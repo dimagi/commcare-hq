@@ -971,8 +971,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/case_detail.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/case_detail.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
@@ -2124,8 +2123,7 @@ msgstr ""
 #: corehq/messaging/smsbackends/airtel_tcl/forms.py
 #: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
 #: corehq/messaging/smsbackends/start_enterprise/forms.py
-#: corehq/messaging/smsbackends/trumpia/forms.py
-#: corehq/messaging/smsbackends/unicel/forms.py corehq/motech/openmrs/forms.py
+#: corehq/messaging/smsbackends/trumpia/forms.py corehq/motech/openmrs/forms.py
 #: custom/abt/reports/filters.py
 msgid "Username"
 msgstr ""
@@ -3418,7 +3416,7 @@ msgstr ""
 msgid "Invalid data source! Details: {details}"
 msgstr ""
 
-#: corehq/apps/api/resources/v0_5.py
+#: corehq/apps/api/resources/v0_5.py corehq/apps/enterprise/api/resources.py
 msgid "You do not have permission to view this feed."
 msgstr ""
 
@@ -4059,8 +4057,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
 #: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Applications"
 msgstr ""
@@ -4751,9 +4748,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
-"Automatically resizes images within forms. Follow <a href='https://"
-"confluence.dimagi.com/display/commcarepublic/Auto-Resize+Images+on+Android'> "
-"the instructions here</a> to determine which value to use."
+"Automatically resizes images within forms. Follow <a href='https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/"
+"Images+in+CommCare#Auto-Resize-Images-on-Android'> the instructions here</a> "
+"to determine which value to use."
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -4988,12 +4986,9 @@ msgid "Image Compatibility on Multiple Devices"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/sessions/bootstrap3/list.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/sessions/bootstrap5/list.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/sessions/list.html
 msgid "Incomplete Forms"
 msgstr ""
 
@@ -5004,8 +4999,7 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/bootstrap3/dropdown.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/bootstrap5/dropdown.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
 msgid "Languages"
 msgstr ""
@@ -5484,10 +5478,11 @@ msgstr ""
 msgid ""
 "When a value is selected, this feature controls the display size of any user-"
 "provided image such that it will be consistent with the size of the original "
-"image file, and consistent across devices. Follow <a href='https://"
-"confluence.dimagi.com/display/commcarepublic/"
-"Image+Sizing+with+Multiple+Android+Device+Models'> the instructions here</a> "
-"to determine which value to use."
+"image file, and consistent across devices. Follow <a href='https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/"
+"Images+in+CommCare#CommCare-Developer-Toolkit-Image-Sizing-with-Multiple-"
+"Android-Device-Models'> the instructions here</a> to determine which value "
+"to use."
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -5736,14 +5731,6 @@ msgid ""
 "          clinical protocols from the World Health Organization, the Centers "
 "for Disease Control, and others.\n"
 "        </p>\n"
-"        <p>\n"
-"          <strong>\n"
-"            For more information about these template applications, please "
-"visit Dimagi's\n"
-"            <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"CommCare+for+COVID-19\" target=\"_blank\">COVID-19 wiki</a>.\n"
-"          </strong>\n"
-"        </p>\n"
 "        <p class=\"help-block\">\n"
 "          These application templates can be imported into your project "
 "space as licensed by Dimagi under the\n"
@@ -5793,11 +5780,9 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
 #: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Settings"
 msgstr ""
@@ -5828,8 +5813,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/pagination.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/pagination.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
 msgid "Go"
 msgstr ""
 
@@ -6334,10 +6318,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/question.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/question.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/query/bootstrap3/list.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/query/bootstrap5/list.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 #: corehq/apps/domain/templates/domain/confirm_plan.html
@@ -8092,10 +8073,8 @@ msgid "Refresh"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/case_detail.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/case_detail.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap3/multi_select_continue_button.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap5/multi_select_continue_button.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/multi_select_continue_button.html
 #: corehq/apps/domain/templates/domain/confirm_plan.html
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_continue.html
@@ -8288,8 +8267,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
 #: corehq/apps/app_manager/views/modules.py
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/case_detail.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/case_detail.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 msgid "Case Detail"
 msgstr ""
 
@@ -9206,8 +9184,7 @@ msgid "Validation Message"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/inactivity_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/inactivity_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/get_demo_modals.html
@@ -9701,8 +9678,7 @@ msgid "Select Icon Image"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/case_detail.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/case_detail.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
@@ -10012,8 +9988,9 @@ msgid ""
 "updates will also\n"
 "                                include multimedia which could require a lot "
 "of data. See the\n"
-"                                <a href='https://confluence.dimagi.com/"
-"display/commcarepublic/Install+CommCare+for+Android+Smartphones'>\n"
+"                                <a href=\"https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143946239/"
+"Installing+CommCare+on+Android+Devices\">\n"
 "                                  Help Site\n"
 "                                </a> for more info.\n"
 "                              "
@@ -10105,13 +10082,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#, python-format
 msgid ""
 "\n"
 "        For more information on deprecated case types, see the following\n"
-"        <a target=\"_blank\" href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/"
-"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">documentation</"
-"a>.\n"
+"        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-"
+"Types-and-Case-Properties\">documentation</a>.\n"
 "      "
 msgstr ""
 
@@ -10416,12 +10393,9 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 msgid "Sync"
 msgstr ""
@@ -10453,8 +10427,7 @@ msgstr ""
 #: corehq/messaging/smsbackends/mach/forms.py
 #: corehq/messaging/smsbackends/push/forms.py
 #: corehq/messaging/smsbackends/start_enterprise/forms.py
-#: corehq/messaging/smsbackends/unicel/forms.py corehq/motech/forms.py
-#: corehq/motech/openmrs/forms.py
+#: corehq/motech/forms.py corehq/motech/openmrs/forms.py
 msgid "Password"
 msgstr ""
 
@@ -10500,8 +10473,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap3/search_controls.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap5/search_controls.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Select All"
 msgstr ""
@@ -11547,8 +11519,9 @@ msgid ""
 "      <p>\n"
 "        Documentation for bulk case imports can be found on our\n"
 "        <a\n"
-"          href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Updating+Cases+-+Update+multiple+case+types+in+a+single+Excel+import\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143946828/Importing+Cases+Using+Excel#Update-Multiple-Case-Types-in-a-"
+"Single-Import\"\n"
 "          target=\"_blank\">\n"
 "          help page for this feature.\n"
 "        </a>\n"
@@ -11991,10 +11964,8 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/case_search/templates/case_search/profile_case_search.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/entry_geo.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/entry_geo.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/query/bootstrap3/list.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/query/bootstrap5/list.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_geo.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/reports/filters/simple.py
@@ -12221,19 +12192,6 @@ msgstr ""
 msgid "You are currently blocked from using Web Apps"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/bootstrap3/formplayer_home.html
-#: corehq/apps/cloudcare/templates/cloudcare/bootstrap5/formplayer_home.html
-#: corehq/apps/users/landing_pages.py
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-#: corehq/tabs/tabclasses.py
-msgid "Web Apps"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/bootstrap3/formplayer_home.html
-#: corehq/apps/cloudcare/templates/cloudcare/bootstrap5/formplayer_home.html
-msgid "Show Full Menu"
-msgstr ""
-
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 msgid "Manage Web Apps Permissions"
 msgstr ""
@@ -12299,182 +12257,15 @@ msgstr ""
 msgid "No Web Apps applications available"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/debugger.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/debugger.html
-msgid "Expand Data Preview Section."
+#: corehq/apps/cloudcare/templates/cloudcare/formplayer_home.html
+#: corehq/apps/users/landing_pages.py
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/tabs/tabclasses.py
+msgid "Web Apps"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/debugger.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/debugger.html
-msgid "Data Preview"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/debugger.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/debugger.html
-msgid "Empty String"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/debugger.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/debugger.html
-msgid "Showing the first"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/debugger.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/debugger.html
-msgid "lines..."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/debugger.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/debugger.html
-msgid "Copy Full Evaluation to Clipboard"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/debugger.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/debugger.html
-msgid "Copy Full Trace to Clipboard"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/debugger.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/debugger.html
-msgid "Recent Queries"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/debugger.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/debugger.html
-msgid "No recent queries"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/new_app_version_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/new_app_version_modal.html
-msgid "A new version of this app is available"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/new_app_version_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/new_app_version_modal.html
-msgid ""
-"\n"
-"              CommCare recommends that you get the latest version of this "
-"app.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/new_app_version_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/new_app_version_modal.html
-msgid "To keep any unsaved changes -"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/new_app_version_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/new_app_version_modal.html
-msgid "Click on “Update Later”."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/new_app_version_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/new_app_version_modal.html
-msgid "Submit your changes."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/new_app_version_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/new_app_version_modal.html
-msgid "Update by clicking on “Web Apps” at the top left of the browser page."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/new_app_version_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/new_app_version_modal.html
-msgid ""
-"\n"
-"                  If you don’t have any unsaved changes and would like to "
-"update, click on “Get Latest App”.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/new_app_version_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/new_app_version_modal.html
-msgid "Update Later"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/new_app_version_modal.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/new_app_version_modal.html
-msgid "Get Latest App"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/pagination.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/pagination.html
-#, python-format
-msgid "<%%- rowRange[i] %%> per page"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/pagination.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/pagination.html
-msgid "1"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/pagination.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/pagination.html
-msgid "..."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
-msgid "Use one question per screen"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
-msgid "Set the application language"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
-msgid "Clear user data"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/entry_choice_label.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/entry_select.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/entry_signature.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/entry_choice_label.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/entry_select.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/entry_signature.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/query/bootstrap3/list.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/query/bootstrap5/list.html
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
-msgid "Clear"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
-msgid "Break Pending Request Locks"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
-msgid "Break"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap3/settings_view.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
-msgid "Sync User Data"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap3/list.html
-msgid "Scroll to bottom"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap3/menu_header.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap5/menu_header.html
-msgid "Hide Map"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap3/menu_header.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap5/menu_header.html
-msgid "Refine search"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap3/search_controls.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap5/search_controls.html
-msgid "Sort By"
+#: corehq/apps/cloudcare/templates/cloudcare/formplayer_home.html
+msgid "Show Full Menu"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/detail.html
@@ -12482,39 +12273,87 @@ msgstr ""
 msgid "List is empty."
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/entry_geo.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/entry_geo.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
+msgid "Hide Map"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
+msgid "Refine search"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
+msgid "Sort By"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Expand Data Preview Section."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Data Preview"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Empty String"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Showing the first"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "lines..."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Copy Full Evaluation to Clipboard"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Copy Full Trace to Clipboard"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Recent Queries"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "No recent queries"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_choice_label.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_select.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_signature.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
+msgid "Clear"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_geo.html
 msgid "Clear map"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/entry_geo.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/entry_geo.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_geo.html
 msgid "Please wait while the map loads"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/entry_unsupported.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/entry_unsupported.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_unsupported.html
 msgid ""
 "\n"
 "      Sorry, web entry cannot support this type of question.\n"
 "    "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/entry_unsupported.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/entry_unsupported.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_unsupported.html
 msgid ""
 "\n"
 "            This question will appear as follows in data exports.\n"
 "          "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/entry_unsupported.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/entry_unsupported.html
-msgid "OK"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/form.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/form.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid ""
 "\n"
 "              Please correct the answers below before submitting.\n"
@@ -12525,89 +12364,128 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/form.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/form.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid "An answer is required."
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/form.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/form.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid "Next Error"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/help_multimedia.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/multimedia.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/help_multimedia.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/multimedia.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/help_multimedia.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/multimedia.html
 msgid "Your browser does not support audio"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/help_multimedia.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/multimedia.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/help_multimedia.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/multimedia.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/help_multimedia.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/multimedia.html
 msgid "Your browser does not support video"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/question.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/question.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/question.html
 msgid "Show help dialog"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/question.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/question.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/question.html
 msgid "A response is required for this question."
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/question.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/question.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/question.html
 msgid "Sorry, this response is required!"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/sub_group.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/sub_group.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/sub_group.html
 msgid "Question Group"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
 msgid "Log in as"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
 #: corehq/messaging/scheduling/forms.py
 msgid "Start"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/bootstrap3/breadcrumbs.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/bootstrap5/breadcrumbs.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/breadcrumbs.html
 msgid "Home"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/bootstrap3/dropdown.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/bootstrap5/dropdown.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
 msgid "Dropdown toggle"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/bootstrap3/dropdown.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/bootstrap5/dropdown.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
 #: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
 msgid "Print"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/query/bootstrap3/item.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/query/bootstrap5/item.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
+msgid "A new version of this app is available"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
+msgid ""
+"\n"
+"              CommCare recommends that you get the latest version of this "
+"app.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
+msgid "To keep any unsaved changes -"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
+msgid "Click on “Update Later”."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
+msgid "Submit your changes."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
+msgid "Update by clicking on “Web Apps” at the top left of the browser page."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
+msgid ""
+"\n"
+"                  If you don’t have any unsaved changes and would like to "
+"update, click on “Get Latest App”.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
+msgid "Update Later"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
+msgid "Get Latest App"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
+#, python-format
+msgid "<%%- rowRange[i] %%> per page"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
+msgid "1"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
+msgid "..."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/query/item.html
 #, python-format
 msgid "Include results where '<%%- text %%>' is blank"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/sessions/bootstrap3/list.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/sessions/bootstrap5/list.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/sessions/list.html
 msgid ""
 "\n"
 "          Web Apps deletes any Incomplete Forms that are more than 7 days "
@@ -12617,8 +12495,31 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/users/bootstrap3/restore_as.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/users/bootstrap5/restore_as.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Use one question per screen"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Set the application language"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Clear user data"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Break Pending Request Locks"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Break"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Sync User Data"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/users/restore_as.html
 msgid "Log in as user"
 msgstr ""
 
@@ -13289,7 +13190,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
-msgid "Group \"{}\" already exists for case type \"{}\""
+#, python-brace-format
+msgid "Group \"{group}\" already exists for case type \"{case_type}\""
 msgstr ""
 
 #: corehq/apps/data_dictionary/models.py
@@ -13487,6 +13389,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, python-format
 msgid ""
 "\n"
 "            <p>\n"
@@ -13513,10 +13416,9 @@ msgid ""
 "            </ul>\n"
 "            <p>\n"
 "              For more information on deprecated case types, see the\n"
-"              <a target=\"_blank\" href=\"https://confluence.dimagi.com/"
-"display/commcarepublic/"
-"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">following "
-"documentation</a>.\n"
+"              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-"
+"Delete-Case-Types-and-Case-Properties\">following documentation</a>.\n"
 "            </p>\n"
 "          "
 msgstr ""
@@ -14069,9 +13971,9 @@ msgid ""
 "\n"
 "            Create rules for updating or closing cases from CommCare HQ.\n"
 "            All rules run every day at %(time)s GMT.\n"
-"            For more information, see the <a href=\"https://confluence."
-"dimagi.com/display/commcarepublic/Automatically+Close+Cases\">Help Site</"
-"a>.\n"
+"            For more information, see the <a href=\"https://dimagi.atlassian."
+"net/wiki/spaces/commcarepublic/pages/2143957601/"
+"Automatically+Update+Cases\">Help Site</a>.\n"
 "          "
 msgstr ""
 
@@ -14137,7 +14039,7 @@ msgid ""
 "      This feature allows you to quickly explore your case data for ad-hoc "
 "data\n"
 "      queries or to identify unclean data.<br />\n"
-"      This is a Feature Preview.\n"
+"      This is an Add-On.\n"
 "    "
 msgstr ""
 
@@ -18629,7 +18531,19 @@ msgid "Mobile Form Submissions"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
+msgid "{} to {}"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "past {} days"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Date ranges with more than 90 days are not supported"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Form ID"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
@@ -19928,9 +19842,9 @@ msgid ""
 "\n"
 "                                    <p>Checking this will add a button to "
 "download a configuration file\n"
-"                                       for the <a href=\"https://confluence."
-"dimagi.com/display/commcarepublic/CommCare+Data+Export+Tool\" "
-"target=\"_blank\">\n"
+"                                       for the <a href=\"https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/"
+"CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
 "                                       CommCare Data Export Tool</a> for the "
 "export.</p>\n"
 "                                   "
@@ -20258,8 +20172,8 @@ msgstr ""
 msgid ""
 "\n"
 "            To get started, please\n"
-"            <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Deploy+and+Install+an+Application+on+CommCareHQ\"\n"
+"            <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143947269/Publish+Your+Application\"\n"
 "               target=\"_blank\">deploy</a>\n"
 "            your application and submit data from a phone. You may also\n"
 "            <a href=\"https://help.commcarehq.org/display/commcarepublic/"
@@ -20851,8 +20765,8 @@ msgstr ""
 msgid ""
 "\n"
 "                Your export exceeds the limit of %(max_rows)s rows. Please "
-"see <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Selecting+Tools+for+CommCare+Data+Processing+and+Analysis\" data-"
+"see <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2337669143/Setting+up+a+Data+Pipeline+via+CommCare\" data-"
 "toggle=\"modal\">documentation</a> for more information.\n"
 "              "
 msgstr ""
@@ -27434,6 +27348,7 @@ msgid "Upload Organization Structure From Excel"
 msgstr ""
 
 #: corehq/apps/locations/views.py corehq/apps/products/views.py
+#: corehq/apps/users/views/mobile/users.py
 msgid "no file uploaded"
 msgstr ""
 
@@ -27482,6 +27397,10 @@ msgstr ""
 
 #: corehq/apps/locations/views.py
 msgid "All users have been unassigned from their locations"
+msgstr ""
+
+#: corehq/apps/locations/views.py corehq/apps/users/views/mobile/users.py
+msgid "only one file can be uploaded at a time"
 msgstr ""
 
 #: corehq/apps/mobile_auth/utils.py
@@ -27993,13 +27912,13 @@ msgstr ""
 #: corehq/apps/registration/forms.py
 msgid ""
 "I have read and agree to Dimagi's\n"
-"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                <a href=\"https://dimagi.com/terms-privacy/\"\n"
 "                    target=\"_blank\">Privacy Policy</a>,\n"
-"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                <a href=\"https://dimagi.com/terms-of-service/\"\n"
 "                    target=\"_blank\">Terms of Service</a>,\n"
-"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                <a href=\"https://dimagi.com/terms-ba/\"\n"
 "                    target=\"_blank\">Business Agreement</a>, and\n"
-"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                <a href=\"https://dimagi.com/terms-aup/\"\n"
 "                    target=\"_blank\">Acceptable Use Policy</a>.\n"
 "               "
 msgstr ""
@@ -30118,8 +30037,9 @@ msgid ""
 "When searching by location, put your location name in quotes to show only "
 "exact matches. To more easily find a location, you may specify multiple "
 "levels by separating with a \"/\". For example, \"Massachusetts/Suffolk/"
-"Boston\". <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Search+for+Locations\"target=\"_blank\">Learn more</a>."
+"Boston\". <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2215051298/Organization+Data+Management\"target=\"_blank\">Learn more</"
+"a>."
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
@@ -30128,8 +30048,9 @@ msgstr ""
 
 #: corehq/apps/reports/filters/users.py
 msgid ""
-"<i class=\"fa fa-info-circle\"></i> See <a href=\"https://confluence.dimagi."
-"com/display/commcarepublic/Report+and+Export+Filters\" target=\"_blank\"> "
+"<i class=\"fa fa-info-circle\"></i> See <a href=\"https://dimagi.atlassian."
+"net/wiki/spaces/commcarepublic/pages/2215051298/"
+"Organization+Data+Management#Search-for-Locations\" target=\"_blank\"> "
 "Filter Definitions</a>."
 msgstr ""
 
@@ -32154,14 +32075,13 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
-#, python-format
 msgid ""
 "\n"
 "              This feature will only update the specified questions.\n"
 "              It will <strong>not</strong> run any calculations or affect "
 "cases.\n"
-"              <a target=\"_blank\" href=\"https://confluence.dimagi.com/"
-"display/commcarepublic/Data+Cleaning%%3A+Clean+Form+Submission\">Read more</"
+"              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143954777/Clean+Form+Submission\">Read more</"
 "a>.\n"
 "            "
 msgstr ""
@@ -32456,14 +32376,14 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap5/case_data.html
+#, python-format
 msgid ""
 "\n"
 "                    This case uses a deprecated case type.\n"
 "                    See the\n"
-"                    <a target=\"_blank\" href=\"https://confluence.dimagi."
-"com/display/commcarepublic/"
-"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">help "
-"documentation</a>\n"
+"                    <a target=\"_blank\" href=\"https://dimagi.atlassian.net/"
+"wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-"
+"Delete-Case-Types-and-Case-Properties\">help documentation</a>\n"
 "                    for more information.\n"
 "                  "
 msgstr ""
@@ -36551,7 +36471,9 @@ msgid "Enabled toggle items"
 msgstr ""
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-msgid "Items added here will be enabled regardless of the randomness"
+msgid ""
+"Items added here will be enabled regardless of the randomness (or disabled "
+"if preceded by `!`)"
 msgstr ""
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
@@ -37377,12 +37299,18 @@ msgstr ""
 
 #: corehq/apps/user_importer/validation.py
 msgid ""
-"Based on your locations do not have permission to edit this user or user "
+"Based on your locations you do not have permission to edit this user or user "
 "invitation"
 msgstr ""
 
 #: corehq/apps/user_importer/validation.py
 msgid "You do not have permission to assign or remove these locations: {}"
+msgstr ""
+
+#: corehq/apps/user_importer/validation.py
+msgid ""
+"These locations cannot have users assigned because of their organization "
+"level settings: {}."
 msgstr ""
 
 #: corehq/apps/userreports/columns.py
@@ -39085,6 +39013,10 @@ msgid "Primary Location must always be set to one of above locations"
 msgstr ""
 
 #: corehq/apps/users/forms.py
+msgid "One or more of the locations you specified cannot have users assigned."
+msgstr ""
+
+#: corehq/apps/users/forms.py
 msgid "You do not have permissions to assign one of those locations."
 msgstr ""
 
@@ -40559,8 +40491,8 @@ msgstr ""
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid ""
 "\n"
-"          <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Roles+and+Permissions\"\n"
+"          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143957921/Roles+and+Permissions+Overview\"\n"
 "            target=\"_blank\">Learn more</a> about how roles &amp; "
 "permissions are used.\n"
 "        "
@@ -40894,12 +40826,6 @@ msgstr[1] ""
 
 #: corehq/apps/users/views/__init__.py
 msgid "Invite Web User to Project"
-msgstr ""
-
-#: corehq/apps/users/views/__init__.py
-msgid ""
-"Groups are not allowed with parallel user import. Please upload them "
-"separately"
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py
@@ -41451,20 +41377,6 @@ msgstr ""
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html
 msgid "Your export is ready."
-msgstr ""
-
-#: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html
-msgid ""
-"\n"
-"            If you are downloading a large file over a slow or unstable "
-"connection, we recommend syncing to Dropbox. Learn more about\n"
-"            <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Syncing+Downloads+to+Dropbox\">Sync to Dropbox</a>.\n"
-"          "
-msgstr ""
-
-#: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html
-msgid "Sync to Dropbox"
 msgstr ""
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html
@@ -42380,11 +42292,7 @@ msgstr ""
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert.html
 msgid ""
 "\n"
-"        Since you are a Superuser, you will see additional options. See\n"
-"        <a target=\"_blank\" href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/Conditional+Alerts+-+Superuser+Options\">Superuser Options</"
-"a>\n"
-"        for more information.\n"
+"        Since you are a Superuser, you will see additional options.\n"
 "      "
 msgstr ""
 
@@ -42441,8 +42349,8 @@ msgstr ""
 msgid ""
 "\n"
 "      For information on Broadcasts, see the\n"
-"      <a target=\"_blank\" href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/Broadcasts\">Broadcasts</a>\n"
+"      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143944996/Broadcast+Messaging\">Broadcasts</a>\n"
 "      help page.\n"
 "    "
 msgstr ""
@@ -42830,7 +42738,6 @@ msgstr ""
 #: corehq/messaging/smsbackends/airtel_tcl/forms.py
 #: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
 #: corehq/messaging/smsbackends/mach/forms.py
-#: corehq/messaging/smsbackends/unicel/forms.py
 msgid "Sender ID"
 msgstr ""
 
@@ -43423,10 +43330,6 @@ msgstr ""
 
 #: corehq/messaging/smsbackends/twilio/forms.py
 msgid "Twilio Settings"
-msgstr ""
-
-#: corehq/messaging/smsbackends/unicel/forms.py
-msgid "Unicel Settings"
 msgstr ""
 
 #: corehq/messaging/smsbackends/vertex/forms.py

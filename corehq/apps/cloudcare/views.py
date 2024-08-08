@@ -23,8 +23,8 @@ from django.views.generic import View
 from django.views.generic.base import TemplateView
 
 import requests
-import sentry_sdk
 from langcodes import get_name
+from sentry_sdk import Scope
 from text_unidecode import unidecode
 from xml2json.lib import xml2json
 
@@ -426,8 +426,8 @@ def report_formplayer_error(request, domain):
     data = json.loads(request.body)
     error_type = data.get('type')
 
-    with sentry_sdk.configure_scope() as scope:
-        scope.set_tag("cloudcare_error_type", error_type)
+    scope = Scope.get_current_scope()
+    scope.set_tag("cloudcare_error_type", error_type)
 
     if error_type == 'webformsession_request_failure':
         metrics_counter('commcare.formplayer.webformsession_request_failure', tags={

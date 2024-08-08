@@ -413,6 +413,12 @@ class TableauVisualizationForm(forms.ModelForm):
     view_url = forms.CharField(
         label=_('View URL'),
     )
+    location_safe = forms.BooleanField(
+        label=_('Visible to location-restricted users'),
+        help_text=_('If checked, the visualization will be visible to users with roles that do not have '
+                    '"Full Organization Access"'),
+        required=False,
+    )
 
     class Meta:
         model = TableauVisualization
@@ -420,6 +426,7 @@ class TableauVisualizationForm(forms.ModelForm):
             'title',
             'server',
             'view_url',
+            'location_safe',
         ]
 
     def __init__(self, domain, *args, **kwargs):
@@ -435,6 +442,7 @@ class TableauVisualizationForm(forms.ModelForm):
             crispy.Field('title'),
             crispy.Field('server'),
             crispy.Field('view_url'),
+            crispy.Field('location_safe'),
 
             FormActions(
                 StrictButton(
@@ -469,6 +477,7 @@ class UpdateTableauVisualizationForm(TableauVisualizationForm):
             'title',
             'server',
             'view_url',
+            'location_safe',
         ]
 
     @property
@@ -482,6 +491,7 @@ class UpdateTableauVisualizationForm(TableauVisualizationForm):
                 crispy.Field('title'),
                 crispy.Field('server'),
                 crispy.Field('view_url'),
+                crispy.Field('location_safe'),
                 css_class='modal-body',
             ),
             FormActions(

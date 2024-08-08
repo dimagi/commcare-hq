@@ -2804,7 +2804,8 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
         For mobile users, enables bulk deletion page and bulk lookup page.
         For web users, enables filtered download page.
     """,
-    help_link='https://confluence.dimagi.com/display/commcarepublic/Bulk+User+Management'
+    help_link=('https://dimagi.atlassian.net/wiki/spaces/'
+               'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
