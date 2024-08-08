@@ -1,4 +1,5 @@
 from django.test import TestCase
+from unittest.mock import patch
 
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser, PermissionInfo
 from corehq.apps.users.role_utils import (
@@ -18,6 +19,7 @@ from corehq.apps.users.permissions import (
     COMMCARE_ANALYTICS_GAMMA,
     COMMCARE_ANALYTICS_SQL_LAB,
 )
+from corehq.toggles import SUPERSET_ANALYTICS
 
 
 class RoleUtilsTests(TestCase):
@@ -153,21 +155,34 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         cls.user.delete(deleted_by_domain=cls.domain.name, deleted_by=None)
         cls.domain.delete()
 
-    def test_admin_user(self):
+    def test_user_domain_does_not_have_flag_enabled(self):
+        analytics_roles = get_commcare_analytics_roles_by_user_domains(self.user)
+        self.assertTrue("domain1" not in analytics_roles)
+
+    @patch.object(SUPERSET_ANALYTICS, "get_enabled_domains")
+    def test_admin_user(self, get_enabled_domains_mock):
+        get_enabled_domains_mock.return_value = ["domain1"]
+
         self.user.domain_memberships[0].is_admin = True
         self.assertTrue(self.user.get_domain_membership("domain1").is_admin)
 
         analytics_roles = get_commcare_analytics_roles_by_user_domains(self.user)
         self.assertTrue(analytics_roles["domain1"], COMMCARE_ANALYTICS_USER_PERMISSIONS)
 
-    def test_non_admin_user(self):
+    @patch.object(SUPERSET_ANALYTICS, "get_enabled_domains")
+    def test_non_admin_user(self, get_enabled_domains_mock):
+        get_enabled_domains_mock.return_value = ["domain1"]
+
         self.user.set_role(self.domain.name, self.hq_no_cca_role.get_qualified_id())
         self.assertFalse(self.user.get_domain_membership("domain1").is_admin)
 
         analytics_roles = get_commcare_analytics_roles_by_user_domains(self.user)
         self.assertEqual(analytics_roles["domain1"], [])
 
-    def test_user_has_limited_roles(self):
+    @patch.object(SUPERSET_ANALYTICS, "get_enabled_domains")
+    def test_user_has_limited_roles(self, get_enabled_domains_mock):
+        get_enabled_domains_mock.return_value = ["domain1"]
+
         self.user.set_role(self.domain.name, self.hq_limited_cca_role.get_qualified_id())
         self.assertFalse(self.user.get_domain_membership("domain1").is_admin)
 
