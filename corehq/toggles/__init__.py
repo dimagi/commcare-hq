@@ -2291,6 +2291,13 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
 )
 
+ARCGIS_INTEGRATION = StaticToggle(
+    'arcgis_integration',
+    'Enable the ArcGIS Form Repeater integration. Used for forwarding form data to an ArcGIS account.',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 GENERIC_INBOUND_API = StaticToggle(
     'configurable_api',
     'Generic inbound APIs',

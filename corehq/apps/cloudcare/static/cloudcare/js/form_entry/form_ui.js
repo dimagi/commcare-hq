@@ -785,13 +785,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.newRepeat = function () {
             $.publish('formplayer.' + constants.NEW_REPEAT, self);
-            $.publish('formplayer.dirty');
+            $.publish('formplayer.' + constants.DIRTY);
             $('.add').trigger('blur');
         };
 
         self.deleteRepeat = function () {
             $.publish('formplayer.' + constants.DELETE_REPEAT, self);
-            $.publish('formplayer.dirty');
+            $.publish('formplayer.' + constants.DIRTY);
         };
 
         self.hasAnyNestedQuestions = function () {
@@ -965,7 +965,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             publishAnswerEvent();
         };
         var publishAnswerEvent = _.throttle(function () {
-            $.publish('formplayer.dirty');
+            $.publish('formplayer.' + constants.DIRTY);
             $.publish('formplayer.' + constants.ANSWER, self);
         }, self.throttle);
         self.onchange = self.triggerAnswer;
@@ -1057,7 +1057,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             self.labelWidth = "";
             self.questionTileWidth = `col-md-${columnWidth}`;
         } else {
-            if (self.isLabel || self.isButton) {
+            if (self.isLabel) {
                 self.controlWidth = "";
                 self.labelWidth = "";
             } else {
@@ -1065,7 +1065,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 self.labelWidth = constants.LABEL_WIDTH;
             }
             self.questionTileWidth = constants.FULL_WIDTH;
-            if (!hasLabel) {
+            if (!hasLabel && !self.isLabel) {
                 self.controlWidth += ' ' + constants.LABEL_OFFSET;
             }
         }

@@ -416,7 +416,7 @@ class Repeater(RepeaterSuperProxy):
 
     def allowed_to_forward(self, payload):
         """
-        Return True/False depending on whether the payload meets forawrding criteria or not
+        Return True/False depending on whether the payload meets forwarding criteria or not
         """
         return True
 
@@ -438,18 +438,18 @@ class Repeater(RepeaterSuperProxy):
             response = self.send_request(repeat_record, payload)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
-            return self.handle_response(RequestConnectionError(error), repeat_record)
+            self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
-            return self.handle_response(err, repeat_record)
+            self.handle_response(err, repeat_record)
         except (PossibleSSRFAttempt, CannotResolveHost):
-            return self.handle_response(Exception("Invalid URL"), repeat_record)
+            self.handle_response(Exception("Invalid URL"), repeat_record)
         except Exception:
             # This shouldn't ever happen in normal operation and would mean code broke
             # we want to notify ourselves of the error detail and tell the user something vague
             notify_exception(None, "Unexpected error sending repeat record request")
-            return self.handle_response(Exception("Internal Server Error"), repeat_record)
+            self.handle_response(Exception("Internal Server Error"), repeat_record)
         else:
-            return self.handle_response(response, repeat_record)
+            self.handle_response(response, repeat_record)
 
     @memoized
     def get_payload(self, repeat_record):
@@ -474,12 +474,11 @@ class Repeater(RepeaterSuperProxy):
         result may be either a response object or an exception
         """
         if isinstance(result, Exception):
-            attempt = repeat_record.handle_exception(result)
+            repeat_record.handle_exception(result)
         elif is_response(result) and 200 <= result.status_code < 300 or result is True:
-            attempt = repeat_record.handle_success(result)
+            repeat_record.handle_success(result)
         else:
-            attempt = repeat_record.handle_failure(result)
-        return attempt
+            repeat_record.handle_failure(result)
 
     def get_headers(self, repeat_record):
         # to be overridden
@@ -1151,18 +1150,12 @@ class RepeatRecord(models.Model):
     def fire(self, force_send=False):
         if force_send or not self.succeeded:
             try:
-                attempt = self.repeater.fire_for_record(self)
+                self.repeater.fire_for_record(self)
             except Exception as e:
                 log_repeater_error_in_datadog(self.domain, status_code=None,
                                               repeater_type=self.repeater_type)
-                attempt = self.handle_payload_exception(e)
+                self.handle_payload_exception(e)
                 raise
-            finally:
-                # pycharm warns attempt might not be defined.
-                # that'll only happen if fire_for_record raise a non-Exception exception (e.g. SIGINT)
-                # or handle_payload_exception raises an exception. I'm okay with that. -DMR
-                self.add_attempt(attempt)
-                self.save()
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
@@ -1215,9 +1208,6 @@ class RepeatRecord(models.Model):
 
     def handle_payload_exception(self, exception):
         self.add_client_failure_attempt(str(exception), retry=False)
-
-    def add_attempt(self, attempt):
-        assert attempt is None, "SQL attempts are added/saved on create"
 
     def cancel(self):
         self.state = State.Cancelled

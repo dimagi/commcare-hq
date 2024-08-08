@@ -100,8 +100,9 @@ CALC_XPATHS = FeaturePreview(
     description=_(
         "Specify a custom xpath expression to calculate a value "
         "in the case list or case detail screen."),
-    help_link=('https://dimagi.atlassian.net/wiki/spaces/commcarepublic'
-               '/pages/2143951603/Case+List+and+Case+Detail+Configuration')
+    help_link=('https://dimagi.atlassian.net/wiki/spaces/commcarepublic/'
+               'pages/2143951603/Case+List+and+Case+Detail+Configuration#'
+               'Calculations-in-the-Case-List%2FDetail')
 )
 
 ENUM_IMAGE = FeaturePreview(

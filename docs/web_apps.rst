@@ -106,7 +106,7 @@ Not all features have all of these pieces:
 Example: Registration from Case List
 ====================================
 
-As an example, consider `registration from the case list <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration>`_:
+As an example, consider `registration from the case list <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Minimize-Duplicates%3A-Registration-From-the-Case-List>`_:
 
 * A CommCare HQ user goes to the module settings page in app builder and turns on the feature, selecting the registration form they want to be accessible from the case list.
 

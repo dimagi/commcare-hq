@@ -266,6 +266,10 @@ class LocationOptionsController(EmwfOptionsController):
     namespace_locations = False
     case_sharing_only = False
 
+    def __init__(self, *args, include_locations_with_no_users_allowed=True):
+        self.include_locations_with_no_users_allowed = include_locations_with_no_users_allowed
+        super().__init__(*args)
+
     @property
     def data_sources(self):
         return [
@@ -276,11 +280,13 @@ class LocationOptionsController(EmwfOptionsController):
 @method_decorator(locations_access_required, name='dispatch')
 @location_safe
 class LocationsSearchView(EmwfOptionsView):
+    include_locations_with_no_users_allowed = True
 
     @property
     @memoized
     def options_controller(self):
-        return LocationOptionsController(self.request, self.domain, self.search)
+        return LocationOptionsController(self.request, self.domain, self.search,
+            include_locations_with_no_users_allowed=self.include_locations_with_no_users_allowed)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
