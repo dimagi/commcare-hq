@@ -467,7 +467,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         named_expression_specs = deepcopy(self.named_expressions)
         named_expressions = {}
         factory_context = FactoryContext.empty(self.domain)
-        for name, expression in list(named_expression_specs.items()):
+        for name, expression in named_expression_specs.items():
             named_expressions[name] = LazyExpressionWrapper(expression, factory_context)
 
         factory_context.named_expressions.replace(named_expressions)
