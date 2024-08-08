@@ -130,6 +130,7 @@ class TaskProgress:
             'status': self.STATUS_IN_PROGRESS,
             'query_id': None,
             'error': None,
+            'task': task,
         }
 
         self.redis_client.set(self.key, status_dict, timeout=self.STATUS_TIMEOUT)
@@ -152,11 +153,11 @@ class TaskProgress:
             self._query_id = uuid.uuid4().hex
         self.redis_client.set(self._query_id, data, timeout=self.STATUS_TIMEOUT)
 
-        status_dict = {
-            'status': self.STATUS_COMPLETE,
-            'query_id': self._query_id,
-            'error': None
-        }
+        status_dict = self.redis_client.get(self.key)
+        if status_dict is None:
+            raise KeyError(self.key)
+        status_dict['status'] = self.STATUS_COMPLETE
+        status_dict['query_id'] = self._query_id
         self.redis_client.set(self.key, status_dict, timeout=self.STATUS_TIMEOUT)
 
     def get_query_id(self):
@@ -169,6 +170,10 @@ class TaskProgress:
 
     def clear_status(self):
         self.redis_client.delete(self.key)  # clear status data to allow this key to be re-used
+
+    def get_task(self):
+        status_dict = self.redis_client.get(self.key)
+        return status_dict.get('task', None) if status_dict else None
 
 
 class ReportTaskProgress(TaskProgress):

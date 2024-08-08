@@ -152,6 +152,7 @@ class ODataEnterpriseReportResource(ODataResource):
     # window will be subject to this delay (PowerBI will subject them to it twice,
     # as the data preview and actual request perform separate queries
     RETRY_IN_PROGRESS_DELAY = 60
+    RETRY_CONFLICT_DELAY = 120
 
     class Meta(ODataResource.Meta):
         authentication = EnterpriseODataAuthentication()
@@ -163,6 +164,10 @@ class ODataEnterpriseReportResource(ODataResource):
         status = progress.get_status()
         if status == ReportTaskProgress.STATUS_COMPLETE:
             try:
+                # ensure this is for the same parameters
+                if progress.get_task() != self.get_report_task(request):
+                    raise ImmediateHttpResponse(
+                        response=http.HttpTooManyRequests(headers={'Retry-After': self.RETRY_CONFLICT_DELAY}))
                 data = progress.get_data()
                 progress.clear_status()  # Clear this request so that this user can issue new requests
             except KeyError:
