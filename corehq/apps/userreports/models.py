@@ -6,13 +6,13 @@ from ast import literal_eval
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime, timedelta
+from functools import cached_property
 from uuid import UUID
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
 import requests
@@ -1473,21 +1473,18 @@ class LazyExpressionWrapper:
     def __init__(self, expression, factory_context):
         self.expression = expression
         self.factory_context = factory_context
-        self.wrapped_expression = None
 
     def __call__(self, *args, **kwargs):
-        self.unwrap()
         return self.wrapped_expression(*args, **kwargs)
 
-    def unwrap(self):
-        if self.wrapped_expression is None:
-            if hasattr(self.expression, 'wrapped_definition'):
-                self.wrapped_expression = self.expression.wrapped_definition(self.factory_context)
-            elif isinstance(self.expression, dict):
-                self.wrapped_expression = ExpressionFactory.from_spec(self.expression, self.factory_context)
-            else:
-                raise ValueError(f"Invalid expression type: {self.expression}")
-        return self.wrapped_expression
+    @cached_property
+    def wrapped_expression(self):
+        if hasattr(self.expression, 'wrapped_definition'):
+            return self.expression.wrapped_definition(self.factory_context)
+        elif isinstance(self.expression, dict):
+            return ExpressionFactory.from_spec(self.expression, self.factory_context)
+        else:
+            raise ValueError(f"Invalid expression type: {self.expression}")
 
 
 class UCRExpression(models.Model):

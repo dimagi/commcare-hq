@@ -40,8 +40,8 @@ class BaseContainer:
             if not expr:
                 raise KeyError(item)
             if isinstance(expr, LazyExpressionWrapper):
-                # unwrap here to force evaluation of the lazy expression and catch recursive references
-                expr = expr.unwrap()
+                # load here to force evaluation of the lazy expression and catch recursive references
+                expr = expr.wrapped_expression
             return expr
 
     @contextmanager
