@@ -53,8 +53,14 @@ hqDefine("locations/js/widgets", [
                     };
                 },
             },
-            templateResult: function (result) { return result.text || result.name; },
-            templateSelection: function (result) { return result.text || result.name; },
+            templateResult: function (result) {
+                return result.text || result.name;
+            },
+            templateSelection: function (result) {
+                const fullLengthName = result.text || result.name;
+                const truncatedName = truncateLocationName(fullLengthName, $select);
+                return truncatedName;
+            },
         });
 
         var initial = options.initial;
