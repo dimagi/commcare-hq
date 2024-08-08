@@ -836,7 +836,7 @@ class TestDBExpressions(TestCase):
 
     @flag_enabled('UCR_EXPRESSION_REGISTRY')
     def test_db_named_db_filter(self):
-        """Test that named expressions work in DB expressions"""
+        """Test that named filters work in DB expressions"""
         UCRExpression.objects.create(
             name='pregnant',
             domain='test',
