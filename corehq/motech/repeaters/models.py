@@ -65,11 +65,13 @@ class.
 """
 import inspect
 import json
+import random
 import traceback
 import uuid
 from collections import defaultdict
 from contextlib import nullcontext
 from datetime import datetime, timedelta
+from http import HTTPStatus
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
@@ -124,8 +126,10 @@ from .const import (
     ENDPOINT_TIMER,
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
+    MAX_REPEATER_WORKERS,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
+    RATE_LIMITER_DELAY_RANGE,
     State,
 )
 from .exceptions import RequestConnectionError, UnknownRepeater
@@ -260,6 +264,7 @@ class Repeater(RepeaterSuperProxy):
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
+    # TODO: max_workers = models.IntegerField(default=1)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
@@ -350,21 +355,26 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def repeat_records_ready(self):
-        return self.repeat_records.filter(state__in=(State.Pending, State.Fail))
+        return (
+            self.repeat_records
+            .filter(state__in=(State.Pending, State.Fail))
+            .order_by('registered_at')
+        )
 
     @property
-    def is_ready(self):
-        """
-        Returns True if there are repeat records to be sent.
-        """
-        if self.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(self.domain):
-            return False
-        if not (self.next_attempt_at is None
-                or self.next_attempt_at < timezone.now()):
-            return False
-        return self.repeat_records_ready.exists()
+    def domain_can_forward(self):
+        return (
+            domain_can_forward(self.domain)
+            and not toggles.PAUSE_DATA_FORWARDING.enabled(self.domain)
+        )
 
-    def set_next_attempt(self):
+    def rate_limit(self):
+        interval = random.uniform(*RATE_LIMITER_DELAY_RANGE)
+        Repeater.objects.filter(id=self.repeater_id).update(
+            next_attempt_at=datetime.utcnow() + interval,
+        )
+
+    def set_backoff(self):
         now = datetime.utcnow()
         interval = _get_retry_interval(self.last_attempt_at, now)
         self.last_attempt_at = now
@@ -377,7 +387,7 @@ class Repeater(RepeaterSuperProxy):
             next_attempt_at=now + interval,
         )
 
-    def reset_next_attempt(self):
+    def reset_backoff(self):
         if self.last_attempt_at or self.next_attempt_at:
             self.last_attempt_at = None
             self.next_attempt_at = None
@@ -413,7 +423,8 @@ class Repeater(RepeaterSuperProxy):
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
             repeat_record.__dict__["repeater"] = self
-        repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
+        # TODO: No, send the repeat record when it's its turn.
+        # repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -437,6 +448,11 @@ class Repeater(RepeaterSuperProxy):
     def _time_request(self, repeat_record, payload, timing_context):
         with timing_context(ENDPOINT_TIMER) if timing_context else nullcontext():
             return self.send_request(repeat_record, payload)
+
+    @property
+    def num_workers(self):
+        # TODO: return min(self.max_workers, MAX_REPEATER_WORKERS)
+        return MAX_REPEATER_WORKERS
 
     def fire_for_record(self, repeat_record, timing_context=None):
         payload = self.get_payload(repeat_record)
@@ -479,10 +495,36 @@ class Repeater(RepeaterSuperProxy):
 
         result may be either a response object or an exception
         """
+        never_gonna_work = (
+            HTTPStatus.BAD_REQUEST,
+            HTTPStatus.UNAUTHORIZED,
+            HTTPStatus.PAYMENT_REQUIRED,
+            HTTPStatus.FORBIDDEN,
+            HTTPStatus.NOT_FOUND,
+            HTTPStatus.METHOD_NOT_ALLOWED,
+            HTTPStatus.NOT_ACCEPTABLE,
+            HTTPStatus.PROXY_AUTHENTICATION_REQUIRED,
+            HTTPStatus.GONE,
+            HTTPStatus.LENGTH_REQUIRED,
+            HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+            HTTPStatus.REQUEST_URI_TOO_LONG,
+            HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+            HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
+            HTTPStatus.EXPECTATION_FAILED,
+            HTTPStatus.IM_A_TEAPOT,  # For completeness :)
+            HTTPStatus.MISDIRECTED_REQUEST,
+            HTTPStatus.UNPROCESSABLE_ENTITY,
+            HTTPStatus.REQUEST_HEADER_FIELDS_TOO_LARGE,
+            HTTPStatus.UNAVAILABLE_FOR_LEGAL_REASONS,
+        )
+
         if isinstance(result, Exception):
             repeat_record.handle_exception(result)
         elif is_response(result) and 200 <= result.status_code < 300 or result is True:
             repeat_record.handle_success(result)
+        elif is_response(result) and result.status_code in never_gonna_work:
+            message = format_response(result)
+            repeat_record.handle_payload_error(message)
         else:
             repeat_record.handle_failure(result)
 
@@ -922,10 +964,22 @@ class RepeatRecordManager(models.Manager):
         return result
 
     def count_overdue(self, threshold=timedelta(minutes=10)):
-        return self.filter(
-            next_check__isnull=False,
-            next_check__lt=datetime.utcnow() - threshold
-        ).count()
+        overdue = datetime.utcnow() - threshold
+        repeater_not_paused = models.Q(repeater__is_paused=False)
+        repeater_next_attempt_overdue = (
+            models.Q(repeater__next_attempt_at__isnull=False)
+            | models.Q(repeater__next_attempt_at__lt=overdue)
+        )
+        ready_to_send = models.Q(
+            state__in=(State.Pending, State.Fail)
+        )
+        return (
+            self.get_queryset()
+            .filter(repeater_not_paused)
+            .filter(repeater_next_attempt_overdue)
+            .filter(ready_to_send)
+            .count()
+        )
 
     def iterate(self, domain, repeater_id=None, state=None, chunk_size=1000):
         db = router.db_for_read(self.model)
@@ -1160,9 +1214,12 @@ class RepeatRecord(models.Model):
             except Exception as e:
                 log_repeater_error_in_datadog(self.domain, status_code=None,
                                               repeater_type=self.repeater_type)
-                self.handle_payload_exception(e)
-                raise
+                self.handle_payload_error(str(e))
+            finally:
+                return self.state
+        return None
 
+    # TODO: Drop: `process_repeater` task will call `process_repeat_record` tasks directly
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
             process_repeat_record,
@@ -1212,8 +1269,8 @@ class RepeatRecord(models.Model):
     def handle_exception(self, exception):
         self.add_client_failure_attempt(str(exception))
 
-    def handle_payload_exception(self, exception):
-        self.add_client_failure_attempt(str(exception), retry=False)
+    def handle_payload_error(self, message):
+        self.add_client_failure_attempt(message, retry=False)
 
     def cancel(self):
         self.state = State.Cancelled
