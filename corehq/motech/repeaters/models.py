@@ -69,6 +69,7 @@ import uuid
 from collections import defaultdict
 from contextlib import nullcontext
 from datetime import datetime, timedelta
+from http import HTTPStatus
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.db import models, router
@@ -484,11 +485,34 @@ class Repeater(RepeaterSuperProxy):
 
         result may be either a response object or an exception
         """
+        never_gonna_work = (
+            HTTPStatus.BAD_REQUEST,
+            HTTPStatus.UNAUTHORIZED,
+            HTTPStatus.PAYMENT_REQUIRED,
+            HTTPStatus.FORBIDDEN,
+            HTTPStatus.NOT_FOUND,
+            HTTPStatus.METHOD_NOT_ALLOWED,
+            HTTPStatus.NOT_ACCEPTABLE,
+            HTTPStatus.PROXY_AUTHENTICATION_REQUIRED,
+            HTTPStatus.GONE,
+            HTTPStatus.LENGTH_REQUIRED,
+            HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+            HTTPStatus.REQUEST_URI_TOO_LONG,
+            HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+            HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
+            HTTPStatus.EXPECTATION_FAILED,
+            HTTPStatus.IM_A_TEAPOT,  # For completeness :)
+            HTTPStatus.MISDIRECTED_REQUEST,
+            HTTPStatus.UNPROCESSABLE_ENTITY,
+            HTTPStatus.REQUEST_HEADER_FIELDS_TOO_LARGE,
+            HTTPStatus.UNAVAILABLE_FOR_LEGAL_REASONS,
+        )
+
         if isinstance(result, Exception):
             repeat_record.handle_exception(result)
         elif is_response(result) and 200 <= result.status_code < 300 or result is True:
             repeat_record.handle_success(result)
-        elif is_response(result) and 400 <= result.status_code < 500:
+        elif is_response(result) and result.status_code in never_gonna_work:
             message = format_response(result)
             repeat_record.handle_payload_error(message)
         else:
