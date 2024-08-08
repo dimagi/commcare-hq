@@ -18,6 +18,7 @@ from corehq.apps.api.odata.utils import FieldMetadata
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
+from corehq.apps.api.resources.meta import get_hq_throttle
 from corehq.apps.enterprise.enterprise import (
     EnterpriseReport,
 )
@@ -48,6 +49,7 @@ class ODataResource(HqBaseResource):
         include_resource_uri = False
         collection_name = 'value'
         authentication = ODataAuthentication()
+        throttle = get_hq_throttle()
         limit = 2000
         max_limit = 10000
 
