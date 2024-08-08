@@ -75,6 +75,15 @@ class CaseDocumentStore(DocumentStore):
             yield wrapped_case.to_json()
 
 
+class CaseDocumentStoreByExternalID(CaseDocumentStore):
+    def get_document(self, doc_external_id):
+        try:
+            return CommCareCase.objects.get_case_by_external_id(domain=self.domain,
+                                                                external_id=doc_external_id).to_json()
+        except CaseNotFound as e:
+            raise DocumentNotFoundError(e)
+
+
 class LedgerV2DocumentStore(DocumentStore):
 
     def __init__(self, domain):
