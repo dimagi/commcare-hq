@@ -1,4 +1,5 @@
 import os.path
+import statistics
 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -380,9 +381,59 @@ def excel_fields(request, domain):
     return render(request, "case_importer/excel_fields.html", context)
 
 
+def find_outlier_column(spreadsheet, col_data_counts, outlier_col, sheet_name, max_z_score):
+    Z_SCORE_THRESHOLD = 1.5
+    mean = statistics.mean(col_data_counts)
+    std_dev = statistics.pstdev(col_data_counts)
+    if not std_dev:
+        return outlier_col, sheet_name, max_z_score
+
+    header_columns = spreadsheet.get_header_columns()
+    for col_index, data_count in enumerate(col_data_counts):
+        z_score = (data_count - mean) / std_dev
+        if z_score > max_z_score:
+            max_z_score = z_score
+            outlier_col = header_columns[col_index]
+
+    return (outlier_col if max_z_score > Z_SCORE_THRESHOLD else None), sheet_name, max_z_score
+
+
+def count_cases_and_columns(spreadsheet):
+    col_data_counts = [0] * len(spreadsheet.get_header_columns())
+    num_cases = 0
+
+    for row_index, row in enumerate(spreadsheet.iter_rows()):
+        if row_index == 0:
+            continue
+
+        row_empty = True
+        for col_index, val in enumerate(row):
+            if val is not None and val != ' ':
+                col_data_counts[col_index] += 1
+                row_empty = False
+        num_cases += not row_empty
+
+    return num_cases, col_data_counts
+
+
+def iterate_spreadsheets(case_upload):
+    total_cases, max_z_score, outlier_col = 0, 0, None
+
+    for worksheet_index, worksheet in enumerate(_get_workbook_sheet_names(case_upload)):
+        with case_upload.get_spreadsheet(worksheet_index) as spreadsheet:
+            num_cases, col_data_counts = count_cases_and_columns(spreadsheet)
+            total_cases += num_cases
+            if col_data_counts:
+                outlier_col, max_z_score, outlier_sheet = find_outlier_column(
+                    spreadsheet, col_data_counts, outlier_col, worksheet, max_z_score)
+
+    return total_cases, outlier_col, outlier_sheet
+
+
 @require_POST
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
+@use_bootstrap5
 def excel_commit(request, domain):
     """
     Step three of three.
@@ -403,6 +454,29 @@ def excel_commit(request, domain):
         case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
+
+    if not request.POST.get('confirm'):
+        NUM_CASES_THRESHOLD = 100 * 1000
+        num_cases, outlier_col, outlier_sheet = iterate_spreadsheets(case_upload)
+
+        if num_cases >= NUM_CASES_THRESHOLD or outlier_col:
+            context = {
+                'num_cases': num_cases,
+                'outlier_column': outlier_col,
+                'outlier_sheet': outlier_sheet,
+                'domain': domain,
+                'case_type': request.POST.get('case_type'),
+                'search_column': request.POST.get('search_column'),
+                'search_field': request.POST.get('search_field'),
+                'create_new_cases': request.POST.get('create_new_cases'),
+                'columns': request.POST.get('columns'),
+                'excel_fields': request.POST.get('excel_fields'),
+                'case_field_specs': request.POST.get('case_field_specs'),
+                'is_bulk_import': request.POST.get('is_bulk_import'),
+                'mirroring_enabled': request.POST.get('mirroring_enabled')
+            }
+            context.update(_case_importer_breadcrumb_context(_('Confirm Import'), domain))
+            return render(request, 'case_importer/confirm_import.html', context)
 
     case_type = request.POST['case_type']
     all_configs = []
