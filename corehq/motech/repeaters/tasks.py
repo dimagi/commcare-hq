@@ -106,14 +106,11 @@ def iter_ready_repeaters():
     while True:
         yielded = False
         for repeater in Repeater.objects.all_ready():
-            if not repeater.domain_can_forward:
-                continue
             yielded = True
             yield repeater
 
         if not yielded:
-            # No repeaters are ready, or their domains can't forward or
-            # are paused.
+            # No repeaters are ready
             return
 
 
