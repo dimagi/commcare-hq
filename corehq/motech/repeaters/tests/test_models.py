@@ -1,18 +1,16 @@
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 from uuid import uuid4
-
-from dateutil.parser import isoparse
 
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from dateutil.parser import isoparse
 from freezegun import freeze_time
-
 from nose.tools import assert_in, assert_raises
 
 from corehq.motech.models import ConnectionSettings
@@ -33,6 +31,7 @@ from ..models import (
     RepeatRecord,
     format_response,
     get_all_repeater_types,
+    get_domains_forwarding_enabled,
     is_response,
 )
 
@@ -827,3 +826,41 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
         with patch.object(RepeatRecord, "num_attempts", 2), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertFalse(repeat_record.exceeded_max_retries)
+
+
+class TestGetDomainsForwardingEnabled(SimpleTestCase):
+
+    @patch('corehq.motech.repeaters.models.get_domains_with_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    def test_returns_domains_with_privilege_excluding_paused(self, mock_pause_enabled, mock_has_privilege):
+        mock_has_privilege.side_effect = [
+            ['zapier_domain_1', 'zapier_domain_2'],
+            ['forwarding_domain_3', 'forwarding_domain_4'],
+        ]
+        mock_pause_enabled.return_value = ['zapier_domain_2', 'forwarding_domain_4']
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, {'zapier_domain_1', 'forwarding_domain_3'})
+
+    @patch('corehq.motech.repeaters.models.get_domains_with_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    def test_returns_empty_set_when_no_privileges(self, mock_pause_enabled, mock_has_privilege):
+        mock_has_privilege.side_effect = [[], []]
+        mock_pause_enabled.return_value = []
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, set())
+
+    @patch('corehq.motech.repeaters.models.get_domains_with_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    def test_returns_all_domains_when_none_paused(self, mock_pause_enabled, mock_has_privilege):
+        mock_has_privilege.side_effect = [
+            ['zapier_domain_1', 'zapier_domain_2'],
+            ['forwarding_domain_3', 'forwarding_domain_4'],
+        ]
+        mock_pause_enabled.return_value = []
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, {
+            'zapier_domain_1',
+            'zapier_domain_2',
+            'forwarding_domain_3',
+            'forwarding_domain_4',
+        })

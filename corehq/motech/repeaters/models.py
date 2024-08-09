@@ -93,7 +93,10 @@ from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq import toggles
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.utils import (
+    domain_has_privilege,
+    get_domains_with_privilege,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
@@ -224,6 +227,7 @@ class RepeaterManager(models.Manager):
         """
         Return all Repeaters ready to be forwarded.
         """
+        domains = get_domains_forwarding_enabled()
         not_paused = models.Q(is_paused=False)
         next_attempt_not_in_the_future = (
             models.Q(next_attempt_at__isnull=True)
@@ -232,10 +236,13 @@ class RepeaterManager(models.Manager):
         repeat_records_ready_to_send = models.Q(
             repeat_records__state__in=(State.Pending, State.Fail)
         )
-        return (self.get_queryset()
-                .filter(not_paused)
-                .filter(next_attempt_not_in_the_future)
-                .filter(repeat_records_ready_to_send))
+        return (
+            self.get_queryset()
+            .filter(domain__in=domains)
+            .filter(not_paused)
+            .filter(next_attempt_not_in_the_future)
+            .filter(repeat_records_ready_to_send)
+        )
 
     def get_queryset(self):
         repeater_obj = self.model()
@@ -357,13 +364,6 @@ class Repeater(RepeaterSuperProxy):
             self.repeat_records
             .filter(state__in=(State.Pending, State.Fail))
             .order_by('registered_at')
-        )
-
-    @property
-    def domain_can_forward(self):
-        return (
-            domain_can_forward(self.domain)
-            and not toggles.PAUSE_DATA_FORWARDING.enabled(self.domain)
         )
 
     def rate_limit(self):
@@ -959,6 +959,7 @@ class RepeatRecordManager(models.Manager):
 
     def count_overdue(self, threshold=timedelta(minutes=10)):
         overdue = datetime.utcnow() - threshold
+        domains = get_domains_forwarding_enabled()
         repeater_not_paused = models.Q(repeater__is_paused=False)
         repeater_next_attempt_overdue = (
             models.Q(repeater__next_attempt_at__isnull=False)
@@ -969,6 +970,7 @@ class RepeatRecordManager(models.Manager):
         )
         return (
             self.get_queryset()
+            .filter(domain__in=domains)
             .filter(repeater_not_paused)
             .filter(repeater_next_attempt_overdue)
             .filter(ready_to_send)
@@ -1427,7 +1429,27 @@ def is_response(duck):
 
 
 def domain_can_forward(domain):
+    """
+    Checks whether ``domain`` has the privilege to forward data. Ignores
+    the status of the (temporary) ``PAUSE_DATA_FORWARDING`` toggle.
+
+    Used for registering repeat records.
+    """
     return domain and (
         domain_has_privilege(domain, ZAPIER_INTEGRATION)
         or domain_has_privilege(domain, DATA_FORWARDING)
     )
+
+
+def get_domains_forwarding_enabled():
+    """
+    Returns a set of domains that are *currently* able to forward data.
+    Considers the status of the (temporary) ``PAUSE_DATA_FORWARDING``
+    toggle.
+
+    Used for iterating repeaters and counting overdue repeat records.
+    """
+    return (
+        set(get_domains_with_privilege(ZAPIER_INTEGRATION))
+        | set(get_domains_with_privilege(DATA_FORWARDING))
+    ) - set(toggles.PAUSE_DATA_FORWARDING.get_enabled_domains())
