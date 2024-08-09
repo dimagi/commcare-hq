@@ -102,6 +102,30 @@ class TestCreateIndex(BaseCase):
         self.assertIndexHasAnalysis(self.index, self.analysis)
         self.assertIndexHasTuningSettings(self.index, self.settings_key)
 
+    def test_create_index_with_creation_checks(self):
+        migration = TestMigration(CreateIndex(*self.create_index_args, creation_checks=True))
+        self.assertIndexDoesNotExist(self.index)
+        migration.apply()
+        self.assertIndexExists(self.index)
+        self.assertIndexMappingMatches(self.index, self.type, self.mapping)
+        self.assertIndexHasAnalysis(self.index, self.analysis)
+
+    def test_create_index_with_creation_checks_with_high_disk_watermark(self):
+        # Set watermark value to 0.01% to ensure failure
+        manager._cluster_put_settings({
+            "cluster.routing.allocation.disk.watermark.low": "0.01%"
+        })
+        self.addCleanup(manager._cluster_put_settings, {"cluster.routing.allocation.disk.watermark.low": None})
+
+        migration = TestMigration(CreateIndex(*self.create_index_args, creation_checks=True))
+        self.assertIndexDoesNotExist(self.index)
+
+        exception_msg = """All data nodes are above low watermark capacity.
+                            Index creation failed due to insufficient disk space."""
+        with self.assertRaisesRegex(Exception, exception_msg):
+            migration.apply()
+        self.assertIndexDoesNotExist(self.index)
+
     def test_creates_index_with_comment(self):
         comment = "test comment"
         migration = TestMigration(
