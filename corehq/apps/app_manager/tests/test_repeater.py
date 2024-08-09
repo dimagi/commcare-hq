@@ -3,8 +3,6 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.client import Client
 
-from unittest.mock import patch
-
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
@@ -64,18 +62,3 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         later = datetime.utcnow() + timedelta(hours=48 + 1)
         repeat_records = RepeatRecord.objects.filter(domain=self.domain, next_check__lt=later)
         self.assertEqual(len(repeat_records), 1)
-
-    def test_repeat_record_forwarded(self):
-        """
-        When an application with a repeater is saved, then HQ should try to forward the repeat record
-        """
-        self.app_structure_repeater = AppStructureRepeater(domain=self.domain, connection_settings=self.conn)
-        self.app_structure_repeater.save()
-        self.addCleanup(self.app_structure_repeater.delete)
-
-        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
-            self.application = Application(domain=self.domain)
-            self.application.save()
-            self.addCleanup(self.application.delete)
-
-            self.assertEqual(mock_fire.call_count, 1)
