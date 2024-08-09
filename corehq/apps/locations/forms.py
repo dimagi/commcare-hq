@@ -13,6 +13,7 @@ from memoized import memoized
 
 from dimagi.utils.couch.database import iter_docs
 
+from corehq import toggles
 from corehq.apps.custom_data_fields.edit_entity import (
     CUSTOM_DATA_FIELD_PREFIX,
     CustomDataEditor,
@@ -43,13 +44,17 @@ from crispy_forms.utils import flatatt
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None,
+                 include_locations_with_no_users_allowed=True):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
         self.placeholder = placeholder
-        self.query_url = reverse('location_search', args=[self.domain])
+        url_name = 'location_search'
+        if not include_locations_with_no_users_allowed and toggles.LOCATION_HAS_USERS.enabled(self.domain):
+            url_name = 'location_search_has_users_only'
+        self.query_url = reverse(url_name, args=[self.domain])
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):
