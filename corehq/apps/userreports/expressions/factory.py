@@ -46,6 +46,7 @@ from corehq.apps.userreports.expressions.specs import (
     NestedExpressionSpec,
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
+    RelatedCaseByExternalIDExpressionSpec,
     RelatedDocExpressionSpec,
     ReportingGroupsExpressionSpec,
     RootDocExpressionSpec,
@@ -126,6 +127,15 @@ def _root_doc_expression(spec, factory_context):
 
 def _related_doc_expression(spec, factory_context):
     wrapped = RelatedDocExpressionSpec.wrap(spec)
+    wrapped.configure(
+        doc_id_expression=ExpressionFactory.from_spec(wrapped.doc_id_expression, factory_context),
+        value_expression=ExpressionFactory.from_spec(wrapped.value_expression, factory_context),
+    )
+    return wrapped
+
+
+def _related_case_by_external_id_expression(spec, factory_context):
+    wrapped = RelatedCaseByExternalIDExpressionSpec.wrap(spec)
     wrapped.configure(
         doc_id_expression=ExpressionFactory.from_spec(wrapped.doc_id_expression, factory_context),
         value_expression=ExpressionFactory.from_spec(wrapped.value_expression, factory_context),
@@ -361,6 +371,7 @@ class ExpressionFactory(object):
         'property_path': _property_path_expression,
         'reduce_items': _reduce_items_expression,
         'related_doc': _related_doc_expression,
+        'related_case_by_external_id': _related_case_by_external_id_expression,
         'root_doc': _root_doc_expression,
         'sort_items': _sort_items_expression,
         'split_string': _split_string_expression,
