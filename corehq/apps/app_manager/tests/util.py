@@ -180,7 +180,7 @@ def delete_all_apps():
 def delete_all_multimedia():
     # Clean up multimedia, which is shared across domains keyed on
     # file content hash. Blob metadata is automatically cleaned up
-    # on SQL transaction rollback, which brakes CommCareMultimedia
+    # on SQL transaction rollback, which breaks CommCareMultimedia
     # functionality in other tests.
     metas = []
     for dbname in get_db_aliases_for_partitioned_query():
