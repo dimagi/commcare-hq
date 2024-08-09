@@ -11,8 +11,49 @@ hqDefine("locations/js/widgets", [
     function updateSelect2($source, $select) {
         $select.find("option").remove();
         _.each($source.select2('data'), function (result) {
-            $select.append(new Option(result.text || result.name, result.id));
+            const fullLengthName = result.text || result.name;
+            const truncatedName = truncateLocationName(fullLengthName, $select);
+            $select.append(new Option(truncatedName, result.id));
         });
+    }
+
+    function truncateLocationName(name, select) {
+        const nameWidthPixels = getSelectTextWidth(name, select);
+        const containerWidthPixels = select.parent().width();
+        let truncatedName;
+        if (nameWidthPixels > containerWidthPixels) {
+            // Conservative calc of the number of chars that will fit the container
+            const averagePixelWidthPerChar = Math.ceil(nameWidthPixels / name.length);
+            const maxCharCount = Math.floor(containerWidthPixels / averagePixelWidthPerChar);
+            const charLengthDiff = name.length - maxCharCount;
+
+            truncatedName = `${name.substring(0, 5)}...${name.substring(charLengthDiff + 16, name.length)}`;
+
+            return truncatedName
+        }
+
+        return name;
+    }
+
+    function getSelectTextWidth(text, select) {
+        const fontSize = select.css('font-size');
+        const fontFamily = select.css('font-family');
+        const fontWeight = select.css('font-weight');
+        // Create an invisible div to get accurate measure of text width
+        const textDiv = $('<div id="select-text-div"></div>').text(text).css({'position': 'absolute',
+            'float': 'left',
+            'white-space': 'nowrap',
+            'visibility': 'hidden',
+            'font-size': fontSize,
+            'font-weight': fontWeight,
+            'font-family': fontFamily,
+        });
+
+        textDiv.appendTo('body');
+        const textWidth = textDiv.width();
+        textDiv.remove();
+
+        return textWidth;
     }
 
     function initAutocomplete($select) {
@@ -40,8 +81,14 @@ hqDefine("locations/js/widgets", [
                     };
                 },
             },
-            templateResult: function (result) { return result.text || result.name; },
-            templateSelection: function (result) { return result.text || result.name; },
+            templateResult: function (result) {
+                return result.text || result.name;
+            },
+            templateSelection: function (result) {
+                const fullLengthName = result.text || result.name;
+                const truncatedName = truncateLocationName(fullLengthName, $select);
+                return truncatedName;
+            },
         });
 
         var initial = options.initial;
