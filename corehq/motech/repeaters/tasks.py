@@ -9,6 +9,7 @@ from celery.utils.log import get_task_logger
 from dimagi.utils.couch import get_redis_lock
 
 from corehq.apps.celery import periodic_task, task
+from corehq.apps.pg_lock.models import Lock
 from corehq.motech.models import RequestLog
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,
@@ -110,8 +111,11 @@ def iter_ready_repeaters():
                 # if rate_limit_repeater(repeater.domain): TODO: Update rate limiting
                 #     repeater.rate_limit()
                 #     continue
-                yielded = True
-                yield repeater
+
+                lock = Lock(f'process_repeater_{repeater.repeater_id}')
+                if lock.acquire(blocking=False, timeout=9 * 60):
+                    yielded = True
+                    yield repeater
 
         if not yielded:
             return
@@ -140,16 +144,20 @@ def update_repeater(repeat_record_states, repeater_id):
     Determines whether the repeater should back off, based on the
     results of `fire_repeat_record()` tasks.
     """
-    repeater = Repeater.objects.get(id=repeater_id)
-    if any(s == State.Success for s in repeat_record_states):
-        # At least one repeat record was sent successfully.
-        repeater.reset_backoff()
-    elif all(s in (State.Empty, None) for s in repeat_record_states):
-        # Nothing was sent. Don't update the repeater.
-        pass
-    else:
-        # All sent payloads failed.
-        repeater.set_backoff()
+    try:
+        repeater = Repeater.objects.get(id=repeater_id)
+        if any(s == State.Success for s in repeat_record_states):
+            # At least one repeat record was sent successfully.
+            repeater.reset_backoff()
+        elif all(s in (State.Empty, None) for s in repeat_record_states):
+            # Nothing was sent. Don't update the repeater.
+            pass
+        else:
+            # All sent payloads failed.
+            repeater.set_backoff()
+    finally:
+        lock = Lock(f'process_repeater_{repeater_id}')
+        lock.release()
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)

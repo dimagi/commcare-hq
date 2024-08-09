@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
 
+from corehq.apps.pg_lock.models import Lock
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils.xform import (
@@ -133,18 +134,24 @@ class TestProcessRepeatRecord(TestCase):
 class TestIterReadyRepeaters(SimpleTestCase):
 
     def test_no_ready_repeaters(self):
-        with (patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
-                    return_value=[])):
+        with (
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
+                  return_value=[]),
+            patch.object(Lock, 'acquire', return_value=True),
+        ):
             self.assertFalse(next(iter_ready_repeaters(), False))
 
     def test_successive_loops(self):
         repeater_1 = Repeater()
         repeater_2 = Repeater()
-        with (patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
-                    side_effect=[[repeater_1, repeater_2], [repeater_1], []])):
+        with (
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
+                  side_effect=[[repeater_1, repeater_2], [repeater_1], []]),
+            patch.object(Lock, 'acquire', side_effect=[True, True, False]),
+        ):
             repeaters = list(iter_ready_repeaters())
-            self.assertEqual(len(repeaters), 3)
-            self.assertEqual(repeaters, [repeater_1, repeater_2, repeater_1])
+            self.assertEqual(len(repeaters), 2)
+            self.assertEqual(repeaters, [repeater_1, repeater_2])
 
 
 class TestProcessRepeater(TestCase):
@@ -205,8 +212,9 @@ class TestProcessRepeater(TestCase):
 
 class TestUpdateRepeater(SimpleTestCase):
 
+    @patch.object(Lock, 'release')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_resets_backoff_on_success(self, mock_get_repeater):
+    def test_update_repeater_resets_backoff_on_success(self, mock_get_repeater, __):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
@@ -215,8 +223,9 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
+    @patch.object(Lock, 'release')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_sets_backoff_on_failure(self, mock_get_repeater):
+    def test_update_repeater_sets_backoff_on_failure(self, mock_get_repeater, __):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
@@ -225,8 +234,9 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_called_once()
         mock_repeater.reset_backoff.assert_not_called()
 
+    @patch.object(Lock, 'release')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_does_nothing_on_empty(self, mock_get_repeater):
+    def test_update_repeater_does_nothing_on_empty(self, mock_get_repeater, __):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
@@ -235,8 +245,9 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
 
+    @patch.object(Lock, 'release')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_does_nothing_on_none(self, mock_get_repeater):
+    def test_update_repeater_does_nothing_on_none(self, mock_get_repeater, __):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
