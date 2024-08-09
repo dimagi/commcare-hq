@@ -205,6 +205,6 @@ def _process_repeat_record(repeat_record):
 metrics_gauge_task(
     'commcare.repeaters.overdue',
     RepeatRecord.objects.count_overdue,
-    run_every=crontab(),  # every minute
+    run_every=crontab(minute='*/5'),  # Every 5 minutes
     multiprocess_mode=MPM_MAX
 )
