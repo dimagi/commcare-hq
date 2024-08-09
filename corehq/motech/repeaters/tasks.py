@@ -20,7 +20,7 @@ from corehq.util.metrics import (
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
 
-from ..rate_limiter import rate_limit_repeater, report_repeater_usage
+from ..rate_limiter import report_repeater_usage
 from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
@@ -105,12 +105,11 @@ def iter_ready_repeaters():
     while True:
         yielded = False
         for repeater in Repeater.objects.all_ready():
-            if not repeater.domain_can_forward:
-                continue
 
-            if rate_limit_repeater(repeater.domain):
-                repeater.rate_limit()
-                continue
+            # TODO: Update rate limiting
+            # if rate_limit_repeater(repeater.domain):
+            #     repeater.rate_limit()
+            #     continue
 
             yielded = True
             yield repeater
@@ -205,6 +204,6 @@ def _process_repeat_record(repeat_record):
 metrics_gauge_task(
     'commcare.repeaters.overdue',
     RepeatRecord.objects.count_overdue,
-    run_every=crontab(),  # every minute
+    run_every=crontab(minute='*/5'),  # Every 5 minutes
     multiprocess_mode=MPM_MAX
 )

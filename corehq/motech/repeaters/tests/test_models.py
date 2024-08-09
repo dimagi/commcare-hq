@@ -1,18 +1,16 @@
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 from uuid import uuid4
-
-from dateutil.parser import isoparse
 
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from dateutil.parser import isoparse
 from freezegun import freeze_time
-
 from nose.tools import assert_in, assert_raises
 
 from corehq.motech.models import ConnectionSettings
@@ -33,6 +31,7 @@ from ..models import (
     RepeatRecord,
     format_response,
     get_all_repeater_types,
+    get_domains_forwarding_enabled,
     is_response,
 )
 
@@ -827,3 +826,51 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
         with patch.object(RepeatRecord, "num_attempts", 2), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertFalse(repeat_record.exceeded_max_retries)
+
+
+class TestGetDomainsForwardingEnabled(SimpleTestCase):
+
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_domains_with_privilege_excluding_paused(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2', 'domain3', 'domain4'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: domain in {'domain1', 'domain2', 'domain3'}
+        mock_get_enabled_domains.return_value = {'domain2', 'domain4'}
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, {'domain1', 'domain3'})
+
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_empty_set_when_no_privileges(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: False
+        mock_get_enabled_domains.return_value = set()
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, set())
+
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_all_domains_when_none_paused(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2', 'domain3', 'domain4'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: True
+        mock_get_enabled_domains.return_value = set()
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, {'domain1', 'domain2', 'domain3', 'domain4'})
