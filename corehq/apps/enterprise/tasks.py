@@ -129,7 +129,6 @@ class TaskProgress:
         status_dict = {
             'status': self.STATUS_IN_PROGRESS,
             'query_id': None,
-            'error': None,
             'task': task,
         }
 
