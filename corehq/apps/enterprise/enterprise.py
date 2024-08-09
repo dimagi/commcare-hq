@@ -38,7 +38,7 @@ class EnterpriseReport:
     title = _('Enterprise Report')
     subtitle = ''
 
-    def __init__(self, account, couch_user):
+    def __init__(self, account, couch_user, **kwargs):
         self.account = account
         self.couch_user = couch_user
         self.slug = None
@@ -52,19 +52,19 @@ class EnterpriseReport:
         return "{} ({}) {}.csv".format(self.account.name, self.title, datetime.utcnow().strftime('%Y%m%d %H%M%S'))
 
     @classmethod
-    def create(cls, slug, account_id, couch_user):
+    def create(cls, slug, account_id, couch_user, **kwargs):
         account = BillingAccount.objects.get(id=account_id)
         report = None
         if slug == cls.DOMAINS:
-            report = EnterpriseDomainReport(account, couch_user)
+            report = EnterpriseDomainReport(account, couch_user, **kwargs)
         elif slug == cls.WEB_USERS:
-            report = EnterpriseWebUserReport(account, couch_user)
+            report = EnterpriseWebUserReport(account, couch_user, **kwargs)
         elif slug == cls.MOBILE_USERS:
-            report = EnterpriseMobileWorkerReport(account, couch_user)
+            report = EnterpriseMobileWorkerReport(account, couch_user, **kwargs)
         elif slug == cls.FORM_SUBMISSIONS:
-            report = EnterpriseFormReport(account, couch_user)
+            report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
-            report = EnterpriseODataReport(account, couch_user)
+            report = EnterpriseODataReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
@@ -214,8 +214,12 @@ class EnterpriseFormReport(EnterpriseReport):
         super().__init__(account, couch_user)
         if not end_date:
             end_date = datetime.utcnow()
+        elif isinstance(end_date, str):
+            end_date = datetime.fromisoformat(end_date)
 
         if start_date:
+            if isinstance(start_date, str):
+                start_date = datetime.fromisoformat(start_date)
             self.datespan = DateSpan(start_date, end_date)
             self.subtitle = _("{} to {}").format(
                 start_date.date(),
