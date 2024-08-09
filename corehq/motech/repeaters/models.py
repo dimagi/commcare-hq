@@ -93,10 +93,8 @@ from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq import toggles
-from corehq.apps.accounting.utils import (
-    domain_has_privilege,
-    get_domains_with_privilege,
-)
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
@@ -1449,7 +1447,9 @@ def get_domains_forwarding_enabled():
 
     Used for iterating repeaters and counting overdue repeat records.
     """
-    return (
-        set(get_domains_with_privilege(ZAPIER_INTEGRATION))
-        | set(get_domains_with_privilege(DATA_FORWARDING))
-    ) - set(toggles.PAUSE_DATA_FORWARDING.get_enabled_domains())
+    domains_can_forward = {
+        domain for domain in Domain.get_all_names()
+        if domain_can_forward(domain)
+    }
+    domains_paused = set(toggles.PAUSE_DATA_FORWARDING.get_enabled_domains())
+    return domains_can_forward - domains_paused

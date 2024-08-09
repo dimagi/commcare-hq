@@ -830,37 +830,47 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
 
 class TestGetDomainsForwardingEnabled(SimpleTestCase):
 
-    @patch('corehq.motech.repeaters.models.get_domains_with_privilege')
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
     @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
-    def test_returns_domains_with_privilege_excluding_paused(self, mock_pause_enabled, mock_has_privilege):
-        mock_has_privilege.side_effect = [
-            ['zapier_domain_1', 'zapier_domain_2'],
-            ['forwarding_domain_3', 'forwarding_domain_4'],
-        ]
-        mock_pause_enabled.return_value = ['zapier_domain_2', 'forwarding_domain_4']
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_domains_with_privilege_excluding_paused(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2', 'domain3', 'domain4'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: domain in {'domain1', 'domain2', 'domain3'}
+        mock_get_enabled_domains.return_value = {'domain2', 'domain4'}
         result = get_domains_forwarding_enabled()
-        self.assertEqual(result, {'zapier_domain_1', 'forwarding_domain_3'})
+        self.assertEqual(result, {'domain1', 'domain3'})
 
-    @patch('corehq.motech.repeaters.models.get_domains_with_privilege')
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
     @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
-    def test_returns_empty_set_when_no_privileges(self, mock_pause_enabled, mock_has_privilege):
-        mock_has_privilege.side_effect = [[], []]
-        mock_pause_enabled.return_value = []
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_empty_set_when_no_privileges(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: False
+        mock_get_enabled_domains.return_value = set()
         result = get_domains_forwarding_enabled()
         self.assertEqual(result, set())
 
-    @patch('corehq.motech.repeaters.models.get_domains_with_privilege')
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
     @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
-    def test_returns_all_domains_when_none_paused(self, mock_pause_enabled, mock_has_privilege):
-        mock_has_privilege.side_effect = [
-            ['zapier_domain_1', 'zapier_domain_2'],
-            ['forwarding_domain_3', 'forwarding_domain_4'],
-        ]
-        mock_pause_enabled.return_value = []
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_all_domains_when_none_paused(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2', 'domain3', 'domain4'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: True
+        mock_get_enabled_domains.return_value = set()
         result = get_domains_forwarding_enabled()
-        self.assertEqual(result, {
-            'zapier_domain_1',
-            'zapier_domain_2',
-            'forwarding_domain_3',
-            'forwarding_domain_4',
-        })
+        self.assertEqual(result, {'domain1', 'domain2', 'domain3', 'domain4'})
