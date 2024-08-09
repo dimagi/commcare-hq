@@ -69,7 +69,6 @@ def _simple_expression_generator(wrapper_class, spec, factory_context):
 
 _identity_expression = functools.partial(_simple_expression_generator, IdentityExpressionSpec)
 _constant_expression = functools.partial(_simple_expression_generator, ConstantGetterSpec)
-_property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 _iteration_number_expression = functools.partial(_simple_expression_generator, IterationNumberExpressionSpec)
 _jsonpath_expression = functools.partial(_simple_expression_generator, JsonpathExpressionSpec)
