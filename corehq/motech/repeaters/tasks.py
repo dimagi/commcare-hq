@@ -102,19 +102,18 @@ def iter_ready_repeaters():
     """
     while True:
         yielded = False
-        for repeater in Repeater.objects.all_ready():
-
-            # TODO: Update rate limiting
-            # if rate_limit_repeater(repeater.domain):
-            #     repeater.rate_limit()
-            #     continue
-
-            yielded = True
-            yield repeater
+        with metrics_histogram_timer(
+            "commcare.repeaters.check.each_repeater",
+            timing_buckets=_check_repeaters_buckets,
+        ):
+            for repeater in Repeater.objects.all_ready():
+                # if rate_limit_repeater(repeater.domain): TODO: Update rate limiting
+                #     repeater.rate_limit()
+                #     continue
+                yielded = True
+                yield repeater
 
         if not yielded:
-            # No repeaters are ready, or they are rate limited, or their
-            # domains can't forward or are paused.
             return
 
 
