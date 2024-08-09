@@ -164,16 +164,32 @@
      border-radius: 8px;
      margin: 2px;
      padding-top: 5px;
-@@ -140,7 +133,7 @@
+@@ -138,16 +131,18 @@
+       height: 1em;
+       vertical-align: baseline;
      }
-   }
++
+     .btn {
+       background-color: white;
  
+       &:hover {
+-        background-color: red;
+-      }
+-    }
+-  }
+-
 -  .panel-heading {
++        background-color: var(--bsbtn-hover-bg);
++      }
++
++    }
++  }
++
 +  .card-header {
      border-top-left-radius: 0px;
      border-top-right-radius: 0px;
    }
-@@ -159,17 +152,17 @@
+@@ -166,17 +161,17 @@
      display: none;
    }
  
@@ -196,7 +212,7 @@
      border-bottom: none;
      padding-top: 10px;
      padding-bottom: 10px;
-@@ -183,13 +176,13 @@
+@@ -190,13 +185,13 @@
    .form-group-required-label {
      display: block;
      opacity: 0;
@@ -212,7 +228,7 @@
      color: white;
      width: auto;
      line-height: 14px;
-@@ -204,6 +197,10 @@
+@@ -211,6 +206,10 @@
  }
  
  @media print {
@@ -223,7 +239,7 @@
    .form-container.print-container {
      margin: 0px;
      .page-header {
-@@ -211,14 +208,14 @@
+@@ -218,14 +217,14 @@
      }
    }
  
@@ -243,7 +259,7 @@
      margin-bottom: 0px;
      padding-bottom: 0px;
      .widget-container {
-@@ -241,7 +238,7 @@
+@@ -248,7 +247,7 @@
  .question-tile-row {
    display: flex;
    align-items: start;
@@ -252,7 +268,7 @@
      padding-top: 0px !important;
      padding-bottom: 0px !important;
      margin-top: 0px !important;
-@@ -249,13 +246,6 @@
+@@ -256,13 +255,6 @@
    }
  }
  
@@ -266,7 +282,7 @@
  .gr-has-no-nested-questions {
    display: none;
  }
-@@ -268,3 +258,15 @@
+@@ -275,3 +267,15 @@
    padding-top: 0px !important;
    padding-bottom: 7px;
  }
