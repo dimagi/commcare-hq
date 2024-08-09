@@ -177,6 +177,6 @@ class TaskProgress:
 
 
 class ReportTaskProgress(TaskProgress):
-    def __init__(self, slug, username, query_id=None, **kwargs):
+    def __init__(self, slug, username, query_id=None):
         key = f'report-gen-status-{slug}.{username}'
         super().__init__(key, query_id=query_id)

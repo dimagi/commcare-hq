@@ -163,11 +163,12 @@ class ODataEnterpriseReportResource(ODataResource):
             self.REPORT_SLUG, request.couch_user.username, query_id=query_id)
         status = progress.get_status()
         if status == ReportTaskProgress.STATUS_COMPLETE:
+            # ensure this is for the same parameters
+            if progress.get_task() != self.get_report_task(request):
+                raise ImmediateHttpResponse(
+                    response=http.HttpTooManyRequests(headers={'Retry-After': self.RETRY_CONFLICT_DELAY}))
+
             try:
-                # ensure this is for the same parameters
-                if progress.get_task() != self.get_report_task(request):
-                    raise ImmediateHttpResponse(
-                        response=http.HttpTooManyRequests(headers={'Retry-After': self.RETRY_CONFLICT_DELAY}))
                 data = progress.get_data()
                 progress.clear_status()  # Clear this request so that this user can issue new requests
             except KeyError:
