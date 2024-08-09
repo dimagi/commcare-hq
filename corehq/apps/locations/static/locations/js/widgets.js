@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("locations/js/widgets", [
     'jquery',
     'underscore',
@@ -29,7 +30,7 @@ hqDefine("locations/js/widgets", [
 
             truncatedName = `${name.substring(0, 5)}...${name.substring(charLengthDiff + 16, name.length)}`;
 
-            return truncatedName
+            return truncatedName;
         }
 
         return name;
