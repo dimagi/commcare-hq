@@ -3991,9 +3991,9 @@ class FormSubmittingMobileWorkerHistory(DomainUserHistoryBase):
     The number of mobile workers in a domain who have submitted one or more
     forms in the month preceeding the record_date. Ex: a record_date of
     2024-07-09 includes all dates from 2024-06-09 to 2024-07-08, inclusive.
-    TODO: Create by task calculate_form_submitting_mobile_workers_in_all_domains
-    on the first of every month. Will be used to bill clients for the
-    appropriate number of form-submitting mobile workers.
+    Created by task calculate_form_submitting_mobile_workers_in_all_domains
+    on the first of every month. Used to bill clients for the appropriate
+    number of form-submitting mobile workers.
     """
     pass
 
