@@ -749,6 +749,8 @@ otp_static
 otp_totp
  0001_initial
  0002_auto_20190420_0723
+pg_lock
+ 0001_initial
 phone
  0001_initial
  0002_synclogsql
@@ -830,6 +832,7 @@ repeaters
  0010_rm_couch_artifacts
  0011_remove_obsolete_entities
  0012_formexpressionrepeater_arcgisformexpressionrepeater
+ 0013_repeater_max_workers_alter_repeater_is_paused_and_more
 reports
  0001_initial
  0002_auto_20171121_1803
