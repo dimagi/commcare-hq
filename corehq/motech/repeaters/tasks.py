@@ -112,6 +112,7 @@ def iter_ready_repeaters():
             for repeater in Repeater.objects.all_ready():
                 yielded = True
                 yield repeater
+
         if not yielded:
             # No repeaters are ready
             return
