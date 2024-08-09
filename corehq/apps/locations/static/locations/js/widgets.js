@@ -18,16 +18,42 @@ hqDefine("locations/js/widgets", [
     }
 
     function truncateLocationName(name, select) {
-        const fontSize = select.css('font-size');
-        const fontSizePixels = parseInt(fontSize.substring(0, fontSize.indexOf('px')));
-        const containerWidthPixels = select.parent().parent().width();
-        const containerWidthChars = Math.floor(containerWidthPixels / fontSizePixels);
-        let truncatedName = name;
-        if (name.length > containerWidthChars) {
-            const charLengthDiff = name.length - containerWidthChars;
-            truncatedName = `${name.substring(0, 5)}...${name.substring(charLengthDiff + 12, name.length)}`;
+        const nameWidthPixels = getSelectTextWidth(name, select);
+        const containerWidthPixels = select.parent().width();
+        let truncatedName;
+        if (nameWidthPixels > containerWidthPixels) {
+            // Conservative calc of the number of chars that will fit the container
+            const averagePixelWidthPerChar = Math.ceil(nameWidthPixels / name.length);
+            const maxCharCount = Math.floor(containerWidthPixels / averagePixelWidthPerChar);
+            const charLengthDiff = name.length - maxCharCount;
+
+            truncatedName = `${name.substring(0, 5)}...${name.substring(charLengthDiff + 16, name.length)}`;
+
+            return truncatedName
         }
-        return truncatedName;
+
+        return name;
+    }
+
+    function getSelectTextWidth(text, select) {
+        const fontSize = select.css('font-size');
+        const fontFamily = select.css('font-family');
+        const fontWeight = select.css('font-weight');
+        // Create an invisible div to get accurate measure of text width
+        const textDiv = $('<div id="select-text-div"></div>').text(text).css({'position': 'absolute',
+            'float': 'left',
+            'white-space': 'nowrap',
+            'visibility': 'hidden',
+            'font-size': fontSize,
+            'font-weight': fontWeight,
+            'font-family': fontFamily,
+        });
+
+        textDiv.appendTo('body');
+        const textWidth = textDiv.width();
+        textDiv.remove();
+
+        return textWidth;
     }
 
     function initAutocomplete($select) {
