@@ -10,12 +10,16 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
     'sentry_browser',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/models',
+    "cloudcare/js/form_entry/web_form_session",
 ], function (
     _,
     Backbone,
     Sentry,
     FormplayerFrontend,
-    Utils
+    Utils,
+    UsersModels,
+    webFormSession
 ) {
     function addBreadcrumb(collection, type, data) {
         Sentry.addBreadcrumb({
@@ -110,6 +114,10 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
                 _.pick(response, ["queryKey", "selections"]),
                 _.identity
             );
+            if (response.locales && !response.tree) {
+                    this.langs = response.locales.slice(1);
+                    webFormSession.applyLangListener();
+                }
             if (response.commands) {
                 _.extend(this, _.pick(response, this.commandProperties));
                 addBreadcrumb(this, "menu", _.extend(sentryData, {

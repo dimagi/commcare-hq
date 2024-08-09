@@ -833,6 +833,7 @@ REPEATER_CLASSES = [
     'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
     'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
     'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
+    'corehq.motech.repeaters.expression.repeaters.ArcGISFormExpressionRepeater',
 ]
 
 # Override this in localsettings to add new repeater types
@@ -2085,6 +2086,8 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+CRISPY_FAIL_SILENTLY = not DEBUG
 
 # NOTE: if you are adding a new setting that you intend to have other environments override,
 # make sure you add it before localsettings are imported (from localsettings import *)
