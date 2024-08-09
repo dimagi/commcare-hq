@@ -13,6 +13,7 @@ from corehq.apps.sms.document_stores import SMSDocumentStore
 from corehq.form_processor.document_stores import (
     DocStoreLoadTracker,
     CaseDocumentStore,
+    CaseDocumentStoreByExternalID,
     FormDocumentStore,
     LedgerV2DocumentStore,
 )
@@ -88,8 +89,7 @@ def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None, l
         load_counter = form_load_counter
     elif doc_type in document_types.CASE_DOC_TYPES:
         if search_by_external_id:
-            # ToDo: Update to look up by external ID instead
-            store = CaseDocumentStore(domain, case_type=case_type_or_xmlns)
+            store = CaseDocumentStoreByExternalID(domain, case_type=case_type_or_xmlns)
         else:
             store = CaseDocumentStore(domain, case_type=case_type_or_xmlns)
         load_counter = case_load_counter
