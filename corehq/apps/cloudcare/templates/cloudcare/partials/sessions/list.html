@@ -1,7 +1,7 @@
 {% load i18n %}
 
 <script type="text/template" id="session-view-list-template">
-  <% if(isPreviewEnv) { %>
+  <% if(isAppPreview) { %>
   <div class="breadcrumb-form-container">
     <ol class="breadcrumb breadcrumb-form">
       <li class="breadcrumb-item">
@@ -20,7 +20,7 @@
   </div>
   <% } %>
   <div class="module-menu-container module-menu-bar-offset">
-    <% if (!isPreviewEnv) { %>
+    <% if (!isAppPreview) { %>
     <div class="page-header menu-header d-none d-md-block">
       <h1 class="page-title">{% trans "Incomplete Forms" %}</h1>
     </div>

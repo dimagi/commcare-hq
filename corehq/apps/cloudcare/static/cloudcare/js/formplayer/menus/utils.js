@@ -108,7 +108,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
-            breadcrumbMenuDropdown: "#breadcrumb__menu-dropdown",
+            breadcrumbMenuDropdown: "#navbar-menu-region",
         });
 
         if (langs && langs.length > 1) {

@@ -1,20 +1,22 @@
 #breadcrumb-region .breadcrumb,
 .single-app-view .breadcrumb,
 .breadcrumb-form-container .breadcrumb {
+  background-color: $cc-brand-mid;
+  color: white;
   text-transform: uppercase;
   margin: 0;
   padding: 0 10px;
   line-height: 30px;
   font-size: 11px;
 
+  li:before,
+  .breadcrumb-item a {
+      color: white;
+  }
+
+  // Show only the first and last breadcrumb item
   li {
     display: none;
-    &:before {
-      color: white;
-      vertical-align: middle;
-      font-size: 8px;
-      padding: 0 4px;
-    }
   }
   li:first-child {
     display: inline-block;
