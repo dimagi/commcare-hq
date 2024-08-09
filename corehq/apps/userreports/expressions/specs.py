@@ -604,23 +604,28 @@ class RelatedDocExpressionSpec(JsonObject):
         if doc_id:
             return self.get_value(doc_id, evaluation_context)
 
-    @staticmethod
     @ucr_context_cache(vary_on=('related_doc_type', 'doc_id',))
-    def _get_document(related_doc_type, doc_id, evaluation_context):
+    def _get_document(self, related_doc_type, doc_id, evaluation_context):
         domain = evaluation_context.root_doc['domain']
         assert domain
 
         if related_doc_type not in RelatedDocExpressionSpec.SUPPORTED_RELATED_DOC_TYPES:
             raise BadSpecError(f'Unsupported related_doc_type {related_doc_type!r}')
 
+        document_store = self._get_document_store(domain, related_doc_type)
         func = {
             'CommCareUser': partial(_get_user, domain),
-            'XFormInstance': partial(_get_doc, domain, 'XFormInstance'),
-            'CommCareCase': partial(_get_doc, domain, 'CommCareCase'),
-            'Group': partial(_get_doc, domain, 'Group'),
-            'Location': partial(_get_doc, domain, 'Location'),
+            'XFormInstance': partial(_get_doc, domain, document_store),
+            'CommCareCase': partial(_get_doc, domain, document_store),
+            'Group': partial(_get_doc, domain, document_store),
+            'Location': partial(_get_doc, domain, document_store),
         }[related_doc_type]
         return func(doc_id)
+
+    @staticmethod
+    def _get_document_store(domain, related_doc_type):
+        return get_document_store_for_doc_type(
+            domain, related_doc_type, load_source="related_doc_expression")
 
     def get_value(self, doc_id, evaluation_context):
         doc = self._get_document(self.related_doc_type, doc_id, evaluation_context)
@@ -707,9 +712,7 @@ def _get_user(domain, doc_id):
     return doc
 
 
-def _get_doc(domain, doc_type, doc_id):
-    document_store = get_document_store_for_doc_type(
-        domain, doc_type, load_source="related_doc_expression")
+def _get_doc(domain, document_store, doc_id):
     try:
         doc = document_store.get_document(doc_id)
     except DocumentNotFoundError:
