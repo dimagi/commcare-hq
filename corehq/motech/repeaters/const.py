@@ -16,7 +16,7 @@ MAX_BACKOFF_ATTEMPTS = 6
 # records at the same time. (In other words, HQ's capacity to DDOS
 # attack a remote API endpoint.) This is a guardrail to prevent one
 # domain from hogging repeat record queue workers and to ensure that
-# repeaters are iterated fairly.
+# repeaters are iterated fairly. Set `Repeater.max_workers` to override.
 DEFAULT_REPEATER_WORKERS = 7
 
 
