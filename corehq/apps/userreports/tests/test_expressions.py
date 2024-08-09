@@ -5,11 +5,13 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
+
 from testil import Config
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+
 from corehq.apps.groups.models import Group
 from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -19,7 +21,12 @@ from corehq.apps.userreports.expressions.specs import (
     PropertyPathGetterSpec,
 )
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import (
+    CommCareUser,
+    DeviceAppMeta,
+    LastBuild,
+    WebUser,
+)
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.test_utils import (
@@ -1023,10 +1030,53 @@ class RelatedDocExpressionDbTest(TestCase):
 
     def test_other_lookups(self):
         user_id = uuid.uuid4().hex
-        CommCareUser.get_db().save_doc({'_id': user_id, 'domain': self.domain})
+        CommCareUser.get_db().save_doc({
+            '_id': user_id,
+            'doc_type': 'CommCareUser',
+            'domain': self.domain,
+            'username': f'user@{self.domain}.commcarehq.org',
+        })
         expression = self._get_expression('CommCareUser')
         doc = self._get_doc(user_id)
         self.assertEqual(user_id, expression(doc, EvaluationContext(doc, 0)))
+
+    def test_user_data_lookup(self):
+        user = CommCareUser.create(self.domain, 'username', "123", None, None,
+                                   user_data={'favorite_color': 'indigo'})
+        self.addCleanup(user.delete, None, None)
+        expression = ExpressionFactory.from_spec({
+            "type": "related_doc",
+            "related_doc_type": 'CommCareUser',
+            "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "related_id"
+            },
+            "value_expression": {
+                "type": "property_path",
+                "property_path": ["user_data", "favorite_color"],
+            },
+        })
+        doc = self._get_doc(user._id)
+        self.assertEqual('indigo', expression(doc, EvaluationContext(doc, 0)))
+
+    def test_password_lookup(self):
+        user = CommCareUser.create(self.domain, 'username', "123", None, None)
+        self.addCleanup(user.delete, None, None)
+        expression = ExpressionFactory.from_spec({
+            "type": "related_doc",
+            "related_doc_type": 'CommCareUser',
+            "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "related_id"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "password",
+            },
+        })
+        doc = self._get_doc(user._id)
+        value = expression(doc, EvaluationContext(doc, 0))
+        self.assertIsNone(value)
 
     @staticmethod
     def _get_expression(doc_type):
@@ -1049,6 +1099,160 @@ class RelatedDocExpressionDbTest(TestCase):
             'related_id': id,
             'domain': cls.domain,
         }
+
+
+class RelatedDocExpressionUserTest(TestCase):
+    domain = 'test-domain'
+
+    def setUp(self):
+
+        LocationTypeDuck = type('LocationType', (object,), {
+            'administrative': True,
+        })
+
+        LocationDuck = type('Location', (object,), {
+            'location_id': 'abc123',
+            'location_type': LocationTypeDuck(),
+        })
+
+        now = datetime.utcnow()
+        self.user = CommCareUser.create(
+            self.domain,
+            'testy',
+            '123',
+            created_by=None,
+            created_via=None,
+            assigned_location_ids=['location_id'],
+            doc_type='CommCareUser',
+            first_name='Testy',
+            last_name='McTestface',
+            location_id='abc123',
+            is_active=True,
+            user_data={
+                '30_day_max_bonus': 123,
+                '30_day_target': 123,
+                'dhis2_org_unit': 'dhis2_org_unit',
+            },
+        )
+        self.user.add_phone_number('123')
+        self.user.set_location(LocationDuck())
+        self.user.update_device_id_last_used(
+            'phone',
+            now,
+            device_app_meta=DeviceAppMeta(
+                build_version=123,
+                num_unsent_forms=5,
+            ),
+        )
+        last_build = LastBuild(build_version=123)
+        self.user.reporting_metadata.last_builds.append(last_build)
+        self.user.reporting_metadata.last_build_for_user = last_build
+        self.user.save()
+
+    def tearDown(self):
+        self.user.delete(None, None)
+
+    def test_value_expressions(self):
+        # Actual value expressions currently in use
+        value_expressions = [
+            {
+                'type': 'jsonpath',
+                'jsonpath': 'devices[0].app_meta[0].build_version',
+            },
+            {
+                'type': 'jsonpath',
+                'jsonpath': 'last_device.app_meta[0].num_unsent_forms',
+            },
+            {'type': 'jsonpath', 'jsonpath': 'phone_numbers[0]'},
+            {
+                'type': 'property_name',
+                'property_name': 'assigned_location_ids',
+            },
+            {'type': 'property_name', 'property_name': 'doc_type'},
+            {'type': 'property_name', 'property_name': 'first_name'},
+            {'type': 'property_name', 'property_name': 'last_name'},
+            {'type': 'property_name', 'property_name': 'location_id'},
+            {'type': 'property_name', 'property_name': 'phone_numbers'},
+            {'type': 'property_name', 'property_name': 'username'},
+            {
+                'type': 'property_path',
+                'property_path': ['domain_membership', 'location_id'],
+            },
+            {'type': 'property_path', 'property_path': ['first_name']},
+            {'type': 'property_path', 'property_path': ['is_active']},
+            {'type': 'property_path', 'property_path': ['last_name']},
+            {'type': 'property_path', 'property_path': ['phone_numbers']},
+            {
+                'type': 'property_path',
+                'property_path': [
+                    'reporting_metadata',
+                    'last_build_for_user',
+                    'build_version',
+                ],
+            },
+            {
+                'type': 'property_path',
+                'property_path': ['user_data', '30_day_max_bonus'],
+            },
+            {
+                'type': 'property_path',
+                'property_path': ['user_data', '30_day_target'],
+            },
+            {
+                'type': 'property_path',
+                'property_path': ['user_data', 'commcare_location_id'],
+            },
+            {
+                'type': 'property_path',
+                'property_path': ['user_data', 'dhis2_org_unit'],
+            },
+            {'type': 'property_path', 'property_path': ['username']},
+            {
+                'type': 'array_index',
+                'array_expression': {
+                    'type': 'property_path',
+                    'property_path': ['phone_numbers'],
+                },
+                'index_expression': {'type': 'constant', 'constant': 0},
+            },
+            {
+                'type': 'evaluator',
+                'statement': 'first_name + space + last_name',
+                'context_variables': {
+                    'first_name': {
+                        'type': 'property_name',
+                        'property_name': 'first_name',
+                    },
+                    'space': {'type': 'constant', 'constant': ' '},
+                    'last_name': {
+                        'type': 'property_name',
+                        'property_name': 'last_name',
+                    },
+                },
+            },
+        ]
+
+        doc = {
+            'related_user_id': self.user._id,
+            'domain': self.domain,
+        }
+        evaluation_context = EvaluationContext(doc, 0)
+
+        for value_expression in value_expressions:
+            expression = ExpressionFactory.from_spec({
+                'type': 'related_doc',
+                'related_doc_type': 'CommCareUser',
+                'doc_id_expression': {
+                    'type': 'property_name',
+                    'property_name': 'related_user_id'
+                },
+                'value_expression': value_expression,
+            })
+            value = expression(doc, evaluation_context)
+            self.assertIsNotNone(
+                value,
+                f'Bad value expression {value_expression!r}'
+            )
 
 
 class TestFormsExpressionSpec(TestCase):

@@ -352,7 +352,10 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def is_ready(self):
-        if self.is_paused:
+        """
+        Returns True if there are repeat records to be sent.
+        """
+        if self.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(self.domain):
             return False
         if not (self.next_attempt_at is None
                 or self.next_attempt_at < timezone.now()):
@@ -364,16 +367,23 @@ class Repeater(RepeaterSuperProxy):
         interval = _get_retry_interval(self.last_attempt_at, now)
         self.last_attempt_at = now
         self.next_attempt_at = now + interval
-        self.save()
+        # Save using QuerySet.update() to avoid a possible race condition
+        # with self.pause(), etc. and to skip the unnecessary functionality
+        # in RepeaterSuperProxy.save().
+        Repeater.objects.filter(id=self.repeater_id).update(
+            last_attempt_at=now,
+            next_attempt_at=now + interval,
+        )
 
     def reset_next_attempt(self):
         if self.last_attempt_at or self.next_attempt_at:
             self.last_attempt_at = None
             self.next_attempt_at = None
-            self.save()
-
-    def get_attempt_info(self, repeat_record):
-        return None
+            # Avoid a possible race condition with self.pause(), etc.
+            Repeater.objects.filter(id=self.repeater_id).update(
+                last_attempt_at=None,
+                next_attempt_at=None,
+            )
 
     @property
     def verify(self):
@@ -406,21 +416,21 @@ class Repeater(RepeaterSuperProxy):
 
     def allowed_to_forward(self, payload):
         """
-        Return True/False depending on whether the payload meets forawrding criteria or not
+        Return True/False depending on whether the payload meets forwarding criteria or not
         """
         return True
 
     def pause(self):
         self.is_paused = True
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_paused=True)
 
     def resume(self):
         self.is_paused = False
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_paused=False)
 
     def retire(self):
         self.is_deleted = True
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_deleted=True)
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
@@ -428,18 +438,18 @@ class Repeater(RepeaterSuperProxy):
             response = self.send_request(repeat_record, payload)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
-            return self.handle_response(RequestConnectionError(error), repeat_record)
+            self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
-            return self.handle_response(err, repeat_record)
+            self.handle_response(err, repeat_record)
         except (PossibleSSRFAttempt, CannotResolveHost):
-            return self.handle_response(Exception("Invalid URL"), repeat_record)
+            self.handle_response(Exception("Invalid URL"), repeat_record)
         except Exception:
             # This shouldn't ever happen in normal operation and would mean code broke
             # we want to notify ourselves of the error detail and tell the user something vague
             notify_exception(None, "Unexpected error sending repeat record request")
-            return self.handle_response(Exception("Internal Server Error"), repeat_record)
+            self.handle_response(Exception("Internal Server Error"), repeat_record)
         else:
-            return self.handle_response(response, repeat_record)
+            self.handle_response(response, repeat_record)
 
     @memoized
     def get_payload(self, repeat_record):
@@ -464,12 +474,11 @@ class Repeater(RepeaterSuperProxy):
         result may be either a response object or an exception
         """
         if isinstance(result, Exception):
-            attempt = repeat_record.handle_exception(result)
+            repeat_record.handle_exception(result)
         elif is_response(result) and 200 <= result.status_code < 300 or result is True:
-            attempt = repeat_record.handle_success(result)
+            repeat_record.handle_success(result)
         else:
-            attempt = repeat_record.handle_failure(result)
-        return attempt
+            repeat_record.handle_failure(result)
 
     def get_headers(self, repeat_record):
         # to be overridden
@@ -1018,7 +1027,6 @@ class RepeatRecord(models.Model):
         # although the Couch RepeatRecord did the same.
         code = getattr(response, "status_code", None)
         state = State.Empty if code == 204 else State.Success
-        self.repeater.reset_next_attempt()
         self.attempt_set.create(state=state, message=format_response(response) or '')
         self.state = state
         self.next_check = None
@@ -1030,7 +1038,6 @@ class RepeatRecord(models.Model):
         service is assumed to be in a good state, so do not back off, so
         that this repeat record does not hold up the rest.
         """
-        self.repeater.reset_next_attempt()
         self._add_failure_attempt(message, MAX_ATTEMPTS, retry)
 
     def add_server_failure_attempt(self, message):
@@ -1044,7 +1051,6 @@ class RepeatRecord(models.Model):
            days and will hold up all other payloads.
 
         """
-        self.repeater.set_next_attempt()
         self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
 
     def _add_failure_attempt(self, message, max_attempts, retry=True):
@@ -1096,10 +1102,6 @@ class RepeatRecord(models.Model):
             return None
 
     @property
-    def next_attempt_at(self):
-        return self.repeater.next_attempt_at
-
-    @property
     def url(self):
         # Used by .../case/partials/repeat_records.html
         return self.repeater.get_url(self)
@@ -1148,18 +1150,12 @@ class RepeatRecord(models.Model):
     def fire(self, force_send=False):
         if force_send or not self.succeeded:
             try:
-                attempt = self.repeater.fire_for_record(self)
+                self.repeater.fire_for_record(self)
             except Exception as e:
                 log_repeater_error_in_datadog(self.domain, status_code=None,
                                               repeater_type=self.repeater_type)
-                attempt = self.handle_payload_exception(e)
+                self.handle_payload_exception(e)
                 raise
-            finally:
-                # pycharm warns attempt might not be defined.
-                # that'll only happen if fire_for_record raise a non-Exception exception (e.g. SIGINT)
-                # or handle_payload_exception raises an exception. I'm okay with that. -DMR
-                self.add_attempt(attempt)
-                self.save()
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
@@ -1212,9 +1208,6 @@ class RepeatRecord(models.Model):
 
     def handle_payload_exception(self, exception):
         self.add_client_failure_attempt(str(exception), retry=False)
-
-    def add_attempt(self, attempt):
-        assert attempt is None, "SQL attempts are added/saved on create"
 
     def cancel(self):
         self.state = State.Cancelled
@@ -1275,16 +1268,6 @@ def _get_retry_interval(last_checked, now):
     interval = max(MIN_RETRY_WAIT, interval)
     interval = min(MAX_RETRY_WAIT, interval)
     return interval
-
-
-def attempt_forward_now(repeater: Repeater):  # unused
-    from corehq.motech.repeaters.tasks import process_repeater
-
-    if not domain_can_forward(repeater.domain):
-        return
-    if not repeater.is_ready:  # only place that uses Repeater.is_ready
-        return
-    process_repeater.delay(repeater.id.hex)
 
 
 def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:

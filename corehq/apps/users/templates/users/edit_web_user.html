@@ -7,6 +7,7 @@
 {% requirejs_main 'users/js/edit_web_user' %}
 
 {% block page_content %}
+  {% initial_page_data 'can_edit_original_profile' can_edit_original_profile %}
   {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
   {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
   {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}

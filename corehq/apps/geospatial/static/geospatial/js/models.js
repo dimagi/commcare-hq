@@ -17,9 +17,10 @@ hqDefine('geospatial/js/models', [
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
     const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
-    const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
+    const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
+    const unexpectedErrorMessage = "Oops! Something went wrong! Please report an issue if the problem persists.";
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -146,6 +147,10 @@ hqDefine('geospatial/js/models', [
                 },
             });
             self.mapInstance.addControl(self.drawControls);
+
+            // Add zoom and rotation controls to the map.
+            self.mapInstance.addControl(new mapboxgl.NavigationControl());  // eslint-disable-line no-undef
+
             if (self.usesClusters) {
                 createClusterLayers();
             }
@@ -566,24 +571,14 @@ hqDefine('geospatial/js/models', [
         };
 
         function updatePolygonQueryParam() {
-            const url = new URL(window.location.href);
+            let success;
             if (Object.keys(self.polygons)) {
-                url.searchParams.set(FEATURE_QUERY_PARAM, JSON.stringify(self.polygons));
+                success = utils.setQueryParam(FEATURE_QUERY_PARAM, JSON.stringify(self.polygons));
             } else {
-                url.searchParams.delete(FEATURE_QUERY_PARAM);
+                success = utils.clearQueryParam(FEATURE_QUERY_PARAM);
             }
-            updateUrl(url);
-        }
-
-        function updateUrl(url) {
-            if (url.href.length <= MAX_URL_LENGTH) {
-                window.history.replaceState({ path: url.href }, '', url.href);
-                self.shouldRefreshPage(true);
-                self.hasUrlError(false);
-            } else {
-                self.shouldRefreshPage(false);
-                self.hasUrlError(true);
-            }
+            self.shouldRefreshPage(success);
+            self.hasUrlError(!success);
         }
 
         function updateSelectedSavedPolygonParam() {
@@ -594,17 +589,18 @@ hqDefine('geospatial/js/models', [
                 return;
             }
 
+            let success;
             if (self.selectedSavedPolygonId()) {
-                url.searchParams.set(SELECTED_FEATURE_ID_QUERY_PARAM, self.selectedSavedPolygonId());
+                success = utils.setQueryParam(SELECTED_FEATURE_ID_QUERY_PARAM, self.selectedSavedPolygonId());
             } else {
-                url.searchParams.delete(SELECTED_FEATURE_ID_QUERY_PARAM);
+                success = utils.clearQueryParam(SELECTED_FEATURE_ID_QUERY_PARAM);
             }
-            updateUrl(url);
+            self.shouldRefreshPage(success);
+            self.hasUrlError(!success);
         }
 
         self.loadPolygonFromQueryParam = function () {
-            const url = new URL(window.location.href);
-            const featureParam = url.searchParams.get(FEATURE_QUERY_PARAM);
+            const featureParam = utils.fetchQueryParam(FEATURE_QUERY_PARAM);
             if (featureParam) {
                 const features = JSON.parse(featureParam);
                 for (const featureId in features) {
@@ -616,8 +612,7 @@ hqDefine('geospatial/js/models', [
         };
 
         self.loadSelectedPolygonFromQueryParam = function () {
-            const url = new URL(window.location.href);
-            const selectedFeatureParam = url.searchParams.get(SELECTED_FEATURE_ID_QUERY_PARAM);
+            const selectedFeatureParam = utils.fetchQueryParam(SELECTED_FEATURE_ID_QUERY_PARAM);
             if (selectedFeatureParam) {
                 self.selectedSavedPolygonId(selectedFeatureParam);
             }
@@ -662,6 +657,16 @@ hqDefine('geospatial/js/models', [
             updateSelectedSavedPolygonParam();
         };
 
+        self.exportSelectedPolygonGeoJson = function (data, event) {
+            if (self.activeSavedPolygon()) {
+                const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(self.activeSavedPolygon().geoJson));
+                $(event.target).attr('href', 'data:' + convertedData);
+                $(event.target).attr('download',self.activeSavedPolygon().text + '.geojson');
+                return true;
+            }
+            return false;
+        };
+
         self.deleteSelectedPolygonFilter = function () {
             const deleteGeoJSONUrl = initialPageData.reverse('geo_polygon', self.selectedSavedPolygonId());
             $.ajax({
@@ -679,10 +684,7 @@ hqDefine('geospatial/js/models', [
                     }, 2000);
                 },
                 error: function () {
-                    alertUser.alert_user(
-                        gettext("Oops! Something went wrong! Please report an issue if the problem persists."),
-                        'danger'
-                    );
+                    alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
                 },
             });
         };
@@ -755,18 +757,58 @@ hqDefine('geospatial/js/models', [
             self.loadSelectedPolygonFromQueryParam();
         };
 
-        self.exportGeoJson = function (exportButtonId) {
-            const exportButton = $(`#${exportButtonId}`);
-            const selectedId = parseInt(self.selectedSavedPolygonId());
-            const selectedPolygon = self.savedPolygons().find(
-                function (o) { return o.id === selectedId; }
-            );
-            if (selectedPolygon) {
-                const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(selectedPolygon.geoJson));
-                exportButton.attr('href', 'data:' + convertedData);
-                exportButton.attr('download','data.geojson');
+        self.saveGeoPolygon = function () {
+            let data = self.mapObj.drawControls.getAll();
+            if (data.features.length) {
+                const name = window.prompt(gettext("Name of the Area"));
+                if (!validateSavedPolygonName(name)) {
+                    return;
+                }
+                data['name'] = name;
+                $.ajax({
+                    type: 'post',
+                    url: saveGeoPolygonUrl,
+                    dataType: 'json',
+                    data: JSON.stringify({'geo_json': data}),
+                    contentType: "application/json; charset=utf-8",
+                    success: function (ret) {
+                        delete data.name;
+                        // delete drawn area
+                        self.mapObj.drawControls.deleteAll();
+                        self.removePolygonsFromFilterList(data.features);
+                        self.savedPolygons.push(
+                            new SavedPolygon({
+                                name: name,
+                                id: ret.id,
+                                geo_json: data,
+                            })
+                        );
+                        // redraw using mapControlsModelInstance
+                        self.selectedSavedPolygonId(ret.id);
+                        self.shouldRefreshPage(true);
+                    },
+                    error: function (response) {
+                        const responseText = response.responseText;
+                        if (responseText) {
+                            alertUser.alert_user(gettext(responseText), 'danger');
+                        } else {
+                            alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                        }
+                    },
+                });
             }
         };
+
+        function validateSavedPolygonName(name) {
+            if (name === null) {
+                return false;
+            }
+            if (name === '') {
+                alertUser.alert_user(gettext("Please enter the name for the area!"), 'warning', false, true);
+                return false;
+            }
+            return true;
+        }
     };
 
     return {

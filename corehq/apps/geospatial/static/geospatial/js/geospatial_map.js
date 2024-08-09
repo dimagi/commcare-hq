@@ -5,6 +5,7 @@ hqDefine("geospatial/js/geospatial_map", [
     "hqwebapp/js/initial_page_data",
     "knockout",
     'geospatial/js/models',
+    'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
     'select2/dist/js/select2.full.min',
 ], function (
@@ -12,6 +13,7 @@ hqDefine("geospatial/js/geospatial_map", [
     initialPageData,
     ko,
     models,
+    utils,
     alertUser
 ) {
     const caseMarkerColors = {
@@ -22,11 +24,12 @@ hqDefine("geospatial/js/geospatial_map", [
         'default': "#0e00ff", // Blue
         'selected': "#0b940d", // Dark Green
     };
-    const DEFAULT_POLL_TIME_MS = 1500;
 
     const MAP_CONTAINER_ID = 'geospatial-map';
+    const SHOW_USERS_QUERY_PARAM = 'show_users';
+    const USER_LOCATION_ID_QUERY_PARAM = 'user_location_id';
+    const USER_LOCATION_NAME_QUERY_PARAM = 'user_location_name';
 
-    var saveGeoJSONUrl = initialPageData.reverse('geo_polygons');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
 
@@ -36,48 +39,19 @@ hqDefine("geospatial/js/geospatial_map", [
     function showMapControls(state) {
         $("#geospatial-map").toggle(state);
         $("#case-buttons").toggle(state);
-        $("#mapControls").toggle(state);
+        $("#polygon-filters").toggle(state);
         $("#user-filters-panel").toggle(state);
     }
-
-    var saveGeoJson = function () {
-        const data = mapModel.drawControls.getAll();
-        if (data.features.length) {
-            let name = window.prompt(gettext("Name of the Area"));
-            data['name'] = name;
-
-            $.ajax({
-                type: 'post',
-                url: saveGeoJSONUrl,
-                dataType: 'json',
-                data: JSON.stringify({'geo_json': data}),
-                contentType: "application/json; charset=utf-8",
-                success: function (ret) {
-                    delete data.name;
-                    // delete drawn area
-                    mapModel.drawControls.deleteAll();
-                    console.log('newPoly', name);
-                    polygonFilterModel.savedPolygons.push(
-                        new models.SavedPolygon({
-                            name: name,
-                            id: ret.id,
-                            geo_json: data,
-                        })
-                    );
-                    // redraw using mapControlsModelInstance
-                    polygonFilterModel.selectedSavedPolygonId(ret.id);
-                },
-            });
-        }
-    };
 
     var disbursementRunnerModel = function () {
         var self = {};
 
-        self.pollUrl = ko.observable('');
         self.isBusy = ko.observable(false);
+        self.showParams = ko.observable(false);
+        self.parameters = ko.observableArray([]);
 
         self.disbursementErrorMessage = ko.observable('');
+        self.showUnassignedCasesError = ko.observable(false);
 
         self.setBusy = function (isBusy) {
             self.isBusy(isBusy);
@@ -132,6 +106,28 @@ hqDefine("geospatial/js/geospatial_map", [
                 });
             });
 
+            self.setDisbursementParameters = function (parameters) {
+                var parametersList = [
+                    {name: gettext("Max cases per user"), value: parameters.max_cases_per_user},
+                    {name: gettext("Min cases per user"), value: parameters.min_cases_per_user},
+                ];
+
+                if (parameters.max_case_distance) {
+                    const maxCaseDistanceParamValue = `${parameters.max_case_distance} km`;
+                    parametersList.push({name: gettext("Max distance to case"), value: maxCaseDistanceParamValue});
+                }
+
+                if (parameters.max_case_travel_time_seconds) {
+                    const travelParamValue = `${parameters.max_case_travel_time_seconds / 60} ${gettext("minutes")}`;
+                    parametersList.push(
+                        {name: gettext("Max travel time"), value: travelParamValue}
+                    );
+                }
+
+                self.parameters(parametersList);
+                self.showParams(true);
+            };
+
             let userData = users.map(function (c) {
                 return {
                     id: c.itemId,
@@ -147,15 +143,15 @@ hqDefine("geospatial/js/geospatial_map", [
                 data: JSON.stringify({'users': userData, "cases": caseData}),
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
-                    if (ret.error) {
-                        self.disbursementErrorMessage(ret.error);
-                        self.setBusy(false);
+                    self.setDisbursementParameters(ret["parameters"]);
+
+                    if (ret['unassigned'].length) {
+                        self.showUnassignedCasesError(true);
+                    }
+                    if (ret['assignments']) {
+                        self.handleDisbursementResults(ret['assignments']);
                     } else {
-                        if (ret['poll_url'] !== undefined) {
-                            self.startPoll(ret['poll_url']);
-                        } else {
-                            self.handleDisbursementResults(ret['result']);
-                        }
+                        self.setBusy(false);
                     }
                 },
                 error: function () {
@@ -165,32 +161,6 @@ hqDefine("geospatial/js/geospatial_map", [
                     self.setBusy(false);
                 },
             });
-        };
-
-        self.startPoll = function (pollUrl) {
-            if (!self.isBusy()) {
-                self.setBusy(true);
-            }
-            self.pollUrl(pollUrl);
-            self.doPoll();
-        };
-
-        self.doPoll = function () {
-            var tick = function () {
-                $.ajax({
-                    method: 'GET',
-                    url: self.pollUrl(),
-                    success: function (data) {
-                        const result = data.result;
-                        if (!data) {
-                            setTimeout(tick, DEFAULT_POLL_TIME_MS);
-                        } else {
-                            self.handleDisbursementResults(result);
-                        }
-                    },
-                });
-            };
-            tick();
         };
 
         function connectUserWithCasesOnMap(user, cases) {
@@ -268,27 +238,13 @@ hqDefine("geospatial/js/geospatial_map", [
 
     function initPolygonFilters() {
         // Assumes `map` var is initialized
-        const $mapControlDiv = $("#mapControls");
+        const $mapControlDiv = $("#polygon-filters");
         polygonFilterModel = new models.PolygonFilter(mapModel, false, true);
         polygonFilterModel.loadPolygons(initialPageData.get('saved_polygons'));
         if ($mapControlDiv.length) {
             ko.cleanNode($mapControlDiv[0]);
             $mapControlDiv.koApplyBindings(polygonFilterModel);
         }
-
-        const $saveDrawnArea = $("#btnSaveDrawnArea");
-        $saveDrawnArea.click(function () {
-            if (mapModel && mapModel.mapInstance) {
-                saveGeoJson();
-            }
-        });
-
-        var $exportDrawnArea = $("#btnExportDrawnArea");
-        $exportDrawnArea.click(function () {
-            if (mapModel && mapModel.mapInstance) {
-                polygonFilterModel.exportGeoJson("btnExportDrawnArea");
-            }
-        });
 
         var $runDisbursement = $("#btnRunDisbursement");
         $runDisbursement.click(function () {
@@ -314,6 +270,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     disbursementRunner.disbursementErrorMessage(errorMessage);
                 } else {
                     disbursementRunner.disbursementErrorMessage('');
+                    disbursementRunner.showUnassignedCasesError(false);
                 }
                 if (hasValidData) {
                     disbursementRunner.runCaseDisbursementAlgorithm(selectedCases, selectedUsers);
@@ -330,6 +287,20 @@ hqDefine("geospatial/js/geospatial_map", [
         self.showFilterMenu = ko.observable(true);
         self.hasErrors = ko.observable(false);
         self.selectedLocation = null;
+
+        self.setUserFiltersFromUrl = function () {
+            const shouldShowUsers = utils.fetchQueryParam(SHOW_USERS_QUERY_PARAM) || false;
+            self.shouldShowUsers(shouldShowUsers);
+            const userLocationId = utils.fetchQueryParam(USER_LOCATION_ID_QUERY_PARAM);
+            if (userLocationId) {
+                self.selectedLocation = userLocationId;
+                const userLocationName = utils.fetchQueryParam(USER_LOCATION_NAME_QUERY_PARAM);
+                const $filterSelect = $("#location-filter-select");
+                $filterSelect.append(new Option(userLocationName, self.selectedLocation));
+                $filterSelect.val(self.selectedLocation).trigger('change');
+                self.loadUsers();
+            }
+        };
 
         self.loadUsers = function () {
             mapModel.removeMarkersFromMap(mapModel.userMapItems());
@@ -373,6 +344,22 @@ hqDefine("geospatial/js/geospatial_map", [
 
         self.onFiltersChange = function () {
             self.hasFiltersChanged(true);
+            self.setLocationQueryParams();
+        };
+
+        self.setLocationQueryParams = function () {
+            if (self.selectedLocation) {
+                utils.setQueryParam(USER_LOCATION_ID_QUERY_PARAM, self.selectedLocation);
+                const selectedLocationData = $("#location-filter-select").select2('data');
+                if (selectedLocationData.length) {
+                    // We shouldn't have more than 1, since this select2 doesn't have multi-select enabled
+                    const userLocationName = selectedLocationData[0].text;
+                    utils.setQueryParam(USER_LOCATION_NAME_QUERY_PARAM, userLocationName);
+                }
+            } else {
+                utils.clearQueryParam(USER_LOCATION_ID_QUERY_PARAM);
+                utils.clearQueryParam(USER_LOCATION_NAME_QUERY_PARAM);
+            }
         };
 
         self.toggleFilterMenu = function () {
@@ -380,6 +367,14 @@ hqDefine("geospatial/js/geospatial_map", [
             const shouldShow = self.showFilterMenu() ? 'show' : 'hide';
             $("#user-filters-panel .panel-body").collapse(shouldShow);
         };
+
+        self.shouldShowUsers.subscribe(function (shouldShowUsers) {
+            if (shouldShowUsers) {
+                utils.setQueryParam(SHOW_USERS_QUERY_PARAM, true);
+            } else {
+                utils.clearQueryParam(SHOW_USERS_QUERY_PARAM);
+            }
+        });
 
         return self;
     };
@@ -408,6 +403,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     },
                 },
             });
+            userFiltersInstance.setUserFiltersFromUrl();
         }
     }
 
@@ -449,8 +445,10 @@ hqDefine("geospatial/js/geospatial_map", [
             showMapControls(false);
 
             disbursementRunner = new disbursementRunnerModel();
+
             $("#disbursement-spinner").koApplyBindings(disbursementRunner);
             $("#disbursement-error").koApplyBindings(disbursementRunner);
+            $("#disbursement-params").koApplyBindings(disbursementRunner);
 
             return;
         }
@@ -465,7 +463,16 @@ hqDefine("geospatial/js/geospatial_map", [
         // Hide the datatable rows but not the pagination bar
         $('.dataTables_scroll').hide();
 
-        if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
+        if (xhr.status !== 200) {
+            if (xhr.responseText.length) {
+                alertUser.alert_user(xhr.responseText, 'danger');
+            } else {
+                alertUser.alert_user(
+                    gettext('Oops! Something went wrong! Please report an issue if the problem persists.'),
+                    'danger'
+                );
+            }
+        } else if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
             loadCases(xhr.responseJSON.aaData);
         }
     });

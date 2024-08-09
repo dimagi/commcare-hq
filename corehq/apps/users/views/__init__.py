@@ -11,7 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -436,15 +436,17 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def page_context(self):
-        profiles = [profile.to_json() for profile in self.form_user_update.custom_data.model.get_profiles()]
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
-            'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
-            'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
-            'custom_fields_profile_slug': PROFILE_SLUG,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
         }
+
+        original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
+        field_view_context = self.form_user_update.custom_data.field_view.get_field_page_context(
+            self.domain, self.request.couch_user, self.form_user_update.custom_data, original_profile_id
+        )
+        ctx.update(field_view_context)
         if self.request.is_view_only:
             make_form_readonly(self.commtrack_form)
         if self.request.project.commtrack_enabled or self.request.project.uses_locations:
@@ -710,6 +712,20 @@ class ListRolesView(BaseRoleAccessView):
             )
         return role_view_data
 
+    def get_possible_profiles(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            CUSTOM_USER_DATA_FIELD_TYPE,
+        )
+        definition = CustomDataFieldsDefinition.get(self.domain, CUSTOM_USER_DATA_FIELD_TYPE)
+        if definition is not None:
+            return [{
+                    'id': profile.id,
+                    'name': profile.name,
+                    }
+                for profile in definition.get_profiles()]
+        else:
+            return []
+
     @property
     def page_context(self):
         from corehq.apps.linked_domain.dbaccessors import is_active_downstream_domain
@@ -739,6 +755,7 @@ class ListRolesView(BaseRoleAccessView):
             'default_role': StaticRole.domain_default(self.domain),
             'tableau_list': tableau_list,
             'report_list': get_possible_reports(self.domain),
+            'profile_list': self.get_possible_profiles(),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
@@ -772,6 +789,10 @@ def _commcare_analytics_roles_options():
         {
             'slug': 'sql_lab',
             'name': 'SQL Lab'
+        },
+        {
+            'slug': 'dataset_editor',
+            'name': 'Dataset Editor'
         }
     ]
 
@@ -1224,59 +1245,75 @@ class BaseUploadUser(BaseUserSettingsView):
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
         try:
-            self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+            workbook = get_workbook(request.FILES.get("bulk_upload_file"))
+            user_specs, group_specs = self.process_workbook(workbook, self.domain, self.is_web_upload)
+            task_ref = self.upload_users(
+                request, user_specs, group_specs, self.domain, self.is_web_upload)
+            return self._get_success_response(request, task_ref)
         except WorkbookJSONError as e:
             messages.error(request, str(e))
             return self.get(request, *args, **kwargs)
-
-        try:
-            self.user_specs = self.workbook.get_worksheet(title='users')
         except WorksheetNotFound:
-            try:
-                self.user_specs = self.workbook.get_worksheet()
-            except WorksheetNotFound:
-                return HttpResponseBadRequest("Workbook has no worksheets")
-
-        try:
-            self.group_specs = self.workbook.get_worksheet(title='groups')
-        except WorksheetNotFound:
-            self.group_specs = []
-        try:
-            from corehq.apps.user_importer.importer import check_headers
-            check_headers(self.user_specs, self.domain, is_web_upload=self.is_web_upload)
+            return HttpResponseBadRequest("Workbook has no worksheets")
         except UserUploadError as e:
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
+    @staticmethod
+    def process_workbook(workbook, domain, is_web_upload):
+        from corehq.apps.user_importer.importer import check_headers
+
+        try:
+            user_specs = workbook.get_worksheet(title="users")
+        except WorksheetNotFound:
+            try:
+                user_specs = workbook.get_worksheet()
+            except WorksheetNotFound as e:
+                raise WorksheetNotFound("Workbook has no worksheets") from e
+
+        check_headers(user_specs, domain, is_web_upload=is_web_upload)
+
+        try:
+            group_specs = workbook.get_worksheet(title="groups")
+        except WorksheetNotFound:
+            group_specs = []
+
+        return user_specs, group_specs
+
+    @staticmethod
+    def upload_users(request, user_specs, group_specs, domain, is_web_upload):
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        if PARALLEL_USER_IMPORTS.enabled(self.domain) and not self.is_web_upload:
-            if list(self.group_specs):
-                messages.error(
-                    request,
-                    _("Groups are not allowed with parallel user import. Please upload them separately")
-                )
-                return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+        if PARALLEL_USER_IMPORTS.enabled(domain) and not is_web_upload:
+            if list(group_specs):
+                raise UserUploadError(
+                    "Groups are not allowed with parallel user import. Please upload them separately")
 
             task = parallel_user_import.delay(
-                self.domain,
-                list(self.user_specs),
+                domain,
+                list(user_specs),
                 request.couch_user.user_id
             )
         else:
             upload_record = UserUploadRecord(
-                domain=self.domain,
+                domain=domain,
                 user_id=request.couch_user.user_id
             )
             upload_record.save()
+
             task = import_users_and_groups.delay(
-                self.domain,
-                list(self.user_specs),
-                list(self.group_specs),
+                domain,
+                list(user_specs),
+                list(group_specs),
                 request.couch_user.user_id,
                 upload_record.pk,
-                self.is_web_upload
+                is_web_upload
             )
+
         task_ref.set_task(task)
+        return task_ref
+
+    def _get_success_response(self, request, task_ref):
         if self.is_web_upload:
             return HttpResponseRedirect(
                 reverse(

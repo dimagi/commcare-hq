@@ -26,8 +26,10 @@ ucr_data_source_updated = dispatcher.Signal()
 
 def create_form_repeat_records(sender, xform, **kwargs):
     from corehq.motech.repeaters.models import FormRepeater
+    from corehq.motech.repeaters.expression.repeaters import ArcGISFormExpressionRepeater
     if not xform.is_duplicate:
         create_repeat_records(FormRepeater, xform)
+        create_repeat_records(ArcGISFormExpressionRepeater, xform)
 
 
 def create_case_repeat_records(sender, case, **kwargs):

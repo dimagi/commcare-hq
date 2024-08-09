@@ -2,7 +2,7 @@
 hqDefine("accounting/js/stripe_card_manager", [
     'jquery',
     'knockout',
-    'accounting/js/lib/stripe',
+    'stripe',
 ], function (
     $,
     ko,
