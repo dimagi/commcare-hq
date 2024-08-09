@@ -638,6 +638,36 @@ class RelatedDocExpressionSpec(JsonObject):
                                   str(self._value_expression))
 
 
+class RelatedCaseByExternalIDExpressionSpec(RelatedDocExpressionSpec):
+    """
+        This can be used to look up a property in another case by searching it
+        by its external ID.
+        In case of multiple matching cases, the first match is picked up.
+        Here's an example to get name of a related case, looked up by external id
+        .. code:: json
+           {
+               "type": "related_case_by_external_id",
+               "related_doc_type": "CommCareCase",
+               "doc_id_expression": {
+                   "type": "property_path",
+                   "property_path": ["form", "case", "related_person_case_id"]
+               },
+               "value_expression": {
+                   "type": "property_name",
+                   "property_name": "name"
+               }
+           }
+        """
+
+    type = TypeProperty('related_case_by_external_id')
+
+    @staticmethod
+    def _get_document_store(domain, related_doc_type):
+        return get_document_store_for_doc_type(
+            domain, related_doc_type, load_source="related_doc_expression",
+            search_by_external_id=True)
+
+
 def _get_user(domain, doc_id):
     # Whitelisted properties of CommCareUser are organized by the
     # (sub)class that added them. If the value is a JsonObject instance
