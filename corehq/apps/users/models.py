@@ -354,10 +354,10 @@ class HqPermissions(DocumentSchema):
     def access_profile(self, profile_id):
         return self.edit_user_profile or profile_id in self.edit_user_profile_list
 
-    def view_tableau_viz(self, viz_id):
-        if not self.access_all_locations:
+    def view_tableau_viz(self, viz):
+        if not viz.location_safe and not self.access_all_locations:
             return False
-        return self.view_tableau or viz_id in self.view_tableau_list
+        return self.view_tableau or str(viz.id) in self.view_tableau_list
 
     def has(self, permission, data=None):
         if data:

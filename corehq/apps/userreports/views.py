@@ -1946,7 +1946,7 @@ class UCRExpressionEditView(BaseProjectDataView):
         if form.is_valid():
             form.save()
             try:
-                self.expression.wrapped_definition(EvaluationContext({}))
+                self.expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
             except BadSpecError as e:
                 return JsonResponse({"warning": _("Problem with expression: {}").format(e)})
             return JsonResponse({})

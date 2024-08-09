@@ -2336,8 +2336,7 @@ msgstr ""
 #: corehq/messaging/smsbackends/airtel_tcl/forms.py
 #: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
 #: corehq/messaging/smsbackends/start_enterprise/forms.py
-#: corehq/messaging/smsbackends/trumpia/forms.py
-#: corehq/messaging/smsbackends/unicel/forms.py corehq/motech/openmrs/forms.py
+#: corehq/messaging/smsbackends/trumpia/forms.py corehq/motech/openmrs/forms.py
 #: custom/abt/reports/filters.py
 msgid "Username"
 msgstr "Nom d'utilisateur"
@@ -5051,10 +5050,17 @@ msgid "Automatic"
 msgstr "Automatique"
 
 #: corehq/apps/app_manager/static_strings.py
+#, fuzzy
+#| msgid ""
+#| "Automatically resizes images within forms. Follow <a href='https://"
+#| "confluence.dimagi.com/display/commcarepublic/Auto-"
+#| "Resize+Images+on+Android'> the instructions here</a> to determine which "
+#| "value to use."
 msgid ""
-"Automatically resizes images within forms. Follow <a href='https://"
-"confluence.dimagi.com/display/commcarepublic/Auto-Resize+Images+on+Android'> "
-"the instructions here</a> to determine which value to use."
+"Automatically resizes images within forms. Follow <a href='https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/"
+"Images+in+CommCare#Auto-Resize-Images-on-Android'> the instructions here</a> "
+"to determine which value to use."
 msgstr ""
 "Redimensionne automatiquement les images dans les formulaires. Suivez <a "
 "href='https://confluence.dimagi.com/display/commcarepublic/Auto-"
@@ -5791,10 +5797,11 @@ msgstr ""
 msgid ""
 "When a value is selected, this feature controls the display size of any user-"
 "provided image such that it will be consistent with the size of the original "
-"image file, and consistent across devices. Follow <a href='https://"
-"confluence.dimagi.com/display/commcarepublic/"
-"Image+Sizing+with+Multiple+Android+Device+Models'> the instructions here</a> "
-"to determine which value to use."
+"image file, and consistent across devices. Follow <a href='https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/"
+"Images+in+CommCare#CommCare-Developer-Toolkit-Image-Sizing-with-Multiple-"
+"Android-Device-Models'> the instructions here</a> to determine which value "
+"to use."
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -6052,14 +6059,6 @@ msgid ""
 "CommCare. These have been developed based on\n"
 "          clinical protocols from the World Health Organization, the Centers "
 "for Disease Control, and others.\n"
-"        </p>\n"
-"        <p>\n"
-"          <strong>\n"
-"            For more information about these template applications, please "
-"visit Dimagi's\n"
-"            <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"CommCare+for+COVID-19\" target=\"_blank\">COVID-19 wiki</a>.\n"
-"          </strong>\n"
 "        </p>\n"
 "        <p class=\"help-block\">\n"
 "          These application templates can be imported into your project "
@@ -10436,8 +10435,9 @@ msgid ""
 "updates will also\n"
 "                                include multimedia which could require a lot "
 "of data. See the\n"
-"                                <a href='https://confluence.dimagi.com/"
-"display/commcarepublic/Install+CommCare+for+Android+Smartphones'>\n"
+"                                <a href=\"https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143946239/"
+"Installing+CommCare+on+Android+Devices\">\n"
 "                                  Help Site\n"
 "                                </a> for more info.\n"
 "                              "
@@ -10531,13 +10531,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#, python-format
 msgid ""
 "\n"
 "        For more information on deprecated case types, see the following\n"
-"        <a target=\"_blank\" href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/"
-"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">documentation</"
-"a>.\n"
+"        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-"
+"Types-and-Case-Properties\">documentation</a>.\n"
 "      "
 msgstr ""
 
@@ -10881,8 +10881,7 @@ msgstr "Veuillez entrer un mot de passe ou annuler."
 #: corehq/messaging/smsbackends/mach/forms.py
 #: corehq/messaging/smsbackends/push/forms.py
 #: corehq/messaging/smsbackends/start_enterprise/forms.py
-#: corehq/messaging/smsbackends/unicel/forms.py corehq/motech/forms.py
-#: corehq/motech/openmrs/forms.py
+#: corehq/motech/forms.py corehq/motech/openmrs/forms.py
 msgid "Password"
 msgstr "Mot de passe"
 
@@ -12041,8 +12040,9 @@ msgid ""
 "      <p>\n"
 "        Documentation for bulk case imports can be found on our\n"
 "        <a\n"
-"          href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Updating+Cases+-+Update+multiple+case+types+in+a+single+Excel+import\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143946828/Importing+Cases+Using+Excel#Update-Multiple-Case-Types-in-a-"
+"Single-Import\"\n"
 "          target=\"_blank\">\n"
 "          help page for this feature.\n"
 "        </a>\n"
@@ -13928,6 +13928,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, python-format
 msgid ""
 "\n"
 "            <p>\n"
@@ -13954,10 +13955,9 @@ msgid ""
 "            </ul>\n"
 "            <p>\n"
 "              For more information on deprecated case types, see the\n"
-"              <a target=\"_blank\" href=\"https://confluence.dimagi.com/"
-"display/commcarepublic/"
-"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">following "
-"documentation</a>.\n"
+"              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-"
+"Delete-Case-Types-and-Case-Properties\">following documentation</a>.\n"
 "            </p>\n"
 "          "
 msgstr ""
@@ -14522,9 +14522,9 @@ msgid ""
 "\n"
 "            Create rules for updating or closing cases from CommCare HQ.\n"
 "            All rules run every day at %(time)s GMT.\n"
-"            For more information, see the <a href=\"https://confluence."
-"dimagi.com/display/commcarepublic/Automatically+Close+Cases\">Help Site</"
-"a>.\n"
+"            For more information, see the <a href=\"https://dimagi.atlassian."
+"net/wiki/spaces/commcarepublic/pages/2143957601/"
+"Automatically+Update+Cases\">Help Site</a>.\n"
 "          "
 msgstr ""
 
@@ -14591,7 +14591,7 @@ msgid ""
 "      This feature allows you to quickly explore your case data for ad-hoc "
 "data\n"
 "      queries or to identify unclean data.<br />\n"
-"      This is a Feature Preview.\n"
+"      This is an Add-On.\n"
 "    "
 msgstr ""
 
@@ -19211,26 +19211,20 @@ msgid "Mobile Form Submissions"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid " to "
 msgid "{} to {}"
-msgstr "à"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "past {} days"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Remote apps are not supported"
 msgid "Date ranges with more than 90 days are not supported"
-msgstr "Les applications à distance ne sont pas supportées"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Form Data"
 msgid "Form ID"
-msgstr "Données de formulaire"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Submitted [UTC]"
@@ -20539,9 +20533,9 @@ msgid ""
 "\n"
 "                                    <p>Checking this will add a button to "
 "download a configuration file\n"
-"                                       for the <a href=\"https://confluence."
-"dimagi.com/display/commcarepublic/CommCare+Data+Export+Tool\" "
-"target=\"_blank\">\n"
+"                                       for the <a href=\"https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/"
+"CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
 "                                       CommCare Data Export Tool</a> for the "
 "export.</p>\n"
 "                                   "
@@ -20875,8 +20869,8 @@ msgstr ""
 msgid ""
 "\n"
 "            To get started, please\n"
-"            <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Deploy+and+Install+an+Application+on+CommCareHQ\"\n"
+"            <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143947269/Publish+Your+Application\"\n"
 "               target=\"_blank\">deploy</a>\n"
 "            your application and submit data from a phone. You may also\n"
 "            <a href=\"https://help.commcarehq.org/display/commcarepublic/"
@@ -21470,8 +21464,8 @@ msgstr ""
 msgid ""
 "\n"
 "                Your export exceeds the limit of %(max_rows)s rows. Please "
-"see <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Selecting+Tools+for+CommCare+Data+Processing+and+Analysis\" data-"
+"see <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2337669143/Setting+up+a+Data+Pipeline+via+CommCare\" data-"
 "toggle=\"modal\">documentation</a> for more information.\n"
 "              "
 msgstr ""
@@ -28858,13 +28852,13 @@ msgstr "Créer un projet"
 #: corehq/apps/registration/forms.py
 msgid ""
 "I have read and agree to Dimagi's\n"
-"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                <a href=\"https://dimagi.com/terms-privacy/\"\n"
 "                    target=\"_blank\">Privacy Policy</a>,\n"
-"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                <a href=\"https://dimagi.com/terms-of-service/\"\n"
 "                    target=\"_blank\">Terms of Service</a>,\n"
-"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                <a href=\"https://dimagi.com/terms-ba/\"\n"
 "                    target=\"_blank\">Business Agreement</a>, and\n"
-"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                <a href=\"https://dimagi.com/terms-aup/\"\n"
 "                    target=\"_blank\">Acceptable Use Policy</a>.\n"
 "               "
 msgstr ""
@@ -31068,8 +31062,9 @@ msgid ""
 "When searching by location, put your location name in quotes to show only "
 "exact matches. To more easily find a location, you may specify multiple "
 "levels by separating with a \"/\". For example, \"Massachusetts/Suffolk/"
-"Boston\". <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Search+for+Locations\"target=\"_blank\">Learn more</a>."
+"Boston\". <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2215051298/Organization+Data+Management\"target=\"_blank\">Learn more</"
+"a>."
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
@@ -31078,8 +31073,9 @@ msgstr ""
 
 #: corehq/apps/reports/filters/users.py
 msgid ""
-"<i class=\"fa fa-info-circle\"></i> See <a href=\"https://confluence.dimagi."
-"com/display/commcarepublic/Report+and+Export+Filters\" target=\"_blank\"> "
+"<i class=\"fa fa-info-circle\"></i> See <a href=\"https://dimagi.atlassian."
+"net/wiki/spaces/commcarepublic/pages/2215051298/"
+"Organization+Data+Management#Search-for-Locations\" target=\"_blank\"> "
 "Filter Definitions</a>."
 msgstr ""
 
@@ -33164,14 +33160,13 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
-#, python-format
 msgid ""
 "\n"
 "              This feature will only update the specified questions.\n"
 "              It will <strong>not</strong> run any calculations or affect "
 "cases.\n"
-"              <a target=\"_blank\" href=\"https://confluence.dimagi.com/"
-"display/commcarepublic/Data+Cleaning%%3A+Clean+Form+Submission\">Read more</"
+"              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143954777/Clean+Form+Submission\">Read more</"
 "a>.\n"
 "            "
 msgstr ""
@@ -33476,14 +33471,14 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap5/case_data.html
+#, python-format
 msgid ""
 "\n"
 "                    This case uses a deprecated case type.\n"
 "                    See the\n"
-"                    <a target=\"_blank\" href=\"https://confluence.dimagi."
-"com/display/commcarepublic/"
-"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">help "
-"documentation</a>\n"
+"                    <a target=\"_blank\" href=\"https://dimagi.atlassian.net/"
+"wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-"
+"Delete-Case-Types-and-Case-Properties\">help documentation</a>\n"
 "                    for more information.\n"
 "                  "
 msgstr ""
@@ -38524,12 +38519,10 @@ msgid "When '{}' is True for an existing user, {}."
 msgstr ""
 
 #: corehq/apps/user_importer/validation.py
-#, fuzzy
-#| msgid "Sorry, you don't have permission to do this action!"
 msgid ""
 "Based on your locations you do not have permission to edit this user or user "
 "invitation"
-msgstr "Désolé, vous n'avez pas la permission de réaliser cette action!"
+msgstr ""
 
 #: corehq/apps/user_importer/validation.py
 msgid "You do not have permission to assign or remove these locations: {}"
@@ -40330,6 +40323,12 @@ msgstr ""
 "Le site principal doit toujours être réglé sur l'un des sites ci-dessus"
 
 #: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid "One or more of the locations was not found."
+msgid "One or more of the locations you specified cannot have users assigned."
+msgstr "Un ou plusieurs sites n'ont pas été trouvé(s)."
+
+#: corehq/apps/users/forms.py
 msgid "You do not have permissions to assign one of those locations."
 msgstr ""
 
@@ -41819,8 +41818,8 @@ msgstr ""
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid ""
 "\n"
-"          <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Roles+and+Permissions\"\n"
+"          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143957921/Roles+and+Permissions+Overview\"\n"
 "            target=\"_blank\">Learn more</a> about how roles &amp; "
 "permissions are used.\n"
 "        "
@@ -42751,20 +42750,6 @@ msgstr "Il y a une erreur dans le processus de votre requête"
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html
 msgid "Your export is ready."
 msgstr "Votre exportation est prête. "
-
-#: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html
-msgid ""
-"\n"
-"            If you are downloading a large file over a slow or unstable "
-"connection, we recommend syncing to Dropbox. Learn more about\n"
-"            <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Syncing+Downloads+to+Dropbox\">Sync to Dropbox</a>.\n"
-"          "
-msgstr ""
-
-#: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html
-msgid "Sync to Dropbox"
-msgstr "Synchroniser avec Dropbox"
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html
 msgid "Process complete."
@@ -43698,11 +43683,7 @@ msgstr ""
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert.html
 msgid ""
 "\n"
-"        Since you are a Superuser, you will see additional options. See\n"
-"        <a target=\"_blank\" href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/Conditional+Alerts+-+Superuser+Options\">Superuser Options</"
-"a>\n"
-"        for more information.\n"
+"        Since you are a Superuser, you will see additional options.\n"
 "      "
 msgstr ""
 
@@ -43759,8 +43740,8 @@ msgstr ""
 msgid ""
 "\n"
 "      For information on Broadcasts, see the\n"
-"      <a target=\"_blank\" href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/Broadcasts\">Broadcasts</a>\n"
+"      <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143944996/Broadcast+Messaging\">Broadcasts</a>\n"
 "      help page.\n"
 "    "
 msgstr ""
@@ -44148,7 +44129,6 @@ msgstr ""
 #: corehq/messaging/smsbackends/airtel_tcl/forms.py
 #: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
 #: corehq/messaging/smsbackends/mach/forms.py
-#: corehq/messaging/smsbackends/unicel/forms.py
 msgid "Sender ID"
 msgstr "Identifiant de l'expéditeur"
 
@@ -44746,10 +44726,6 @@ msgstr ""
 #: corehq/messaging/smsbackends/twilio/forms.py
 msgid "Twilio Settings"
 msgstr "Paramètres de Twilio"
-
-#: corehq/messaging/smsbackends/unicel/forms.py
-msgid "Unicel Settings"
-msgstr "Paramètres d'Unicel"
 
 #: corehq/messaging/smsbackends/vertex/forms.py
 msgid "password"
@@ -47597,5 +47573,8 @@ msgstr "Le Score à la Fonctionnalité"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
-#~ msgid "OK"
-#~ msgstr "OK"
+#~ msgid "Sync to Dropbox"
+#~ msgstr "Synchroniser avec Dropbox"
+
+#~ msgid "Unicel Settings"
+#~ msgstr "Paramètres d'Unicel"

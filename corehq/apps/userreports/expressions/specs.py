@@ -1,5 +1,5 @@
 import textwrap
-from functools import cached_property
+from functools import cached_property, partial
 
 from jsonobject.base_properties import DefaultProperty
 from jsonpath_ng.ext import parse as jsonpath_parse
@@ -211,8 +211,7 @@ class NamedExpressionSpec(JsonObject):
     name = StringProperty(required=True)
 
     def configure(self, factory_context):
-        if self.name not in factory_context.named_expressions:
-            raise BadSpecError('Name {} not found in list of named expressions!'.format(self.name))
+        factory_context.get_named_expression(self.name)
         self._factory_context = factory_context
 
     def _context_cache_key(self, item):
@@ -223,7 +222,7 @@ class NamedExpressionSpec(JsonObject):
         if evaluation_context and evaluation_context.exists_in_cache(key):
             return evaluation_context.get_cache_value(key)
 
-        result = self._factory_context.named_expressions[self.name](item, evaluation_context)
+        result = self._factory_context.get_named_expression(self.name)(item, evaluation_context)
         if evaluation_context:
             evaluation_context.set_iteration_cache_value(key, result)
         return result
@@ -579,6 +578,14 @@ class RelatedDocExpressionSpec(JsonObject):
     doc_id_expression = DictProperty(required=True)
     value_expression = DictProperty(required=True)
 
+    SAFE_DOC_TYPES = (
+        'XFormInstance',
+        'CommCareCase',
+        'Group',
+        'Location',
+    )
+    SUPPORTED_RELATED_DOC_TYPES = SAFE_DOC_TYPES + ('CommCareUser',)
+
     def configure(self, doc_id_expression, value_expression):
         non_couch_doc_types = {
             CommCareCase.DOC_TYPE,
@@ -602,17 +609,18 @@ class RelatedDocExpressionSpec(JsonObject):
     def _get_document(related_doc_type, doc_id, evaluation_context):
         domain = evaluation_context.root_doc['domain']
         assert domain
-        document_store = get_document_store_for_doc_type(
-            domain, related_doc_type, load_source="related_doc_expression")
-        try:
-            doc = document_store.get_document(doc_id)
-        except DocumentNotFoundError:
-            return None
-        if domain != doc.get('domain'):
-            return None
-        if related_doc_type == 'CommCareUser':
-            doc['user_data'] = CommCareUser.wrap(doc).get_user_data(domain).to_dict()
-        return doc
+
+        if related_doc_type not in RelatedDocExpressionSpec.SUPPORTED_RELATED_DOC_TYPES:
+            raise BadSpecError(f'Unsupported related_doc_type {related_doc_type!r}')
+
+        func = {
+            'CommCareUser': partial(_get_user, domain),
+            'XFormInstance': partial(_get_doc, domain, 'XFormInstance'),
+            'CommCareCase': partial(_get_doc, domain, 'CommCareCase'),
+            'Group': partial(_get_doc, domain, 'Group'),
+            'Location': partial(_get_doc, domain, 'Location'),
+        }[related_doc_type]
+        return func(doc_id)
 
     def get_value(self, doc_id, evaluation_context):
         doc = self._get_document(self.related_doc_type, doc_id, evaluation_context)
@@ -623,6 +631,104 @@ class RelatedDocExpressionSpec(JsonObject):
         return "{}[{}]/{}".format(self.related_doc_type,
                                   str(self._doc_id_expression),
                                   str(self._value_expression))
+
+
+def _get_user(domain, doc_id):
+    # Whitelisted properties of CommCareUser are organized by the
+    # (sub)class that added them. If the value is a JsonObject instance
+    # that needs to be serialized, the property is given as a tuple,
+    # where the second value is the serializer function.
+    property_whitelist = (
+        # DocumentBase
+        '_id',
+        'doc_type',
+
+        # DjangoUserMixin
+        'username',
+        'first_name',
+        'last_name',
+        'email',
+        # 'password',
+        # 'is_staff',
+        # 'is_superuser',
+        'is_active',
+        'last_login',
+        'date_joined',
+
+        # EulaMixin
+        # 'eulas',
+
+        # CouchUser
+        # 'device_ids',
+        ('devices', lambda lst: [_device_to_dict(d) for d in lst]),
+        ('last_device', _device_to_dict),
+        'phone_numbers',
+        'created_on',
+        'last_modified',
+        'status',
+        'language',
+        # 'subscribed_to_commcare_users',
+        # 'announcements_seen',
+        'location_id',
+        'assigned_location_ids',
+        # 'has_built_app',
+        # 'analytics_enabled',
+        # two_factor_auth_disabled_until,
+        # login_attempts,
+        # attempt_date,
+        ('reporting_metadata', JsonObject.to_json),
+        # 'can_assign_superuser',
+
+        # SingleMembershipMixin
+        'domain_membership',
+
+        # CommCareUser
+        'domain',
+        # 'registering_device_id',
+        # 'loadtest_factor',
+        # 'is_loadtest_user',
+        # 'is_demo_user',
+        # 'demo_restore_id',
+        # 'is_account_confirmed',
+        # 'user_location_id',
+    )
+    user = CommCareUser.get_by_user_id(doc_id, domain)
+    if not user:
+        return None
+
+    doc = {}
+    for key in property_whitelist:
+        if isinstance(key, tuple):
+            key, func = key
+            doc[key] = func(getattr(user, key))
+        else:
+            doc[key] = getattr(user, key)
+    doc['user_data'] = user.get_user_data(domain).to_dict()
+    return doc
+
+
+def _get_doc(domain, doc_type, doc_id):
+    document_store = get_document_store_for_doc_type(
+        domain, doc_type, load_source="related_doc_expression")
+    try:
+        doc = document_store.get_document(doc_id)
+    except DocumentNotFoundError:
+        return None
+    if domain != doc.get('domain'):
+        return None
+    return doc
+
+
+def _device_to_dict(
+    device  # DeviceIdLastUsed
+):
+    whitelist = (
+        'device_id',
+        'last_used',
+        'commcare_version',
+        'app_meta',
+    )
+    return {k: v for k, v in device.to_json().items() if k in whitelist}
 
 
 class NestedExpressionSpec(JsonObject):
