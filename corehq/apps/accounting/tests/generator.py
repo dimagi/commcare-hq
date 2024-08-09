@@ -22,7 +22,13 @@ from corehq.apps.accounting.models import (
     BillingContactInfo,
     Currency,
     DefaultProductPlan,
+    Feature,
+    FeatureType,
+    SoftwarePlan,
     SoftwarePlanEdition,
+    SoftwarePlanVersion,
+    SoftwareProductRate,
+    Role,
     Subscriber,
     Subscription,
     SubscriptionType,
@@ -110,6 +116,38 @@ def arbitrary_contact_info(account, web_user_creator):
 @unit_testing_only
 def subscribable_plan_version(edition=SoftwarePlanEdition.STANDARD):
     return DefaultProductPlan.get_default_plan_version(edition)
+
+
+@unit_testing_only
+def default_feature_rates(edition=SoftwarePlanEdition.STANDARD):
+    feature_rates = []
+    for feature_type in FeatureType.EDITIONED_FEATURES:
+        feature = Feature.objects.get(
+            feature_type=feature_type,
+            name=f"{feature_type} {edition}"
+        )
+        feature_rates.append(feature.get_rate(default_instance=True))
+    return feature_rates
+
+
+@unit_testing_only
+def custom_plan_version(name='Custom software plan', edition=SoftwarePlanEdition.STANDARD,
+                        role_slug='standard_plan_v0', feature_rates=None):
+    plan = SoftwarePlan.objects.create(name=name, edition=edition)
+    product_rate = SoftwareProductRate.objects.create(name=name)
+    role = Role.objects.get(slug=role_slug)
+    plan_version = SoftwarePlanVersion.objects.create(
+        plan=plan,
+        product_rate=product_rate,
+        role=role
+    )
+    if feature_rates is None:
+        feature_rates = default_feature_rates(edition)
+    for feature_rate in feature_rates:
+        feature_rate.save()
+        plan_version.feature_rates.add(feature_rate)
+    plan_version.save()
+    return plan_version
 
 
 @unit_testing_only
