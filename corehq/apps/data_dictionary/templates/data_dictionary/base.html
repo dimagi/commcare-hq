@@ -205,7 +205,7 @@
           {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
             <div class="row-item">{% trans "Data Type" %}</div>
           {% endif %}
-          <div class="row-item">{% trans "Description" %}</div>
+          <div class="row-item-big">{% trans "Description" %}</div>
           {% if fhir_integration_enabled %}
             <div class="row-item">{% trans "FHIR Resource Property Path" %}</div>
           {% endif %}
@@ -241,10 +241,13 @@
                             attr: {'placeholder': name}" id="group-name" />
               <!-- /ko -->
             </div>
+            <div class="row-item">
+              &nbsp;{# Empty cell where "Label" is in case property rows #}
+            </div>
             {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
               <div class="row-item">{% trans "Case Property Group" %}</div>
             {% endif %}
-            <div class="row-item">
+            <div class="row-item-big">
               <!-- ko if: name() !== ''-->
               <textarea class="form-control std-height vertical-resize"
                         data-bind="value: $data.description, rows: 1"
