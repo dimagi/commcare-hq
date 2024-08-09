@@ -1,4 +1,5 @@
 import uuid
+from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
@@ -13,6 +14,10 @@ from dateutil.parser import isoparse
 from freezegun import freeze_time
 from nose.tools import assert_in, assert_raises
 
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import _create_case
 
@@ -32,6 +37,7 @@ from ..models import (
     RepeatRecord,
     format_response,
     get_all_repeater_types,
+    get_domains_forwarding_enabled,
     is_response,
     is_success_response,
 )
@@ -46,17 +52,34 @@ def test_get_all_repeater_types():
         assert_in(name, types)
 
 
-class RepeaterTestCase(TestCase):
+class RepeaterTestCase(TestCase, DomainSubscriptionMixin):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.addClassCleanup(clear_plan_version_cache)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        # DATA_FORWARDING is on PRO and above
+        cls.setup_subscription(DOMAIN, SoftwarePlanEdition.PRO)
+        cls.addClassCleanup(cls.teardown_subscriptions)
 
     def setUp(self):
         super().setUp()
         url = 'https://www.example.com/api/'
-        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        self.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name=url,
+            url=url,
+        )
+        self.addCleanup(self.conn.delete)
         self.repeater = FormRepeater(
             domain=DOMAIN,
             connection_settings=self.conn,
         )
         self.repeater.save()
+        self.addCleanup(self.repeater.delete)
 
 
 class TestSoftDeleteRepeaters(RepeaterTestCase):
@@ -69,6 +92,7 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
                 connection_settings=self.conn,
             )
             r.save()
+            self.addCleanup(r.delete)
             self.all_repeaters.append(r)
 
     def test_soft_deletion(self):
@@ -522,21 +546,20 @@ class TestRepeaterModelMethods(RepeaterTestCase):
         payload, cases = _create_case(
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
-        repeat_record = self.repeater.register(payload, fire_synchronously=True)
-        self.assertEqual(repeat_record.payload_id, payload.get_id)
-        all_records = list(RepeatRecord.objects.iterate(DOMAIN))
+        all_records = self.repeater.repeat_records.all()
         self.assertEqual(len(all_records), 1)
-        self.assertEqual(all_records[0].id, repeat_record.id)
+        self.assertEqual(all_records[0].payload_id, payload.form_id)
 
     def test_send_request(self):
-        case_id = uuid.uuid4().hex
-        payload, cases = _create_case(
-            domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
-        )
-        repeat_record = self.repeater.register(payload, fire_synchronously=True)
-        from corehq.motech.repeaters.tests.test_models_slow import ResponseMock
-        resp = ResponseMock(status_code=200, reason='OK')
         # Basic test checks if send_request is called
+        ResponseMock = namedtuple('ResponseMock', 'status_code reason')
+
+        case_id = uuid.uuid4().hex
+        payload, __ = _create_case(
+            domain=DOMAIN, case_id=case_id, case_type='case', owner_id='abcd'
+        )
+        repeat_record = self.repeater.repeat_records.first()
+        resp = ResponseMock(status_code=200, reason='OK')
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
             self.repeater.send_request(repeat_record, payload)
@@ -589,10 +612,10 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.assertEqual(counts[missing_id][State.Success], 0)
 
     def test_count_overdue(self):
-        self.new_record()
-        self.new_record()
-        self.new_record(state=State.Fail)
-        self.new_record(next_check=None, state=State.Success)
+        self.new_record(domain=DOMAIN)
+        self.new_record(domain=DOMAIN)
+        self.new_record(domain=DOMAIN, state=State.Fail)
+        self.new_record(domain=DOMAIN, next_check=None, state=State.Success)
 
         fifteen_mins_ago = datetime.utcnow() - timedelta(minutes=15)
         with self.set_repeater_attr('next_attempt_at', fifteen_mins_ago):
@@ -844,3 +867,51 @@ class TestIsSuccessResponse(SimpleTestCase):
 
     def test_none_response(self):
         self.assertFalse(is_success_response(None))
+
+
+class TestGetDomainsForwardingEnabled(SimpleTestCase):
+
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_domains_with_privilege_excluding_paused(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2', 'domain3', 'domain4'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: domain in {'domain1', 'domain2', 'domain3'}
+        mock_get_enabled_domains.return_value = {'domain2', 'domain4'}
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, {'domain1', 'domain3'})
+
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_empty_set_when_no_privileges(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: False
+        mock_get_enabled_domains.return_value = set()
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, set())
+
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_all_domains_when_none_paused(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2', 'domain3', 'domain4'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: True
+        mock_get_enabled_domains.return_value = set()
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, {'domain1', 'domain2', 'domain3', 'domain4'})

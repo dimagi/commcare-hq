@@ -133,43 +133,15 @@ class TestProcessRepeatRecord(TestCase):
 class TestIterReadyRepeaters(SimpleTestCase):
 
     def test_no_ready_repeaters(self):
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
-                  return_value=[]),  # <--
-            patch('corehq.motech.repeaters.models.domain_can_forward',
-                  return_value=True),
-        ):
-            self.assertFalse(next(iter_ready_repeaters(), False))
-
-    def test_not_domain_can_forward(self):
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
-                  return_value=[Repeater()]),
-            patch('corehq.motech.repeaters.models.domain_can_forward',
-                  return_value=False),  # <--
-        ):
-            self.assertFalse(next(iter_ready_repeaters(), False))
-
-    def test_pause_data_forwarding(self):
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
-                  return_value=[Repeater()]),
-            patch('corehq.motech.repeaters.models.domain_can_forward',
-                  return_value=True),
-            patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.enabled',
-                  return_value=True)  # <--
-        ):
+        with (patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
+                    return_value=[])):
             self.assertFalse(next(iter_ready_repeaters(), False))
 
     def test_successive_loops(self):
         repeater_1 = Repeater()
         repeater_2 = Repeater()
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
-                  side_effect=[[repeater_1, repeater_2], [repeater_1], []]),
-            patch('corehq.motech.repeaters.models.domain_can_forward',
-                  return_value=True),
-        ):
+        with (patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
+                    side_effect=[[repeater_1, repeater_2], [repeater_1], []])):
             repeaters = list(iter_ready_repeaters())
             self.assertEqual(len(repeaters), 3)
             self.assertEqual(repeaters, [repeater_1, repeater_2, repeater_1])
