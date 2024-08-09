@@ -1032,7 +1032,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         } else {
             if (self.isLabel) {
                 self.controlWidth = "";
-                self.labelWidth = "";
+                self.labelWidth = constants.FULL_WIDTH;
             } else {
                 self.controlWidth = constants.CONTROL_WIDTH;
                 self.labelWidth = constants.LABEL_WIDTH;
