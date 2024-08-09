@@ -127,6 +127,7 @@ from corehq.apps.users.util import (
     log_user_change,
     verify_modify_user_conditions,
 )
+from corehq.apps.users.role_utils import get_commcare_analytics_roles_by_user_domains
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -900,6 +901,40 @@ class IdentityResource(CorsResourceMixin, Resource):
         detail_allowed_methods = []
         list_allowed_methods = ['get']
         object_class = CouchUser
+        include_resource_uri = False
+
+
+AnalyticsRoles = namedtuple('AnalyticsRoles', 'domain_name role_names')
+AnalyticsRoles.__new__.__defaults__ = ('', '')
+
+
+class CommCareAnalyticsRolesResource(CorsResourceMixin, Resource):
+    domain_name = fields.CharField(attribute='domain_name', readonly=True)
+    role_names = fields.CharField(attribute='role_names', readonly=True)
+
+    def obj_get_list(self, bundle, **kwargs):
+        request = bundle.request
+        roles_by_domain = get_commcare_analytics_roles_by_user_domains(request.couch_user)
+
+        domain = request.GET.get('domain')
+        if domain:
+            if domain not in roles_by_domain:
+                return []
+            return [
+                AnalyticsRoles(domain, roles_by_domain[domain])
+            ]
+
+        results = []
+        for domain, roles in roles_by_domain.items():
+            results.append(
+                AnalyticsRoles(domain, roles)
+            )
+        return results
+
+    class Meta(object):
+        resource_name = 'commcare_analytics_roles'
+        authentication = LoginAuthentication()
+        list_allowed_methods = ['get']
         include_resource_uri = False
 
 
