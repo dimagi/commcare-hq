@@ -74,3 +74,25 @@ class SanitizeRowTests(SimpleTestCase):
         self.assertEqual(result[0], ['One', 'Two'])
         self.assertEqual(result[1], ['Three', 'Four'])
         self.assertEqual(result[2], ['Five', 'Six'])
+
+    def test_handles_safe_dict(self):
+        rows = [[{'text': '**One**', 'html': '<b>One</b>'}]]
+
+        result = _sanitize_rows(rows)
+        self.assertEqual(
+            result[0],
+            [{'text': '**One**', 'html': '<b>One</b>'}],
+        )
+
+    def test_soft_asserts_unsafe_dict(self):
+        rows = [[{'text': '<b>One</b>'}]]
+
+        with self.assertRaises(AssertionError):
+            _sanitize_rows(rows)
+
+    def test_soft_asserts_unexpected_type(self):
+        one = object()
+        rows = [[one]]
+
+        with self.assertRaises(AssertionError):
+            _sanitize_rows(rows)
