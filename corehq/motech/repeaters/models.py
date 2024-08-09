@@ -262,10 +262,10 @@ class Repeater(RepeaterSuperProxy):
         default=REQUEST_POST,
         max_length=16,
     )
-    is_paused = models.BooleanField(default=False)
-    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    is_paused = models.BooleanField(default=False, db_index=True)
+    next_attempt_at = models.DateTimeField(null=True, blank=True, db_index=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
-    # TODO: max_workers = models.IntegerField(default=0)
+    max_workers = models.IntegerField(default=0)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
@@ -435,8 +435,9 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def num_workers(self):
-        # TODO: return self.max_workers or MAX_REPEATER_WORKERS
-        return DEFAULT_REPEATER_WORKERS
+        # If `num_workers` is 1, repeat records are sent in the order in
+        # which they were registered.
+        return self.max_workers or DEFAULT_REPEATER_WORKERS
 
     def _time_request(self, repeat_record, payload, timing_context):
         with timing_context(ENDPOINT_TIMER) if timing_context else nullcontext():
@@ -1014,13 +1015,19 @@ class RepeatRecordManager(models.Manager):
 
 
 class RepeatRecord(models.Model):
-    domain = models.CharField(max_length=126)
+    domain = models.CharField(max_length=126, db_index=True)
     payload_id = models.CharField(max_length=255)
-    repeater = models.ForeignKey(Repeater,
-                                 on_delete=DB_CASCADE,
-                                 db_column="repeater_id_",
-                                 related_name='repeat_records')
-    state = models.PositiveSmallIntegerField(choices=State.choices, default=State.Pending)
+    repeater = models.ForeignKey(
+        Repeater,
+        on_delete=DB_CASCADE,
+        db_column="repeater_id_",
+        related_name='repeat_records',
+    )
+    state = models.PositiveSmallIntegerField(
+        choices=State.choices,
+        default=State.Pending,
+        db_index=True,
+    )
     registered_at = models.DateTimeField()
     next_check = models.DateTimeField(null=True, default=None)
     max_possible_tries = models.IntegerField(default=MAX_BACKOFF_ATTEMPTS)
