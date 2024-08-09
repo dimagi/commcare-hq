@@ -32,6 +32,12 @@ class _patch_user_data_db_layer(ContextDecorator):
         self.init_patcher = None
         self.schema_patcher = None
 
+    def __call__(self, func):
+        if isinstance(func, type):
+            raise NotImplementedError(
+                f"this decorator can only be used to wrap test functions (got: {func})")
+        return super().__call__(func)
+
     def __enter__(self):
         self.init_patcher = patch(
             'corehq.apps.users.user_data.UserData.for_user', new=lambda u, d: UserData({}, None, d))

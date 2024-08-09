@@ -9,6 +9,7 @@ import functools
 import json
 import logging
 import os
+import re
 import traceback
 import uuid
 from collections import namedtuple
@@ -445,6 +446,10 @@ class generate_cases:
                 "duplicate test case: {}.{}".format(owner, test.__name__)
             setattr(owner, test.__name__, test)
 
+        def argsrepr(args):
+            return obj_addr.sub(">", repr(args))
+
+        obj_addr = re.compile(r" at 0x[\da-f]{8,}>")
         tests = []
 
         if self.test_class is None:
@@ -469,7 +474,7 @@ class generate_cases:
                     return test_func(self, **args)
                 return test_func(self, *args)
 
-            test.__name__ = test_func.__name__ + repr(args)
+            test.__name__ = test_func.__name__ + argsrepr(args)
             assign(Test, test)
             tests.append(test)
 
