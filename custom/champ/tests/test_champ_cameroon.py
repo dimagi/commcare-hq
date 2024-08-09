@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 from datetime import date
 
 from corehq.apps.userreports.specs import EvaluationContext
@@ -8,10 +9,15 @@ from custom.champ.utils import POST_TEST_XMLNS, ACCOMPAGNEMENT_XMLNS, SUIVI_MEDI
 CHAMP_CAMEROON_DATA_SOURCE = 'champ_cameroon.json'
 
 
-@patch_user_data_db_layer()
 class TestEnhancedPeerMobilization(TestDataSourceExpressions):
 
     data_source_name = CHAMP_CAMEROON_DATA_SOURCE
+
+    def setUp(self):
+        super().setUp()
+        context = ExitStack()
+        context.enter_context(patch_user_data_db_layer())
+        self.addCleanup(context.close)
 
     def test_champ_cametoon_properties_for_post_test_xmlns(self):
         form = {

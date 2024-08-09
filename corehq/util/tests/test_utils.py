@@ -19,7 +19,7 @@ def test_timelimit_fail():
     @timelimit(0.0001)
     def sleeper():
         time.sleep(0.001)
-    with assert_raises(AssertionError, msg=re.compile("sleeper took too long")):
+    with assert_raises(AssertionError, msg=re.compile("sleeper time limit .+ exceeded")):
         sleeper()
 
 

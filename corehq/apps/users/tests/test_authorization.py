@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from decorator import contextmanager
 from django.test import TestCase
-from nose.tools import nottest, istest
+from corehq.tests.tools import nottest, istest
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain

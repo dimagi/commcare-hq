@@ -1,4 +1,5 @@
 import datetime
+from contextlib import ExitStack
 from copy import deepcopy
 
 from django.contrib.admin.models import LogEntry
@@ -2210,7 +2211,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             local_tableau_users.get(username='george@eliot.com')
 
 
-@patch_user_data_db_layer()
 class TestUserChangeLogger(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
@@ -2221,6 +2221,11 @@ class TestUserChangeLogger(SimpleTestCase):
             domain=cls.domain_name,
             user_id=cls.uploading_user.get_id
         )
+
+    def setUp(self):
+        context = ExitStack()
+        context.enter_context(patch_user_data_db_layer())
+        self.addCleanup(context.close)
 
     def test_add_change_message_duplicate_slug_entry(self):
         user = CommCareUser()

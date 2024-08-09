@@ -28,6 +28,8 @@ class Command(BaseCommand):
             help='Mark migrations as run without actually running them.')
 
     def handle(self, app_label, migration_name, **options):
+        import traceback
+        traceback.print_stack()
         args = []
         if app_label is not None:
             args.append(app_label)

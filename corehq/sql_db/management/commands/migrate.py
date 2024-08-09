@@ -14,6 +14,8 @@ class Command(migrate.Command):
 
     @no_translations
     def handle(self, *args, should_reindex, **options):
+        import traceback
+        traceback.print_stack()
         result = super().handle(*args, **options)
 
         if reindexer.should_reindex and should_reindex:

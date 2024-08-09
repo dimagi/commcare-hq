@@ -1,16 +1,16 @@
 -r requirements.in
 
-django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
 fakecouch
-nose
-nose-exclude
 pip-tools>=6.8.0
 testil
 requests-mock
 sqlalchemy-postgres-copy
 Faker
-flaky
+flaky>=3.8  # required for pytest 8.2 (and possibly earlier versions)
 freezegun
 radon>=5.0  # v5 no longer depends on flake8-polyfill
+pytest @ git+https://github.com/millerdev/pytest.git@7843f289c99cba985c78ded49170bee300984ba2
+pytest-django
+pytest-unmagic @ git+https://github.com/dimagi/pytest-unmagic.git
 coverage
 uWSGI

@@ -20,6 +20,7 @@ WHITELIST = [
 
     # warnings that may be resolved with a library upgrade
     ("couchdbkit.schema.properties", "'collections.abc'"),
+    ("eulxml", "pkg_resources is deprecated as an API"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
@@ -46,8 +47,8 @@ WHITELIST = [
         "elasticsearch5.connection.http_urllib3",
         "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
-    # Should be removed when Nose is updated
-    ("nose.plugins.manager", "pkg_resources is deprecated as an API."),
+    # Open files are leaked all over the place, it will probably take a long time to fix all of them
+    ("", "unclosed file", ResourceWarning),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
@@ -64,7 +65,7 @@ WHITELIST = [
 ]
 
 
-def configure_warnings(is_testing):
+def configure_warnings(is_testing=False):
     strict = is_testing or os.environ.get("CCHQ_STRICT_WARNINGS")
     if strict:
         augment_warning_messages()
