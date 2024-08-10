@@ -1,16 +1,18 @@
 --- 
 +++ 
-@@ -2,30 +2,35 @@
+@@ -1,37 +1,20 @@
++// These styles are overridden in preview_app/breadcrumbs.scss and
++// formplayer-webapp/breadcrumbs.scss
+ #breadcrumb-region {
      position: sticky;
      position: -webkit-sticky;
      top: 0;
 -    z-index: @zindex-navbar-cloudcare;
-+    z-index: $zindex-navbar-cloudcare;
- }
- 
+-}
+-
 -#breadcrumb-region .breadcrumb-text, .single-app-view .breadcrumb-text {
-+#breadcrumb-region .breadcrumb-item, .single-app-view .breadcrumb-item {
-     cursor: pointer;
+-    cursor: pointer;
++    z-index: $zindex-navbar-cloudcare - 1;
  }
  
  #breadcrumb-region .breadcrumb,
@@ -21,27 +23,25 @@
 -  .border-top-radius(0);
 -  .border-bottom-radius(0);
 -  .box-shadow(0 0 5px 2px rgba(0,0,0,.3));
-+  background-color: $cc-brand-mid;
 +  border-radius: 0;
 +  box-shadow: 0 0 5px 2px rgba(0,0,0,.3);
    border: none;
  
 -  .breadcrumb-text {
-+  .breadcrumb-item {
-+    color: white;
-+
-     &:before {
-+      padding: 0 6px 0 0;
-       content: '\f054';
-       font-family: 'FontAwesome';
-     }
-+
-+    a {
-+      color: white;
-+    }
-   }
+-    &:before {
+-      content: '\f054';
+-      font-family: 'FontAwesome';
+-    }
+-  }
 -  .breadcrumb-text:first-child {
-+  .breadcrumb-item:first-child {
-     &:before {
-       display: none;
-     }
+-    &:before {
+-      display: none;
+-    }
++  .breadcrumb-item::before {
++    font-family: "FontAwesome";  // supports bsbreadcrumb-divider: \f054
+   }
+ }
+-
+-#breadcrumb__menu-dropdown {
+-    cursor: pointer;
+-}
