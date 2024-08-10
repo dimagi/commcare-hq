@@ -358,6 +358,10 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def repeat_records_ready(self):
+        """
+        Returns repeat records in the Pending or Fail state in the order
+        in which they were registered
+        """
         return (
             self.repeat_records
             .filter(state__in=(State.Pending, State.Fail))
