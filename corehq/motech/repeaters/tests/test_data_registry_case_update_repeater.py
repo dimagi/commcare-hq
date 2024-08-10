@@ -120,9 +120,6 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
         url = self.repeater.get_url(repeat_records[0])
         self.assertEqual(url, f"case-repeater-url/{self.target_domain}/")
 
-        # check that the synchronous attempt of the repeat record happened
-        self.assertEqual(1, len(repeat_records[0].attempts))
-
     def test_prevention_of_update_chaining(self):
         builder = (
             IntentCaseBuilder(self.registry_slug)
