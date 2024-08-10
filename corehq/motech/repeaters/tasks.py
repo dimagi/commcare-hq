@@ -139,17 +139,23 @@ def process_repeater(domain, repeater_id):
 def update_repeater(repeat_record_states, repeater_id):
     """
     Determines whether the repeater should back off, based on the
-    results of `fire_repeat_record()` tasks.
+    results of ``_process_repeat_record()`` tasks.
     """
     repeater = Repeater.objects.get(id=repeater_id)
     if any(s == State.Success for s in repeat_record_states):
-        # At least one repeat record was sent successfully.
+        # At least one repeat record was sent successfully. The
+        # remote endpoint is healthy.
         repeater.reset_backoff()
-    elif all(s in (State.Empty, None) for s in repeat_record_states):
-        # Nothing was sent. Don't update the repeater.
+    elif all(s in (State.Empty, State.InvalidPayload, None)
+             for s in repeat_record_states):
+        # We can't tell anything about the remote endpoint.
+        # _process_repeat_record() can return None if it is called
+        # with a repeat record whose state is Success or Empty. That
+        # can't happen in this workflow, but None is included for
+        # completeness.
         pass
     else:
-        # All sent payloads failed.
+        # All sent payloads failed. Try again later.
         repeater.set_backoff()
 
 
