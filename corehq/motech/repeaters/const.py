@@ -10,6 +10,7 @@ RATE_LIMITER_DELAY_RANGE = (timedelta(minutes=0), timedelta(minutes=15))
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT  # TODO: Drop
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
+ENDPOINT_TIMER = 'endpoint_timer'
 # Number of attempts to an online endpoint before cancelling payload
 MAX_ATTEMPTS = 3
 # Number of exponential backoff attempts to an offline endpoint

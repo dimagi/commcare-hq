@@ -15,6 +15,7 @@ from corehq.util.metrics import (
     make_buckets_from_timedeltas,
     metrics_counter,
     metrics_gauge_task,
+    metrics_histogram,
     metrics_histogram_timer,
 )
 from corehq.util.metrics.const import MPM_MAX
@@ -24,6 +25,7 @@ from ..rate_limiter import report_repeater_usage
 from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
+    ENDPOINT_TIMER,
     State,
 )
 from .models import Repeater, RepeatRecord
@@ -191,14 +193,31 @@ def retry_process_repeat_record(repeat_record_id, domain):
 
 def _process_repeat_record(repeat_record_id):
     state_or_none = None
-    try:
-        repeat_record = RepeatRecord.objects.get(id=repeat_record_id)
-        with TimingContext() as timer:
-            state_or_none = repeat_record.fire()
-        # round up to the nearest millisecond, meaning always at least 1ms
-        report_repeater_usage(repeat_record.domain, milliseconds=int(timer.duration * 1000) + 1)
-    except Exception:
-        logging.exception(f'Failed to process repeat record: {repeat_record_id}')
+    repeat_record = RepeatRecord.objects.get(id=repeat_record_id)
+    request_duration = None
+    with TimingContext('process_repeat_record') as timer:
+        try:
+            with timer('fire_timing') as fire_timer:
+                state_or_none = repeat_record.fire(timing_context=fire_timer)
+            # round up to the nearest millisecond, meaning always at least 1ms
+            report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
+            action = 'attempted'
+            request_duration = [sub.duration for sub in fire_timer.root.subs if sub.name == ENDPOINT_TIMER][0]
+        except Exception:
+            logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
+
+    processing_time = timer.duration - request_duration if request_duration else timer.duration
+    metrics_histogram(
+        'commcare.repeaters.repeat_record_processing.timing',
+        processing_time * 1000,
+        buckets=(100, 500, 1000, 5000),
+        bucket_tag='duration',
+        bucket_unit='ms',
+        tags={
+            'domain': repeat_record.domain,
+            'action': action,
+        },
+    )
     return state_or_none
 
 
