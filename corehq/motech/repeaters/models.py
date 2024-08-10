@@ -357,6 +357,10 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def repeat_records_ready(self):
+        """
+        Returns repeat records in the Pending or Fail state in the order
+        in which they were registered
+        """
         return (
             self.repeat_records
             .filter(state__in=(State.Pending, State.Fail))
@@ -1211,8 +1215,8 @@ class RepeatRecord(models.Model):
     # TODO: Drop: `process_repeater` task will call `process_repeat_record` tasks directly
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
-            process_repeat_record,
-            retry_process_repeat_record,
+            process_pending_repeat_record,
+            process_failed_repeat_record,
         )
 
         if self.next_check is None or self.next_check > datetime.utcnow():
@@ -1233,7 +1237,7 @@ class RepeatRecord(models.Model):
             return
 
         # separated for improved datadog reporting
-        task = retry_process_repeat_record if is_retry else process_repeat_record
+        task = process_failed_repeat_record if is_retry else process_pending_repeat_record
         if fire_synchronously:
             task(self.id, self.domain)
         else:

@@ -91,19 +91,15 @@ def form_context(form_ids):
 class TestProcessRepeatRecord(TestCase):
 
     def test_fires_record(self):
-        repeater = Repeater.objects.create(
-            domain=self.domain,
-            connection_settings=self.conn_settings,
-        )
-
-        repeat_record = RepeatRecord(
+        repeat_record = RepeatRecord.objects.create(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
-            repeater_id=repeater.repeater_id,
+            repeater_id=self.repeater.repeater_id,
         )
+        self.addCleanup(repeat_record.delete)
 
-        _process_repeat_record(repeat_record)
+        _process_repeat_record(repeat_record.id)
 
         self.assertEqual(self.mock_fire.call_count, 1)
 
@@ -116,10 +112,12 @@ class TestProcessRepeatRecord(TestCase):
             name='To Be Deleted',
             url="http://localhost/api/"
         )
+        cls.addClassCleanup(cls.conn_settings.delete)
         cls.repeater = Repeater.objects.create(
             domain=cls.domain,
             connection_settings=cls.conn_settings,
         )
+        cls.addClassCleanup(cls.repeater.delete)
 
     def setUp(self):
         self.patch()
