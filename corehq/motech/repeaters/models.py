@@ -95,6 +95,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
@@ -226,6 +227,7 @@ class RepeaterManager(models.Manager):
         """
         Return all Repeaters ready to be forwarded.
         """
+        domains = get_domains_forwarding_enabled()
         not_paused = models.Q(is_paused=False)
         next_attempt_not_in_the_future = (
             models.Q(next_attempt_at__isnull=True)
@@ -234,10 +236,13 @@ class RepeaterManager(models.Manager):
         repeat_records_ready_to_send = models.Q(
             repeat_records__state__in=(State.Pending, State.Fail)
         )
-        return (self.get_queryset()
-                .filter(not_paused)
-                .filter(next_attempt_not_in_the_future)
-                .filter(repeat_records_ready_to_send))
+        return (
+            self.get_queryset()
+            .filter(domain__in=domains)
+            .filter(not_paused)
+            .filter(next_attempt_not_in_the_future)
+            .filter(repeat_records_ready_to_send)
+        )
 
     def get_queryset(self):
         repeater_obj = self.model()
@@ -261,10 +266,10 @@ class Repeater(RepeaterSuperProxy):
         default=REQUEST_POST,
         max_length=16,
     )
-    is_paused = models.BooleanField(default=False)
-    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    is_paused = models.BooleanField(default=False, db_index=True)
+    next_attempt_at = models.DateTimeField(null=True, blank=True, db_index=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
-    # TODO: max_workers = models.IntegerField(default=1)
+    max_workers = models.IntegerField(default=MAX_REPEATER_WORKERS)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
@@ -361,13 +366,6 @@ class Repeater(RepeaterSuperProxy):
             .order_by('registered_at')
         )
 
-    @property
-    def domain_can_forward(self):
-        return (
-            domain_can_forward(self.domain)
-            and not toggles.PAUSE_DATA_FORWARDING.enabled(self.domain)
-        )
-
     def rate_limit(self):
         interval = random.uniform(*RATE_LIMITER_DELAY_RANGE)
         Repeater.objects.filter(id=self.repeater_id).update(
@@ -451,8 +449,7 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def num_workers(self):
-        # TODO: return min(self.max_workers, MAX_REPEATER_WORKERS)
-        return MAX_REPEATER_WORKERS
+        return min(self.max_workers, MAX_REPEATER_WORKERS)
 
     def fire_for_record(self, repeat_record, timing_context=None):
         payload = self.get_payload(repeat_record)
@@ -965,16 +962,15 @@ class RepeatRecordManager(models.Manager):
 
     def count_overdue(self, threshold=timedelta(minutes=10)):
         overdue = datetime.utcnow() - threshold
+        domains = get_domains_forwarding_enabled()
         repeater_not_paused = models.Q(repeater__is_paused=False)
-        repeater_next_attempt_overdue = (
-            models.Q(repeater__next_attempt_at__isnull=False)
-            | models.Q(repeater__next_attempt_at__lt=overdue)
-        )
+        repeater_next_attempt_overdue = models.Q(repeater__next_attempt_at__lt=overdue)
         ready_to_send = models.Q(
             state__in=(State.Pending, State.Fail)
         )
         return (
             self.get_queryset()
+            .filter(domain__in=domains)
             .filter(repeater_not_paused)
             .filter(repeater_next_attempt_overdue)
             .filter(ready_to_send)
@@ -1027,13 +1023,19 @@ class RepeatRecordManager(models.Manager):
 
 
 class RepeatRecord(models.Model):
-    domain = models.CharField(max_length=126)
+    domain = models.CharField(max_length=126, db_index=True)
     payload_id = models.CharField(max_length=255)
-    repeater = models.ForeignKey(Repeater,
-                                 on_delete=DB_CASCADE,
-                                 db_column="repeater_id_",
-                                 related_name='repeat_records')
-    state = models.PositiveSmallIntegerField(choices=State.choices, default=State.Pending)
+    repeater = models.ForeignKey(
+        Repeater,
+        on_delete=DB_CASCADE,
+        db_column="repeater_id_",
+        related_name='repeat_records',
+    )
+    state = models.PositiveSmallIntegerField(
+        choices=State.choices,
+        default=State.Pending,
+        db_index=True,
+    )
     registered_at = models.DateTimeField()
     next_check = models.DateTimeField(null=True, default=None)
     max_possible_tries = models.IntegerField(default=MAX_BACKOFF_ATTEMPTS)
@@ -1067,7 +1069,7 @@ class RepeatRecord(models.Model):
         # preserves the value of `self.failure_reason`.
         if self.succeeded:
             self.state = State.Pending
-        elif self.state == State.Cancelled:
+        elif self.state in (State.Cancelled, State.InvalidPayload):
             self.state = State.Fail
         self.next_check = datetime.utcnow()
         self.max_possible_tries = self.num_attempts + MAX_BACKOFF_ATTEMPTS
@@ -1124,13 +1126,13 @@ class RepeatRecord(models.Model):
         self.next_check = (attempt.created_at + wait) if state == State.Fail else None
         self.save()
 
-    def add_payload_exception_attempt(self, message, tb_str):
+    def add_payload_error_attempt(self, message, tb_str):
         self.attempt_set.create(
-            state=State.Cancelled,
+            state=State.InvalidPayload,
             message=message,
             traceback=tb_str,
         )
-        self.state = State.Cancelled
+        self.state = State.InvalidPayload
         self.next_check = None
         self.save()
 
@@ -1214,7 +1216,7 @@ class RepeatRecord(models.Model):
             except Exception as e:
                 log_repeater_error_in_datadog(self.domain, status_code=None,
                                               repeater_type=self.repeater_type)
-                self.handle_payload_error(str(e))
+                self.handle_payload_error(str(e), tb_str=traceback.format_exc())
             finally:
                 return self.state
         return None
@@ -1269,8 +1271,8 @@ class RepeatRecord(models.Model):
     def handle_exception(self, exception):
         self.add_client_failure_attempt(str(exception))
 
-    def handle_payload_error(self, message):
-        self.add_client_failure_attempt(message, retry=False)
+    def handle_payload_error(self, message, tb_str=''):
+        self.add_payload_error_attempt(message, tb_str)
 
     def cancel(self):
         self.state = State.Cancelled
@@ -1342,13 +1344,14 @@ def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:
             status_code=None,
             repeater_type=repeater.__class__.__name__
         )
-        repeat_record.add_payload_exception_attempt(
+        repeat_record.add_payload_error_attempt(
             message=str(err),
             tb_str=traceback.format_exc()
         )
         raise
 
 
+# TODO: Unused outside of tests
 def send_request(
     repeater: Repeater,
     repeat_record: RepeatRecord,
@@ -1412,7 +1415,7 @@ def send_request(
 
 
 def has_failed(record):
-    return record.state in (State.Fail, State.Cancelled)
+    return record.state in (State.Fail, State.Cancelled, State.InvalidPayload)
 
 
 def format_response(response):
@@ -1433,7 +1436,29 @@ def is_response(duck):
 
 
 def domain_can_forward(domain):
+    """
+    Checks whether ``domain`` has the privilege to forward data. Ignores
+    the status of the (temporary) ``PAUSE_DATA_FORWARDING`` toggle.
+
+    Used for registering repeat records.
+    """
     return domain and (
         domain_has_privilege(domain, ZAPIER_INTEGRATION)
         or domain_has_privilege(domain, DATA_FORWARDING)
     )
+
+
+def get_domains_forwarding_enabled():
+    """
+    Returns a set of domains that are *currently* able to forward data.
+    Considers the status of the (temporary) ``PAUSE_DATA_FORWARDING``
+    toggle.
+
+    Used for iterating repeaters and counting overdue repeat records.
+    """
+    domains_can_forward = {
+        domain for domain in Domain.get_all_names()
+        if domain_can_forward(domain)
+    }
+    domains_paused = set(toggles.PAUSE_DATA_FORWARDING.get_enabled_domains())
+    return domains_can_forward - domains_paused

@@ -9,6 +9,7 @@ from celery.utils.log import get_task_logger
 from dimagi.utils.couch import get_redis_lock
 
 from corehq.apps.celery import periodic_task, task
+from corehq.apps.pg_lock.models import Lock
 from corehq.motech.models import RequestLog
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,
@@ -20,7 +21,7 @@ from corehq.util.metrics import (
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
 
-from ..rate_limiter import rate_limit_repeater, report_repeater_usage
+from ..rate_limiter import report_repeater_usage
 from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
@@ -104,20 +105,21 @@ def iter_ready_repeaters():
     """
     while True:
         yielded = False
-        for repeater in Repeater.objects.all_ready():
-            if not repeater.domain_can_forward:
-                continue
+        with metrics_histogram_timer(
+            "commcare.repeaters.check.each_repeater",
+            timing_buckets=_check_repeaters_buckets,
+        ):
+            for repeater in Repeater.objects.all_ready():
+                # if rate_limit_repeater(repeater.domain): TODO: Update rate limiting
+                #     repeater.rate_limit()
+                #     continue
 
-            if rate_limit_repeater(repeater.domain):
-                repeater.rate_limit()
-                continue
-
-            yielded = True
-            yield repeater
+                lock = Lock(f'process_repeater_{repeater.repeater_id}')
+                if lock.acquire(blocking=False, timeout=9 * 60):
+                    yielded = True
+                    yield repeater
 
         if not yielded:
-            # No repeaters are ready, or they are rate limited, or their
-            # domains can't forward or are paused.
             return
 
 
@@ -142,18 +144,28 @@ def process_repeater(domain, repeater_id):
 def update_repeater(repeat_record_states, repeater_id):
     """
     Determines whether the repeater should back off, based on the
-    results of `fire_repeat_record()` tasks.
+    results of ``_process_repeat_record()`` tasks.
     """
-    repeater = Repeater.objects.get(id=repeater_id)
-    if any(s == State.Success for s in repeat_record_states):
-        # At least one repeat record was sent successfully.
-        repeater.reset_backoff()
-    elif all(s in (State.Empty, None) for s in repeat_record_states):
-        # Nothing was sent. Don't update the repeater.
-        pass
-    else:
-        # All sent payloads failed.
-        repeater.set_backoff()
+    try:
+        repeater = Repeater.objects.get(id=repeater_id)
+        if any(s == State.Success for s in repeat_record_states):
+            # At least one repeat record was sent successfully. The
+            # remote endpoint is healthy.
+            repeater.reset_backoff()
+        elif all(s in (State.Empty, State.InvalidPayload, None)
+                 for s in repeat_record_states):
+            # We can't tell anything about the remote endpoint.
+            # _process_repeat_record() can return None if it is called
+            # with a repeat record whose state is Success or Empty. That
+            # can't happen in this workflow, but None is included for
+            # completeness.
+            pass
+        else:
+            # All sent payloads failed. Try again later.
+            repeater.set_backoff()
+    finally:
+        lock = Lock(f'process_repeater_{repeater_id}')
+        lock.release()
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -205,6 +217,6 @@ def _process_repeat_record(repeat_record):
 metrics_gauge_task(
     'commcare.repeaters.overdue',
     RepeatRecord.objects.count_overdue,
-    run_every=crontab(),  # every minute
+    run_every=crontab(minute='*/5'),  # Every 5 minutes
     multiprocess_mode=MPM_MAX
 )
