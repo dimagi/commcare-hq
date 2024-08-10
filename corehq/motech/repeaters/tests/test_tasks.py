@@ -204,7 +204,10 @@ class TestProcessRepeater(TestCase):
         self.repeater.register(payload)
 
         with patch('corehq.motech.repeaters.models.simple_request') as request_mock:
-            request_mock.return_value = ResponseMock(status_code=404, reason='Not found')
+            request_mock.return_value = ResponseMock(
+                status_code=429,
+                reason='Too Many Requests',
+            )
             process_repeater(DOMAIN, self.repeater.repeater_id)
 
         self.repeater.set_backoff.assert_called_once()
