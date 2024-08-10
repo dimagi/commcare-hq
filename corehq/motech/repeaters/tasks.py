@@ -123,19 +123,29 @@ def iter_ready_repeaters():
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeater(domain, repeater_id):
-
-    def is_retry(repeat_record):
-        return repeat_record.state == State.Fail
-
     repeater = Repeater.objects.get(domain=domain, id=repeater_id)
     repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
     header_tasks = [
-        retry_process_repeat_record.s(rr.id, rr.domain)
-        if is_retry(rr)
-        else process_repeat_record.s(rr.id, rr.domain)
+        process_pending_repeat_record.s(rr.id, rr.domain)
+        if rr.state == State.Pending
+        else process_failed_repeat_record.s(rr.id, rr.domain)
         for rr in repeat_records
     ]
     chord(header_tasks)(update_repeater.s(repeater.repeater_id))
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_pending_repeat_record(repeat_record_id, domain):
+    # NOTE: Keep separate from `process_failed_repeat_record()` for
+    # monitoring purposes. `domain` is for tagging in Datadog
+    return _process_repeat_record(repeat_record_id)
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_failed_repeat_record(repeat_record_id, domain):
+    # NOTE: Keep separate from `process_pending_repeat_record()` for
+    # monitoring purposes. `domain` is for tagging in Datadog
+    return _process_repeat_record(repeat_record_id)
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -168,31 +178,27 @@ def update_repeater(repeat_record_states, repeater_id):
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record_id, domain):
-    """
-    NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
-    Domain is present here for domain tagging in datadog
-    """
-    return _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
+    # NOOP for flushing backlog of prefetched tasks created before
+    # repeaters were locked.
+    pass
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def retry_process_repeat_record(repeat_record_id, domain):
-    """
-    NOTE: Keep separate from process_repeat_record for monitoring purposes
-    Domain is present here for domain tagging in datadog
-    """
-    return _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
+    # NOOP for flushing backlog of prefetched tasks
+    pass
 
 
-def _process_repeat_record(repeat_record):
+def _process_repeat_record(repeat_record_id):
     state_or_none = None
     try:
+        repeat_record = RepeatRecord.objects.get(id=repeat_record_id)
         with TimingContext() as timer:
             state_or_none = repeat_record.fire()
         # round up to the nearest millisecond, meaning always at least 1ms
         report_repeater_usage(repeat_record.domain, milliseconds=int(timer.duration * 1000) + 1)
     except Exception:
-        logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
+        logging.exception(f'Failed to process repeat record: {repeat_record_id}')
     return state_or_none
 
 
