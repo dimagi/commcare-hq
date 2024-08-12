@@ -527,8 +527,6 @@ def create_case_repeater_register(repeater, domain, payload):
         'domain': domain,
         'doc_type': repeater.repeater_type
     })
-    # TODO: No, the repeater sends the repeat record.
-    # repeat_record.attempt_forward_now()
     return repeat_record
 
 
