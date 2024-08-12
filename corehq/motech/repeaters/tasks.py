@@ -93,17 +93,17 @@ def check_repeaters():
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for repeater, lock_token in iter_ready_repeaters():
+            for domain, repeater_id, lock_token in iter_ready_repeater_ids_forever():
                 if datetime.utcnow() > twentythree_hours_later:
                     break
 
                 metrics_counter("commcare.repeaters.check.attempt_forward")
-                process_repeater.delay(repeater.domain, repeater.repeater_id, lock_token)
+                process_repeater.delay(domain, repeater_id, lock_token)
     finally:
         check_repeater_lock.release()
 
 
-def iter_ready_repeaters():
+def iter_ready_repeater_ids_forever():
     """
     Cycles through repeaters (repeatedly ;) ) until there are no more
     repeat records ready to be sent.
@@ -114,12 +114,12 @@ def iter_ready_repeaters():
             "commcare.repeaters.check.each_repeater",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for repeater in Repeater.objects.all_ready():
-                lock = get_repeater_lock(repeater.repeater_id)
+            for domain, repeater_id in _iter_ready_repeater_ids_once():
+                lock = get_repeater_lock(repeater_id)
                 lock_token = uuid.uuid1().hex  # The same way Lock does it
                 if lock.acquire(blocking=False, token=lock_token):
                     yielded = True
-                    yield repeater, lock_token
+                    yield domain, repeater_id, lock_token
 
         if not yielded:
             # No repeaters are ready
@@ -132,6 +132,43 @@ def get_repeater_lock(repeater_id):
     one_day = 24 * 60 * 60
     lock = Lock(redis, name, timeout=one_day)
     return MeteredLock(lock, name)
+
+
+def _iter_ready_repeater_ids_once():
+    """
+    Yields domain-repeater_id tuples in a round-robin fashion.
+
+    e.g. ::
+        ('domain1', 'repeater_id1'),
+        ('domain2', 'repeater_id2'),
+        ('domain3', 'repeater_id3'),
+        ('domain1', 'repeater_id4'),
+        ('domain2', 'repeater_id5'),
+        ...
+
+    """
+
+    def iter_domain_repeaters(dom):
+        try:
+            rep_id = repeater_ids_by_domain[dom].pop(0)
+        except IndexError:
+            return
+        else:
+            yield rep_id
+
+    repeater_ids_by_domain = Repeater.objects.get_all_ready_ids_by_domain()
+    while True:
+        if not repeater_ids_by_domain:
+            return
+        for domain in list(repeater_ids_by_domain.keys()):
+            try:
+                repeater_id = next(iter_domain_repeaters(domain))
+            except StopIteration:
+                # We've exhausted the repeaters for this domain
+                del repeater_ids_by_domain[domain]
+                continue
+            else:
+                yield domain, repeater_id
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
