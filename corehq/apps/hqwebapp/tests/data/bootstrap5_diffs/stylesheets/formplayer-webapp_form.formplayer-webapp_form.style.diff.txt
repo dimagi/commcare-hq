@@ -1,12 +1,11 @@
 --- 
 +++ 
-@@ -1,15 +1,15 @@
+@@ -1,40 +1,31 @@
 -@form-text-indent: 23px;
 -@form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
 -@group-indent: 15px;
 +$form-text-indent: 23px;
 +$form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
-+$group-indent: 15px;
  
  .form-container {
    background-color: white;
@@ -22,7 +21,7 @@
    }
  
    .controls {
-@@ -17,24 +17,17 @@
+-    padding-right: 25px;
      padding-top: 3px;
    }
  
@@ -51,56 +50,54 @@
      }
    }
  
-@@ -42,7 +35,7 @@
+@@ -42,83 +33,47 @@
      position: sticky;
      /* Puts the anchored submit button in front of form elements that use bootstrap's .form-control,
         which adds z-index of 2 (3 when focused) */
 -    z-index: @zindex-formplayer-anchored-submit;
+-  }
+-
+-  // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
+-  .row {
+-    margin-left: 0px;
+-    margin-right: 0px;
+-  }
 +    z-index: $zindex-formplayer-anchored-submit;
-   }
- 
-   // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
-@@ -51,43 +44,43 @@
-     margin-right: 0px;
-   }
++  }
++
    .question-container {
 -    padding-left: @form-text-indent;
 -    padding-right: @form-text-indent;
 -  }
 -
 -  .form-group {
+-    margin-left: 0px;
+-    margin-right: 0px;
+-    .caption.control-label {
 +    padding-left: $form-text-indent;
 +    padding-right: $form-text-indent;
 +  }
 +
 +  .q {
-     margin-left: 0px;
-     margin-right: 0px;
--    .caption.control-label {
 +    .caption {
        display: block;
      }
    }
  
-   .group-body {
+-  .group-body {
 -    margin-left: @group-indent;
 -    margin-right: @group-indent;
 -  }
 -
 -  .gr.panel {
-+    margin-left: $group-indent;
-+    margin-right: $group-indent;
-+  }
-+
-+  .gr.card {
-     border-radius: 0px;
-   }
- 
--  .rep.panel {
 +  .rep.card {
      border-radius: 0px;
    }
  
+-  .rep.panel {
+-    border-radius: 0px;
+-  }
+-
 -  .col-sm-12,
 -  .col-sm-11,
 -  .col-sm-10,
@@ -113,25 +110,14 @@
 -  .col-sm-3,
 -  .col-sm-2,
 -  .col-sm-1 {
-+  .col-md-12,
-+  .col-md-11,
-+  .col-md-10,
-+  .col-md-9,
-+  .col-md-8,
-+  .col-md-7,
-+  .col-md-6,
-+  .col-md-5,
-+  .col-md-4,
-+  .col-md-3,
-+  .col-md-2,
-+  .col-md-1 {
-     &:first-child {
-       padding-left: 0;
-     }
-@@ -96,29 +89,29 @@
-     }
-   }
- 
+-    &:first-child {
+-      padding-left: 0;
+-    }
+-    &:last-child {
+-      padding-right: 0;
+-    }
+-  }
+-
 -  .panel-body {
 -    @media (max-width: @screen-xs-max) {
 +  .card-body {
@@ -164,7 +150,7 @@
      border-radius: 8px;
      margin: 2px;
      padding-top: 5px;
-@@ -138,16 +131,18 @@
+@@ -138,16 +93,18 @@
        height: 1em;
        vertical-align: baseline;
      }
@@ -189,7 +175,7 @@
      border-top-left-radius: 0px;
      border-top-right-radius: 0px;
    }
-@@ -166,17 +161,17 @@
+@@ -166,17 +123,17 @@
      display: none;
    }
  
@@ -212,7 +198,7 @@
      border-bottom: none;
      padding-top: 10px;
      padding-bottom: 10px;
-@@ -190,13 +185,13 @@
+@@ -190,13 +147,13 @@
    .form-group-required-label {
      display: block;
      opacity: 0;
@@ -228,7 +214,7 @@
      color: white;
      width: auto;
      line-height: 14px;
-@@ -211,6 +206,10 @@
+@@ -211,6 +168,10 @@
  }
  
  @media print {
@@ -239,7 +225,7 @@
    .form-container.print-container {
      margin: 0px;
      .page-header {
-@@ -218,14 +217,14 @@
+@@ -218,14 +179,14 @@
      }
    }
  
@@ -259,7 +245,7 @@
      margin-bottom: 0px;
      padding-bottom: 0px;
      .widget-container {
-@@ -248,7 +247,7 @@
+@@ -248,7 +209,7 @@
  .question-tile-row {
    display: flex;
    align-items: start;
@@ -268,7 +254,7 @@
      padding-top: 0px !important;
      padding-bottom: 0px !important;
      margin-top: 0px !important;
-@@ -256,13 +255,6 @@
+@@ -256,17 +217,6 @@
    }
  }
  
@@ -279,10 +265,14 @@
 -  }
 -}
 -
- .gr-has-no-nested-questions {
-   display: none;
- }
-@@ -275,3 +267,15 @@
+-.gr-has-no-nested-questions {
+-  display: none;
+-}
+-
+ .checkbox, .radio {
+   input[type="checkbox"], input[type="radio"] {
+     margin-top: 3.15px;
+@@ -275,3 +225,15 @@
    padding-top: 0px !important;
    padding-bottom: 7px;
  }
