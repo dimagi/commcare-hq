@@ -14,6 +14,10 @@ from dimagi.utils.couch import get_redis_lock
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
+from corehq.motech.rate_limiter import (
+    rate_limit_repeater,
+    report_repeater_usage,
+)
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,
     metrics_counter,
@@ -24,7 +28,6 @@ from corehq.util.metrics.const import MPM_MAX
 from corehq.util.metrics.lockmeter import MeteredLock
 from corehq.util.timer import TimingContext
 
-from ..rate_limiter import report_repeater_usage
 from .const import CHECK_REPEATERS_INTERVAL, CHECK_REPEATERS_KEY, State
 from .models import Repeater, RepeatRecord
 
@@ -108,10 +111,6 @@ def iter_ready_repeater_ids_forever():
             timing_buckets=_check_repeaters_buckets,
         ):
             for domain, repeater_id in _iter_ready_repeater_ids_once():
-                # if rate_limit_repeater(repeater.domain): TODO: Update rate limiting
-                #     repeater.rate_limit()
-                #     continue
-
                 lock = get_repeater_lock(repeater_id)
                 lock_token = uuid.uuid1().hex  # The same way Lock does it
                 if lock.acquire(blocking=False, token=lock_token):
@@ -164,6 +163,8 @@ def _iter_ready_repeater_ids_once():
                 del repeater_ids_by_domain[domain]
                 continue
             else:
+                if rate_limit_repeater(domain):
+                    continue  # Skip this repeater
                 yield domain, repeater_id
 
 
@@ -254,6 +255,7 @@ def _is_repeat_record_ready(repeat_record):
     return (
         not repeat_record.repeater.is_paused
         and not toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain)
+        and not rate_limit_repeater(repeat_record.domain)
     )
 
 

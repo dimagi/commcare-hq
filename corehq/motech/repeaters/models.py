@@ -65,7 +65,6 @@ class.
 """
 import inspect
 import json
-import random
 import traceback
 import uuid
 from collections import defaultdict
@@ -128,7 +127,6 @@ from .const import (
     MAX_REPEATER_WORKERS,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    RATE_LIMITER_DELAY_RANGE,
     State,
 )
 from .exceptions import RequestConnectionError, UnknownRepeater
@@ -373,12 +371,6 @@ class Repeater(RepeaterSuperProxy):
             self.repeat_records
             .filter(state__in=(State.Pending, State.Fail))
             .order_by('registered_at')
-        )
-
-    def rate_limit(self):
-        interval = random.uniform(*RATE_LIMITER_DELAY_RANGE)
-        Repeater.objects.filter(id=self.repeater_id).update(
-            next_attempt_at=datetime.utcnow() + interval,
         )
 
     def set_backoff(self):
