@@ -131,13 +131,15 @@ class TestProcessRepeatRecord(TestCase):
 
 class TestIterReadyRepeaterIDsOnce(SimpleTestCase):
 
+    @patch('corehq.motech.repeaters.tasks.rate_limit_repeater')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain')
-    def test_round_robin(self, mock_get_all_ready):
+    def test_round_robin(self, mock_get_all_ready, mock_rate_limit_repeater):
         mock_get_all_ready.return_value = {
             'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
             'domain2': ['repeater_id4', 'repeater_id5'],
             'domain3': ['repeater_id6'],
         }
+        mock_rate_limit_repeater.return_value = False
         pairs = list(_iter_ready_repeater_ids_once())
         self.assertEqual(pairs, [
             # First round of domains
@@ -153,12 +155,30 @@ class TestIterReadyRepeaterIDsOnce(SimpleTestCase):
             ('domain1', 'repeater_id3'),
         ])
 
+    @patch('corehq.motech.repeaters.tasks.rate_limit_repeater')
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain')
+    def test_rate_limit(self, mock_get_all_ready, mock_rate_limit_repeater):
+        mock_get_all_ready.return_value = {
+            'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
+            'domain2': ['repeater_id4', 'repeater_id5'],
+            'domain3': ['repeater_id6'],
+        }
+        mock_rate_limit_repeater.side_effect = lambda dom: dom == 'domain2'
+        pairs = list(_iter_ready_repeater_ids_once())
+        self.assertEqual(pairs, [
+            ('domain1', 'repeater_id1'),
+            ('domain3', 'repeater_id6'),
+            ('domain1', 'repeater_id2'),
+            ('domain1', 'repeater_id3'),
+        ])
+
 
 class TestIterReadyRepeaterIDsForever(SimpleTestCase):
 
     @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
+    @patch('corehq.motech.repeaters.tasks.rate_limit_repeater')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain')
-    def test_successive_loops(self, mock_get_all_ready, __):
+    def test_successive_loops(self, mock_get_all_ready, mock_rate_limit_repeater, __):
         mock_get_all_ready.side_effect = [
             {
                 'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
@@ -171,6 +191,7 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
             },
             {},
         ]
+        mock_rate_limit_repeater.return_value = False
 
         domain_repeater_id_tokens = iter_ready_repeater_ids_forever()
         domain_repeater_ids = [(t[0], t[1]) for t in domain_repeater_id_tokens]

@@ -15,6 +15,7 @@ from corehq import toggles
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
 from corehq.motech.rate_limiter import (
+    rate_limit_repeater,
     report_repeater_attempt,
     report_repeater_usage,
 )
@@ -168,6 +169,8 @@ def _iter_ready_repeater_ids_once():
                 del repeater_ids_by_domain[domain]
                 continue
             else:
+                if rate_limit_repeater(domain):
+                    continue  # Skip this repeater
                 yield domain, repeater_id
 
 
@@ -278,6 +281,7 @@ def _is_repeat_record_ready(repeat_record):
     return (
         not repeat_record.repeater.is_paused
         and not toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain)
+        and not rate_limit_repeater(repeat_record.domain)
     )
 
 
