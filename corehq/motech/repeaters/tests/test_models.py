@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from dateutil.parser import isoparse
 from freezegun import freeze_time
-from nose.tools import assert_in, assert_raises
+from nose.tools import assert_in
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
@@ -456,88 +456,6 @@ class TestRepeaterConnectionSettings(RepeaterTestCase):
             ConnectionSettings.objects.filter(id=self.conn.id).delete()
         with self.assertRaises(ProtectedError):
             ConnectionSettings.all_objects.filter(id=self.conn.id).delete()
-
-
-def test_attempt_forward_now_kwargs():
-    rr = RepeatRecord()
-    with assert_raises(TypeError):
-        rr.attempt_forward_now(True)
-
-
-@patch("corehq.motech.repeaters.tasks.process_failed_repeat_record")
-@patch("corehq.motech.repeaters.tasks.process_pending_repeat_record")
-class TestAttemptForwardNow(RepeaterTestCase):
-    before_now = datetime.utcnow() - timedelta(seconds=1)
-
-    def test_future_next_check(self, process, retry_process):
-        rec = self.new_record(next_check=datetime.utcnow() + timedelta(hours=1))
-        rec.attempt_forward_now()
-
-        self.assert_not_called(process, retry_process)
-
-    def test_success_state(self, process, retry_process):
-        rec = self.new_record(state=RECORD_SUCCESS_STATE, next_check=None)
-        rec.attempt_forward_now()
-
-        self.assert_not_called(process, retry_process)
-
-    def test_cancelled_state(self, process, retry_process):
-        rec = self.new_record(state=RECORD_CANCELLED_STATE, next_check=None)
-        rec.attempt_forward_now()
-
-        self.assert_not_called(process, retry_process)
-
-    def test_delayed_task(self, process, retry_process):
-        rec = self.new_record()
-        rec.attempt_forward_now()
-
-        process.delay.assert_called_once()
-        self.assert_not_called(retry_process)
-
-    def test_fire_synchronously(self, process, retry_process):
-        rec = self.new_record()
-        rec.attempt_forward_now(fire_synchronously=True)
-
-        process.assert_called_once()
-        self.assert_not_called(retry_process)
-
-    def test_retry(self, process, retry_process):
-        rec = self.new_record()
-        rec.attempt_forward_now(is_retry=True)
-
-        retry_process.delay.assert_called_once()
-        self.assert_not_called(process)
-
-    def test_optimistic_lock(self, process, retry_process):
-        rec = self.new_record()
-
-        two = RepeatRecord.objects.get(id=rec.id)
-        two.next_check = datetime.utcnow() - timedelta(days=1)
-        two.save()
-
-        rec.attempt_forward_now()
-
-        self.assert_not_called(process, retry_process)
-
-    def assert_not_called(self, *tasks):
-        for task in tasks:
-            try:
-                task.assert_not_called()
-                task.delay.assert_not_called()
-            except AssertionError as err:
-                raise AssertionError(f"{task} unexpectedly called:\n{err}")
-
-    def new_record(self, next_check=before_now, state=RECORD_PENDING_STATE):
-        rec = RepeatRecord(
-            domain="test",
-            repeater_id=self.repeater.repeater_id,
-            payload_id="c0ffee",
-            registered_at=self.before_now,
-            next_check=next_check,
-            state=state,
-        )
-        rec.save()
-        return rec
 
 
 class TestRepeaterModelMethods(RepeaterTestCase):
