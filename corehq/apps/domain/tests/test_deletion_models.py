@@ -25,6 +25,7 @@ IGNORE_APPS = {
     'icds_reports',
     'notifications',
     'oauth2_provider',
+    'pg_lock',
     'phonelog',  # these are deleted after 60 days regardless
     'pillow_retry',
     'pillowtop',

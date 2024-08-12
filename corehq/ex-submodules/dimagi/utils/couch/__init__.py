@@ -97,6 +97,12 @@ def get_redis_lock(key, timeout=None, name=None, track_unreleased=True, **kw):
     return MeteredLock(lock, name, track_unreleased)
 
 
+def get_pg_lock(key, name, track_unreleased=True):
+    from corehq.apps.pg_lock.models import Lock
+    lock = Lock(key)
+    return MeteredLock(lock, name, track_unreleased)
+
+
 def acquire_lock(lock, degrade_gracefully, **kwargs):
     acquired = False
     try:
