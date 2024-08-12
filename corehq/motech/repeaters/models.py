@@ -401,8 +401,7 @@ class Repeater(RepeaterSuperProxy):
     def verify(self):
         return not self.connection_settings.skip_cert_verify
 
-    def register(self, payload, fire_synchronously=False):
-        # TODO: Clean up calls with `fire_synchronously`
+    def register(self, payload):
         if not self.allowed_to_forward(payload):
             return
         now = datetime.utcnow()
@@ -416,7 +415,7 @@ class Repeater(RepeaterSuperProxy):
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
             'doc_type': self.repeater_type,
-            'mode': 'sync' if fire_synchronously else 'async'
+            'mode': 'async'
         })
         repeat_record.save()
         return repeat_record
