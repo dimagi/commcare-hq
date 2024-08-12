@@ -1285,22 +1285,6 @@ def _get_retry_interval(last_checked, now):
     return interval
 
 
-def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:
-    try:
-        return repeater.get_payload(repeat_record)
-    except Exception as err:
-        log_repeater_error_in_datadog(
-            repeater.domain,
-            status_code=None,
-            repeater_type=repeater.__class__.__name__
-        )
-        repeat_record.add_payload_error_attempt(
-            message=str(err),
-            tb_str=traceback.format_exc()
-        )
-        raise
-
-
 def has_failed(record):
     return record.state in (State.Fail, State.Cancelled, State.InvalidPayload)
 
