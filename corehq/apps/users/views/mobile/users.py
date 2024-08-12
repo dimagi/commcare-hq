@@ -62,7 +62,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
-from corehq.apps.domain.utils import guess_domain_language_for_sms
+from corehq.apps.domain.utils import guess_domain_language_for_sms, encrypt_account_confirmation_info
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
 from corehq.apps.events.models import (
@@ -160,6 +160,7 @@ from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.metrics import metrics_counter
+from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
@@ -721,9 +722,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def two_stage_user_confirmation(self):
-        return toggles.TWO_STAGE_USER_PROVISIONING.enabled(
-            self.domain
-        ) or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
+        return (toggles.TWO_STAGE_USER_PROVISIONING.enabled(self.domain)
+            or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
+            or toggles.COMMCARE_CONNECT.enabled(self.domain))
 
     @property
     def page_context(self):
@@ -1683,6 +1684,61 @@ def link_connectid_user(request, domain):
         return HttpResponse(status=201)
     else:
         return HttpResponse()
+
+
+@require_can_edit_commcare_users
+@location_safe
+def send_connectid_invite(request, domain, user_id):
+    # Currently same as what send_confirmation_sms does
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if user.is_account_confirmed or not user.is_commcare_user() or user.domain != domain:
+        messages.error(request, "The user is already confirmed or is not a mobile user")
+        return HttpResponse(status=400)
+
+    invite_code = encrypt_account_confirmation_info(user)
+    url = absolute_reverse("confirm_connectid_user", args=[user.domain])
+    text_content = f"""
+    Link your ConnectID account to CommCare
+    username: {user.username}
+    domain: {domain}
+    invite_code: {invite_code}
+    url: {url}
+    Make a POST call to above url with invite_code and your ConnectID token
+    """
+    print(text_content)
+    return send_sms(
+        domain=domain,
+        contact=None,
+        phone_number=user.default_phone_number,
+        text=text_content)
+
+
+@csrf_exempt
+@require_POST
+def confirm_connectid_user(request, domain):
+    try:
+        token = request.POST["token"]
+        invite_code = request.POST["invite_code"]
+        invite = json.loads(b64_aes_decrypt(invite_code))
+        user_id = invite['user_id']
+        expiry_time = invite['time']
+    except ValueError:
+        return HttpResponseBadRequest("Invalid Request")
+
+    # Expiry limit is 3 days
+    if float(int(time.time()) - expiry_time) > 3 * 24 * 60 * 60:
+        return JsonResponse(data={"error": "Invite has expired"})
+
+    user = CommCareUser.get(user_id)
+    if user.domain != domain:
+        return HttpResponseBadRequest("Invalid Request")
+
+    connectid_username = get_connectid_userinfo(token)
+    ConnectIDUserLink.objects.get_or_create(
+        connectid_username=connectid_username, commcare_user=user.get_django_user(), domain=domain
+    )
+    user.confirm_account(password=None)
+    return json_response({'success': True})
 
 
 @waf_allow('XSS_BODY')

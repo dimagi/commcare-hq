@@ -25,6 +25,7 @@
   {% registerurl 'deactivate_commcare_user' domain '---' %}
   {% registerurl 'send_confirmation_email' domain '---' %}
   {% registerurl 'send_confirmation_sms' domain '---' %}
+  {% registerurl 'send_connectid_invite' domain '---' %}
 
   <div>
     <div class="row">
@@ -319,17 +320,21 @@
                   </p>
                 </div>
                 <div data-bind="visible: !is_active() && !is_account_confirmed()">
-                  {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
                   <button type="button" class="btn btn-default" data-toggle="modal"
                           data-bind="attr: {'data-target': '#confirm_' + user_id()}">
-                    {% trans "Send Confirmation Email" %}
-                  </button>
-                  {% else %}
-                  <button type="button" class="btn btn-default" data-toggle="modal"
-                          data-bind="attr: {'data-target': '#confirm_' + user_id()}">
-                    {% trans "Send Confirmation SMS" %}
-                  </button>
-                  {% endif %}
+                    {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+                      {% blocktrans %}
+                      Send Confirmation Email
+                      {% endblocktrans %}
+                    {% elif request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
+                      {% blocktrans %}
+                      Send Confirmation SMS
+                      {% endblocktrans %}
+                    {% elif request|toggle_enabled:"COMMCARE_CONNECT" %}
+                      {% blocktrans %}
+                      Send ConnectID Invite
+                      {% endblocktrans %}
+                    {% endif %}
                   <p data-bind="visible: action_error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     <span data-bind="text: action_error"></span>
@@ -450,7 +455,18 @@
                           <span aria-hidden="true">&times;</span>
                           <span class="sr-only">{% trans "Close" %}</span>
                         </button>
-                        <h4 class="modal-title">{% trans "Confirm Account" %}</h4>
+
+                        <h4 class="modal-title">
+                        {% if request|toggle_enabled:"COMMCARE_CONNECT" %}
+                          {% blocktrans %}
+                            Re-Invite
+                          {% endblocktrans %}
+                        {% else %}
+                          {% blocktrans %}
+                            Confirm Account
+                          {% endblocktrans %}
+                        {% endif %}
+                        </h4>
                       </div>
                       <div class="modal-body">
                         <p class="lead">
@@ -459,10 +475,14 @@
                               Would you like to send the account confirmation
                               email to this account?
                             {% endblocktrans %}
-                          {% else %}
+                          {% elif request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
                             {% blocktrans %}
                               Would you like to send the account confirmation
                               SMS to this account?
+                            {% endblocktrans %}
+                          {% elif request|toggle_enabled:"COMMCARE_CONNECT" %}
+                            {% blocktrans %}
+                              Would you like to reinvite the ConnectID User?
                             {% endblocktrans %}
                           {% endif %}
                         </p>
@@ -476,10 +496,15 @@
                               The user will be sent an email with instructions to
                               set a password and be able to login to this project.
                             {% endblocktrans %}
-                          {% else %}
+                          {% elif request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
                             {% blocktrans %}
                               The user will be sent a SMS with instructions to
                               set a password and be able to login to this project.
+                            {% endblocktrans %}
+                          {% elif request|toggle_enabled:"COMMCARE_CONNECT" %}
+                            {% blocktrans %}
+                              The user will be sent a ConnectID SMS with instructions to
+                              login to this project using their ConnectID account.
                             {% endblocktrans %}
                           {% endif %}
                         </p>
@@ -493,10 +518,15 @@
                                   data-bind="click: sendConfirmationEmail">
                             {% trans 'Send Account Confirmaton Email' %}
                           </button>
-                        {% else %}
+                        {% elif request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
                           <button type="button" class="btn btn-primary"
                                   data-bind="click: sendConfirmationSMS">
                             {% trans 'Send Account Confirmaton SMS' %}
+                          </button>
+                        {% elif request|toggle_enabled:"COMMCARE_CONNECT" %}
+                          <button type="button" class="btn btn-primary"
+                                  data-bind="click: sendConnectIDInvite">
+                            {% trans 'Send ConnectID Invite' %}
                           </button>
                         {% endif %}
                       </div>

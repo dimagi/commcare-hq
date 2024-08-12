@@ -70,6 +70,7 @@ hqDefine("users/js/mobile_workers",[
             email: '',
             send_account_confirmation_email: false,
             force_account_confirmation_by_sms: false,
+            account_invite_by_cid: false,
             phone_number: '',
             is_active: true,
             is_account_confirmed: true,
@@ -93,7 +94,11 @@ hqDefine("users/js/mobile_workers",[
         self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
 
         // used by two-stage sms provisioning
-        self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
+        self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms() || self.account_invite_by_cid());
+
+        self.passwordEnabled = ko.observable(!(
+            self.force_account_confirmation_by_sms() || self.force_account_confirmation() || self.account_invite_by_cid())
+        );
 
         self.passwordEnabled = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
 
@@ -153,6 +158,31 @@ hqDefine("users/js/mobile_workers",[
 
         self.sendConfirmationSMS = function () {
             var urlName = 'send_confirmation_sms';
+            var $modal = $('#confirm_' + self.user_id());
+
+            $modal.find(".btn").addSpinnerToButton();
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse(urlName, self.user_id()),
+                success: function (data) {
+                    $modal.modal('hide');
+                    if (data.success) {
+                        self.action_error('');
+                    } else {
+                        self.action_error(data.error);
+                    }
+
+                },
+                error: function () {
+                    $modal.modal('hide');
+                    $modal.find(".btn").removeSpinnerFromButton();
+                    self.action_error(gettext("Issue communicating with server. Try again."));
+                },
+            });
+        };
+
+        self.sendConnectIDInvite = function () {
+            var urlName = 'send_connectid_invite';
             var $modal = $('#confirm_' + self.user_id());
 
             $modal.find(".btn").addSpinnerToButton();
@@ -507,7 +537,7 @@ hqDefine("users/js/mobile_workers",[
                     user.send_account_confirmation_email(false);
                 }
             });
-            user.force_account_confirmation_by_sms.subscribe(function (enabled) {
+            var handlePhoneRequired = function (enabled) {
                 if (enabled) {
                     // make phone number required
                     user.phoneRequired(true);
@@ -521,7 +551,9 @@ hqDefine("users/js/mobile_workers",[
                     // enable password input
                     user.passwordEnabled(true);
                 }
-            });
+            };
+            user.force_account_confirmation_by_sms.subscribe(handlePhoneRequired);
+            user.account_invite_by_cid.subscribe(handlePhoneRequired);
         });
 
         self.initializeUser = function () {

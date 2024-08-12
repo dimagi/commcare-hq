@@ -76,6 +76,8 @@ from .views.mobile.users import (
     CommCareUserConfirmAccountView,
     send_confirmation_email,
     send_confirmation_sms,
+    send_connectid_invite,
+    confirm_connectid_user,
     CommcareUserUploadJobPollView,
     ClearCommCareUsers,
     link_connectid_user,
@@ -252,6 +254,16 @@ urlpatterns = [
         r'^commcare/confirm_account_sms/(?P<user_invite_hash>[\S-]+)/$',
         CommCareUserConfirmAccountBySMSView.as_view(),
         name=CommCareUserConfirmAccountBySMSView.urlname
+    ),
+    url(
+        r'^commcare/send_connectid_invite/(?P<user_id>[ \w-]+)/$',
+        send_connectid_invite,
+        name='send_connectid_invite'
+    ),
+    url(
+        r'^commcare/confirm_connectid_user/$',
+        confirm_connectid_user,
+        name="confirm_connectid_user"
     ),
     url(
         r'^commcare/link_connectid_user/$',
