@@ -224,9 +224,9 @@
                           }">
           <div>
           <div class="group-deprecated" data-bind="visible: showGroupPropertyTransferWarning" style="display: none;">
-            <b data-bind="text: name()"></b>
-            {% trans "group's properties will be moved to" %}
-            <b>{% trans "No Group" %}</b>
+            {% blocktrans %}
+            <b data-bind="text: name()"></b> group's properties will be moved to <b>No Group</b>
+            {% endblocktrans %}
           </div>
           <div class="table-row group" data-bind="css: { 'group-deprecated': toBeDeprecated() }, visible: !deprecated || $root.showAll()">
             <div class="row-item-small">
