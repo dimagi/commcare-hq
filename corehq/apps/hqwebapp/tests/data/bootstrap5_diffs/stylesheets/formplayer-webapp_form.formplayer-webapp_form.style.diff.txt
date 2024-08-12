@@ -150,16 +150,32 @@
      border-radius: 8px;
      margin: 2px;
      padding-top: 5px;
-@@ -140,7 +95,7 @@
+@@ -138,16 +93,18 @@
+       height: 1em;
+       vertical-align: baseline;
      }
-   }
++
+     .btn {
+       background-color: white;
  
+       &:hover {
+-        background-color: red;
+-      }
+-    }
+-  }
+-
 -  .panel-heading {
++        background-color: var(--bsbtn-hover-bg);
++      }
++
++    }
++  }
++
 +  .card-header {
      border-top-left-radius: 0px;
      border-top-right-radius: 0px;
    }
-@@ -159,17 +114,17 @@
+@@ -166,17 +123,17 @@
      display: none;
    }
  
@@ -182,7 +198,7 @@
      border-bottom: none;
      padding-top: 10px;
      padding-bottom: 10px;
-@@ -183,13 +138,13 @@
+@@ -190,13 +147,13 @@
    .form-group-required-label {
      display: block;
      opacity: 0;
@@ -198,7 +214,7 @@
      color: white;
      width: auto;
      line-height: 14px;
-@@ -204,6 +159,10 @@
+@@ -211,6 +168,10 @@
  }
  
  @media print {
@@ -209,7 +225,7 @@
    .form-container.print-container {
      margin: 0px;
      .page-header {
-@@ -211,14 +170,14 @@
+@@ -218,14 +179,14 @@
      }
    }
  
@@ -229,7 +245,7 @@
      margin-bottom: 0px;
      padding-bottom: 0px;
      .widget-container {
-@@ -241,7 +200,7 @@
+@@ -248,7 +209,7 @@
  .question-tile-row {
    display: flex;
    align-items: start;
@@ -238,7 +254,7 @@
      padding-top: 0px !important;
      padding-bottom: 0px !important;
      margin-top: 0px !important;
-@@ -249,17 +208,6 @@
+@@ -256,17 +217,6 @@
    }
  }
  
@@ -256,7 +272,7 @@
  .checkbox, .radio {
    input[type="checkbox"], input[type="radio"] {
      margin-top: 3.15px;
-@@ -268,3 +216,15 @@
+@@ -275,3 +225,15 @@
    padding-top: 0px !important;
    padding-bottom: 7px;
  }

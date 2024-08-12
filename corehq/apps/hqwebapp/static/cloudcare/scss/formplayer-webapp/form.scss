@@ -93,6 +93,15 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
       height: 1em;
       vertical-align: baseline;
     }
+
+    .btn {
+      background-color: white;
+
+      &:hover {
+        background-color: var(--bsbtn-hover-bg);
+      }
+
+    }
   }
 
   .card-header {
