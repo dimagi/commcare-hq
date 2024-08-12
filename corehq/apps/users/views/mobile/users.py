@@ -6,6 +6,7 @@ import time
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
+from django.db.models import F
 from django.http import (
     Http404,
     HttpResponse,
@@ -928,6 +929,32 @@ def _modify_user_status(request, domain, user_id, is_active):
 @require_can_edit_commcare_users
 @require_POST
 @location_safe
+def activate_connectid_link(request, domain, user_id):
+    return _toggle_connectid_link(request, domain, user_id, True)
+
+
+@require_can_edit_commcare_users
+@require_POST
+@location_safe
+def deactivate_connectid_link(request, domain, user_id):
+    return _toggle_connectid_link(request, domain, user_id, False)
+
+
+def _toggle_connectid_link(request, domain, user_id, is_active):
+    if not toggles.COMMCARE_CONNECT.enabled(domain):
+        return HttpResponseBadRequest()
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    connect_link = ConnectIDUserLink.objects.get(commcare_user=user.get_django_user())
+    connect_link.is_active = is_active
+    connect_link.save()
+    return JsonResponse({
+        'success': True,
+    })
+
+
+@require_can_edit_commcare_users
+@require_POST
+@location_safe
 def send_confirmation_email(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     send_account_confirmation_if_necessary(user)
@@ -982,6 +1009,22 @@ def paginate_mobile_workers(request, domain):
         else:
             return _('Pending Confirmation')
 
+    def get_connect_links_by_username(users):
+        if not toggles.COMMCARE_CONNECT.enabled(domain):
+            return {}
+        usernames = [
+            f"{u['base_username']}@{domain}.commcarehq.org"
+            for u in users
+        ]
+        links = ConnectIDUserLink.objects.filter(
+            commcare_user__username__in=usernames
+        ).annotate(commcare_username=F("commcare_user__username")).all()
+        return {
+            link.commcare_username.split("@")[0]: link
+            for link in links
+        }
+
+    connect_links = get_connect_links_by_username(users)
     for user in users:
         date_registered = user.pop('created_on', '')
         if date_registered:
@@ -989,6 +1032,8 @@ def paginate_mobile_workers(request, domain):
         # make sure these are always set and default to true
         user['is_active'] = user.get('is_active', True)
         user['is_account_confirmed'] = user.get('is_account_confirmed', True)
+        connect_link = connect_links.get(user.get('base_username'))
+        user['is_connect_link_active'] = connect_link.is_active if connect_link else None
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
@@ -1705,7 +1750,6 @@ def send_connectid_invite(request, domain, user_id):
     url: {url}
     Make a POST call to above url with invite_code and your ConnectID token
     """
-    print(text_content)
     return send_sms(
         domain=domain,
         contact=None,

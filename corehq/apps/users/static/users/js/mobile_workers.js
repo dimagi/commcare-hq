@@ -74,6 +74,7 @@ hqDefine("users/js/mobile_workers",[
             phone_number: '',
             is_active: true,
             is_account_confirmed: true,
+            is_connect_link_active: null,
             deactivate_after_date: '',
         });
 
@@ -108,10 +109,7 @@ hqDefine("users/js/mobile_workers",[
             return initialPageData.reverse('edit_commcare_user', self.user_id());
         });
 
-        self.is_active.subscribe(function (newValue) {
-            var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
-                $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
-
+        var toggle_active = function($modal, urlName) {
             $modal.find(".btn").addSpinnerToButton();
             $.ajax({
                 method: 'POST',
@@ -129,6 +127,18 @@ hqDefine("users/js/mobile_workers",[
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },
             });
+        };
+
+        self.is_active.subscribe(function (newValue) {
+            var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
+                $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
+            toggle_active($modal, urlName);
+        });
+
+        self.is_connect_link_active.subscribe(function (newValue) {
+            var urlName = newValue ? 'activate_connectid_link' : 'deactivate_connectid_link',
+                $modal = $('#' + (newValue ? 'activate_connect_link_' : 'deactivate_connect_link_') + self.user_id());
+            toggle_active($modal, urlName);
         });
 
         self.sendConfirmationEmail = function () {

@@ -3282,6 +3282,7 @@ class ConnectIDUserLink(models.Model):
     connectid_username = models.TextField()
     commcare_user = models.ForeignKey(User, related_name='connectid_user', on_delete=models.CASCADE)
     domain = models.TextField()
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         unique_together = ('domain', 'commcare_user')
