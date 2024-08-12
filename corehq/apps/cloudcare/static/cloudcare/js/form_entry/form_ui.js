@@ -723,7 +723,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         } else {
             self.showDelete = false;
         }
-        self.repeatable = self.repeatable() === "true";
+        const isRepeatable = ko.utils.unwrapObservable(self.repeatable) === "true";
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
 
@@ -748,9 +748,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
         self.stripeRepeats = _.contains(styles, constants.STRIPE_REPEATS);
-        self.collapsible = _.contains(styles, constants.COLLAPSIBLE) || self.repeatable;
+        self.collapsible = (_.contains(styles, constants.COLLAPSIBLE) || isRepeatable) && self.showHeader;
         self.groupBorder = _.contains(styles, constants.GROUP_BORDER);
-        self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN) || (self.repeatable && !collapsedIx.includes(self.rel_ix())));
+        self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN) || (isRepeatable && !collapsedIx.includes(self.rel_ix())));
         self.toggleChildren = function () {
             if (self.collapsible) {
                 if (self.showChildren()) {

@@ -211,8 +211,7 @@ class NamedExpressionSpec(JsonObject):
     name = StringProperty(required=True)
 
     def configure(self, factory_context):
-        if self.name not in factory_context.named_expressions:
-            raise BadSpecError('Name {} not found in list of named expressions!'.format(self.name))
+        factory_context.get_named_expression(self.name)
         self._factory_context = factory_context
 
     def _context_cache_key(self, item):
@@ -223,7 +222,7 @@ class NamedExpressionSpec(JsonObject):
         if evaluation_context and evaluation_context.exists_in_cache(key):
             return evaluation_context.get_cache_value(key)
 
-        result = self._factory_context.named_expressions[self.name](item, evaluation_context)
+        result = self._factory_context.get_named_expression(self.name)(item, evaluation_context)
         if evaluation_context:
             evaluation_context.set_iteration_cache_value(key, result)
         return result

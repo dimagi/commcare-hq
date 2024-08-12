@@ -330,8 +330,7 @@ class CaseSearchQueryBuilder:
         elif criteria.is_index_query:
             return reverse_index_case_query(value, criteria.index_query_identifier)
         else:
-            return case_property_query(criteria.key, value, fuzzy=fuzzy,
-                                       fuzzy_prefix_length=self.config.fuzzy_prefix_length)
+            return case_property_query(criteria.key, value, fuzzy=fuzzy)
 
     def _remove_ignored_patterns(self, case_property, value):
         for to_remove in self._patterns_to_remove[case_property]:

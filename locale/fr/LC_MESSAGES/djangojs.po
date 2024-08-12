@@ -2781,6 +2781,10 @@ msgid "Form submission failed with error"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "You have a form in progress. Are you sure you want to navigate away?"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "Form successfully saved!"
 msgstr ""
 
@@ -3433,6 +3437,11 @@ msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "All locations"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid ""
+"Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/gps_capture.js
