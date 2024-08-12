@@ -70,7 +70,6 @@ import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.db import models, router
@@ -1300,69 +1299,6 @@ def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:
             tb_str=traceback.format_exc()
         )
         raise
-
-
-# TODO: Unused outside of tests
-def send_request(
-    repeater: Repeater,
-    repeat_record: RepeatRecord,
-    payload: Any,
-) -> bool:
-    """
-    Calls ``repeater.send_request()`` and handles the result.
-
-    Returns True on success or cancelled, which means the caller should
-    not retry. False means a retry should be attempted later.
-    """
-
-    def is_success(resp):
-        return (
-            is_response(resp)
-            and 200 <= resp.status_code < 300
-            # `response` is `True` if the payload did not need to be
-            # sent. (This can happen, for example, with DHIS2 if the
-            # form that triggered the forwarder doesn't contain data
-            # for a DHIS2 Event.)
-            or resp is True
-        )
-
-    def allow_retries(response):
-        # respect the `retry` field of RepeaterResponse
-        return getattr(response, 'retry', True)
-
-    def later_might_be_better(resp):
-        return is_response(resp) and resp.status_code in (
-            502,  # Bad Gateway
-            503,  # Service Unavailable
-            504,  # Gateway Timeout
-        )
-
-    try:
-        response = repeater.send_request(repeat_record, payload)
-    except (Timeout, ConnectionError) as err:
-        log_repeater_timeout_in_datadog(repeat_record.domain)
-        message = str(RequestConnectionError(err))
-        repeat_record.add_server_failure_attempt(message)
-    except Exception as err:
-        repeat_record.add_client_failure_attempt(str(err))
-    else:
-        if is_success(response):
-            if is_response(response):
-                # Log success in Datadog if the payload was sent.
-                log_repeater_success_in_datadog(
-                    repeater.domain,
-                    response.status_code,
-                    repeater_type=repeater.__class__.__name__
-                )
-            repeat_record.add_success_attempt(response)
-        else:
-            message = format_response(response)
-            if later_might_be_better(response):
-                repeat_record.add_server_failure_attempt(message)
-            else:
-                retry = allow_retries(response)
-                repeat_record.add_client_failure_attempt(message, retry)
-    return repeat_record.state in (State.Success, State.Cancelled, State.Empty)  # Don't retry
 
 
 def has_failed(record):
