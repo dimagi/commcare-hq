@@ -16,9 +16,10 @@ from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.models import FormRepeater, Repeater, RepeatRecord
 from corehq.motech.repeaters.tasks import (
+    _iter_ready_repeater_ids_once,
     _process_repeat_record,
     delete_old_request_logs,
-    iter_ready_repeaters,
+    iter_ready_repeater_ids_forever,
     process_repeater,
     update_repeater,
 )
@@ -128,28 +129,65 @@ class TestProcessRepeatRecord(TestCase):
         self.addCleanup(patch_fire.stop)
 
 
-class TestIterReadyRepeaters(SimpleTestCase):
+class TestIterReadyRepeaterIDsOnce(SimpleTestCase):
 
-    def test_no_ready_repeaters(self):
-        with (patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
-                    return_value=[])):
-            self.assertFalse(next(iter_ready_repeaters(), False))
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain')
+    def test_round_robin(self, mock_get_all_ready):
+        mock_get_all_ready.return_value = {
+            'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
+            'domain2': ['repeater_id4', 'repeater_id5'],
+            'domain3': ['repeater_id6'],
+        }
+        pairs = list(_iter_ready_repeater_ids_once())
+        self.assertEqual(pairs, [
+            # First round of domains
+            ('domain1', 'repeater_id1'),
+            ('domain2', 'repeater_id4'),
+            ('domain3', 'repeater_id6'),
 
-    def test_successive_loops(self):
-        repeater_1 = Repeater()
-        repeater_2 = Repeater()
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
-                  side_effect=[[repeater_1, repeater_2], [repeater_1], []]),
-            patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
-        ):
-            repeater_token_pairs = list(iter_ready_repeaters())
-            self.assertEqual(len(repeater_token_pairs), 3)
-            # Check IDs so that Repeater doesn't try to fetch ConnectionSettings
-            self.assertEqual(
-                [repeater for repeater, token in repeater_token_pairs],
-                [repeater_1, repeater_2, repeater_1]
-            )
+            # Second round
+            ('domain1', 'repeater_id2'),
+            ('domain2', 'repeater_id5'),
+
+            # Third round
+            ('domain1', 'repeater_id3'),
+        ])
+
+
+class TestIterReadyRepeaterIDsForever(SimpleTestCase):
+
+    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain')
+    def test_successive_loops(self, mock_get_all_ready, __):
+        mock_get_all_ready.side_effect = [
+            {
+                'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
+                'domain2': ['repeater_id4', 'repeater_id5'],
+                'domain3': ['repeater_id6'],
+            },
+            {
+                'domain1': ['repeater_id1', 'repeater_id2'],
+                'domain2': ['repeater_id4']
+            },
+            {},
+        ]
+
+        domain_repeater_id_tokens = iter_ready_repeater_ids_forever()
+        domain_repeater_ids = [(t[0], t[1]) for t in domain_repeater_id_tokens]
+        self.assertEqual(domain_repeater_ids, [
+            # First loop
+            ('domain1', 'repeater_id1'),
+            ('domain2', 'repeater_id4'),
+            ('domain3', 'repeater_id6'),
+            ('domain1', 'repeater_id2'),
+            ('domain2', 'repeater_id5'),
+            ('domain1', 'repeater_id3'),
+
+            # Second loop
+            ('domain1', 'repeater_id1'),
+            ('domain2', 'repeater_id4'),
+            ('domain1', 'repeater_id2'),
+        ])
 
 
 class TestProcessRepeater(TestCase):
