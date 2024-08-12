@@ -58,20 +58,6 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
     }
   }
 
-  .stripe-repeats {
-    > .row, .card-body > .children > .row {
-      &:nth-of-type(odd) {
-        background-color: $table-accent-bg;
-      }
-      &:nth-of-type(even) {
-        background-color: white;
-      }
-      &:hover {
-        background-color: $table-hover-bg;
-      }
-    }
-  }
-
   .group-border {
     border: solid 1px $cc-neutral-mid;
     border-radius: 8px;

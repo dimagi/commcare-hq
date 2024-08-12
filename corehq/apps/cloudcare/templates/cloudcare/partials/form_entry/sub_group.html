@@ -18,8 +18,6 @@
           'gr-no-children': $data.children().length === 0,
           'd-none': !$data.hasAnyNestedQuestions(),
           'required-group': !showChildren() && childrenRequired(),
-          'stripe-repeats': stripeRepeats,
-
         }">
     <div data-bind="
         css: {
@@ -98,7 +96,6 @@
                 },
                 css: {
                   'card-body': collapsible,
-                  'stripe-repeats': stripeRepeats,
                 }"></div>
           </fieldset>
         </div>

@@ -43,7 +43,6 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         BUTTON_SELECT: 'button-select',
         SHORT: 'short',
         MEDIUM: 'medium',
-        STRIPE_REPEATS: 'stripe-repeats',
         GROUP_BORDER: 'group-border',
         HINT_AS_PLACEHOLDER: 'hint-as-placeholder',
         RECEIVER_FIELD_INDEXED: 'indexed',
