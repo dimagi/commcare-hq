@@ -77,7 +77,11 @@ hqDefine("geospatial/js/geospatial_map", [
                 mapModel.caseMapItems().forEach((caseModel) => {
                     if (result[userId].includes(caseModel.itemId)) {
                         cases.push(caseModel);
-                        mapModel.caseGroupsIndex[caseModel.itemId] = {groupId: groupId, item: caseModel};
+                        mapModel.caseGroupsIndex[caseModel.itemId] = {
+                            groupId: groupId,
+                            item: caseModel,
+                            assignedUserId: userId,
+                        };
                     }
                 });
                 connectUserWithCasesOnMap(user, cases);

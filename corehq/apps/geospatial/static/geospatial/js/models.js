@@ -810,18 +810,56 @@ hqDefine('geospatial/js/models', [
             return true;
         }
     };
+
+    var AssignmentRow = function (caseName, caseId, userId, userName, userPrimaryLocName, mapItem) {
+        let self = this;
+
+        self.caseName = ko.observable(caseName);
+        self.caseId = caseId;
+        self.assignedUsername = ko.observable(userName);
+        self.assignedUserId = userId;
+        self.assignedUserPrimaryLocName = ko.observable(userPrimaryLocName);
+        self.mapItem = mapItem;
+        self.isSelected = ko.observable(false);
+
+        return self;
+    };
+
     var AssignmentManager = function (mapModel, disbursementModel) {
         let self = this;
 
         self.mapModel = mapModel;
         self.disbursementModel = disbursementModel;
 
+        self.caseData = [];
         self.canOpenModal = ko.computed(function () {
             return self.mapModel.caseGroupsIndex.length;
         });
+        self.isAllChecked = ko.observable(false);
+        self.isAllChecked.subscribe(() => {
+            for (const caseItem of self.caseData) {
+                caseItem.isSelected(self.isAllChecked());
+            }
+        });
 
         self.loadCaseData = function () {
-            // TODO: Implement
+            const groupData = self.mapModel.caseGroupsIndex;
+            self.caseData = [];
+            for (const item of self.mapModel.caseMapItems()) {
+                const assignedUserId = groupData[item.itemId].assignedUserId;
+                let assignedUsername = '---';
+                let primaryLocName = '---';
+                if (assignedUserId) {
+                    const userData = groupData[assignedUserId].item.itemData;
+                    assignedUsername = userData.name;
+                    primaryLocName = userData.primary_loc_name;
+                }
+                self.caseData.push(
+                    new AssignmentRow(
+                        item.itemData.name, item.itemId, assignedUserId, assignedUsername, primaryLocName, item
+                    )
+                );
+            }
 
         };
 
