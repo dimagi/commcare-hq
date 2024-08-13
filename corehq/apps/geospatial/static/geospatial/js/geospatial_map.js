@@ -309,6 +309,9 @@ hqDefine("geospatial/js/geospatial_map", [
                 $filterSelect.append(new Option(userLocationName, self.selectedLocation));
                 $filterSelect.val(self.selectedLocation).trigger('change');
                 self.loadUsers();
+            } else if (shouldShowUsers) {
+                // If only checkbox is ticked, then load all users
+                self.loadUsers();
             }
         };
 
