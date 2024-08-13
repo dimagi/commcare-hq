@@ -20,10 +20,10 @@ class TestKafkaPillowGauge(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.feature_key = CASE_SQL
         cls.scopes = topics.get_all_kafka_partitons_for_topic(cls.feature_key)
         cls.case_gauge = case_pillow_lag_gauge
-        return super().setUpClass()
 
     @nottest
     def _report_usage_for_multiple_partitions(self, gauge, partitions, lag_values):
@@ -111,6 +111,7 @@ class TestPillowLagGaugeLimiter(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.scopes = ['topic-0', 'topic-1']
         cls.patcher = patch.object(topics, 'get_all_kafka_partitons_for_topic', return_value=cls.scopes)
         cls.patcher.start()
@@ -127,11 +128,10 @@ class TestPillowLagGaugeLimiter(TestCase):
             max_value=10,
             average_value=8
         )
-        return super().setUpClass()
 
     def setUp(self):
+        super().setUp()
         self._set_gauge_defintion(10, 8)
-        return super().setUp()
 
     @nottest
     def _set_gauge_defintion(self, max_value, average_value):
