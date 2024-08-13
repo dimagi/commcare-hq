@@ -117,7 +117,8 @@ class GaugeLimiter:
                 `False` it means that the usage should be throttled.
         """
         if not self.gauge_definition:
-            return False
+            # no throttling if config to throttle is not set.
+            return True
         computed_value = None
         if self.gauge_definition.actionable_metric == AVG:
             computed_value = self.gauge.avg()
