@@ -846,6 +846,22 @@ hqDefine('geospatial/js/models', [
         self.canOpenModal = ko.computed(function () {
             return self.mapModel.caseGroupsIndex.length;
         });
+        self.assignedFilter = ko.observable();
+        self.assignedFilter.subscribe(() => {
+            if (self.assignedFilter() === 'all') {
+                self.filteredCaseData(self.caseData);
+            } else {
+                self.filteredCaseData(self.caseData.filter(function (caseItem) {
+                    if (self.assignedFilter() === 'unassigned') {
+                        return !caseItem.assignedUserId;
+                    }
+                    return caseItem.assignedUserId;
+                }));
+            }
+            self.totalItems(self.filteredCaseData().length);
+            self.goToPage(1);
+        });
+
         self.isAllChecked = ko.observable(false);
         self.isAllChecked.subscribe(() => {
             for (const caseItem of self.caseDataPage()) {

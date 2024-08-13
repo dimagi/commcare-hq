@@ -18,7 +18,15 @@
                         remove it from final assignments once the "Assign" button is clicked.
                     {% endblocktrans %}
                 </p>
-                <!-- TODO: Implement table + UI -->
+                <div class="row">
+                    <div class="form-group col-lg-6">
+                        <select class="select form-control" data-bind="value: assignedFilter">
+                            <option value="all">{% trans 'Show All' %}</option>
+                            <option value="assigned">{% trans 'Assigned Only' %}</option>
+                            <option value="unassigned">{% trans 'Unassigned Only' %}</option>
+                        </select>
+                    </div>
+                </div>
                 <table class="table table-striped table-bordered">
                     <thead>
                     <tr>
