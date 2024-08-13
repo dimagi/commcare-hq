@@ -59,11 +59,11 @@ class Gauge:
         return list(all_observed_values.values())
 
     def _tracked_event_cache_key(self, tracked_key):
-        return f'{self.__class__}-{tracked_key}-gauge-key'
+        return f'{type(self).__name__}-{tracked_key}-key'
 
     @property
     def _last_reported_timestamp_key(self):
-        return f'{self.__class__}-{self.feature_key}-last-reported'
+        return f'{type(self).__name__}-{self.feature_key}-last-reported'
 
     def get_last_reported_time(self):
         "returns the last time when the lag was reported or will return ``datetime.min`` if not reported yet"
