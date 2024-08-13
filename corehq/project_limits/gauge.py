@@ -111,6 +111,11 @@ class GaugeLimiter:
             time.sleep(self.gauge_definition.throttle_for_seconds)
 
     def allow_usage(self):
+        """
+        Checks for the throttle conditions provided in the Defintion class and evaluates them.
+        returns `True` it means that the usage should not be throttled.
+                `False` it means that the usage should be throttled.
+        """
         if not self.gauge_definition:
             return False
         computed_value = None
