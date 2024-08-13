@@ -326,7 +326,17 @@ hqDefine("geospatial/js/geospatial_map", [
                         const editUrl = initialPageData.reverse('edit_commcare_user', userData.id);
                         const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${userData.username}</a>`;
 
-                        return [userData.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link, 'type': 'user'}];
+                        const userInfo = {
+                            'coordinates': {
+                                'lat': lat,
+                                'lng': lng,
+                            },
+                            'link': link,
+                            'type': 'user',
+                            'name': userData.username,
+                            'primary_loc_name': userData.primary_loc_name,
+                        };
+                        return [userData.id, userInfo];
                     }));
 
                     const userMapItems = mapModel.addMarkersToMap(userData, userMarkerColors);
@@ -425,7 +435,7 @@ hqDefine("geospatial/js/geospatial_map", [
         // Index by case_id
         var casesById = _.object(_.map(casesWithGPS, function (item) {
             if (item[1]) {
-                return [item[0], {'coordinates': item[1], 'link': item[2], 'type': 'case'}];
+                return [item[0], {'coordinates': item[1], 'link': item[2], 'type': 'case', 'name': item[3]}];
             }
         }));
         const caseMapItems = mapModel.addMarkersToMap(casesById, caseMarkerColors);

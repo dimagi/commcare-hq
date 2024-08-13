@@ -30,6 +30,7 @@ from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
@@ -407,17 +408,32 @@ def get_users_with_gps(request, domain):
         .domain(domain)
         .mobile_users()
         .NOT(missing_or_empty_user_data_property(location_prop_name))
+        .fields(['location_id', '_id'])
     )
     selected_location_id = request.GET.get('location_id')
     if selected_location_id:
         query = query.location(selected_location_id)
-    user_ids = query.scroll_ids()
+
+    user_ids = []
+    primary_loc_ids = set()
+    for user_doc in query.run().hits:
+        primary_loc_ids.add(user_doc['location_id'])
+        user_ids.append(user_doc['_id'])
+
+    user_primary_locs = dict(SQLLocation.objects.filter(
+        domain=domain, location_id__in=primary_loc_ids
+    ).values_list('location_id', 'name'))
+
     users = map(CouchUser.wrap_correctly, iter_docs(CommCareUser.get_db(), user_ids))
     user_data = [
         {
             'id': user.user_id,
             'username': user.raw_username,
             'gps_point': user.get_user_data(domain).get(location_prop_name, ''),
+            'primary_loc_name': (
+                user_primary_locs[user.location_id]
+                if user.location_id in user_primary_locs else '---'
+            )
         } for user in users
     ]
 
