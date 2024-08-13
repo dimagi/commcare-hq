@@ -84,16 +84,14 @@ hqDefine("geospatial/js/geospatial_map", [
                         };
                     }
                 });
-                connectUserWithCasesOnMap(user, cases);
+                self.connectUserWithCasesOnMap(user, cases);
                 groupId += 1;
             });
             self.setBusy(false);
         };
 
-        self.runCaseDisbursementAlgorithm = function (cases, users) {
-            self.setBusy(true);
+        self.clearConnectionLines = function (cases) {
             let mapInstance = mapModel.mapInstance;
-
             let caseData = [];
             cases.forEach(function (c) {
                 const layerId = mapModel.getLineFeatureId(c.itemId);
@@ -110,6 +108,13 @@ hqDefine("geospatial/js/geospatial_map", [
                     lat: c.itemData.coordinates.lat,
                 });
             });
+
+            return caseData;
+        };
+
+        self.runCaseDisbursementAlgorithm = function (cases, users) {
+            self.setBusy(true);
+            const caseData = self.clearConnectionLines(cases);
 
             self.setDisbursementParameters = function (parameters) {
                 var parametersList = [
@@ -168,7 +173,7 @@ hqDefine("geospatial/js/geospatial_map", [
             });
         };
 
-        function connectUserWithCasesOnMap(user, cases) {
+        self.connectUserWithCasesOnMap = function (user, cases) {
             cases.forEach((caseModel) => {
                 const lineCoordinates = [
                     [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
@@ -199,7 +204,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     },
                 });
             });
-        }
+        };
 
         return self;
     };
