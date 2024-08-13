@@ -54,6 +54,7 @@ from corehq.apps.users.tests.util import patch_user_data_db_layer
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
+from corehq.tests.util.context import add_context
 from corehq.util.test_utils import flag_enabled
 
 from dimagi.utils.dates import add_months_to_date
@@ -2210,7 +2211,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             local_tableau_users.get(username='george@eliot.com')
 
 
-@patch_user_data_db_layer()
 class TestUserChangeLogger(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
@@ -2221,6 +2221,9 @@ class TestUserChangeLogger(SimpleTestCase):
             domain=cls.domain_name,
             user_id=cls.uploading_user.get_id
         )
+
+    def setUp(self):
+        add_context(patch_user_data_db_layer(), self)
 
     def test_add_change_message_duplicate_slug_entry(self):
         user = CommCareUser()
