@@ -2,112 +2,34 @@
 
 const path = require('path');
 const webpack = require('webpack');
-const fs = require('fs');
+const utils = require('./utils');
 
-//Just to help us with directories and folders path
-const __base = path.resolve(__dirname, '..');
+const aliases = {
+    "jquery": "jquery/dist/jquery.min",
+    "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
+        'commcarehq'),
+    "commcarehq_b3": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap3/'),
+        'commcarehq'),
 
-const BUNDLE_SUFFIX = '.main.js';
+    // todo after completing requirejs migration,
+    //  remove this file and the yarn modernizr post-install step
+    "modernizr": "hqwebapp/js/lib/modernizr",
 
-
-const getAppJsName = function (appName) {
-    const appJsNames = {
-        "analytics": "analytix",
-    };
-    return appJsNames[appName] || appName;
+    "sentry_browser": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
+        'sentry/js/sentry.browser.7.28.0.min'),
+    "sentry_captureconsole": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
+        'sentry/js/sentry.captureconsole.7.28.0.min'),
+    "tempusDominus": "@eonasdan/tempus-dominus",
+    "ko.mapping": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
+        'knockout_mapping.ko.min'),
 };
-
-const getStaticFolderForApp = function (appName) {
-    return path.resolve(__base, 'corehq', 'apps', appName, 'static');
-};
-
-const getStaticPathForApp = function (appName, directory) {
-    directory = directory || "";
-    const staticFolder = getStaticFolderForApp(appName);
-
-    return path.resolve(staticFolder, getAppJsName(appName), directory);
-};
-
-const isEntryPoint = function (dirEntry) {
-    const jsPath = getStaticPathForApp(dirEntry.name, 'js');
-    try {
-        return fs.readdirSync(jsPath);
-    } catch (e) {
-        // throws an error if the js directory does not exist
-        return false;
-    }
-};
-
-const getEntriesForApp = function (appName, directory) {
-    directory = directory || 'js';
-    const jsPath = getStaticPathForApp(appName, directory);
-    let entries = {};
-    fs.readdirSync(jsPath, {withFileTypes: true})
-        .forEach(dirEnt => {
-            if (dirEnt.isFile() && dirEnt.name.endsWith(BUNDLE_SUFFIX)) {
-                const filename = dirEnt.name.slice(0, -BUNDLE_SUFFIX.length);
-                const directoryName = directory.replace('/', '_');
-                const fullName = `${appName}_${directoryName}_${filename}`;
-                entries[fullName] = {
-                    import: path.resolve(dirEnt.path, dirEnt.name),
-                    filename: `${getAppJsName(appName)}/${directory}/${filename}.js`,
-                };
-            } else if (dirEnt.isDirectory()) {
-                const nextDirectory = `${directory}/${dirEnt.name}`;
-                entries = Object.assign(entries, getEntriesForApp(appName, nextDirectory));
-            }
-        });
-    return entries;
-};
-
-
-const getEntries = function () {
-    const appsPath = path.resolve(__base, 'corehq', 'apps');
-    let entries = {};
-    fs.readdirSync(appsPath, {withFileTypes: true})
-        .filter(dirEnt => dirEnt.isDirectory())
-        .filter(isEntryPoint)
-        .forEach(dirEnt => {
-            entries = Object.assign(entries, getEntriesForApp(dirEnt.name));
-        });
-    return entries;
-};
-
-const getAliases = function (directory) {
-    directory = directory || 'js';
-    const appsPath = path.resolve(__base, 'corehq', 'apps');
-    const aliases = {
-        "jquery": "jquery/dist/jquery.min",
-
-        // todo after completing requirejs migration, remove this file and the yarn modernizr post-install step
-        "modernizr": "hqwebapp/js/lib/modernizr",
-
-        "sentry_browser": path.resolve(getStaticFolderForApp('hqwebapp'),
-            'sentry/js/sentry.browser.7.28.0.min'),
-        "sentry_captureconsole": path.resolve(getStaticFolderForApp('hqwebapp'),
-            'sentry/js/sentry.captureconsole.7.28.0.min'),
-
-        "tempusDominus": "@eonasdan/tempus-dominus",
-
-        "ko.mapping": path.resolve(getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
-            'knockout_mapping.ko.min'),
-    };
-    fs.readdirSync(appsPath, {withFileTypes: true})
-        .filter(dirEnt => dirEnt.isDirectory())
-        .filter(isEntryPoint)
-        .forEach(dirEnt => {
-            aliases[`${getAppJsName(dirEnt.name)}/${directory}`] = getStaticPathForApp(dirEnt.name, directory);
-        });
-    return aliases;
-};
-
 
 module.exports = {
-    entry: getEntries(),
+    entry: utils.getEntries(),
 
     output: {
         filename: '[name].js',
-        path: path.resolve(__base, 'staticfiles/webpack'),
+        path: utils.getStaticfilesPath(),
         clean: true,
     },
 
@@ -171,7 +93,49 @@ module.exports = {
         }),
     ],
 
+    optimization: {
+        splitChunks: {
+            cacheGroups: {
+                hqwebapp: {
+                    test: /[\\/]hqwebapp[\\/]js[\\/]/,
+                    name: 'hqwebapp',
+                    chunks: 'all',
+                    minSize: 0, // Include even small modules
+                },
+                // hqwebapp: {
+                //     test: /\/hqwebapp\/js\/(?!.*(bootstrap3|bootstrap5)\/).*\.js$/,
+                //     name: 'hqwebapp',
+                //     chunks: 'all',
+                //     minSize: 0, // Include even small modules
+                // },
+                // hqwebappBootstrap5: {
+                //     test: /\/hqwebapp\/js\/.*bootstrap5\/.*\.js$/,
+                //     name: 'hqwebapp-bootstrap5',
+                //     chunks: 'all',
+                //     minSize: 0, // Include even small modules
+                // },
+                // hqwebappBootstrap3: {
+                //     test: /\/hqwebapp\/js\/.*bootstrap3\/.*\.js$/,
+                //     name: 'hqwebapp-bootstrap3',
+                //     chunks: 'all',
+                //     minSize: 0, // Include even small modules
+                // },
+                prototype: {
+                    test: /[\\/]prototype[\\/]js[\\/]/,
+                    name: 'prototype',
+                    chunks: 'all',
+                    minSize: 0, // Include even small modules
+                },
+                vendors: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    chunks: 'all',
+                },
+            },
+        },
+    },
+
     resolve: {
-        alias: getAliases(),
+        alias: utils.getAllAliases(aliases),
     },
 };
