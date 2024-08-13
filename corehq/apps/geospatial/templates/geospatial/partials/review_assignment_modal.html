@@ -30,7 +30,7 @@
                         <th>{% trans "Mobile Worker Primary Location" %}</th>
                     </tr>
                     </thead>
-                    <tbody data-bind="foreach: caseData">
+                    <tbody data-bind="foreach: caseDataPage">
                         <tr data-bind="css: { active: isSelected }">
                             <td>
                                 <input type="checkbox" data-bind="checked: isSelected" />
@@ -41,6 +41,12 @@
                         </tr>
                     </tbody>
                 </table>
+                <pagination data-apply-bindings="false"
+                            params="goToPage: goToPage,
+                                    slug: 'assigned-cases',
+                                    perPage: itemsPerPage,
+                                    totalItems: totalItems">
+                </pagination>
             </div>
             <div class="modal-footer">
                 <!-- TODO: Implement footer buttons -->

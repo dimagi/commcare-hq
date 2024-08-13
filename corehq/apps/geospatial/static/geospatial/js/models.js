@@ -828,16 +828,27 @@ hqDefine('geospatial/js/models', [
     var AssignmentManager = function (mapModel, disbursementModel) {
         let self = this;
 
+        self.itemsPerPage = ko.observable(5);
+        self.totalItems = ko.observable(0);
+        self.currentPage = ko.observable(1);
+
         self.mapModel = mapModel;
         self.disbursementModel = disbursementModel;
 
         self.caseData = [];
+        self.filteredCaseData = ko.observableArray([]);
+        self.caseDataPage = ko.computed(function () {
+            const end = self.currentPage() * self.itemsPerPage();
+            const start = end - self.itemsPerPage();
+            return self.filteredCaseData().slice(start, end);
+        });
+
         self.canOpenModal = ko.computed(function () {
             return self.mapModel.caseGroupsIndex.length;
         });
         self.isAllChecked = ko.observable(false);
         self.isAllChecked.subscribe(() => {
-            for (const caseItem of self.caseData) {
+            for (const caseItem of self.caseDataPage()) {
                 caseItem.isSelected(self.isAllChecked());
             }
         });
@@ -861,6 +872,13 @@ hqDefine('geospatial/js/models', [
                 );
             }
 
+            self.filteredCaseData(self.caseData);
+            self.totalItems(self.filteredCaseData().length);
+        };
+
+        self.goToPage = function (pageNumber) {
+            self.isAllChecked(false);
+            self.currentPage(pageNumber);
         };
 
         return self;
