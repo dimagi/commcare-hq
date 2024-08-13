@@ -138,11 +138,18 @@ class TestIterReadyRepeaters(SimpleTestCase):
     def test_successive_loops(self):
         repeater_1 = Repeater()
         repeater_2 = Repeater()
-        with (patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
-                    side_effect=[[repeater_1, repeater_2], [repeater_1], []])):
-            repeaters = list(iter_ready_repeaters())
-            self.assertEqual(len(repeaters), 3)
-            self.assertEqual(repeaters, [repeater_1, repeater_2, repeater_1])
+        with (
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
+                  side_effect=[[repeater_1, repeater_2], [repeater_1], []]),
+            patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
+        ):
+            repeater_token_pairs = list(iter_ready_repeaters())
+            self.assertEqual(len(repeater_token_pairs), 3)
+            # Check IDs so that Repeater doesn't try to fetch ConnectionSettings
+            self.assertEqual(
+                [repeater for repeater, token in repeater_token_pairs],
+                [repeater_1, repeater_2, repeater_1]
+            )
 
 
 class TestProcessRepeater(TestCase):
@@ -179,9 +186,12 @@ class TestProcessRepeater(TestCase):
         )
         self.repeater.register(payload)
 
-        with patch('corehq.motech.repeaters.models.simple_request') as request_mock:
+        with (
+            patch('corehq.motech.repeaters.models.simple_request') as request_mock,
+            patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
+        ):
             request_mock.return_value = ResponseMock(status_code=200, reason='OK')
-            process_repeater(DOMAIN, self.repeater.repeater_id)
+            process_repeater(DOMAIN, self.repeater.repeater_id, 'token')
 
             request_mock.assert_called_once()
 
@@ -194,54 +204,73 @@ class TestProcessRepeater(TestCase):
         )
         self.repeater.register(payload)
 
-        with patch('corehq.motech.repeaters.models.simple_request') as request_mock:
+        with (
+            patch('corehq.motech.repeaters.models.simple_request') as request_mock,
+            patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
+        ):
             request_mock.return_value = ResponseMock(
                 status_code=429,
                 reason='Too Many Requests',
             )
-            process_repeater(DOMAIN, self.repeater.repeater_id)
+            process_repeater(DOMAIN, self.repeater.repeater_id, 'token')
 
         self.repeater.set_backoff.assert_called_once()
 
 
 class TestUpdateRepeater(SimpleTestCase):
 
+    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_resets_backoff_on_success(self, mock_get_repeater):
+    def test_update_repeater_resets_backoff_on_success(self, mock_get_repeater, __):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
-        update_repeater([State.Success, State.Fail, State.Empty, None], 1)
+        update_repeater([State.Success, State.Fail, State.Empty, None], 1, 'token')
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
+    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_sets_backoff_on_failure(self, mock_get_repeater):
+    def test_update_repeater_sets_backoff_on_failure(self, mock_get_repeater, __):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
-        update_repeater([State.Fail, State.Empty, None], 1)
+        update_repeater([State.Fail, State.Empty, None], 1, 'token')
 
         mock_repeater.set_backoff.assert_called_once()
         mock_repeater.reset_backoff.assert_not_called()
 
+    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_does_nothing_on_empty(self, mock_get_repeater):
+    def test_update_repeater_does_nothing_on_empty(self, mock_get_repeater, __):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
-        update_repeater([State.Empty], 1)
+        update_repeater([State.Empty], 1, 'token')
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
 
+    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_does_nothing_on_none(self, mock_get_repeater):
+    def test_update_repeater_does_nothing_on_none(self, mock_get_repeater, __):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
-        update_repeater([None], 1)
+        update_repeater([None], 1, 'token')
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
+
+    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
+    def test_update_repeater_releases_lock(self, mock_get_repeater, mock_get_repeater_lock):
+        mock_get_repeater.side_effect = Exception()
+        mock_lock = MagicMock()
+        mock_get_repeater_lock.return_value = mock_lock
+
+        with self.assertRaises(Exception):
+            update_repeater([None], 1, 'token')
+
+        mock_lock.release.assert_called_once()
