@@ -850,6 +850,7 @@ reports
  0017_alter_tableauuser_tableau_user_id
  0018_alter_tableauuser_role
  0019_tableauvisualization_location_safe
+ 0020_tableauserver_get_reports_using_role
 saved_reports
  0001_initial
  0002_scheduledreportlog
