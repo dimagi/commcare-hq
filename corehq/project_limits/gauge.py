@@ -141,9 +141,7 @@ class PillowLagGaugeLimiter(GaugeLimiter):
         if not self.gauge_definition:
             # No throttling if config to throttle is not set
             return True
-        if self._is_ideal_throttle_condition() and self._has_pillow_reported_recently():
-            return False
-        return True
+        return not (self._is_ideal_throttle_condition() and self._has_pillow_reported_recently())
 
     def _is_ideal_throttle_condition(self):
         """

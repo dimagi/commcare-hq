@@ -121,7 +121,7 @@ def _get_topic_offsets(topics, latest):
 
 def get_all_kafka_partitons_for_topic(topic):
     """
-    :returns: A set of stings containing topic and the partition numbers for the given topic.
+    :returns: A set of strings containing topic and the partition numbers for the given topic.
     For example:
     {'form-sql-0', 'form-sql-1', 'form-sql-2'}
     """
