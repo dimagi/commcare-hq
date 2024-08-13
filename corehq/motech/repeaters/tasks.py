@@ -181,7 +181,9 @@ def _process_repeat_record(repeat_record):
                 # round up to the nearest millisecond, meaning always at least 1ms
                 report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
                 action = 'attempted'
-                request_duration = [sub.duration for sub in fire_timer.root.subs if sub.name == ENDPOINT_TIMER][0]
+                request_duration = [
+                    sub.duration for sub in fire_timer.to_list(exclude_root=True) if sub.name == ENDPOINT_TIMER
+                ][0]
         except Exception:
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return
