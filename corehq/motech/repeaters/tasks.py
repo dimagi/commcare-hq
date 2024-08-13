@@ -75,18 +75,12 @@ def delete_old_request_logs():
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def check_repeaters():
-    start = datetime.utcnow()
-    twentythree_hours_sec = 23 * 60 * 60
-    twentythree_hours_later = start + timedelta(hours=23)
-
-    # Long timeout to allow all waiting repeaters to be iterated
     check_repeater_lock = get_redis_lock(
         CHECK_REPEATERS_KEY,
-        timeout=twentythree_hours_sec,
+        timeout=None,
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
-        metrics_counter("commcare.repeaters.check.locked_out")
         return
 
     try:
@@ -95,9 +89,6 @@ def check_repeaters():
             timing_buckets=_check_repeaters_buckets,
         ):
             for domain, repeater_id, lock_token in iter_ready_repeater_ids_forever():
-                if datetime.utcnow() > twentythree_hours_later:
-                    break
-
                 metrics_counter("commcare.repeaters.check.attempt_forward")
                 process_repeater.delay(domain, repeater_id, lock_token)
     finally:

@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 MAX_RETRY_WAIT = timedelta(days=7)
 MIN_RETRY_WAIT = timedelta(minutes=60)
-CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
+CHECK_REPEATERS_INTERVAL = timedelta(minutes=1)
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
 ENDPOINT_TIMER = 'endpoint_timer'
 # Number of attempts to an online endpoint before cancelling payload
