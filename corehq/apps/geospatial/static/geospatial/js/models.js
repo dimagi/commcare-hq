@@ -829,6 +829,16 @@ hqDefine('geospatial/js/models', [
         self.mapItem = mapItem;
         self.isSelected = ko.observable(false);
 
+        self.getJson = function () {
+            return {
+                caseName: self.caseName(),
+                caseId: self.caseId,
+                assignedUsername: self.assignedUsername(),
+                assignedUserId: self.assignedUserId,
+                assignedUserPrimaryLocName: self.assignedUserPrimaryLocName(),
+            };
+        };
+
         return self;
     };
 
@@ -963,6 +973,27 @@ hqDefine('geospatial/js/models', [
                 const cases = userCasesToConnect[userId];
                 self.disbursementModel.connectUserWithCasesOnMap(user, cases);
             }
+        };
+
+        self.exportAssignments = function () {
+            const headers = [
+                gettext('Case Name'),
+                gettext('Case ID'),
+                gettext('Assigned User ID'),
+                gettext('Assigned Username'),
+                gettext('Assigned User Primary Location'),
+            ];
+            const cols = [
+                'caseName',
+                'caseId',
+                'assignedUserId',
+                'assignedUsername',
+                'assignedUserPrimaryLocName',
+            ];
+            const casesToExport = self.filteredCaseData().map(function (caseItem) {
+                return caseItem.getJson();
+            });
+            utils.downloadCsv(casesToExport, headers, cols, 'Case Assignment Export');
         };
 
         return self;
