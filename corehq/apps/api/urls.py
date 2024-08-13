@@ -172,6 +172,7 @@ GLOBAL_USER_API_LIST = (
 
 NON_GLOBAL_USER_API_LIST = (
     v0_5.IdentityResource,
+    v0_5.CommCareAnalyticsRolesResource,
 )
 
 
