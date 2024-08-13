@@ -26,6 +26,13 @@
                             <option value="unassigned">{% trans 'Unassigned Only' %}</option>
                         </select>
                     </div>
+                    <div class="form-group col-lg-6">
+                        <select class="select form-control"
+                                type="text"
+                                id="user-assignment-select"
+                                data-bind="value: selectedUserId">
+                        </select>
+                    </div>
                 </div>
                 <table class="table table-striped table-bordered">
                     <thead>
@@ -58,6 +65,18 @@
             </div>
             <div class="modal-footer">
                 <!-- TODO: Implement footer buttons -->
+                <div class="row form-horizontal">
+                    <div class="col-sm-8 pull-right">
+                        <button class="btn btn-default" data-bind="click: assignUserToCases">
+                            <span data-bind="visible: selectedUserId">
+                                {% trans 'Assign Cases' %}
+                            </span>
+                            <span data-bind="hidden: selectedUserId">
+                                {% trans 'Unassign Cases' %}
+                            </span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -83,6 +83,13 @@ hqDefine('geospatial/js/models', [
             var color = self.isSelected() ? self.markerColors.selected : self.markerColors.default;
             changeMarkerColor(self, color);
         });
+
+        self.getJson = function () {
+            return {
+                'id': self.itemId,
+                'text': self.itemData.name,
+            };
+        };
     };
 
     var GroupedCaseMapItem = function (itemId, itemData, link) {
@@ -843,9 +850,12 @@ hqDefine('geospatial/js/models', [
             return self.filteredCaseData().slice(start, end);
         });
 
+        self.userData = ko.observableArray([]);
         self.canOpenModal = ko.computed(function () {
             return self.mapModel.caseGroupsIndex.length;
         });
+
+        self.selectedUserId = ko.observable();
         self.assignedFilter = ko.observable();
         self.assignedFilter.subscribe(() => {
             if (self.assignedFilter() === 'all') {
@@ -888,13 +898,45 @@ hqDefine('geospatial/js/models', [
                 );
             }
 
+            loadUserData();
             self.filteredCaseData(self.caseData);
             self.totalItems(self.filteredCaseData().length);
         };
 
+        function loadUserData() {
+            self.userData([]);
+            for (const item of self.mapModel.userMapItems()) {
+                self.userData.push(item.getJson());
+            }
+
+            $('#user-assignment-select').select2({
+                placeholder: gettext('No user selected (unassign mode)'),
+                allowClear: true,
+                data: self.userData(),
+            });
+        }
+
         self.goToPage = function (pageNumber) {
             self.isAllChecked(false);
             self.currentPage(pageNumber);
+        };
+
+        self.assignUserToCases = function () {
+            const selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()];
+            for (const caseItem of self.caseDataPage()) {
+                if (!caseItem.isSelected()) {
+                    continue;
+                }
+
+                caseItem.assignedUsername(
+                    (selectedUser) ? selectedUser.item.itemData.name : '---'
+                );
+                caseItem.assignedUserPrimaryLocName(
+                    (selectedUser) ? selectedUser.item.itemData.primary_loc_name : '---'
+                );
+                caseItem.assignedUserId = self.selectedUserId();
+                caseItem.isSelected(false);
+            }
         };
 
         return self;
