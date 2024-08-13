@@ -262,7 +262,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                     });
                 }
 
-                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
+                if (user.isAppPreview) {
                     Kissmetrics.track.event("[app-preview] User submitted a form");
                     GGAnalytics.track.event("App Preview", "User submitted a form");
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
@@ -290,7 +290,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                     FormplayerUtils.navigate('/apps', { trigger: true });
                 }
             } else {
-                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
+                if (user.isAppPreview) {
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: false });
                 }
                 CloudcareUtils.showError(resp.output, $("#cloudcare-notifications"));
@@ -729,6 +729,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         urlObject.clearExceptApp();
         FormplayerFrontend.regions.getRegion('sidebar').empty();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
+        FormplayerFrontend.regions.getRegion('persistentMenu').empty();
         if (currentUser.displayOptions.singleAppMode) {
             appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
             FormplayerFrontend.trigger("app:singleApp", appId);
