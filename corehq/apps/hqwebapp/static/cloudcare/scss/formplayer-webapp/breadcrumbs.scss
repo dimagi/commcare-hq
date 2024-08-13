@@ -1,4 +1,8 @@
 // Only webapps
+#breadcrumb-region {
+  z-index: $zindex-navbar-cloudcare - 1;
+}
+
 #breadcrumb-region .breadcrumb-nav {
   background-color: white;
   display: flex;
@@ -13,6 +17,7 @@
 
     .breadcrumb-item {
       &::before {
+        font-family: "FontAwesome";  // supports bsbreadcrumb-divider: \f054
         color: $cc-neutral-hi;
       }
       a {
