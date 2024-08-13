@@ -747,7 +747,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
-        self.stripeRepeats = _.contains(styles, constants.STRIPE_REPEATS);
         self.collapsible = (_.contains(styles, constants.COLLAPSIBLE) || isRepeatable) && self.showHeader;
         self.groupBorder = _.contains(styles, constants.GROUP_BORDER);
         self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN) || (isRepeatable && !collapsedIx.includes(self.rel_ix())));

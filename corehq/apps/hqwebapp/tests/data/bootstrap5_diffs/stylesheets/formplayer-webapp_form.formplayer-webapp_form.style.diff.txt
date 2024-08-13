@@ -50,7 +50,7 @@
      }
    }
  
-@@ -42,83 +33,47 @@
+@@ -42,69 +33,33 @@
      position: sticky;
      /* Puts the anchored submit button in front of form elements that use bootstrap's .form-control,
         which adds z-index of 2 (3 when focused) */
@@ -127,30 +127,13 @@
      }
    }
  
-   .stripe-repeats {
--    > .row, .panel-body > .children > .row {
-+    > .row, .card-body > .children > .row {
-       &:nth-of-type(odd) {
--        background-color: @table-bg-accent;
-+        background-color: $table-accent-bg;
-       }
-       &:nth-of-type(even) {
-         background-color: white;
-       }
-       &:hover {
--        background-color: @table-bg-hover;
-+        background-color: $table-hover-bg;
-       }
-     }
-   }
- 
    .group-border {
 -    border: solid 1px @cc-neutral-mid;
 +    border: solid 1px $cc-neutral-mid;
      border-radius: 8px;
      margin: 2px;
      padding-top: 5px;
-@@ -138,16 +93,18 @@
+@@ -124,16 +79,18 @@
        height: 1em;
        vertical-align: baseline;
      }
@@ -160,13 +143,12 @@
  
        &:hover {
 -        background-color: red;
--      }
++        background-color: var(--bsbtn-hover-bg);
+       }
 -    }
 -  }
 -
 -  .panel-heading {
-+        background-color: var(--bsbtn-hover-bg);
-+      }
 +
 +    }
 +  }
@@ -175,7 +157,7 @@
      border-top-left-radius: 0px;
      border-top-right-radius: 0px;
    }
-@@ -166,17 +123,17 @@
+@@ -152,17 +109,17 @@
      display: none;
    }
  
@@ -198,7 +180,7 @@
      border-bottom: none;
      padding-top: 10px;
      padding-bottom: 10px;
-@@ -190,13 +147,13 @@
+@@ -176,13 +133,13 @@
    .form-group-required-label {
      display: block;
      opacity: 0;
@@ -214,7 +196,7 @@
      color: white;
      width: auto;
      line-height: 14px;
-@@ -211,6 +168,10 @@
+@@ -197,6 +154,10 @@
  }
  
  @media print {
@@ -225,7 +207,7 @@
    .form-container.print-container {
      margin: 0px;
      .page-header {
-@@ -218,14 +179,14 @@
+@@ -204,14 +165,14 @@
      }
    }
  
@@ -245,7 +227,7 @@
      margin-bottom: 0px;
      padding-bottom: 0px;
      .widget-container {
-@@ -248,7 +209,7 @@
+@@ -234,7 +195,7 @@
  .question-tile-row {
    display: flex;
    align-items: start;
@@ -254,7 +236,7 @@
      padding-top: 0px !important;
      padding-bottom: 0px !important;
      margin-top: 0px !important;
-@@ -256,17 +217,6 @@
+@@ -242,17 +203,6 @@
    }
  }
  
@@ -272,7 +254,7 @@
  .checkbox, .radio {
    input[type="checkbox"], input[type="radio"] {
      margin-top: 3.15px;
-@@ -275,3 +225,15 @@
+@@ -261,3 +211,15 @@
    padding-top: 0px !important;
    padding-bottom: 7px;
  }
