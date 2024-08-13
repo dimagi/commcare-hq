@@ -810,6 +810,23 @@ hqDefine('geospatial/js/models', [
             return true;
         }
     };
+    var AssignmentManager = function (mapModel, disbursementModel) {
+        let self = this;
+
+        self.mapModel = mapModel;
+        self.disbursementModel = disbursementModel;
+
+        self.canOpenModal = ko.computed(function () {
+            return self.mapModel.caseGroupsIndex.length;
+        });
+
+        self.loadCaseData = function () {
+            // TODO: Implement
+
+        };
+
+        return self;
+    };
 
     return {
         MissingGPSModel: MissingGPSModel,
@@ -818,5 +835,6 @@ hqDefine('geospatial/js/models', [
         GroupedCaseMapItem: GroupedCaseMapItem,
         Map: Map,
         PolygonFilter: PolygonFilter,
+        AssignmentManager: AssignmentManager,
     };
 });

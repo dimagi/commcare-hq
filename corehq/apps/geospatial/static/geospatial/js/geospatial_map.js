@@ -35,6 +35,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
     var mapModel;
     var polygonFilterModel;
+    var assignmentManagerModel;
 
     function showMapControls(state) {
         $("#geospatial-map").toggle(state);
@@ -407,6 +408,14 @@ hqDefine("geospatial/js/geospatial_map", [
         }
     }
 
+    function initAssignmentReview() {
+        const $manageAssignmentModal = $("#review-assignments");
+        if ($manageAssignmentModal.length) {
+            assignmentManagerModel = models.AssignmentManager(mapModel, disbursementRunner);
+            $manageAssignmentModal.koApplyBindings(assignmentManagerModel);
+        }
+    }
+
     function loadCases(caseData) {
         mapModel.removeMarkersFromMap(mapModel.caseMapItems());
         mapModel.caseMapItems([]);
@@ -439,6 +448,7 @@ hqDefine("geospatial/js/geospatial_map", [
             mapModel.mapInstance.on('load', () => {
                 initPolygonFilters();
                 initUserFilters();
+                initAssignmentReview();
             });
 
             // Hide controls until data is displayed
