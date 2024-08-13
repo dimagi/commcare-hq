@@ -866,6 +866,8 @@ hqDefine('geospatial/js/models', [
         });
 
         self.selectedUserId = ko.observable();
+        self.includeRelatedCases = ko.observable(false);
+
         self.assignedFilter = ko.observable();
         self.assignedFilter.subscribe(() => {
             if (self.assignedFilter() === 'all') {

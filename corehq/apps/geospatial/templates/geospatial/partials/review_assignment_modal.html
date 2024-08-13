@@ -66,6 +66,10 @@
             <div class="modal-footer">
                 <!-- TODO: Implement footer buttons -->
                 <div class="row form-horizontal">
+                    <label class="checkbox col-sm-4">
+                        <input type="checkbox" data-bind="checked: includeRelatedCases"/>
+                        {% trans 'Include related cases' %}
+                    </label>
                     <div class="col-sm-8 pull-right">
                         <button class="btn btn-default" data-bind="click: assignUserToCases">
                             <span data-bind="visible: selectedUserId">
