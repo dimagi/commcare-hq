@@ -61,6 +61,7 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         }
 
         user = {
+            'doc_type': 'CommCareUser',
             'id': 'user_id',
             'domain': 'champ_cameroon',
             'location_id': 'test_location_id'
@@ -183,6 +184,7 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         }
 
         user = {
+            'doc_type': 'CommCareUser',
             'id': 'user_id',
             'domain': 'champ_cameroon',
             'location_id': 'test_location_id'
@@ -307,6 +309,7 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         }
 
         user = {
+            'doc_type': 'CommCareUser',
             'id': 'user_id',
             'domain': 'champ_cameroon',
             'location_id': 'test_location_id'
