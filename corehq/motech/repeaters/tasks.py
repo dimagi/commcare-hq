@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -5,6 +6,8 @@ from django.conf import settings
 from celery import chord
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
+from django_redis import get_redis_connection
+from redis.lock import Lock
 
 from dimagi.utils.couch import get_redis_lock
 
@@ -23,6 +26,7 @@ from corehq.util.metrics import (
     metrics_histogram_timer,
 )
 from corehq.util.metrics.const import MPM_MAX
+from corehq.util.metrics.lockmeter import MeteredLock
 from corehq.util.timer import TimingContext
 
 from .const import (
@@ -89,12 +93,12 @@ def check_repeaters():
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for repeater in iter_ready_repeaters():
+            for repeater, lock_token in iter_ready_repeaters():
                 if datetime.utcnow() > twentythree_hours_later:
                     break
 
                 metrics_counter("commcare.repeaters.check.attempt_forward")
-                process_repeater.delay(repeater.domain, repeater.repeater_id)
+                process_repeater.delay(repeater.domain, repeater.repeater_id, lock_token)
     finally:
         check_repeater_lock.release()
 
@@ -111,16 +115,27 @@ def iter_ready_repeaters():
             timing_buckets=_check_repeaters_buckets,
         ):
             for repeater in Repeater.objects.all_ready():
-                yielded = True
-                yield repeater
+                lock = get_repeater_lock(repeater.repeater_id)
+                lock_token = uuid.uuid1().hex  # The same way Lock does it
+                if lock.acquire(blocking=False, token=lock_token):
+                    yielded = True
+                    yield repeater, lock_token
 
         if not yielded:
             # No repeaters are ready
             return
 
 
+def get_repeater_lock(repeater_id):
+    redis = get_redis_connection()
+    name = f'process_repeater_{repeater_id}'
+    one_day = 24 * 60 * 60
+    lock = Lock(redis, name, timeout=one_day)
+    return MeteredLock(lock, name)
+
+
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeater(domain, repeater_id):
+def process_repeater(domain, repeater_id, lock_token):
 
     def get_task_signature(repeat_record):
         task = {
@@ -132,7 +147,7 @@ def process_repeater(domain, repeater_id):
     repeater = Repeater.objects.get(domain=domain, id=repeater_id)
     repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
     header_tasks = [get_task_signature(rr) for rr in repeat_records]
-    chord(header_tasks)(update_repeater.s(repeater_id))
+    chord(header_tasks)(update_repeater.s(repeater_id, lock_token))
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -150,27 +165,32 @@ def process_failed_repeat_record(repeat_record_id, domain):
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def update_repeater(repeat_record_states, repeater_id):
+def update_repeater(repeat_record_states, repeater_id, lock_token):
     """
     Determines whether the repeater should back off, based on the
     results of ``_process_repeat_record()`` tasks.
     """
-    repeater = Repeater.objects.get(id=repeater_id)
-    if any(s == State.Success for s in repeat_record_states):
-        # At least one repeat record was sent successfully. The
-        # remote endpoint is healthy.
-        repeater.reset_backoff()
-    elif all(s in (State.Empty, State.InvalidPayload, None)
-             for s in repeat_record_states):
-        # We can't tell anything about the remote endpoint.
-        # _process_repeat_record() can return None if it is called
-        # with a repeat record whose state is Success or Empty. That
-        # can't happen in this workflow, but None is included for
-        # completeness.
-        pass
-    else:
-        # All sent payloads failed. Try again later.
-        repeater.set_backoff()
+    try:
+        repeater = Repeater.objects.get(id=repeater_id)
+        if any(s == State.Success for s in repeat_record_states):
+            # At least one repeat record was sent successfully. The
+            # remote endpoint is healthy.
+            repeater.reset_backoff()
+        elif all(s in (State.Empty, State.InvalidPayload, None)
+                 for s in repeat_record_states):
+            # We can't tell anything about the remote endpoint.
+            # _process_repeat_record() can return None if it is called
+            # with a repeat record whose state is Success or Empty. That
+            # can't happen in this workflow, but None is included for
+            # completeness.
+            pass
+        else:
+            # All sent payloads failed. Try again later.
+            repeater.set_backoff()
+    finally:
+        lock = get_repeater_lock(repeater_id)
+        lock.local.token = lock_token
+        lock.release()
 
 
 def _process_repeat_record(repeat_record_id):
