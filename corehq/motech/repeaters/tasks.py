@@ -10,7 +10,6 @@ from dimagi.utils.couch import get_redis_lock
 
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
-from corehq.apps.pg_lock.models import Lock
 from corehq.motech.models import RequestLog
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,
@@ -112,11 +111,8 @@ def iter_ready_repeaters():
                 # if rate_limit_repeater(repeater.domain): TODO: Update rate limiting
                 #     repeater.rate_limit()
                 #     continue
-
-                lock = Lock(f'process_repeater_{repeater.repeater_id}')
-                if lock.acquire(blocking=False, timeout=9 * 60):
-                    yielded = True
-                    yield repeater
+                yielded = True
+                yield repeater
 
         if not yielded:
             return
@@ -158,26 +154,22 @@ def update_repeater(repeat_record_states, repeater_id):
     Determines whether the repeater should back off, based on the
     results of ``_process_repeat_record()`` tasks.
     """
-    try:
-        repeater = Repeater.objects.get(id=repeater_id)
-        if any(s == State.Success for s in repeat_record_states):
-            # At least one repeat record was sent successfully. The
-            # remote endpoint is healthy.
-            repeater.reset_backoff()
-        elif all(s in (State.Empty, State.InvalidPayload, None)
-                 for s in repeat_record_states):
-            # We can't tell anything about the remote endpoint.
-            # _process_repeat_record() can return None if it is called
-            # with a repeat record whose state is Success or Empty. That
-            # can't happen in this workflow, but None is included for
-            # completeness.
-            pass
-        else:
-            # All sent payloads failed. Try again later.
-            repeater.set_backoff()
-    finally:
-        lock = Lock(f'process_repeater_{repeater_id}')
-        lock.release()
+    repeater = Repeater.objects.get(id=repeater_id)
+    if any(s == State.Success for s in repeat_record_states):
+        # At least one repeat record was sent successfully. The
+        # remote endpoint is healthy.
+        repeater.reset_backoff()
+    elif all(s in (State.Empty, State.InvalidPayload, None)
+             for s in repeat_record_states):
+        # We can't tell anything about the remote endpoint.
+        # _process_repeat_record() can return None if it is called
+        # with a repeat record whose state is Success or Empty. That
+        # can't happen in this workflow, but None is included for
+        # completeness.
+        pass
+    else:
+        # All sent payloads failed. Try again later.
+        repeater.set_backoff()
 
 
 def _process_repeat_record(repeat_record_id):
