@@ -79,7 +79,6 @@ IGNORE_MODELS = {
     "otp_static.StaticDevice",
     "otp_static.StaticToken",
     "otp_totp.TOTPDevice",
-    "pg_lock.PGLock",
     "phone.SyncLogSQL",  # not required and can be a lot of data
     "pillow_retry.PillowError",
     "pillowtop.DjangoPillowCheckpoint",

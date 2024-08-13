@@ -56,9 +56,6 @@ class MeteredLock(object):
             self.lock_trace.finish()
             self.lock_trace = None
 
-    def locked(self):
-        return self.lock.locked()
-
     def __enter__(self):
         self.acquire(blocking=True)
         return self

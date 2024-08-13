@@ -749,8 +749,6 @@ otp_static
 otp_totp
  0001_initial
  0002_auto_20190420_0723
-pg_lock
- 0001_initial
 phone
  0001_initial
  0002_synclogsql
