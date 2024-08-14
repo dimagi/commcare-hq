@@ -41,6 +41,7 @@ class TableauView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.visualization.id,))
 
+    @method_decorator(login_and_domain_required)
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         if not self._authenticate_request(request):

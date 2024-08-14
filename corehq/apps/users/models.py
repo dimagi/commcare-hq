@@ -1645,11 +1645,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return False
 
     def can_view_some_tableau_viz(self, domain):
-        if not self.can_access_all_locations(domain):
-            return False
-
         from corehq.apps.reports.models import TableauVisualization
-        return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
+        return bool(TableauVisualization.for_user(domain, self))
 
     def can_login_as(self, domain):
         return (
