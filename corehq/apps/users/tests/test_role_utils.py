@@ -1,6 +1,7 @@
 from django.test import TestCase
+from unittest.mock import patch
 
-from corehq.apps.users.models import HqPermissions, UserRole
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser, PermissionInfo
 from corehq.apps.users.role_utils import (
     UserRolePresets,
     archive_custom_roles_for_domain,
@@ -9,8 +10,16 @@ from corehq.apps.users.role_utils import (
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
     enable_attendance_coordinator_role_for_domain,
-    archive_attendance_coordinator_role_for_domain
+    archive_attendance_coordinator_role_for_domain,
+    get_commcare_analytics_roles_by_user_domains,
 )
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.permissions import (
+    COMMCARE_ANALYTICS_USER_PERMISSIONS,
+    COMMCARE_ANALYTICS_GAMMA,
+    COMMCARE_ANALYTICS_SQL_LAB,
+)
+from corehq.toggles import SUPERSET_ANALYTICS
 
 
 class RoleUtilsTests(TestCase):
@@ -118,3 +127,74 @@ class RoleUtilsTests(TestCase):
         for role in UserRole.objects.get_by_domain(self.domain):
             if role.id != self.role1.id:
                 role.delete()
+
+
+class TestCommcareAnalyticsRolesByUser(TestCase):
+
+    USERNAME = "username"
+    PASSWORD = "***"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = create_domain("domain1")
+        cls.user = WebUser.create("domain1", cls.USERNAME, cls.PASSWORD, None, None)
+
+        cls.hq_no_cca_role = cls.create_role("No CCA role", analytics_roles=None)
+
+        cls.limited_cca_roles = [
+            COMMCARE_ANALYTICS_GAMMA,
+            COMMCARE_ANALYTICS_SQL_LAB,
+        ]
+        cls.hq_limited_cca_role = cls.create_role("Limited CCA role", analytics_roles=cls.limited_cca_roles)
+
+    @classmethod
+    def tearDownClass(cls):
+        for role in UserRole.objects.get_by_domain(cls.domain):
+            role.delete()
+
+        cls.user.delete(deleted_by_domain=cls.domain.name, deleted_by=None)
+        cls.domain.delete()
+
+    def test_user_domain_does_not_have_flag_enabled(self):
+        analytics_roles = get_commcare_analytics_roles_by_user_domains(self.user)
+        self.assertTrue("domain1" not in analytics_roles)
+
+    @patch.object(SUPERSET_ANALYTICS, "get_enabled_domains")
+    def test_admin_user(self, get_enabled_domains_mock):
+        get_enabled_domains_mock.return_value = ["domain1"]
+
+        self.user.domain_memberships[0].is_admin = True
+        self.assertTrue(self.user.get_domain_membership("domain1").is_admin)
+
+        analytics_roles = get_commcare_analytics_roles_by_user_domains(self.user)
+        self.assertTrue(analytics_roles["domain1"], COMMCARE_ANALYTICS_USER_PERMISSIONS)
+
+    @patch.object(SUPERSET_ANALYTICS, "get_enabled_domains")
+    def test_non_admin_user(self, get_enabled_domains_mock):
+        get_enabled_domains_mock.return_value = ["domain1"]
+
+        self.user.set_role(self.domain.name, self.hq_no_cca_role.get_qualified_id())
+        self.assertFalse(self.user.get_domain_membership("domain1").is_admin)
+
+        analytics_roles = get_commcare_analytics_roles_by_user_domains(self.user)
+        self.assertEqual(analytics_roles["domain1"], [])
+
+    @patch.object(SUPERSET_ANALYTICS, "get_enabled_domains")
+    def test_user_has_limited_roles(self, get_enabled_domains_mock):
+        get_enabled_domains_mock.return_value = ["domain1"]
+
+        self.user.set_role(self.domain.name, self.hq_limited_cca_role.get_qualified_id())
+        self.assertFalse(self.user.get_domain_membership("domain1").is_admin)
+
+        analytics_roles = get_commcare_analytics_roles_by_user_domains(self.user)
+        self.assertEqual(analytics_roles["domain1"], self.limited_cca_roles)
+
+    @classmethod
+    def create_role(cls, role_name, analytics_roles=None):
+        if analytics_roles is None:
+            analytics_roles = []
+        permissions_infos = [PermissionInfo('commcare_analytics_roles', analytics_roles)]
+        permissions = HqPermissions.from_permission_list(permissions_infos)
+
+        role = UserRole.create(domain=cls.domain, name=role_name, permissions=permissions)
+        return role
