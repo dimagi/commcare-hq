@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('geospatial/js/utils', [], function () {
 
     const DEFAULT_MARKER_OPACITY = 1.0;
