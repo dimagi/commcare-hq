@@ -37,8 +37,10 @@
                 <table class="table table-striped table-bordered">
                     <thead>
                     <tr>
-                        <th>
-                            <input type="checkbox" data-bind="checked: isAllChecked" />
+                        <th class="col-sm-3">
+                            <span>{% trans 'Select' %}</span>
+                            <button class="btn btn-xs btn-default" data-bind="click: toggleSelectAll(true)">{% trans 'All' %}</button>
+                            <button class="btn btn-xs btn-default" data-bind="click: toggleSelectAll(false)">{% trans 'None' %}</button>
                         </th>
                         <th>{% trans "Case Name" %}</th>
                         <th>{% trans "Potential Mobile Worker" %}</th>
@@ -71,6 +73,7 @@
                         {% trans 'Include related cases' %}
                     </label>
                     <div class="col-sm-8 pull-right">
+                        <!-- TODO: Need to disable button if no rows checked -->
                         <button class="btn btn-default" data-bind="click: assignUserToCases">
                             <span data-bind="visible: selectedUserId">
                                 {% trans 'Assign Cases' %}

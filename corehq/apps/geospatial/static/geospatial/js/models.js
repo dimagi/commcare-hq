@@ -885,11 +885,12 @@ hqDefine('geospatial/js/models', [
         });
 
         self.isAllChecked = ko.observable(false);
-        self.isAllChecked.subscribe(() => {
+        self.toggleSelectAll = function (selectAll) {
+            self.isAllChecked(selectAll);
             for (const caseItem of self.caseDataPage()) {
                 caseItem.isSelected(self.isAllChecked());
             }
-        });
+        };
 
         self.loadCaseData = function () {
             const groupData = self.mapModel.caseGroupsIndex;
@@ -929,7 +930,7 @@ hqDefine('geospatial/js/models', [
         }
 
         self.goToPage = function (pageNumber) {
-            self.isAllChecked(false);
+            self.toggleSelectAll(false);
             self.currentPage(pageNumber);
         };
 
