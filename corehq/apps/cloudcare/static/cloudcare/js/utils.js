@@ -139,7 +139,6 @@ hqDefine('cloudcare/js/utils', [
                 persistentCaseTile: "#persistent-case-tile",
                 restoreAsBanner: '#restore-as-region',
                 sidebar: '#sidebar-region',
-                persistentMenu: "#persistent-menu-region",
             },
         });
 

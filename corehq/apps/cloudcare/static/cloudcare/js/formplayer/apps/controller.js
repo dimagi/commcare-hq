@@ -3,6 +3,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
     'jquery',
     'backbone',
     'hqwebapp/js/toggles',
+    'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/layout/views/settings',
     'cloudcare/js/formplayer/apps/api',
@@ -12,6 +13,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
     $,
     Backbone,
     Toggles,
+    constants,
     FormplayerFrontend,
     settingsViews,
     AppsAPI,
@@ -59,7 +61,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
                 settings = [],
                 collection,
                 settingsView;
-            if (currentUser.isAppPreview) {
+            if (currentUser.environment === constants.PREVIEW_APP_ENVIRONMENT) {
                 settings = settings.concat([
                     new Backbone.Model({ slug: slugs.SET_LANG }),
                     new Backbone.Model({ slug: slugs.SET_DISPLAY }),
