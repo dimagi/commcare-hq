@@ -123,7 +123,7 @@ from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 from .const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
-    MAX_REPEATER_WORKERS,
+    DEFAULT_REPEATER_WORKERS,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
     State,
@@ -271,7 +271,7 @@ class Repeater(RepeaterSuperProxy):
     is_paused = models.BooleanField(default=False, db_index=True)
     next_attempt_at = models.DateTimeField(null=True, blank=True, db_index=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
-    max_workers = models.IntegerField(default=MAX_REPEATER_WORKERS)
+    max_workers = models.IntegerField(default=0)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
@@ -438,7 +438,9 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def num_workers(self):
-        return min(self.max_workers, MAX_REPEATER_WORKERS)
+        # If `num_workers` is 1, repeat records are sent in the order in
+        # which they were registered.
+        return self.max_workers or DEFAULT_REPEATER_WORKERS
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)

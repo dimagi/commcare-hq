@@ -13,12 +13,12 @@ CHECK_REPEATERS_KEY = 'check-repeaters-key'
 MAX_ATTEMPTS = 3
 # Number of exponential backoff attempts to an offline endpoint
 MAX_BACKOFF_ATTEMPTS = 6
-# The maximum number of workers that one repeater can use to send repeat
+# The default number of workers that one repeater can use to send repeat
 # records at the same time. (In other words, HQ's capacity to DDOS
 # attack a remote API endpoint.) This is a guardrail to prevent one
 # domain from hogging repeat record queue workers and to ensure that
-# repeaters are iterated fairly.
-MAX_REPEATER_WORKERS = 7
+# repeaters are iterated fairly. Set `Repeater.max_workers` to override.
+DEFAULT_REPEATER_WORKERS = 7
 
 
 class State(IntegerChoices):

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="repeater",
             name="max_workers",
-            field=models.IntegerField(default=7),
+            field=models.IntegerField(default=0),
         ),
         migrations.AlterField(
             model_name="repeater",
