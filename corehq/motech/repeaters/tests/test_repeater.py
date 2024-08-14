@@ -313,7 +313,10 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertEqual(len(self.repeat_records()), 2)
         self.assertEqual(self.initial_fire_call_count, 0)
 
-        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
+        with (
+            patch('corehq.motech.repeaters.tasks.get_redis_lock'),
+            patch('corehq.motech.repeaters.models.simple_request') as mock_fire
+        ):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 2)
 
@@ -325,7 +328,10 @@ class RepeaterTest(BaseRepeaterTest):
             repeat_record.state = State.Cancelled
             repeat_record.next_check = None
             repeat_record.save()
-        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
+        with (
+            patch('corehq.motech.repeaters.tasks.get_redis_lock'),
+            patch('corehq.motech.repeaters.models.simple_request') as mock_fire
+        ):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
 
@@ -343,16 +349,22 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertEqual(repeat_record.num_attempts, 1)
 
         # not trigger records succeeded triggered after cancellation
-        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
+        with (
+            patch('corehq.motech.repeaters.tasks.get_redis_lock'),
+            patch('corehq.motech.repeaters.models.simple_request') as mock_fire
+        ):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
             for repeat_record in self.repeat_records():
                 self.assertEqual(repeat_record.state, State.Success)
 
-    def test_retry_process_repeat_record_locking(self):
+    def test_process_failed_repeat_record_locking(self):
         self.assertEqual(len(self.repeat_records()), 2)
 
-        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process:
+        with (
+            patch('corehq.motech.repeaters.tasks.get_redis_lock'),
+            patch('corehq.motech.repeaters.tasks.process_failed_repeat_record') as mock_process
+        ):
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 0)
 
@@ -362,7 +374,10 @@ class RepeaterTest(BaseRepeaterTest):
             record.next_check = datetime.utcnow()
             record.save()
 
-        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process:
+        with (
+            patch('corehq.motech.repeaters.tasks.get_redis_lock'),
+            patch('corehq.motech.repeaters.tasks.process_failed_repeat_record') as mock_process
+        ):
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 0)
 
@@ -384,7 +399,10 @@ class RepeaterTest(BaseRepeaterTest):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
 
-        with patch('corehq.motech.repeaters.models.simple_request') as mock_retry:
+        with (
+            patch('corehq.motech.repeaters.tasks.get_redis_lock'),
+            patch('corehq.motech.repeaters.models.simple_request') as mock_retry
+        ):
             check_repeaters()
             self.assertEqual(mock_retry.delay.call_count, 0)
 
@@ -392,7 +410,10 @@ class RepeaterTest(BaseRepeaterTest):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
 
-        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process:
+        with (
+            patch('corehq.motech.repeaters.tasks.get_redis_lock'),
+            patch('corehq.motech.repeaters.tasks.process_failed_repeat_record') as mock_process
+        ):
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 0)
 
@@ -402,7 +423,10 @@ class RepeaterTest(BaseRepeaterTest):
             record.next_check = datetime.utcnow() - timedelta(hours=1)
             record.save()
 
-        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process:
+        with (
+            patch('corehq.motech.repeaters.tasks.get_redis_lock'),
+            patch('corehq.motech.repeaters.tasks.process_failed_repeat_record') as mock_process
+        ):
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 0)
 
