@@ -785,7 +785,7 @@ class NewMobileWorkerForm(forms.Form):
             location_field = crispy.Field(
                 'location_id',
                 data_bind='value: location_id',
-                data_query_url=reverse('location_search', args=[self.domain]),
+                data_query_url=reverse('location_search_has_users_only', args=[self.domain]),
             )
         else:
             location_field = crispy.Hidden(
