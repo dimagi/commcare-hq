@@ -141,7 +141,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         });
 
         self.newCaseProperty = function () {
-            if (_.isString(self.newPropertyName()) && self.newPropertyName().trim()) {
+            if (self.newPropertyName().trim()) {
                 const prop = {
                     'name': self.newPropertyName(),
                     'label': self.newPropertyName(),
