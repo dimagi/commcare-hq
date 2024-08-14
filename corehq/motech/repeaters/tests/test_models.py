@@ -463,8 +463,8 @@ def test_attempt_forward_now_kwargs():
         rr.attempt_forward_now(True)
 
 
-@patch("corehq.motech.repeaters.tasks.retry_process_repeat_record")
-@patch("corehq.motech.repeaters.tasks.process_repeat_record")
+@patch("corehq.motech.repeaters.tasks.process_failed_repeat_record")
+@patch("corehq.motech.repeaters.tasks.process_pending_repeat_record")
 class TestAttemptForwardNow(RepeaterTestCase):
     before_now = datetime.utcnow() - timedelta(seconds=1)
 
