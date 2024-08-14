@@ -925,7 +925,7 @@ hqDefine('geospatial/js/models', [
                 placeholder: gettext('No user selected (unassign mode)'),
                 allowClear: true,
                 data: self.userData(),
-            });
+            }).val(null).trigger('change');
         }
 
         self.goToPage = function (pageNumber) {
