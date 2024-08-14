@@ -430,10 +430,7 @@ def get_users_with_gps(request, domain):
             'id': user.user_id,
             'username': user.raw_username,
             'gps_point': user.get_user_data(domain).get(location_prop_name, ''),
-            'primary_loc_name': (
-                user_primary_locs[user.location_id]
-                if user.location_id in user_primary_locs else '---'
-            )
+            'primary_loc_name': user_primary_locs.get(user.location_id, '---'),
         } for user in users
     ]
 
