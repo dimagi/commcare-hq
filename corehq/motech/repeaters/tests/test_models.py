@@ -73,13 +73,11 @@ class RepeaterTestCase(TestCase, DomainSubscriptionMixin):
             name=url,
             url=url,
         )
-        self.addCleanup(self.conn.delete)
         self.repeater = FormRepeater(
             domain=DOMAIN,
             connection_settings=self.conn,
         )
         self.repeater.save()
-        self.addCleanup(self.repeater.delete)
 
 
 class TestSoftDeleteRepeaters(RepeaterTestCase):
@@ -92,7 +90,6 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
                 connection_settings=self.conn,
             )
             r.save()
-            self.addCleanup(r.delete)
             self.all_repeaters.append(r)
 
     def test_soft_deletion(self):
@@ -445,10 +442,6 @@ class TestConnectionSettingsUsedBy(TestCase):
             domain='nice-domain'
         )
         self.assertEqual(new_conn.used_by, set())
-
-    def tearDown(self):
-        self.repeater.delete()
-        super().tearDown()
 
 
 class TestRepeaterConnectionSettings(RepeaterTestCase):
