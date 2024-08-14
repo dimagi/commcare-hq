@@ -124,9 +124,7 @@ class GaugeLimiter:
             computed_value = self.gauge.avg()
         else:
             computed_value = self.gauge.max()
-        if computed_value < self.gauge_definition.acceptable_value:
-            return True
-        return False
+        return computed_value < self.gauge_definition.acceptable_value
 
     @property
     def gauge_definition(self):
