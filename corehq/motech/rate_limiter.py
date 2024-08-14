@@ -18,7 +18,7 @@ repeater_rate_limiter = RateLimiter(
 
 repeater_attempts_rate_limiter = RateLimiter(
     feature_key='repeater_attempts',
-    get_rate_limits=lambda domain: _get_per_user_repeater_attempt_rate_definition(domain),
+    get_rate_limits=lambda: _get_repeater_attempt_rate_definition(),
 )
 
 
@@ -60,18 +60,15 @@ global_repeater_rate_limiter = RateLimiter(
 )
 
 
-def _get_per_user_repeater_attempt_rate_definition(domain):
-
-    return PerUserRateDefinition(
-        per_user_rate_definition=get_dynamic_rate_definition(
-            "repeater_attempts_per_user",
-            default=RateDefinition(
-                per_week=None,
-                per_day=None,
-                per_hour=6000,
-                per_minute=100,
-                per_second=10,
-            ),
+def _get_repeater_attempt_rate_definition(domain):
+    return get_dynamic_rate_definition(
+        "repeater_attempts",
+        default=RateDefinition(
+            per_week=None,
+            per_day=None,
+            per_hour=360000,
+            per_minute=6000,
+            per_second=100,
         ),
     )
 
