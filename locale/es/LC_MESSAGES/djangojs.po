@@ -506,6 +506,10 @@ msgid "Conditional ID Mapping"
 msgstr "Mapeo de ID Condicional"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Translatable Text"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Image"
 msgstr "Imagen"
@@ -3586,13 +3590,9 @@ msgid "All locations"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-#, fuzzy
-#| msgid "Could not clear user data. Please report an issue if this persists."
 msgid ""
 "Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr ""
-"No es posible borrar los datos del usuario. Por favor reporte un problema si "
-"esto continúa."
 
 #: corehq/apps/geospatial/static/geospatial/js/gps_capture.js
 msgid "current user"
@@ -3943,6 +3943,23 @@ msgstr "Agregar Clave, Mapeo de Valor"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Key"
 msgstr "Clave"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "This key is already defined"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+#, fuzzy
+#| msgid "Add Key, Value Mapping"
+msgid "Add Key, Translation Mapping"
+msgstr "Agregar Clave, Mapeo de Valor"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Key contains invalid characters."
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js

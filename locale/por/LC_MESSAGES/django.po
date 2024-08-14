@@ -578,15 +578,8 @@ msgstr ""
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
-msgid ""
-"Per-{user} fee exceeding limit of {monthly_limit} {user} with plan above."
-"{prorated_notice}"
-msgid_plural ""
-"Per-{user} fee exceeding limit of {monthly_limit} {user}s with plan above."
-"{prorated_notice}"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgid "Fee for each {user} exceeding the plan limit of {monthly_limit}."
+msgstr ""
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -3157,16 +3150,10 @@ msgid "Web Users"
 msgstr "Usuários da Web"
 
 #: corehq/apps/accounting/user_text.py
-msgid "Mobile Users"
-msgstr "Usuários Móveis"
-
-#: corehq/apps/accounting/user_text.py corehq/apps/commtrack/views.py
-#: corehq/apps/domain/forms.py corehq/apps/reminders/forms.py
-#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
-#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
-msgid "SMS"
-msgstr "SMS"
+#, fuzzy
+#| msgid "Go back to Mobile Workers"
+msgid "Form-Submitting Mobile Workers"
+msgstr "Voltar para Trabalhadores Móveis"
 
 #: corehq/apps/accounting/user_text.py corehq/apps/reports/forms.py
 #: corehq/messaging/scheduling/forms.py corehq/motech/const.py
@@ -5163,8 +5150,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/confirm_plan.html
-#: corehq/apps/reports/standard/sms.py corehq/apps/smsbillables/filters.py
-#: corehq/messaging/scheduling/forms.py
+#: corehq/apps/reports/standard/sms.py
+#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/smsbillables/filters.py corehq/messaging/scheduling/forms.py
 #: corehq/messaging/smsbackends/telerivet/forms.py
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
@@ -5642,8 +5631,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/confirm_plan.html
-#: corehq/apps/reports/standard/sms.py corehq/apps/smsbillables/filters.py
-#: corehq/messaging/scheduling/forms.py
+#: corehq/apps/reports/standard/sms.py
+#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/smsbillables/filters.py corehq/messaging/scheduling/forms.py
 #: corehq/messaging/smsbackends/telerivet/forms.py
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
@@ -6054,6 +6045,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
@@ -11241,15 +11233,6 @@ msgstr ""
 "A propriedade não formatado corretamente. Deve ser formatado como: loacation:"
 "mytype:referencetype/property. Por exemplo: location:outlet:state/name"
 
-#: corehq/apps/auditcare/templates/auditcare/audit_views.html
-#: corehq/apps/auditcare/templates/auditcare/index.html
-msgid "Audit Viewer"
-msgstr ""
-
-#: corehq/apps/auditcare/templates/auditcare/partials/model_property_change.html
-msgid "Audited Model Changes"
-msgstr ""
-
 #: corehq/apps/builds/templates/builds/all.html
 msgid "Build Number"
 msgstr ""
@@ -12787,6 +12770,14 @@ msgstr ""
 #: corehq/apps/commtrack/views.py
 msgid "Default consumption values updated"
 msgstr ""
+
+#: corehq/apps/commtrack/views.py corehq/apps/domain/forms.py
+#: corehq/apps/reminders/forms.py
+#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
+#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
+#: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
+msgid "SMS"
+msgstr "SMS"
 
 #: corehq/apps/custom_data_fields/edit_entity.py
 msgid "Select one"
@@ -30362,6 +30353,16 @@ msgstr ""
 msgid "View URL"
 msgstr ""
 
+#: corehq/apps/reports/forms.py
+msgid "Visible to location-restricted users"
+msgstr ""
+
+#: corehq/apps/reports/forms.py
+msgid ""
+"If checked, the visualization will be visible to users with roles that do "
+"not have \"Full Organization Access\""
+msgstr ""
+
 #: corehq/apps/reports/generic.py
 msgid "This report has been deprecated."
 msgstr ""
@@ -32941,6 +32942,10 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Could not update Tableau Server Settings"
+msgstr ""
+
+#: corehq/apps/reports/views.py
+msgid "Visible to Location-Restricted Users"
 msgstr ""
 
 #: corehq/apps/reports/views.py
@@ -37556,10 +37561,6 @@ msgid "{0} filter type must include a \"filters\" list"
 msgstr ""
 
 #: corehq/apps/userreports/filters/factory.py
-msgid "Couldn't find named filter with name: {}"
-msgstr ""
-
-#: corehq/apps/userreports/filters/factory.py
 msgid "Problem creating filter from spec: {}, message is {}"
 msgstr ""
 
@@ -37818,6 +37819,21 @@ msgstr ""
 
 #: corehq/apps/userreports/reports/view.py
 msgid "Download Report"
+msgstr ""
+
+#: corehq/apps/userreports/specs.py
+#, python-brace-format
+msgid "Recursive expression reference: {name}"
+msgstr ""
+
+#: corehq/apps/userreports/specs.py
+#, python-brace-format
+msgid "Named filter not found: {name}"
+msgstr ""
+
+#: corehq/apps/userreports/specs.py
+#, python-brace-format
+msgid "Named expression not found: {name}"
 msgstr ""
 
 #: corehq/apps/userreports/sql/adapter.py
@@ -44517,9 +44533,21 @@ msgstr ""
 msgid "Configurable Case Repeater"
 msgstr ""
 
+#: corehq/motech/repeaters/expression/repeaters.py
+msgid "Configurable Form Repeater"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/repeaters.py
+msgid "Configurable ArcGIS Form Repeater"
+msgstr ""
+
 #: corehq/motech/repeaters/expression/views.py
 #: corehq/motech/repeaters/views/repeaters.py
 msgid "Edit Case Repeater"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/views.py
+msgid "Edit ArcGIS Form Repeater"
 msgstr ""
 
 #: corehq/motech/repeaters/forms.py
@@ -46378,3 +46406,6 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#~ msgid "Mobile Users"
+#~ msgstr "Usuários Móveis"
