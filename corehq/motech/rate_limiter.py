@@ -55,7 +55,7 @@ global_repeater_rate_limiter = RateLimiter(
 )
 
 
-def _get_repeater_attempt_rate_definition(domain):
+def _get_repeater_attempt_rate_definition():
     return get_dynamic_rate_definition(
         "repeater_attempts",
         default=RateDefinition(
