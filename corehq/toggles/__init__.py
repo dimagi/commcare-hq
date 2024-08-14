@@ -1989,7 +1989,7 @@ RATE_LIMIT_REPEATER_ATTEMPTS = DynamicallyPredictablyRandomToggle(
     [NAMESPACE_DOMAIN],
     description="""
     In addition to the rate limits based on time spent waiting, these rate limits ensure a project
-    is limited to how many workers they can use at a time.
+    is limited to how many records they can attempt to forward in a given time window.
     """
 )
 
