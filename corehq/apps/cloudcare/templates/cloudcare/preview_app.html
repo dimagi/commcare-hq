@@ -72,12 +72,8 @@
       </section>
     </div>
     {% if request.couch_user.can_edit_data %}
-      <section id="cloudcare-debugger" data-bind="
-        template: {
-            name: 'instance-viewer-ko-template',
-            afterRender: adjustWidth
-        }
-    "></section>
+      <section data-bind="template: { name: 'instance-viewer-ko-template' }"
+               id="cloudcare-debugger"></section>
     {% endif %}
   </div>
 {% endblock %}
