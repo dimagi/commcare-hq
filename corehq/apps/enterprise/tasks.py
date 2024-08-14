@@ -100,10 +100,18 @@ def generate_enterprise_report(slug, billing_account_id, username, **kwargs):
 
     rows = report.rows
     progress = ReportTaskProgress(slug, username)
-    progress.set_data(rows)
+    progress.complete_task(rows)
 
 
 class TaskProgress:
+    """
+    This class manages a task's lifecycle. Tasks triggered by this class are expected to call
+    complete_task in order to store their results for later retrieval.
+    Once a task completes, a query_id is generated that can be used to retrieve the results in the future.
+    Multiple tasks run with the same key will overwrite each other's results. If you want to re-use a key after
+    it has completed its task, you can call clear_status so that new tasks will store their results
+    in a different query_id
+    """
     STATUS_TIMEOUT = 600  # 10 minutes
 
     STATUS_COMPLETE = 'COMPLETE'
@@ -135,6 +143,18 @@ class TaskProgress:
         self.redis_client.set(self.key, status_dict, timeout=self.STATUS_TIMEOUT)
         task.delay()
 
+    def complete_task(self, data):
+        if not self.get_query_id():
+            self._query_id = uuid.uuid4().hex
+        self.redis_client.set(self._query_id, data, timeout=self.STATUS_TIMEOUT)
+
+        status_dict = self.redis_client.get(self.key)
+        if status_dict is None:
+            raise KeyError(self.key)
+        status_dict['status'] = self.STATUS_COMPLETE
+        status_dict['query_id'] = self._query_id
+        self.redis_client.set(self.key, status_dict, timeout=self.STATUS_TIMEOUT)
+
     def get_data(self):
         query_id = self.get_query_id()
         data = self.redis_client.get(query_id)
@@ -147,23 +167,14 @@ class TaskProgress:
 
         return data
 
-    def set_data(self, data):
-        if not self._query_id:
-            self._query_id = uuid.uuid4().hex
-        self.redis_client.set(self._query_id, data, timeout=self.STATUS_TIMEOUT)
-
-        status_dict = self.redis_client.get(self.key)
-        if status_dict is None:
-            raise KeyError(self.key)
-        status_dict['status'] = self.STATUS_COMPLETE
-        status_dict['query_id'] = self._query_id
-        self.redis_client.set(self.key, status_dict, timeout=self.STATUS_TIMEOUT)
-
     def get_query_id(self):
         if self._query_id:
             return self._query_id
 
         status_dict = self.redis_client.get(self.key)
+        if not status_dict:
+            return None
+
         self._query_id = status_dict['query_id']
         return self._query_id
 
