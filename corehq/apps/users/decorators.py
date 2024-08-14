@@ -19,7 +19,8 @@ from corehq.util.view_utils import is_ajax
 def require_permission_raw(permission_check,
                            login_decorator=login_and_domain_required,
                            view_only_permission_check=None,
-                           permission_check_v2=None):
+                           permission_check_v2=None,
+                           get_permission_parameter=None):
     """
     A way to do more fine-grained permissions via decorator. The permission_check should be
     a function that takes in a couch_user and a domain and returns True if that user can access
@@ -37,8 +38,8 @@ def require_permission_raw(permission_check,
         def _inner(request, domain, *args, **kwargs):
             if not hasattr(request, "couch_user"):
                 return redirect_for_login_or_domain(request)
-            elif permission_check_v2 is not None:
-                if permission_check_v2(request, domain):
+            if permission_check_v2 is not None:
+                if permission_check_v2(request, domain, *args, **kwargs):
                     return view_func(request, domain, *args, **kwargs)
                 else:
                     raise PermissionDenied()
@@ -78,7 +79,7 @@ def require_api_permission(permission, data=None, login_decorator=login_and_doma
     api_access_permission = 'access_api'
     permissions_to_check = {permission, api_access_permission}
 
-    def permission_check(request, domain):
+    def permission_check(request, domain, *args, **kwargs):
         # first check user permissions and return immediately if not valid
         user_has_permission = all(
             request.couch_user.has_permission(domain, p, data=data)
@@ -116,7 +117,18 @@ def require_permission(permission,
                        login_decorator=login_and_domain_required,
                        view_only_permission=None):
     permission = get_permission_name(permission) or permission
-    permission_check = lambda couch_user, domain: couch_user.has_permission(domain, permission, data=data)
+
+    def permission_check(request, domain, *args, **kwargs):
+        # TODO: TESTS, add docstring, way to automatically get kwargs from view_func,
+        # apply to other places in HQ
+        '''
+            `data` can 
+        '''
+        if callable(data):
+            data = data(request, domain, *args, **kwargs)
+        return request.couch_user.has_permission(domain, permission,
+            data=data)
+
 
     view_only_check = None
     if view_only_permission is not None:
@@ -129,8 +141,9 @@ def require_permission(permission,
         view_only_check = _check_permission
 
     return require_permission_raw(
-        permission_check, login_decorator,
-        view_only_permission_check=view_only_check
+        None, login_decorator,
+        view_only_permission_check=view_only_check,
+        permission_check_v2=permission_check,
     )
 
 
