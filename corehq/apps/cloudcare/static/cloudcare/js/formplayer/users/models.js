@@ -85,7 +85,6 @@ hqDefine("cloudcare/js/formplayer/users/models", [
         userInstance.formplayer_url = options.formplayer_url;
         userInstance.debuggerEnabled = options.debuggerEnabled;
         userInstance.environment = options.environment;
-        userInstance.isAppPreview = options.environment === Const.PREVIEW_APP_ENVIRONMENT;
         userInstance.changeFormLanguage = options.changeFormLanguage;
 
         var savedDisplayOptions = _.pick(

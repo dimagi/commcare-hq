@@ -99,7 +99,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                             }
                         } else {
                             if (response.smartLinkRedirect) {
-                                if (user.isAppPreview) {
+                                if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
                                     FormplayerFrontend.trigger('showSuccess', gettext("You have selected a case in a different domain. App Preview does not support this feature.", 5000));
                                     FormplayerFrontend.trigger('navigateHome');
                                     return;
