@@ -16,11 +16,6 @@ repeater_rate_limiter = RateLimiter(
     get_rate_limits=lambda domain: _get_per_user_repeater_wait_milliseconds_rate_definition(domain)
 )
 
-repeater_attempts_rate_limiter = RateLimiter(
-    feature_key='repeater_attempts',
-    get_rate_limits=lambda: _get_repeater_attempt_rate_definition(),
-)
-
 
 def _get_per_user_repeater_wait_milliseconds_rate_definition(domain):
     return PerUserRateDefinition(
@@ -71,6 +66,12 @@ def _get_repeater_attempt_rate_definition(domain):
             per_second=100,
         ),
     )
+
+
+repeater_attempts_rate_limiter = RateLimiter(
+    feature_key='repeater_attempts',
+    get_rate_limits=_get_repeater_attempt_rate_definition
+)
 
 
 SHOULD_RATE_LIMIT_REPEATERS = not settings.UNIT_TESTING
