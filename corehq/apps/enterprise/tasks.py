@@ -157,6 +157,9 @@ class TaskProgress:
 
     def get_data(self):
         query_id = self.get_query_id()
+        if not query_id:
+            raise ValueError('cannot retrieve data without a query ID')
+
         data = self.redis_client.get(query_id)
         if data is None:
             # Before raising an error for a missing value, ensure that the 'None' wasn't deliberately set
