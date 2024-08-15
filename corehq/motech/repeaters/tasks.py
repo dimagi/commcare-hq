@@ -31,11 +31,7 @@ from .const import (
 )
 from .models import RepeatRecord, domain_can_forward
 
-from ..rate_limiter import (
-    rate_limit_repeater,
-    report_repeater_attempt,
-    report_repeater_usage,
-)
+from ..rate_limiter import report_repeater_usage, rate_limit_repeater
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -174,7 +170,6 @@ def _process_repeat_record(repeat_record):
             # with the intent of avoiding clumping and spreading load
             repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
         elif repeat_record.is_queued():
-            report_repeater_attempt(repeat_record.domain)
             with TimingContext() as timer:
                 repeat_record.fire()
             # round up to the nearest millisecond, meaning always at least 1ms
