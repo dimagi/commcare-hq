@@ -196,6 +196,23 @@ class AbtExpressionSpec(JsonObject):
     def _get_responsible_follow_up(self, spec):
         return spec.get('responsible_follow_up', "")
 
+    @classmethod
+    def _get_description(cls, item, spec):
+        description = ()
+        question = spec.get('description')
+        if question:
+            path = spec['base_path'] + question
+            description = cls._get_val(item, path)
+        return description if description != () else ''
+
+    @classmethod
+    def _get_time_spent(cls, item, spec):
+        time_spent = ()
+        path = spec.get('time_spent')
+        if path:
+            time_spent = cls._get_val(item, path)
+        return time_spent if time_spent != () else ''
+
     def __call__(self, item, evaluation_context=None):
         """
         Given a document (item), return a list of documents representing each
@@ -268,7 +285,9 @@ class AbtExpressionSpec(JsonObject):
                 ),
                 'names': names,
                 'form_name': self._get_form_name(item),
-                'responsible_follow_up': self._get_responsible_follow_up(spec)
+                'responsible_follow_up': self._get_responsible_follow_up(spec),
+                'description': self._get_description(item, spec),
+                'time_spent': self._get_time_spent(item, spec),
             }
 
     def _get_unchecked_special_flag_doc(self, item, spec, partial, names, form_value):
@@ -294,7 +313,9 @@ class AbtExpressionSpec(JsonObject):
                 ),
                 'names': names,
                 'form_name': self._get_form_name(item),
-                'responsible_follow_up': self._get_responsible_follow_up(spec)
+                'responsible_follow_up': self._get_responsible_follow_up(spec),
+                'description': self._get_description(item, spec),
+                'time_spent': self._get_time_spent(item, spec),
             }
 
     def _get_q3_special_flag_doc(self, item, spec, partial, names, form_value):
@@ -317,7 +338,9 @@ class AbtExpressionSpec(JsonObject):
                 ),
                 'names': names,
                 'form_name': self._get_form_name(item),
-                'responsible_follow_up': self._get_responsible_follow_up(spec)
+                'responsible_follow_up': self._get_responsible_follow_up(spec),
+                'description': self._get_description(item, spec),
+                'time_spent': self._get_time_spent(item, spec),
             }
 
     def _get_not_selected_flag_doc(self, item, spec, partial, names, form_value):
@@ -335,7 +358,9 @@ class AbtExpressionSpec(JsonObject):
                 ),
                 'names': names,
                 'form_name': self._get_form_name(item),
-                'responsible_follow_up': self._get_responsible_follow_up(spec)
+                'responsible_follow_up': self._get_responsible_follow_up(spec),
+                'description': self._get_description(item, spec),
+                'time_spent': self._get_time_spent(item, spec),
             }
 
     def _get_answer_flag_doc(self, item, spec, partial, names, form_value):
@@ -356,7 +381,9 @@ class AbtExpressionSpec(JsonObject):
                 ),
                 'names': names,
                 'form_name': self._get_form_name(item),
-                'responsible_follow_up': self._get_responsible_follow_up(spec)
+                'responsible_follow_up': self._get_responsible_follow_up(spec),
+                'description': self._get_description(item, spec),
+                'time_spent': self._get_time_spent(item, spec),
             }
 
 
