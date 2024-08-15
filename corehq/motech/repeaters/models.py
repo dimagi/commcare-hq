@@ -68,6 +68,7 @@ import json
 import traceback
 import uuid
 from collections import defaultdict
+from contextlib import nullcontext
 from datetime import datetime, timedelta
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -120,6 +121,7 @@ from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 from .const import (
+    ENDPOINT_TIMER,
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
@@ -432,10 +434,14 @@ class Repeater(RepeaterSuperProxy):
         self.is_deleted = True
         Repeater.objects.filter(id=self.repeater_id).update(is_deleted=True)
 
-    def fire_for_record(self, repeat_record):
+    def _time_request(self, repeat_record, payload, timing_context):
+        with timing_context(ENDPOINT_TIMER) if timing_context else nullcontext():
+            return self.send_request(repeat_record, payload)
+
+    def fire_for_record(self, repeat_record, timing_context=None):
         payload = self.get_payload(repeat_record)
         try:
-            response = self.send_request(repeat_record, payload)
+            response = self._time_request(repeat_record, payload, timing_context)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
             self.handle_response(RequestConnectionError(error), repeat_record)
@@ -1147,10 +1153,10 @@ class RepeatRecord(models.Model):
     def repeater_type(self):
         return self.repeater.repeater_type
 
-    def fire(self, force_send=False):
+    def fire(self, force_send=False, timing_context=None):
         if force_send or not self.succeeded:
             try:
-                self.repeater.fire_for_record(self)
+                self.repeater.fire_for_record(self, timing_context=timing_context)
             except Exception as e:
                 log_repeater_error_in_datadog(self.domain, status_code=None,
                                               repeater_type=self.repeater_type)
