@@ -85,14 +85,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", [
             user.username
         );
         user.restoreAs = null;
-        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
-            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                UsersViews.RestoreAsBanner({
-                    model: user,
-                })
-            );
-        });
-
+        FormplayerFrontend.showRestoreAs(user);
         FormplayerFrontend.trigger('navigateHome');
     });
 

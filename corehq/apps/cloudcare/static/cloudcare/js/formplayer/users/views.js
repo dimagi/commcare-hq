@@ -27,7 +27,6 @@ hqDefine("cloudcare/js/formplayer/users/views", [
      * currently logged in (or restoring) as.
      */
     var RestoreAsBanner = Marionette.View.extend({
-        className: 'restore-as-banner-container',
         ui: {
             clear: '.js-clear-user',
         },
@@ -36,9 +35,9 @@ hqDefine("cloudcare/js/formplayer/users/views", [
         },
         getTemplate: function () {
             if (this.model.restoreAs) {
-                const templateId = (usersModels.getCurrentUser().isAppPreview ?
-                                    "#app-preview-restore-as-template" :
-                                    "#webapps-restore-as-template");
+                const templateId = (this.options.smallScreen || usersModels.getCurrentUser().isAppPreview ?
+                                    "#restore-as-banner-template" :
+                                    "#restore-as-pill-template");
                 return _.template($(templateId).html() || "");
             } else {
                 return "";
@@ -94,11 +93,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
                 confirmText: gettext('Log in'),
                 onConfirm: function () {
                     usersUtils.Users.logInAsUser(this.model.get('username'));
-                    FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                        new RestoreAsBanner({
-                            model: usersModels.getCurrentUser(),
-                        })
-                    );
+                    FormplayerFrontend.showRestoreAs(usersModels.getCurrentUser());
                     var loginAsNextOptions = FormplayerFrontend.getChannel().request('getLoginAsNextOptions');
                     if (loginAsNextOptions) {
                         FormplayerFrontend.trigger("clearLoginAsNextOptions");
