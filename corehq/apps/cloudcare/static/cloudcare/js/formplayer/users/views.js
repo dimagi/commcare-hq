@@ -27,7 +27,6 @@ hqDefine("cloudcare/js/formplayer/users/views", [
      * currently logged in (or restoring) as.
      */
     var RestoreAsBanner = Marionette.View.extend({
-        className: 'restore-as-banner-container',
         ui: {
             clear: '.js-clear-user',
         },
