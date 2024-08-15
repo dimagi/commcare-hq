@@ -230,25 +230,19 @@ class AbtExpressionSpec(JsonObject):
                 form_value = self._get_val(partial, spec['question'])
                 warning_type = spec.get("warning_type", None)
 
-                if warning_type == "unchecked" and form_value:
-                    if flag_doc := self._get_unchecked_flag_doc(item, spec, partial, names, form_value):
-                        docs.append(flag_doc)
-
-                elif warning_type == "unchecked_special" and form_value:
-                    if flag_doc := self._get_unchecked_special_flag_doc(item, spec, partial, names, form_value):
-                        docs.append(flag_doc)
-
-                elif warning_type == "q3_special" and form_value:
-                    if flag_doc := self._get_q3_special_flag_doc(item, spec, partial, names, form_value):
-                        docs.append(flag_doc)
-
-                elif warning_type == "not_selected" and form_value:
-                    if flag_doc := self._get_not_selected_flag_doc(item, spec, partial, names, form_value):
-                        docs.append(flag_doc)
-
+                flag_doc_methods = {
+                    'unchecked': self._get_unchecked_flag_doc,
+                    'unchecked_special': self._get_unchecked_special_flag_doc,
+                    'q3_special': self._get_q3_special_flag_doc,
+                    'not_selected': self._get_not_selected_flag_doc,
+                }
+                if warning_type in flag_doc_methods and form_value:
+                    method = flag_doc_methods[warning_type]
+                    flag_doc = method(item, spec, partial, names, form_value)
                 else:
-                    if flag_doc := self._get_answer_flag_doc(item, spec, partial, names, form_value):
-                        docs.append(flag_doc)
+                    flag_doc = self._get_answer_flag_doc(item, spec, partial, names, form_value)
+                if flag_doc:
+                    docs.append(flag_doc)
 
         return docs
 
