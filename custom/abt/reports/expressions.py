@@ -231,118 +231,139 @@ class AbtExpressionSpec(JsonObject):
                 warning_type = spec.get("warning_type", None)
 
                 if warning_type == "unchecked" and form_value:
-                    # Don't raise flag if no answer given
-                    ignore = spec.get("ignore", [])
-                    section = spec.get("section", "data")
-                    unchecked = self._get_unchecked(
-                        item,
-                        spec.get('base_path', []) + spec['question'],
-                        form_value,
-                        ignore,
-                        section
-                    )
-                    if unchecked:
-                        # Raise a flag because there are unchecked answers.
-                        docs.append({
-                            'flag': self._get_flag_name(item, spec),
-                            'warning': self._get_warning(spec, item).format(msg=", ".join(unchecked)),
-                            'comments': self._get_comments(
-                                partial if not self.comment_from_root else item,
-                                spec
-                            ),
-                            'names': names,
-                            'form_name': self._get_form_name(item),
-                            'responsible_follow_up': self._get_responsible_follow_up(spec)
-                        })
+                    if flag_doc := self._get_unchecked_flag_doc(item, spec, partial, names, form_value):
+                        docs.append(flag_doc)
 
                 elif warning_type == "unchecked_special" and form_value:
-                    # Don't raise flag if no answer given
-                    ignore = spec.get("ignore", [])
-                    section = spec.get("section", "data")
-                    master_value = self._get_val(item, ['insecticide_prep_grp', 'Q10', 'sop_full_ppe'])
-                    second_unchecked = self._get_unchecked(
-                        item,
-                        spec.get('base_path', []) + spec['question'],
-                        form_value,
-                        ignore,
-                        section
-                    )
-                    if not master_value and second_unchecked:
-                        # Raise a flag because master question is not answered but duplicate question is.
-                        docs.append({
-                            'flag': self._get_flag_name(item, spec),
-                            'warning': self._get_warning(spec, item).format(msg=", ".join(second_unchecked)),
-                            'comments': self._get_comments(
-                                partial if not self.comment_from_root else item,
-                                spec
-                            ),
-                            'names': names,
-                            'form_name': self._get_form_name(item),
-                            'responsible_follow_up': self._get_responsible_follow_up(spec)
-                        })
+                    if flag_doc := self._get_unchecked_special_flag_doc(item, spec, partial, names, form_value):
+                        docs.append(flag_doc)
 
                 elif warning_type == "q3_special" and form_value:
-                    # One of the questions doesn't follow the same format as the
-                    # others, hence this special case.
-                    missing_items = ""
-                    if form_value == "only_license":
-                        missing_items = "cell"
-                    if form_value == "only_cell":
-                        missing_items = "license"
-                    if form_value == "none":
-                        missing_items = "cell, license"
-                    if missing_items:
-                        docs.append({
-                            'flag': self._get_flag_name(item, spec),
-                            'warning': self._get_warning(spec, item).format(msg=missing_items),
-                            'comments': self._get_comments(
-                                partial if not self.comment_from_root else item,
-                                spec
-                            ),
-                            'names': names,
-                            'form_name': self._get_form_name(item),
-                            'responsible_follow_up': self._get_responsible_follow_up(spec)
-                        })
+                    if flag_doc := self._get_q3_special_flag_doc(item, spec, partial, names, form_value):
+                        docs.append(flag_doc)
+
                 elif warning_type == "not_selected" and form_value:
-                    value = spec.get("value", "")
-                    if form_value and value not in form_value:
-                        warning_question_data = partial if not spec.get('warning_question_root', False) else item
-                        docs.append({
-                            'flag': self._get_flag_name(item, spec),
-                            'warning': self._get_warning(spec, item).format(
-                                msg=self._get_val(warning_question_data, spec.get('warning_question', None)) or ""
-                            ),
-                            'comments': self._get_comments(
-                                partial if not self.comment_from_root else item,
-                                spec
-                            ),
-                            'names': names,
-                            'form_name': self._get_form_name(item),
-                            'responsible_follow_up': self._get_responsible_follow_up(spec)
-                        })
+                    if flag_doc := self._get_not_selected_flag_doc(item, spec, partial, names, form_value):
+                        docs.append(flag_doc)
 
                 else:
-                    danger_value = spec.get('answer', [])
-                    if form_value == danger_value or (
-                        self._question_answered(form_value) and
-                        self._raise_for_any_answer(danger_value)
-                    ):
-                        warning_question_data = partial if not spec.get('warning_question_root', False) else item
-                        docs.append({
-                            'flag': self._get_flag_name(item, spec),
-                            'warning': self._get_warning(spec, item).format(
-                                msg=self._get_val(warning_question_data, spec.get('warning_question', None)) or ""
-                            ),
-                            'comments': self._get_comments(
-                                partial if not self.comment_from_root else item,
-                                spec
-                            ),
-                            'names': names,
-                            'form_name': self._get_form_name(item),
-                            'responsible_follow_up': self._get_responsible_follow_up(spec)
-                        })
+                    if flag_doc := self._get_answer_flag_doc(item, spec, partial, names, form_value):
+                        docs.append(flag_doc)
 
         return docs
+
+    def _get_unchecked_flag_doc(self, item, spec, partial, names, form_value):
+        # Don't raise flag if no answer given
+        ignore = spec.get("ignore", [])
+        section = spec.get("section", "data")
+        unchecked = self._get_unchecked(
+            item,
+            spec.get('base_path', []) + spec['question'],
+            form_value,
+            ignore,
+            section
+        )
+        if unchecked:
+            # Raise a flag because there are unchecked answers.
+            return {
+                'flag': self._get_flag_name(item, spec),
+                'warning': self._get_warning(spec, item).format(msg=", ".join(unchecked)),
+                'comments': self._get_comments(
+                    partial if not self.comment_from_root else item,
+                    spec
+                ),
+                'names': names,
+                'form_name': self._get_form_name(item),
+                'responsible_follow_up': self._get_responsible_follow_up(spec)
+            }
+
+    def _get_unchecked_special_flag_doc(self, item, spec, partial, names, form_value):
+        # Don't raise flag if no answer given
+        ignore = spec.get("ignore", [])
+        section = spec.get("section", "data")
+        master_value = self._get_val(item, ['insecticide_prep_grp', 'Q10', 'sop_full_ppe'])
+        second_unchecked = self._get_unchecked(
+            item,
+            spec.get('base_path', []) + spec['question'],
+            form_value,
+            ignore,
+            section
+        )
+        if not master_value and second_unchecked:
+            # Raise a flag because master question is not answered but duplicate question is.
+            return {
+                'flag': self._get_flag_name(item, spec),
+                'warning': self._get_warning(spec, item).format(msg=", ".join(second_unchecked)),
+                'comments': self._get_comments(
+                    partial if not self.comment_from_root else item,
+                    spec
+                ),
+                'names': names,
+                'form_name': self._get_form_name(item),
+                'responsible_follow_up': self._get_responsible_follow_up(spec)
+            }
+
+    def _get_q3_special_flag_doc(self, item, spec, partial, names, form_value):
+        # One of the questions doesn't follow the same format as the
+        # others, hence this special case.
+        missing_items = ""
+        if form_value == "only_license":
+            missing_items = "cell"
+        if form_value == "only_cell":
+            missing_items = "license"
+        if form_value == "none":
+            missing_items = "cell, license"
+        if missing_items:
+            return {
+                'flag': self._get_flag_name(item, spec),
+                'warning': self._get_warning(spec, item).format(msg=missing_items),
+                'comments': self._get_comments(
+                    partial if not self.comment_from_root else item,
+                    spec
+                ),
+                'names': names,
+                'form_name': self._get_form_name(item),
+                'responsible_follow_up': self._get_responsible_follow_up(spec)
+            }
+
+    def _get_not_selected_flag_doc(self, item, spec, partial, names, form_value):
+        value = spec.get("value", "")
+        if form_value and value not in form_value:
+            warning_question_data = partial if not spec.get('warning_question_root', False) else item
+            return {
+                'flag': self._get_flag_name(item, spec),
+                'warning': self._get_warning(spec, item).format(
+                    msg=self._get_val(warning_question_data, spec.get('warning_question', None)) or ""
+                ),
+                'comments': self._get_comments(
+                    partial if not self.comment_from_root else item,
+                    spec
+                ),
+                'names': names,
+                'form_name': self._get_form_name(item),
+                'responsible_follow_up': self._get_responsible_follow_up(spec)
+            }
+
+    def _get_answer_flag_doc(self, item, spec, partial, names, form_value):
+        danger_value = spec.get('answer', [])
+        if form_value == danger_value or (
+                self._question_answered(form_value)
+                and self._raise_for_any_answer(danger_value)
+        ):
+            warning_question_data = partial if not spec.get('warning_question_root', False) else item
+            return {
+                'flag': self._get_flag_name(item, spec),
+                'warning': self._get_warning(spec, item).format(
+                    msg=self._get_val(warning_question_data, spec.get('warning_question', None)) or ""
+                ),
+                'comments': self._get_comments(
+                    partial if not self.comment_from_root else item,
+                    spec
+                ),
+                'names': names,
+                'form_name': self._get_form_name(item),
+                'responsible_follow_up': self._get_responsible_follow_up(spec)
+            }
 
 
 class AbtSupervisorExpressionSpec(AbtExpressionSpec):
