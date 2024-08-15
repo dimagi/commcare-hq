@@ -47,6 +47,7 @@ from .utils import (
     get_lat_lon_from_dict,
     set_case_gps_property,
     set_user_gps_property,
+    update_cases_owner,
 )
 
 
@@ -435,3 +436,16 @@ def get_users_with_gps(request, domain):
     ]
 
     return json_response({'user_data': user_data})
+
+
+@method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
+class CasesReassignmentView(BaseDomainView):
+    urlname = "reassign_cases"
+
+    def post(self, request, domain, *args, **kwargs):
+        request_data = json.loads(request.body)
+        case_id_to_owner_id = request_data.get('case_id_to_owner_id', {})
+
+        update_cases_owner(domain, case_id_to_owner_id)
+
+        return JsonResponse({'status': 'success'})
