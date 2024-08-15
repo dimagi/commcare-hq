@@ -6,7 +6,7 @@ from corehq.project_limits.rate_limiter import (
     PerUserRateDefinition,
     RateLimiter,
 )
-from corehq.toggles import RATE_LIMIT_REPEATERS, NAMESPACE_DOMAIN
+from corehq.toggles import RATE_LIMIT_REPEATERS, RATE_LIMIT_REPEATER_ATTEMPTS, NAMESPACE_DOMAIN
 from corehq.util.decorators import silence_and_report_error, run_only_when
 from corehq.util.metrics import metrics_gauge, metrics_counter
 from corehq.util.quickcache import quickcache
@@ -55,14 +55,37 @@ global_repeater_rate_limiter = RateLimiter(
 )
 
 
+def _get_repeater_attempt_rate_definition():
+    return get_dynamic_rate_definition(
+        "repeater_attempts",
+        default=RateDefinition(
+            per_week=None,
+            per_day=None,
+            per_hour=360000,
+            per_minute=6000,
+            per_second=100,
+        ),
+    )
+
+
+repeater_attempts_rate_limiter = RateLimiter(
+    feature_key='repeater_attempts',
+    get_rate_limits=_get_repeater_attempt_rate_definition
+)
+
+
 SHOULD_RATE_LIMIT_REPEATERS = not settings.UNIT_TESTING
 
 
-@run_only_when(lambda: SHOULD_RATE_LIMIT_REPEATERS)
+@run_only_when(SHOULD_RATE_LIMIT_REPEATERS)
 @silence_and_report_error("Exception raised in the repeater rate limiter",
                           'commcare.repeaters.rate_limiter_errors')
 def rate_limit_repeater(domain):
-    if global_repeater_rate_limiter.allow_usage() or repeater_rate_limiter.allow_usage(domain):
+    is_domain_allowed_usage = repeater_rate_limiter.allow_usage(domain)
+    if RATE_LIMIT_REPEATER_ATTEMPTS.enabled(domain, namespace=NAMESPACE_DOMAIN):
+        is_domain_allowed_usage = is_domain_allowed_usage and repeater_attempts_rate_limiter.allow_usage(domain)
+
+    if global_repeater_rate_limiter.allow_usage() or is_domain_allowed_usage:
         allow_usage = True
     elif not RATE_LIMIT_REPEATERS.enabled(domain, namespace=NAMESPACE_DOMAIN):
         allow_usage = True
@@ -85,6 +108,13 @@ def report_repeater_usage(domain, milliseconds):
     repeater_rate_limiter.report_usage(domain, delta=milliseconds)
     global_repeater_rate_limiter.report_usage(delta=milliseconds)
     _report_current_global_repeater_thresholds()
+
+
+@run_only_when(SHOULD_RATE_LIMIT_REPEATERS)
+@silence_and_report_error("Exception raised reporting usage to the repeater attempt rate limiter",
+                          'commcare.repeaters.report_usage_errors')
+def report_repeater_attempt(domain):
+    repeater_attempts_rate_limiter.report_usage(domain)
 
 
 @quickcache([], timeout=60)  # Only report up to once a minute
