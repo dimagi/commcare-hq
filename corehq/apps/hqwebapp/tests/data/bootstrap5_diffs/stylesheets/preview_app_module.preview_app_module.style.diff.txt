@@ -75,13 +75,16 @@
    }
  
    .btn-lg {
-@@ -142,8 +131,7 @@
- 
- .module-banner {
-   font-size: 11px;
--  padding-left: 6px;
--  padding-right: 6px;
-+  padding: 6px;
+@@ -140,12 +129,6 @@
+   padding: 8px;
  }
  
+-.module-banner {
+-  font-size: 11px;
+-  padding-left: 6px;
+-  padding-right: 6px;
+-}
+-
  .module-menu-bar-offset {
+   padding-top: 40px;
+   .table > tbody > tr > th,

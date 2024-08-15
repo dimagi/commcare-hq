@@ -9,9 +9,11 @@
   line-height: 30px;
   font-size: 11px;
 
-  li:before,
-  .breadcrumb-item a {
-      color: white;
+  .breadcrumb-item:before, .breadcrumb-item > a {
+    color: white;
+  }
+  .breadcrumb-item:before {
+    font-family: "FontAwesome";  // supports bsbreadcrumb-divider: \f054
   }
 
   // Show only the first and last breadcrumb item
