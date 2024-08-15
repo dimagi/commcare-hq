@@ -55,8 +55,9 @@ global_repeater_rate_limiter = RateLimiter(
 )
 
 
-def _get_repeater_attempt_rate_definition():
-    return get_dynamic_rate_definition(
+repeater_attempts_rate_limiter = RateLimiter(
+    feature_key='repeater_attempts',
+    get_rate_limits=lambda scope: get_dynamic_rate_definition(
         "repeater_attempts",
         default=RateDefinition(
             per_week=None,
@@ -65,12 +66,7 @@ def _get_repeater_attempt_rate_definition():
             per_minute=6000,
             per_second=100,
         ),
-    )
-
-
-repeater_attempts_rate_limiter = RateLimiter(
-    feature_key='repeater_attempts',
-    get_rate_limits=_get_repeater_attempt_rate_definition
+    ).get_rate_limits(),
 )
 
 
