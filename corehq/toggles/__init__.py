@@ -1982,6 +1982,17 @@ RATE_LIMIT_REPEATERS = DynamicallyPredictablyRandomToggle(
     """
 )
 
+RATE_LIMIT_REPEATER_ATTEMPTS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_repeater_attempts',
+    'Apply rate limiting to attempts for data forwarding (repeaters)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    In addition to the rate limits based on time spent waiting, these rate limits ensure a project
+    is limited to how many records they can attempt to forward in a given time window.
+    """
+)
+
 TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
     'test_form_submission_rate_limit_response',
     "Respond to all form submissions with a 429 response",
