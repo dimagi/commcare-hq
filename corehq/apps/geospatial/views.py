@@ -441,10 +441,17 @@ def get_users_with_gps(request, domain):
 @method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
+    MAX_REASSIGNMENT_REQUEST_CASES = 100
 
     def post(self, request, domain, *args, **kwargs):
         request_data = json.loads(request.body)
         case_id_to_owner_id = request_data.get('case_id_to_owner_id', {})
+        if len(case_id_to_owner_id) > self.MAX_REASSIGNMENT_REQUEST_CASES:
+            return HttpResponseBadRequest(
+                _("Maximum number of cases that can be reassigned is {limit}").format(
+                    self.MAX_REASSIGNMENT_REQUEST_CASES
+                )
+            )
 
         update_cases_owner(domain, case_id_to_owner_id)
 
