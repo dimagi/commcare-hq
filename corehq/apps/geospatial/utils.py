@@ -5,12 +5,11 @@ from casexml.apps.case.mock import CaseBlock
 from couchforms.geopoint import GeoPoint
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.hqcase.case_helper import CaseHelper
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
-
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.geospatial.models import GeoConfig
 
 
 @quickcache(['domain'], timeout=24 * 60 * 60)

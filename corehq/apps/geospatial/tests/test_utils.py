@@ -5,19 +5,19 @@ from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.form_processor.models import CommCareCase
-from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import create_case
-from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.utils import (
+    create_case_with_gps_property,
     get_geo_case_property,
     get_geo_user_property,
     set_case_gps_property,
     set_user_gps_property,
-    create_case_with_gps_property,
     update_cases_owner,
 )
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.tests.utils import create_case
 
 
 class TestGetGeoProperty(TestCase):
