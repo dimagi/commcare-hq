@@ -157,9 +157,9 @@ def reprocess_api_request(request_log):
         make_processing_attempt(response, request_log, is_retry=True)
 
 
-def process_api_request(api_model, request_id, get_request_data):
+def process_api_request(configurable_api, request_id, get_request_data):
     try:
-        backend_cls = api_model.backend_class
+        backend_cls = configurable_api.backend_class
     except GenericInboundApiError as e:
         response = ApiResponse(status=500, internal_response={'error': str(e)})
     else:
@@ -168,7 +168,7 @@ def process_api_request(api_model, request_id, get_request_data):
         except GenericInboundUserError as e:
             response = backend_cls.get_basic_error_response(request_id, 400, str(e))
         else:
-            response = backend_cls(api_model, request_data).run()
+            response = backend_cls(configurable_api, request_data).run()
     return response
 
 

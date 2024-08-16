@@ -26,8 +26,8 @@ class BaseApiBackend:
         It can also be used for basic errors that don't require additional context."""
         raise NotImplementedError
 
-    def __init__(self, api_model, request_data):
-        self.api_model = api_model
+    def __init__(self, configurable_api, request_data):
+        self.configurable_api = configurable_api
         self.request_data = request_data
 
     def run(self):
@@ -37,7 +37,7 @@ class BaseApiBackend:
                 self.request_data.couch_user,
                 self.request_data.user_agent,
                 self.get_context(),
-                self.api_model,
+                self.configurable_api,
             )
             return self.get_success_response(response_json)
         except GenericInboundRequestFiltered:
@@ -90,11 +90,11 @@ class BaseApiBackend:
         raise NotImplementedError
 
 
-def _execute_generic_api(domain, couch_user, device_id, context, api_model):
-    _apply_api_filter(api_model, context)
-    _validate_api_request(api_model, context)
+def _execute_generic_api(domain, couch_user, device_id, context, configurable_api):
+    _apply_api_filter(configurable_api, context)
+    _validate_api_request(configurable_api, context)
 
-    data = api_model.parsed_transform_expression(context.root_doc, context)
+    data = configurable_api.parsed_transform_expression(context.root_doc, context)
 
     if not isinstance(data, list):
         # the bulk API always requires a list
