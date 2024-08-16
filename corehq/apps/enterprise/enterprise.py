@@ -212,7 +212,7 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 class EnterpriseFormReport(EnterpriseReport):
     title = _('Mobile Form Submissions')
     MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20000)
-    MAXIMUM_ROWS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_ROW_LIMIT', 1000000)
+    MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1000000)
 
     def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30, include_form_id=False):
         super().__init__(account, couch_user)
@@ -265,15 +265,30 @@ class EnterpriseFormReport(EnterpriseReport):
         return query
 
     def hits(self, domain_name):
-        exception = TooMuchRequestedDataError(
-            _('Domain {name} has too many rows. Maximum allowed is: {amount}')
-            .format(name=domain_name, amount=self.MAXIMUM_ROWS_PER_DOMAIN)
-        )
         return raise_after_max_elements(
             self._query(domain_name).scroll(),
-            self.MAXIMUM_ROWS_PER_DOMAIN,
-            exception
+            self.MAXIMUM_ROWS_PER_REQUEST,
+            self._generate_data_error()
         )
+
+    def _generate_data_error(self):
+        return TooMuchRequestedDataError(
+            _('{name} contains too many rows. Maximum allowed is: {amount}. Please narrow the date range'
+                ' to fetch a smaller amount of data').format(
+                    name=self.account.name, amount=self.MAXIMUM_ROWS_PER_REQUEST)
+        )
+
+    @property
+    def rows(self):
+        total_rows = 0
+        rows = []
+        for domain_obj in self.domains():
+            domain_rows = self.rows_for_domain(domain_obj)
+            total_rows += len(domain_rows)
+            if total_rows > self.MAXIMUM_ROWS_PER_REQUEST:
+                raise self._generate_data_error()
+            rows += domain_rows
+        return rows
 
     def rows_for_domain(self, domain_obj):
         apps = get_brief_apps_in_domain(domain_obj.name)
