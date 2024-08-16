@@ -94,7 +94,7 @@ def _execute_generic_api(domain, couch_user, device_id, context, api_model):
     _apply_api_filter(api_model, context)
     _validate_api_request(api_model, context)
 
-    data = api_model.parsed_expression(context.root_doc, context)
+    data = api_model.parsed_transform_expression(context.root_doc, context)
 
     if not isinstance(data, list):
         # the bulk API always requires a list

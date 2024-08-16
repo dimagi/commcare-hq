@@ -66,7 +66,7 @@ class ConfigurableAPI(models.Model):
 
     @property
     @memoized
-    def parsed_expression(self):
+    def parsed_transform_expression(self):
         return self.transform_expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
 
     @property

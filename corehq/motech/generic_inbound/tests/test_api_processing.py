@@ -151,7 +151,7 @@ class TestGenericInboundAPINamedExpression(TestCase):
             ),
         )
         # this also tests that an exception isn't raised
-        self.assertIsNotNone(api_model.parsed_expression)
+        self.assertIsNotNone(api_model.parsed_transform_expression)
 
     def test_named_expression_in_validation(self):
         validation_expression = UCRExpression.objects.create(
