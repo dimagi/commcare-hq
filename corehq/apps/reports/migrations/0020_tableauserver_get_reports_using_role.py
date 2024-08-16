@@ -18,8 +18,9 @@ def _move_ff_to_setting(apps, schema_editor):
                 server = TableauServer.objects.get(domain=domain)
             except TableauServer.DoesNotExist:
                 pass
-            server.get_reports_using_role = True
-            server.save()
+            else:
+                server.get_reports_using_role = True
+                server.save()
 
 
 def noop(*args, **kwargs):
