@@ -60,11 +60,11 @@ class BaseApiBackend:
 
     def get_context(self):
         return get_evaluation_context(
-            self.request_data.restore_user,
-            self.request_data.request_method,
-            self.request_data.query,
-            self.request_data.headers,
-            self._get_body_for_eval_context()
+            restore_user=self.request_data.restore_user,
+            method=self.request_data.request_method,
+            query=self.request_data.query,
+            headers=self.request_data.headers,
+            body=self._get_body_for_eval_context()
         )
 
     def get_success_response(self, response_json):
