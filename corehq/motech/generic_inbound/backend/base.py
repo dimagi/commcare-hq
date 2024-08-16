@@ -91,6 +91,7 @@ class BaseApiBackend:
 
 
 def _execute_generic_api(domain, couch_user, device_id, context, configurable_api):
+    # context is all data returned in structure corehq.motech.generic_inbound.utils.get_evaluation_context
     _apply_api_filter(configurable_api, context)
     _validate_api_request(configurable_api, context)
 
@@ -122,6 +123,7 @@ def _apply_api_filter(api, eval_context):
     if not api_filter:
         return False
 
+    # root_doc here is the all data available as in corehq.motech.generic_inbound.utils.get_evaluation_context
     if not api_filter(eval_context.root_doc, eval_context):
         raise GenericInboundRequestFiltered()
 
