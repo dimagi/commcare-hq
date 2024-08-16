@@ -847,6 +847,9 @@ REPEATERS_WHITELIST = None
 # how many tasks to split the check_repeaters process into
 CHECK_REPEATERS_PARTITION_COUNT = 1
 
+MIN_REPEATER_RATE_LIMIT_DELAY = 0  # minutes
+MAX_REPEATER_RATE_LIMIT_DELAY = 15  # minutes
+
 # If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
 ENABLE_PRELOGIN_SITE = False
 
