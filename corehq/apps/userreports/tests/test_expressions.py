@@ -1257,7 +1257,7 @@ class RelatedDocExpressionUserTest(TestCase):
 
 
 class TestRelatedDocExpressionWebUser(TestCase):
-    domain = 'test-domain'
+    domain = 'test-webuser-domain'
 
     def setUp(self):
         domain_obj = Domain(name=self.domain, is_active=True)
