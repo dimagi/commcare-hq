@@ -26,7 +26,7 @@ class TestGenericInboundModels(TestCase):
 
     def test_transform(self):
         body = {'name': 'cricket', 'is_team_sport': True}
-        result = self.api.parsed_expression(body, EvaluationContext(body))
+        result = self.api.parsed_transform_expression(body, EvaluationContext(body))
         self.assertEqual(result, {'case_type': 'sport', 'case_name': 'cricket', 'is_team_sport': True})
 
 
