@@ -89,7 +89,7 @@
           <div class="flex-grow-1">
             <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> {% trans "Web Apps" %}</a>
           </div>
-          <div class="flex-grow-1">
+          <div class="flex-grow-1 d-none d-lg-inline">
             <div id="restore-as-region"></div>
           </div>
           <ul class="nav navbar-nav navbar-right">
@@ -99,7 +99,10 @@
           </div>
         </div>
       </nav>
-      <div id="breadcrumb-region" class="print-container"></div>
+      <div class="d-lg-none">
+        <div id="mobile-restore-as-region"></div>
+      </div>
+      <div id="breadcrumb-region" class="print-container sticky-top"></div>
       <section id="cloudcare-notifications" class="container notifications-container"></section>
       <div class="container case-tile-container">
         <div id="persistent-case-tile" class="print-container"></div>
