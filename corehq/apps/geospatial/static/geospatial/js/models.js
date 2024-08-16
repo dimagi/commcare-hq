@@ -845,6 +845,8 @@ hqDefine('geospatial/js/models', [
     var AssignmentManager = function (mapModel, disbursementModel) {
         let self = this;
 
+        const emptyColStr = '---';
+
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.observable(0);
         self.currentPage = ko.observable(1);
@@ -897,8 +899,8 @@ hqDefine('geospatial/js/models', [
             self.caseData = [];
             for (const item of self.mapModel.caseMapItems()) {
                 const assignedUserId = groupData[item.itemId].assignedUserId;
-                let assignedUsername = '---';
-                let primaryLocName = '---';
+                let assignedUsername = emptyColStr;
+                let primaryLocName = emptyColStr;
                 if (assignedUserId) {
                     const userData = groupData[assignedUserId].item.itemData;
                     assignedUsername = userData.name;
@@ -942,10 +944,10 @@ hqDefine('geospatial/js/models', [
                 }
 
                 caseItem.assignedUsername(
-                    (selectedUser) ? selectedUser.item.itemData.name : '---'
+                    (selectedUser) ? selectedUser.item.itemData.name : emptyColStr
                 );
                 caseItem.assignedUserPrimaryLocName(
-                    (selectedUser) ? selectedUser.item.itemData.primary_loc_name : '---'
+                    (selectedUser) ? selectedUser.item.itemData.primary_loc_name : emptyColStr
                 );
                 caseItem.assignedUserId = self.selectedUserId();
                 caseItem.isSelected(false);
