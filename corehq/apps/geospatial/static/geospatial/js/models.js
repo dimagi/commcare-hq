@@ -886,6 +886,12 @@ hqDefine('geospatial/js/models', [
             self.goToPage(1);
         });
 
+        self.hasCheckedRows = ko.computed(function () {
+            return _.some(self.caseDataPage(), function (caseItem) {
+                return caseItem.isSelected();
+            });
+        });
+
         self.isAllChecked = ko.observable(false);
         self.toggleSelectAll = function (selectAll) {
             self.isAllChecked(selectAll);

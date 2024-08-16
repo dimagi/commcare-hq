@@ -72,22 +72,20 @@
                 </pagination>
             </div>
             <div class="modal-footer">
-                <!-- TODO: Implement footer buttons -->
                 <div class="row form-horizontal">
                     <label class="checkbox col-sm-4">
                         <input type="checkbox" data-bind="checked: includeRelatedCases"/>
                         {% trans 'Include related cases' %}
                     </label>
                     <div class="col-sm-8 pull-right">
-                        <!-- TODO: Need to disable button if no rows checked -->
-                        <button class="btn btn-default" data-bind="click: assignUserToCases">
+                        <a class="btn btn-default" data-bind="click: assignUserToCases, attr: { disabled: !hasCheckedRows() }">
                             <span data-bind="visible: selectedUserId">
                                 {% trans 'Assign Cases' %}
                             </span>
                             <span data-bind="hidden: selectedUserId">
                                 {% trans 'Unassign Cases' %}
                             </span>
-                        </button>
+                        </a>
                         <button class="btn btn-default" data-bind="click: exportAssignments">
                             {% trans 'Export' %}
                         </button>
