@@ -20,6 +20,9 @@
                 </p>
                 <div class="row">
                     <div class="form-group col-lg-6">
+                        <label>
+                            {% trans 'Assignment Status' %}
+                        </label>
                         <select class="select form-control" data-bind="value: assignedFilter">
                             <option value="all">{% trans 'Show All' %}</option>
                             <option value="assigned">{% trans 'Assigned Only' %}</option>
@@ -27,6 +30,9 @@
                         </select>
                     </div>
                     <div class="form-group col-lg-6">
+                        <label>
+                            {% trans 'Select mobile worker for case assignment' %}
+                        </label>
                         <select class="select form-control"
                                 type="text"
                                 id="user-assignment-select"
