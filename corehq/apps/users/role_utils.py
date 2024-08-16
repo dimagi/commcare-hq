@@ -1,4 +1,5 @@
 from corehq.apps.users.models import UserRole, HqPermissions
+from corehq.toggles import SUPERSET_ANALYTICS
 
 
 class UserRolePresets:
@@ -126,3 +127,12 @@ def enable_attendance_coordinator_role_for_domain(domain):
     if role.is_archived:
         role.is_archived = False
         role.save()
+
+
+def get_commcare_analytics_roles_for_user_domain(couch_user, domain):
+    if not SUPERSET_ANALYTICS.enabled(domain):
+        return []
+
+    domain_membership = couch_user.get_domain_membership(domain)
+    # todo: return all roles for admin
+    return domain_membership.role.permissions.commcare_analytics_roles_list
