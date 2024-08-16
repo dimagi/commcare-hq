@@ -1,11 +1,10 @@
-import json
 import uuid
 from base64 import urlsafe_b64encode
 from functools import cached_property
 
 from django.conf import settings
 from django.db import transaction
-from django.http import QueryDict, HttpResponse, JsonResponse
+from django.http import QueryDict, HttpResponse
 from django.utils.translation import gettext as _
 
 import attr
