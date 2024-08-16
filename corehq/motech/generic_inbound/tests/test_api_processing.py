@@ -43,7 +43,14 @@ class TestGenericInboundAPI(SimpleTestCase):
         # mock 'get_validations' to prevent reverse foreign key lookup on unsaved obj
         configurable_api.get_validations = lambda: []
         user = MockUser()
-        context = get_evaluation_context(self.domain_name, user, 'post', {}, {}, {})
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={}
+        )
         with self.assertRaises(BadSpecError):
             _execute_generic_api(self.domain_name, user, "device_id", context, configurable_api)
 
@@ -55,26 +62,54 @@ class TestGenericInboundAPI(SimpleTestCase):
             }),
         )
         user = MockUser()
-        context = get_evaluation_context(self.domain_name, user, 'post', {}, {}, {"resource": {"type": "patient"}})
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={"resource": {"type": "patient"}}
+        )
         self.assertFalse(_apply_api_filter(configurable_api, context))
 
     def test_filter_pass(self):
         configurable_api = _get_api_with_filter(self.domain_name)
         user = MockUser()
-        context = get_evaluation_context(self.domain_name, user, 'post', {}, {}, {"resource": {"type": "patient"}})
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={"resource": {"type": "patient"}}
+        )
         self.assertTrue(_apply_api_filter(configurable_api, context))
 
     def test_filter_fail(self):
         configurable_api = _get_api_with_filter(self.domain_name)
         user = MockUser()
-        context = get_evaluation_context(self.domain_name, user, 'post', {}, {}, {"resource": {"type": "client"}})
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={"resource": {"type": "client"}}
+        )
         with self.assertRaises(GenericInboundRequestFiltered):
             _apply_api_filter(configurable_api, context)
 
     def test_validation_pass(self):
         configurable_api = _get_api_with_validation(self.domain_name)
         user = MockUser()
-        context = get_evaluation_context(self.domain_name, user, 'post', {}, {}, {"resource": {"type": "patient"}})
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={"resource": {"type": "patient"}}
+        )
         self.assertTrue(_validate_api_request(configurable_api, context))
 
     def test_validation_errors(self):
@@ -96,8 +131,14 @@ class TestGenericInboundAPI(SimpleTestCase):
         ))
         user = MockUser()
         # 1st validation should fail, 2nd should succeed
-        context = get_evaluation_context(self.domain_name, user, 'post', {}, {},
-                                         {"resource": {"type": "employee"}})
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={"resource": {"type": "employee"}}
+        )
         with self.assertRaises(GenericInboundValidationError) as cm:
             _execute_generic_api(self.domain_name, user, "device_id", context, configurable_api)
 
