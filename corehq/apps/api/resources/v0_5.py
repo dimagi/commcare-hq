@@ -26,6 +26,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 
 import pytz
 from memoized import memoized_property
@@ -1376,3 +1377,21 @@ def get_datasource_data(request, config_id, domain):
     query = cursor_based_query_for_datasource(request_params, datasource_adapter)
     data = response_for_cursor_based_pagination(request, query, request_params, datasource_adapter)
     return JsonResponse(data)
+
+
+@require_GET
+@api_auth()
+@requires_privilege_with_fallback(privileges.API_ACCESS)
+@api_throttle
+def get_cca_user_roles(request, domain):
+    if not toggles.SUPERSET_ANALYTICS.enabled(domain):
+        return HttpResponseForbidden()
+
+    try:
+        if request.method == 'GET':
+            return JsonResponse({
+                "roles": []
+            })
+        return JsonResponse({'error': "Request method not allowed"}, status=405)
+    except BadRequest as e:
+        return JsonResponse({'error': str(e)}, status=400)
