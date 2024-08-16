@@ -11,6 +11,7 @@ from testil import Config
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from corehq.apps.domain.models import Domain
 
 from corehq.apps.groups.models import Group
 from corehq.apps.userreports.decorators import ucr_context_cache
@@ -1253,6 +1254,39 @@ class RelatedDocExpressionUserTest(TestCase):
                 value,
                 f'Bad value expression {value_expression!r}'
             )
+
+
+class TestRelatedDocExpressionWebUser(TestCase):
+    domain = 'test-domain'
+
+    def setUp(self):
+        domain_obj = Domain(name=self.domain, is_active=True)
+        domain_obj.save()
+        self.addCleanup(domain_obj.delete)
+        self.user = WebUser.create(self.domain, 'user', '***', None, None)
+        self.addCleanup(self.user.delete, None, None)
+
+    def test_web_user(self):
+        doc = {
+            'related_user_id': self.user._id,
+            'domain': self.domain,
+        }
+        evaluation_context = EvaluationContext(doc, 0)
+
+        expression = ExpressionFactory.from_spec({
+            'type': 'related_doc',
+            'related_doc_type': 'CommCareUser',
+            'doc_id_expression': {
+                'type': 'property_name',
+                'property_name': 'related_user_id'
+            },
+            'value_expression': {
+                'type': 'property_name',
+                'property_name': 'username',
+            },
+        })
+        value = expression(doc, evaluation_context)
+        self.assertIsNone(value)
 
 
 class TestFormsExpressionSpec(TestCase):
