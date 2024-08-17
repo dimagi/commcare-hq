@@ -308,6 +308,7 @@ class RequestLog(models.Model):
     response_status = models.IntegerField(null=True, db_index=True)
     response_headers = jsonfield.JSONField(blank=True, null=True)
     response_body = models.TextField(blank=True, null=True)
+    duration = models.IntegerField(null=True)
 
     class Meta:
         db_table = 'dhis2_jsonapilog'
