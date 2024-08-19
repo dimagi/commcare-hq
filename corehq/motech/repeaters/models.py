@@ -443,7 +443,6 @@ class Repeater(RepeaterSuperProxy):
         try:
             response = self._time_request(repeat_record, payload, timing_context)
         except (Timeout, ConnectionError) as error:
-            log_repeater_timeout_in_datadog(self.domain)
             self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
             self.handle_response(err, repeat_record)
@@ -475,11 +474,13 @@ class Repeater(RepeaterSuperProxy):
 
     def handle_response(self, result, repeat_record):
         """
-        route the result to the success, failure, or exception handlers
+        route the result to the success, failure, timeout, or exception handlers
 
         result may be either a response object or an exception
         """
-        if isinstance(result, Exception):
+        if isinstance(result, RequestConnectionError):
+            repeat_record.handle_timeout(result)
+        elif isinstance(result, Exception):
             repeat_record.handle_exception(result)
         elif is_response(result) and 200 <= result.status_code < 300 or result is True:
             repeat_record.handle_success(result)
@@ -1212,6 +1213,10 @@ class RepeatRecord(models.Model):
         log_repeater_error_in_datadog(self.domain, None, self.repeater_type)
         self.add_client_failure_attempt(str(exception))
 
+    def handle_timeout(self, exception):
+        log_repeater_timeout_in_datadog(self.domain)
+        self.add_server_failure_attempt(str(exception))
+
     def handle_payload_exception(self, exception):
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
         self.add_client_failure_attempt(str(exception), retry=False)
@@ -1330,9 +1335,7 @@ def send_request(
     try:
         response = repeater.send_request(repeat_record, payload)
     except (Timeout, ConnectionError) as err:
-        log_repeater_timeout_in_datadog(repeat_record.domain)
-        message = str(RequestConnectionError(err))
-        repeat_record.add_server_failure_attempt(message)
+        repeat_record.handle_timeout(RequestConnectionError(err))
     except Exception as err:
         repeat_record.add_client_failure_attempt(str(err))
     else:
