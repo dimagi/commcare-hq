@@ -1032,7 +1032,7 @@ class RepeatRecord(models.Model):
         # preserves the value of `self.failure_reason`.
         if self.succeeded:
             self.state = State.Pending
-        elif self.state == State.Cancelled:
+        elif self.state in (State.Cancelled, State.InvalidPayload):
             self.state = State.Fail
         self.next_check = datetime.utcnow()
         self.max_possible_tries = self.num_attempts + MAX_BACKOFF_ATTEMPTS
@@ -1089,13 +1089,13 @@ class RepeatRecord(models.Model):
         self.next_check = (attempt.created_at + wait) if state == State.Fail else None
         self.save()
 
-    def add_payload_exception_attempt(self, message, tb_str):
+    def add_payload_error_attempt(self, message, tb_str):
         self.attempt_set.create(
-            state=State.Cancelled,
+            state=State.InvalidPayload,
             message=message,
             traceback=tb_str,
         )
-        self.state = State.Cancelled
+        self.state = State.InvalidPayload
         self.next_check = None
         self.save()
 
@@ -1177,7 +1177,7 @@ class RepeatRecord(models.Model):
             try:
                 self.repeater.fire_for_record(self, timing_context=timing_context)
             except Exception as e:
-                self.handle_payload_error(str(e))
+                self.handle_payload_error(str(e), tb_str=traceback.format_exc())
                 raise
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
@@ -1235,9 +1235,9 @@ class RepeatRecord(models.Model):
         log_repeater_timeout_in_datadog(self.domain)
         self.add_server_failure_attempt(str(exception))
 
-    def handle_payload_error(self, message):
+    def handle_payload_error(self, message, tb_str=''):
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
-        self.add_client_failure_attempt(message, retry=False)
+        self.add_payload_error_attempt(message, tb_str)
 
     def cancel(self):
         self.state = State.Cancelled
@@ -1317,7 +1317,7 @@ def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:
 
 
 def has_failed(record):
-    return record.state in (State.Fail, State.Cancelled)
+    return record.state in (State.Fail, State.Cancelled, State.InvalidPayload)
 
 
 def format_response(response):
