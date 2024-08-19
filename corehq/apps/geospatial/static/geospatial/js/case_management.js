@@ -1,6 +1,6 @@
 'use strict';
 
-hqDefine("geospatial/js/geospatial_map", [
+hqDefine("geospatial/js/case_management", [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "knockout",
