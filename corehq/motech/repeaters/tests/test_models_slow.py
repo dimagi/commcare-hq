@@ -67,8 +67,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
 
-            payload = self.repeater.get_payload(self.repeat_record)
-            self.repeater.send_request(self.repeat_record, payload)
+            self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_SUCCESS_STATE)
@@ -81,8 +80,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
 
-            payload = self.repeater.get_payload(self.repeat_record)
-            self.repeater.send_request(self.repeat_record, payload)
+            self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
@@ -96,8 +94,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
 
-            payload = self.repeater.get_payload(self.repeat_record)
-            self.repeater.send_request(self.repeat_record, payload)
+            self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
@@ -133,8 +130,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
 
-            payload = self.repeater.get_payload(self.repeat_record)
-            self.repeater.send_request(self.repeat_record, payload)
+            self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
@@ -146,8 +142,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.side_effect = ConnectionError()
 
-            payload = self.repeater.get_payload(self.repeat_record)
-            self.repeater.send_request(self.repeat_record, payload)
+            self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
