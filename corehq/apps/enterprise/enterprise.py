@@ -250,7 +250,7 @@ class EnterpriseFormReport(EnterpriseReport):
             .values_list('_id', flat=True)
         )
 
-        if len(users_filter) == self.MAXIMUM_USERS_PER_DOMAIN:
+        if len(users_filter) > self.MAXIMUM_USERS_PER_DOMAIN:
             raise TooMuchRequestedDataError(
                 _('Domain {name} has too many users. Maximum allowed is: {amount}')
                 .format(name=domain_name, amount=self.MAXIMUM_USERS_PER_DOMAIN)
