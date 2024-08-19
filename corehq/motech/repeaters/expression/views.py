@@ -31,6 +31,15 @@ class EditCaseExpressionRepeaterView(EditRepeaterView, BaseExpressionRepeaterVie
     page_title = _("Edit Case Repeater")
 
 
+class AddFormExpressionRepeaterView(BaseExpressionRepeaterView):
+    urlname = 'add_form_expression_repeater'
+
+
+class EditFormExpressionRepeaterView(EditRepeaterView, BaseExpressionRepeaterView):
+    urlname = 'edit_form_expression_repeater'
+    page_title = _('Edit Form Repeater')
+
+
 class AddArcGISFormExpressionRepeaterView(BaseExpressionRepeaterView):
     urlname = 'add_arcgis_form_expression_repeater'
 
