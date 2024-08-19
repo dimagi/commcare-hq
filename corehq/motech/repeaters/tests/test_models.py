@@ -33,6 +33,7 @@ from ..models import (
     format_response,
     get_all_repeater_types,
     is_response,
+    is_success_response,
 )
 
 DOMAIN = 'test-domain'
@@ -814,3 +815,20 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
         with patch.object(RepeatRecord, "num_attempts", 2), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertFalse(repeat_record.exceeded_max_retries)
+
+
+class TestIsSuccessResponse(SimpleTestCase):
+
+    def test_true_response(self):
+        self.assertTrue(is_success_response(True))
+
+    def test_status_201_response(self):
+        response = Mock(status_code=201)
+        self.assertTrue(is_success_response(response))
+
+    def test_status_404_response(self):
+        response = Mock(status_code=404)
+        self.assertFalse(is_success_response(response))
+
+    def test_none_response(self):
+        self.assertFalse(is_success_response(None))
