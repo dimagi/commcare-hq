@@ -90,6 +90,7 @@
         "webpack": "^5.91.0",
         "webpack-cli": "^5.1.4",
         "webpack-merge": "^5.10.0",
+        "webpack-modernizr-loader": "5.0.0",
         "xpath": "dimagi/js-xpath#v0.0.8",
         "zxcvbn": "4.4.2"
     },
@@ -105,8 +106,7 @@
         "lodash": "4.17.21",
         "mocha": "9.2.2",
         "mocha-headless-chrome": "4.0.0",
-        "sinon": "2.3.2",
-        "webpack-modernizr-loader": "5.0.0"
+        "sinon": "2.3.2"
     },
     "engines": {
         "yarn": ">= 1.0.0"
