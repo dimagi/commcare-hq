@@ -431,7 +431,7 @@ hqDefine("geospatial/js/geospatial_map", [
     }
 
     function initAssignmentReview() {
-        const $manageAssignmentModal = $("#review-assignments");
+        const $manageAssignmentModal = $("#assignments-results");
         if ($manageAssignmentModal.length) {
             assignmentManagerModel = models.AssignmentManager(mapModel, disbursementRunner);
             $manageAssignmentModal.koApplyBindings(assignmentManagerModel);
