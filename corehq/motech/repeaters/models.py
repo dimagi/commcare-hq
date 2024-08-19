@@ -1206,8 +1206,23 @@ class RepeatRecord(models.Model):
         self.add_success_attempt(response)
 
     def handle_failure(self, response):
+        def allow_retries(response):
+            # respect the `retry` field of RepeaterResponse
+            return getattr(response, 'retry', True)
+
+        def is_server_error(resp):
+            return is_response(resp) and resp.status_code in (
+                502,  # Bad Gateway
+                503,  # Service Unavailable
+                504,  # Gateway Timeout
+            )
+
         log_repeater_error_in_datadog(self.domain, response.status_code, self.repeater_type)
-        self.add_server_failure_attempt(format_response(response))
+
+        if is_server_error(response):
+            self.add_server_failure_attempt(format_response(response))
+        else:
+            self.add_client_failure_attempt(format_response(response), allow_retries(response))
 
     def handle_exception(self, exception):
         log_repeater_error_in_datadog(self.domain, None, self.repeater_type)
@@ -1321,40 +1336,17 @@ def send_request(
             or resp is True
         )
 
-    def allow_retries(response):
-        # respect the `retry` field of RepeaterResponse
-        return getattr(response, 'retry', True)
-
-    def later_might_be_better(resp):
-        return is_response(resp) and resp.status_code in (
-            502,  # Bad Gateway
-            503,  # Service Unavailable
-            504,  # Gateway Timeout
-        )
-
     try:
         response = repeater.send_request(repeat_record, payload)
     except (Timeout, ConnectionError) as err:
         repeat_record.handle_timeout(RequestConnectionError(err))
     except Exception as err:
-        repeat_record.add_client_failure_attempt(str(err))
+        repeat_record.handle_exception(str(err))
     else:
         if is_success(response):
-            if is_response(response):
-                # Log success in Datadog if the payload was sent.
-                log_repeater_success_in_datadog(
-                    repeater.domain,
-                    response.status_code,
-                    repeater_type=repeater.__class__.__name__
-                )
-            repeat_record.add_success_attempt(response)
+            repeat_record.handle_success(response)
         else:
-            message = format_response(response)
-            if later_might_be_better(response):
-                repeat_record.add_server_failure_attempt(message)
-            else:
-                retry = allow_retries(response)
-                repeat_record.add_client_failure_attempt(message, retry)
+            repeat_record.handle_failure(response)
     return repeat_record.state in (State.Success, State.Cancelled, State.Empty)  # Don't retry
 
 
