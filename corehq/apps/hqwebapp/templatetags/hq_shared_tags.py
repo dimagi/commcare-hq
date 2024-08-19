@@ -1,4 +1,5 @@
 import json
+import warnings
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
@@ -654,6 +655,9 @@ def _bundler_main(parser, token, flag, node_class):
     # Some templates check for {% if requirejs_main %}
     tag_name = tag_name.rstrip("_b5")
 
+    # likewise with webpack_main_b3, treat identically to webpack_main
+    tag_name = tag_name.rstrip("_b3")
+
     if getattr(parser, flag, False):
         raise TemplateSyntaxError(
             "multiple '%s' tags not allowed (%s)" % tuple(bits))
@@ -706,7 +710,17 @@ def webpack_main(parser, token):
     will have a value of `None` unless an extending template has a
     `{% webpack_main "..." %}` with a value.
     """
-    return _bundler_main(parser, token, "__saw_webpac k_main", WebpackMainNode)
+    return _bundler_main(parser, token, "__saw_webpack_main", WebpackMainNode)
+
+
+@register.tag
+def webpack_main_b3(parser, token):
+    """
+    Alias for webpack_main. The webpack/getDetails.js script, which determines the entries for
+    the webpack build, uses these tags to identify the entries and decide which entries
+    to use for the separated bootstrap 5 (default) and bootstrap 3 (being phased out) builds.
+    """
+    return webpack_main(parser, token)
 
 
 class RequireJSMainNode(template.Node):
@@ -718,14 +732,11 @@ class RequireJSMainNode(template.Node):
     def __repr__(self):
         return "<RequireJSMain Node: %r>" % (self.value,)
 
-    def get_path(self):
-        return self.value
-
     def render(self, context):
         if self.name not in context and self.value:
             # set name in block parent context
             context.dicts[-2]['use_js_bundler'] = True
-            context.dicts[-2][self.name] = self.get_path()
+            context.dicts[-2][self.name] = self.value
         return ''
 
 
@@ -734,13 +745,40 @@ class WebpackMainNode(RequireJSMainNode):
     def __repr__(self):
         return "<WebpackMain Node: %r>" % (self.value,)
 
-    def get_path(self):
-        return f"webpack/{self.value}.js"
-
 
 @register.inclusion_tag('hqwebapp/basic_errors.html')
 def bootstrap_form_errors(form):
     return {'form': form}
+
+
+try:
+    from get_webpack_manifest import get_webpack_manifest
+    webpack_manifest = get_webpack_manifest()
+    webpack_manifest_b3 = get_webpack_manifest('webpack/manifest_b3.json')
+except (ImportError, SyntaxError):
+    webpack_manifest = {}
+    webpack_manifest_b3 = {}
+
+
+@register.filter
+def webpack_bundles(entry_name):
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+    if get_bootstrap_version() == BOOTSTRAP_5:
+        bundles = webpack_manifest.get(entry_name, [])
+        webpack_folder = 'webpack'
+    else:
+        bundles = webpack_manifest_b3.get(entry_name, [])
+        webpack_folder = 'webpack_b3'
+    if not bundles:
+        warnings.warn(f"\x1b[33;20m"  # yellow color
+                      f"\n\n\nNo webpack manifest entry found for '{entry_name}'"
+                      f"\nPage may have javascript errors!"
+                      f"\nDid you forget to run `yarn dev`?\n\n"
+                      f"\x1b[0m")
+        bundles = ["common.js", f"{entry_name}.js"]
+    return [
+        f"{webpack_folder}/{bundle}" for bundle in bundles
+    ]
 
 
 @register.inclusion_tag('hqwebapp/includes/core_libraries.html', takes_context=True)
