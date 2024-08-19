@@ -62,10 +62,9 @@ class LocationSelectWidget(forms.Widget):
         location_ids = to_list(value) if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
-
         initial_data = [{
             'id': loc.location_id,
-            'text': loc.get_path_display(),
+            'text': loc.display_name if True else loc.get_path_display(),
         } for loc in locations]
 
         return get_template(self.template).render({
