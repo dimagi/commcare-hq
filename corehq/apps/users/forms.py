@@ -1125,9 +1125,10 @@ class PrimaryLocationWidget(forms.Widget):
         if value:
             try:
                 loc = SQLLocation.objects.get(location_id=value)
+                text = loc.display_name if True else loc.get_path_display()
                 initial_data = {
                     'id': loc.location_id,
-                    'text': loc.get_path_display(),
+                    'text': text,
                 }
             except SQLLocation.DoesNotExist:
                 pass
