@@ -1,0 +1,10 @@
+{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% webpack_main_b3 "prototype/js/webpack/bootstrap3_tests" %}
+
+{% block content %}
+{% initial_page_data 'test_initial_b3' 'successfully retrieved initial page data' %}
+Hello bootstrap 3!
+{% endblock content %}

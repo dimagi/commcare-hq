@@ -1,5 +1,7 @@
 from django.shortcuts import render
 
+from corehq import toggles
+from corehq.apps.domain.decorators import login_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.styleguide.context import (
     get_navigation_context,
@@ -373,3 +375,10 @@ def styleguide_pages_views(request):
         },
     })
     return render(request, 'styleguide/bootstrap5/pages/views.html', context)
+
+
+@login_required
+@use_bootstrap5
+@toggles.SAAS_PROTOTYPE.required_decorator()
+def styleguide_knockout_pagination_webpack(request):
+    return render(request, 'styleguide/bootstrap5/webpack_test.html', {})
