@@ -88,4 +88,6 @@ urlpatterns = [
         name="styleguide_pages_navigation_b5"),
     url(r'^b5/pages/views/$', bootstrap5.styleguide_pages_views,
         name="styleguide_pages_views_b5"),
+    url(r'^b5/webpack/$', bootstrap5.styleguide_knockout_pagination_webpack,
+        name="styleguide_knockout_pagination_webpack"),
 ]

@@ -7,10 +7,12 @@ from gettext import gettext
 
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
+from corehq import toggles
 from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
     track_clicked_deploy_on_hubspot,
@@ -21,6 +23,8 @@ from corehq.apps.analytics.utils import (
     get_client_ip_from_request,
     log_response,
 )
+from corehq.apps.domain.decorators import login_required
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 
 
 class HubspotClickDeployView(View):
@@ -97,3 +101,10 @@ def submit_hubspot_cta_form(request):
     return JsonResponse({
         "success": True,
     })
+
+
+@login_required
+@use_bootstrap5
+@toggles.SAAS_PROTOTYPE.required_decorator()
+def webpack_testing_view(request):
+    return render(request, 'analytics/webpack_test.html', {})

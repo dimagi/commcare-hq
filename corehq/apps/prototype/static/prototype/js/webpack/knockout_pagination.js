@@ -1,20 +1,19 @@
-// base level imports need to figure out how to always include these
-
-//need to figure out gettext mapping
-import 'hqwebapp/js/bootstrap5/common';
-import 'hqwebapp/js/bootstrap5/base_main';
+import 'commcarehq';
 
 import ko from 'knockout';
 import mapping from 'ko.mapping';
 ko.mapping = mapping;
 
-
 import $ from 'jquery';
 import _ from 'underscore';
 import initialPageData from 'hqwebapp/js/initial_page_data';
 
-// import 'hqwebapp/js/bootstrap5/hq.helpers';  // for using $.koApplyBindings
 import 'hqwebapp/js/bootstrap5/components.ko';  // for pagination
+
+import { sayHello } from "prototype/js/webpack_utils/shared_tooling";
+
+sayHello();
+console.log(initialPageData.get("test_initial"));
 
 $(function () {
     let rowData = function (data) {
