@@ -1,20 +1,23 @@
 import uuid
+from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 from uuid import uuid4
-
-from dateutil.parser import isoparse
 
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from dateutil.parser import isoparse
 from freezegun import freeze_time
+from nose.tools import assert_in
 
-from nose.tools import assert_in, assert_raises
-
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import _create_case
 
@@ -23,6 +26,7 @@ from ..const import (
     MAX_BACKOFF_ATTEMPTS,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
+    RECORD_INVALIDPAYLOAD_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
     State,
@@ -33,6 +37,7 @@ from ..models import (
     RepeatRecord,
     format_response,
     get_all_repeater_types,
+    get_domains_forwarding_enabled,
     is_response,
 )
 
@@ -46,12 +51,27 @@ def test_get_all_repeater_types():
         assert_in(name, types)
 
 
-class RepeaterTestCase(TestCase):
+class RepeaterTestCase(TestCase, DomainSubscriptionMixin):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.addClassCleanup(clear_plan_version_cache)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        # DATA_FORWARDING is on PRO and above
+        cls.setup_subscription(DOMAIN, SoftwarePlanEdition.PRO)
+        cls.addClassCleanup(cls.teardown_subscriptions)
 
     def setUp(self):
         super().setUp()
         url = 'https://www.example.com/api/'
-        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        self.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name=url,
+            url=url,
+        )
         self.repeater = FormRepeater(
             domain=DOMAIN,
             connection_settings=self.conn,
@@ -192,6 +212,14 @@ class RepeaterManagerTests(RepeaterTestCase):
             repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(repeaters), 1)
             self.assertEqual(repeaters[0].id, self.repeater.id)
+
+    def test_all_ready_ids(self):
+        with make_repeat_record(self.repeater, RECORD_PENDING_STATE):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
 
 
 @contextmanager
@@ -362,17 +390,17 @@ class AttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
-    def test_add_payload_exception_attempt(self):
+    def test_add_payload_error_attempt(self):
         message = 'ValueError: Schema validation failed'
         tb_str = 'Traceback ...'
-        self.repeat_record.add_payload_exception_attempt(message=message,
-                                                         tb_str=tb_str)
-        self.assertEqual(self.repeat_record.state, RECORD_CANCELLED_STATE)
+        self.repeat_record.add_payload_error_attempt(message=message,
+                                                     tb_str=tb_str)
+        self.assertEqual(self.repeat_record.state, RECORD_INVALIDPAYLOAD_STATE)
         # Note: Our payload issues do not affect how we deal with their
         #       server issues:
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
-                         RECORD_CANCELLED_STATE)
+                         RECORD_INVALIDPAYLOAD_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, tb_str)
 
@@ -414,10 +442,6 @@ class TestConnectionSettingsUsedBy(TestCase):
         )
         self.assertEqual(new_conn.used_by, set())
 
-    def tearDown(self):
-        self.repeater.delete()
-        super().tearDown()
-
 
 class TestRepeaterConnectionSettings(RepeaterTestCase):
 
@@ -433,88 +457,6 @@ class TestRepeaterConnectionSettings(RepeaterTestCase):
             ConnectionSettings.all_objects.filter(id=self.conn.id).delete()
 
 
-def test_attempt_forward_now_kwargs():
-    rr = RepeatRecord()
-    with assert_raises(TypeError):
-        rr.attempt_forward_now(True)
-
-
-@patch("corehq.motech.repeaters.tasks.retry_process_repeat_record")
-@patch("corehq.motech.repeaters.tasks.process_repeat_record")
-class TestAttemptForwardNow(RepeaterTestCase):
-    before_now = datetime.utcnow() - timedelta(seconds=1)
-
-    def test_future_next_check(self, process, retry_process):
-        rec = self.new_record(next_check=datetime.utcnow() + timedelta(hours=1))
-        rec.attempt_forward_now()
-
-        self.assert_not_called(process, retry_process)
-
-    def test_success_state(self, process, retry_process):
-        rec = self.new_record(state=RECORD_SUCCESS_STATE, next_check=None)
-        rec.attempt_forward_now()
-
-        self.assert_not_called(process, retry_process)
-
-    def test_cancelled_state(self, process, retry_process):
-        rec = self.new_record(state=RECORD_CANCELLED_STATE, next_check=None)
-        rec.attempt_forward_now()
-
-        self.assert_not_called(process, retry_process)
-
-    def test_delayed_task(self, process, retry_process):
-        rec = self.new_record()
-        rec.attempt_forward_now()
-
-        process.delay.assert_called_once()
-        self.assert_not_called(retry_process)
-
-    def test_fire_synchronously(self, process, retry_process):
-        rec = self.new_record()
-        rec.attempt_forward_now(fire_synchronously=True)
-
-        process.assert_called_once()
-        self.assert_not_called(retry_process)
-
-    def test_retry(self, process, retry_process):
-        rec = self.new_record()
-        rec.attempt_forward_now(is_retry=True)
-
-        retry_process.delay.assert_called_once()
-        self.assert_not_called(process)
-
-    def test_optimistic_lock(self, process, retry_process):
-        rec = self.new_record()
-
-        two = RepeatRecord.objects.get(id=rec.id)
-        two.next_check = datetime.utcnow() - timedelta(days=1)
-        two.save()
-
-        rec.attempt_forward_now()
-
-        self.assert_not_called(process, retry_process)
-
-    def assert_not_called(self, *tasks):
-        for task in tasks:
-            try:
-                task.assert_not_called()
-                task.delay.assert_not_called()
-            except AssertionError as err:
-                raise AssertionError(f"{task} unexpectedly called:\n{err}")
-
-    def new_record(self, next_check=before_now, state=RECORD_PENDING_STATE):
-        rec = RepeatRecord(
-            domain="test",
-            repeater_id=self.repeater.repeater_id,
-            payload_id="c0ffee",
-            registered_at=self.before_now,
-            next_check=next_check,
-            state=state,
-        )
-        rec.save()
-        return rec
-
-
 class TestRepeaterModelMethods(RepeaterTestCase):
 
     def test_register(self):
@@ -522,21 +464,20 @@ class TestRepeaterModelMethods(RepeaterTestCase):
         payload, cases = _create_case(
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
-        repeat_record = self.repeater.register(payload, fire_synchronously=True)
-        self.assertEqual(repeat_record.payload_id, payload.get_id)
-        all_records = list(RepeatRecord.objects.iterate(DOMAIN))
+        all_records = self.repeater.repeat_records.all()
         self.assertEqual(len(all_records), 1)
-        self.assertEqual(all_records[0].id, repeat_record.id)
+        self.assertEqual(all_records[0].payload_id, payload.form_id)
 
     def test_send_request(self):
-        case_id = uuid.uuid4().hex
-        payload, cases = _create_case(
-            domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
-        )
-        repeat_record = self.repeater.register(payload, fire_synchronously=True)
-        from corehq.motech.repeaters.tests.test_models_slow import ResponseMock
-        resp = ResponseMock(status_code=200, reason='OK')
         # Basic test checks if send_request is called
+        ResponseMock = namedtuple('ResponseMock', 'status_code reason')
+
+        case_id = uuid.uuid4().hex
+        payload, __ = _create_case(
+            domain=DOMAIN, case_id=case_id, case_type='case', owner_id='abcd'
+        )
+        repeat_record = self.repeater.repeat_records.first()
+        resp = ResponseMock(status_code=200, reason='OK')
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
             self.repeater.send_request(repeat_record, payload)
@@ -589,13 +530,14 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.assertEqual(counts[missing_id][State.Success], 0)
 
     def test_count_overdue(self):
-        now = datetime.utcnow()
-        self.new_record(next_check=now - timedelta(hours=2))
-        self.new_record(next_check=now - timedelta(hours=1))
-        self.new_record(next_check=now - timedelta(minutes=15))
-        self.new_record(next_check=now - timedelta(minutes=5))
-        self.new_record(next_check=None, state=State.Success)
-        overdue = RepeatRecord.objects.count_overdue()
+        self.new_record(domain=DOMAIN)
+        self.new_record(domain=DOMAIN)
+        self.new_record(domain=DOMAIN, state=State.Fail)
+        self.new_record(domain=DOMAIN, next_check=None, state=State.Success)
+
+        fifteen_mins_ago = datetime.utcnow() - timedelta(minutes=15)
+        with self.set_repeater_attr('next_attempt_at', fifteen_mins_ago):
+            overdue = RepeatRecord.objects.count_overdue()
         self.assertEqual(overdue, 3)
 
     iter_partition = RepeatRecord.objects.iter_partition
@@ -667,6 +609,17 @@ class TestRepeatRecordManager(RepeaterTestCase):
             state=state,
         ) for i in range(n))
         return {r.id for r in records}
+
+    @contextmanager
+    def set_repeater_attr(self, attr, value):
+        old = getattr(self.repeater, attr)
+        setattr(self.repeater, attr, value)
+        self.repeater.save()
+        try:
+            yield
+        finally:
+            setattr(self.repeater, attr, old)
+            self.repeater.save()
 
 
 class TestRepeatRecordMethods(TestCase):
@@ -815,3 +768,51 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
         with patch.object(RepeatRecord, "num_attempts", 2), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertFalse(repeat_record.exceeded_max_retries)
+
+
+class TestGetDomainsForwardingEnabled(SimpleTestCase):
+
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_domains_with_privilege_excluding_paused(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2', 'domain3', 'domain4'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: domain in {'domain1', 'domain2', 'domain3'}
+        mock_get_enabled_domains.return_value = {'domain2', 'domain4'}
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, {'domain1', 'domain3'})
+
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_empty_set_when_no_privileges(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: False
+        mock_get_enabled_domains.return_value = set()
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, set())
+
+    @patch('corehq.motech.repeaters.models.domain_has_privilege')
+    @patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.get_enabled_domains')
+    @patch('corehq.motech.repeaters.models.Domain.get_all_names')
+    def test_returns_all_domains_when_none_paused(
+        self,
+        mock_get_all_names,
+        mock_get_enabled_domains,
+        mock_domain_has_privilege,
+    ):
+        mock_get_all_names.return_value = {'domain1', 'domain2', 'domain3', 'domain4'}
+        mock_domain_has_privilege.side_effect = lambda domain, slug: True
+        mock_get_enabled_domains.return_value = set()
+        result = get_domains_forwarding_enabled()
+        self.assertEqual(result, {'domain1', 'domain2', 'domain3', 'domain4'})

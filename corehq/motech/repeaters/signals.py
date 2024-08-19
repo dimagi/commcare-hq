@@ -72,7 +72,7 @@ def create_repeat_records(repeater_cls, payload):
     })
 
 
-def _create_repeat_records(repeater_cls, payload, fire_synchronously=False):
+def _create_repeat_records(repeater_cls, payload):
     repeater_name = repeater_cls.__module__ + '.' + repeater_cls._repeater_type
     if settings.REPEATERS_WHITELIST is not None and repeater_name not in settings.REPEATERS_WHITELIST:
         return
@@ -81,7 +81,7 @@ def _create_repeat_records(repeater_cls, payload, fire_synchronously=False):
     if domain_can_forward(domain):
         repeaters = repeater_cls.objects.by_domain(domain)
         for repeater in repeaters:
-            repeater.register(payload, fire_synchronously=fire_synchronously)
+            repeater.register(payload)
 
 
 @receiver(commcare_user_post_save, dispatch_uid="create_user_repeat_records")
@@ -103,7 +103,7 @@ def fire_synchronous_case_repeaters(sender, case, **kwargs):
     """These repeaters need to fire synchronously since the changes they make to cases
     must reflect by the end of form submission processing
     """
-    _create_repeat_records(DataRegistryCaseUpdateRepeater, case, fire_synchronously=True)
+    _create_repeat_records(DataRegistryCaseUpdateRepeater, case)
 
 
 def create_data_source_updated_repeat_record(sender, **kwargs):
