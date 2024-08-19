@@ -25,14 +25,9 @@ const aliases = {
         'knockout_mapping.ko.min'),
 };
 
+
 module.exports = {
     entry: utils.getEntries(),
-
-    output: {
-        filename: '[name].js',
-        path: utils.getStaticfilesPath(),
-        clean: true,
-    },
 
     module: {
         rules: [
@@ -90,50 +85,13 @@ module.exports = {
     plugins: [
         new webpack.ProvidePlugin({
             '$': 'jquery',
-            'jQuery': 'jquery', // needed for bootstrap 3 to work
         }),
         new hqPlugins.EntryChunksPlugin(),
     ],
 
     optimization: {
         splitChunks: {
-            cacheGroups: {
-                hqwebapp: {
-                    test: /[\\/]hqwebapp[\\/]js[\\/]/,
-                    name: 'hqwebapp',
-                    chunks: 'all',
-                    minSize: 0, // Include even small modules
-                },
-                // hqwebapp: {
-                //     test: /\/hqwebapp\/js\/(?!.*(bootstrap3|bootstrap5)\/).*\.js$/,
-                //     name: 'hqwebapp',
-                //     chunks: 'all',
-                //     minSize: 0, // Include even small modules
-                // },
-                // hqwebappBootstrap5: {
-                //     test: /\/hqwebapp\/js\/.*bootstrap5\/.*\.js$/,
-                //     name: 'hqwebapp-bootstrap5',
-                //     chunks: 'all',
-                //     minSize: 0, // Include even small modules
-                // },
-                // hqwebappBootstrap3: {
-                //     test: /\/hqwebapp\/js\/.*bootstrap3\/.*\.js$/,
-                //     name: 'hqwebapp-bootstrap3',
-                //     chunks: 'all',
-                //     minSize: 0, // Include even small modules
-                // },
-                prototype: {
-                    test: /[\\/]prototype[\\/]js[\\/]/,
-                    name: 'prototype',
-                    chunks: 'all',
-                    minSize: 0, // Include even small modules
-                },
-                vendors: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: 'vendors',
-                    chunks: 'all',
-                },
-            },
+            cacheGroups: utils.getCacheGroups(),
         },
     },
 
