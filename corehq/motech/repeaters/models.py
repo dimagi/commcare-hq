@@ -1204,9 +1204,11 @@ class RepeatRecord(models.Model):
         self.add_success_attempt(response)
 
     def handle_failure(self, response):
+        log_repeater_error_in_datadog(self.domain, response.status_code, self.repeater_type)
         self.add_server_failure_attempt(format_response(response))
 
     def handle_exception(self, exception):
+        log_repeater_error_in_datadog(self.domain, None, self.repeater_type)
         self.add_client_failure_attempt(str(exception))
 
     def handle_payload_exception(self, exception):
