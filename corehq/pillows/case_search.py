@@ -19,10 +19,6 @@ from corehq.apps.es.client import manager
 from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.toggles import (
-    GEOSPATIAL,
-    USH_CASE_CLAIM_UPDATES,
-)
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
@@ -84,8 +80,7 @@ def _get_case_properties(doc_dict):
     dynamic_properties = [_format_property(key, value, case_id)
                           for key, value in doc_dict['case_json'].items()]
 
-    if USH_CASE_CLAIM_UPDATES.enabled(domain) or GEOSPATIAL.enabled(domain):
-        _add_smart_types(dynamic_properties, domain, doc_dict['type'])
+    _add_smart_types(dynamic_properties, domain, doc_dict['type'])
 
     return base_case_properties + dynamic_properties
 
@@ -94,12 +89,9 @@ def _add_smart_types(dynamic_properties, domain, case_type):
     # Properties are stored in a dict like {"key": "dob", "value": "1900-01-01"}
     # `value` is a multi-field property that duck types numeric and date values
     # We can't do that for properties like geo_points in ES v2, as `ignore_malformed` is broken
-    if USH_CASE_CLAIM_UPDATES.enabled(domain):
-        gps_props = get_gps_properties(domain, case_type)
-        _add_gps_smart_types(dynamic_properties, gps_props)
-    if GEOSPATIAL.enabled(domain):
-        gps_props = [get_geo_case_property(domain)]
-        _add_gps_smart_types(dynamic_properties, gps_props)
+    gps_props = get_gps_properties(domain, case_type)
+    gps_props.add(get_geo_case_property(domain))
+    _add_gps_smart_types(dynamic_properties, gps_props)
 
 
 def _add_gps_smart_types(dynamic_properties, gps_props):
