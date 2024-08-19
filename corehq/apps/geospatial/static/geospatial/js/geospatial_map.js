@@ -275,7 +275,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 // disbursement if this is the case
                 const hasValidData = selectedCases.length && selectedUsers.length;
                 if (!hasValidData) {
-                    const errorMessage = gettext("Please ensure that the filtered area includes both cases" +
+                    const errorMessage = gettext("Please ensure that the filtered area includes both cases " +
                                                  "and mobile workers before attempting to run disbursement.");
                     disbursementRunner.disbursementErrorMessage(errorMessage);
                 } else {
