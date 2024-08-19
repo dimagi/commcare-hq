@@ -3,6 +3,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const utils = require('./utils');
+const hqPlugins = require('./plugins');
 
 const aliases = {
     "jquery": "jquery/dist/jquery.min",
@@ -91,6 +92,7 @@ module.exports = {
             '$': 'jquery',
             'jQuery': 'jquery', // needed for bootstrap 3 to work
         }),
+        new hqPlugins.EntryChunksPlugin(),
     ],
 
     optimization: {
