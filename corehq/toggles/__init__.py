@@ -2485,11 +2485,9 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
 EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
     'embed_tableau_report_by_user',
     'Use a Tableau username "HQ/{username}" to embed reports instead of "HQ/{role name}"',
-    TAG_INTERNAL,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
-    description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
-                'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
-                'to Tableau to get the embedded report.',
+    description='This flag is now deprecated and will be removed.',
     parent_toggles=[EMBEDDED_TABLEAU]
 )
 
@@ -2510,7 +2508,7 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBED_TABLEAU_REPORT_BY_USER],
+    parent_toggles=[EMBEDDED_TABLEAU],
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
 
