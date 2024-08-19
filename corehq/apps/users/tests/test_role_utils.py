@@ -17,7 +17,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.permissions import (
     COMMCARE_ANALYTICS_GAMMA,
     COMMCARE_ANALYTICS_SQL_LAB,
-    COMMCARE_ANALYTICS_USER_PERMISSIONS,
+    COMMCARE_ANALYTICS_USER_ROLES,
 )
 
 
@@ -165,7 +165,7 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         self.assertTrue(self.user.get_domain_membership(self.DOMAIN).is_admin)
 
         analytics_roles = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
-        self.assertEqual(analytics_roles, COMMCARE_ANALYTICS_USER_PERMISSIONS)
+        self.assertEqual(analytics_roles, COMMCARE_ANALYTICS_USER_ROLES)
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_non_admin_user(self):

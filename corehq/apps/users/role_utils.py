@@ -1,6 +1,6 @@
 from corehq.apps.users.models import UserRole, HqPermissions
 from corehq.toggles import SUPERSET_ANALYTICS
-from corehq.apps.users.permissions import COMMCARE_ANALYTICS_USER_PERMISSIONS
+from corehq.apps.users.permissions import COMMCARE_ANALYTICS_USER_ROLES
 
 
 class UserRolePresets:
@@ -136,5 +136,5 @@ def get_commcare_analytics_roles_for_user_domain(couch_user, domain):
 
     domain_membership = couch_user.get_domain_membership(domain)
     if domain_membership.is_admin:
-        return COMMCARE_ANALYTICS_USER_PERMISSIONS
+        return COMMCARE_ANALYTICS_USER_ROLES
     return domain_membership.role.permissions.commcare_analytics_roles_list
