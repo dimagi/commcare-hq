@@ -1158,8 +1158,6 @@ class RepeatRecord(models.Model):
             try:
                 self.repeater.fire_for_record(self, timing_context=timing_context)
             except Exception as e:
-                log_repeater_error_in_datadog(self.domain, status_code=None,
-                                              repeater_type=self.repeater_type)
                 self.handle_payload_exception(e)
                 raise
 
@@ -1213,6 +1211,7 @@ class RepeatRecord(models.Model):
         self.add_client_failure_attempt(str(exception))
 
     def handle_payload_exception(self, exception):
+        log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
         self.add_client_failure_attempt(str(exception), retry=False)
 
     def cancel(self):
