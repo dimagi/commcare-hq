@@ -8,7 +8,15 @@
  
  /**
  These are the styles shared across both PREVIEW and the FULL PAGE WEB APP
-@@ -22,6 +22,7 @@
+@@ -11,7 +11,6 @@
+ @import "formplayer-common/navigation";
+ @import "formplayer-common/notifications";
+ @import "formplayer-common/grid";
+-@import "formplayer-common/breadcrumbs";
+ @import "formplayer-common/paginate";
+ @import "formplayer-common/appicon";
+ @import "formplayer-common/case";
+@@ -22,6 +21,7 @@
  @import "formplayer-common/formnav";
  @import "formplayer-common/markdown-table";
  @import "formplayer-common/address";
