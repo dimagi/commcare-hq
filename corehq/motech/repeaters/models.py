@@ -65,7 +65,6 @@ class.
 """
 import inspect
 import json
-import traceback
 import uuid
 from collections import defaultdict
 from contextlib import nullcontext
@@ -1273,22 +1272,6 @@ def _get_retry_interval(last_checked, now):
     interval = max(MIN_RETRY_WAIT, interval)
     interval = min(MAX_RETRY_WAIT, interval)
     return interval
-
-
-def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:
-    try:
-        return repeater.get_payload(repeat_record)
-    except Exception as err:
-        log_repeater_error_in_datadog(
-            repeater.domain,
-            status_code=None,
-            repeater_type=repeater.__class__.__name__
-        )
-        repeat_record.add_payload_exception_attempt(
-            message=str(err),
-            tb_str=traceback.format_exc()
-        )
-        raise
 
 
 def has_failed(record):
