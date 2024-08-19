@@ -279,4 +279,5 @@ class TestRequestLogFormatting(TestCase):
             response_status=200,
             response_headers={},
             response_body='OK',
+            duration=0,
         )
