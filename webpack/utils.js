@@ -41,7 +41,6 @@ const getEntries = function (otherEntry) {
     const otherEntries = {
         'b3': DETAILS.b3Entries,
     };
-    console.log(otherEntries[otherEntry] || DETAILS.entries);
     return otherEntries[otherEntry] || DETAILS.entries;
 };
 
