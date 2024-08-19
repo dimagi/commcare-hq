@@ -132,9 +132,20 @@ def enable_attendance_coordinator_role_for_domain(domain):
 
 def get_commcare_analytics_roles_for_user_domain(couch_user, domain):
     if not SUPERSET_ANALYTICS.enabled(domain):
-        return []
+        return None
 
     domain_membership = couch_user.get_domain_membership(domain)
-    if domain_membership.is_admin:
-        return COMMCARE_ANALYTICS_USER_ROLES
-    return domain_membership.role.permissions.commcare_analytics_roles_list
+    is_admin = domain_membership.is_admin
+
+    domain_role_permissions = domain_membership.role.permissions
+    permissions = {
+        "can_edit": True if is_admin else domain_role_permissions.edit_commcare_analytics,
+        "can_view": True if is_admin else domain_role_permissions.view_commcare_analytics,
+    }
+    cca_roles = domain_role_permissions.commcare_analytics_roles_list
+    assign_all_roles = domain_role_permissions.commcare_analytics_roles or is_admin
+
+    return {
+        "permissions": permissions,
+        "roles": cca_roles if not assign_all_roles else COMMCARE_ANALYTICS_USER_ROLES,
+    }

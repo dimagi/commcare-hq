@@ -146,6 +146,7 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
             COMMCARE_ANALYTICS_SQL_LAB,
         ]
         cls.hq_limited_cca_role = cls.create_role("Limited CCA role", analytics_roles=cls.limited_cca_roles)
+        cls.hq_all_cca_roles_role = cls.create_role("All CCA roles", analytics_roles=[], all_roles=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -156,39 +157,53 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         cls.domain.delete()
 
     def test_user_domain_does_not_have_flag_enabled(self):
-        analytics_roles = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
-        self.assertTrue("domain1" not in analytics_roles)
+        cca_access = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
+        self.assertEqual(cca_access, None)
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_admin_user(self):
         self.user.domain_memberships[0].is_admin = True
         self.assertTrue(self.user.get_domain_membership(self.DOMAIN).is_admin)
 
-        analytics_roles = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
-        self.assertEqual(analytics_roles, COMMCARE_ANALYTICS_USER_ROLES)
+        cca_access = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
+        self.assertEqual(cca_access['roles'], COMMCARE_ANALYTICS_USER_ROLES)
+        self.assertTrue(cca_access['permissions']['can_edit'])
+        self.assertTrue(cca_access['permissions']['can_view'])
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_non_admin_user(self):
         self.user.set_role(self.domain.name, self.hq_no_cca_role.get_qualified_id())
         self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
 
-        analytics_roles = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
-        self.assertEqual(analytics_roles, [])
+        cca_access = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
+        self.assertEqual(cca_access['roles'], [])
+        self.assertFalse(cca_access['permissions']['can_edit'])
+        self.assertFalse(cca_access['permissions']['can_view'])
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_user_has_limited_roles(self):
         self.user.set_role(self.domain.name, self.hq_limited_cca_role.get_qualified_id())
         self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
 
-        analytics_roles = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
-        self.assertEqual(analytics_roles, self.limited_cca_roles)
+        cca_access = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
+        self.assertEqual(cca_access['roles'], self.limited_cca_roles)
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_user_has_all_roles(self):
+        self.user.set_role(self.domain.name, self.hq_all_cca_roles_role.get_qualified_id())
+        self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
+
+        cca_access = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
+        self.assertEqual(cca_access['roles'], COMMCARE_ANALYTICS_USER_ROLES)
 
     @classmethod
-    def create_role(cls, role_name, analytics_roles=None):
+    def create_role(cls, role_name, analytics_roles=None, all_roles=False):
         if analytics_roles is None:
             analytics_roles = []
         permissions_infos = [PermissionInfo('commcare_analytics_roles', analytics_roles)]
         permissions = HqPermissions.from_permission_list(permissions_infos)
+        if all_roles:
+            permissions.commcare_analytics_roles = True
 
         role = UserRole.create(domain=cls.domain, name=role_name, permissions=permissions)
         return role
