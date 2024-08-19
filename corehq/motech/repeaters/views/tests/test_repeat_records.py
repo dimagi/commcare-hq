@@ -115,6 +115,7 @@ class TestDomainForwardingOptionsView(TestCase):
             # updated if the keys in this dict change
             'Pending': 1,
             'Fail': 0,
+            'InvalidPayload': 0,
             'Success': 0,
             'Cancelled': 0,
             'Empty': 0,

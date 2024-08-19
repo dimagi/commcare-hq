@@ -692,7 +692,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
                 repeat_record.fire()
 
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
-        self.assertEqual(repeat_record.state, State.Cancelled)
+        self.assertEqual(repeat_record.state, State.InvalidPayload)
 
     def test_payload_exception(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
@@ -700,7 +700,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             rr = self.repeater.register(case)
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
-        self.assertEqual(repeat_record.state, State.Cancelled)
+        self.assertEqual(repeat_record.state, State.InvalidPayload)
         self.assertEqual(repeat_record.failure_reason, "Payload error")
 
     def test_failure(self):
