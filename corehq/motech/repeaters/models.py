@@ -443,18 +443,21 @@ class Repeater(RepeaterSuperProxy):
         try:
             response = self._time_request(repeat_record, payload, timing_context)
         except (Timeout, ConnectionError) as error:
-            self.handle_response(RequestConnectionError(error), repeat_record)
+            repeat_record.handle_timeout(RequestConnectionError(error))
         except RequestException as err:
-            self.handle_response(err, repeat_record)
+            repeat_record.handle_exception(err)
         except (PossibleSSRFAttempt, CannotResolveHost):
-            self.handle_response(Exception("Invalid URL"), repeat_record)
+            repeat_record.handle_exception(Exception("Invalid URL"))
         except Exception:
             # This shouldn't ever happen in normal operation and would mean code broke
             # we want to notify ourselves of the error detail and tell the user something vague
             notify_exception(None, "Unexpected error sending repeat record request")
-            self.handle_response(Exception("Internal Server Error"), repeat_record)
+            repeat_record.handle_exception(Exception("Internal Server Error"))
         else:
-            self.handle_response(response, repeat_record)
+            if is_response(response) and 200 <= response.status_code < 300 or response is True:
+                repeat_record.handle_success(response)
+            else:
+                repeat_record.handle_failure(response)
 
     @memoized
     def get_payload(self, repeat_record):
@@ -471,21 +474,6 @@ class Repeater(RepeaterSuperProxy):
             payload_id=repeat_record.payload_id,
             method=self.request_method,
         )
-
-    def handle_response(self, result, repeat_record):
-        """
-        route the result to the success, failure, timeout, or exception handlers
-
-        result may be either a response object or an exception
-        """
-        if isinstance(result, RequestConnectionError):
-            repeat_record.handle_timeout(result)
-        elif isinstance(result, Exception):
-            repeat_record.handle_exception(result)
-        elif is_response(result) and 200 <= result.status_code < 300 or result is True:
-            repeat_record.handle_success(result)
-        else:
-            repeat_record.handle_failure(result)
 
     def get_headers(self, repeat_record):
         # to be overridden
