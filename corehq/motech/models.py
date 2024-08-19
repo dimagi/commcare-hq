@@ -51,6 +51,7 @@ class RequestLogEntry:
     response_status: int
     response_headers: dict
     response_body: str
+    duration: int
 
 
 class ConnectionQuerySet(models.QuerySet):
@@ -328,4 +329,5 @@ class RequestLog(models.Model):
             response_status=log_entry.response_status,
             response_headers=log_entry.response_headers,
             response_body=as_text(log_entry.response_body)[:MAX_REQUEST_LOG_LENGTH],
+            duration=log_entry.duration,
         )
