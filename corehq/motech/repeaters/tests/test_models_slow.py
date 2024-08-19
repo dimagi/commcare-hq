@@ -19,7 +19,7 @@ from corehq.motech.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.models import FormRepeater, send_request
+from corehq.motech.repeaters.models import FormRepeater
 from corehq.util.test_utils import timelimit
 
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
@@ -68,7 +68,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
-            send_request(self.repeater, self.repeat_record, payload)
+            self.repeater.send_request(self.repeat_record, payload)
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_SUCCESS_STATE)
@@ -82,7 +82,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
-            send_request(self.repeater, self.repeat_record, payload)
+            self.repeater.send_request(self.repeat_record, payload)
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
@@ -97,7 +97,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
-            send_request(self.repeater, self.repeat_record, payload)
+            self.repeater.send_request(self.repeat_record, payload)
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
@@ -134,7 +134,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
-            send_request(self.repeater, self.repeat_record, payload)
+            self.repeater.send_request(self.repeat_record, payload)
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
@@ -147,7 +147,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             simple_request.side_effect = ConnectionError()
 
             payload = self.repeater.get_payload(self.repeat_record)
-            send_request(self.repeater, self.repeat_record, payload)
+            self.repeater.send_request(self.repeat_record, payload)
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)

@@ -70,7 +70,6 @@ import uuid
 from collections import defaultdict
 from contextlib import nullcontext
 from datetime import datetime, timedelta
-from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.db import models, router
@@ -439,6 +438,17 @@ class Repeater(RepeaterSuperProxy):
             return self.send_request(repeat_record, payload)
 
     def fire_for_record(self, repeat_record, timing_context=None):
+        def is_success(resp):
+            return (
+                is_response(resp)
+                and 200 <= resp.status_code < 300
+                # `response` is `True` if the payload did not need to be
+                # sent. (This can happen, for example, with DHIS2 if the
+                # form that triggered the forwarder doesn't contain data
+                # for a DHIS2 Event.)
+                or resp is True
+            )
+
         payload = self.get_payload(repeat_record)
         try:
             response = self._time_request(repeat_record, payload, timing_context)
@@ -454,7 +464,7 @@ class Repeater(RepeaterSuperProxy):
             notify_exception(None, "Unexpected error sending repeat record request")
             repeat_record.handle_exception(Exception("Internal Server Error"))
         else:
-            if is_response(response) and 200 <= response.status_code < 300 or response is True:
+            if is_success(response):
                 repeat_record.handle_success(response)
             else:
                 repeat_record.handle_failure(response)
@@ -1299,43 +1309,6 @@ def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:
             tb_str=traceback.format_exc()
         )
         raise
-
-
-def send_request(
-    repeater: Repeater,
-    repeat_record: RepeatRecord,
-    payload: Any,
-) -> bool:
-    """
-    Calls ``repeater.send_request()`` and handles the result.
-
-    Returns True on success or cancelled, which means the caller should
-    not retry. False means a retry should be attempted later.
-    """
-
-    def is_success(resp):
-        return (
-            is_response(resp)
-            and 200 <= resp.status_code < 300
-            # `response` is `True` if the payload did not need to be
-            # sent. (This can happen, for example, with DHIS2 if the
-            # form that triggered the forwarder doesn't contain data
-            # for a DHIS2 Event.)
-            or resp is True
-        )
-
-    try:
-        response = repeater.send_request(repeat_record, payload)
-    except (Timeout, ConnectionError) as err:
-        repeat_record.handle_timeout(RequestConnectionError(err))
-    except Exception as err:
-        repeat_record.handle_exception(str(err))
-    else:
-        if is_success(response):
-            repeat_record.handle_success(response)
-        else:
-            repeat_record.handle_failure(response)
-    return repeat_record.state in (State.Success, State.Cancelled, State.Empty)  # Don't retry
 
 
 def has_failed(record):
