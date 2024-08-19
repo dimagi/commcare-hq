@@ -11,7 +11,7 @@ from corehq.apps.users.role_utils import (
     unarchive_roles_for_domain,
     enable_attendance_coordinator_role_for_domain,
     archive_attendance_coordinator_role_for_domain,
-    get_commcare_analytics_roles_for_user_domain,
+    get_commcare_analytics_access_for_user_domain,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.permissions import (
@@ -157,7 +157,7 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         cls.domain.delete()
 
     def test_user_domain_does_not_have_flag_enabled(self):
-        cca_access = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
+        cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
         self.assertEqual(cca_access, None)
 
     @flag_enabled('SUPERSET_ANALYTICS')
@@ -165,7 +165,7 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         self.user.domain_memberships[0].is_admin = True
         self.assertTrue(self.user.get_domain_membership(self.DOMAIN).is_admin)
 
-        cca_access = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
+        cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
         self.assertEqual(cca_access['roles'], COMMCARE_ANALYTICS_USER_ROLES)
         self.assertTrue(cca_access['permissions']['can_edit'])
         self.assertTrue(cca_access['permissions']['can_view'])
@@ -175,7 +175,7 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         self.user.set_role(self.domain.name, self.hq_no_cca_role.get_qualified_id())
         self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
 
-        cca_access = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
+        cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
         self.assertEqual(cca_access['roles'], [])
         self.assertFalse(cca_access['permissions']['can_edit'])
         self.assertFalse(cca_access['permissions']['can_view'])
@@ -185,7 +185,7 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         self.user.set_role(self.domain.name, self.hq_limited_cca_role.get_qualified_id())
         self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
 
-        cca_access = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
+        cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
         self.assertEqual(cca_access['roles'], self.limited_cca_roles)
 
     @flag_enabled('SUPERSET_ANALYTICS')
@@ -193,7 +193,7 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         self.user.set_role(self.domain.name, self.hq_all_cca_roles_role.get_qualified_id())
         self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
 
-        cca_access = get_commcare_analytics_roles_for_user_domain(self.user, self.DOMAIN)
+        cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
         self.assertEqual(cca_access['roles'], COMMCARE_ANALYTICS_USER_ROLES)
 
     @classmethod

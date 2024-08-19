@@ -132,7 +132,7 @@ from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
-from corehq.apps.users.role_utils import get_commcare_analytics_roles_for_user_domain
+from corehq.apps.users.role_utils import get_commcare_analytics_access_for_user_domain
 
 from ..exceptions import UpdateUserException
 from ..user_updates import update
@@ -1390,9 +1390,7 @@ def get_cca_user_roles(request, domain):
 
     try:
         if request.method == 'GET':
-            return JsonResponse({
-                "roles": get_commcare_analytics_roles_for_user_domain(request.couch_user, domain)
-            })
+            return JsonResponse(get_commcare_analytics_access_for_user_domain(request.couch_user, domain))
         return JsonResponse({'error': "Request method not allowed"}, status=405)
     except BadRequest as e:
         return JsonResponse({'error': str(e)}, status=400)

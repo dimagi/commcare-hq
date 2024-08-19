@@ -130,7 +130,7 @@ def enable_attendance_coordinator_role_for_domain(domain):
         role.save()
 
 
-def get_commcare_analytics_roles_for_user_domain(couch_user, domain):
+def get_commcare_analytics_access_for_user_domain(couch_user, domain):
     if not SUPERSET_ANALYTICS.enabled(domain):
         return None
 
