@@ -442,7 +442,6 @@ class Repeater(RepeaterSuperProxy):
         try:
             response = self._time_request(repeat_record, payload, timing_context)
         except (Timeout, ConnectionError) as error:
-            log_repeater_timeout_in_datadog(self.domain)
             self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
             self.handle_response(err, repeat_record)
@@ -474,11 +473,13 @@ class Repeater(RepeaterSuperProxy):
 
     def handle_response(self, result, repeat_record):
         """
-        route the result to the success, failure, or exception handlers
+        route the result to the success, failure, timeout, or exception handlers
 
         result may be either a response object or an exception
         """
-        if isinstance(result, Exception):
+        if isinstance(result, RequestConnectionError):
+            repeat_record.handle_timeout(result)
+        elif isinstance(result, Exception):
             repeat_record.handle_exception(result)
         elif is_response(result) and 200 <= result.status_code < 300 or result is True:
             repeat_record.handle_success(result)
@@ -1210,6 +1211,10 @@ class RepeatRecord(models.Model):
     def handle_exception(self, exception):
         log_repeater_error_in_datadog(self.domain, None, self.repeater_type)
         self.add_client_failure_attempt(str(exception))
+
+    def handle_timeout(self, exception):
+        log_repeater_timeout_in_datadog(self.domain)
+        self.add_server_failure_attempt(str(exception))
 
     def handle_payload_exception(self, exception):
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
