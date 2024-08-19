@@ -48,6 +48,7 @@ from django.views.generic import TemplateView
 from django.views.generic.base import View
 from memoized import memoized
 from sentry_sdk import last_event_id
+from two_factor.utils import default_device
 from two_factor.views import LoginView
 
 from corehq.apps.accounting.decorators import (
@@ -462,12 +463,16 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
 @xframe_options_sameorigin
 @location_safe
 def iframe_domain_login(req, domain):
-    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
-        'current_page': {'page_name': _('Your session has expired')},
-        'restrict_domain_creation': True,
-        'is_session_expiration': True,
-        'ANALYTICS_IDS': {},
-    })
+    return domain_login(
+        req,
+        domain,
+        custom_template_name="hqwebapp/bootstrap3/iframe_domain_login.html",
+        extra_context={
+            'current_page': {'page_name': _('Your session has expired')},
+            'restrict_domain_creation': True,
+            'is_session_expiration': True,
+            'ANALYTICS_IDS': {},
+        })
 
 
 @xframe_options_sameorigin
@@ -478,14 +483,32 @@ def iframe_sso_login_pending(request):
 
 class HQLoginView(LoginView):
     form_list = [
-        ('auth', EmailAuthenticationForm),
-        ('token', HQAuthenticationTokenForm),
-        ('backup', HQBackupTokenForm),
+        (LoginView.AUTH_STEP, EmailAuthenticationForm),
+        (LoginView.TOKEN_STEP, HQAuthenticationTokenForm),
+        (LoginView.BACKUP_STEP, HQBackupTokenForm),
     ]
     extra_context = {}
 
+    def has_token_step(self):
+        """
+        Overrides the two_factor LoginView has_token_step to ensure this step is excluded if a valid backup
+        token exists. Created https://github.com/jazzband/django-two-factor-auth/issues/709 to track work to
+        potentially include this in django-two-factor-auth directly.
+        """
+        return (
+            default_device(self.get_user())
+            and self.BACKUP_STEP not in self.storage.validated_step_data
+            and not self.remember_agent
+        )
+
+    # override two_factor LoginView condition_dict to include the method defined above
+    condition_dict = {
+        LoginView.TOKEN_STEP: has_token_step,
+        LoginView.BACKUP_STEP: LoginView.has_backup_step,
+    }
+
     def post(self, *args, **kwargs):
-        if settings.ENFORCE_SSO_LOGIN and self.steps.current == 'auth':
+        if settings.ENFORCE_SSO_LOGIN and self.steps.current == self.AUTH_STEP:
             # catch anyone who by-passes the javascript and tries to log in directly
             username = self.request.POST.get('auth-username')
             idp = IdentityProvider.get_required_identity_provider(username) if username else None
@@ -504,7 +527,7 @@ class HQLoginView(LoginView):
         context.update(self.extra_context)
         context['enforce_sso_login'] = (
             settings.ENFORCE_SSO_LOGIN
-            and self.steps.current == 'auth'
+            and self.steps.current == self.AUTH_STEP
         )
         domain = context.get('domain')
         if domain and not is_domain_using_sso(domain):
@@ -516,9 +539,9 @@ class HQLoginView(LoginView):
 
 class CloudCareLoginView(HQLoginView):
     form_list = [
-        ('auth', CloudCareAuthenticationForm),
-        ('token', HQAuthenticationTokenForm),
-        ('backup', HQBackupTokenForm),
+        (HQLoginView.AUTH_STEP, CloudCareAuthenticationForm),
+        (HQLoginView.TOKEN_STEP, HQAuthenticationTokenForm),
+        (HQLoginView.BACKUP_STEP, HQBackupTokenForm),
     ]
 
 
@@ -569,6 +592,7 @@ def ping_response(request):
 
 @location_safe
 @login_required
+@use_bootstrap5
 def login_new_window(request):
     return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
 
@@ -1192,7 +1216,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_update_form_response(self, update_form):
         return render_to_string(
-            'hqwebapp/partials/update_item_form.html', {
+            'hqwebapp/partials/bootstrap3/update_item_form.html', {
                 'form': update_form
             }
         )

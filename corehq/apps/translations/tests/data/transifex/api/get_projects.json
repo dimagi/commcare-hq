@@ -1,0 +1,82 @@
+{
+    "data": [
+        {
+            "id": "o:test-organization:p:test-project",
+            "type": "projects",
+            "attributes": {
+                "slug": "test-project",
+                "name": "Test Project",
+                "type": "file",
+                "datetime_created": "2024-02-07T21:47:30Z",
+                "datetime_modified": "2024-02-07T21:47:30Z",
+                "tags": [],
+                "description": "Test Project",
+                "long_description": "",
+                "private": false,
+                "archived": false,
+                "translation_memory_fillup": false,
+                "machine_translation_fillup": false,
+                "homepage_url": "",
+                "repository_url": "",
+                "instructions_url": "",
+                "license": "open_source",
+                "logo_url": ""
+            },
+            "relationships": {
+                "organization": {
+                    "links": {
+                        "related": "https://rest.api.transifex.com/organizations/o:test-organization"
+                    },
+                    "data": {
+                        "type": "organizations",
+                        "id": "o:test-organization"
+                    }
+                },
+                "source_language": {
+                    "links": {
+                        "related": "https://rest.api.transifex.com/languages/l:en"
+                    },
+                    "data": {
+                        "type": "languages",
+                        "id": "l:en"
+                    }
+                },
+                "languages": {
+                    "links": {
+                        "self": "https://rest.api.transifex.com/projects/o:test-organization:p:test-project/relationships/languages",
+                        "related": "https://rest.api.transifex.com/projects/o:test-organization:p:test-project/languages"
+                    }
+                },
+                "team": {
+                    "data": {
+                        "type": "teams",
+                        "id": "o:test-organization:t:test-project-team"
+                    },
+                    "links": {
+                        "related": "https://rest.api.transifex.com/teams/o:test-organization:t:test-project-team",
+                        "self": "https://rest.api.transifex.com/projects/o:test-organization:p:test-project/relationships/team"
+                    }
+                },
+                "maintainers": {
+                    "links": {
+                        "related": "https://rest.api.transifex.com/projects/o:test-organization:p:test-project/maintainers",
+                        "self": "https://rest.api.transifex.com/projects/o:test-organization:p:test-project/relationships/maintainers"
+                    }
+                },
+                "resources": {
+                    "links": {
+                        "related": "https://rest.api.transifex.com/resources?filter[project]=o:test-organization:p:test-project"
+                    }
+                }
+            },
+            "links": {
+                "self": "https://rest.api.transifex.com/projects/o:test-organization:p:test-project"
+            }
+        }
+    ],
+    "links": {
+        "self": "https://rest.api.transifex.com/projects?filter[organization]=o:test-organization&filter[slug]=test-project",
+        "next": null,
+        "previous": null
+    }
+}

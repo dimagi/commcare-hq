@@ -1,6 +1,5 @@
 import os
 import uuid
-from datetime import date
 
 from django.test import TestCase
 
@@ -14,6 +13,8 @@ from casexml.apps.case.tests.util import (
     delete_all_sync_logs,
     delete_all_xforms,
 )
+from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.tests.util import make_loc
 from casexml.apps.phone import xml
 from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 from casexml.apps.phone.restore import CachedResponse
@@ -33,6 +34,14 @@ from corehq.util.test_utils import TestFileMixin
 
 def get_registration_xml(restore_user):
     return xml.tostring(xml.get_registration_element(restore_user)).decode('utf-8')
+
+
+def _expected_payload(key, val):
+    if val is None:
+        expected = f'<data key="{key}"/>'
+    else:
+        expected = f'<data key="{key}">{val}</data>'
+    return expected
 
 
 class SimpleOtaRestoreTest(TestCase):
@@ -62,18 +71,10 @@ class SimpleOtaRestoreTest(TestCase):
             phone_number='555555',
         )
         payload = get_registration_xml(user)
-
-        def assertRegistrationData(key, val):
-            if val is None:
-                expected = f'<data key="{key}"/>'
-            else:
-                expected = f'<data key="{key}">{val}</data>'
-            self.assertIn(expected, payload)
-
-        assertRegistrationData("commcare_first_name", "mclovin")
-        assertRegistrationData("commcare_last_name", None)
-        assertRegistrationData("commcare_phone_number", "555555")
-        assertRegistrationData("commcare_user_type", "commcare")
+        self.assertIn(_expected_payload("commcare_first_name", "mclovin"), payload)
+        self.assertIn(_expected_payload("commcare_last_name", None), payload)
+        self.assertIn(_expected_payload("commcare_phone_number", "555555"), payload)
+        self.assertIn(_expected_payload("commcare_user_type", "commcare"), payload)
 
 
 class BaseOtaRestoreTest(TestCase, TestFileMixin):
@@ -285,8 +286,8 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         )
         all_sync_logs = get_all_syncslogs()
         [even_latest_log] = [log for log in all_sync_logs
-                             if log.get_id != sync_log_id and
-                             log.get_id != latest_log.get_id]
+                             if log.get_id != sync_log_id
+                             and log.get_id != latest_log.get_id]
 
         # case block should come back
         expected_sync_restore_payload = dummy_restore_xml(
@@ -385,3 +386,23 @@ class WebUserOtaRestoreTest(OtaRestoreTest):
         super(WebUserOtaRestoreTest, self).setUp()
         delete_all_users()
         self.restore_user = create_restore_user(self.project.name, is_mobile_user=False)
+
+    def test_location_ids_in_restore(self):
+        web_user = self.restore_user._couch_user
+        domain = self.project.name
+
+        # Location setup
+        lt = LocationType.objects.create(
+            domain=domain, name='lt2'
+        )
+        self.loc1 = make_loc('loc1', type=lt.name, domain=domain)
+        self.loc2 = make_loc('loc2', type=lt.name, domain=domain)
+        web_user.set_location(domain, self.loc1)
+        web_user.add_to_assigned_locations(domain, self.loc2)
+
+        payload = get_registration_xml(self.restore_user)
+
+        self.assertIn(_expected_payload("commcare_location_id", self.loc1.location_id), payload)
+        self.assertIn(_expected_payload("commcare_location_ids",
+                                       ' '.join([self.loc1.location_id, self.loc2.location_id])), payload)
+        self.assertIn(_expected_payload("commcare_primary_case_sharing_id", self.loc1.location_id), payload)

@@ -6,19 +6,6 @@
 <!--[if IE 8]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9"><![endif]-->
 <!--[if gt IE 8]><!--><html lang="{{ LANGUAGE_CODE }}"><!--<![endif]-->
   <head>
-    {% if ANALYTICS_IDS.GTM_ID %}
-      {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
-      <!-- Google Tag Manager -->
-      <script>
-        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','{{ ANALYTICS_IDS.GTM_ID }}');
-      </script>
-      <!-- End Google Tag Manager -->
-    {% endif %}
-
     {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
     {% captureas title_context_block %}{% block title_context %}{% endblock title_context %}{% endcaptureas %}
     <title>
@@ -128,7 +115,7 @@
       {% endif %}
     {% endif %}
 
-    {% if request.use_datetimepicker and use_bootstrap5 %}
+    {% if request.use_tempusdominus and use_bootstrap5 %}
       {% compress css %}
         <link type="text/css"
               rel="stylesheet"
@@ -176,17 +163,17 @@
       {% endcompress %}
     {% endif %}
 
+    {% if request.use_tempusdominus and not requirejs_main and use_bootstrap5 %}
+      {% compress js %}
+        <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
+        <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
+      {% endcompress %}
+    {% endif %}
+
     {% block head %}
     {% endblock %}
   </head>
   <body>
-    {% if ANALYTICS_IDS.GTM_ID %}
-      <!-- Google Tag Manager (noscript) -->
-      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ ANALYTICS_IDS.GTM_ID }}"
-                        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-      <!-- End Google Tag Manager (noscript) -->
-    {% endif %}
-
     {# for setting up page-wide backgrounds #}
     {% block background_content %}{% endblock %}
 
@@ -342,7 +329,7 @@
           <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap5/alert_user.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap5/main.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/mobile_experience_warning.js' %}"></script>
         {% endcompress %}
       {% else %}
         {% compress js %}
@@ -353,7 +340,7 @@
           <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap3/alert_user.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap3/main.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/mobile_experience_warning.js' %}"></script>
         {% endcompress %}
       {% endif %}
     {% endif %}
@@ -417,14 +404,6 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_datetimepicker and not requirejs_main and use_bootstrap5 %}
-      {% compress js %}
-        <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
-        <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
-        <script src="{% static '@eonasdan/tempus-dominus/dist/js/jQuery-provider.min.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
     {% if request.use_timepicker and not requirejs_main and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
@@ -442,7 +421,7 @@
 
     {% if request.use_maps and not requirejs_main %}
       {% compress js %}
-        <script src="{% static 'reports/js/maps_utils.js' %}"></script>
+        <script src="{% static 'reports/js/bootstrap3/maps_utils.js' %}"></script>
       {% endcompress %}
     {% endif %}
 

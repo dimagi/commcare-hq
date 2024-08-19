@@ -570,7 +570,7 @@ def validate_pull(user, domain_link):
 
 class DomainLinkHistoryReport(GenericTabularReport):
     name = 'Linked Project Space History'
-    base_template = "reports/base_template.html"
+    base_template = "reports/bootstrap3/base_template.html"
     section_name = 'Project Settings'
     slug = 'project_link_report'
     dispatcher = ReleaseManagementReportDispatcher

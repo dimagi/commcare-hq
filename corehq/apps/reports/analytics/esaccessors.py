@@ -6,6 +6,7 @@ from django.conf import settings
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.data_dictionary.util import get_data_dict_case_types, get_data_dict_deprecated_case_types
 from corehq.apps.es import (
     CaseES,
@@ -87,7 +88,7 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False,
     if case_types:
         case_query = case_query.filter({"terms": {"type.exact": case_types}})
     else:
-        case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
+        case_query = case_query.filter(filters.NOT(case_type_filter(USERCASE_TYPE)))
 
     if not is_total:
         case_query = case_query.active_in_range(
@@ -124,12 +125,13 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
             )
         )
         .terms_aggregation(user_field, 'by_user')
-        .size(0))
+        .size(0)
+    )
 
     if case_types:
         case_query = case_query.case_type(case_types)
     else:
-        case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
+        case_query = case_query.filter(filters.NOT(case_type_filter(USERCASE_TYPE)))
 
     if user_ids:
         case_query = case_query.filter(filters.term(user_field, user_ids))
@@ -143,7 +145,10 @@ def get_paged_forms_by_type(
         sort_col=None,
         desc=True,
         start=0,
-        size=10):
+        size=10,
+        user_ids=None,
+        app_ids=None,
+        xmlns=None):
     sort_col = sort_col or "received_on"
     query = (
         FormES()
@@ -155,6 +160,13 @@ def get_paged_forms_by_type(
         .start(start)
         .size(size)
     )
+    if user_ids:
+        query = query.user_id(user_ids)
+    # Even if we have form xmlns we still filter by app_id since xmlns may not be unique (e.g. copied apps)
+    if app_ids:
+        query = query.app(app_ids)
+    if xmlns:
+        query = query.xmlns(xmlns)
     result = query.run()
     return PagedResult(total=result.total, hits=result.hits)
 

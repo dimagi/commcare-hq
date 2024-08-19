@@ -15,13 +15,13 @@ from corehq.apps.es import queries
 from corehq.apps.es.client import manager
 from corehq.apps.es.case_search import (
     CaseSearchES,
-    case_search_adapter,
-    case_property_starts_with,
+    case_property_date_range,
     case_property_geo_distance,
     case_property_missing,
     case_property_query,
-    case_property_range_query,
+    case_property_starts_with,
     case_property_text_query,
+    case_search_adapter,
     wrap_case_search_hit,
 )
 from corehq.apps.es.const import SIZE_LIMIT
@@ -166,6 +166,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                     "case_properties.value": {
                                                                         "value": "polly",
                                                                         "fuzziness": "AUTO",
+                                                                        "prefix_length": 2,
                                                                         "max_expansions": 100
                                                                     }
                                                                 }
@@ -214,6 +215,51 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                 },
             },
             'size': SIZE_LIMIT,
+        }
+        self.checkQuery(query, expected, validate_query=False)
+
+    def test_fuzzy_property_query(self):
+        query = self.es.domain('swashbucklers').filter(
+            case_property_query("foo", "backbeard", fuzzy=True)
+        )
+        expected = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"domain.exact": "swashbucklers"}},
+                        {
+                            "nested": {
+                                "path": "case_properties",
+                                "query": {
+                                    "bool": {
+                                        "filter": [{"term": {"case_properties.key.exact": "foo"}}],
+                                        "must": {
+                                            "bool": {
+                                                "should": [
+                                                    {"fuzzy": {"case_properties.value": {
+                                                        "value": "backbeard",
+                                                        "fuzziness": "AUTO",
+                                                        "max_expansions": 100,
+                                                        "prefix_length": 2
+                                                    }}},
+                                                    {"match": {"case_properties.value": {
+                                                        "query": "backbeard",
+                                                        "operator": "or",
+                                                        "fuzziness": "0"
+                                                    }}}
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {"match_all": {}}
+                    ],
+                    "must": {"match_all": {}}
+                }
+            },
+            "size": 1000000
         }
         self.checkQuery(query, expected, validate_query=False)
 
@@ -379,23 +425,13 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             [
                 {'_id': 'c1', 'foo': 'redbeard'},
                 {'_id': 'c2', 'foo': 'blackbeard'},
+                {'_id': 'c3', 'foo': 'backbird'},
             ],
+            # 'backbird' is a fuzzy match - off by two edits
+            # 'blackbeard' is even closer, but it is omitted because of prefix_length=2
             CaseSearchES().domain(self.domain).case_property_query("foo", "backbeard", fuzzy=True),
             None,
-            ['c2']
-        )
-
-    def test_regex_case_property_query(self):
-        self._assert_query_runs_correctly(
-            self.domain,
-            [
-                {'_id': 'c1', 'foo': 'redbeard'},
-                {'_id': 'c2', 'foo': 'blackbeard'},
-                {'_id': 'c3', 'foo': 'redblack'},
-            ],
-            CaseSearchES().domain(self.domain).regexp_case_property_query("foo", ".*beard.*"),
-            None,
-            ['c1', 'c2']
+            ['c3']
         )
 
     def test_multiple_case_search_queries(self):
@@ -467,20 +503,6 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             ['c1']
         )
 
-    def test_numeric_range_query(self):
-        self._assert_query_runs_correctly(
-            self.domain,
-            [
-                {'_id': 'c1', 'num': '1'},
-                {'_id': 'c2', 'num': '2'},
-                {'_id': 'c3', 'num': '3'},
-                {'_id': 'c4', 'num': '4'},
-            ],
-            CaseSearchES().domain(self.domain).numeric_range_case_property_query('num', gte=2, lte=3),
-            'num <= 3 and num >= 2',
-            ['c2', 'c3']
-        )
-
     def test_date_range_query(self):
         self._assert_query_runs_correctly(
             self.domain,
@@ -491,7 +513,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
                 {'_id': 'c4', 'dob': date(2020, 3, 4)},
             ],
             CaseSearchES().domain(self.domain).add_query(
-                case_property_range_query('dob', gte='2020-03-02', lte='2020-03-03'),
+                case_property_date_range('dob', gte='2020-03-02', lte='2020-03-03'),
                 clause=queries.MUST
             ),
             "dob >= '2020-03-02' and dob <= '2020-03-03'",

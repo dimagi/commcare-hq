@@ -69,8 +69,8 @@ def _get_advanced_saml2_settings(identity_provider):
             "wantAssertionsSigned": True,
             "wantAssertionsEncrypted": identity_provider.require_encrypted_assertions,
             "wantNameId": True,
-            "wantMessagesSigned": False,  # Azure does not support this, premium or standard
-            "wantNameIdEncrypted": False,  # Azure will not accept if True
+            "wantMessagesSigned": False,  # Entra ID does not support this, premium or standard
+            "wantNameIdEncrypted": False,  # Entra ID will not accept if True
             "failOnAuthnContextMismatch": True,  # very important
             "signatureAlgorithm": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
             "digestAlgorithm": "http://www.w3.org/2001/04/xmlenc#sha256",

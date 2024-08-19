@@ -32,13 +32,13 @@
 
 <div class="tab-content">
   <div class="tab-pane fade in active" id="tabs-cases">
-    {% include "reports/standard/partials/filter_panel.html" %}
+    {% include "reports/standard/partials/bootstrap3/filter_panel.html" %}
     {% include 'gps_capture.html' with data_type='case' %}
   </div>
 
   <div class="tab-pane fade" id="tabs-users">
     {% include 'gps_capture.html' with data_type='user' %}
-      <div class="module-banner alert alert-info">
+      <div class="alert alert-info">
         <span>
           {% blocktrans %}
             To create new Mobile Workers navigate to the Mobile Workers page under the Users tab.

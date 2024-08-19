@@ -1,0 +1,42 @@
+.debugger {
+  -webkit-transition: all 0.5s;
+  transition: all 0.5s;
+}
+
+.debugger.debugger-maximized {
+  height: $preview-phone-height;
+  max-height: 100vh;
+}
+
+.debugger.debugger-minimized {
+  height: 30px;
+  // Javascript auto sets the width for normal web apps so we need to override that with !important
+  // This way form entry javascript doesn't need to know whether its in web apps or preview
+  width: 30px !important;
+  border-radius: 15px;
+
+  // Space the debugger button so it's not flush against the phone
+  bottom: 3px;
+  right: 3px;
+  left: initial;
+
+  box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.45);
+
+  .debugger-tab-title {
+    text-align: center;
+    .debugger-title, .fa-xmark {
+      display: none;
+    }
+  }
+}
+
+.debugger .debugger-content {
+  font-size: 1rem;
+}
+
+
+.preview-tablet-mode {
+  .debugger.debugger-maximized {
+    height: $preview-tablet-height;
+  }
+}

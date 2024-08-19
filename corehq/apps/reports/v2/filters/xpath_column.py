@@ -6,10 +6,7 @@ from django.utils.translation import gettext_lazy
 import dateutil
 from memoized import memoized
 
-from corehq.apps.case_search.const import (
-    CASE_COMPUTED_METADATA,
-    SPECIAL_CASE_PROPERTIES,
-)
+from corehq.apps.case_search.const import METADATA_IN_REPORTS
 from corehq.apps.reports.v2.exceptions import ColumnFilterNotFound
 from corehq.apps.reports.v2.models import BaseFilter
 from corehq.util.timezones.utils import get_timezone
@@ -146,8 +143,7 @@ class DateXpathColumnFilter(BaseXpathColumnFilter):
         )
 
     def get_expression(self, property, choice_name, value):
-        server_properties = SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA
-        if property in server_properties:
+        if property in METADATA_IN_REPORTS:
             self.adjust_to_utc = True
 
         if choice_name == 'date_is':

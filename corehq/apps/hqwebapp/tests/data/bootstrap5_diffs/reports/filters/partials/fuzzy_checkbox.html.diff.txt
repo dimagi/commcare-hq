@@ -1,0 +1,14 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+ {% load i18n %}
+ {% trans "This project looks like it has some submissions we don't recognize.  Don't worry this can usually be fixed." %}
+ Please contact <a href="mailto:{{ SUPPORT_EMAIL }}">CommCare Support</a>.
+-<div class="checkbox">
++<div class="checkbox">  {# todo B5: css:checkbox #}
+     <label>
+-        <input type="checkbox" name="{{ hide_fuzzy.slug }}" value="yes" {% if hide_fuzzy.checked %}checked{% endif %} /> {% trans 'Hide Fuzzy Submissions' %}
++        <input type="checkbox" name="{{ hide_fuzzy.slug }}" value="yes" {% if hide_fuzzy.checked %}checked{% endif %} /> {% trans 'Hide Fuzzy Submissions' %}  {# todo B5: css:checkbox #}
+         <span class="hq-help-template"
+           data-title="{% trans "Hide Fuzzy Submissions?" %}"
+           data-content="{% trans "Some of the submissions included in the report results could not be matched with precision to your selected applications. This hides those submissions so that only the most accurate submissions remain." %}"

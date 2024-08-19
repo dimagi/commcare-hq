@@ -1,7 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-
 <div data-bind="modal: roleBeingEdited" tabindex="-1" role="dialog" class="modal fade">
   <div data-bind="with: roleBeingEdited" class="modal-dialog">
     <form data-bind="submit: $root.submitNewRole">
@@ -56,7 +55,7 @@
                     </label>
                   </div>
                 </div>
-                <div class="col-sm-2 controls" data-bind="visible: !showEditCheckbox">
+                <div class="col-sm-2 controls" data-bind="visible: !ko.utils.unwrapObservable(showEditCheckbox)">
                   <div class="form-check-placeholder">
                     <label></label>
                   </div>
@@ -206,52 +205,62 @@
               </div>
             {% endif %}
 
-            {% if request|toggle_enabled:"DATA_REGISTRY" %}
-            <legend>
-              {% trans "Data Registries" %}
-            </legend>
+            {% if request|request_has_privilege:"CLOUDCARE" %}
+              <legend>
+                {% trans "Web Apps" %}
+              </legend>
+              <div data-bind="template: {name: 'permission_all_selected_none', data: webAppsPermissions}"></div>
+            {% endif %}
 
-            <div data-bind="foreach: registryPermissions">
-              <div class="form-group">
-                <label class="col-sm-4 control-label" data-bind="text: text"></label>
-                <div class="col-sm-8 controls">
-                  <select class="form-control" data-bind="
-                    attr: { 'id': id },
-                    options: options,
-                    optionsText: 'text',
-                    optionsValue: 'value',
-                    value: selection">
-                    <option value="none" data-bind="text: accessNoneText"></option>
-                    <option value="all" data-bind="text: accessAllText"></option>
-                    <option value="selected" data-bind="text: accessSelectedText"></option>
-                </select>
+            {% if request|toggle_enabled:"DATA_REGISTRY" %}
+              <legend>
+                {% trans "Data Registries" %}
+              </legend>
+              <div data-bind="template: {name: 'permission_all_selected_none', foreach: registryPermissions}"></div>
+            {% endif %}
+            {% if request|toggle_enabled:"SUPERSET_ANALYTICS" %}
+            <legend>
+              {% trans "CommCare Analytics" %}
+            </legend>
+            <div class="form-group">
+              <label class="col-sm-4 control-label">
+                {% trans "All CommCare Analytics Roles" %}
+              </label>
+              <div class="col-sm-8 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="commcare-analytics-all-roles-checkbox"
+                         data-bind="checked: commcareAnalyticsRoles.all" />
+                  <label for="commcare-analytics-all-roles-checkbox">
+                    {% trans "Assign all commcare analytics roles to users with this role" %}
+                  </label>
                 </div>
               </div>
-              <div class="form-group" data-bind="visible: showItems, css: {'has-error': hasError()}">
-                <div class="col-sm-8 col-sm-offset-4 controls">
-                  <div class="panel panel-default">
-                    <div class="panel-heading" data-bind="text: listHeading"></div>
-                    <div class="panel-body">
-                      <div data-bind="foreach: specific, slideVisible: showItems">
-                        <div class="form-check">
-                          <input type="checkbox"
-                                 data-bind="checked: value, attr: { 'id': $parent.id + slug() + '-checkbox' },
-                                            disable: !$root.allowEdit" />
-                          <label data-bind="attr: { 'for': $parent.id + slug() + '-checkbox' }">
-                            <span data-bind="text: name"></span>
-                          </label>
-                        </div>
-                      </div>
-                      <span class='help-block' data-bind="visible: hasError">
-                        {% trans "Please select at least one item." %}
-                      </span>
+            </div>
+            <div class="form-group"
+                 data-bind="visible: !commcareAnalyticsRoles.all()">
+              <label class="col-sm-4 control-label">
+                {% trans "CommCare Analytics Roles" %}
+              </label>
+              <div class="col-sm-8 controls">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    {% trans "Commcare Analytics Roles:" %}
+                  </div>
+                  <div class="panel-body"
+                       data-bind="foreach: commcareAnalyticsRoles.specific, slideVisible: !commcareAnalyticsRoles.all()">
+                    <div class="form-check">
+                      <input type="checkbox"
+                             data-bind="checked: value, attr: { 'id': 'cca-role-' + slug() + '-checkbox' }" />
+                      <label data-bind="attr: { 'for': 'cca-role-' + slug() + '-checkbox' }">
+                        <span data-bind="text: name"></span>
+                      </label>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
             {% endif %}
-
             <legend>
               {% trans "Other Settings" %}
             </legend>
@@ -289,7 +298,8 @@
               </div>
             </div>
             <div class="form-group"
-                 data-bind="css: { 'has-error': hasUnpermittedLocationRestriction },
+                 data-bind="css: { 'has-error': hasUnpermittedLocationRestriction || unrestrictedButRestrictedRoleCanAssign,
+                                   'has-warning': cantAccessAllLocations },
                             visible: $root.canRestrictAccessByLocation || hasUnpermittedLocationRestriction">
               <label class="col-sm-4 control-label">
                 {% trans "Full Organization Access" %}
@@ -304,8 +314,8 @@
                     {% trans "Allow role to access data from all locations." %}
                   </label>
                 </div>
-                <div class="help-block alert alert-warning"
-                     data-bind="visible: !hasUnpermittedLocationRestriction && !permissions.access_all_locations()">
+                <div class="help-block"
+                     data-bind="visible: cantAccessAllLocations">
                   {% blocktrans %}
                     Make sure any users assigned this role also have a location assigned to them.
                     Users without assigned locations will not be permitted to log in.
@@ -316,6 +326,12 @@
                     Organization-based data access restrictions are only available
                     on the Pro plan and above. Saving this role will enable
                     full organization access for the assigned users.
+                  {% endblocktrans %}
+                </div>
+                <div class="help-block" data-bind="visible: unrestrictedButRestrictedRoleCanAssign">
+                  {% blocktrans %}
+                    With the current configuration, this role will have full organization access and roles that can assign it will not.
+                    This is not recommended.
                   {% endblocktrans %}
                 </div>
               </div>
@@ -447,14 +463,14 @@
               <label class="col-sm-4 control-label">
                 {% trans "Manage Role Assignment" %}
               </label>
-              <div class="col-sm-8 controls">
+              <div class="col-sm-8 controls", data-bind="css: { 'has-error': showRestrictedLocationRoleAssignmentWarning }">
                 <div class="panel panel-default">
                   <div class="panel-heading">
                     {% trans "Select which other roles can assign this role:" %}
                   </div>
                   <div class="panel-body"
                        data-bind="foreach: manageRoleAssignments.specific, slideVisible: !manageRoleAssignments.all()">
-                    <div class="form-check">
+                    <div class="form-check" data-bind="css: {'bg-danger': !access_all_locations() && $parent.permissions.access_all_locations()}">
                       <input type="checkbox"
                              data-bind="checked: value, attr: { 'id': 'role-' + path() + '-checkbox' }" />
                       <label data-bind="attr: { 'for': 'role-' + path() + '-checkbox' }">
@@ -463,10 +479,56 @@
                     </div>
                   </div>
                 </div>
+                <div class="help-block" data-bind="visible: showRestrictedLocationRoleAssignmentWarning">
+                  {% blocktrans %}
+                    If the highlighted roles are selected, this role will have full organization access and be assignable
+                    by a role that does not. This is not recommended configuration.
+                  {% endblocktrans %}
+                </div>
               </div>
             </div>
-          </div>
-          {% if request|request_has_privilege:"CUSTOM_DOMAIN_ALERTS" %}
+            {% if request|request_has_privilege:"APP_USER_PROFILES" and request|toggle_enabled:"RESTRICT_USER_PROFILE_ASSIGNMENT" %}
+              <div class="form-group"
+                data-bind="visible: permissions.edit_web_users() || permissions.edit_commcare_users()">
+                <label class="col-sm-4 control-label">
+                  {% trans "Assign All User Profiles" %}
+                </label>
+                <div class="col-sm-8 controls">
+                  <div class="form-check">
+                    <input type="checkbox"
+                          id="assign-profiles-checkbox"
+                          data-bind="checked: profilePermissions.all" />
+                    <label for="assign-profiles-checkbox">
+                      {% trans "Allow role to access all user profiles while setting up mobile workers and web users." %}
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group"
+                data-bind="visible: !profilePermissions.all() && (permissions.edit_web_users() || permissions.edit_commcare_users())">
+                <label class="col-sm-4 control-label">
+                  {% trans "Assign Specific User Profiles" %}
+                </label>
+                <div class="col-sm-8 controls">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      {% trans "Select which user profiles the role can assign to mobile workers and web users:" %}
+                    </div>
+                    <div class="panel-body"
+                      data-bind="foreach: profilePermissions.specific, slideVisible: !profilePermissions.all()">
+                      <div class="form-check">
+                        <input type="checkbox"
+                        data-bind="checked: value, attr: { 'id': 'profile-' + slug() + '-checkbox' }" />
+                        <label data-bind="attr: { 'for': 'profile-' + slug() + '-checkbox' }">
+                          <span data-bind="text: name"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+            {% if request|request_has_privilege:"CUSTOM_DOMAIN_ALERTS" %}
             <div class="form-group">
               <label class="col-sm-4 control-label">
                 {% trans "Manage Project Alerts" %}
@@ -482,7 +544,9 @@
                 </div>
               </div>
             </div>
-          {% endif %}
+            {% endif %}
+            </fieldset>
+          </div>
         </div>
 
         <div class="modal-footer" data-bind="css: {'has-error': $root.roleError }">
@@ -510,3 +574,43 @@
     </form>
   </div>
 </div>
+
+<script type="text/html" id="permission_all_selected_none">
+  <div class="form-group">
+    <label class="col-sm-4 control-label" data-bind="text: text"></label>
+    <div class="col-sm-8 controls">
+      <select class="form-control" data-bind="
+        attr: { 'id': id },
+        options: options,
+        optionsText: 'text',
+        optionsValue: 'value',
+        value: selection">
+        <option value="none" data-bind="text: accessNoneText"></option>
+        <option value="all" data-bind="text: accessAllText"></option>
+        <option value="selected" data-bind="text: accessSelectedText"></option>
+    </select>
+    </div>
+  </div>
+  <div class="form-group" data-bind="visible: showItems, css: {'has-error': hasError()}">
+    <div class="col-sm-8 col-sm-offset-4 controls">
+      <div class="panel panel-default">
+        <div class="panel-heading" data-bind="text: listHeading"></div>
+        <div class="panel-body">
+          <div data-bind="foreach: specific, slideVisible: showItems">
+            <div class="form-check">
+              <input type="checkbox"
+                     data-bind="checked: value, attr: { 'id': $parent.id + slug() + '-checkbox' },
+                                disable: !$root.allowEdit" />
+              <label data-bind="attr: { 'for': $parent.id + slug() + '-checkbox' }">
+                <span data-bind="text: name"></span>
+              </label>
+            </div>
+          </div>
+          <span class='help-block' data-bind="visible: hasError">
+            {% trans "Please select at least one item." %}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</script>

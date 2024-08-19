@@ -1,11 +1,9 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from django.test import TestCase
-from django.utils import timezone
 
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils.xform import (
@@ -13,14 +11,13 @@ from corehq.form_processor.utils.xform import (
     TestFormMetadata,
 )
 from corehq.motech.models import ConnectionSettings, RequestLog
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
-from corehq.motech.repeaters.models import FormRepeater, RepeatRecord, Repeater
-from corehq.motech.repeaters.tasks import delete_old_request_logs, process_repeater, _process_repeat_record
-from ..const import (
-    RECORD_CANCELLED_STATE,
-    RECORD_FAILURE_STATE,
-    RECORD_PENDING_STATE,
+from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.motech.repeaters.tasks import (
+    _process_repeat_record,
+    delete_old_request_logs,
 )
+
+from ..const import State
 
 DOMAIN = 'gaidhlig'
 PAYLOAD_IDS = ['aon', 'dha', 'trì', 'ceithir', 'coig', 'sia', 'seachd', 'ochd',
@@ -69,67 +66,6 @@ class TestDeleteOldRequestLogs(TestCase):
         self.assertEqual(count, 0)
 
 
-class TestProcessRepeater(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain = create_domain(DOMAIN)
-        cls.addClassCleanup(cls.domain.delete)
-        cls.connection_settings = ConnectionSettings.objects.create(
-            domain=DOMAIN,
-            name='Test API',
-            url="http://localhost/api/"
-        )
-        cls.addClassCleanup(delete_all_repeat_records)
-
-    def setUp(self):
-        self.repeater = FormRepeater.objects.create(
-            domain=DOMAIN,
-            format='form_xml',
-            connection_settings=self.connection_settings
-        )
-        just_now = timezone.now() - timedelta(seconds=10)
-        for payload_id in PAYLOAD_IDS:
-            self.repeater.repeat_records.create(
-                domain=self.repeater.domain,
-                payload_id=payload_id,
-                registered_at=just_now,
-            )
-            just_now += timedelta(seconds=1)
-
-    def test_get_payload_fails(self):
-        # If the payload of a repeat record is missing, it should be
-        # cancelled, and process_repeater() should continue to the next
-        # payload
-        with patch('corehq.motech.repeaters.models.log_repeater_error_in_datadog'), \
-                patch('corehq.motech.repeaters.tasks.metrics_counter'):
-            process_repeater(self.repeater.id)
-
-        # All records were tried and cancelled
-        records = list(self.repeater.repeat_records.all())
-        self.assertEqual(len(records), 10)
-        self.assertTrue(all(r.state == RECORD_CANCELLED_STATE for r in records))
-        # All records have a cancelled Attempt
-        self.assertTrue(all(len(r.attempts) == 1 for r in records))
-        self.assertTrue(all(r.attempts[0].state == RECORD_CANCELLED_STATE
-                            for r in records))
-
-    def test_send_request_fails(self):
-        # If send_request() should be retried with the same repeat
-        # record, process_repeater() should exit
-        with patch('corehq.motech.repeaters.models.simple_request') as post_mock, \
-                patch('corehq.motech.repeaters.tasks.metrics_counter'), \
-                form_context(PAYLOAD_IDS):
-            post_mock.return_value = Mock(status_code=400, reason='Bad request', text='')
-            process_repeater(self.repeater.id)
-
-        # Only the first record was attempted, the rest are still pending
-        states = [r.state for r in self.repeater.repeat_records.all()]
-        self.assertListEqual(states, ([RECORD_FAILURE_STATE]
-                                      + [RECORD_PENDING_STATE] * 9))
-
-
 @contextmanager
 def form_context(form_ids):
     for form_id in form_ids:
@@ -153,7 +89,7 @@ class TestProcessRepeatRecord(TestCase):
             registered_at=datetime.utcnow(),
             repeater_id=self.repeater.repeater_id,
             next_check=None,
-            cancelled=True,
+            state=State.Cancelled,
         )
 
         _process_repeat_record(repeat_record)
@@ -173,8 +109,8 @@ class TestProcessRepeatRecord(TestCase):
 
         _process_repeat_record(repeat_record)
 
-        fetched_repeat_record = RepeatRecord.get(repeat_record._id)
-        self.assertTrue(fetched_repeat_record.cancelled)
+        fetched_repeat_record = RepeatRecord.objects.get(id=repeat_record.id)
+        self.assertEqual(fetched_repeat_record.state, State.Cancelled)
         self.assertEqual(self.mock_fire.call_count, 0)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
@@ -184,15 +120,15 @@ class TestProcessRepeatRecord(TestCase):
             payload_id='abc123',
             registered_at=datetime.utcnow(),
             repeater_id=self.repeater.repeater_id,
-            failure_reason='test',
-            overall_tries=1,
-            max_possible_tries=1
+            state=State.Fail,
         )
 
-        _process_repeat_record(repeat_record)
+        with patch.object(RepeatRecord, "num_attempts", 1), \
+                patch.object(repeat_record, "max_possible_tries", 1):
+            _process_repeat_record(repeat_record)
 
-        fetched_repeat_record = RepeatRecord.get(repeat_record._id)
-        self.assertTrue(fetched_repeat_record.cancelled)
+        fetched_repeat_record = RepeatRecord.objects.get(id=repeat_record.id)
+        self.assertEqual(fetched_repeat_record.state, State.Cancelled)
         self.assertEqual(self.mock_fire.call_count, 0)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
@@ -212,9 +148,8 @@ class TestProcessRepeatRecord(TestCase):
 
         _process_repeat_record(repeat_record)
 
-        fetched_repeat_record = RepeatRecord.get(repeat_record._id)
-        self.assertEqual(fetched_repeat_record.doc_type, 'RepeatRecord-Deleted')
-        self.assertTrue(fetched_repeat_record.cancelled)
+        repeat_record.refresh_from_db(fields=["state"])
+        self.assertEqual(repeat_record.state, State.Cancelled)
         self.assertEqual(self.mock_fire.call_count, 0)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
@@ -289,7 +224,6 @@ class TestProcessRepeatRecord(TestCase):
             domain=cls.domain,
             connection_settings=cls.conn_settings,
         )
-        cls.addClassCleanup(delete_all_repeat_records)
 
     def setUp(self):
         self.patch()

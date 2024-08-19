@@ -1,3 +1,4 @@
+"use strict";
 /* globals HQMediaFileUploadController */
 hqDefine("app_manager/js/details/case_detail_print", function () {
     var printRef, printTemplateUploader;

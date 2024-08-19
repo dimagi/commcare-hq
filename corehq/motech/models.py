@@ -94,7 +94,7 @@ class ConnectionSettings(models.Model):
         choices=api_auth_settings_choices,
     )
     username = models.CharField(max_length=255, null=True, blank=True)
-    password = models.CharField(max_length=255, blank=True)
+    password = models.CharField(max_length=1023, blank=True)
     # OAuth 2.0 Password Grant needs username, password, client_id & client_secret
     client_id = models.CharField(max_length=255, null=True, blank=True)
     client_secret = models.CharField(max_length=255, blank=True)
@@ -109,6 +109,9 @@ class ConnectionSettings(models.Model):
 
     objects = ConnectionSoftDeleteManager.from_queryset(ConnectionQuerySet)()
     all_objects = ConnectionQuerySet.as_manager()
+
+    # Used when serializing data to ensure encrypted fields are reset
+    encrypted_fields = {"password": PASSWORD_PLACEHOLDER, "client_secret": PASSWORD_PLACEHOLDER}
 
     def __str__(self):
         return self.name
@@ -222,7 +225,7 @@ class ConnectionSettings(models.Model):
                 self.plaintext_password,
             )
         if self.auth_type == APIKEY_AUTH:
-            return ApiKeyAuthManager(self.plaintext_password)
+            return ApiKeyAuthManager(self.username, self.plaintext_password)
         if self.auth_type == OAUTH2_PWD:
             return OAuth2PasswordGrantManager(
                 self.url,
@@ -275,6 +278,12 @@ class ConnectionSettings(models.Model):
     def soft_delete(self):
         self.is_deleted = True
         self.save()
+
+    def clear_caches(self):
+        try:
+            del self.used_by
+        except AttributeError:
+            pass
 
 
 class RequestLog(models.Model):

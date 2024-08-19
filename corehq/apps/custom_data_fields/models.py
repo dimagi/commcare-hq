@@ -5,8 +5,6 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.utils.translation import gettext as _
 
-from corehq.apps.es.users import UserES
-
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
 COMMCARE_USER_TYPE_KEY = 'user_type'
@@ -15,6 +13,10 @@ COMMCARE_PROJECT = "commcare_project"
 
 # This stores the id of the user's CustomDataFieldsProfile, if any
 PROFILE_SLUG = "commcare_profile"
+
+COMMCARE_LOCATION_ID = "commcare_location_id"
+COMMCARE_LOCATION_IDS = "commcare_location_ids"
+COMMCARE_PRIMARY_CASE_SHARING_ID = "commcare_primary_case_sharing_id"
 
 # Any new fields should use the system prefix defined by SYSTEM_PREFIX.
 # SYSTEM_FIELDS is a list of fields predating SYSTEM_PREFIX that are exempt from that convention.
@@ -177,18 +179,10 @@ class CustomDataFieldsProfile(models.Model):
 
     @property
     def has_users_assigned(self):
-        return bool(self._user_query().count())
+        return self.sqluserdata_set.exists()
 
     def user_ids_assigned(self):
-        return self._user_query().values_list('_id', flat=True)
-
-    def _user_query(self):
-        return (
-            UserES().domain(self.definition.domain)
-                    .mobile_users()
-                    .show_inactive()
-                    .user_data(PROFILE_SLUG, self.id)
-        )
+        return self.sqluserdata_set.values_list('user_id', flat=True)
 
     def to_json(self):
         return {

@@ -30,7 +30,7 @@ from soil.util import expose_cached_download, get_download_context
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
+from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.casegroups.dbaccessors import (
     get_case_groups_in_domain,
     get_number_of_case_groups_in_domain,
@@ -1012,7 +1012,8 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
         domain_obj = Domain.get_by_name(self.domain)
         hour = domain_obj.auto_case_update_hour
         context.update({
-            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
+            'help_site_url': ('https://dimagi.atlassian.net/wiki/spaces/'
+                              'commcarepublic/pages/2143957601/Automatically+Update+Cases'),
             'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
         })
         return context
@@ -1301,7 +1302,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
         update_properties = [prop['name'] for prop in action_params['properties_to_update']]
         update_properties_set = set(update_properties)
-        reserved_properties = set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES)
+        reserved_properties = set(prop.replace("@", "") for prop in INDEXED_METADATA_BY_KEY)
         reserved_properties.add(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME)
 
         reserved_properties_updated = (

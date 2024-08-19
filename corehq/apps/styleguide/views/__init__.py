@@ -2,7 +2,6 @@ import os
 
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.utils.decorators import method_decorator
 from django.views.generic import *
 
 from corehq.apps.styleguide.context import (
@@ -267,6 +266,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'molecules/pagination',
             'molecules/search_box',
             'molecules/inline_edit',
+            'molecules/help',
             'molecules/feedback',
         ]
 
@@ -286,6 +286,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
                 'pagination': self.example('pagination.html'),
                 'search_box': self.example('search_box.html'),
                 'inline_edit': self.example('inline_edit.html'),
+                'help': self.example('help.html'),
                 'feedback': self.example('feedback.html'),
             },
         }

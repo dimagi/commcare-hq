@@ -52,6 +52,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def setUp(self):
         super().setUp()
+        self.repeater = self.reget_repeater()
         self.repeat_record = self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id=self.instance_id,
@@ -72,9 +73,10 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_SUCCESS_STATE)
             repeater = self.reget_repeater()
-            self.assertIsNone(repeater.next_attempt_at)
+            repeat_record = repeater.repeat_records.last()
+            self.assertIsNone(repeat_record.next_check)
 
-    def test_no_backoff_on_409(self):
+    def test_backoff_on_409(self):
         resp = ResponseMock(status_code=409, reason='Conflict')
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
@@ -85,10 +87,11 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
             repeater = self.reget_repeater()
+            repeat_record = repeater.repeat_records.last()
             # Trying tomorrow is just as likely to work as in 5 minutes
-            self.assertIsNone(repeater.next_attempt_at)
+            self.assertIsNotNone(repeat_record.next_check)
 
-    def test_no_backoff_on_500(self):
+    def test_backoff_on_500(self):
         resp = ResponseMock(status_code=500, reason='Internal Server Error')
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
@@ -99,7 +102,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
             repeater = self.reget_repeater()
-            self.assertIsNone(repeater.next_attempt_at)
+            repeat_record = repeater.repeat_records.last()
+            self.assertIsNotNone(repeat_record.next_check)
 
     @timelimit(65)
     def test_backoff_on_503(self):
@@ -135,7 +139,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
             repeater = self.reget_repeater()
-            self.assertIsNotNone(repeater.next_attempt_at)
+            repeat_record = repeater.repeat_records.last()
+            self.assertIsNotNone(repeat_record.next_check)
 
     def test_backoff_on_connection_error(self):
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
@@ -147,7 +152,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
             repeater = self.reget_repeater()
-            self.assertIsNotNone(repeater.next_attempt_at)
+            repeat_record = repeater.repeat_records.last()
+            self.assertIsNotNone(repeat_record.next_check)
 
 
 def post_xform(instance_id):

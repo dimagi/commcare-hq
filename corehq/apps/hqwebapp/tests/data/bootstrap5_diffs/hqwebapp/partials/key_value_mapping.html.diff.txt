@@ -52,7 +52,7 @@
                <i class="icon-white fa fa-remove"></i>
              </a>
            </div>
-@@ -73,7 +73,7 @@
+@@ -82,7 +82,7 @@
      <div class="modal-dialog">
        <div class="modal-content">
          <div class="modal-header">
@@ -61,7 +61,7 @@
              <span aria-hidden="true">&times;</span>
            </button>
            <h4 class="modal-title" data-bind="text: $data.modalTitle"></h4>
-@@ -81,8 +81,8 @@
+@@ -90,8 +90,8 @@
          <div class="modal-body" style="max-height:372px; overflow-y: scroll;"
               data-bind="template: {name: 'key_value_mapping_editable_template', data: mapList}"></div>
          <div class="modal-footer">
@@ -72,7 +72,7 @@
                    data-bind="disable: $data.mapList.hasError(),
                              text: $data.mapList.hasError() ? 'Fix errors' : 'OK',
                              click: save"></button>
-@@ -109,20 +109,20 @@
+@@ -118,20 +118,20 @@
  <!-- Read-only version of keys and values, displayed alongside button to pop up modal -->
  <div id="key_value_mapping_template" class="hide">
    <div data-bind="template: {name: 'key_value_mapping_display_template', if: !$data.values_are_icons() }"></div>
@@ -97,7 +97,7 @@
                             attr: { 'data-hqmediapath': currentPath },
                             event: {
                                  mediaUploadComplete: uploadComplete,
-@@ -133,8 +133,8 @@
+@@ -142,8 +142,8 @@
        <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
      </button>
    </div>
@@ -108,7 +108,16 @@
              data-bind="
                      visible: !$parent.editing(),
                      click: function(){if (!useCustomPath()) setCustomPath(); $parent.toggleEditMode()}">
-@@ -145,25 +145,25 @@
+@@ -155,7 +155,7 @@
+ 
+ <div id="icon_alt_text" class="hide">
+   <label class="control-label col-sm-1">{% trans 'Alt Text' %}</label>
+-  <div class="col-sm-4">
++  <div class="col-md-4">
+     <input type="text" class="form-control"
+            placeholder="{% trans 'Alternative text description' %}"
+            data-bind="value: altText,
+@@ -164,25 +164,25 @@
  </div>
  
  <div id="icon_uploader_path" class="hide">

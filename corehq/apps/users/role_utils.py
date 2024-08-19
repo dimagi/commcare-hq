@@ -27,6 +27,7 @@ class UserRolePresets:
                                                  download_reports=True),
         BILLING_ADMIN: lambda: HqPermissions(edit_billing=True),
         MOBILE_WORKER: lambda: HqPermissions(access_mobile_endpoints=True,
+                                             access_web_apps=True,
                                              report_an_issue=True,
                                              access_all_locations=True),
     }

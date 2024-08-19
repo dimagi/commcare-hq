@@ -76,7 +76,7 @@ class KnockoutCrispyExampleForm(forms.Form):
                     # data-bind creating select2 (see Molecules > Selections)
                     data_bind="select2: areas, value: area"
                 ),
-                twbscrispy.PrependedText('include_message', ''),
+                hqcrispy.CheckboxField('include_message'),
                 crispy.Div(
                     crispy.Field('message', data_bind="value: message"),
                     # we apply a data-bind on the visibility to a wrapper

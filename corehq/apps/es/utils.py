@@ -10,7 +10,6 @@ from corehq.apps.es.exceptions import TaskError, TaskMissing
 from corehq.util.es.elasticsearch import SerializationError
 from corehq.util.json import CommCareJSONEncoder
 
-
 TASK_POLL_DELAY = 10  # number of seconds to sleep between polling for task info
 
 
@@ -180,3 +179,17 @@ def mapping_sort_key(item):
 def index_runtime_name(name):
     # transform the name if testing
     return f"{TEST_DATABASE_PREFIX}{name}" if settings.UNIT_TESTING else name
+
+
+def get_es_reindex_setting_value(name, default):
+    """
+    :name: name of the multiplex or swap setting like ES_APPS_INDEX_MULTIPLEXED/ES_APPS_INDEX_SWAPPED
+    :default: default value if the setting is not set in localsettings.py. Should be True or False
+    Returns the default value of multiplexed/swapped settings if
+    `ES_MULTIPLEX_TO_VERSION` is not set or is not set to desired version.
+    """
+    from corehq.apps.es.const import ES_REINDEX_LOG
+
+    if ES_REINDEX_LOG[-1] != getattr(settings, 'ES_MULTIPLEX_TO_VERSION', None):
+        return default
+    return getattr(settings, name, default)

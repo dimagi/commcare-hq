@@ -206,15 +206,17 @@ class LocationV6Test(APIResourceTest):
     def test_invalid_parent(self):
         put_data = {
             "parent_location_id": self.south_park.location_id,
+            "site_code": "denver"
         }
         response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
                                                    put_data, method='PUT')
         self.assertEqual(response.json(),
-                         {'error': 'The selected parent location cannot have child locations!'})
+                         {'error': 'The selected parent location cannot have child locations! '
+                                   'Location site code: denver.'})
         self.assertEqual(response.status_code, 400)
 
     def test_name_unique_among_siblings(self):
-        post_data = post_data = {
+        post_data = {
             "location_type_code": "city",
             "name": "Denver",
             "parent_location_id": "1",
@@ -223,7 +225,8 @@ class LocationV6Test(APIResourceTest):
         response = self._assert_auth_post_resource(self.list_endpoint, post_data, method='POST')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(),
-                         {'error': 'Location with same name and parent already exists.'})
+                         {'error': 'Location with same name and parent already exists. '
+                                   'Location site code: second_denver.'})
 
     def test_site_code_special_chars(self):
         put_data = {

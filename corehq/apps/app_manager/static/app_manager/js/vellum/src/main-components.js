@@ -30564,7 +30564,7 @@ define('vellum/parser',[
 
         var xml = util.parseXML(xmlString),
             docNode = xml.find('h\\:xdoc'),
-            head = xml.find('h\\:head, head'),
+            head = xml.find(':root > h\\:head, :root > head'),
             title = head.children('h\\:title, title'),
             binds = head.find('bind'),
             instances = _getInstances(xml),
@@ -30616,7 +30616,7 @@ define('vellum/parser',[
 
         parseSetValues(form, setValues);
 
-        var controls = xml.find('h\\:body, body').children();
+        var controls = xml.find(':root > h\\:body, :root > body').children();
         parseControlTree(form, controls);
 
         var i;
@@ -49456,7 +49456,7 @@ define('vellum/core',[
                     title: gettext("Advanced"),
                     text: gettext("These are advanced settings and are not needed for most applications.  " +
                         "Please only change these if you have a specific need!"),
-                    link: "https://confluence.dimagi.com/display/commcarepublic/Application+Building"
+                    link: "https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946283/Application+Development"
                 }
             }
         ];

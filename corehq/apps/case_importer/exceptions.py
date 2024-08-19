@@ -173,4 +173,4 @@ class ExternalIdTooLong(CaseRowError):
 
 class UnexpectedError(CaseRowError):
     title = gettext_noop('Unexpected error')
-    message = gettext_lazy('Could not process case. If this persists, Please report an issue to CommCareHQ')
+    message = gettext_lazy('Could not process case. If this persists, please report an issue to CommCare HQ')

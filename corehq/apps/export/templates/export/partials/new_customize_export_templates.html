@@ -196,7 +196,7 @@
               </button>
 
               <!-- Deprecated Button -->
-              {% if export_instance.type == 'case' %}
+              {% if show_deprecated_filter %}
                 <button type="button"
                         class="btn btn-default btn-xs"
                         data-bind="click: table.toggleShowDeprecated,
@@ -334,7 +334,11 @@
                                 <span data-bind="text: tag,
                                  attr: { class: $root.getTagCSSClass(tag) }"></span>
               </span>
-
+              <span
+                data-bind="text: column.item.case_property_group_name"
+                class="label label-default"
+                style="background-color: #495057"
+              ></span>
               <!-- ko if: !column.isEditable() -->
               <code data-toggle="tooltip"
                     data-placement="top"

@@ -49,6 +49,7 @@ from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
 )
 from corehq.apps.userreports.exceptions import (
+    BadBuilderConfigError,
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     TableNotFoundWarning,
@@ -307,11 +308,18 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                     )
                     details = str(e)
                 self.template_name = 'userreports/report_error.html'
+                allow_delete = (
+                    self.report_config_id
+                    and not self.is_static
+                    and can_delete_report(request, self.spec)
+                )
+
                 context = {
                     'report_id': self.report_config_id,
                     'is_static': self.is_static,
                     'error_message': error_message,
                     'details': details,
+                    'allow_delete': allow_delete,
                 }
                 context.update(self.main_context)
                 return self.render_to_response(context)
@@ -447,7 +455,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             if settings.DEBUG:
                 raise
             return self.render_json_response({
-                'error': str(e),
+                'error_message': str(e),
                 'aaData': [],
                 'iTotalRecords': 0,
                 'iTotalDisplayRecords': 0,
@@ -482,7 +490,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls import re_path as url
+        from django.urls import re_path as url
         pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
 
@@ -585,13 +593,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 "chart_configs": report_config.charts,
                 "aaData": cls.sanitize_page(export.get_data()),
             }
-        except UserReportsError:
-            # User posted an invalid report configuration
-            return None
         except DataSourceConfigurationNotFoundError:
-            # A temporary data source has probably expired
-            # TODO: It would be more helpful just to quietly recreate the data source config from GET params
-            return None
+            raise BadBuilderConfigError(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
 
 
 # Base class for classes that provide custom rendering for UCRs
@@ -629,7 +632,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls import re_path as url
+        from django.urls import re_path as url
         pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
 

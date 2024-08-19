@@ -260,7 +260,7 @@ class TestSsoBackend(TestCase):
 
     def test_new_user_displayname_is_used_if_first_and_last_are_missing(self):
         """
-        Azure AD does not mark the First and Last names as required, only the
+        Entra ID does not mark the First and Last names as required, only the
         Display Name. If First and Last are missing, ensure that this
         information is then obtained from the Display Name
         """
@@ -298,7 +298,7 @@ class TestSsoBackend(TestCase):
 
     def test_new_user_displayname_with_one_name_is_used_as_first_name(self):
         """
-        Ensure that if the Azure AD "Display Name" has only one name/word in
+        Ensure that if the Entra ID "Display Name" has only one name/word in
         it that only the first name is populated.
         """
         username = 'test@vaultwax.com'

@@ -7,9 +7,8 @@ from django.http import Http404
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
-from django.utils.functional import lazy
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
@@ -86,9 +85,6 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXPORT_OWNERSHIP, EXCEL_DASHBO
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.data_dictionary.util import is_case_type_deprecated
-
-
-mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
 
 class ExportListHelper(object):
@@ -216,6 +212,11 @@ class ExportListHelper(object):
         :return dict
         """
         from corehq.apps.export.views.new import DeleteNewCustomExportView
+
+        def get_export_owner_username(owner_id):
+            user = CouchUser.get_by_user_id(owner_id) if owner_id else None
+            return user.username if user else UNKNOWN_EXPORT_OWNER
+
         formname = export.formname if isinstance(export, FormExportInstance) else None
         return {
             'id': export.get_id,
@@ -223,10 +224,7 @@ class ExportListHelper(object):
             'name': export.name,
             'description': export.description,
             'sharing': export.sharing,
-            'owner_username': (
-                CouchUser.get_by_user_id(export.owner_id).username
-                if export.owner_id else UNKNOWN_EXPORT_OWNER
-            ),
+            'owner_username': get_export_owner_username(export.owner_id),
             'can_edit': export.can_edit(self.request.couch_user),
             'exportType': export.type,
             'filters': self._get_filters(export),
@@ -499,7 +497,7 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
-    lead_text = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+    lead_text = mark_safe(gettext_lazy(  # nosec: no user input
         '''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.
@@ -751,7 +749,7 @@ class DashboardFeedListView(DailySavedExportListView, DashboardFeedListHelper):
     page_title = gettext_lazy("Excel Dashboard Integration")
 
     lead_text = gettext_lazy('''
-        Excel dashboard feeds allow Excel to directly connect to CommCareHQ to download data.
+        Excel dashboard feeds allow Excel to directly connect to CommCare HQ to download data.
         Data is updated daily.
     ''')
 

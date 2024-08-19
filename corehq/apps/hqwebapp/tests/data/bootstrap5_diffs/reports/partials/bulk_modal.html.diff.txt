@@ -1,0 +1,58 @@
+--- 
++++ 
+@@ -3,8 +3,8 @@
+ <div data-bind="attr: {id: 'bulk-modal'}" class="modal fade">
+   <div class="modal-dialog">
+     <div class="modal-content">
+-      <div class="modal-header" style="color:black;">
+-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++      <div class="modal-header" style="color:black;">  {# todo B5: css:modal-header, inline style #}
++        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css:close #}
+         <h4 class="modal-title">
+           <!-- ko if: action() == 'delete' -->
+             <!-- ko if: isMultiple -->
+@@ -32,7 +32,7 @@
+           <!-- /ko -->
+         </h4>
+       </div>
+-      <div class="modal-body" style="color:black;">
++      <div class="modal-body" style="color:black;">  {# todo B5: inline style #}
+         <p>
+           <!-- ko if: action() == 'delete' -->
+             <!-- ko if: isMultiple -->
+@@ -51,7 +51,7 @@
+             <!-- /ko -->
+           <!-- /ko -->
+           <br>
+-          <ul data-bind="foreach: selectedReports()" style="word-wrap: break-word">
++          <ul data-bind="foreach: selectedReports()" style="word-wrap: break-word">  {# todo B5: inline style #}
+             <div data-bind="if: !configMany">
+               <li data-bind="with: firstConfig()">
+                 <!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)
+@@ -72,7 +72,7 @@
+       </div>
+       <div class="modal-footer">
+         <!-- ko if: action() == 'delete' -->
+-          <button class="btn btn-danger" data-bind="click: bulkDelete" data-dismiss="modal">
++          <button class="btn btn-outline-danger" data-bind="click: bulkDelete" data-bs-dismiss="modal">
+             <!-- ko if: isMultiple -->
+               {% blocktrans %}
+                 Delete <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Reports
+@@ -86,7 +86,7 @@
+           </button>
+         <!-- /ko -->
+         <!-- ko if: action() == 'send' -->
+-          <button class="btn btn-primary" data-bind="click: bulkSend" data-dismiss="modal">
++          <button class="btn btn-primary" data-bind="click: bulkSend" data-bs-dismiss="modal">
+             <!-- ko if: isMultiple -->
+               {% blocktrans %}
+                 Send <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Reports
+@@ -99,7 +99,7 @@
+             <!-- /ko -->
+           </button>
+         <!-- /ko -->
+-        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
++        <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</a>
+       </div>
+     </div>
+   </div>

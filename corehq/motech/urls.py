@@ -1,4 +1,4 @@
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 
 from corehq.motech.dhis2.views import (
     AddDhis2EntityRepeaterView,
@@ -24,6 +24,8 @@ from corehq.motech.openmrs.views import (
 from corehq.motech.repeaters.expression.views import (
     AddCaseExpressionRepeaterView,
     EditCaseExpressionRepeaterView,
+    AddArcGISFormExpressionRepeaterView,
+    EditArcGISFormExpressionRepeaterView,
 )
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
@@ -78,6 +80,8 @@ urlpatterns = [
         {'repeater_type': 'DataRegistryCaseUpdateRepeater'}, name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/CaseExpressionRepeater/$', AddCaseExpressionRepeaterView.as_view(),
         {'repeater_type': 'CaseExpressionRepeater'}, name=AddCaseExpressionRepeaterView.urlname),
+    url(r'^forwarding/new/ArcGISFormExpressionRepeater/$', AddArcGISFormExpressionRepeaterView.as_view(),
+        {'repeater_type': 'ArcGISFormExpressionRepeater'}, name=AddArcGISFormExpressionRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
 
     url(r'^forwarding/edit/CaseRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
@@ -104,6 +108,12 @@ urlpatterns = [
         EditCaseExpressionRepeaterView.as_view(),
         {'repeater_type': 'CaseExpressionRepeater'},
         name=EditCaseExpressionRepeaterView.urlname
+    ),
+    url(
+        r'^forwarding/edit/ArcGISFormExpressionRepeater/(?P<repeater_id>\w+)/$',
+        EditArcGISFormExpressionRepeaterView.as_view(),
+        {'repeater_type': 'ArcGISFormExpressionRepeater'},
+        name=EditArcGISFormExpressionRepeaterView.urlname
     ),
     url(r'^forwarding/edit/(?P<repeater_type>\w+)/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
         name=EditRepeaterView.urlname),

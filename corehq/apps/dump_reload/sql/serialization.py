@@ -10,11 +10,18 @@ class JsonLinesSerializer(JsonSerializer):
     """
     Convert a queryset to JSON outputting one object per line
     """
+
     def start_serialization(self):
         self._init_options()
 
     def end_serialization(self):
         pass
+
+    def get_dump_object(self, obj):
+        dumped_obj = super().get_dump_object(obj)
+        if hasattr(obj, 'encrypted_fields'):
+            dumped_obj['fields'].update(obj.encrypted_fields)
+        return dumped_obj
 
     def end_object(self, obj):
         # self._current has the field data

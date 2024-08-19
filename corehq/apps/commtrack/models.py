@@ -277,7 +277,7 @@ def _reopen_or_create_supply_point(location):
         return SupplyInterface.create_from_location(location.domain, location)
 
 
-def sync_supply_point(location, is_deletion=False):
+def sync_supply_point(location, is_deletion=False, update_fields=None):
     """Called on location save() or delete().  Updates the supply_point_id if appropriate"""
     domain_obj = Domain.get_by_name(location.domain)
     if not domain_obj.commtrack_enabled:
@@ -291,6 +291,9 @@ def sync_supply_point(location, is_deletion=False):
     else:
         updated_supply_point = _reopen_or_create_supply_point(location)
         location.supply_point_id = updated_supply_point.case_id
+
+    if update_fields is not None:
+        update_fields.append('supply_point_id')
 
 
 @receiver(xform_archived)

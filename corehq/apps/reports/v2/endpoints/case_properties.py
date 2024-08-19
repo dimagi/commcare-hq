@@ -7,10 +7,7 @@ from memoized import memoized
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties_for_case_type,
 )
-from corehq.apps.case_search.const import (
-    CASE_COMPUTED_METADATA,
-    SPECIAL_CASE_PROPERTIES,
-)
+from corehq.apps.case_search.const import METADATA_IN_REPORTS
 from corehq.apps.reports.standard.cases.filters import (
     get_flattened_case_properties,
 )
@@ -39,7 +36,7 @@ class CasePropertiesEndpoint(BaseOptionsEndpoint):
     def special_properties(self):
         return [
             self._fmt_result(prop, 'label-primary', _('info'))
-            for prop in SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA
+            for prop in METADATA_IN_REPORTS
             if prop not in self.excluded_types
         ]
 

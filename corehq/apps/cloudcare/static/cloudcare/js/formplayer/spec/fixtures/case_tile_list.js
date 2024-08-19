@@ -1,6 +1,9 @@
-hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
-    let FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer");
-
+'use strict';
+hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", [
+    "cloudcare/js/formplayer/spec/fake_formplayer",
+], function (
+    FakeFormplayer
+) {
     return FakeFormplayer.makeEntitiesResponse({
         "title": "Active Patients",
         "breadcrumbs": [

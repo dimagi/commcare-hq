@@ -1,15 +1,26 @@
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/apps/controller", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        settingsViews = hqImport("cloudcare/js/formplayer/layout/views/settings"),
-        Toggles = hqImport("hqwebapp/js/toggles"),
-        views = hqImport("cloudcare/js/formplayer/apps/views");
-
+'use strict';
+hqDefine("cloudcare/js/formplayer/apps/controller", [
+    'jquery',
+    'backbone',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/layout/views/settings',
+    'cloudcare/js/formplayer/apps/api',
+    'cloudcare/js/formplayer/apps/views',
+    'cloudcare/js/formplayer/users/models',
+], function (
+    $,
+    Backbone,
+    Toggles,
+    FormplayerFrontend,
+    settingsViews,
+    AppsAPI,
+    views,
+    UsersModels
+) {
     return {
         listApps: function () {
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
+            $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                 let apps = appCollection.toJSON();
                 let isIncompleteFormsDisabled = (app) => (app.profile.properties || {})['cc-show-incomplete'] === 'no';
                 let isAllIncompleteFormsDisabled = apps.every(isIncompleteFormsDisabled);
@@ -27,7 +38,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
          * Renders a SingleAppView.
          */
         singleApp: function (appId) {
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function () {
+            $.when(AppsAPI.getAppEntities()).done(function () {
                 var singleAppView = views.SingleAppView({
                     appId: appId,
                 });
@@ -35,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
             });
         },
         landingPageApp: function (appId) {
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function () {
+            $.when(AppsAPI.getAppEntities()).done(function () {
                 var landingPageAppView = views.LandingPageAppView({
                     appId: appId,
                 });
@@ -43,12 +54,12 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
             });
         },
         listSettings: function () {
-            var currentUser = FormplayerFrontend.getChannel().request('currentUser'),
+            var currentUser = UsersModels.getCurrentUser(),
                 slugs = settingsViews.slugs,
                 settings = [],
                 collection,
                 settingsView;
-            if (currentUser.environment === constants.PREVIEW_APP_ENVIRONMENT) {
+            if (currentUser.isAppPreview) {
                 settings = settings.concat([
                     new Backbone.Model({ slug: slugs.SET_LANG }),
                     new Backbone.Model({ slug: slugs.SET_DISPLAY }),

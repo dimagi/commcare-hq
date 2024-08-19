@@ -15,6 +15,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchAgainLabel,
     CaseSearchLabel,
     CaseSearchProperty,
+    MappingItem,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import SuiteMixin
@@ -305,3 +306,39 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
 
         es_app_strings = self._generate_app_strings(app, 'fra', build_profile_id='fra')
         self.assertEqual(es_app_strings['m0_select_text'], 'Continuer avec le cas')
+
+    def test_alt_text_app_strings(self):
+        factory = AppFactory(build_version='2.54.0')
+        factory.app.langs = ['en', 'fra']
+        factory.app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'fra': BuildProfile(langs=['fra'], name='fra-profile'),
+        })
+        module, form = factory.new_basic_module('my_module', 'cases')
+
+        short_column = module.case_details.short.get_column(0)
+        short_column.format = 'clickable-icon'
+        short_column.model = 'case'
+        short_column.field = 'is_favorite'
+        short_column.enum = [
+            MappingItem(
+                key='true',
+                value={
+                    'en': 'jr://image_is_favorite.png',
+                    'fra': 'jr://image_is_favorite.png',
+                },
+                alt_text={
+                    'en': 'filled yellow star',
+                    'fra': 'étoile jaune remplie',
+                }
+            ),
+        ]
+
+        app = Application.wrap(factory.app.to_json())
+
+        en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+        self.assertEqual(en_app_strings['m0.case_short.case_is_favorite_1.alt_text.ktrue'], 'filled yellow star')
+
+        fra_app_strings = self._generate_app_strings(app, 'fra', build_profile_id='fra')
+        self.assertEqual(fra_app_strings['m0.case_short.case_is_favorite_1.alt_text.ktrue'],
+                         'étoile jaune remplie')

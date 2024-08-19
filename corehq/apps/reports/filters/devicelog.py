@@ -17,7 +17,7 @@ class DeviceLogTagFilter(BaseReportFilter):
     slug = "logtag"
     label = gettext_lazy("Filter Logs by Tag")
     errors_only_slug = "errors_only"
-    template = "reports/filters/devicelog_tags.html"
+    template = "reports/filters/bootstrap3/devicelog_tags.html"
 
     @quickcache(['self.domain'], timeout=10 * 60)
     def _all_values(self):

@@ -219,7 +219,7 @@ class BaseProjectReportSectionView(BaseDomainView):
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
     page_title = gettext_noop("My Saved Reports")
-    template_name = 'reports/reports_home.html'
+    template_name = 'reports/bootstrap3/reports_home.html'
 
     @use_jquery_ui
     @use_datatables
@@ -682,7 +682,7 @@ def soft_shift_to_server_timezone(report_notification):
 class ScheduledReportsView(BaseProjectReportSectionView):
     urlname = 'edit_scheduled_report'
     page_title = _("Scheduled Report")
-    template_name = 'reports/edit_scheduled_report.html'
+    template_name = 'reports/bootstrap3/edit_scheduled_report.html'
 
     @method_decorator(require_permission(HqPermissions.download_reports))
     @use_multiselect
@@ -874,7 +874,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
 
 class ReportNotificationUnsubscribeView(TemplateView):
-    template_name = 'reports/notification_unsubscribe.html'
+    template_name = 'reports/bootstrap3/notification_unsubscribe.html'
     urlname = 'notification_unsubscribe'
     not_found_error = gettext_noop('Could not find the requested Scheduled Report')
     broken_link_error = gettext_noop('Invalid unsubscribe link')
@@ -1411,7 +1411,7 @@ def safely_get_form(request, domain, instance_id):
 class FormDataView(BaseProjectReportSectionView):
     urlname = 'render_form_data'
     page_title = gettext_lazy("Untitled Form")
-    template_name = "reports/reportdata/form_data.html"
+    template_name = "reports/reportdata/bootstrap3/form_data.html"
     http_method_names = ['get']
 
     @method_decorator(require_form_view_permission)
@@ -1484,7 +1484,7 @@ def view_form_attachment(request, domain, instance_id, attachment_id):
     }
     return render(
         request,
-        template_name='reports/reportdata/view_form_attachment.html',
+        template_name='reports/reportdata/bootstrap3/view_form_attachment.html',
         context=context
     )
 
@@ -1528,7 +1528,7 @@ def case_form_data(request, domain, case_id, xform_id):
         }, status=403)
     context = _get_form_render_context(request, domain, instance, case_id)
     return JsonResponse({
-        'html': render_to_string("reports/form/partials/single_form.html", context, request=request),
+        'html': render_to_string("reports/form/partials/bootstrap3/single_form.html", context, request=request),
         'xform_id': xform_id,
         'question_response_map': context['question_response_map'],
         'ordered_question_values': context['ordered_question_values'],
@@ -1812,7 +1812,7 @@ def project_health_user_details(request, domain, user_id):
         reverse('project_report_dispatcher', args=(domain, 'submissions_by_form')),
         user_id,
     )
-    return render(request, 'reports/project_health/user_details.html', {
+    return render(request, 'reports/project_health/bootstrap3/user_details.html', {
         'domain': domain,
         'user': user,
         'groups': ', '.join(g.name for g in Group.by_user_id(user_id)),
@@ -1823,7 +1823,7 @@ def project_health_user_details(request, domain, user_id):
 class TableauServerView(BaseProjectReportSectionView):
     urlname = 'tableau_server_view'
     page_title = gettext_lazy('Tableau Server Config')
-    template_name = 'hqwebapp/crispy/single_crispy_form.html'
+    template_name = 'hqwebapp/crispy/bootstrap3/single_crispy_form.html'
 
     @method_decorator(require_superuser)
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
@@ -1884,7 +1884,7 @@ class TableauServerView(BaseProjectReportSectionView):
 class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedViewMixin):
     urlname = 'tableau_visualization_list_view'
     page_title = _('Tableau Visualizations')
-    template_name = 'reports/tableau_visualization.html'
+    template_name = 'reports/bootstrap3/tableau_visualization.html'
 
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
     def dispatch(self, request, *args, **kwargs):
@@ -1904,6 +1904,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
             _("Title"),
             _("Server"),
             _("View URL"),
+            _("Visible to Location-Restricted Users"),
         ]
 
     @property
@@ -1925,6 +1926,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
             'title': tableau_visualization.title,
             'server': tableau_visualization.server.server_name,
             'view_url': tableau_visualization.view_url,
+            'location_safe': tableau_visualization.location_safe,
             'updateForm': self.get_update_form_response(
                 self.get_update_form(tableau_visualization)
             ),
@@ -1966,7 +1968,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
 class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixin, ProcessFormView):
     urlname = 'tableau_visualization_detail_view'
     page_title = _('Tableau Visualization')
-    template_name = 'hqwebapp/crispy/single_crispy_form.html'
+    template_name = 'hqwebapp/crispy/bootstrap3/single_crispy_form.html'
     model = TableauVisualization
     form_class = TableauVisualizationForm
 

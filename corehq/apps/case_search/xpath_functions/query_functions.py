@@ -6,6 +6,7 @@ from jsonobject.exceptions import BadValueError
 
 from couchforms.geopoint import GeoPoint
 
+from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.es import filters
 from corehq.apps.es.queries import DISTANCE_UNITS
@@ -87,8 +88,6 @@ def phonetic_match(node, context):
 
 def fuzzy_match(node, context):
     """fuzzy-match(alias, 'pinky')"""
-    from corehq.apps.case_search.dsl_utils import unwrap_value
-
     confirm_args_count(node, 2)
     property_name = _property_name_to_string(node.args[0], node)
     value = unwrap_value(node.args[1], context)

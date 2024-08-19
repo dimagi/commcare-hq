@@ -91,14 +91,23 @@ class XPathEnum(TextXPath):
             v_val = get_value(v_key)
             variables.append(XPathVariable(name=v_key, locale_id=v_val))
         parts = []
-        for i, item in enumerate(enum):
-            template_context = get_template_context(item, i)
-            parts.append(template.format(**template_context))
+        if format == 'translatable-enum':
+            calculated_property = get_template_context()['calculated_property']
+            # converting variables into suite.xml recognized variables (i.e. $variable > $kvariable)
+            for item in enum:
+                key = item.key_as_variable
+                if key[1:] in calculated_property:
+                    calculated_property = calculated_property.replace(key[1:], key)
+            parts.append(calculated_property)
+        else:
+            for i, item in enumerate(enum):
+                template_context = get_template_context(item, i)
+                parts.append(template.format(**template_context))
         if type == "display" and format == "enum":
             parts.insert(0, "replace(join(' ', ")
             parts[-1] = parts[-1][:-2]  # removes extra comma from last string
             parts.append("), '\\s+', ' ')")
-        else:
+        elif format != "translatable-enum":
             parts.append("''")
             parts.append(")" * len(enum))
 
@@ -717,6 +726,10 @@ class Template(AbstractTemplate):
     ROOT_NAME = 'template'
 
 
+class AltText(AbstractTemplate):
+    ROOT_NAME = 'alt_text'
+
+
 class GraphTemplate(Template):
     # TODO: Is there a way to specify a default/static value for form?
     form = StringField('@form', choices=['graph'])
@@ -849,7 +862,7 @@ class EndpointAction(XmlObject):
 
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
-    ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node')
+    ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node', 'alt_text')
 
     sort = StringField('@sort')
     print_id = StringField('@print-id')
@@ -859,6 +872,7 @@ class Field(OrderedXmlObject):
     sort_node = NodeField('sort', Sort)
     background = NodeField('background/text', Text)
     endpoint_action = NodeField('endpoint_action', EndpointAction)
+    alt_text = NodeField('alt_text', AltText)
 
 
 class Lookup(OrderedXmlObject):

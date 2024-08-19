@@ -5,7 +5,6 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy, gettext
-from django.utils.functional import lazy
 
 from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
 
@@ -14,9 +13,9 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
 from corehq.apps.case_search.const import (
-    CASE_COMPUTED_METADATA,
-    SPECIAL_CASE_PROPERTIES,
+    INDEXED_METADATA_BY_KEY,
     DOCS_LINK_CASE_LIST_EXPLORER,
+    METADATA_IN_REPORTS
 )
 from corehq.apps.data_dictionary.util import get_case_property_label_dict
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -25,9 +24,6 @@ from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter,
 )
 from corehq import privileges
-
-
-mark_safe_lazy = lazy(mark_safe, str)  # TODO: Replace with library method
 
 
 class CaseSearchFilter(BaseSimpleFilter):
@@ -94,7 +90,7 @@ class XPathCaseSearchFilter(BaseSimpleFilter):
     """
     slug = 'search_xpath'
     label = gettext_lazy("Search")
-    template = "reports/filters/xpath_textarea.html"
+    template = "reports/filters/bootstrap3/xpath_textarea.html"
 
     @property
     def filter_context(self):
@@ -109,21 +105,21 @@ class XPathCaseSearchFilter(BaseSimpleFilter):
 
     def get_suggestions(self):
         case_properties = get_flattened_case_properties(self.domain, include_parent_properties=True)
-        special_case_properties = [
+        meta_properties = [
             {'name': prop, 'case_type': None, 'meta_type': 'info'}
-            for prop in SPECIAL_CASE_PROPERTIES
+            for prop in INDEXED_METADATA_BY_KEY
         ]
         operators = [
             {'name': prop, 'case_type': None, 'meta_type': 'operator'}
             for prop in ['=', '!=', '>=', '<=', '>', '<', 'and', 'or']
         ]
-        return case_properties + special_case_properties + operators
+        return case_properties + meta_properties + operators
 
 
 class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = gettext_lazy("Columns")
-    template = "reports/filters/explorer_columns.html"
+    template = "reports/filters/bootstrap3/explorer_columns.html"
     DEFAULT_COLUMNS = [
         {'name': '@case_type', 'label': '@case_type'},
         {'name': 'case_name', 'label': 'case_name'},
@@ -148,7 +144,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         case_properties = get_flattened_case_properties(self.domain, include_parent_properties=False)
         special_properties = [
             {'name': prop, 'case_type': None, 'meta_type': 'info'}
-            for prop in SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA
+            for prop in METADATA_IN_REPORTS
         ]
         return case_properties + special_properties
 
@@ -169,7 +165,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
 class SensitiveCaseProperties(CaseListExplorerColumns):
     slug = "sensitive_properties"
     label = gettext_lazy("De-identify options")
-    template = "reports/filters/sensitive_columns.html"
+    template = "reports/filters/bootstrap3/sensitive_columns.html"
 
     @property
     def filter_context(self):

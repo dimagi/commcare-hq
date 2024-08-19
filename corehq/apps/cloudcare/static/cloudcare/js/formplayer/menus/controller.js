@@ -1,18 +1,43 @@
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/menus/controller", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        markdown = hqImport("cloudcare/js/markdown"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views"),
-        queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
+'use strict';
+hqDefine("cloudcare/js/formplayer/menus/controller", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/markdown',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/menus/utils',
+    'cloudcare/js/formplayer/menus/views/query',
+    'cloudcare/js/formplayer/menus/views',
+    'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    bootstrap,
+    initialPageData,
+    toggles,
+    markdown,
+    constants,
+    FormplayerFrontend,
+    UsersModels,
+    formplayerUtils,
+    Collection,
+    menusUtils,
+    queryView,
+    views
+) {
     var selectMenu = function (options) {
 
-        options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
 
         var fetchingNextMenu = FormplayerFrontend.getChannel().request("app:select:menus", options);
 
@@ -44,6 +69,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
             var urlObject = formplayerUtils.currentUrlToObject();
             if (urlObject.endpointId) {
+                menuResponse.breadcrumbs = [];
                 urlObject.replaceEndpoint(menuResponse.selections);
                 formplayerUtils.setUrlToObject(urlObject);
             }
@@ -66,7 +92,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             if (urlObject.appId === undefined || urlObject.appId === null) {
                 if (menuResponse.appId === null || menuResponse.appId === undefined) {
                     FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
-                        "required. If this persists, please report an issue to CommCareHQ");
+                        "required. If this persists, please report an issue to CommCare HQ");
                     FormplayerFrontend.trigger("apps:list");
                     return;
                 }
@@ -105,7 +131,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
-        var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        var appPreview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
         var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
         if (menuListView && !sidebarEnabled) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
@@ -124,20 +150,40 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (!appPreview) {
-                let isFormEntry = !menuResponse.queryKey;
-                if (isFormEntry) {
-                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
-                }
-                if (menuResponse.type === constants.ENTITIES) {
-                    menusUtils.showMenuDropdown();
-                }
+                menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }
+
+        if (!appPreview && menuResponse.persistentMenu) {
+            FormplayerFrontend.regions.getRegion('persistentMenu').show(
+                views.PersistentMenuView({
+                    collection: _toMenuCommands(menuResponse.persistentMenu, []),
+                }).render());
+        } else {
+            FormplayerFrontend.regions.getRegion('persistentMenu').empty();
+        }
+
         if (menuResponse.appVersion) {
             FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
         }
+    };
+
+    var _toMenuCommands = function (menuCommands, priorSelections) {
+        return new Backbone.Collection(_.map(menuCommands, function (menuCommand) {
+            const command = _.pick(menuCommand, [
+                'index',
+                'displayText',
+                'navigationState',
+                'imageUri',
+                'commands',
+            ]);
+            // Store an array of the commands needed to navigate to each nested menu item
+            command.selections = priorSelections.concat([command.index]);
+            command.commands = _toMenuCommands(command.commands, command.selections);
+            return new Backbone.Model(command);
+        }));
     };
 
     var showSplitScreenQuery = function (menuResponse, menuListView) {
@@ -231,8 +277,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(contentView.render().el);
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
-        $('#case-detail-modal').modal('show');
-
+        bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).show();
     };
 
     var getDetailList = function (detailObject) {
@@ -267,6 +312,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var headers = detailObject.get('headers');
         var details = detailObject.get('details');
         var styles = detailObject.get('styles');
+        var altText = detailObject.get('altText');
         var detailModel = [];
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
@@ -274,6 +320,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.data = details[i];
             obj.header = headers[i];
             obj.style = styles[i];
+            obj.altText = altText[i];
             obj.id = i;
             if (obj.style.displayFormat === constants.FORMAT_MARKDOWN) {
                 obj.html = markdown.render(details[i]);
@@ -298,7 +345,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         return {
             styles: _.map(indices, index => detailObject.styles[index]),
-            headers: _.map(indices, index => detailObject.headers[index]),
+            altText: _.map(indices, index => detailObject.altText[index]),
             tiles: _.map(indices, index => detailObject.tiles[index]),
             details: _.map(indices, index => detailObject.details[index]),
         };
@@ -308,12 +355,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var getCaseTile = function (detailObject) {
         var {
             styles,
-            headers,
+            altText,
             tiles,
             details,
         } = onlyVisibleColumns(detailObject);
         var detailModel = new Backbone.Model({
             data: details,
+            altText,
             id: 0,
         });
         var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
@@ -324,12 +372,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var caseTileStyles = views.buildCaseTileStyles(tiles, styles, numRows,
             numColumns, numEntitiesPerRow, useUniformUnits, 'persistent');
         // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
-        $("#persistent-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
+        $("#persistent-cell-layout-style").html(caseTileStyles.cellLayoutStyle);
         // Style the grid (IE each tile has 6 rows, 12 columns)
-        $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
+        $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle);
         return views.PersistentCaseTileView({
             model: detailModel,
-            headers: headers,
             styles: styles,
             tiles: tiles,
             maxWidth: detailObject.maxWidth,

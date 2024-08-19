@@ -43,6 +43,7 @@ def get_navigation_context(current_page):
                     Page("Pagination", 'styleguide_molecules_pagination_b5'),
                     Page("Searching & Filtering", 'styleguide_molecules_searching_b5'),
                     Page("Inline Editing", 'styleguide_molecules_inline_editing_b5'),
+                    Page("Help", 'styleguide_molecules_help_b5'),
                     Page("Feedback", 'styleguide_molecules_feedback_b5'),
                     Page("Dates & Times", 'styleguide_molecules_dates_times_b5'),
                 ],
@@ -86,7 +87,7 @@ def get_interaction_colors():
             title="Success",
             description="Use when an action has been completed successfully, primarily for messaging. "
                         "Rarely used for interactive elements like buttons.",
-            main_color=Color('success', '3FA12A'),
+            main_color=Color('success', '358623'),
             subtle_color=Color('success-subtle', 'D9ECD4'),
         ),
         ColorGroup(
@@ -100,7 +101,7 @@ def get_interaction_colors():
             title="Error, Negative Attention",
             description="Use to highlight an error, something negative or a critical risk. "
                         "Use as text, highlights, banners or destructive buttons. ",
-            main_color=Color('danger', 'E73C27'),
+            main_color=Color('danger', 'E13019'),
             subtle_color=Color('danger-subtle', 'FAD8D4'),
         ),
     ]

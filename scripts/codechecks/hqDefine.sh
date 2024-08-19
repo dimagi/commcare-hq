@@ -5,11 +5,11 @@
 ## Count files by type
 
 function list-js() {
-  find corehq -name '*.js' | grep -v '/_design/' | grep -v 'couchapps' | grep -v '/js/vellum/'
+  find corehq custom -name '*.js' | grep -v '/_design/' | grep -v 'couchapps' | grep -v '/js/vellum/'
 }
 
 function list-html() {
-  find corehq -name '*.html' | grep -v 'vellum'
+  find corehq custom -name '*.html' | grep -v 'vellum'
 }
 
 ## Count files that haven't met migration criteria

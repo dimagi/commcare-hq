@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("motech/js/connection_settings_detail", [
     'jquery',
     'underscore',
@@ -22,11 +23,11 @@ hqDefine("motech/js/connection_settings_detail", [
                 ];
             if (authPreset === 'CUSTOM') {
                 _.each(customAuthPresetFields, function (field) {
-                    $('#div_id_' + field).show();
+                    $('#div_id_' + field).removeClass("d-none");
                 });
             } else {
                 _.each(customAuthPresetFields, function (field) {
-                    $('#div_id_' + field).hide();
+                    $('#div_id_' + field).addClass("d-none");
                 });
             }
 
@@ -40,6 +41,8 @@ hqDefine("motech/js/connection_settings_detail", [
                     'client_id': gettext("Client ID"),
                     'plaintext_client_secret': gettext("Client Secret"),
                     'oauth_settings': null,
+                },
+                placeholders = {
                 };
             switch ($(this).val()) {
                 case '':  // Auth type is "None"
@@ -62,8 +65,10 @@ hqDefine("motech/js/connection_settings_detail", [
                     break;
                 case 'api_key':
                     visible = {
+                        'username': gettext("HTTP Header Name"),
                         'plaintext_password': gettext("API Key"),
                     };
+                    placeholders['username'] = 'Authorization';
                     break;
                 default:
                     visible = {
@@ -71,16 +76,20 @@ hqDefine("motech/js/connection_settings_detail", [
                         'plaintext_password': null,
                     };
             }
-            _.each(_.pairs(allFields), function ([field, label]) {
+            _.each(_.keys(allFields), function (field) {
                 let div = $('#div_id_' + field);
                 if (field in visible) {
-                    div.show();
+                    div.removeClass("d-none");
                     let label = visible[field] || allFields[field];
-                    if (label) {
-                        div.find('label').text(label);
+                    let labelElement = div.find('label');
+                    if (label && labelElement.length > 0 && labelElement.text() !== label) {
+                        labelElement.text(label);
+                        let fieldElement = $('#id_' + field);
+                        fieldElement.val('');  // clear current value
+                        fieldElement.attr('placeholder', placeholders[field] || '');
                     }
                 } else {
-                    div.hide();
+                    div.addClass("d-none");
                 }
             });
         });
@@ -93,7 +102,7 @@ hqDefine("motech/js/connection_settings_detail", [
          */
         var handleSuccess = function (resp) {
             var message;
-            $testResult.removeClass("hide text-danger text-success");
+            $testResult.removeClass("d-none text-danger text-success");
             $testConnectionButton.enableButton();
 
             if (resp.status) {
@@ -114,7 +123,7 @@ hqDefine("motech/js/connection_settings_detail", [
         var handleFailure = function (resp) {
             $testConnectionButton.enableButton();
             $testResult
-                .removeClass("hide text-success")
+                .removeClass("d-none text-success")
                 .addClass("text-danger");
             $testResult.text(gettext(
                 'CommCare HQ was unable to make the request: '

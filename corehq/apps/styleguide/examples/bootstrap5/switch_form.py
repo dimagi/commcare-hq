@@ -36,7 +36,7 @@ class SwitchDemoForm(forms.Form):
             crispy.Fieldset(
                 _("Basic Information"),
                 'email',
-                twbscrispy.PrependedText('enable_tracking', ''),
+                hqcrispy.CheckboxField('enable_tracking'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

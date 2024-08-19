@@ -1,3 +1,4 @@
+"use strict";
 /*
  *  Manage data needed by JavaScript but supplied by server,
  *  with special handling for urls.
@@ -132,6 +133,6 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         getUrlParameterFromString: getUrlParameterFromString,
         registerUrl: registerUrl,
         reverse: reverse,
-        clear: clear
+        clear: clear,
     };
 });

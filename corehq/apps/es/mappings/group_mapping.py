@@ -39,13 +39,13 @@ GROUP_MAPPING = {
             "type": "text"
         },
         "removed_users": {
-            "type": "text"
+            "type": "keyword"
         },
         "reporting": {
             "type": "boolean"
         },
         "users": {
-            "type": "text"
+            "type": "keyword"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"

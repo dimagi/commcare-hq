@@ -35,7 +35,7 @@ if you have questions or need feedback.
 
 Useful Tools
 ------------
-Here are some tools widely used by CommCareHQ developers
+Here are some tools widely used by CommCare HQ developers
 
 flake8
     Flake8 is run on all PRs automatically. You can run it locally to ensure your
@@ -94,7 +94,7 @@ to see how that works.
 
 .. _Dimagi: http://www.dimagi.com/
 .. _issue tracker: https://github.com/dimagi/commcare-hq/issues
-.. _bug reports: https://confluence.dimagi.com/display/commcarepublic/Bug+Reports
+.. _bug reports: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956931/Submit+a+Support+Request
 .. _Standards and Best Practices: STANDARDS.rst
 .. _Style Guide: https://www.commcarehq.org/styleguide/
 .. _Javascript Guide: docs/js-guide/README.md

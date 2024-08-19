@@ -31,7 +31,7 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.views import BasePageView, logout
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import location_restricted_response, location_safe
 from corehq.apps.registration.forms import WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user_via_reg_form
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -39,6 +39,7 @@ from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.users.forms import DomainRequestForm
 from corehq.apps.users.models import CouchUser, DomainRequest, Invitation
 from corehq.apps.users.util import log_user_change
+from corehq.apps.users.views.utils import user_can_access_invite
 from corehq.const import USER_CHANGE_VIA_INVITATION
 
 
@@ -180,10 +181,11 @@ class UserInvitationView(object):
                         created_via=USER_CHANGE_VIA_INVITATION,
                         domain=invitation.domain,
                         is_domain_admin=False,
+                        commit=False
                     )
-                    user.save()
-                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     invitation.accept_invitation_and_join_domain(user)
+                    user.log_user_create(invitation.domain, invited_by_user, USER_CHANGE_VIA_INVITATION)
+                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     messages.success(
                         self.request,
                         _('You have been added to the "{}" project space.').format(self.domain)
@@ -256,12 +258,15 @@ def accept_invitation(request, domain, uuid):
 @always_allow_project_access
 @require_POST
 @require_can_edit_web_users
+@location_safe
 def reinvite_web_user(request, domain):
     uuid = request.POST['uuid']
     try:
         invitation = Invitation.objects.get(uuid=uuid)
     except Invitation.DoesNotExist:
         return JsonResponse({'response': _("Error while attempting resend"), 'status': 'error'})
+    if not user_can_access_invite(domain, request.couch_user, invitation):
+        return location_restricted_response(request)
 
     invitation.invited_on = datetime.utcnow()
     invitation.save()
@@ -272,9 +277,12 @@ def reinvite_web_user(request, domain):
 @always_allow_project_access
 @require_POST
 @require_can_edit_web_users
+@location_safe
 def delete_invitation(request, domain):
     uuid = request.POST['uuid']
     invitation = Invitation.objects.get(uuid=uuid)
+    if not user_can_access_invite(domain, request.couch_user, invitation):
+        return location_restricted_response(request)
     invitation.delete()
     return JsonResponse({'status': 'ok'})
 

@@ -385,7 +385,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         expected_object_counts = Counter({
             UserRole: 2,
-            RolePermission: 5,
+            RolePermission: 7,
             RoleAssignableBy: 1
         })
 

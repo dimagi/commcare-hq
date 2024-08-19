@@ -19,7 +19,7 @@ def main():
         GeventCommand('run_blob_migration'),
         GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
-        GeventCommand('migrate'),
+        GeventCommand('migrate', env_exclude=['SKIP_GEVENT_PATCHING']),
         GeventCommand('migrate_multi'),
         GeventCommand('prime_views'),
         GeventCommand('ptop_preindex'),
@@ -52,6 +52,7 @@ def main():
 class GeventCommand(object):
     command = attr.ib()
     contains = attr.ib(default=None)
+    env_exclude = attr.ib(default=None)
     http_adapter_pool_size = attr.ib(default=None)
 
 
@@ -60,8 +61,17 @@ def _patch_gevent_if_required(args, gevent_commands):
         return
     for gevent_command in gevent_commands:
         should_patch = args[1] == gevent_command.command
-        if gevent_command.contains:
-            should_patch = should_patch and gevent_command.contains in ' '.join(args)
+        contains = set(gevent_command.contains or [])
+        env_exclude = gevent_command.env_exclude or []
+        arg_set = set(args)
+
+        should_include = contains.issubset(arg_set)
+        should_exclude = any(
+            [os.environ.get(env_var) == '1' for env_var in env_exclude]
+        )
+
+        should_patch = should_patch and should_include and not should_exclude
+
         if should_patch:
             monkey.patch_all(subprocess=True)
             patch_psycopg()
@@ -117,6 +127,7 @@ def _set_source_root(source_root):
 
 def run_patches():
     patch_jsonfield()
+    unpatch_sys_modules()
 
 
 def patch_jsonfield():
@@ -137,6 +148,14 @@ def patch_jsonfield():
         return value
 
     JSONField.to_python = to_python
+
+
+def unpatch_sys_modules():
+    # until https://github.com/DataDog/dd-trace-py/issues/9143 is implemented
+    if os.environ.get("DD_TRACE_ENABLED") == "false":
+        from ddtrace import ModuleWatchdog
+        if isinstance(sys.modules, ModuleWatchdog):
+            sys.modules.uninstall()
 
 
 def set_default_settings_path(argv):

@@ -12,19 +12,24 @@ from django.utils.translation import gettext_lazy
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.apps.reports.filters.dates import SingleDateFilter
+from corehq.util.dates import iso_string_to_date
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
 from phonelog.models import UserErrorEntry
 
-from corehq import toggles, privileges
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
 )
 from corehq.apps.es import UserES, filters
-from corehq.apps.es.aggregations import DateHistogram
+from corehq.apps.es.aggregations import (
+    DateHistogram,
+    FilterAggregation,
+    NestedAggregation,
+)
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
@@ -42,6 +47,7 @@ from corehq.apps.reports.standard import (
     ProjectReportParametersMixin,
 )
 from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.quickcache import quickcache
@@ -76,6 +82,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
                              sql_col='user_dim__username'),
+            DataTablesColumn(_("Assigned Location(s)"),
+                             help_text=_('Assigned locations for the user, with the primary '
+                                         'location highlighted in bold.'),
+                             sortable=False),
             DataTablesColumn(_("Last Submission"),
                              prop_name='reporting_metadata.last_submissions.submission_date',
                              alt_prop_name='reporting_metadata.last_submission_for_user.submission_date',
@@ -114,7 +124,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                  sortable=False)
             )
         headers = DataTablesHeader(*columns)
-        headers.custom_sort = [[1, 'desc']]
+        headers.custom_sort = [[2, 'desc']]
         return headers
 
     @cached_property
@@ -216,8 +226,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker') +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.request.GET.getlist('location_restricted_mobile_worker')
+            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -311,6 +321,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
             self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
 
+        loc_names_dict = self._locations_names_dict(users)
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             last_build_profile_name = device = device_app_meta = num_unsent_forms = None
@@ -368,6 +379,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
+                self._get_location_column(user, loc_names_dict),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---',
                 num_unsent_forms if num_unsent_forms is not None else "---",
@@ -382,6 +394,23 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
             rows.append(row_data)
         return rows
+
+    def _locations_names_dict(self, user_es_docs):
+        """
+        Returns a dict of all assigned location names for given `user_docs`.
+        The dict has the following structure:
+        {
+            'loc_id': 'loc_name'
+        }
+        """
+        all_loc_ids = set()
+        for user_es_doc in user_es_docs:
+            user = CouchUser.wrap_correctly(user_es_doc)
+            for loc_id in user.get_location_ids(self.domain):
+                all_loc_ids.add(loc_id)
+        return dict(SQLLocation.objects.filter(
+            location_id__in=all_loc_ids, domain=self.domain
+        ).values_list('location_id', 'name'))
 
     def process_facts(self, app_status_facts, fmt_for_export=False):
         rows = []
@@ -438,8 +467,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def get_user_ids(self):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker') +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.request.GET.getlist('location_restricted_mobile_worker')
+            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
         user_ids = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -472,11 +501,50 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         for row in table[1:]:
             # Last submission
-            row[len(location_colums) + 1] = _fmt_timestamp(row[len(location_colums) + 1])
-            # Last sync
             row[len(location_colums) + 2] = _fmt_timestamp(row[len(location_colums) + 2])
+            # Last sync
+            row[len(location_colums) + 3] = _fmt_timestamp(row[len(location_colums) + 3])
         result[0][1] = table
         return result
+
+    def _get_location_column(self, user_es_doc, user_loc_dict):
+        user = CouchUser.wrap_correctly(user_es_doc)
+        if not user.get_location_ids(self.domain):
+            return '---'
+        return self._get_formatted_assigned_location_names(user, user_loc_dict)
+
+    def _get_formatted_assigned_location_names(self, user, user_loc_dict):
+        """
+        Create an HTML formatted string of the given assigned location names.
+        The primary location will be highlighted in bold.
+        """
+        assigned_location_ids = user.get_location_ids(self.domain)
+        primary_location_id = user.get_location_id(self.domain)
+        formatted_loc_names = []
+        for loc_id in assigned_location_ids:
+            loc_name = user_loc_dict.get(loc_id)
+            if loc_id == primary_location_id:
+                formatted_loc_names.insert(
+                    0, f'<strong>{loc_name}</strong>'
+                )
+            else:
+                formatted_loc_names.append(loc_name)
+
+        formatted_str = ', '.join(formatted_loc_names[:4])
+        html_nodes = [
+            f'<span class="locations-list">{formatted_str}</span>',
+        ]
+        if len(formatted_loc_names) > 4:
+            all_str = ', '.join(formatted_loc_names)
+            view_controls_html_nodes = [
+                f'<span class="loc-view-control">{_("...See more")}</span>',
+                f'<span class="loc-view-control" style="display:none">{_("...Collapse")}</span>',
+            ]
+            html_nodes += [
+                f'<span class="all-locations-list" style="display:none">{all_str}</span>',
+                f'<a href="#" class="toggle-all-locations">{"".join(view_controls_html_nodes)}</a>',
+            ]
+        return format_html(f'<div>{"".join(html_nodes)}</div>')
 
 
 def _get_commcare_version(app_version_info):
@@ -540,6 +608,27 @@ def _bootstrap_class(obj, severe, warn):
         return "label label-success"
 
 
+def _get_histogram_aggregation_for_app(field_name, date_field_name, app_id):
+    """
+    The histogram aggregation is put inside a nested and filter aggregation to only query
+    the nested documents that match the selected app ID.
+
+    Refer to `TestGetHistogramAggregationForApp` to see the final output.
+    """
+    field_path = f'reporting_metadata.{field_name}'
+    nested_agg = NestedAggregation(field_name, field_path)
+    filter_agg = FilterAggregation(
+        'filtered_agg',
+        filters.term(f'{field_path}.app_id', app_id),
+    )
+    histogram_agg = DateHistogram(
+        'date_histogram',
+        f'{field_path}.{date_field_name}',
+        DateHistogram.Interval.DAY,
+    )
+    return nested_agg.aggregation(filter_agg.aggregation(histogram_agg))
+
+
 class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     name = gettext_lazy("Application Error Report")
     slug = "application_error"
@@ -555,19 +644,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return cls.has_access(domain, user)
-
-    @classmethod
-    def has_access(cls, domain=None, user=None):
-        domain_access = (
-            domain_has_privilege(domain, privileges.APPLICATION_ERROR_REPORT)
-            if domain else False
-        )
-        user_access = (
-            user.is_superuser or user.is_dimagi
-            if user else False
-        )
-        return user and (domain_access or user_access)
+        return user and toggles.APPLICATION_ERROR_REPORT.enabled(user.username)
 
     @property
     def shared_pagination_GET_params(self):
@@ -647,14 +724,25 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
 @location_safe
 class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
+
+    class FromDateFilter(SingleDateFilter):
+        label = gettext_lazy("Start Date")
+        default_date_delta = -59
+        min_date_delta = -364
+        max_date_delta = -1
+        help_text = gettext_lazy("Choose a start date up to 1 year ago."
+                                 " Report displays data from the selected date to today.")
+
     slug = 'aggregate_user_status'
 
-    report_template_path = "reports/async/aggregate_user_status.html"
+    report_template_path = "reports/async/bootstrap3/aggregate_user_status.html"
     name = gettext_lazy("Aggregate User Status")
     description = gettext_lazy("See the last activity of your project's users in aggregate.")
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        FromDateFilter,
+        'corehq.apps.reports.filters.select.SelectApplicationFilter',
     ]
     exportable = False
     emailable = False
@@ -662,6 +750,11 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def selected_app_id(self):
+        return self.request_params.get(SelectApplicationFilter.slug, None)
 
     @memoized
     def user_query(self):
@@ -674,19 +767,52 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             mobile_user_and_group_slugs,
             self.request.couch_user,
         )
-        user_query = user_query.aggregations([
-            DateHistogram(
+
+        if self.selected_app_id:
+            last_submission_agg = _get_histogram_aggregation_for_app(
+                "last_submissions", "submission_date", self.selected_app_id
+            )
+            last_sync_agg = _get_histogram_aggregation_for_app(
+                "last_syncs", "sync_date", self.selected_app_id
+            )
+        else:
+            last_submission_agg = DateHistogram(
                 'last_submission',
                 'reporting_metadata.last_submission_for_user.submission_date',
                 DateHistogram.Interval.DAY,
-            ),
-            DateHistogram(
+            )
+            last_sync_agg = DateHistogram(
                 'last_sync',
                 'reporting_metadata.last_sync_for_user.sync_date',
                 DateHistogram.Interval.DAY,
             )
+
+        user_query = user_query.aggregations([
+            last_submission_agg,
+            last_sync_agg,
         ])
         return user_query
+
+    def _sanitize_report_from_date(self, from_date):
+        """resets the date to a valid value if out of range"""
+        today = datetime.today().date()
+        from_date_delta = (from_date - today).days
+        if from_date_delta > self.FromDateFilter.max_date_delta:
+            from_date = today + timedelta(days=self.FromDateFilter.max_date_delta)
+        elif from_date_delta < self.FromDateFilter.min_date_delta:
+            from_date = today + timedelta(days=self.FromDateFilter.min_date_delta)
+        return from_date
+
+    @cached_property
+    def report_from_date(self):
+        from_date = self.request_params.get(self.FromDateFilter.slug)
+        if from_date:
+            try:
+                from_date = iso_string_to_date(from_date)
+                return self._sanitize_report_from_date(from_date)
+            except ValueError:
+                pass
+        return datetime.today().date() + timedelta(days=self.FromDateFilter.default_date_delta)
 
     @property
     def template_context(self):
@@ -713,7 +839,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             def get_buckets(self):
                 return self.bucket_series.get_summary_data()
 
-
         class BucketSeries(namedtuple('Bucket', 'data_series total_series total user_count')):
             @property
             @memoized
@@ -731,11 +856,16 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 def _readable_pct_from_total(total_series, index):
                     return '{0:.0f}%'.format(total_series[index - 1]['y'])
 
+                total_days = len(self.data_series) - 1
+                intervals = [interval for interval in [3, 7, 30] if interval < total_days]
+                intervals.append(total_days)
+
                 return [
-                    [_readable_pct_from_total(self.percent_series, 3), _('in the last 3 days')],
-                    [_readable_pct_from_total(self.percent_series, 7), _('in the last week')],
-                    [_readable_pct_from_total(self.percent_series, 30), _('in the last 30 days')],
-                    [_readable_pct_from_total(self.percent_series, 60), _('in the last 60 days')],
+                    [
+                        _readable_pct_from_total(self.percent_series, interval),
+                        _('in the last {} days').format(interval)
+                    ]
+                    for interval in intervals
                 ]
 
             @property
@@ -749,20 +879,25 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         query = self.user_query().run()
 
         aggregations = query.aggregations
-        last_submission_buckets = aggregations[0].normalized_buckets
-        last_sync_buckets = aggregations[1].normalized_buckets
+        if self.selected_app_id:
+            last_submission_buckets = aggregations[0].filtered_agg.date_histogram.normalized_buckets
+            last_sync_buckets = aggregations[1].filtered_agg.date_histogram.normalized_buckets
+        else:
+            last_submission_buckets = aggregations[0].normalized_buckets
+            last_sync_buckets = aggregations[1].normalized_buckets
         total_users = query.total
 
         def _buckets_to_series(buckets, user_count):
             # start with N days of empty data
             # add bucket info to the data series
             # add last bucket
-            days_of_history = 60
+            today = datetime.today().date()
+            # today and report_from_date both are inclusive
+            days_of_history = (today - self.report_from_date).days + 1
             vals = {
                 i: 0 for i in range(days_of_history)
             }
             extra = total = running_total = 0
-            today = datetime.today().date()
             for bucket_val in buckets:
                 bucket_date = date.fromisoformat(bucket_val['key'])
                 delta_days = (today - bucket_date).days
@@ -809,8 +944,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 }
             )
             return BucketSeries(daily_series, running_total_series, total, user_count)
-
-
 
         submission_series = SeriesData(
             id='submission',

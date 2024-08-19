@@ -1,0 +1,14 @@
+<script type="text/template" id="user-row-view-template">
+  <td class="module-column module-column-icon">
+    <div class="module-icon-container module-icon-user">
+      <i class="fa fa-user module-icon" aria-hidden="true"></i>
+    </div>
+  </td>
+  <td class="module-column module-column-name">
+    <h3>
+      <b><%- username %></b>
+      <span><%- first_name + ' ' + last_name %></span>
+      <i><small><%- location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
+    </h3>
+  </td>
+</script>

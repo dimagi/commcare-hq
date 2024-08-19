@@ -1,24 +1,59 @@
-/*globals Marionette */
-
-hqDefine("cloudcare/js/formplayer/menus/views", function () {
-    const kissmetrics = hqImport("analytix/js/kissmetrix"),
-        constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
-        markdown = hqImport("cloudcare/js/markdown");
-
+'use strict';
+hqDefine("cloudcare/js/formplayer/menus/views", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/markdown',
+    'cloudcare/js/utils',
+    'leaflet-fullscreen/dist/Leaflet.fullscreen.min',   // adds L.control.fullscreen to L
+], function (
+    $,
+    _,
+    Backbone,
+    Marionette,
+    DOMPurify,
+    bootstrap,
+    initialPageData,
+    toggles,
+    kissmetrics,
+    constants,
+    FormplayerFrontend,
+    AppsAPI,
+    UsersModels,
+    formplayerUtils,
+    markdown,
+    cloudcareUtils,
+    L
+) {
     const MenuView = Marionette.View.extend({
+        isGrid: function () {
+            return this.model.collection.layoutStyle === constants.LayoutStyles.GRID;
+        },
         tagName: function () {
-            if (this.model.collection.layoutStyle === 'grid') {
+            if (this.isGrid()) {
                 return 'div';
             } else {
                 return 'tr';
             }
         },
-        className: "formplayer-request",
+        className: function () {
+            let classNames = "formplayer-request";
+            if (this.isGrid()) {
+                classNames += " col-sm-6 col-md-4 col-lg-3";
+            }
+            return classNames;
+        },
         attributes: function () {
             const displayText = this.options.model.attributes.displayText;
             return {
@@ -40,7 +75,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         getTemplate: function () {
             let id = "#menu-view-row-template";
-            if (this.model.collection.layoutStyle === constants.LayoutStyles.GRID) {
+            if (this.isGrid()) {
                 id = "#menu-view-grid-item-template";
             } else if (this.model.get('audioUri')) {
                 id = "#menu-view-row-audio-template";
@@ -62,14 +97,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.preventDefault();
             const $playBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-play');
             const $pauseBtn = $playBtn.parent().find('.js-module-audio-pause');
-            $pauseBtn.removeClass('hide');
-            $playBtn.addClass('hide');
+            $pauseBtn.removeClass("d-none");
+            $playBtn.addClass("d-none");
             const $audioElem = $playBtn.parent().find('.js-module-audio');
             if ($audioElem.data('isFirstPlay') !== 'yes') {
                 $audioElem.data('isFirstPlay', 'yes');
                 $audioElem.one('ended', function () {
-                    $playBtn.removeClass('hide');
-                    $pauseBtn.addClass('hide');
+                    $playBtn.removeClass("d-none");
+                    $pauseBtn.addClass("d-none");
                     $audioElem.data('isFirstPlay', 'no');
                 });
             }
@@ -78,8 +113,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         audioPause: function (e) {
             e.preventDefault();
             const $pauseBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-pause');
-            $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
-            $pauseBtn.addClass('hide');
+            $pauseBtn.parent().find('.js-module-audio-play').removeClass("d-none");
+            $pauseBtn.addClass("d-none");
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
         rowKeyAction: function (e) {
@@ -115,7 +150,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             return {
                 title: this.options.title,
-                environment: FormplayerFrontend.getChannel().request('currentUser').environment,
+                isAppPreview: UsersModels.getCurrentUser().isAppPreview,
             };
         },
         childViewOptions: function (model) {
@@ -237,7 +272,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
-            clickIcon: ".module-icon.clickable-icon",
+            clickIcon: "button.clickable-icon",
             selectRow: ".select-row-checkbox",
             showMore: ".show-more",
         },
@@ -293,12 +328,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
             const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
             const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='));
-            e.target.className += " disabled";
+            $(e.target).closest('button.clickable-icon').addClass('disabled');
             this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
         },
 
         iconKeyAction: function (e) {
-            if (e.keyCode === 13) {
+            if (e.keyCode === 13 || e.keyCode === 32) {
+                e.preventDefault();
                 this.iconClick(e);
             }
         },
@@ -309,25 +345,28 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         clickableIconRequest: function (e, endpointId, caseId, endpointArg, isBackground) {
             const self = this;
-            const clickedIcon = e.target;
-            clickedIcon.classList.add("disabled");
-            clickedIcon.style.display = 'none';
-            const spinnerElement = $(clickedIcon).siblings('i');
-            spinnerElement[0].style.display = '';
+            const $moduleIcon = $(e.target).find('img.module-icon').addBack('img.module-icon');
+            const $iconButton = $(e.target).closest('button.clickable-icon');
+            const $spinnerElement = $iconButton.find('i');
+            $moduleIcon.css('display', 'none');
+            $iconButton.addClass('disabled');
+            $spinnerElement.removeClass("d-none");
+
             const currentUrlToObject = formplayerUtils.currentUrlToObject();
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
-
+            currentUrlToObject.setRequestInitiatedByTag(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             function resetIcon() {
-                clickedIcon.classList.remove("disabled");
-                clickedIcon.style.display = '';
-                spinnerElement[0].style.display = 'none';
+                $moduleIcon.css('display', '');
+                $iconButton.removeClass('disabled');
+                $spinnerElement.addClass("d-none");
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
-                self.reloadCase(self.model.get('id'));
-                resetIcon();
+                self.reloadCase(self.model.get('id')).then(function () {
+                    resetIcon();
+                });
             }).fail(function () {
                 resetIcon();
             });
@@ -337,6 +376,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
+            urlObject.setRequestInitiatedByTag(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             urlObject.clickedIcon = true;
             const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
@@ -344,6 +384,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }).fail(function () {
                 console.log('could not get case details');
             });
+            return fetchingDetails;
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
@@ -351,6 +392,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.destroy();
             } else {
                 this.model.set("data", detailResponse.models[0].attributes.details);
+                this.model.set("altText", detailResponse.models[0].attributes.altText);
             }
         },
 
@@ -419,8 +461,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
+                altText: this.options.model.get('altText'),
                 styles: this.options.styles,
-                headers: this.options.headers,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
@@ -452,7 +494,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileView = CaseView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style panel panel-default",
+        className: "formplayer-request list-cell-wrapper-style card",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
@@ -476,7 +518,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileViewUnclickable = CaseTileView.extend({
         events: {},
-        className: "list-cell-wrapper-style panel panel-default",
+        className: "list-cell-wrapper-style card",
         rowClick: function () {},
     });
 
@@ -489,22 +531,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
             numEntitiesPerRow, useUniformUnits, 'list', options.isMultiSelect);
 
-        const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
-
-        $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
-        $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
+        $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle);
+        $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle);
         // If we have multiple cases per line, need to generate the outer grid style as well
         if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
-            $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
-            $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
+            $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle);
+            $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle);
         }
-
-        $.getScript(gridPolyfillPath);
     };
 
     const CaseTileGroupedView = CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style case-tile-group panel panel-default",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group card",
         template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
@@ -624,7 +662,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                headers: this.options.headers,
                 endpointActions: this.options.endpointActions,
             };
         },
@@ -644,7 +681,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 self.selectedCaseIds = [];
             }
-            const user = FormplayerFrontend.currentUser;
+            const user = UsersModels.getCurrentUser();
             const displayOptions = user.displayOptions;
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
@@ -767,14 +804,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
             const hideButton = $('#hide-map-button');
-            if (!mapDiv.hasClass('hide')) {
-                mapDiv.addClass('hide');
-                moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
+            if (!mapDiv.hasClass("d-none")) {
+                mapDiv.addClass("d-none");
+                moduleCaseList.removeClass('col-lg-7').addClass('col-lg');
                 hideButton.text(gettext('Show Map'));
                 $(e.target).attr('aria-expanded', 'false');
             } else {
-                mapDiv.removeClass('hide');
-                moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
+                mapDiv.removeClass("d-none");
+                moduleCaseList.addClass('col-lg-7').removeClass('col-lg');
                 hideButton.text(gettext('Hide Map'));
                 $(e.target).attr('aria-expanded', 'true');
             }
@@ -825,7 +862,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                     "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                hqRequire(["hqwebapp/js/bootstrap3/alert_user"], function (alertUser) {
+                hqRequire(["hqwebapp/js/bootstrap5/alert_user"], function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
             }
@@ -985,7 +1022,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.boundHandleScroll = self.handleScroll.bind(self);
             $(window).on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
-                $('#scroll-to-bottom').show();
+                $('#scroll-to-bottom').removeClass("d-none");
             }
         },
 
@@ -1028,6 +1065,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 isMultiSelect: false,
                 showMap: this.showMap,
                 sidebarEnabled: this.options.sidebarEnabled,
+                splitScreenToggleEnabled: toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 smallScreenEnabled: this.smallScreenEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
 
@@ -1240,17 +1278,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const BreadcrumbView = Marionette.View.extend({
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
-        className: "breadcrumb-text",
+        className: "breadcrumb-item",
         attributes: function () {
-            let attributes = {
-                "role": "link",
-                "tabindex": "0",
-                "style": this.buildMaxWidth(),
-            };
-            if (this.options.model.get('ariaCurrentPage')) {
-                attributes['aria-current'] = 'page';
-            }
-            return attributes;
+            return {"style": this.buildMaxWidth()};
         },
         events: {
             "click": "crumbClick",
@@ -1271,6 +1301,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.crumbClick(e);
             }
         },
+        templateContext: function () {
+            return {isCurrentPage: this.options.model.get('ariaCurrentPage')};
+        },
     });
 
     const BreadcrumbListView = Marionette.CollectionView.extend({
@@ -1283,6 +1316,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keydown .js-home': 'onKeyActionHome',
         },
         onClickHome: function () {
+            if (!FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm()) {
+                return;
+            }
             FormplayerFrontend.trigger('navigateHome');
         },
         onKeyActionHome: function (e) {
@@ -1357,15 +1393,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 languageOptionsEnabled: languageOptionsEnabled,
             };
         },
-        events: {
-            "keydown": "expandDropdown",
-        },
-        expandDropdown: function (e) {
-            if (e.keyCode === 13 || e.keyCode === 32) {
-                e.preventDefault();
-                $(this.ui.dropdownMenu).toggleClass("open");
-            }
-        },
     });
 
     const DetailView = Marionette.View.extend({
@@ -1391,8 +1418,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const DetailTabView = Marionette.View.extend({
         tagName: "li",
-        className: function () {
-            return this.options.model.get('active') ? 'active' : '';
+        className: "nav-item",
+        attributes: {
+            role: "presentation",
         },
         template: _.template($("#detail-view-tab-item-template").html() || ""),
         events: {
@@ -1423,7 +1451,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseDetailFooterView = Marionette.View.extend({
         tagName: "div",
-        className: "",
+        className: "d-flex gap-2 justify-content-center",
         events: {
             "click #select-case": "selectCase",
         },
@@ -1451,6 +1479,88 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                     });
                 }
+            }
+        },
+    });
+
+    /* Handle an individual menu item. Also contains a child list view */
+    const PersistentMenuItemView = Marionette.View.extend({
+        tagName: "li",
+        template: _.template($("#persistent-menu-item").html() || ""),
+        regions: {
+            tree: {
+                el: 'ul',
+                replaceElement: true,
+            },
+        },
+        triggers: {
+            "click a": "click:persistent:menu:command",  // magically calls onClickPersistentMenuCommand
+        },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                imageUri = this.model.get('imageUri'),
+                  icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder', ENTITY_SELECT: 'fa-list-ul'};
+            return {
+                imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+                iconClass: icons[this.model.get('navigationState')] || 'fa-arrow-up-right-from-square',
+            };
+        },
+        onRender: function () {
+            if (!_.isEmpty(this.model.get('commands'))) {
+                this.showChildView('tree', new PersistentMenuListView({
+                    collection: this.model.get('commands'),
+                }));
+            }
+        },
+        onClickPersistentMenuCommand: function () {
+            FormplayerFrontend.trigger("persistentMenuSelect", this.model.get('selections'));
+        },
+    });
+
+    /* Handle a collection of sibling menu items at the same level */
+    const PersistentMenuListView = Marionette.CollectionView.extend({
+        tagName: "ul",
+        className: "list-unstyled",
+        childView: PersistentMenuItemView,
+    });
+
+    /*
+      This view operates on a collection of persistent menu items, each of which
+      may contain its own collection in a recursive tree structure.
+      PersistentMenuView manages the top level of the menu
+    */
+    const PersistentMenuView = Marionette.View.extend({
+        tagName: "div",
+        template: _.template($("#persistent-menu-template").html() || ""),
+        regions: {
+            menu: "#persistent-menu-content",
+        },
+        events: {
+            'click #app-main': 'onClickAppMain',
+        },
+        onRender: function () {
+            this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
+        },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                currentApp = AppsAPI.getAppEntity(appId),
+                appName = currentApp.get('name'),
+                imageUri = currentApp.get('imageUri');
+            return {
+                appName: appName,
+                imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+            };
+        },
+        onClickAppMain: function () {
+            FormplayerFrontend.trigger("persistentMenuSelect");
+        },
+        onBeforeDetach: function () {
+            // Be sure to hide offcanvas element so scroll works properly
+            const openedCanvas = bootstrap.Offcanvas.getInstance(
+                document.getElementById('persistent-menu-container')
+            );
+            if (openedCanvas) {
+                openedCanvas.hide();
             }
         },
     });
@@ -1495,6 +1605,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
+        },
+        PersistentMenuView: function (options) {
+            return new PersistentMenuView(options);
         },
     };
 })

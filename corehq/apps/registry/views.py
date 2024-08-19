@@ -1,6 +1,5 @@
 import json
 from collections import Counter
-from datetime import datetime
 
 from django.contrib import messages
 from django.db.models import Q
@@ -14,7 +13,7 @@ from corehq import toggles
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.decorators import use_multiselect, use_daterangepicker
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_multiselect, use_tempusdominus
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation
 from corehq.apps.registry.utils import (
     _get_registry_or_404,
@@ -26,12 +25,13 @@ from corehq.apps.registry.utils import (
 )
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
-from dimagi.utils.parsing import ISO_DATE_FORMAT
+from corehq.util.view_utils import get_date_param
 
 
 @manage_some_registries_required
 @require_GET
 @toggles.DATA_REGISTRY.required_decorator()
+@use_bootstrap5
 def data_registries(request, domain):
     owned, invited = [], []
     permission_check = RegistryPermissionCheck(domain, request.couch_user)
@@ -91,8 +91,9 @@ def _registry_list_context(domain, registry):
 @manage_some_registries_required
 @require_GET
 @toggles.DATA_REGISTRY.required_decorator()
+@use_bootstrap5
 @use_multiselect
-@use_daterangepicker
+@use_tempusdominus
 def manage_registry(request, domain, registry_slug):
     registry = _get_registry_or_404(domain, registry_slug)
     if not RegistryPermissionCheck(domain, request.couch_user).can_manage_registry(registry.slug):
@@ -389,9 +390,10 @@ def registry_audit_logs(request, domain, registry_slug):
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)
 
+    timezone = get_timezone_for_user(request.couch_user, domain)
     try:
-        start_date = _get_date_param(request, 'startDate')
-        end_date = _get_date_param(request, 'endDate')
+        start_date = get_date_param(request, 'startDate', timezone=timezone)
+        end_date = get_date_param(request, 'endDate', timezone=timezone)
     except ValueError:
         return JsonResponse({"error": "Invalid date parameter"})
 
@@ -400,7 +402,6 @@ def registry_audit_logs(request, domain, registry_slug):
 
     helper.filter(domain_param, start_date, end_date, action)
 
-    timezone = get_timezone_for_user(request.couch_user, domain)
     logs = helper.get_logs(skip, limit)
     for log in logs:
         log['date'] = ServerTime(log['date']).user_time(timezone).done().isoformat()
@@ -409,9 +410,3 @@ def registry_audit_logs(request, domain, registry_slug):
         "total": helper.get_total(),
         "logs": logs
     })
-
-
-def _get_date_param(request, param_name):
-    param = request.GET.get(param_name) or None
-    if param:
-        return datetime.strptime(param, ISO_DATE_FORMAT)

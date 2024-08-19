@@ -1,7 +1,8 @@
+import re
 from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
-import re
+from urllib.parse import parse_qsl, urlencode, urlparse
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
@@ -18,48 +19,51 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
-from corehq.apps.es.case_search import CaseSearchES, CASE_PROPERTIES_PATH, PROPERTY_KEY
+from corehq.apps.es.case_search import (
+    CASE_PROPERTIES_PATH,
+    PROPERTY_KEY,
+    CaseSearchES,
+)
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
 
 def generate_data_dictionary(domain):
-    case_type_to_properties = _get_all_case_properties(domain)
-    _create_properties_for_case_types(domain, case_type_to_properties)
-    CaseType.objects.filter(domain=domain, name__in=list(case_type_to_properties)).update(fully_generated=True)
+    properties_by_case_type = _get_properties_by_case_type(domain)
+    _create_properties_for_case_types(domain, properties_by_case_type)
+    CaseType.objects.filter(domain=domain, name__in=list(properties_by_case_type)).update(fully_generated=True)
     return True
 
 
-def _get_all_case_properties(domain):
-    # moved here to avoid circular import
-    from corehq.apps.export.models.new import CaseExportDataSchema
-
-    case_type_to_properties = {}
+def _get_properties_by_case_type(domain):
     case_properties_from_apps = all_case_properties_by_domain(
         domain, include_parent_properties=False
     )
 
+    properties_by_case_type = {}
     for case_type in get_case_types_from_apps(domain):
-        properties = set()
-        schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case_type)
+        properties_by_case_type[case_type] = {
+            *_get_case_properties_from_export_schema(domain, case_type),
+            *case_properties_from_apps.get(case_type, {})
+        }
 
-        # only the first schema contains case properties. The others contain meta info
-        group_schema = schema.group_schemas[0]
-        for item in group_schema.items:
-            if len(item.path) > 1:
-                continue
+    return properties_by_case_type
 
-            name = item.tag if item.tag else item.path[-1].name
-            if '/' not in name:
-                # Filter out index and parent properties as some are stored as parent/prop in item.path
-                properties.add(name)
 
-        case_type_props_from_app = case_properties_from_apps.get(case_type, {})
-        properties |= set(case_type_props_from_app)
+def _get_case_properties_from_export_schema(domain, case_type):
+    from corehq.apps.export.models.new import CaseExportDataSchema
+    schema = CaseExportDataSchema.generate_schema_from_builds(domain, app_id=None, identifier=case_type)
 
-        case_type_to_properties[case_type] = properties
+    # only the first schema contains case properties. The others contain meta info
+    group_schema = schema.group_schemas[0]
+    for item in group_schema.items:
+        if len(item.path) > 1:
+            continue
 
-    return case_type_to_properties
+        name = item.tag if item.tag else item.path[-1].name
+        if '/' not in name:
+            # Filter out index and parent properties as some are stored as parent/prop in item.path
+            yield name
 
 
 def _get_current_case_types_and_properties(domain):
@@ -149,6 +153,26 @@ def get_case_property_label_dict(domain):
     for case_type in annotated_types:
         labels_dict[case_type.name] = {prop.name: prop.label for prop in case_type.properties.all()}
     return labels_dict
+
+
+def get_case_property_deprecated_dict(domain):
+    """
+    This returns a dictionary of the structure
+    {
+        case_type: [
+            case_property,
+            ...
+        ],
+        ...
+    }
+    for each case type and case property in the domain. Each case type
+    will contain a list of only deprecated case properties.
+    """
+    annotated_types = CaseType.objects.filter(domain=domain).prefetch_related('properties')
+    deprecated_dict = {}
+    for case_type in annotated_types:
+        deprecated_dict[case_type.name] = [prop.name for prop in case_type.properties.all() if prop.deprecated]
+    return deprecated_dict
 
 
 def get_values_hints_dict(domain, case_type_name):
@@ -320,19 +344,14 @@ def get_gps_properties(domain, case_type):
     ).values_list('name', flat=True))
 
 
-def get_column_headings(row, valid_values, sheet_name=None, case_prop_name=None):
+def get_column_headings(row, valid_values, sheet_name, case_prop_name=None):
     column_headings = []
     errors = []
     for index, cell in enumerate(row, start=1):
         if not cell.value:
-            if sheet_name:
-                errors.append(
-                    _("Column {} in \"{}\" sheet has an empty header").format(index, sheet_name)
-                )
-            else:
-                errors.append(
-                    _("Column {} has an empty header").format(index)
-                )
+            errors.append(
+                _('Column {} in "{}" sheet has an empty header').format(index, sheet_name)
+            )
             continue
 
         cell_value = cell.value.lower()
@@ -340,32 +359,30 @@ def get_column_headings(row, valid_values, sheet_name=None, case_prop_name=None)
             column_headings.append(valid_values[cell_value])
         else:
             formatted_valid_values = ', '.join(list(valid_values.keys())).title()
-            if sheet_name:
-                error = _("Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}").format(
-                    cell.value, sheet_name, formatted_valid_values)
-                errors.append(error)
-            else:
-                error = _("Invalid column \"{}\". Valid column names are: {}").format(
-                    cell.value, formatted_valid_values)
-                errors.append(error)
+            error = _('Invalid column "{}" in "{}" sheet. Valid column names are: {}').format(
+                cell.value, sheet_name, formatted_valid_values)
+            errors.append(error)
     if case_prop_name and case_prop_name not in column_headings:
-        if sheet_name:
-            errors.append(
-                _("Missing \"Case Property\" column header in \"{}\" sheet").format(sheet_name)
-            )
-        else:
-            errors.append(_("Missing \"Case Property\" column header"))
+        errors.append(
+            _('Missing "Case Property" column header in "{}" sheet').format(sheet_name)
+        )
 
     return column_headings, errors
 
 
-def map_row_values_to_column_names(row, column_headings, default_val=None):
+def map_row_values_to_column_names(row, column_headings, sheet_name, default_val=None):
     row_vals = defaultdict(lambda: default_val)
+    errors = []
     for index, cell in enumerate(row):
-        column_name = column_headings[index]
+        try:
+            column_name = column_headings[index]
+        except IndexError:
+            errors.append(
+                _('Column {} in "{}" sheet is missing a header').format(index + 1, sheet_name)
+            )
         cell_val = '' if cell.value is None else str(cell.value)
         row_vals[column_name] = cell_val
-    return row_vals
+    return row_vals, errors
 
 
 def is_case_type_deprecated(domain, case_type):
@@ -382,8 +399,8 @@ def is_case_type_or_prop_name_valid(case_prop_name):
     return match_obj is not None
 
 
-@quickcache(vary_on=['domain'], timeout=60 * 10)
-def get_used_props_by_case_type(domain):
+@quickcache(vary_on=['domain', 'case_type'], timeout=60 * 10)
+def get_used_props_by_case_type(domain, case_type=None):
     agg = TermsAggregation('case_types', 'type.exact').aggregation(
         NestedAggregation('case_props', CASE_PROPERTIES_PATH).aggregation(
             TermsAggregation('props', PROPERTY_KEY)
@@ -395,6 +412,8 @@ def get_used_props_by_case_type(domain):
         .size(0)
         .aggregation(agg)
     )
+    if case_type:
+        query = query.case_type(case_type)
     case_type_buckets = query.run().aggregations.case_types.buckets_list
     props_by_case_type = {}
     for case_type_bucket in case_type_buckets:
@@ -404,3 +423,18 @@ def get_used_props_by_case_type(domain):
                 props_by_case_type[case_type_bucket.key] = []
             props_by_case_type[case_type_bucket.key].append(prop_bucket.key)
     return props_by_case_type
+
+
+def get_case_property_group_name_for_properties(domain, case_type_name):
+    return dict(CaseProperty.objects.filter(
+        case_type__name=case_type_name, case_type__domain=domain, deprecated=False, group__deprecated=False
+    ).values_list('name', 'group__name'))
+
+
+def update_url_query_params(url, params):
+    """Adds query params to the url. Overrides the value if param already exists."""
+    parsed_url = urlparse(url)
+    current_params = dict(parse_qsl(parsed_url.query))
+    merged_params = urlencode({**current_params, **params})
+    # Note: _replace is a public method of namedtuple. Starts with _ to avoid conflicts with field names.
+    return parsed_url._replace(query=merged_params).geturl()

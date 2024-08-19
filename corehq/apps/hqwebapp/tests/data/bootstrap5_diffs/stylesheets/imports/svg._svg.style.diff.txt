@@ -5,6 +5,6 @@
    display: block;
    path {
 -    fill: @cc-brand-low;
-+    fill: $cc-brand-low;
++    fill: $primary-border-subtle-dark;
    }
  }

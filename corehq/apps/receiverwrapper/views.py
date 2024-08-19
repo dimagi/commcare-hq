@@ -29,7 +29,7 @@ from corehq.apps.domain.auth import (
 )
 from corehq.apps.domain.decorators import (
     api_auth,
-    check_domain_migration,
+    check_domain_mobile_access,
     login_or_basic_ex,
     login_or_digest_ex,
     login_or_api_key_ex,
@@ -37,6 +37,7 @@ from corehq.apps.domain.decorators import (
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.ota.decorators import is_from_formplayer
 from corehq.apps.ota.utils import handle_401_response
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
@@ -65,17 +66,19 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 CACHE_EXPIRY_7_DAYS_IN_SECS = 7 * 24 * 60 * 60
 
 
+# This mirrors the logic of require_mobile_access
 def _verify_access(domain, user_id, request):
-    """Unless going through the API, users should have the access_mobile_endpoints permission"""
-    cache_key = f"form_submission_permissions_audit:{user_id}"
-    if cache.get(cache_key):
-        # User is already logged once in last 7 days for incorrect access, so no need to log again
-        return
+    """Unless going through formplayer or the API, users need access_mobile_endpoints"""
+    if not is_from_formplayer(request):
+        cache_key = f"form_submission_permissions_audit_v2:{user_id}"
+        if cache.get(cache_key):
+            # User is already logged once in last 7 days for incorrect access, so no need to log again
+            return
 
-    if not request.couch_user.has_permission(domain, 'access_mobile_endpoints'):
-        cache.set(cache_key, True, CACHE_EXPIRY_7_DAYS_IN_SECS)
-        message = f"NoMobileEndpointsAccess: invalid request by {user_id} on {domain}"
-        notify_exception(request, message=message)
+        if not request.couch_user.has_permission(domain, 'access_mobile_endpoints'):
+            cache.set(cache_key, True, CACHE_EXPIRY_7_DAYS_IN_SECS)
+            message = f"NoMobileEndpointsAccess: invalid request by {user_id} on {domain}"
+            notify_exception(request, message=message)
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
@@ -231,7 +234,7 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
 @require_POST
-@check_domain_migration
+@check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
 def post_api(request, domain):
     return _process_form(
@@ -248,7 +251,7 @@ def post_api(request, domain):
 @location_safe
 @csrf_exempt
 @require_POST
-@check_domain_migration
+@check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
 def post(request, domain, app_id=None):
     try:
@@ -401,7 +404,7 @@ def _secure_post_api_key(request, domain, app_id=None):
 @location_safe
 @csrf_exempt
 @require_POST
-@check_domain_migration
+@check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
 def secure_post(request, domain, app_id=None):
     authtype_map = {

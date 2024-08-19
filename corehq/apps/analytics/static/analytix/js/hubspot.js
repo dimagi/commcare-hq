@@ -1,3 +1,4 @@
+"use strict";
 /**
  * Instatiates the Hubspot analytics platform.
  */
