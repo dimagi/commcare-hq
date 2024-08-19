@@ -136,6 +136,7 @@
     "scripts": {
         "postinstall": "yarn run -s build:modernizr",
         "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib",
-        "dev": "webpack --mode development --config webpack/webpack.dev.js --watch"
+        "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
+        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js"
     }
 }
