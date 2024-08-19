@@ -494,7 +494,7 @@ class Repeater(RepeaterSuperProxy):
             repeat_record.handle_timeout(result)
         elif isinstance(result, Exception):
             repeat_record.handle_exception(result)
-        elif is_response(result) and 200 <= result.status_code < 300 or result is True:
+        elif is_success_response(result):
             repeat_record.handle_success(result)
         elif not is_response(result) or (
             500 <= result.status_code < 600
@@ -1327,6 +1327,18 @@ def format_response(response):
     if response_text:
         return f'{response.status_code}: {response.reason}\n{response_text}'
     return f'{response.status_code}: {response.reason}'
+
+
+def is_success_response(response):
+    return (
+        is_response(response)
+        and 200 <= response.status_code < 300
+        # `response` is `True` if the payload did not need to be sent.
+        # (This can happen, for example, if a form submission is
+        # transformed into a payload, but the form didn't contain any
+        # relevant data and so the payload is empty.)
+        or response is True
+    )
 
 
 def is_response(duck):
