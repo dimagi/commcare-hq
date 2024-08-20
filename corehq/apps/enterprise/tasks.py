@@ -15,6 +15,7 @@ from corehq.apps.enterprise.models import (
     EnterpriseMobileWorkerSettings,
     EnterprisePermissions,
 )
+from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import DeactivateMobileWorkerTrigger
 from corehq.const import ONE_DAY
@@ -32,7 +33,19 @@ def email_enterprise_report(domain: str, slug, couch_user):
     csv_file = io.StringIO()
     writer = csv.writer(csv_file)
     writer.writerow(report.headers)
-    writer.writerows(report.rows)
+    try:
+        writer.writerows(report.rows)
+    except TooMuchRequestedDataError as e:
+        subject = _("Enterprise Dashboard Error: {}").format(report.title)
+        body = str(e)
+        send_html_email_async(
+            subject,
+            couch_user.get_email(),
+            body,
+            domain=domain,
+            use_domain_gateway=True,
+        )
+        return
 
     # Store file in redis
     hash_id = uuid.uuid4().hex
