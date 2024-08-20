@@ -3,13 +3,15 @@ from datetime import datetime, timedelta
 
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.conf import settings
 
 from memoized import memoized
 
 from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
-from corehq.apps.enterprise.exceptions import EnterpriseReportError
+from corehq.apps.enterprise.exceptions import EnterpriseReportError, TooMuchRequestedDataError
+from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
@@ -38,7 +40,7 @@ class EnterpriseReport:
     title = _('Enterprise Report')
     subtitle = ''
 
-    def __init__(self, account, couch_user):
+    def __init__(self, account, couch_user, **kwargs):
         self.account = account
         self.couch_user = couch_user
         self.slug = None
@@ -52,19 +54,19 @@ class EnterpriseReport:
         return "{} ({}) {}.csv".format(self.account.name, self.title, datetime.utcnow().strftime('%Y%m%d %H%M%S'))
 
     @classmethod
-    def create(cls, slug, account_id, couch_user):
+    def create(cls, slug, account_id, couch_user, **kwargs):
         account = BillingAccount.objects.get(id=account_id)
         report = None
         if slug == cls.DOMAINS:
-            report = EnterpriseDomainReport(account, couch_user)
+            report = EnterpriseDomainReport(account, couch_user, **kwargs)
         elif slug == cls.WEB_USERS:
-            report = EnterpriseWebUserReport(account, couch_user)
+            report = EnterpriseWebUserReport(account, couch_user, **kwargs)
         elif slug == cls.MOBILE_USERS:
-            report = EnterpriseMobileWorkerReport(account, couch_user)
+            report = EnterpriseMobileWorkerReport(account, couch_user, **kwargs)
         elif slug == cls.FORM_SUBMISSIONS:
-            report = EnterpriseFormReport(account, couch_user)
+            report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
-            report = EnterpriseODataReport(account, couch_user)
+            report = EnterpriseODataReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
@@ -209,13 +211,19 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 class EnterpriseFormReport(EnterpriseReport):
     title = _('Mobile Form Submissions')
+    MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
+    MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
 
     def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30, include_form_id=False):
         super().__init__(account, couch_user)
         if not end_date:
             end_date = datetime.utcnow()
+        elif isinstance(end_date, str):
+            end_date = datetime.fromisoformat(end_date)
 
         if start_date:
+            if isinstance(start_date, str):
+                start_date = datetime.fromisoformat(start_date)
             self.datespan = DateSpan(start_date, end_date)
             self.subtitle = _("{} to {}").format(
                 start_date.date(),
@@ -241,23 +249,56 @@ class EnterpriseFormReport(EnterpriseReport):
     def _query(self, domain_name):
         time_filter = form_es.submitted
 
-        users_filter = form_es.user_id(UserES().domain(domain_name).mobile_users().show_inactive()
-                                    .values_list('_id', flat=True))
+        users_filter = form_es.user_id(
+            UserES().domain(domain_name).mobile_users().show_inactive().size(self.MAXIMUM_USERS_PER_DOMAIN + 1)
+            .values_list('_id', flat=True)
+        )
 
-        query = (form_es.FormES()
-                 .domain(domain_name)
-                 .filter(time_filter(gte=self.datespan.startdate,
-                                     lt=self.datespan.enddate_adjusted))
-                 .filter(users_filter))
+        if len(users_filter) > self.MAXIMUM_USERS_PER_DOMAIN:
+            raise TooMuchRequestedDataError(
+                _('Domain {name} has too many users. Maximum allowed is: {amount}')
+                .format(name=domain_name, amount=self.MAXIMUM_USERS_PER_DOMAIN)
+            )
+
+        query = (
+            form_es.FormES()
+            .domain(domain_name)
+            .filter(time_filter(gte=self.datespan.startdate, lt=self.datespan.enddate_adjusted))
+            .filter(users_filter)
+        )
         return query
 
     def hits(self, domain_name):
-        return self._query(domain_name).run().hits
+        return raise_after_max_elements(
+            self._query(domain_name).scroll(),
+            self.MAXIMUM_ROWS_PER_REQUEST,
+            self._generate_data_error()
+        )
+
+    def _generate_data_error(self):
+        return TooMuchRequestedDataError(
+            _('{name} contains too many rows. Maximum allowed is: {amount}. Please narrow the date range'
+                ' to fetch a smaller amount of data').format(
+                    name=self.account.name, amount=self.MAXIMUM_ROWS_PER_REQUEST)
+        )
+
+    @property
+    def rows(self):
+        total_rows = 0
+        rows = []
+        for domain_obj in self.domains():
+            domain_rows = self.rows_for_domain(domain_obj)
+            total_rows += len(domain_rows)
+            if total_rows > self.MAXIMUM_ROWS_PER_REQUEST:
+                raise self._generate_data_error()
+            rows += domain_rows
+        return rows
 
     def rows_for_domain(self, domain_obj):
         apps = get_brief_apps_in_domain(domain_obj.name)
         apps = {a.id: a.name for a in apps}
         rows = []
+
         for hit in self.hits(domain_obj.name):
             if hit['form'].get('#type') == 'system':
                 continue

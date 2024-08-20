@@ -391,11 +391,13 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
                 'id': self.user_a.user_id,
                 'username': self.user_a.raw_username,
                 'gps_point': '12.34 45.67',
+                'primary_loc_name': self.country_a.name,
             },
             self.user_c.user_id: {
                 'id': self.user_c.user_id,
                 'username': self.user_c.raw_username,
                 'gps_point': '45.67 12.34',
+                'primary_loc_name': '---',
             }
         }
         self.client.login(username=self.username, password=self.password)
