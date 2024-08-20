@@ -2,15 +2,19 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
 from django.db.models import Q
+from django.db.models.fields.related import ForeignKey
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS_BY_DOC_TYPE
+from corehq.apps.dump_reload.util import get_model_class
 from corehq.blobs.models import BlobMeta
+from corehq.form_processor.models.cases import CommCareCase
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
     get_db_aliases_for_partitioned_query,
+    paginate_query,
 )
 from corehq.util.queries import queryset_to_iterator
 
@@ -100,6 +104,35 @@ class UserIDFilter(IDFilter):
         return get_all_user_ids_by_domain(domain_name, include_web_users=self.include_web_users)
 
 
+class CaseIDFilter(IDFilter):
+
+    def __init__(self, model_label, case_field='case'):
+        _, self.model_cls = get_model_class(model_label)
+        try:
+            field_obj, = [f for f in self.model_cls._meta.fields if f.name == case_field]
+            assert isinstance(field_obj, ForeignKey)
+            assert field_obj.remote_field.model == CommCareCase
+        except Exception:
+            raise ValueError(
+                "CaseIDFilter only supports models with a foreign key relationship to CommCareCase"
+            )
+        super().__init__(case_field, None, chunksize=500)
+
+    def count(self, domain_name):
+        count = 0
+        for db in get_db_aliases_for_partitioned_query():
+            count += self.model_cls.objects.using(db).filter(case__domain=domain_name).count()
+        return count
+
+    def get_ids(self, domain_name, db_alias=None):
+        assert db_alias, "Expected db_alias to be defined for CaseIDFilter"
+        source = 'dump_domain_data'
+        query = Q(domain=domain_name)
+        for row in paginate_query(db_alias, CommCareCase, query, values=['case_id'], load_source=source):
+            # there isn't a good way to return flattened results
+            yield row[0]
+
+
 class MultimediaBlobMetaFilter(IDFilter):
     """
     BlobMeta for multimedia references the "<shared>" domain which is not the domain being dumped.
@@ -174,9 +207,14 @@ class UnfilteredModelIteratorBuilder(object):
 
 
 class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
-    def __init__(self, model_label, filter):
+    def __init__(self, model_label, filter, paginate_by={}):
+        """
+        :param paginate_by: optional dictionary of {field: conditional, ...} (e.g., {'username': 'gt'})
+        NOTE: the order of keys matters in this dictionary, as it dictates sort order.
+        """
         super(FilteredModelIteratorBuilder, self).__init__(model_label)
         self.filter = filter
+        self.paginate_by = paginate_by
 
     def build(self, domain, model_class, db_alias):
         return self.__class__(self.model_label, self.filter).prepare(domain, model_class, db_alias)
