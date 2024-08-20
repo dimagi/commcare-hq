@@ -35,7 +35,12 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
 from corehq.motech.generic_inbound.views import generic_inbound_api
 
-API_LIST = (
+
+api_urlpatterns = [
+    v0_5.CommCareUserResource.get_urlpattern('v1'),
+]
+
+_OLD_API_LIST = (
     ((0, 3), (
         v0_3.CommCareCaseResource,
         ProductResource,
@@ -100,7 +105,7 @@ def versioned_apis(api_list):
         yield url(r'^', include(api.urls))
 
 
-def api_url_patterns():
+def _old_api_url_patterns():
     # todo: these have to come first to short-circuit tastypie's matching
     yield url(r'v0.5/odata/cases/(?P<config_id>[\w\-:]+)/(?P<table_id>[\d]+)/$',
               ODataCaseServiceView.as_view(), name=ODataCaseServiceView.table_urlname)
@@ -124,7 +129,7 @@ def api_url_patterns():
     yield url(r'v0\.6/case/bulk-fetch/$', case_api_bulk_fetch, name='case_api_bulk_fetch')
     # match v0.6/case/ AND v0.6/case/e0ad6c2e-514c-4c2b-85a7-da35bbeb1ff1/ trailing slash optional
     yield url(r'v0\.6/case(?:/(?P<case_id>[\w\-,]+))?/?$', case_api, name='case_api')
-    yield from versioned_apis(API_LIST)
+    yield from versioned_apis(_OLD_API_LIST)
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(),
               name="api_case_attachment")
     yield url(r'^form/attachment/(?P<instance_id>[\w\-:]+)/(?P<attachment_id>.*)$', view_form_attachment,
@@ -134,7 +139,7 @@ def api_url_patterns():
     yield url(r'v0.5/ucr/', v0_5.get_ucr_data, name="api_get_ucr_data")
 
 
-urlpatterns = list(api_url_patterns())
+urlpatterns = list(_old_api_url_patterns()) + api_urlpatterns
 
 ADMIN_API_LIST = (
     v0_5.AdminWebUserResource,

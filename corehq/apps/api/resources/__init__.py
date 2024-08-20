@@ -2,7 +2,7 @@ import json
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
-from django.urls import NoReverseMatch, include, re_path
+from django.urls import NoReverseMatch, include, path, re_path
 
 from tastypie import http
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, InvalidSortError
@@ -171,13 +171,21 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
 
     @property
     def urls(self):
-        urls = self.prepend_urls() + [
+        # Old way of doing things, in line with tastypie's versioning scheme
+        return [re_path(r"^(?P<resource_name>%s)/" % (self._meta.resource_name), include(self._get_urls()))]
+
+    @classmethod
+    def get_urlpattern(cls, version):
+        # Newer URL pattern, allows for versioning per resource
+        return path(f'{cls.Meta.resource_name}/{version}/', include(cls()._get_urls()))
+
+    def _get_urls(self):
+        return self.prepend_urls() + [
             re_path(r"^$", self.wrap_view('dispatch_list'), name="api_dispatch_list"),
             re_path(r"^schema/$", self.wrap_view('get_schema'), name="api_get_schema"),
             re_path(r"^set/(?P<%s_list>.*?)/$" % (self._meta.detail_uri_name), self.wrap_view('get_multiple'), name="api_get_multiple"),
             re_path(r"^(?P<%s>.*?)/$" % (self._meta.detail_uri_name), self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
-        return [re_path(r"^(?P<resource_name>%s)/" % (self._meta.resource_name), include(urls))]
 
 
 class SimpleSortableResourceMixin(object):
