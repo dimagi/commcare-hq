@@ -173,16 +173,9 @@ class PillowLagGaugeLimiter(GaugeLimiter):
         average_value = self.gauge_definition.average_value
 
         if max_value is not None and average_value is not None:
-            # If the max and average values are both set, consider both before throttling
-
-            if max_observed_value > max_value and avg_observed_value > average_value:
-                return True
+            return max_observed_value > max_value and avg_observed_value > average_value
         elif max_value is not None:
-            # If only max value is set, throttle based on max value of gauge.
-            if max_observed_value > max_value:
-                return True
+            return max_observed_value > max_value
         elif average_value is not None:
-            # If only averable value is set, throttle based on average value gauge.
-            if avg_observed_value > average_value:
-                return True
+            return avg_observed_value > average_value
         return False
