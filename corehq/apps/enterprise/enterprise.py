@@ -211,7 +211,7 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 class EnterpriseFormReport(EnterpriseReport):
     title = _('Mobile Form Submissions')
-    MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20000)
+    MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
     MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
 
     def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30, include_form_id=False):
