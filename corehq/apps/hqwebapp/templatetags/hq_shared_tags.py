@@ -756,8 +756,9 @@ except (ImportError, SyntaxError):
 
 @register.filter
 def webpack_bundles(entry_name):
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
-    if get_bootstrap_version() == BOOTSTRAP_5:
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
+    bootstrap_version = get_bootstrap_version()
+    if bootstrap_version == BOOTSTRAP_5:
         bundles = webpack_manifest.get(entry_name, [])
         webpack_folder = 'webpack'
     else:
@@ -769,7 +770,12 @@ def webpack_bundles(entry_name):
                       f"\nPage may have javascript errors!"
                       f"\nDid you try restarting `yarn dev` and `runserver`?\n\n"
                       f"\x1b[0m")
-        bundles = ["common.js", f"{entry_name}.js"]
+        if bootstrap_version == BOOTSTRAP_3:
+            warnings.warn("\x1b[33;20m"  # yellow color
+                          "Additionally, did you remember to use `webpack_main_b3` "
+                          "for this Bootstrap 3 module?\n\n"
+                          "\x1b[0m")
+        bundles = [f"{entry_name}.js"]
     return [
         f"{webpack_folder}/{bundle}" for bundle in bundles
     ]
