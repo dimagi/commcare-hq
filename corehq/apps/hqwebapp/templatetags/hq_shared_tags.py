@@ -1,4 +1,5 @@
 import json
+import warnings
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
@@ -742,6 +743,36 @@ class WebpackMainNode(RequireJSMainNode):
 
     def __repr__(self):
         return "<WebpackMain Node: %r>" % (self.value,)
+
+
+try:
+    from get_webpack_manifest import get_webpack_manifest
+    webpack_manifest = get_webpack_manifest()
+    webpack_manifest_b3 = get_webpack_manifest('webpack/manifest_b3.json')
+except (ImportError, SyntaxError):
+    webpack_manifest = {}
+    webpack_manifest_b3 = {}
+
+
+@register.filter
+def webpack_bundles(entry_name):
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+    if get_bootstrap_version() == BOOTSTRAP_5:
+        bundles = webpack_manifest.get(entry_name, [])
+        webpack_folder = 'webpack'
+    else:
+        bundles = webpack_manifest_b3.get(entry_name, [])
+        webpack_folder = 'webpack_b3'
+    if not bundles:
+        warnings.warn(f"\x1b[33;20m"  # yellow color
+                      f"\n\n\nNo webpack manifest entry found for '{entry_name}'"
+                      f"\nPage may have javascript errors!"
+                      f"\nDid you forget to run `yarn dev`?\n\n"
+                      f"\x1b[0m")
+        bundles = ["common.js", f"{entry_name}.js"]
+    return [
+        f"{webpack_folder}/{bundle}" for bundle in bundles
+    ]
 
 
 @register.inclusion_tag('hqwebapp/basic_errors.html')

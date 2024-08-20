@@ -3,6 +3,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const utils = require('./utils');
+const hqPlugins = require('./plugins');
 
 const aliases = {
     "jquery": "jquery/dist/jquery.min",
@@ -81,6 +82,7 @@ module.exports = {
         new webpack.ProvidePlugin({
             '$': 'jquery',
         }),
+        new hqPlugins.EntryChunksPlugin(),
     ],
 
     optimization: {
