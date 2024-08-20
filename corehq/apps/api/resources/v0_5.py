@@ -333,10 +333,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/activate/$" % self._meta.resource_name,
-                self.wrap_view('activate_user'), name="api_activate_user"),
-            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/deactivate/$" % self._meta.resource_name,
-                self.wrap_view('deactivate_user'), name="api_deactivate_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('activate_user'), name="api_activate_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/deactivate/$", self.wrap_view('deactivate_user'), name="api_deactivate_user"),
         ]
 
     @location_safe
@@ -1069,10 +1067,8 @@ class ODataCaseResource(BaseODataResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed", self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/feed", self.wrap_view('dispatch_list')),
         ]
 
 
@@ -1110,10 +1106,8 @@ class ODataFormResource(BaseODataResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed", self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/feed", self.wrap_view('dispatch_list')),
         ]
 
 

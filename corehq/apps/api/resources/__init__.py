@@ -2,7 +2,7 @@ import json
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
-from django.urls import NoReverseMatch
+from django.urls import NoReverseMatch, include, re_path
 
 from tastypie import http
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, InvalidSortError
@@ -168,6 +168,16 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
 
         to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
         return self.create_response(request, to_be_serialized, response_class=status)
+
+    @property
+    def urls(self):
+        urls = self.prepend_urls() + [
+            re_path(r"^$", self.wrap_view('dispatch_list'), name="api_dispatch_list"),
+            re_path(r"^schema/$", self.wrap_view('get_schema'), name="api_get_schema"),
+            re_path(r"^set/(?P<%s_list>.*?)/$" % (self._meta.detail_uri_name), self.wrap_view('get_multiple'), name="api_get_multiple"),
+            re_path(r"^(?P<%s>.*?)/$" % (self._meta.detail_uri_name), self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+        ]
+        return [re_path(r"^(?P<resource_name>%s)/" % (self._meta.resource_name), include(urls))]
 
 
 class SimpleSortableResourceMixin(object):
