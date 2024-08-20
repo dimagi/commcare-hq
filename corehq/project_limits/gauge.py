@@ -166,7 +166,7 @@ class PillowLagGaugeLimiter(GaugeLimiter):
         avg_observed_value = self.gauge.avg()
 
         if max_observed_value is None or avg_observed_value is None:
-            # No throttling if we don't have any values
+            # Don't throttle unless both observed values are set
             return False
 
         max_value = self.gauge_definition.max_value

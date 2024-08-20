@@ -387,6 +387,10 @@ class PillowBase(metaclass=ABCMeta):
                 multiprocess_mode=MPM_MAX
             )
             if change.partition:
+                # adding check for partition as dd_topic may or
+                # may not contain partition name.
+                # and for the pillows that we are interested in
+                # we would be needing both topic and partition.
                 from corehq.project_limits.gauge import case_pillow_lag_gauge
                 if case_pillow_lag_gauge.feature_key == change.topic:
                     case_pillow_lag_gauge.report(dd_topic, change_lag)
