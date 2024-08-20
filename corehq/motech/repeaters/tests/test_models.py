@@ -57,6 +57,12 @@ class RepeaterTestCase(TestCase):
             connection_settings=self.conn,
         )
         self.repeater.save()
+        self.paused_repeater = FormRepeater(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            is_paused=True,
+        )
+        self.paused_repeater.save()
 
 
 class TestSoftDeleteRepeaters(RepeaterTestCase):
@@ -627,6 +633,14 @@ class TestRepeatRecordManager(RepeaterTestCase):
         ids = {r.id for r in iter_partition(start, 0, 1)}
         self.assertEqual(ids, all_ids)
 
+    def test_paused_repeaters_are_skipped(self):
+        iter_partition = type(self).iter_partition
+        all_ids = self.make_records(3, is_paused=False)
+        self.make_records(2, is_paused=True)
+        start = datetime.utcnow()
+        ids = {r.id for r in iter_partition(start, 0, 1)}
+        self.assertEqual(ids, all_ids)
+
     def test_get_domains_with_records(self):
         self.new_record(domain='a')
         self.new_record(domain='b')
@@ -655,12 +669,13 @@ class TestRepeatRecordManager(RepeaterTestCase):
             state=state,
         )
 
-    def make_records(self, n, state=State.Pending):
+    def make_records(self, n, state=State.Pending, is_paused=False):
+        repeater = self.paused_repeater if is_paused else self.repeater
         now = timezone.now() - timedelta(seconds=10)
         is_pending = state in [State.Pending, State.Fail]
         records = RepeatRecord.objects.bulk_create(RepeatRecord(
             domain="test",
-            repeater=self.repeater,
+            repeater=repeater,
             payload_id="c0ffee",
             registered_at=now,
             next_check=(now if is_pending else None),

@@ -945,12 +945,14 @@ class RepeatRecordManager(models.Manager):
                 .prefetch_related('attempt_set'))
 
     def iter_partition(self, start, partition, total_partitions):
-        from django.db.models import F
+        from django.db.models import Exists, F, OuterRef
+        # look for is_paused=True since that subset is small
+        is_repeater_paused = Repeater.objects.filter(id=OuterRef("repeater_id"), is_paused=True)
         query = self.annotate(partition_id=F("id") % total_partitions).filter(
             partition_id=partition,
             next_check__isnull=False,
             next_check__lt=start,
-        ).order_by("next_check", "id")
+        ).filter(~Exists(is_repeater_paused)).order_by("next_check", "id")
         offset = {}
         while True:
             result = list(query.filter(**offset)[:1000])
