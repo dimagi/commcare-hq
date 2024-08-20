@@ -101,7 +101,7 @@ class TagTest(SimpleTestCase):
                 {% extends "requirejs_base.html" %}
                 {% load hq_shared_tags %}
                 {% requirejs_main "requirejs/main" %}
-                {% block content %}{{requirejs_main}}{% endblock %}
+                {% block content %}{% if use_js_bundler %}{{requirejs_main}}{% endif %}{% endblock %}
             """).strip(),
             "requirejs/main after tag\nrequirejs/main",
         )
@@ -112,10 +112,10 @@ class TagTest(SimpleTestCase):
             self.render("""
                 {% load hq_shared_tags %}
                 {% requirejs_main %}
-                {% if requirejs_main %}unexpected truth{% endif %}
+                {% if use_js_bundler %}unexpected truth{% endif %}
                 {{requirejs_main}}
             """).strip(),
-            "None",
+            "",
         )
 
     def test_requirejs_main_in_context(self):
