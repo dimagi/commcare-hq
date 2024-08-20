@@ -765,12 +765,13 @@ def webpack_bundles(entry_name):
         bundles = webpack_manifest_b3.get(entry_name, [])
         webpack_folder = 'webpack_b3'
     if not bundles:
-        warnings.warn(f"\x1b[33;20m"  # yellow color
-                      f"\n\n\nNo webpack manifest entry found for '{entry_name}'"
-                      f"\nPage may have javascript errors!"
-                      f"\nDid you try restarting `yarn dev` and `runserver`?\n\n"
-                      f"\x1b[0m")
-        if bootstrap_version == BOOTSTRAP_3:
+        if not settings.UNIT_TESTING:
+            warnings.warn(f"\x1b[33;20m"  # yellow color
+                          f"\n\n\nNo webpack manifest entry found for '{entry_name}'"
+                          f"\nPage may have javascript errors!"
+                          f"\nDid you try restarting `yarn dev` and `runserver`?\n\n"
+                          f"\x1b[0m")
+        if bootstrap_version == BOOTSTRAP_3 and not settings.UNIT_TESTING:
             warnings.warn("\x1b[33;20m"  # yellow color
                           "Additionally, did you remember to use `webpack_main_b3` "
                           "for this Bootstrap 3 module?\n\n"
