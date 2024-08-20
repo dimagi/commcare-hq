@@ -654,6 +654,9 @@ def _bundler_main(parser, token, flag, node_class):
     # Some templates check for {% if requirejs_main %}
     tag_name = tag_name.rstrip("_b5")
 
+    # likewise with webpack_main_b3, treat identically to webpack_main
+    tag_name = tag_name.rstrip("_b3")
+
     if getattr(parser, flag, False):
         raise TemplateSyntaxError(
             "multiple '%s' tags not allowed (%s)" % tuple(bits))
@@ -694,6 +697,30 @@ def requirejs_main(parser, token):
     return _bundler_main(parser, token, "__saw_requirejs_main", RequireJSMainNode)
 
 
+@register.tag
+def webpack_main(parser, token):
+    """
+    Indicate that a page should be using Webpack, by naming the
+    JavaScript module to be used as the page's main entry point.
+
+    The base template need not specify a value in its `{% webpack_main %}`
+    tag, allowing it to be extended by templates that may or may not
+    use requirejs. In this case the `webpack_main` template variable
+    will have a value of `None` unless an extending template has a
+    `{% webpack_main "..." %}` with a value.
+    """
+    return _bundler_main(parser, token, "__saw_webpack_main", WebpackMainNode)
+
+
+@register.tag
+def webpack_main_b3(parser, token):
+    """
+    Alias for webpack_main. Use this to mark entry points that should be part of the
+    bootstrap 3 bundle of webpack.
+    """
+    return webpack_main(parser, token)
+
+
 class RequireJSMainNode(template.Node):
 
     def __init__(self, name, value):
@@ -704,10 +731,17 @@ class RequireJSMainNode(template.Node):
         return "<RequireJSMain Node: %r>" % (self.value,)
 
     def render(self, context):
-        if self.name not in context:
+        if self.name not in context and self.value:
             # set name in block parent context
+            context.dicts[-2]['use_js_bundler'] = True
             context.dicts[-2][self.name] = self.value
         return ''
+
+
+class WebpackMainNode(RequireJSMainNode):
+
+    def __repr__(self):
+        return "<WebpackMain Node: %r>" % (self.value,)
 
 
 @register.inclusion_tag('hqwebapp/basic_errors.html')
