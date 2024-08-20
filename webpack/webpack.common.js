@@ -6,6 +6,10 @@ const utils = require('./utils');
 const hqPlugins = require('./plugins');
 
 const aliases = {
+    "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
+        'commcarehq'),
+    "commcarehq_b3": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap3/'),
+        'commcarehq'),
     "jquery": "jquery/dist/jquery.min",
 
     // todo after completing requirejs migration,
