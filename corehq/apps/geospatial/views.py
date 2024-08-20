@@ -448,7 +448,7 @@ class CasesReassignmentView(BaseDomainView):
     def post(self, request, domain, *args, **kwargs):
         request_data = json.loads(request.body)
         case_id_to_owner_id = request_data.get('case_id_to_owner_id', {})
-        include_related_case = request_data.get('include_related_case')
+        include_related_cases = request_data.get('include_related_cases')
         if len(case_id_to_owner_id) > self.MAX_REASSIGNMENT_REQUEST_CASES:
             return HttpResponseBadRequest(
                 _("Maximum number of cases that can be reassigned is {limit}").format(
@@ -456,7 +456,7 @@ class CasesReassignmentView(BaseDomainView):
                 )
             )
 
-        if include_related_case:
+        if include_related_cases:
             request_cases_id = list(case_id_to_owner_id.keys())
             parent_to_child_cases_id = self.get_child_cases(domain, request_cases_id)
             for parent_case_id, child_cases_id in parent_to_child_cases_id.items():

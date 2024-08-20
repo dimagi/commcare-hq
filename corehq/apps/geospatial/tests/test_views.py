@@ -679,7 +679,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             content_type='application/json',
             data={
                 'case_id_to_owner_id': case_id_to_owner_id,
-                'update_related_cases': True,
+                'include_related_cases': True,
             }
         )
 
@@ -703,7 +703,6 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             content_type='application/json',
             data={
                 'case_id_to_owner_id': case_id_to_owner_id,
-                'update_related_cases': True,
             }
         )
 
