@@ -156,10 +156,6 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         cls.user.delete(deleted_by_domain=cls.domain.name, deleted_by=None)
         cls.domain.delete()
 
-    def test_user_domain_does_not_have_flag_enabled(self):
-        cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
-        self.assertEqual(cca_access, None)
-
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_admin_user(self):
         self.user.domain_memberships[0].is_admin = True

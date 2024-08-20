@@ -1,5 +1,4 @@
 from corehq.apps.users.models import UserRole, HqPermissions
-from corehq.toggles import SUPERSET_ANALYTICS
 from corehq.apps.users.permissions import COMMCARE_ANALYTICS_USER_ROLES
 
 
@@ -131,9 +130,6 @@ def enable_attendance_coordinator_role_for_domain(domain):
 
 
 def get_commcare_analytics_access_for_user_domain(couch_user, domain):
-    if not SUPERSET_ANALYTICS.enabled(domain):
-        return None
-
     domain_membership = couch_user.get_domain_membership(domain)
     is_admin = domain_membership.is_admin
 
