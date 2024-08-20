@@ -601,6 +601,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.new_record(next_check=now - timedelta(minutes=15))
         self.new_record(next_check=now - timedelta(minutes=5))
         self.new_record(next_check=None, state=State.Success)
+        self.new_record(next_check=now - timedelta(hours=2), is_paused=True)
         overdue = RepeatRecord.objects.count_overdue()
         self.assertEqual(overdue, 3)
 
@@ -659,10 +660,11 @@ class TestRepeatRecordManager(RepeaterTestCase):
             {'alex', 'alice'},
         )
 
-    def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
+    def new_record(self, next_check=before_now, state=State.Pending, domain="test", is_paused=False):
+        repeater_id = self.paused_repeater.repeater_id if is_paused else self.repeater.repeater_id
         return RepeatRecord.objects.create(
             domain=domain,
-            repeater_id=self.repeater.repeater_id,
+            repeater_id=repeater_id,
             payload_id="c0ffee",
             registered_at=self.before_now,
             next_check=next_check,

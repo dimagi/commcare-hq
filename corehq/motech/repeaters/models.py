@@ -918,7 +918,8 @@ class RepeatRecordManager(models.Manager):
     def count_overdue(self, threshold=timedelta(minutes=10)):
         return self.filter(
             next_check__isnull=False,
-            next_check__lt=datetime.utcnow() - threshold
+            next_check__lt=datetime.utcnow() - threshold,
+            repeater__is_paused=False,
         ).count()
 
     def iterate(self, domain, repeater_id=None, state=None, chunk_size=1000):
