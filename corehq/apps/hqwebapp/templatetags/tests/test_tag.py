@@ -113,6 +113,7 @@ class TagTest(SimpleTestCase):
                 {% load hq_shared_tags %}
                 {% requirejs_main %}
                 {% if use_js_bundler %}unexpected truth{% endif %}
+                {% if requirejs_main %}unexpected truth 2{% endif %}
                 {{requirejs_main}}
             """).strip(),
             "",
