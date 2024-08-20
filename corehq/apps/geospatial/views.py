@@ -459,8 +459,8 @@ class CasesReassignmentView(BaseDomainView):
         if include_related_cases:
             request_cases_id = list(case_id_to_owner_id.keys())
             parent_to_child_cases_id = self.get_child_cases(domain, request_cases_id)
-            for parent_case_id, child_cases_id in parent_to_child_cases_id.items():
-                for child_case_id in child_cases_id:
+            for parent_case_id, child_cases_ids in parent_to_child_cases_id.items():
+                for child_case_id in child_cases_ids:
                     self._add_related_case(case_id_to_owner_id, parent_case_id, child_case_id)
 
             child_to_parent_case_id = self.get_parent_cases(domain, request_cases_id)
