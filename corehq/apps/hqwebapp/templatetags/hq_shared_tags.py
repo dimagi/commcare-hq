@@ -767,7 +767,7 @@ def webpack_bundles(entry_name):
         warnings.warn(f"\x1b[33;20m"  # yellow color
                       f"\n\n\nNo webpack manifest entry found for '{entry_name}'"
                       f"\nPage may have javascript errors!"
-                      f"\nDid you forget to run `yarn dev`?\n\n"
+                      f"\nDid you try restarting `yarn dev` and `runserver`?\n\n"
                       f"\x1b[0m")
         bundles = ["common.js", f"{entry_name}.js"]
     return [
