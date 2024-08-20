@@ -72,12 +72,14 @@ if (require.main === module) {
 
     // guarantee that these aliases are always generated
     const aliases = {
+        'analytix/js': path.join(allAppPaths.analytix, 'static/analytix/js'),
         'hqwebapp/js': path.join(allAppPaths.hqwebapp, 'static/hqwebapp/js'),
         'notifications/js': path.join(allAppPaths.notifications, 'static/notifications/js'),
     };
 
     // guarantee that these apps are always included
     const appsWithEntries = [
+        "analytix",
         "hqwebapp",
         "notifications",
     ];
