@@ -135,8 +135,8 @@ def get_commcare_analytics_access_for_user_domain(couch_user, domain):
 
     domain_role_permissions = domain_membership.role.permissions
     permissions = {
-        "can_edit": True if is_admin else domain_role_permissions.edit_commcare_analytics,
-        "can_view": True if is_admin else domain_role_permissions.view_commcare_analytics,
+        "can_edit": is_admin or domain_role_permissions.edit_commcare_analytics,
+        "can_view": is_admin or domain_role_permissions.view_commcare_analytics,
     }
     cca_roles = domain_role_permissions.commcare_analytics_roles_list
     assign_all_roles = domain_role_permissions.commcare_analytics_roles or is_admin
