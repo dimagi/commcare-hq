@@ -111,7 +111,7 @@ from corehq.motech.repeaters.optionvalue import OptionValue
 from corehq.motech.requests import simple_request
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.sql_db.fields import CharIdField
-from corehq.sql_db.util import paginate_query
+from corehq.sql_db.util import create_unique_index_name, paginate_query
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import ForeignObject, foreign_init
 from corehq.util.quickcache import quickcache
@@ -269,6 +269,13 @@ class Repeater(RepeaterSuperProxy):
 
     class Meta:
         db_table = 'repeaters_repeater'
+        indexes = [
+            models.Index(
+                fields=["id"],
+                name=create_unique_index_name("motech", "repeater", ["id"]),
+                condition=models.Q(is_paused=True),
+            )
+        ]
 
     payload_generator_classes = ()
 
