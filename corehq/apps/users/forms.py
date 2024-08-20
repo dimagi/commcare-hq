@@ -1160,7 +1160,7 @@ class SelectUserLocationForm(forms.Form):
         self.domain = domain
         self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations',
-            include_locations_with_no_users_allowed=False
+            for_user_location_selection=True
         )
         self.fields['assigned_locations'].help_text = ExpandedMobileWorkerFilter.location_search_help
         self.fields['primary_location'].widget = PrimaryLocationWidget(
@@ -1634,7 +1634,7 @@ class UserFilterForm(forms.Form):
             id='id_location_id',
             placeholder=_("All Locations"),
             attrs={'data-bind': 'value: location_id'},
-            include_locations_with_no_users_allowed=False
+            for_user_location_selection=True
         )
         self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
             url=self.fields['location_id'].widget.query_url
