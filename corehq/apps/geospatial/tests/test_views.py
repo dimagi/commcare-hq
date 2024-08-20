@@ -128,7 +128,7 @@ class GeoConfigViewTestClass(TestCase):
 
     def test_feature_flag_not_enabled(self):
         result = self._make_post({})
-        self.assertTrue(result.status_code == 404)
+        self.assertEqual(result.status_code, 404)
 
     @flag_enabled('GEOSPATIAL')
     def test_new_config_create(self):
@@ -143,7 +143,7 @@ class GeoConfigViewTestClass(TestCase):
         )
         config = GeoConfig.objects.get(domain=self.domain)
 
-        self.assertTrue(config.location_data_source == GeoConfig.CUSTOM_USER_PROPERTY)
+        self.assertEqual(config.location_data_source, GeoConfig.CUSTOM_USER_PROPERTY)
         self.assertEqual(config.user_location_property_name, 'some_user_field')
         self.assertEqual(config.case_location_property_name, self.gps_case_prop_name)
         self.assertEqual(config.selected_grouping_method, GeoConfig.MIN_MAX_GROUPING)
@@ -442,7 +442,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
 
     def test_feature_flag_not_enabled(self):
         response = self._make_post_request({'geo_json': _sample_geojson_data()})
-        self.assertTrue(response.status_code == 404)
+        self.assertEqual(response.status_code, 404)
 
     @flag_enabled('GEOSPATIAL')
     def test_save_polygon(self):
@@ -451,7 +451,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         self.assertEqual(response.status_code, 200)
         saved_polygons = GeoPolygon.objects.filter(domain=self.domain)
         self.assertEqual(len(saved_polygons), 1)
-        self.assertTrue(saved_polygons[0].name == geo_json_data["name"])
+        self.assertEqual(saved_polygons[0].name, geo_json_data["name"])
         geo_json_data.pop("name")
         for feature in geo_json_data["features"]:
             del feature['id']
@@ -525,7 +525,7 @@ class TestGeoPolygonDetailView(BaseGeospatialViewClass):
     def test_feature_flag_not_enabled(self):
         geo_polygon = self._create_sample_polygon()
         response = self.client.get(self._endpoint(geo_polygon.id))
-        self.assertTrue(response.status_code == 404)
+        self.assertEqual(response.status_code, 404)
 
     @flag_enabled('GEOSPATIAL')
     def test_get_polygon(self):
@@ -642,7 +642,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
 
     def test_feature_flag_not_enabled(self):
         response = self.client.post(self.endpoint)
-        self.assertTrue(response.status_code == 404)
+        self.assertEqual(response.status_code, 404)
 
     @flag_enabled('GEOSPATIAL')
     def test_cases_reassignment(self):
