@@ -604,19 +604,15 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         )
         self._create_parent_index(self.related_case_2, self.case_2.case_id)
 
-        case_search_adapter.bulk_index(
-            [self.case_1, self.case_2, self.related_case_1, self.related_case_2],
-            refresh=True
-        )
+        self.cases = [self.case_1, self.related_case_1, self.case_2, self.related_case_2]
+        case_search_adapter.bulk_index(self.cases, refresh=True)
 
         self.client.login(username=self.username, password=self.password)
 
     def tearDown(self):
         self.user_a.delete(self.domain, None, None)
         self.user_b.delete(self.domain, None, None)
-        CommCareCase.objects.hard_delete_cases(self.domain, [
-            self.case_1.case_id, self.case_2.case_id, self.related_case_1.case_id, self.related_case_2.case_id
-        ])
+        CommCareCase.objects.hard_delete_cases(self.domain, [case.case_id for case in self.cases])
         super().tearDown()
 
     def _create_parent_index(self, case, parent_case_id):
@@ -631,10 +627,13 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         case.save(with_tracked_models=True)
 
     def _refresh_cases(self):
-        self.case_1.refresh_from_db()
-        self.case_2.refresh_from_db()
-        self.related_case_1.refresh_from_db()
-        self.related_case_2.refresh_from_db()
+        for case in self.cases:
+            case.refresh_from_db()
+
+    def _assert_for_request_cases_success(self, response):
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
+        self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
 
     @flag_enabled('GEOSPATIAL')
     def test_not_logged_in(self):
@@ -660,10 +659,8 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             }
         )
 
-        self.assertEqual(response.status_code, 200)
         self._refresh_cases()
-        self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
-        self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
+        self._assert_for_request_cases_success(response)
         self.assertEqual(self.related_case_1.owner_id, self.user_a.user_id)
         self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
 
@@ -683,11 +680,9 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             }
         )
 
-        self.assertEqual(response.status_code, 200)
         self._refresh_cases()
-        self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
+        self._assert_for_request_cases_success(response)
         self.assertEqual(self.related_case_1.owner_id, self.user_b.user_id)
-        self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
         self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
 
     @flag_enabled('GEOSPATIAL')
