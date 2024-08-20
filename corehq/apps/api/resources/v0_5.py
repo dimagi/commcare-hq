@@ -1386,7 +1386,9 @@ def get_datasource_data(request, config_id, domain):
 @api_throttle
 def get_cca_user_roles(request, domain):
     if not toggles.SUPERSET_ANALYTICS.enabled(domain):
-        return HttpResponseForbidden()
+        return HttpResponseForbidden(
+            _("This domain requires the superset-analytics flag to access this endpoint.")
+        )
 
     try:
         if request.method == 'GET':
