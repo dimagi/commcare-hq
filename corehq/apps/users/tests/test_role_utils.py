@@ -1,6 +1,5 @@
 from django.test import TestCase
 
-from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser, PermissionInfo
 from corehq.apps.users.role_utils import (
     UserRolePresets,
@@ -156,7 +155,6 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         cls.user.delete(deleted_by_domain=cls.domain.name, deleted_by=None)
         cls.domain.delete()
 
-    @flag_enabled('SUPERSET_ANALYTICS')
     def test_admin_user(self):
         self.user.domain_memberships[0].is_admin = True
         self.assertTrue(self.user.get_domain_membership(self.DOMAIN).is_admin)
@@ -166,7 +164,6 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         self.assertTrue(cca_access['permissions']['can_edit'])
         self.assertTrue(cca_access['permissions']['can_view'])
 
-    @flag_enabled('SUPERSET_ANALYTICS')
     def test_non_admin_user(self):
         self.user.set_role(self.domain.name, self.hq_no_cca_role.get_qualified_id())
         self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
@@ -176,7 +173,6 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         self.assertFalse(cca_access['permissions']['can_edit'])
         self.assertFalse(cca_access['permissions']['can_view'])
 
-    @flag_enabled('SUPERSET_ANALYTICS')
     def test_user_has_limited_roles(self):
         self.user.set_role(self.domain.name, self.hq_limited_cca_role.get_qualified_id())
         self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
@@ -184,7 +180,6 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
         self.assertEqual(cca_access['roles'], self.limited_cca_roles)
 
-    @flag_enabled('SUPERSET_ANALYTICS')
     def test_user_has_all_roles(self):
         self.user.set_role(self.domain.name, self.hq_all_cca_roles_role.get_qualified_id())
         self.assertFalse(self.user.get_domain_membership(self.DOMAIN).is_admin)
