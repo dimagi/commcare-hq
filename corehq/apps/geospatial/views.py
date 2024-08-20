@@ -446,7 +446,13 @@ class CasesReassignmentView(BaseDomainView):
     MAX_REASSIGNMENT_REQUEST_CASES = 100
 
     def post(self, request, domain, *args, **kwargs):
-        request_data = json.loads(request.body)
+        try:
+            request_data = json.loads(request.body)
+        except json.decoder.JSONDecodeError:
+            return HttpResponseBadRequest(
+                _('POST Body must be a valid json')
+            )
+
         case_id_to_owner_id = request_data.get('case_id_to_owner_id', {})
         include_related_cases = request_data.get('include_related_cases')
         if len(case_id_to_owner_id) > self.MAX_REASSIGNMENT_REQUEST_CASES:
