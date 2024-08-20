@@ -690,6 +690,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 if (element.serverError) {
                     element.serverError(null);
                 }
+
+                if (allChildren) {
+                    for (let i = 0; i < allChildren.length; i++) {
+                        if (allChildren[i].control >= constants.CONTROL_IMAGE_CHOOSE) {
+                            allChildren[i].filename = element.answer();
+                        }
+                    }
+                }
                 response.children = allChildren;
                 self.fromJS(response);
             }
