@@ -108,7 +108,7 @@ class GaugeLimiter:
 
     def wait(self):
         if not self.allow_usage():
-            time.sleep(self.gauge_definition.throttle_for_seconds)
+            time.sleep(self.gauge_definition.wait_for_seconds)
 
     def allow_usage(self):
         """
@@ -120,7 +120,7 @@ class GaugeLimiter:
             # no throttling if config to throttle is not set.
             return True
         computed_value = None
-        if self.gauge_definition.actionable_metric == AVG:
+        if self.gauge_definition.aggregator == AVG:
             computed_value = self.gauge.avg()
         else:
             computed_value = self.gauge.max()
