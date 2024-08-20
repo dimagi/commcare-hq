@@ -1,0 +1,9 @@
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% webpack_main "prototype/js/webpack/another_test" %}
+
+{% block content %}
+{% initial_page_data 'test_initial' 'successfully retrieved initial page data' %}
+{% endblock content %}

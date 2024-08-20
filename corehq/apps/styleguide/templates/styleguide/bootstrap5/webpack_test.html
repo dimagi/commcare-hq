@@ -2,10 +2,10 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "prototype/js/example/knockout_pagination" %}
-
+{% webpack_main "styleguide/js/styleguide_with_webpack" %}
 
 {% block content %}
+{% initial_page_data 'test_initial' 'foo' %}
 {% registerurl "prototype_example_paginated_data" %}
   <h1>
     Prototype Example

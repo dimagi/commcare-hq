@@ -16,6 +16,26 @@ def knockout_pagination(request):
     return render(request, 'prototype/example/knockout_pagination.html', {})
 
 
+@login_required
+@use_bootstrap5
+@toggles.SAAS_PROTOTYPE.required_decorator()
+def knockout_pagination_webpack(request):
+    return render(request, 'prototype/webpack/knockout_pagination.html', {})
+
+
+@login_required
+@use_bootstrap5
+@toggles.SAAS_PROTOTYPE.required_decorator()
+def another_webpack_test(request):
+    return render(request, 'prototype/webpack/another_test.html', {})
+
+
+@login_required
+@toggles.SAAS_PROTOTYPE.required_decorator()
+def bootstrap3_tests_webpack(request):
+    return render(request, 'prototype/webpack/bootstrap3_tests.html', {})
+
+
 @quickcache(['num_entries'])
 def _generate_example_paginated_data(num_entries):
     rows = []
