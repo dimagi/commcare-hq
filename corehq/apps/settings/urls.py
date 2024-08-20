@@ -17,6 +17,7 @@ from corehq.apps.settings.views import (
     project_id_mapping,
     redirect_domain_settings,
     redirect_users,
+    an_error,
 )
 
 urlpatterns = [
@@ -26,6 +27,8 @@ urlpatterns = [
     url(r'^projects/$', MyProjectsList.as_view(), name=MyProjectsList.urlname),
     url(r'^password/$', ChangeMyPasswordView.as_view(), name=ChangeMyPasswordView.urlname),
     url(r'^mobile_privileges/$', EnableMobilePrivilegesView.as_view(), name=EnableMobilePrivilegesView.urlname),
+    url(r'^error/$', an_error, name='a_settings_error'),
+
 ]
 
 domain_specific = [
