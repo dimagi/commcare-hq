@@ -16,3 +16,10 @@ def bootstrap5_amd_example(request):
 @toggles.SAAS_PROTOTYPE.required_decorator()
 def bootstrap3_amd_example(request):
     return render(request, 'prototype/webpack/bootstrap3_amd.html', {})
+
+
+@login_required
+@use_bootstrap5
+@toggles.SAAS_PROTOTYPE.required_decorator()
+def knockout_pagination(request):
+    return render(request, 'prototype/webpack/knockout_pagination.html', {})
