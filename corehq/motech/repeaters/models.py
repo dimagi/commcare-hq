@@ -400,11 +400,6 @@ class Repeater(RepeaterSuperProxy):
             next_check=now,
             payload_id=payload.get_id
         )
-        metrics_counter('commcare.repeaters.new_record', tags={
-            'domain': self.domain,
-            'doc_type': self.repeater_type,
-            'mode': 'sync' if fire_synchronously else 'async'
-        })
         repeat_record.save()
 
         if fire_synchronously:
