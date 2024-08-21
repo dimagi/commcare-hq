@@ -2002,6 +2002,16 @@ RATE_LIMIT_REPEATER_ATTEMPTS = DynamicallyPredictablyRandomToggle(
     """
 )
 
+DECREASE_REPEATER_TIMEOUT = DynamicallyPredictablyRandomToggle(
+    'decrease_repeater_timeout',
+    'Decrease the request timeout value when forwarding data to external endpoints.',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Decreases the request timeout from 5 minutes to 1 minute for repeater endpoints when enabled.
+    """
+)
+
 TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
     'test_form_submission_rate_limit_response',
     "Respond to all form submissions with a 429 response",
