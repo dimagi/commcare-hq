@@ -104,6 +104,7 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['__group_ids'] = [res.id for res in results]
         user_dict['__group_names'] = [res.name for res in results]
         user_dict['user_data_es'] = []
+        user_dict.pop('password', None)
         if user_dict.get('base_doc') == 'CouchUser' and user_dict['doc_type'] == 'CommCareUser':
             user_obj = self.model_cls.wrap_correctly(user_dict)
             user_data = user_obj.get_user_data(user_obj.domain)

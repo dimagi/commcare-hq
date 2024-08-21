@@ -96,6 +96,15 @@ hqDefine("cloudcare/js/formplayer/app", [
         return true;
     };
 
+    FormplayerFrontend.showRestoreAs = function (user) {
+        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                UsersViews.RestoreAsBanner({model: user, smallScreen: false}));
+            FormplayerFrontend.regions.getRegion('mobileRestoreAsBanner').show(
+                UsersViews.RestoreAsBanner({model: user, smallScreen: true}));
+        });
+    };
+
     /**
      * This function maps a jr:// media path to its HTML path IE
      * jr://images/icon/mother.png -> https://commcarehq.org/hq/multimedia/file/CommCareImage/[app_id]/mother.png
@@ -325,13 +334,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 var apps = appCollection.toJSON();
                 if (Backbone.history) {
                     Backbone.history.start();
-                    hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
-                        FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                            UsersViews.RestoreAsBanner({
-                                model: user,
-                            })
-                        );
-                    });
+                    FormplayerFrontend.showRestoreAs(user);
                     if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
                         appId = apps[0]['_id'];
                     }

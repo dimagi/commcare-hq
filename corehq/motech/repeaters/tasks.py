@@ -19,7 +19,6 @@ from corehq.util.metrics import (
     metrics_histogram_timer,
 )
 from corehq.util.metrics.const import MPM_MAX
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
 from .const import (
@@ -33,7 +32,11 @@ from .const import (
 )
 from .models import RepeatRecord, domain_can_forward
 
-from ..rate_limiter import report_repeater_usage, rate_limit_repeater
+from ..rate_limiter import (
+    rate_limit_repeater,
+    report_repeater_attempt,
+    report_repeater_usage,
+)
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -43,8 +46,6 @@ _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(hours=5),
     timedelta(hours=10),
 )
-MOTECH_DEV = '@'.join(('nhooper', 'dimagi.com'))
-_soft_assert = soft_assert(to=MOTECH_DEV)
 logging = get_task_logger(__name__)
 
 DELETE_CHUNK_SIZE = 5000
@@ -108,20 +109,12 @@ def check_repeaters_in_partition(partition):
         ):
             for record in RepeatRecord.objects.iter_partition(
                     start, partition, CHECK_REPEATERS_PARTITION_COUNT):
-                if not _soft_assert(
-                    datetime.utcnow() < twentythree_hours_later,
-                    "I've been iterating repeat records for 23 hours. I quit!"
-                ):
+
+                if datetime.utcnow() > twentythree_hours_later:
                     break
 
                 metrics_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now(is_retry=True)
-            else:
-                iterating_time = datetime.utcnow() - start
-                _soft_assert(
-                    iterating_time < timedelta(hours=6),
-                    f"It took {iterating_time} to iterate repeat records."
-                )
     finally:
         check_repeater_lock.release()
 
@@ -176,6 +169,7 @@ def _process_repeat_record(repeat_record):
                 repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
                 action = 'rate_limited'
             elif repeat_record.is_queued():
+                report_repeater_attempt(repeat_record.domain)
                 with timer('fire_timing') as fire_timer:
                     repeat_record.fire(timing_context=fire_timer)
                 # round up to the nearest millisecond, meaning always at least 1ms
