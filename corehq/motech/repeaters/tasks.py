@@ -143,15 +143,14 @@ def _process_repeat_record(repeat_record):
         if repeat_record.state == State.Cancelled:
             return
 
-        if not domain_can_forward(repeat_record.domain) or repeat_record.exceeded_max_retries:
+        if (
+            not domain_can_forward(repeat_record.domain)
+            or repeat_record.exceeded_max_retries
+            or repeat_record.repeater.is_deleted
+        ):
             # When creating repeat records, we check if a domain can forward so
             # we should never have a repeat record associated with a domain that
             # cannot forward, but this is just to be sure
-            repeat_record.cancel()
-            repeat_record.save()
-            return
-
-        if repeat_record.repeater.is_deleted:
             repeat_record.cancel()
             repeat_record.save()
             return
