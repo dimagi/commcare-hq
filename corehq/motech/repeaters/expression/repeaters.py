@@ -10,7 +10,10 @@ from corehq.motech.repeaters.expression.repeater_generators import (
     ExpressionPayloadGenerator,
 )
 from corehq.motech.repeaters.models import OptionValue, Repeater
-from corehq.motech.repeaters.expression.repeater_generators import ArcGISFormExpressionPayloadGenerator
+from corehq.motech.repeaters.expression.repeater_generators import (
+    ArcGISFormExpressionPayloadGenerator,
+    FormExpressionPayloadGenerator,
+)
 from corehq.toggles import EXPRESSION_REPEATER, ARCGIS_INTEGRATION
 
 
@@ -84,6 +87,7 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
 class FormExpressionRepeater(BaseExpressionRepeater):
 
     friendly_name = _("Configurable Form Repeater")
+    payload_generator_classes = (FormExpressionPayloadGenerator,)
 
     class Meta:
         app_label = 'repeaters'
