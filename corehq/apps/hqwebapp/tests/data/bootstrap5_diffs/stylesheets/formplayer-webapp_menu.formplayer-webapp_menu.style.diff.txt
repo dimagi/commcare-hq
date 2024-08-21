@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -5,10 +5,49 @@
+@@ -5,10 +5,53 @@
  #menu-region .module-menu-container,
  #menu-region .module-case-list-container {
    background-color: white;
@@ -50,4 +50,8 @@
 +  .persistent-menu-item:hover {
 +    background-color: darken($cc-bg, 5);
 +  }
++}
++
++.flex-grow-if-not-empty:not(:empty) {
++  flex-grow: 1;
 +}
