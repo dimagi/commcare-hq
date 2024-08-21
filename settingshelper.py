@@ -254,7 +254,7 @@ def configure_sentry(server_env, dsn, release):
         dsn,
         release=release,
         environment=server_env,
-        request_bodies='never',
+        max_request_body_size='never',
         before_send=_before_send,
         integrations=[
             DjangoIntegration(),

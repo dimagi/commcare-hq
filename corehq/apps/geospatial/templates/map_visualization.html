@@ -67,12 +67,7 @@
         </button>
     </div>
 </div>
-<div class="row panel" id="mapControls">
-    {% include 'geospatial/partials/saved_polygon_filter.html' %}
-    <a id="btnRunDisbursement" class="col-sm-2 btn btn-primary" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnRunDisbursementDisabled }">
-        {% trans 'Run Disbursement' %}
-    </a>
-</div>
+{% include 'geospatial/partials/saved_polygon_filter.html' with uses_disbursement='true' %}
 <div id="disbursement-spinner">
   <h4 id="loading" class="hide"
       data-bind="visible: isBusy(), css: {hide: false}">
@@ -130,6 +125,12 @@
 </div>
 
 <div id="case-buttons">
+    <div id="review-assignments" class="pull-left">
+        <button class="btn btn-default" data-toggle="modal" data-target="#review-assignment-results" data-bind="click: loadCaseData, enable: canOpenModal">
+            {% trans 'Review Results' %}
+        </button>
+        {% include 'geospatial/partials/review_assignment_modal.html' %}
+    </div>
     <div id="user-modals" class="pull-right">
         <button class="btn btn-default" data-toggle="modal" data-target="#selected-user-list" data-bind="enable: selectedUsers().length">
             <span data-bind="text: selectedUsers().length"></span>

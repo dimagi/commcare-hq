@@ -6,13 +6,13 @@ from ast import literal_eval
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime, timedelta
+from functools import cached_property
 from uuid import UUID
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
 import requests
@@ -466,24 +466,14 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def named_expression_objects(self):
         named_expression_specs = deepcopy(self.named_expressions)
         named_expressions = {}
-        spec_error = None
-        factory_context = FactoryContext(named_expressions=named_expressions, named_filters={}, domain=self.domain)
-        while named_expression_specs:
-            number_generated = 0
-            for name, expression in list(named_expression_specs.items()):
-                try:
-                    factory_context.named_expressions = named_expressions
-                    named_expressions[name] = ExpressionFactory.from_spec(expression, factory_context)
-                    number_generated += 1
-                    del named_expression_specs[name]
-                except BadSpecError as bad_spec_error:
-                    # maybe a nested name resolution issue, try again on the next pass
-                    spec_error = bad_spec_error
-            if number_generated == 0 and named_expression_specs:
-                # we unsuccessfully generated anything on this pass and there are still unresolved
-                # references. we have to fail.
-                assert spec_error is not None
-                raise spec_error
+        factory_context = FactoryContext.empty(self.domain)
+        for name, expression in named_expression_specs.items():
+            named_expressions[name] = LazyExpressionWrapper(expression, factory_context)
+
+        factory_context.named_expressions.replace(named_expressions)
+        # resolve expressions and make sure there are no circular references
+        for name in named_expression_specs:
+            named_expressions[name] = factory_context.get_named_expression(name)
         return named_expressions
 
     @property
@@ -1462,15 +1452,39 @@ class UCRExpressionManager(models.Manager):
 
     def get_wrapped_filters_for_domain(self, domain, factory_context):
         return {
-            f.name: f.wrapped_definition(factory_context)
+            f.name: LazyExpressionWrapper(f, factory_context)
             for f in self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
         }
 
     def get_wrapped_expressions_for_domain(self, domain, factory_context):
         return {
-            f.name: f.wrapped_definition(factory_context)
+            f.name: LazyExpressionWrapper(f, factory_context)
             for f in self.get_expressions_for_domain(domain)
         }
+
+
+class LazyExpressionWrapper:
+    """Wrapper for expressions and filters coming from the database that performs the expression
+    wrapping lazily when the expression is called. This has two purposes:
+    1. Avoids the need to wrap all expressions at once when loading the factory context
+    2. Avoids errors in unrelated expressions
+    3. Avoids recursion errors when named expressions are used
+    """
+    def __init__(self, expression, factory_context):
+        self.expression = expression
+        self.factory_context = factory_context
+
+    def __call__(self, *args, **kwargs):
+        return self.wrapped_expression(*args, **kwargs)
+
+    @cached_property
+    def wrapped_expression(self):
+        if hasattr(self.expression, 'wrapped_definition'):
+            return self.expression.wrapped_definition(self.factory_context)
+        elif isinstance(self.expression, dict):
+            return ExpressionFactory.from_spec(self.expression, self.factory_context)
+        else:
+            raise ValueError(f"Invalid expression type: {self.expression}")
 
 
 class UCRExpression(models.Model):

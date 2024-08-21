@@ -156,6 +156,7 @@ class TableauServer(models.Model):
     validate_hostname = models.CharField(max_length=128, default='', blank=True)
     target_site = models.CharField(max_length=64, default='Default')
     allowed_tableau_groups = ArrayField(models.CharField(max_length=255), null=True, blank=True, default=list)
+    get_reports_using_role = models.BooleanField(default=False)
 
     def __str__(self):
         return '{domain} {server} {server_type} {site}'.format(domain=self.domain,
@@ -170,6 +171,7 @@ class TableauVisualization(models.Model):
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     view_url = models.CharField(max_length=256)
     upstream_id = models.CharField(max_length=32, null=True)
+    location_safe = models.BooleanField(default=False)
 
     @property
     def name(self):
@@ -185,7 +187,7 @@ class TableauVisualization(models.Model):
         items = [
             viz
             for viz in TableauVisualization.objects.filter(domain=domain)
-            if couch_user.can_view_tableau_viz(domain, f"{viz.id}")
+            if couch_user.can_view_tableau_viz(domain, viz)
         ]
         return sorted(items, key=lambda v: v.name.lower())
 

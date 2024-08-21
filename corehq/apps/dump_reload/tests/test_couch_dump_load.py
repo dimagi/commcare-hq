@@ -1,5 +1,4 @@
 import json
-import os
 import random
 import uuid
 from collections import Counter
@@ -137,7 +136,7 @@ class CouchDumpLoadTest(TestCase):
 
     def test_multimedia(self):
         from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareVideo
-        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', 'commcare-hq-logo.png')
+        image_path = 'corehq/apps/hqwebapp/static/hqwebapp/images/commcare-hq-logo.png'
         with open(image_path, 'rb') as f:
             image_data = f.read()
 

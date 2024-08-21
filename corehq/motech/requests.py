@@ -25,6 +25,7 @@ from corehq.motech.utils import (
     unpack_request_args,
 )
 from corehq.util.metrics import metrics_counter
+from corehq.util.timer import TimingContext
 from corehq.util.urlvalidate.urlvalidate import (
     InvalidURL,
     PossibleSSRFAttempt,
@@ -43,7 +44,8 @@ def log_request(self, func, logger):
         response_headers = {}
         response_body = ''
         try:
-            response = func(method, url, *args, **kwargs)
+            with TimingContext() as timer:
+                response = func(method, url, *args, **kwargs)
             response_status = response.status_code
             response_headers = response.headers
             response_body = response.content
@@ -71,6 +73,7 @@ def log_request(self, func, logger):
                 response_status=response_status,
                 response_headers=response_headers,
                 response_body=response_body,
+                duration=int(timer.duration * 1000) + 1,  # round up
             )
             logger(log_level, entry)
 

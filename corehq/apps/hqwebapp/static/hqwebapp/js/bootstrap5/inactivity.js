@@ -114,7 +114,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
         };
 
         var hideWarningModal = function (showLogin) {
-           $warningModal.hide();
+            $warningModal.hide();
             if (showLogin) {
                 loginModal.show();
             }
@@ -134,7 +134,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             } else {
                 $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
             }
-            if (!isModalOpen($modal)) {
+            if (!isModalOpen($loginModal)) {
                 if (isModalOpen($warningModal)) {
                     warningModal.hide();
                 }
@@ -155,7 +155,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                 // Parsing the app id out of URL hash will fail on the web apps home page, login as, etc.
                 // where the hash isn't a JSON object but instead a string like "#apps".
                 // In these cases, there's no app to check for a new version.
-                log("Could not parse app id out of " + window.location.hash)
+                log("Could not parse app id out of " + window.location.hash);
                 selectedAppId = null;
             }
             var domain = initialPageData.get('domain');

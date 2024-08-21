@@ -22,16 +22,10 @@
 
 .form-container .gr {
   background-color: desaturate(lighten($cc-brand-hi, 8), 40);
-  margin-left: -10px;
-  margin-right: -10px;
   padding: 10px;
   margin-bottom: 10px;
   border-bottom: 3px solid desaturate($cc-brand-hi, 30);
   border-top: 3px solid desaturate($cc-brand-hi, 30);
-}
-
-.form-container .gr-has-no-nested-questions {
-  display: none;
 }
 
 .form-container .gr.gr-no-children {
@@ -73,7 +67,7 @@
   }
 }
 
-.form-group {
+.q {
   padding: 10px 0;
   label {
     margin-right: 10px;
@@ -81,15 +75,12 @@
   }
 }
 
-.form-group.required {
+.q.required {
   transition: all .5s;
   margin-bottom: 0;
-  label:before {
-    display: none;
-  }
 }
 
-.form-group.required.on {
+.q.required.on {
   background-color: $cc-att-neg-hi;
   border: 10px solid $cc-att-neg-mid;
   border-bottom: none;
@@ -119,7 +110,7 @@
   border: none;
 }
 
-.form-group .help-block {
+.q .help-block {
   font-size: 11px;
   &:before {
     content: "\f05a";

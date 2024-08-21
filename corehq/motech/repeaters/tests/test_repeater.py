@@ -1245,6 +1245,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         self.config.save()
         self.adapter = get_indicator_adapter(self.config)
         self.adapter.build_table()
+        self.addCleanup(self.adapter.drop_table)
         self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
         self.pillow = _get_pillow([self.config], processor_chunk_size=100)
 
@@ -1297,6 +1298,43 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         json_indicators = json.dumps(expected_indicators, cls=CommCareJSONEncoder)
         expected_indicators = json.loads(json_indicators)
         return sample_doc, expected_indicators
+
+
+class TestRaceCondition(TestCase):
+    domain = 'test-race-condition'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.connx = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            url='https://example.com/api/',
+        )
+        cls.repeater = CaseRepeater(
+            domain=cls.domain,
+            connection_settings_id=cls.connx.id,
+            format='case_json',
+        )
+        cls.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.repeater.delete()
+        cls.connx.delete()
+        super().tearDownClass()
+
+    def test_pause_and_set_next_attempt(self):
+        repeater_a = Repeater.objects.get(id=self.repeater.repeater_id)
+        repeater_b = Repeater.objects.get(id=self.repeater.repeater_id)
+        self.assertIsNone(repeater_a.next_attempt_at)
+        self.assertFalse(repeater_b.is_paused)
+
+        repeater_a.set_next_attempt()
+        repeater_b.pause()
+
+        repeater_c = Repeater.objects.get(id=self.repeater.repeater_id)
+        self.assertIsNotNone(repeater_c.next_attempt_at)
+        self.assertTrue(repeater_c.is_paused)
 
 
 def fromisoformat(isoformat):

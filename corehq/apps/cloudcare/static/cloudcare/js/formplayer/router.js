@@ -275,6 +275,9 @@ hqDefine("cloudcare/js/formplayer/router", [
     });
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
+        if (!FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm()) {
+            return;
+        }
         FormplayerFrontend.trigger("clearForm");
         var urlObject = utils.currentUrlToObject();
         urlObject.spliceSelections(index);
@@ -285,6 +288,17 @@ hqDefine("cloudcare/js/formplayer/router", [
             'queryData': urlObject.queryData,
         };
         menusController.selectMenu(options);
+    });
+
+    FormplayerFrontend.on("persistentMenuSelect", function (selections) {
+        if (!FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm()) {
+            return;
+        }
+        FormplayerFrontend.trigger("clearForm");
+        menusController.selectMenu({
+            'appId': utils.currentUrlToObject().appId,
+            'selections': selections,
+        });
     });
 
     return {

@@ -9,6 +9,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     'cloudcare/js/form_entry/task_queue',
     'cloudcare/js/form_entry/utils',
     'cloudcare/js/form_entry/form_ui',
+    'cloudcare/js/formplayer/utils/utils',
 ], function (
     $,
     ko,
@@ -18,7 +19,8 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     errors,
     taskQueue,
     formEntryUtils,
-    formUI
+    formUI,
+    utils
 ) {
     function WebFormSession(params) {
         var self = {};
@@ -228,7 +230,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 errorMessage = errors.NO_INTERNET_ERROR;
                 if (action === constants.SUBMIT) {
                     $('.submit').prop('disabled', false);
-                    $('.form-control').prop('disabled', false);
+                    $('.form-control, .form-select').prop('disabled', false);
                 }
             } else if (_.has(resp, 'responseJSON') && resp.responseJSON !== undefined) {
                 errorMessage = formEntryUtils.touchformsError(resp.responseJSON.message);
@@ -273,7 +275,6 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 'formplayer.' + constants.PREV_QUESTION,
                 'formplayer.' + constants.QUESTIONS_FOR_INDEX,
                 'formplayer.' + constants.FORMATTED_QUESTIONS,
-                'formplayer.' + constants.CHANGE_LANG,
             ].join(' '));
             $.subscribe('formplayer.' + constants.SUBMIT, function (e, form) {
                 self.submitForm(form);
@@ -305,9 +306,14 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             $.subscribe('formplayer.' + constants.FORMATTED_QUESTIONS, function (e, callback) {
                 self.getFormattedQuestions(callback);
             });
-            $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
-                self.changeLang(lang);
+            $.subscribe('formplayer.' + constants.DIRTY, function (e) {
+                hqRequire([
+                    "cloudcare/js/formplayer/app",
+                ], function (FormplayerFrontend) {
+                    FormplayerFrontend.trigger('setUnsavedFormInProgress');
+                });
             });
+            applyLangListener(self);
         };
 
         self.loadForm = function ($form, initLang) {
@@ -472,7 +478,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         };
 
         self.changeLang = function (lang) {
-            this.serverRequest(
+            self.serverRequest(
                 {
                     'action': constants.CHANGE_LOCALE,
                     'locale': lang,
@@ -603,7 +609,25 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         return self;
     }
 
+    function applyLangListener(session) {
+        $.unsubscribe('formplayer.' + constants.CHANGE_LANG);
+        const fn = session ? session.changeLang : changeLang;
+        $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
+            fn(lang);
+        });
+
+    }
+
+    function changeLang(lang) {
+        hqRequire(["cloudcare/js/formplayer/menus/controller"], function (menusController) {
+            var urlObject = utils.currentUrlToObject();
+            urlObject.changeLang = lang;
+            menusController.selectMenu(urlObject);
+        });
+    }
+
     return {
         WebFormSession: WebFormSession,
+        applyLangListener: applyLangListener,
     };
 });

@@ -58,6 +58,7 @@ from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import (
+    LOCATION_HAS_USERS,
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
@@ -784,7 +785,7 @@ class NewMobileWorkerForm(forms.Form):
             location_field = crispy.Field(
                 'location_id',
                 data_bind='value: location_id',
-                data_query_url=reverse('location_search', args=[self.domain]),
+                data_query_url=reverse('location_search_has_users_only', args=[self.domain]),
             )
         else:
             location_field = crispy.Hidden(
@@ -1141,7 +1142,7 @@ class PrimaryLocationWidget(forms.Widget):
         })
 
 
-class BaseLocationForm(forms.Form):
+class SelectUserLocationForm(forms.Form):
     assigned_locations = forms.CharField(
         label=gettext_noop("Locations"),
         required=False,
@@ -1156,10 +1157,11 @@ class BaseLocationForm(forms.Form):
     def __init__(self, domain: str, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
         self.request = kwargs.pop('request')
-        super(BaseLocationForm, self).__init__(*args, **kwargs)
+        super(SelectUserLocationForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.fields['assigned_locations'].widget = LocationSelectWidget(
-            self.domain, multiselect=True, id='id_assigned_locations'
+            self.domain, multiselect=True, id='id_assigned_locations',
+            include_locations_with_no_users_allowed=False
         )
         self.fields['assigned_locations'].help_text = ExpandedMobileWorkerFilter.location_search_help
         self.fields['primary_location'].widget = PrimaryLocationWidget(
@@ -1176,7 +1178,9 @@ class BaseLocationForm(forms.Form):
             locations = get_locations_from_ids(location_ids, self.domain)
         except SQLLocation.DoesNotExist:
             raise forms.ValidationError(_('One or more of the locations was not found.'))
-
+        if LOCATION_HAS_USERS.enabled(self.domain) and locations.filter(location_type__has_users=False).exists():
+            raise forms.ValidationError(
+                _('One or more of the locations you specified cannot have users assigned.'))
         return [location.location_id for location in locations]
 
     def _user_has_permission_to_access_locations(self, new_location_ids):
@@ -1185,7 +1189,7 @@ class BaseLocationForm(forms.Form):
             self.domain, self.request.couch_user))
 
     def clean(self):
-        self.cleaned_data = super(BaseLocationForm, self).clean()
+        self.cleaned_data = super(SelectUserLocationForm, self).clean()
 
         primary_location_id = self.cleaned_data['primary_location']
         assigned_location_ids = self.cleaned_data.get('assigned_locations', [])
@@ -1209,7 +1213,7 @@ class BaseLocationForm(forms.Form):
         return self.cleaned_data
 
 
-class CommtrackUserForm(BaseLocationForm):
+class CommtrackUserForm(SelectUserLocationForm):
     program_id = forms.ChoiceField(
         label=gettext_noop("Program"),
         choices=(),
@@ -1631,6 +1635,7 @@ class UserFilterForm(forms.Form):
             id='id_location_id',
             placeholder=_("All Locations"),
             attrs={'data-bind': 'value: location_id'},
+            include_locations_with_no_users_allowed=False
         )
         self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
             url=self.fields['location_id'].widget.query_url

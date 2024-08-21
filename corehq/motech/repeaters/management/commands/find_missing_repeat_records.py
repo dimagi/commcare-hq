@@ -18,7 +18,6 @@ from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
 
-from corehq.util.metrics import metrics_counter
 
 logger = logging.getLogger(__name__)
 
@@ -523,10 +522,6 @@ def create_case_repeater_register(repeater, domain, payload):
         next_check=now,
         payload_id=payload.get_id
     )
-    metrics_counter('commcare.repeaters.new_record', tags={
-        'domain': domain,
-        'doc_type': repeater.repeater_type
-    })
     repeat_record.attempt_forward_now()
     return repeat_record
 
