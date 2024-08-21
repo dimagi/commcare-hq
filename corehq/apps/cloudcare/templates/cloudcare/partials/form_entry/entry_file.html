@@ -2,15 +2,20 @@
 
 <script type="text/html" id="file-entry-ko-template">
   <div class="d-flex">
-    <input type="file" data-bind="
+    <input type="file" style="display: none;" data-bind="
           value: $data.rawAnswer,
-          css: { 'is-invalid': $parent.hasError() },
           attr: {
               id: entryId,
               'aria-required': $parent.required() ? 'true' : 'false',
               accept: accept,
           },
       "/>
+    <input type="button" value="Browse..." data-bind="
+          click: uploadFile,
+          css: { 'is-invalid': $parent.hasError() },
+          attr: {id: entryId}
+      "/>
+    <p data-bind="text: fileNameDisplay"></p>
     <button class="btn btn-outline-primary btn-sm" data-bind="
       click: onClear,
       text: $root.getTranslation('upload.clear.title', '{% trans_html_attr 'Clear' %}'),
