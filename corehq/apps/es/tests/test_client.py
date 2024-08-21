@@ -299,6 +299,30 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.assertEqual(settings['transient'], settings_obj)
         self._clear_cluster_settings(verify=True)
 
+    def test_cluster_get_settings_with_unflattened_settings(self):
+        settings_obj = {
+            "cluster.routing.allocation.enable": "all",
+            "cluster.routing.allocation.disk.watermark.low": "1gb"
+        }
+        self.adapter._cluster_put_settings(settings_obj)
+        settings = self.adapter.cluster_get_settings(is_flat=False)
+        expected_settings = {
+            "cluster": {
+                "routing": {
+                    "allocation": {
+                        "enable": "all",
+                        "disk": {
+                            "watermark": {
+                                "low": "1gb"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.assertEqual(settings['transient'], expected_settings)
+        self._clear_cluster_settings(verify=True)
+
     def test_cluster_allocation_explain_on_normal_cluster(self):
         allocation = self.adapter.cluster_allocation_explain()
         self.assertEqual(allocation, {'unassigned_shard': None})
