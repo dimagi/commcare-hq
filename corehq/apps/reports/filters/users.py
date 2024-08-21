@@ -138,11 +138,12 @@ class EmwfUtils(object):
 
     def location_tuple(self, location):
         location_id = location.location_id
-        text = location.display_name if True else location.get_path_display(),
+        text = location.display_name if True else location.get_path_display()
+        path = location.get_path_display()
         if self.namespace_locations:
             location_id = f'l__{location_id}'
             text = f'{text} [location]'
-        return (location_id, text)
+        return (location_id, text, None, path)
 
     @property
     @memoized
