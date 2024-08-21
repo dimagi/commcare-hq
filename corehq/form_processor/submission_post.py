@@ -21,7 +21,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
 from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
+from corehq.toggles import ASYNC_RESTORE, BLOCK_SUMOLOGIC_LOGS, NAMESPACE_OTHER, SUMOLOGIC_LOGS
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
@@ -397,7 +397,8 @@ class SubmissionPost(object):
 
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
-        if url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER):
+        if (url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER)
+                and not BLOCK_SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), self.domain)):
             SumoLogicLog(self.domain, instance).send_data(url)
 
     def _invalidate_caches(self, xform):

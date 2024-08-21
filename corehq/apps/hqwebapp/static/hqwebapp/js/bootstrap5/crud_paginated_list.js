@@ -3,10 +3,12 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
     "jquery",
     "knockout",
     "underscore",
+    "es6!hqwebapp/js/bootstrap5_loader",
 ], function (
     $,
     ko,
-    _
+    _,
+    bootstrap
 ) {
     var CRUDPaginatedListModel = function (
         total,
@@ -197,8 +199,9 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             self.changePage(1);
         };
 
-        self.deleteItem = function (paginatedItem, event) {
+        self.deleteItem = function (paginatedItem, event, button) {
             var pList = self.paginatedList();
+            $(button).enableButton();
             paginatedItem.dismissModals();
             self.paginatedList(_(pList).without(paginatedItem));
             self.deletedList.push(paginatedItem);
@@ -222,7 +225,7 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             });
         };
 
-        self.refreshList = function (paginatedItem) {
+        self.refreshList = function (paginatedItem, button) {
             $.ajax({
                 url: '',
                 type: 'post',
@@ -238,6 +241,7 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
                 statusCode: self.handleStatusCode,
                 success: function (data) {
                     self.utils.reloadList(data);
+                    $(button).enableButton();
                 },
             });
         };
@@ -268,15 +272,9 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
         };
 
         self.dismissModals = function () {
-            var $modals = self.getItemRow().find('.modal');
-            if ($modals) {
-                $modals.modal('hide');
-                //  fix for b3
-                $('body').removeClass('modal-open');
-                var $modalBackdrop = $('.modal-backdrop');
-                if ($modalBackdrop) {
-                    $modalBackdrop.remove();
-                }
+            var $modal = self.getItemRow().find('.modal');
+            if ($modal) {
+                bootstrap.Modal.getOrCreateInstance($modal).hide();
             }
         };
 
@@ -321,15 +319,15 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             var $deleteButton = $(elems).find('.delete-item-confirm');
             if ($deleteButton) {
                 $deleteButton.click(function () {
-                    $(this).button('loading');
-                    self.getItemRow().trigger('deleteItem');
+                    $(this).disableButton();
+                    self.getItemRow().trigger('deleteItem', this);
                 });
             }
             var $refreshButton = $(elems).find('.refresh-list-confirm');
             if ($refreshButton) {
                 $refreshButton.click(function () {
-                    $(this).button('loading');
-                    self.getItemRow().trigger('refreshList');
+                    $(this).disableButton();
+                    self.getItemRow().trigger('refreshList', this);
                 });
             }
             self.initRow(elems, self);

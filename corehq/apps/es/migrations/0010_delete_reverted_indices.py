@@ -13,35 +13,35 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        corehq.apps.es.migration_operations.DeleteIndex(
+        corehq.apps.es.migration_operations.DeleteOnlyIfIndexExists(
             name=index_runtime_name("apps-2024-03-09"),
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.DeleteIndex(
+        corehq.apps.es.migration_operations.DeleteOnlyIfIndexExists(
             name=index_runtime_name("case-search-2024-03-09"),
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.DeleteIndex(
+        corehq.apps.es.migration_operations.DeleteOnlyIfIndexExists(
             name=index_runtime_name("cases-2024-03-09"),
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.DeleteIndex(
+        corehq.apps.es.migration_operations.DeleteOnlyIfIndexExists(
             name=index_runtime_name("domains-2024-03-09"),
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.DeleteIndex(
+        corehq.apps.es.migration_operations.DeleteOnlyIfIndexExists(
             name=index_runtime_name("forms-2024-03-09"),
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.DeleteIndex(
+        corehq.apps.es.migration_operations.DeleteOnlyIfIndexExists(
             name=index_runtime_name("groups-2024-03-09"),
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.DeleteIndex(
+        corehq.apps.es.migration_operations.DeleteOnlyIfIndexExists(
             name=index_runtime_name("sms-2024-03-09"),
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.DeleteIndex(
+        corehq.apps.es.migration_operations.DeleteOnlyIfIndexExists(
             name=index_runtime_name("users-2024-03-09"),
             es_versions=[5],
         ),

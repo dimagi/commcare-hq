@@ -290,9 +290,13 @@ class CaseSearchConfig(models.Model):
     sync_cases_on_form_entry = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
+    # Deprecated - this will be removed in a later PR
     fuzzy_prefix_length = models.SmallIntegerField(blank=True, null=True, validators=[
         MinValueValidator(0), MaxValueValidator(10),
     ])
+    # See case_search_bha.py docstring for context
+    index_name = models.CharField(max_length=256, blank=True, default='', help_text=(
+        "Name or alias of alternative index to use for case search"))
 
     objects = GetOrNoneManager()
 

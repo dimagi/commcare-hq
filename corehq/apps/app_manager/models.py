@@ -4187,6 +4187,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     )
     split_screen_dynamic_search = BooleanProperty(default=False)
 
+    persistent_menu = BooleanProperty(default=False)
+    show_breadcrumbs = BooleanProperty(default=True)
+
     @property
     def id(self):
         return self._id

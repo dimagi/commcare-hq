@@ -159,18 +159,18 @@ class SMSSettingsAsyncHandler(MessagingRecipientHandler):
                     'id': u['id'],
                     'text': _("User: {}").format(u['text']),
                 } for u in users
-            ] +
-            [
+            ]
+            + [
                 {
                     'id': g['id'],
                     'text': _("User Group: {}").format(g['text']),
                 } for g in groups
-            ] +
-            [
+            ]
+            + [
                 {
-                    'id': l['id'],
-                    'text': _("Organization: {}").format(l['text']),
-                } for l in locations
+                    'id': loc['id'],
+                    'text': _("Organization: {}").format(loc['text']),
+                } for loc in locations
             ]
         )
 

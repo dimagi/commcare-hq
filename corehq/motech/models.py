@@ -51,6 +51,7 @@ class RequestLogEntry:
     response_status: int
     response_headers: dict
     response_body: str
+    duration: int
 
 
 class ConnectionQuerySet(models.QuerySet):
@@ -94,7 +95,7 @@ class ConnectionSettings(models.Model):
         choices=api_auth_settings_choices,
     )
     username = models.CharField(max_length=255, null=True, blank=True)
-    password = models.CharField(max_length=255, blank=True)
+    password = models.CharField(max_length=1023, blank=True)
     # OAuth 2.0 Password Grant needs username, password, client_id & client_secret
     client_id = models.CharField(max_length=255, null=True, blank=True)
     client_secret = models.CharField(max_length=255, blank=True)
@@ -225,7 +226,7 @@ class ConnectionSettings(models.Model):
                 self.plaintext_password,
             )
         if self.auth_type == APIKEY_AUTH:
-            return ApiKeyAuthManager(self.plaintext_password)
+            return ApiKeyAuthManager(self.username, self.plaintext_password)
         if self.auth_type == OAUTH2_PWD:
             return OAuth2PasswordGrantManager(
                 self.url,
@@ -279,6 +280,12 @@ class ConnectionSettings(models.Model):
         self.is_deleted = True
         self.save()
 
+    def clear_caches(self):
+        try:
+            del self.used_by
+        except AttributeError:
+            pass
+
 
 class RequestLog(models.Model):
     """
@@ -302,6 +309,7 @@ class RequestLog(models.Model):
     response_status = models.IntegerField(null=True, db_index=True)
     response_headers = jsonfield.JSONField(blank=True, null=True)
     response_body = models.TextField(blank=True, null=True)
+    duration = models.IntegerField(null=True)  # milliseconds
 
     class Meta:
         db_table = 'dhis2_jsonapilog'
@@ -321,4 +329,5 @@ class RequestLog(models.Model):
             response_status=log_entry.response_status,
             response_headers=log_entry.response_headers,
             response_body=as_text(log_entry.response_body)[:MAX_REQUEST_LOG_LENGTH],
+            duration=log_entry.duration,
         )

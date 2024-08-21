@@ -19,6 +19,36 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     // https://github.com/Eonasdan/tempus-dominus/discussions/2698
     window.Popper = Popper;
 
+    let createDatePicker = function (el, options) {
+        let picker = new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
+            display: {
+                theme: 'light',
+                components: {
+                    clock: false,
+                },
+            },
+            localization: _.extend(defaultTranslations, {
+                format: 'yyyy-MM-dd',
+            }),
+        }));
+
+        if (options.viewDate) {
+            picker.dates.setValue(options.viewDate);
+        }
+
+        // Since picking a date is a single-click action, hide the picker on date selection
+        picker.subscribe("change.td", function () {
+            picker.hide();
+        });
+
+        $(el).on("error.td", function (e) {
+            picker.dates.setValue(null);
+            e.stopPropagation();
+        });
+
+        return picker;
+    };
+
     // This replaces createBootstrap3DefaultDateRangePicker in hqwebapp/js/daterangepicker.config
     let createDefaultDateRangePicker = function (el) {
         return createDateRangePicker(el, getDateRangeSeparator());
@@ -54,6 +84,57 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 picker.dates.setValue(picker.dates.picked[0], 1);
             }
         });
+
+        return picker;
+    };
+
+    let createTimePicker = function (el, options) {
+        var picker = new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
+            display: {
+                theme: 'light',
+                components: {
+                    calendar: false,
+                },
+            },
+            localization: _.extend(defaultTranslations, {
+                hourCycle: 'h23',
+                format: 'H:mm',
+            }),
+        }));
+
+        if (options.viewDate) {
+            picker.dates.setValue(options.viewDate);
+        }
+
+        $(el).on("error.td", function (e) {
+            picker.dates.setValue(null);
+            e.stopPropagation();
+        });
+
+        return picker;
+    };
+
+    // Combine user-passed TD options with default options.
+    // A shallow extend is insufficient because TD options can be nested.
+    // A truly generic deep extension is complex, so cheat based on what
+    // we know about TD options: it's an object, but at most two levels,
+    // and values are either primitives or objects, no arrays.
+    let _addDefaultOptions = function (options, defaults) {
+        options = options || {};
+        Object.keys(defaults).forEach((key) => {
+            if (!Object.hasOwn(options, key)) {
+                options[key] = defaults[key];
+            } else {
+                if (options[key] && typeof(options[key]) === "object") {
+                    Object.keys(defaults[key]).forEach((innerKey) => {
+                        if (!Object.hasOwn(options[key], innerKey)) {
+                            options[key][innerKey] = defaults[key][innerKey];
+                        }
+                    });
+                }
+            }
+        });
+        return options;
     };
 
     let getDateRangeSeparator = function () {
@@ -91,8 +172,11 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     };
 
     return {
+        createDatePicker: createDatePicker,
         createDateRangePicker: createDateRangePicker,
         createDefaultDateRangePicker: createDefaultDateRangePicker,
+        createTimePicker: createTimePicker,
         getDateRangeSeparator: getDateRangeSeparator,
+        tempusDominus: tempusDominus,
     };
 });

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,37 +1,35 @@
+@@ -1,37 +1,37 @@
 -.make-module-size(@icon-size) {
 +@mixin make-module-size($icon-size) {
    .module-icon-image,
@@ -19,6 +19,8 @@
 -      line-height: @icon-size;
 +      font-size: $icon-size * 0.5;
 +      line-height: $icon-size;
++      max-width: 100%;
++      max-height: 100%;
      }
    }
    .module-column-icon {

@@ -92,8 +92,7 @@ def fuzzy_match(node, context):
     property_name = _property_name_to_string(node.args[0], node)
     value = unwrap_value(node.args[1], context)
 
-    return case_property_query(property_name, value, fuzzy=True,
-                               fuzzy_prefix_length=context.config.fuzzy_prefix_length)
+    return case_property_query(property_name, value, fuzzy=True)
 
 
 def _property_name_to_string(value, node):

@@ -18,8 +18,9 @@
  
 -  .border-top-radius(0);
 -  .border-bottom-radius(0);
+-  .transition(background 1s);
 +  border-radius: 0;
-   .transition(background 1s);
++  transition: background 1s;
  
    &:hover {
 -    background-color: darken(@cc-bg, 5);

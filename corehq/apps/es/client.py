@@ -31,6 +31,7 @@ from corehq.util.metrics import (
 )
 
 from .const import (
+    HQ_CASE_SEARCH_INDEX_CANONICAL_NAME,
     INDEX_CONF_REINDEX,
     INDEX_CONF_STANDARD,
     SCROLL_KEEPALIVE,
@@ -502,7 +503,7 @@ class ElasticManageAdapter(BaseAdapter):
 
     def reindex(
             self, source, dest, wait_for_completion=False,
-            refresh=False, batch_size=1000, requests_per_second=None, copy_doc_ids=True
+            refresh=False, batch_size=1000, requests_per_second=None, copy_doc_ids=True, query=None,
     ):
         """
         Starts the reindex process in elastic search cluster
@@ -517,6 +518,8 @@ class ElasticManageAdapter(BaseAdapter):
                            batches may process more quickly but risk errors if the documents are too
                            large. 1000 is the recommended maximum and elasticsearch default,
                            and can be reduced if you encounter scroll timeouts.
+        :param query: ``dict`` optional parameter to include a term query to filter which documents are included in
+                      the reindex
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
 
@@ -555,6 +558,9 @@ class ElasticManageAdapter(BaseAdapter):
         if requests_per_second:
             reindex_kwargs["requests_per_second"] = requests_per_second
 
+        if query:
+            reindex_body["source"]["query"] = {"term": query}
+
         reindex_info = self._es.reindex(reindex_body, **reindex_kwargs)
         if not wait_for_completion:
             return reindex_info['task']
@@ -578,6 +584,10 @@ class ElasticDocumentAdapter(BaseAdapter):
 
     # Name of the index as referred in HQ world
     canonical_name = None
+
+    # For adapter of sub indices,
+    # this property is the cname of the parent index
+    parent_index_cname = None
 
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
@@ -736,7 +746,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         try:
             result = self._search(query, **kw)
             self._fix_hits_in_result(result)
-            self._report_and_fail_on_shard_failures(result)
+            self._report_and_fail_on_shard_failures(result, {"index": self.canonical_name})
         except ElasticsearchException as exc:
             raise ESError(exc)
         return result
@@ -777,7 +787,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         # TODO: standardize all result collections returned by this class.
         try:
             for result in self._scroll(query, scroll, size):
-                self._report_and_fail_on_shard_failures(result)
+                self._report_and_fail_on_shard_failures(result, {"index": self.canonical_name})
                 self._fix_hits_in_result(result)
                 for hit in result["hits"]["hits"]:
                     yield hit
@@ -1081,7 +1091,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             self._fix_hit(hit)
 
     @staticmethod
-    def _report_and_fail_on_shard_failures(result):
+    def _report_and_fail_on_shard_failures(result, tags):
         """
         Raise an ESShardFailure if there are shard failures in a search result
         (JSON) and report to datadog.
@@ -1094,7 +1104,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         if not isinstance(result, dict):
             raise ValueError(f"invalid Elastic result object: {result}")
         if result.get("_shards", {}).get("failed"):
-            metrics_counter("commcare.es.partial_results")
+            metrics_counter("commcare.es.partial_results", tags=tags)
             # Example message:
             #   "_shards: {"successful": 4, "failed": 1, "total": 5}"
             shard_info = json.dumps(result["_shards"])
@@ -1251,6 +1261,12 @@ class ElasticMultiplexAdapter(BaseAdapter):
     def search(self, *args, **kw):
         return self.primary.search(*args, **kw)
 
+    def _get_case_search_sub_index_docs(self, action):
+        from corehq.apps.es.case_search import multiplex_to_adapter
+        if self.canonical_name == HQ_CASE_SEARCH_INDEX_CANONICAL_NAME:
+            sub_index_adapter = multiplex_to_adapter(self.primary._get_domain_from_doc(action.doc))
+            return sub_index_adapter._render_bulk_action(action) if sub_index_adapter else None
+
     # Elastic index write methods (multiplexed between both adapters)
     def bulk(self, actions, refresh=False, raise_errors=True):
         """Apply bulk actions on the primary and secondary.
@@ -1285,6 +1301,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
                     )
                 else:
                     payload.append(self.secondary._render_bulk_action(action))
+                    sub_index_docs = self._get_case_search_sub_index_docs(action)
+                    if sub_index_docs:
+                        payload.append(sub_index_docs)
+
             _, chunk_errs = bulk(self._es, payload, chunk_size=len(payload),
                                  refresh=refresh, raise_on_error=False,
                                  raise_on_exception=raise_errors)

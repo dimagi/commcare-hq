@@ -29,7 +29,9 @@ class Command(BaseCommand):
                             assigned_location_ids=list(
                                 invitation.assigned_locations.all().values_list('location_id', flat=True)),
                             program_id=invitation.program,
-                            profile=invitation.profile)
+                            profile=invitation.profile,
+                            tableau_role=invitation.tableau_role,
+                            tableau_group_ids=invitation.tableau_group_ids)
         invitation.is_accepted = True
         invitation.save()
         print("Operation completed")

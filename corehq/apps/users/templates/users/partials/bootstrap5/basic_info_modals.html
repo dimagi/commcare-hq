@@ -3,13 +3,14 @@
 {% load i18n %}
 
 {% for phone_number in phonenumbers %}
-  <div id="delete_phonenumber_{{ forloop.counter }}" class="modal fade">
+  <div id="delete_phonenumber_{{ forloop.counter }}" class="modal fade" aria-labelledby="delete-phonenumber-modal-label">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-          <h3 class="modal-title">{% blocktrans with phone_number.number as number %}Delete +{{ number }}
-            ?{% endblocktrans %}</h3>
+          <h4 class="modal-title" id="delete-phonenumber-modal-label">
+            {% blocktrans with phone_number.number as number %}Delete +{{ number }} ?{% endblocktrans %}
+          </h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
         </div>
         <form class="form form-horizontal disable-on-submit"
               name="delete_phone_number"
@@ -35,12 +36,14 @@
     </div>
   </div>
   {% if user_type == "mobile" and phone_number.status == "pending" %}
-    <div id="reverify_{{phone_number.number|urlencode}}" class="modal fade">
+    <div id="reverify_{{phone_number.number|urlencode}}" class="modal fade" aria-labelledby="reverify-phonenumber-modal-label">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title">{% blocktrans with phone_number.number as number %}Verify +{{ number }}?{% endblocktrans %}</h4>
+            <h4 class="modal-title" id="reverify-phonenumber-modal-label">
+              {% blocktrans with phone_number.number as number %}Verify +{{ number }}?{% endblocktrans %}
+            </h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
           </div>
           <form class="form form-horizontal disable-on-submit"
                 name="reverify_phone_number"

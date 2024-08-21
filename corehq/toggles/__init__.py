@@ -390,10 +390,13 @@ class PredictablyRandomToggle(StaticToggle):
             return False
         elif namespace is not Ellipsis and namespace not in self.namespaces:
             return False
-        return (
-            (item and deterministic_random(self._get_identifier(item)) < self.randomness)
-            or super(PredictablyRandomToggle, self).enabled(item, namespace)
-        )
+        elif item and super().enabled(f'!{item}', namespace):
+            # if there is an explicit entry for the item preceded by '!', always disable
+            return False
+        elif item and deterministic_random(self._get_identifier(item)) < self.randomness:
+            return True
+        else:
+            return super().enabled(item, namespace)
 
 
 class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
@@ -1026,17 +1029,6 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
-NO_SCROLL_IN_CASE_SEARCH = StaticToggle(
-    'no_scroll_in_case_search',
-    "Do not use scroll queries in case search elasticsearch queries",
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    This toggle replaces scroll queries in case search ancestor functions with
-    normal search queries.
-    """
-)
-
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -1149,6 +1141,20 @@ HIDE_SYNC_BUTTON = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+PAUSE_DATA_FORWARDING = StaticToggle(
+    'pause_data_forwarding',
+    "Pause all data forwarding from this domain",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+PERSISTENT_MENU_SETTING = StaticToggle(
+    "persistent_menu_setting",
+    "Show Persistent Menu option in Web Apps settings",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 def _ensure_search_index_is_enabled(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
@@ -1175,6 +1181,14 @@ EXPLORE_CASE_DATA = StaticToggle(
     'the Case List Explorer toggle or doing a manual migration.\n\n'
     'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
     'This will be deprecated once the Feature Preview is in full swing.',
+)
+
+SAAS_PROTOTYPE = StaticToggle(
+    'saas_prototype',
+    'Use allowed to view SaaS prototypes',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+    description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
@@ -1710,8 +1724,8 @@ MOBILE_RECOVERY_MEASURES = StaticToggle(
 
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
-    'ICDS: Used for ICDS emergencies when UCR sync is killing the DB',
-    TAG_CUSTOM,
+    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description='Prevents mobile UCRs from being generated or included in the sync payload',
 )
@@ -1773,6 +1787,13 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'Send logs to sumologic',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_OTHER],
+)
+
+BLOCK_SUMOLOGIC_LOGS = StaticToggle(
+    'block_sumologic_logs',
+    'Block sending logs to sumologic per domain',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 TARGET_COMMCARE_FLAVOR = StaticToggle(
@@ -1944,6 +1965,31 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     When an individual project is having problems with rate limiting,
     use this toggle to lift the restriction for them on a temporary basis,
     just to unblock them while we sort out the conversation with the client.
+    """
+)
+
+RATE_LIMIT_REPEATERS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_repeaters',
+    'Apply rate limiting to data forwarding (repeaters)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Rate limits are based on aggregate time spent waiting on data forwarding responses
+    within tasks for each project within the last second, minute, hour, day, and week windows.
+    Project allowances are based on the number of mobile workers in the project or subscription.
+    Rate limits are only applied (to any project) when global thresholds are surpassed.
+    The specific per-domain and global thresholds can be dynamically updated within the Django Admin.
+    """
+)
+
+RATE_LIMIT_REPEATER_ATTEMPTS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_repeater_attempts',
+    'Apply rate limiting to attempts for data forwarding (repeaters)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    In addition to the rate limits based on time spent waiting, these rate limits ensure a project
+    is limited to how many records they can attempt to forward in a given time window.
     """
 )
 
@@ -2256,6 +2302,13 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
 )
 
+ARCGIS_INTEGRATION = StaticToggle(
+    'arcgis_integration',
+    'Enable the ArcGIS Form Repeater integration. Used for forwarding form data to an ArcGIS account.',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 GENERIC_INBOUND_API = StaticToggle(
     'configurable_api',
     'Generic inbound APIs',
@@ -2432,11 +2485,9 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
 EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
     'embed_tableau_report_by_user',
     'Use a Tableau username "HQ/{username}" to embed reports instead of "HQ/{role name}"',
-    TAG_INTERNAL,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
-    description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
-                'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
-                'to Tableau to get the embedded report.',
+    description='This flag is now deprecated and will be removed.',
     parent_toggles=[EMBEDDED_TABLEAU]
 )
 
@@ -2457,8 +2508,15 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBED_TABLEAU_REPORT_BY_USER],
+    parent_toggles=[EMBEDDED_TABLEAU],
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
+)
+
+RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
+    'restrict_user_profile_assignment',
+    'Limit which user profiles a web user can assign to other web users and mobile workers.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 
@@ -2762,7 +2820,8 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
         For mobile users, enables bulk deletion page and bulk lookup page.
         For web users, enables filtered download page.
     """,
-    help_link='https://confluence.dimagi.com/display/commcarepublic/Bulk+User+Management'
+    help_link=('https://dimagi.atlassian.net/wiki/spaces/'
+               'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
@@ -2858,7 +2917,29 @@ USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',
     label='Restrict data source rebuilt from UI',
-    tag=TAG_SOLUTIONS,
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
+)
+
+APP_TESTING = StaticToggle(
+    slug='app_testing',
+    label='App Testing UI',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=''
+)
+
+SMART_LINKS_FOR_WEB_USERS = StaticToggle(
+    slug='smart_links_for_web_users',
+    label='USH: Allow web users to use smart links without logging in as before',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+LOCATION_HAS_USERS = StaticToggle(
+    slug='location_has_users',
+    label='USH Dev: Allows marking whether a location should have users assigned or not.',
+    tag=TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
 )

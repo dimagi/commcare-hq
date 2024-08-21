@@ -4,7 +4,6 @@ from corehq.apps.cloudcare.views import (
     EditCloudcareUserPermissionsView,
     FormplayerMain,
     FormplayerMainPreview,
-    FormplayerPreviewSingleApp,
     LoginAsUsers,
     PreviewAppView,
     ReadableQuestions,
@@ -18,11 +17,6 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 app_urls = [
     url(r'^v2/$', FormplayerMain.as_view(), name=FormplayerMain.urlname),
     url(r'^v2/preview/$', FormplayerMainPreview.as_view(), name=FormplayerMainPreview.urlname),
-    url(
-        r'^v2/preview/(?P<app_id>[\w-]+)/$',
-        FormplayerPreviewSingleApp.as_view(),
-        name=FormplayerPreviewSingleApp.urlname,
-    ),
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
     url(r'^report_formplayer_error', report_formplayer_error, name='report_formplayer_error'),
     url(r'^report_sentry_error', report_sentry_error, name='report_sentry_error'),

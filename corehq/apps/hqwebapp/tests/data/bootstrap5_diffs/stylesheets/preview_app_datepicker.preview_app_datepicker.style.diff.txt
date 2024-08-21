@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,17 +1,17 @@
+@@ -1,17 +1,18 @@
 -@datepicker-width: 247px;
 -@datepicker-width-tablet: 447px;
 -@datepicker-height: 410px;
@@ -10,7 +10,9 @@
 +$datepicker-height: 410px;
 +$datepicker-height-tablet: 565px;
  
- .bootstrap-datetimepicker-widget.dropdown-menu {
+-.bootstrap-datetimepicker-widget.dropdown-menu {
++.tempus-dominus-widget {
++  transform: none !important;
    position: fixed;
    top: 30px !important;
    left: 0px !important;
@@ -24,12 +26,14 @@
    margin-left: 2px !important;
    margin-right: 2px !important;
  
-@@ -21,6 +21,6 @@
+@@ -20,7 +21,7 @@
+   }
  }
  
- .preview-tablet-mode .bootstrap-datetimepicker-widget.dropdown-menu {
+-.preview-tablet-mode .bootstrap-datetimepicker-widget.dropdown-menu {
 -  width: @datepicker-width-tablet !important;
 -  min-height: @datepicker-height-tablet !important;
++.preview-tablet-mode .tempus-dominus-widget {
 +  width: $datepicker-width-tablet !important;
 +  min-height: $datepicker-height-tablet !important;
  }

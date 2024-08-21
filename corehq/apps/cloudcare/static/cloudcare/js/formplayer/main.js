@@ -21,24 +21,26 @@ hqDefine("cloudcare/js/formplayer/main", [
             domain: initialPageData.get('domain'),
             formplayer_url: initialPageData.get('formplayer_url'),
             debuggerEnabled: initialPageData.get('debugger_enabled'),
-            singleAppMode: initialPageData.get('single_app_mode'),
+            singleAppMode: false,
             environment: initialPageData.get('environment'),
         };
-        FormplayerFrontEnd.start(options);
+        FormplayerFrontEnd.getXSRF(options).then(() =>
+            FormplayerFrontEnd.start(options)
+        );
 
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),
             $trialBanner = $('#cta-trial-banner');
-        var hideMenu = function () {
+        var hideMainMenu = function () {
             $menuToggle.data('minimized', 'yes');
-            $navbar.hide();
-            $trialBanner.hide();
+            $navbar.addClass("d-none");
+            $trialBanner.addClass("d-none");
             $menuToggle.text(gettext('Show Full Menu'));
         };
-        var showMenu = function () {
+        var showMainMenu = function () {
             $menuToggle.data('minimized', 'no');
-            $navbar.show();
-            $trialBanner.show();
+            $navbar.removeClass("d-none");
+            $trialBanner.removeClass("d-none");
             $navbar.css('margin-top', '');
             $menuToggle.text(gettext('Hide Full Menu'));
         };
@@ -46,15 +48,15 @@ hqDefine("cloudcare/js/formplayer/main", [
         // Show the top HQ nav for new users, so they know how to get back to HQ,
         // but hide it for more mature users so it's out of the way
         if (initialPageData.get("domain_is_on_trial")) {
-            showMenu();
+            showMainMenu();
         } else {
-            hideMenu();
+            hideMainMenu();
         }
         $menuToggle.click(function (e) {
             if ($menuToggle.data('minimized') === 'yes') {
-                showMenu();
+                showMainMenu();
             } else {
-                hideMenu();
+                hideMainMenu();
             }
             e.preventDefault();
         });

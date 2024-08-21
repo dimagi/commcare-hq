@@ -40,6 +40,9 @@
 
   .sticky-submit {
     position: sticky;
+    /* Puts the anchored submit button in front of form elements that use bootstrap's .form-control,
+       which adds z-index of 2 (3 when focused) */
+    z-index: @zindex-formplayer-anchored-submit;
   }
 
   // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
@@ -100,20 +103,6 @@
     }
   }
 
-  .stripe-repeats {
-    > .row, .panel-body > .children > .row {
-      &:nth-of-type(odd) {
-        background-color: @table-bg-accent;
-      }
-      &:nth-of-type(even) {
-        background-color: white;
-      }
-      &:hover {
-        background-color: @table-bg-hover;
-      }
-    }
-  }
-
   .group-border {
     border: solid 1px @cc-neutral-mid;
     border-radius: 8px;
@@ -134,6 +123,13 @@
     .webapp-markdown-output img {
       height: 1em;
       vertical-align: baseline;
+    }
+    .btn {
+      background-color: white;
+
+      &:hover {
+        background-color: red;
+      }
     }
   }
 

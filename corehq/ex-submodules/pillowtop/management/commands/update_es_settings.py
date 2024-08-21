@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         noinput = options.pop('noinput')
-        es_indices = list(get_all_expected_es_indices())
+        es_indices = get_all_expected_es_indices()
 
         to_update = []
 

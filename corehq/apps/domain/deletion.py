@@ -70,7 +70,8 @@ class CustomDeletion(BaseDeletion):
 
 class ModelDeletion(BaseDeletion):
 
-    def __init__(self, app_label, model_name, domain_filter_kwarg, extra_models=None, audit_action=None):
+    def __init__(self, app_label, model_name, domain_filter_kwarg,
+                 extra_models=None, manager="objects", audit_action=None):
         """Deletes all records of an app model matching the provided domain
         filter.
 
@@ -80,6 +81,8 @@ class ModelDeletion(BaseDeletion):
         :param extra_models: (optional) a collection of other models in the same
             app which will be deleted along with ``model_name`` via cascaded deletion.
             The ``extra_models`` is used only for auditing purposes.
+        :param manager: (optional) manager to use for delete operation.
+            Default: ``objects``.
         :param audit_action: (optional) an audit action to be provided as a
             keyword argument when deleting records (e.g.
             ``<QuerySet>.delete(audit_action=audit_action)``). Necessary for
@@ -92,10 +95,12 @@ class ModelDeletion(BaseDeletion):
         super(ModelDeletion, self).__init__(app_label, models)
         self.domain_filter_kwarg = domain_filter_kwarg
         self.model_name = model_name
+        self.manager_name = manager
         self.delete_kwargs = {} if audit_action is None else {"audit_action": audit_action}
 
-    def get_model_class(self):
-        return apps.get_model(self.app_label, self.model_name)
+    def get_model_manager(self):
+        model = apps.get_model(self.app_label, self.model_name)
+        return getattr(model, self.manager_name)
 
     def execute(self, domain_name):
         if not domain_name:
@@ -105,26 +110,26 @@ class ModelDeletion(BaseDeletion):
             # in some of the SMS models).
             raise RuntimeError("Expected a valid domain name")
         if self.is_app_installed():
-            model = self.get_model_class()
-            model.objects.filter(**{self.domain_filter_kwarg: domain_name}).delete(**self.delete_kwargs)
+            manager = self.get_model_manager()
+            manager.filter(**{self.domain_filter_kwarg: domain_name}).delete(**self.delete_kwargs)
 
 
 class PartitionedModelDeletion(ModelDeletion):
     def execute(self, domain_name):
         if not self.is_app_installed():
             return
-        model = self.get_model_class()
+        manager = self.get_model_manager()
         for db_name in get_db_aliases_for_partitioned_query():
-            model.objects.using(db_name).filter(**{self.domain_filter_kwarg: domain_name}).delete()
+            manager.using(db_name).filter(**{self.domain_filter_kwarg: domain_name}).delete()
 
 
 class DjangoUserRelatedModelDeletion(ModelDeletion):
     def execute(self, domain_name):
         if not self.is_app_installed():
             return
-        model = self.get_model_class()
+        manager = self.get_model_manager()
         filter_kwarg = f"{self.domain_filter_kwarg}__contains"
-        total, counts = model.objects.filter(**{filter_kwarg: f"@{domain_name}.commcarehq.org"}).delete()
+        total, counts = manager.filter(**{filter_kwarg: f"@{domain_name}.commcarehq.org"}).delete()
         logger.info("Deleted %s %s", total, self.model_name)
         logger.info(counts)
 
@@ -458,8 +463,8 @@ DOMAIN_DELETE_OPERATIONS = [
         'FHIRImportResourceType', 'ResourceTypeRelationship',
         'FHIRImportResourceProperty',
     ]),
-    ModelDeletion('repeaters', 'Repeater', 'domain'),
-    ModelDeletion('motech', 'ConnectionSettings', 'domain'),
+    ModelDeletion('repeaters', 'Repeater', 'domain', manager='all_objects'),
+    ModelDeletion('motech', 'ConnectionSettings', 'domain', manager='all_objects'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),
     ModelDeletion('fixtures', 'LookupTable', 'domain'),

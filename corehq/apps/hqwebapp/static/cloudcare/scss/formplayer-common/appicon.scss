@@ -68,7 +68,7 @@ $appicon-icon-height-xs: $appicon-height-xs - 30px;
   margin-bottom: 15px;
 
   border-radius: 5px;
-  .transition(background 1s);
+  transition: background 1s;
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.45);
 
   .appicon-title {
@@ -95,7 +95,7 @@ $appicon-icon-height-xs: $appicon-height-xs - 30px;
     box-sizing: border-box;
     top: 0;
     left: 50%;
-    .transition(color 1s);
+    transition: color 1s;
   }
 
   &:hover {

@@ -28,7 +28,7 @@
  }
  
  .no-border {
-@@ -81,11 +82,6 @@
+@@ -81,11 +82,10 @@
    }
  }
  
@@ -39,5 +39,8 @@
 -
  a {
      cursor: pointer;
--}
+ }
++
++button {
++  font-weight: bold !important; // to meet WCAG AA guidelines
 +}

@@ -49,7 +49,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
 from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
@@ -145,8 +145,9 @@ class DefaultMySettingsView(BaseMyAccountView):
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = gettext_lazy("My Information")
-    template_name = 'settings/bootstrap3/edit_my_account.html'
+    template_name = 'settings/edit_my_account.html'
 
+    @use_bootstrap5
     @two_factor_exempt
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -618,9 +619,10 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("API Keys")
     urlname = "user_api_keys"
 
-    template_name = "settings/bootstrap3/user_api_keys.html"
+    template_name = "settings/user_api_keys.html"
 
-    @use_jquery_ui  # for datepicker
+    @use_bootstrap5
+    @use_tempusdominus
     def dispatch(self, request, *args, **kwargs):
         return super(ApiKeyView, self).dispatch(request, *args, **kwargs)
 
@@ -755,7 +757,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
-    create_item_form_class = "form form-horizontal"
+    create_item_form_class = "form"
 
     def get_user_timezone(self):
         return ZoneInfo(self.request.couch_user.get_time_zone() or 'UTC')

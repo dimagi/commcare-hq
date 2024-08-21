@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine('users/js/edit_commcare_user', [
     'jquery',
     'knockout',
@@ -151,6 +153,7 @@ hqDefine('users/js/edit_commcare_user', [
                     profiles: initialPageData.get('custom_fields_profiles'),
                     profile_slug: initialPageData.get('custom_fields_profile_slug'),
                     slugs: initialPageData.get('custom_fields_slugs'),
+                    can_edit_original_profile: initialPageData.get('can_edit_original_profile'),
                 }),
             };
         });

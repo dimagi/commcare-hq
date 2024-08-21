@@ -22,7 +22,7 @@ $preview-navbar-height: 40px;
     color: white;
     line-height: $preview-navbar-height;
     padding-right: 19px;
-    .transition(background $transition-speed);
+    transition: background $transition-speed;
 
     &:link, &:focus, &:visited, &:hover {
       color: white;

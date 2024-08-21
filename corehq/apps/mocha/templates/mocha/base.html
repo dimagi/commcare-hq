@@ -11,14 +11,6 @@
     <!-- Mocha and test-only dependencies -->
     <link href="{% static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"/>
 
-    <style type="text/css">
-      /* Override bootstrap's .progress styles for the Mocha progress widget. */
-      #mocha-stats .progress {
-        height: auto;
-        background-color: transparent;
-        box-shadow: none;
-      }
-    </style>
     <script>
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>

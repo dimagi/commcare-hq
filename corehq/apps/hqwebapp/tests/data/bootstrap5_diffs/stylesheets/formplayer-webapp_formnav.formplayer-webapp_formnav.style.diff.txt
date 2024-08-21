@@ -1,8 +1,11 @@
 --- 
 +++ 
-@@ -19,6 +19,5 @@
+@@ -17,8 +17,7 @@
+   float: right;
+   font-size: 1.9rem;
  
-   .transition(all 1s);
+-  .transition(all 1s);
++  transition: all 1s;
  
 -  .border-top-radius(0);
 -  .border-bottom-radius(0);
