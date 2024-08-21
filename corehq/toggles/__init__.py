@@ -2903,7 +2903,7 @@ SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
 
 USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
     'ush_restore_file_location_case_sync_restriction',
-    'USH: Limit the location-owned cases a user\'s restore file, and allow marking whether a '
+    'USH: Limit the location-owned cases in a user\'s restore file, and allow marking whether a '
     'location can have users assigned or not.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
