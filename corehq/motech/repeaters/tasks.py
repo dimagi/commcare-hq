@@ -138,7 +138,7 @@ def retry_process_repeat_record(repeat_record_id, domain):
 
 
 def _process_repeat_record(repeat_record):
-    request_duration = None
+    request_duration = action = None
     with TimingContext('process_repeat_record') as timer:
         if repeat_record.state == State.Cancelled:
             return
@@ -182,18 +182,19 @@ def _process_repeat_record(repeat_record):
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return
 
-    processing_time = timer.duration - request_duration if request_duration else timer.duration
-    metrics_histogram(
-        'commcare.repeaters.repeat_record_processing.timing',
-        processing_time * 1000,
-        buckets=(100, 500, 1000, 5000),
-        bucket_tag='duration',
-        bucket_unit='ms',
-        tags={
-            'domain': repeat_record.domain,
-            'action': action,
-        },
-    )
+    if action:
+        processing_time = timer.duration - request_duration if request_duration else timer.duration
+        metrics_histogram(
+            'commcare.repeaters.repeat_record_processing.timing',
+            processing_time * 1000,
+            buckets=(100, 500, 1000, 5000),
+            bucket_tag='duration',
+            bucket_unit='ms',
+            tags={
+                'domain': repeat_record.domain,
+                'action': action,
+            },
+        )
 
 
 metrics_gauge_task(
