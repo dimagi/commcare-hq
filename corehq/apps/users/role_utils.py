@@ -1,4 +1,5 @@
 from corehq.apps.users.models import UserRole, HqPermissions
+from corehq.apps.users.permissions import COMMCARE_ANALYTICS_USER_ROLES
 
 
 class UserRolePresets:
@@ -126,3 +127,21 @@ def enable_attendance_coordinator_role_for_domain(domain):
     if role.is_archived:
         role.is_archived = False
         role.save()
+
+
+def get_commcare_analytics_access_for_user_domain(couch_user, domain):
+    domain_membership = couch_user.get_domain_membership(domain)
+    is_admin = domain_membership.is_admin
+
+    domain_role_permissions = domain_membership.role.permissions
+    permissions = {
+        "can_edit": is_admin or domain_role_permissions.edit_commcare_analytics,
+        "can_view": is_admin or domain_role_permissions.view_commcare_analytics,
+    }
+    cca_roles = domain_role_permissions.commcare_analytics_roles_list
+    assign_all_roles = domain_role_permissions.commcare_analytics_roles or is_admin
+
+    return {
+        "permissions": permissions,
+        "roles": cca_roles if not assign_all_roles else COMMCARE_ANALYTICS_USER_ROLES,
+    }
