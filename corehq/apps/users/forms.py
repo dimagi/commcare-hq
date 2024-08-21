@@ -1129,6 +1129,7 @@ class PrimaryLocationWidget(forms.Widget):
                 initial_data = {
                     'id': loc.location_id,
                     'text': text,
+                    'tooltip': loc.get_path_display(),
                 }
             except SQLLocation.DoesNotExist:
                 pass
