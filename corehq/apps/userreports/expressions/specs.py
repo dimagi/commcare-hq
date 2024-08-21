@@ -768,7 +768,7 @@ class RelatedCaseExpressionSpec(JsonObject):
         case_id_expression=None,
         external_id_expression=None,
     ):
-        if not (case_id_expression or external_id_expression):
+        if bool(case_id_expression) == bool(external_id_expression):
             raise BadSpecError(
                 'RelatedCaseExpression must have either case_id_expression '
                 'or external_id_expression'

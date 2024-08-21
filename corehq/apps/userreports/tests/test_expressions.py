@@ -1398,6 +1398,36 @@ class RelatedCaseExpressionTest(SimpleTestCase):
         my_context = EvaluationContext(my_case, 0)
         self.assertEqual(ext_id_expression(my_case, my_context), 'foo')
 
+    def test_both_ids_spec(self):
+        both_ids_spec = {
+            'type': 'related_case',
+            'case_id_expression': {
+                'type': 'property_name',
+                'property_name': 'parent_id'
+            },
+            'external_id_expression': {
+                'type': 'property_name',
+                'property_name': 'parent_external_id'
+            },
+            'value_expression': {
+                'type': 'property_name',
+                'property_name': 'related_property'
+            }
+        }
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec(both_ids_spec)
+
+    def test_neither_ids_spec(self):
+        neither_ids_spec = {
+            'type': 'related_case',
+            'value_expression': {
+                'type': 'property_name',
+                'property_name': 'related_property'
+            }
+        }
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec(neither_ids_spec)
+
     def test_related_case_id_not_found(self):
         case_id_expression = ExpressionFactory.from_spec(self.case_id_expr_spec)
         my_case = {
