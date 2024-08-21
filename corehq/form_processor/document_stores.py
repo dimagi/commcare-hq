@@ -65,11 +65,14 @@ class CaseDocumentStore(DocumentStore):
             if external_id is None:
                 return CommCareCase.objects.get_case(doc_id, self.domain).to_json()
             else:
-                return CommCareCase.objects.get_case_by_external_id(
+                case = CommCareCase.objects.get_case_by_external_id(
                     self.domain,
                     external_id,
                     raise_multiple=True
-                ).to_json()
+                )
+                if case:
+                    return case.to_json()
+                raise CaseNotFound(f'external_id: {external_id!r}')
         except (CaseNotFound, CommCareCase.MultipleObjectsReturned) as e:
             raise DocumentNotFoundError(e)
 
