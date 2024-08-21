@@ -124,6 +124,7 @@ from .const import (
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
+    PAYLOAD_TIMER,
     State,
 )
 from .exceptions import RequestConnectionError, UnknownRepeater
@@ -431,8 +432,13 @@ class Repeater(RepeaterSuperProxy):
         with timing_context(ENDPOINT_TIMER) if timing_context else nullcontext():
             return self.send_request(repeat_record, payload)
 
+    def _time_get_payload(self, repeat_record, payload, timing_context):
+        with timing_context(PAYLOAD_TIMER) if timing_context else nullcontext():
+            return self.get_payload(repeat_record)
+
     def fire_for_record(self, repeat_record, timing_context=None):
-        payload = self.get_payload(repeat_record)
+        payload = self._time_get_payload(repeat_record)
+
         try:
             response = self._time_request(repeat_record, payload, timing_context)
         except (Timeout, ConnectionError) as error:

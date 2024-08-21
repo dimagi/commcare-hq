@@ -14,6 +14,7 @@ CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
 ENDPOINT_TIMER = 'endpoint_timer'
+PAYLOAD_TIMER = 'payload_timer'
 # Number of attempts to an online endpoint before cancelling payload
 MAX_ATTEMPTS = 3
 # Number of exponential backoff attempts to an offline endpoint

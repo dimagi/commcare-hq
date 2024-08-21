@@ -27,6 +27,7 @@ from .const import (
     CHECK_REPEATERS_PARTITION_COUNT,
     ENDPOINT_TIMER,
     MAX_RETRY_WAIT,
+    PAYLOAD_TIMER,
     RATE_LIMITER_DELAY_RANGE,
     State,
 )
@@ -160,13 +161,17 @@ def _process_repeat_record(repeat_record):
                 # postpone repeat record by MAX_RETRY_WAIT so that it is not fetched
                 # in the next check to process repeat records, which helps to avoid
                 # clogging the queue
-                repeat_record.postpone_by(MAX_RETRY_WAIT)
                 action = 'paused'
+                with TimingContext() as postpone_timer:
+                    repeat_record.postpone_by(MAX_RETRY_WAIT)
+                _report_timing(repeat_record, 'postpone', action, postpone_timer.duration)
             elif rate_limit_repeater(repeat_record.domain):
                 # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
                 # with the intent of avoiding clumping and spreading load
-                repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
                 action = 'rate_limited'
+                with TimingContext() as postpone_timer:
+                    repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
+                _report_timing(repeat_record, 'postpone', action, postpone_timer.duration)
             elif repeat_record.is_queued():
                 report_repeater_attempt(repeat_record.domain)
                 with timer('fire_timing') as fire_timer:
@@ -174,23 +179,39 @@ def _process_repeat_record(repeat_record):
                 # round up to the nearest millisecond, meaning always at least 1ms
                 report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
                 action = 'attempted'
+
+                # report time spent making request
                 request_duration = [
                     sub.duration for sub in fire_timer.to_list(exclude_root=True) if sub.name == ENDPOINT_TIMER
                 ][0]
+                _report_timing(repeat_record, 'request', action, request_duration)
+
+                # report time spent getting payload
+                payload_duration = [
+                    sub.duration for sub in fire_timer.to_list(exclude_root=True) if sub.name == PAYLOAD_TIMER
+                ][0]
+                _report_timing(repeat_record, 'payload', action, payload_duration)
         except Exception:
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return
 
     processing_time = timer.duration - request_duration if request_duration else timer.duration
+    # rpeort time spent excluding waiting for request
+    _report_timing(repeat_record, 'processing', action, processing_time)
+
+
+def _report_timing(repeat_record, segment, action, duration):
     metrics_histogram(
         'commcare.repeaters.repeat_record_processing.timing',
-        processing_time * 1000,
+        duration * 1000,
         buckets=(100, 500, 1000, 5000),
         bucket_tag='duration',
         bucket_unit='ms',
         tags={
             'domain': repeat_record.domain,
+            'segment': segment,
             'action': action,
+            'repeater_type': repeat_record.repeater_type,
         },
     )
 
