@@ -168,14 +168,13 @@ class CreateIndex(BaseElasticOperation):
         If cluster health gets to red state after index creation,
         this method explains why primary shards were not allocated
         """
-        unassigned_shards = manager.cluster_allocation_explain()
-        if unassigned_shards:
-            for shard in unassigned_shards:
-                log.error(
-                    f"""Unable to assign Shard {shard['shard']} of Index {shard['index']}
-                    {shard['rejection_explanation']}
-                    """
-                )
+        unassigned_shard = manager.cluster_allocation_explain()
+        if unassigned_shard:
+            log.error(
+                f"""Unable to assign Shard {unassigned_shard['shard']} of Index
+                {unassigned_shard['index']} {unassigned_shard['rejection_explanation']}
+                """
+            )
 
     def reverse_run(self, *args, **kw):
         if self.es_versions and self._should_skip_operation(self.es_versions):

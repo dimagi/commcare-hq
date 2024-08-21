@@ -301,7 +301,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
     def test_cluster_allocation_explain_on_normal_cluster(self):
         allocation = self.adapter.cluster_allocation_explain()
-        self.assertEqual(allocation, {'unassigned_shards': []})
+        self.assertEqual(allocation, {'unassigned_shard': None})
 
     def test_cluster_allocation_explain_on_unassigned_shards(self):
         test_index_name = 'test_index_for_cluster_allocation'
@@ -309,12 +309,15 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.addCleanup(self.adapter.index_delete, test_index_name)
 
         # This will create unassigned shards because tests and local setup
-        # will always h
-        self.adapter.index_set_replicas(test_index_name, 5)
-        info = self.adapter.cluster_allocation_explain()['unassigned_shards'][0]
+        # will always have 1 host and multiple replicas are
+        # not assigned on same host.
+        self.adapter.index_set_replicas(test_index_name, 4)
+        info = self.adapter.cluster_allocation_explain()['unassigned_shard']
         self.assertEqual(info['index'], test_index_name)
         self.assertEqual(info['primary'], False)
-        self.assertEqual(info['shard'], 2)
+        # can be any shard from the index, so checking if it is a number
+        assert isinstance(info['shard'], int), f"Expected a number, but got {type(info['shard'])}"
+
         self.assertTrue(len(info['rejection_explanation']) != 0)
 
     def test__parse_watermark_to_percentage_from_absolute_values(self):

@@ -137,7 +137,7 @@ class ElasticManageAdapter(BaseAdapter):
             # RequestError is raised if there are no un-assigned shards
             reason = err.info['error']['reason']
             if 'unable to find any unassigned shards to explain' in reason:
-                return {'unassigned_shards': []}
+                return {'unassigned_shard': None}
             raise err
 
     def _parse_cluster_allocation_info(self, allocation_info):
@@ -163,7 +163,7 @@ class ElasticManageAdapter(BaseAdapter):
                     })
             shard_info["rejection_explanation"].append(node_info)
         return {
-            "unassigned_shards": [shard_info]
+            "unassigned_shard": shard_info
         }
 
     def cluster_routing(self, *, enabled):
