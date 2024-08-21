@@ -64,6 +64,9 @@ class CreateIndex(BaseElasticOperation):
             ``mapping._meta.comment`` property.
         :param es_versions: Optional (default []) list of supported ES versions.
             If specified, the mappings will only be applied on those ES versions.
+        :param creation_checks: Optional (default False) set to ``True`` checks regarding
+            index creation should be performed which involves if primary shards are allocated
+            and if the space available is sufficient i.e below watermark settings
         """
         super().__init__(self.run, self.reverse_run)
         self.name = name
