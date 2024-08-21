@@ -16,6 +16,8 @@ from corehq.apps.es.index.settings import render_index_tuning_settings
 
 log = logging.getLogger(__name__)
 
+DEFAULT_DISK_USAGE_WATERMARK = "85%"
+
 
 class BaseElasticOperation(RunPython):
     """Perform an operation for an Elasticsearch index."""
@@ -125,7 +127,7 @@ class CreateIndex(BaseElasticOperation):
         Raises Exception and fails if no data node has available disk space
         """
         settings = manager.cluster_get_settings()['transient']
-        low_watermark = settings.get("cluster.routing.allocation.disk.watermark.low", "85%")
+        low_watermark = settings.get("cluster.routing.allocation.disk.watermark.low", DEFAULT_DISK_USAGE_WATERMARK)
 
         fs_info = manager.get_node_fs_stats()
         has_one_node_with_available_space = False
