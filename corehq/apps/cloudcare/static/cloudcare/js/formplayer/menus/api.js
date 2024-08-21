@@ -48,16 +48,20 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 menus;
 
             $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
+                const app = appCollection.find(function (app) {
+                    if (app.id && app.id === params.appId) {
+                        return app;
+                    }
+                    if (app.get('copy_of') && app.get('copy_of') === params.appId) {
+                        return app;
+                    }
+                    if (app.get('copy_of') && (app.get('copy_of') === params.copyOf)) {
+                        return app;
+                    }
+                });
                 if (!params.preview) {
                     // Make sure the user has access to the app
-                    if (!appCollection.find(function (app) {
-                        if (app.id && app.id === params.appId) {
-                            return true;
-                        }
-                        if (app.get('copy_of') && app.get('copy_of') === params.copyOf) {
-                            return true;
-                        }
-                    })) {
+                    if (!app) {
                         FormplayerFrontend.trigger(
                             'showError',
                             gettext('The application could not be found')
@@ -65,6 +69,15 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                         FormplayerFrontend.trigger('navigateHome');
                         defer.reject();
                         return;
+                    }
+                }
+                let appId = params.appId;
+                if (!params.preview) {
+                    if (app.get('copy_of') && app.get('copy_of') === params.appId) {
+                        appId = app.id;
+                    }
+                    if (app.get('copy_of') && app.get('copy_of') === params.copyOf) {
+                        appId = params.appId;
                     }
                 }
                 FormplayerFrontend.permitIntervalSync = true;
@@ -164,7 +177,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     "username": user.username,
                     "restoreAs": user.restoreAs,
                     "domain": user.domain,
-                    "app_id": params.appId,
+                    "app_id": appId,
                     "endpoint_id": params.endpointId,
                     "endpoint_args": params.endpointArgs,
                     "locale": params.changeLang || displayOptions.language,
