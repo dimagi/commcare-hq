@@ -65,22 +65,22 @@ class RepeaterTestCase(TestCase):
         self.paused_repeater.save()
 
 
-class TestSoftDeleteRepeaters(RepeaterTestCase):
+class TestSoftDeleteRepeaters(TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.all_repeaters = [self.repeater]
+        url = 'https://www.example.com/api/'
+        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        self.repeaters = []
         for i in range(5):
             r = FormRepeater(
                 domain=DOMAIN,
                 connection_settings=self.conn,
             )
             r.save()
-            self.all_repeaters.append(r)
+            self.repeaters.append(r)
 
     def test_soft_deletion(self):
-        self.assertEqual(FormRepeater.objects.all().count(), 6)
-        self.all_repeaters[1].is_deleted = True
-        self.all_repeaters[1].save()
+        self.assertEqual(FormRepeater.objects.all().count(), 5)
         self.all_repeaters[0].is_deleted = True
         self.all_repeaters[0].save()
         self.assertEqual(FormRepeater.objects.all().count(), 4)
@@ -89,11 +89,10 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
             set([r.id for r in self.all_repeaters if not r.is_deleted])
         )
 
-    def test_repeatrs_retired_from_sql(self):
-        self.all_repeaters[0].retire()
-        self.all_repeaters[4].retire()
-        repeater_count = Repeater.objects.all().count()
-        self.assertEqual(repeater_count, 4)
+    def test_repeaters_retired_from_sql(self):
+        self.assertEqual(Repeater.objects.all().count(), 5)
+        self.repeaters[0].retire()
+        self.assertEqual(Repeater.objects.all().count(), 4)
 
 
 class TestRepeaterName(RepeaterTestCase):
