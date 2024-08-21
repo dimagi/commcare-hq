@@ -24,7 +24,7 @@ from corehq.motech.utils import (
     pformat_json,
     unpack_request_args,
 )
-from corehq.toggles import DECREASE_REPEATER_TIMEOUT, NAMESPACE_DOMAIN
+from corehq.toggles import DECREASE_REPEATER_TIMEOUT
 from corehq.util.metrics import metrics_counter
 from corehq.util.timer import TimingContext
 from corehq.util.urlvalidate.urlvalidate import (
@@ -141,7 +141,7 @@ class Requests(object):
         if not self.verify:
             kwargs['verify'] = False
         request_timeout = REQUEST_TIMEOUT
-        if DECREASE_REPEATER_TIMEOUT.enabled(self.domain_name, namespace=NAMESPACE_DOMAIN):
+        if DECREASE_REPEATER_TIMEOUT.enabled(self.domain_name):
             request_timeout = 60
         kwargs.setdefault('timeout', request_timeout)
         if self._session:

@@ -1993,7 +1993,7 @@ RATE_LIMIT_REPEATER_ATTEMPTS = DynamicallyPredictablyRandomToggle(
     """
 )
 
-DECREASE_REPEATER_TIMEOUT = DynamicallyPredictablyRandomToggle(
+DECREASE_REPEATER_TIMEOUT = StaticToggle(
     'decrease_repeater_timeout',
     'Decrease the request timeout value when forwarding data to external endpoints.',
     TAG_INTERNAL,
