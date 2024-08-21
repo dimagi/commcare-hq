@@ -477,19 +477,16 @@ class CasesReassignmentView(BaseDomainView):
 
         return JsonResponse({'status': 'success'})
 
-    @staticmethod
-    def _add_related_case(case_id_to_owner_id, case_id, related_case_id):
+    def _add_related_case(self, case_id_to_owner_id, case_id, related_case_id):
         if related_case_id not in case_id_to_owner_id:
             case_id_to_owner_id[related_case_id] = case_id_to_owner_id[case_id]
 
-    @staticmethod
-    def _format_as_list(data):
+    def _format_as_list(self, data):
         if isinstance(data, dict):
             data = [data]
         return data
 
-    @staticmethod
-    def _get_parent_index(doc):
+    def _get_parent_index(self, doc):
         return next((index for index in doc[INDICES_PATH] if index[IDENTIFIER] == 'parent'), None)
 
     def get_child_cases(self, domain, case_ids):
