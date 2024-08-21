@@ -163,13 +163,13 @@ def _process_repeat_record(repeat_record):
                 # clogging the queue
                 repeat_record.postpone_by(MAX_RETRY_WAIT)
                 action = 'paused'
-            elif rate_limit_repeater(repeat_record.domain):
+            elif rate_limit_repeater(repeat_record.domain, repeat_record.repeater.repeater_id):
                 # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
                 # with the intent of avoiding clumping and spreading load
                 repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
                 action = 'rate_limited'
             elif repeat_record.is_queued():
-                report_repeater_attempt(repeat_record.domain)
+                report_repeater_attempt(repeat_record.repeater.repeater_id)
                 with timer('fire_timing') as fire_timer:
                     repeat_record.fire(timing_context=fire_timer)
                 # round up to the nearest millisecond, meaning always at least 1ms
