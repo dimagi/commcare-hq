@@ -12,6 +12,7 @@ from django.core.management.color import color_style
 from django.db.migrations import RunPython
 
 from corehq.apps.es.client import manager
+from corehq.apps.es.exceptions import FailedIndexCreationException, LowSpaceInClusterException
 from corehq.apps.es.index.settings import render_index_tuning_settings
 
 log = logging.getLogger(__name__)
@@ -124,7 +125,7 @@ class CreateIndex(BaseElasticOperation):
     def _validate_disk_under_watermark(self):
         """
         Validate disk usage in each data node is under watermarks before creating index
-        Raises Exception and fails if no data node has available disk space
+        Raises LowSpaceInClusterException and fails if no data node has available disk space
         """
         settings = manager.cluster_get_settings()['transient']
         low_watermark = settings.get("cluster.routing.allocation.disk.watermark.low", DEFAULT_DISK_USAGE_WATERMARK)
@@ -151,7 +152,7 @@ class CreateIndex(BaseElasticOperation):
                 )
 
         if not has_one_node_with_available_space:
-            raise Exception("""All data nodes are above low watermark capacity.
+            raise LowSpaceInClusterException("""All data nodes are above low watermark capacity.
                             Index creation failed due to insufficient disk space.""")
 
     def _wait_for_primary_shards_to_be_assigned(self):
@@ -166,7 +167,7 @@ class CreateIndex(BaseElasticOperation):
         if cluster_health['status'] == 'red':
             self._explain_shard_allocation_failure()
             manager.index_delete(self.name)
-            raise Exception(f"Failed to create {self.name} failed. Deleted {self.name}")
+            raise FailedIndexCreationException(f"Failed to create {self.name} failed. Deleted {self.name}")
 
     def _explain_shard_allocation_failure():
         """
