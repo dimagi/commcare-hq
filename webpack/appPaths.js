@@ -32,6 +32,11 @@ const appRenames = {
 };
 
 const hasTemplateFolder = function (dirEnt) {
+    /**
+     * Returns `true` if `dirEnt` has a `templates` folder.
+     *
+     * @type {boolean}
+     */
     const templatePath = path.resolve(APPS_PATH, dirEnt.name, TEMPLATES_DIR);
     try {
         return fs.readdirSync(templatePath);
