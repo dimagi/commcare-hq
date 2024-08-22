@@ -85,7 +85,9 @@ hqDefine("locations/js/widgets", [
                 },
             },
             templateResult: function (result) {
-                return result.text || result.name;
+                var $option = new Option(result.text);
+                $option.setAttribute('title', result.tooltip);
+                return $option;
             },
             templateSelection: function (result) {
                 const fullLengthName = result.text || result.name;
