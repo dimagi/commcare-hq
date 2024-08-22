@@ -135,6 +135,7 @@ from corehq.util.timer import TimingContext
 from ..exceptions import UpdateUserException
 from ..user_updates import update
 from . import (
+    ApiVersioningMixin,
     CorsResourceMixin,
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -905,7 +906,7 @@ Form = namedtuple('Form', 'form_xmlns form_name')
 Form.__new__.__defaults__ = ('', '')
 
 
-class DomainForms(Resource):
+class DomainForms(ApiVersioningMixin, Resource):
     """
     Returns: list of forms for a given domain with form name formatted for display in Zapier
     """
@@ -945,7 +946,7 @@ CaseType = namedtuple('CaseType', 'case_type placeholder')
 CaseType.__new__.__defaults__ = ('', '')
 
 
-class DomainCases(Resource):
+class DomainCases(ApiVersioningMixin, Resource):
     """
     Returns: list of case types for a domain
 
@@ -974,7 +975,7 @@ UserInfo = namedtuple('UserInfo', 'user_id user_name')
 UserInfo.__new__.__defaults__ = ('', '')
 
 
-class DomainUsernames(Resource):
+class DomainUsernames(ApiVersioningMixin, Resource):
     """
     Returns: list of usernames for a domain.
     """
