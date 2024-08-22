@@ -36,7 +36,32 @@ from corehq.apps.locations import resources as locations
 from corehq.motech.generic_inbound.views import generic_inbound_api
 
 api_urlpatterns = [
+    v0_4.ApplicationResource.get_urlpattern('v1'),
+    v0_4.CommCareCaseResource.get_urlpattern('v1'),
+    v0_4.XFormInstanceResource.get_urlpattern('v1'),
+    v0_4.SingleSignOnResource.get_urlpattern('v1'),
     v0_5.CommCareUserResource.get_urlpattern('v1'),
+    v0_5.WebUserResource.get_urlpattern('v1'),
+    v0_5.GroupResource.get_urlpattern('v1'),
+    v0_5.BulkUserResource.get_urlpattern('v1'),
+    fixtures.v0_1.InternalFixtureResource.get_urlpattern('v1'),
+    fixtures.v0_1.FixtureResource.get_urlpattern('v1'),
+    v0_5.DeviceReportResource.get_urlpattern('v1'),
+    DomainMetadataResource.get_urlpattern('v1'),
+    locations.v0_5.LocationResource.get_urlpattern('v1'),
+    locations.v0_5.LocationTypeResource.get_urlpattern('v1'),
+    v0_5.SimpleReportConfigurationResource.get_urlpattern('v1'),
+    v0_5.ConfigurableReportDataResource.get_urlpattern('v1'),
+    v0_5.DataSourceConfigurationResource.get_urlpattern('v1'),
+    DomainForms.get_urlpattern('v1'),
+    DomainCases.get_urlpattern('v1'),
+    DomainUsernames.get_urlpattern('v1'),
+    locations.v0_1.InternalLocationResource.get_urlpattern('v1'),
+    v0_5.ODataCaseResource.get_urlpattern('v1'),
+    v0_5.ODataFormResource.get_urlpattern('v1'),
+    fixtures.v0_1.LookupTableResource.get_urlpattern('v1'),
+    fixtures.v0_1.LookupTableItemResource.get_urlpattern('v1'),
+    v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
 ]
 
 _OLD_API_LIST = (
