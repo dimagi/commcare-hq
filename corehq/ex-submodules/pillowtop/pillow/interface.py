@@ -386,7 +386,7 @@ class PillowBase(metaclass=ABCMeta):
                 },
                 multiprocess_mode=MPM_MAX
             )
-            if change.partition:
+            if change.partition is not None:
                 # adding check for partition as dd_topic may or
                 # may not contain partition name.
                 # and for the pillows that we are interested in
