@@ -1,6 +1,8 @@
 from django.core.mail import mail_admins
 from django.db import ProgrammingError
 
+from corehq.privileges import DATA_DICTIONARY
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.case_search.const import (
     GEOPOINT_VALUE,
     INDEXED_METADATA_BY_KEY,
@@ -89,8 +91,9 @@ def _add_smart_types(dynamic_properties, domain, case_type):
     # Properties are stored in a dict like {"key": "dob", "value": "1900-01-01"}
     # `value` is a multi-field property that duck types numeric and date values
     # We can't do that for properties like geo_points in ES v2, as `ignore_malformed` is broken
-    gps_props = get_gps_properties(domain, case_type)
-    gps_props.add(get_geo_case_property(domain))
+    gps_props = set({get_geo_case_property(domain)})
+    if domain_has_privilege(domain, DATA_DICTIONARY):
+        gps_props |= get_gps_properties(domain, case_type)
     _add_gps_smart_types(dynamic_properties, gps_props)
 
 
