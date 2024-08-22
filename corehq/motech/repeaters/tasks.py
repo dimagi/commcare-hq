@@ -157,7 +157,7 @@ def _process_repeat_record(repeat_record):
             return
 
         try:
-            if toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain):
+            if repeat_record.repeater.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain):
                 # postpone repeat record by MAX_RETRY_WAIT so that it is not fetched
                 # in the next check to process repeat records, which helps to avoid
                 # clogging the queue
