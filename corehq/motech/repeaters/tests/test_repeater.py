@@ -685,16 +685,20 @@ class RepeaterFailureTest(BaseRepeaterTest):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super().tearDown()
 
-    def test_get_payload_exception(self):
-        repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+    def test_payload_exception_on_fire(self):
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
+            mock_simple_post.return_value.status_code = 503  # Fail and retry
+            rr = self.repeater.register(case)
         with self.assertRaises(Exception):
             with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
-                repeat_record.fire()
+                rr.fire()
 
-        self.assertEqual(repeat_record.failure_reason, 'Boom!')
+        repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.InvalidPayload)
+        self.assertEqual(repeat_record.failure_reason, 'Boom!')
 
-    def test_payload_exception(self):
+    def test_payload_exception_on_register(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch.object(Repeater, "get_payload", side_effect=Exception('Payload error')):
             rr = self.repeater.register(case)
