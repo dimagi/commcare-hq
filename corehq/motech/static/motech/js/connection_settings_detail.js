@@ -20,6 +20,8 @@ hqDefine("motech/js/connection_settings_detail", [
                     'token_url',
                     'refresh_url',
                     'pass_credentials_in_header',
+                    'include_client_id',
+                    'scope',
                 ];
             if (authPreset === 'CUSTOM') {
                 _.each(customAuthPresetFields, function (field) {

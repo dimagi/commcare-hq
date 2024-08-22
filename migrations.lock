@@ -710,6 +710,7 @@ motech
  0013_alter_connectionsettings_auth_type
  0014_alter_connectionsettings_password
  0015_requestlog_duration
+ 0016_connectionsettings_include_client_id_and_more
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
