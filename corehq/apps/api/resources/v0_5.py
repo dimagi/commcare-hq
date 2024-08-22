@@ -251,7 +251,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
                                                           domain=obj.domain,
-                                                          api_name=self._meta.api_name,
+                                                          api_name=self.api_name,
                                                           pk=obj._id))
 
     def obj_create(self, bundle, **kwargs):
@@ -377,7 +377,7 @@ class WebUserResource(v0_1.WebUserResource):
         return reverse('api_dispatch_detail', kwargs={
             'resource_name': self._meta.resource_name,
             'domain': bundle_or_obj.request.domain,
-            'api_name': self._meta.api_name,
+            'api_name': self.api_name,
             'pk': bundle_or_obj.obj._id,
         })
 
@@ -486,7 +486,7 @@ class GroupResource(v0_4.GroupResource):
         """Returns the literal string "/a/{domain}/api/v0.5/group/{pk}/" in a DRY way"""
         return reverse('api_dispatch_detail', kwargs=dict(
             resource_name=self._meta.resource_name,
-            api_name=self._meta.api_name,
+            api_name=self.api_name,
             domain='__domain__',
             pk='__pk__')).replace('__pk__', '{pk}').replace('__domain__', '{domain}')
 
@@ -594,7 +594,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             # limit has not changed, but it may not have been present in get params before.
             new_get_params["limit"] = limit
             return reverse('api_dispatch_detail', kwargs=dict(
-                api_name=self._meta.api_name,
+                api_name=self.api_name,
                 resource_name=self._meta.resource_name,
                 domain=domain,
                 pk=id_,

@@ -58,7 +58,7 @@ class LocationTypeResource(BaseLocationsResource):
         return absolute_reverse('api_dispatch_detail', kwargs={
             'resource_name': self._meta.resource_name,
             'domain': obj.domain,
-            'api_name': self._meta.api_name,
+            'api_name': self.api_name,
             'pk': obj.pk
         })
 
@@ -107,6 +107,6 @@ class LocationResource(BaseLocationsResource):
         return absolute_reverse('api_dispatch_detail', kwargs={
             'resource_name': self._meta.resource_name,
             'domain': obj.domain,
-            'api_name': self._meta.api_name,
+            'api_name': self.api_name,
             'location_id': obj.location_id
         })

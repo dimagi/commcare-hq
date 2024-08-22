@@ -35,7 +35,6 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
 from corehq.motech.generic_inbound.views import generic_inbound_api
 
-
 api_urlpatterns = [
     v0_5.CommCareUserResource.get_urlpattern('v1'),
 ]
@@ -99,9 +98,10 @@ class CommCareHqApi(Api):
 
 def versioned_apis(api_list):
     for version, resources in api_list:
-        api = CommCareHqApi(api_name='v%d.%d' % version)
+        api_name = 'v%d.%d' % version
+        api = CommCareHqApi(api_name=api_name)
         for R in resources:
-            api.register(R())
+            api.register(R(api_name))
         yield url(r'^', include(api.urls))
 
 

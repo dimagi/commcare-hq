@@ -94,6 +94,13 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     Convenience class to allow easy adjustment of API resource base classes.
     """
 
+    def __init__(self, api_name=None):
+        super().__init__(api_name)
+        # Tastypie sets `api_name` on `_meta`, which is a singleton, so if a
+        # resource registered multiple times, each instances uses the
+        # `api_name` that came last. This approach works with multiple versions
+        self.api_name = api_name or self._meta.api_name
+
     def dispatch(self, request_type, request, **kwargs):
         if toggles.API_BLACKLIST.enabled_for_request(request):
             msg = ("API access has been temporarily cut off due to too many "
@@ -172,12 +179,18 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     @property
     def urls(self):
         # Old way of doing things, in line with tastypie's versioning scheme
-        return [re_path(r"^(?P<resource_name>%s)/" % (self._meta.resource_name), include(self._get_urls()))]
+        return [
+            re_path(r"^(?P<resource_name>%s)/" % (self._meta.resource_name), include(self._get_urls()))
+        ]
 
     @classmethod
     def get_urlpattern(cls, version):
         # Newer URL pattern, allows for versioning per resource
-        return path(f'{cls.Meta.resource_name}/{version}/', include(cls()._get_urls()))
+        resource = cls(api_name=version)
+        return re_path(
+            r"^(?P<resource_name>%s)/(?P<api_name>%s)/" % (resource._meta.resource_name, version),
+            include(resource._get_urls()),
+        )
 
     def _get_urls(self):
         return self.prepend_urls() + [
@@ -278,8 +291,8 @@ class DomainSpecificResourceMixin(object):
         kwargs = dict(kwargs)
         kwargs['resource_name'] = self._meta.resource_name
 
-        if self._meta.api_name is not None:
-            kwargs['api_name'] = self._meta.api_name
+        if self.api_name is not None:
+            kwargs['api_name'] = self.api_name
 
         try:
             return self._build_reverse_url("api_dispatch_list", kwargs=kwargs)
