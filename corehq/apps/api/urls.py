@@ -49,6 +49,7 @@ api_urlpatterns = [
     v0_5.DeviceReportResource.get_urlpattern('v1'),
     DomainMetadataResource.get_urlpattern('v1'),
     locations.v0_5.LocationResource.get_urlpattern('v1'),
+    locations.v0_6.LocationResource.get_urlpattern('v2'),
     locations.v0_5.LocationTypeResource.get_urlpattern('v1'),
     v0_5.SimpleReportConfigurationResource.get_urlpattern('v1'),
     v0_5.ConfigurableReportDataResource.get_urlpattern('v1'),
@@ -61,6 +62,7 @@ api_urlpatterns = [
     v0_5.ODataFormResource.get_urlpattern('v1'),
     fixtures.v0_1.LookupTableResource.get_urlpattern('v1'),
     fixtures.v0_1.LookupTableItemResource.get_urlpattern('v1'),
+    fixtures.v0_6.LookupTableItemResource.get_urlpattern('v2'),
     v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
 ]
 
