@@ -139,6 +139,7 @@ function run_tests {
         log_group_end  # only log group end on success (notice: `set -e`)
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
             logmsg INFO "Running yarn build"
+            chown -R cchq:cchq ./webpack
             su cchq -c "yarn build"
             su cchq -c scripts/test-prod-entrypoints.sh
             scripts/test-make-requirements.sh
