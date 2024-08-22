@@ -125,13 +125,13 @@ const getCacheGroups = function () {
             name: 'common',
             chunks: 'all',
             minChunks: 2,
-            priority: 1,
+            priority: 2,  // if two cache groups might share a module, prioritize loading into common
         },
         vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendor',
             chunks: 'all',
-            priority: 1,
+            priority: 2,
         },
     };
 
@@ -142,7 +142,8 @@ const getCacheGroups = function () {
             name: `${appName}/${appName}.bundle`,
             chunks: 'all',
             minChunks: 1,
-            priority: 0,
+            // hqwebapp shares the highest priority among the modules
+            priority: (appName === 'hqwebapp') ? 1 : 0,
         };
     });
     return cacheGroups;
