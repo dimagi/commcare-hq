@@ -38,9 +38,6 @@ module.exports = {
         "beforeEach": false,
         "nv": false,
         "d3": false,
-        "require": false,
-        "__dirname": false,
-        "process": false,
     },
 
     // http://eslint.org/docs/rules/
