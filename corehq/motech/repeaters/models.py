@@ -1089,11 +1089,11 @@ class RepeatRecord(models.Model):
         self.next_check = (attempt.created_at + wait) if state == State.Fail else None
         self.save()
 
-    def add_payload_error_attempt(self, message, tb_str):
+    def add_payload_error_attempt(self, message, traceback_str):
         self.attempt_set.create(
             state=State.InvalidPayload,
             message=message,
-            traceback=tb_str,
+            traceback=traceback_str,
         )
         self.state = State.InvalidPayload
         self.next_check = None
@@ -1177,7 +1177,7 @@ class RepeatRecord(models.Model):
             try:
                 self.repeater.fire_for_record(self, timing_context=timing_context)
             except Exception as e:
-                self.handle_payload_error(str(e), tb_str=traceback.format_exc())
+                self.handle_payload_error(str(e), traceback_str=traceback.format_exc())
                 raise
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
@@ -1235,9 +1235,9 @@ class RepeatRecord(models.Model):
         log_repeater_timeout_in_datadog(self.domain)
         self.add_server_failure_attempt(str(exception))
 
-    def handle_payload_error(self, message, tb_str=''):
+    def handle_payload_error(self, message, traceback_str=''):
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
-        self.add_payload_error_attempt(message, tb_str)
+        self.add_payload_error_attempt(message, traceback_str)
 
     def cancel(self):
         self.state = State.Cancelled

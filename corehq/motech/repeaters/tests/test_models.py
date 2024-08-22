@@ -366,7 +366,7 @@ class AttemptsTests(RepeaterTestCase):
         message = 'ValueError: Schema validation failed'
         tb_str = 'Traceback ...'
         self.repeat_record.add_payload_error_attempt(message=message,
-                                                     tb_str=tb_str)
+                                                     traceback_str=tb_str)
         self.assertEqual(self.repeat_record.state, RECORD_INVALIDPAYLOAD_STATE)
         # Note: Our payload issues do not affect how we deal with their
         #       server issues:
