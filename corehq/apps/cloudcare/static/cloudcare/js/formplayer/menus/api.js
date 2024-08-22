@@ -74,8 +74,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     }
                 }
                 let appId = params.appId;
-                const copyOf = app.get('copy_of');
                 if (!params.preview) {
+                    const copyOf = app.get('copy_of');
                     if (copyOf && copyOf === params.appId) {
                         appId = app.id;
                     }
