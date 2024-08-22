@@ -1,5 +1,3 @@
-'use strict';
-
 const commonDefault = require("./webpack.common");
 const webpack = require('webpack');
 const utils = require('./utils');

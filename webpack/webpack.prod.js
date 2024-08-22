@@ -1,5 +1,3 @@
-'use strict';
-
 const { merge } = require('webpack-merge');
 const common = require('./webpack.common');
 const b3Common = require('./webpack.b3.common');
