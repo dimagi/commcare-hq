@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,20 +1,16 @@
+@@ -1,20 +1,18 @@
  .full-width {
    width: 100%;
 +  margin-left: 0;
@@ -11,10 +11,12 @@
 -.sidebar-push {
 -  @media (min-width: @screen-md-min) {
 -    margin-left: 310px;
-+#sidebar-contents {
++// Applies only to split-screen case search
++#sidebar-region #query-list-contents {
 +  background: transparent;
 +  @include media-breakpoint-up(lg) {
 +    width: 300px;
++    margin-right: 10px;
    }
 -}
 -
@@ -29,7 +31,7 @@
      max-width: 600px;
      margin: auto;
    }
-@@ -66,35 +62,39 @@
+@@ -66,35 +64,39 @@
  
  .query-description {
    a {
