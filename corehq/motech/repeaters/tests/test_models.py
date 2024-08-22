@@ -81,12 +81,12 @@ class TestSoftDeleteRepeaters(TestCase):
 
     def test_soft_deletion(self):
         self.assertEqual(FormRepeater.objects.all().count(), 5)
-        self.all_repeaters[0].is_deleted = True
-        self.all_repeaters[0].save()
+        self.repeaters[0].is_deleted = True
+        self.repeaters[0].save()
         self.assertEqual(FormRepeater.objects.all().count(), 4)
         self.assertEqual(
             set(FormRepeater.objects.all().values_list('id', flat=True)),
-            set([r.id for r in self.all_repeaters if not r.is_deleted])
+            set([r.id for r in self.repeaters if not r.is_deleted])
         )
 
     def test_repeaters_retired_from_sql(self):
