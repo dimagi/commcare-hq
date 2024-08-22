@@ -2482,15 +2482,6 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     owner='Simon Kelly'
 )
 
-EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
-    'embed_tableau_report_by_user',
-    'Use a Tableau username "HQ/{username}" to embed reports instead of "HQ/{role name}"',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='This flag is now deprecated and will be removed.',
-    parent_toggles=[EMBEDDED_TABLEAU]
-)
-
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
