@@ -156,10 +156,12 @@ class TaskProgress:
         self.redis_client.set(self.key, status_dict, timeout=self.STATUS_TIMEOUT)
         task.delay()
 
+    def is_managing_task(self, task):
+        return task == self.get_task()
+
     def complete_task(self, data):
         if not self.get_query_id():
             self._query_id = uuid.uuid4().hex
-        self.redis_client.set(self._query_id, data, timeout=self.STATUS_TIMEOUT)
 
         status_dict = self.redis_client.get(self.key)
         if status_dict is None:
@@ -168,6 +170,13 @@ class TaskProgress:
         status_dict['query_id'] = self._query_id
         self.redis_client.set(self.key, status_dict, timeout=self.STATUS_TIMEOUT)
 
+        task = status_dict['task']
+        data_dict = {
+            'task': task,
+            'data': data,
+        }
+        self.redis_client.set(self._query_id, data_dict, timeout=self.STATUS_TIMEOUT)
+
     def get_data(self):
         query_id = self.get_query_id()
         if not query_id:
@@ -175,13 +184,11 @@ class TaskProgress:
 
         data = self.redis_client.get(query_id)
         if data is None:
-            # Before raising an error for a missing value, ensure that the 'None' wasn't deliberately set
-            if not self.redis_client.has_key(query_id):
-                raise KeyError(query_id)
+            raise KeyError(query_id)
 
         self.redis_client.touch(query_id, timeout=self.STATUS_TIMEOUT)
 
-        return data
+        return data['data']
 
     def get_query_id(self):
         if self._query_id:
@@ -199,7 +206,14 @@ class TaskProgress:
 
     def get_task(self):
         status_dict = self.redis_client.get(self.key)
-        return status_dict.get('task', None) if status_dict else None
+        if status_dict:
+            return status_dict['task']
+
+        data_dict = self.redis_client.get(self.get_query_id())
+        if data_dict:
+            return data_dict['task']
+
+        return None
 
 
 class ReportTaskProgress(TaskProgress):

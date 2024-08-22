@@ -164,7 +164,7 @@ class ODataEnterpriseReportResource(ODataResource):
         status = progress.get_status()
         if status == ReportTaskProgress.STATUS_COMPLETE:
             # ensure this is for the same parameters
-            if progress.get_task() != self.get_report_task(request):
+            if not progress.is_managing_task(self.get_report_task(request)):
                 raise ImmediateHttpResponse(
                     response=http.HttpTooManyRequests(headers={'Retry-After': self.RETRY_CONFLICT_DELAY}))
 
