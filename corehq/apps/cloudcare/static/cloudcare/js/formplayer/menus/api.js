@@ -49,6 +49,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
 
             $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                 const app = appCollection.find(function (app) {
+                    // Prevents breaking if a web apps session spans pre and post deploy. Can remove post deploy.
                     if (app.id && app.id === params.appId) {
                         return app;
                     }
