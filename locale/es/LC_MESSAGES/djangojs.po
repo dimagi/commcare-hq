@@ -506,6 +506,10 @@ msgid "Conditional ID Mapping"
 msgstr "Mapeo de ID Condicional"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Translatable Text"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Image"
 msgstr "Imagen"
@@ -2522,6 +2526,7 @@ msgstr "Tipo de Caso"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Case ID"
 msgstr "ID del Caso"
 
@@ -3514,6 +3519,7 @@ msgid "Group Center Coordinates"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Case Name"
 msgstr "Nombre del Caso"
 
@@ -3586,13 +3592,9 @@ msgid "All locations"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-#, fuzzy
-#| msgid "Could not clear user data. Please report an issue if this persists."
 msgid ""
 "Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr ""
-"No es posible borrar los datos del usuario. Por favor reporte un problema si "
-"esto continúa."
 
 #: corehq/apps/geospatial/static/geospatial/js/gps_capture.js
 msgid "current user"
@@ -3619,6 +3621,28 @@ msgstr ""
 #: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Please enter the name for the area!"
 msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "No user selected (unassign mode)"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+#, fuzzy
+#| msgid "User ID"
+msgid "Assigned User ID"
+msgstr "ID del Usuario"
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+#, fuzzy
+#| msgid "Username"
+msgid "Assigned Username"
+msgstr "Nombre de Usuario"
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+#, fuzzy
+#| msgid "Choose a primary location"
+msgid "Assigned User Primary Location"
+msgstr "Elegir una ubicación principal"
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
@@ -3943,6 +3967,21 @@ msgstr "Agregar Clave, Mapeo de Valor"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Key"
 msgstr "Clave"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "This key is already defined"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Add Key, Translation Mapping"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Key contains invalid characters."
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js

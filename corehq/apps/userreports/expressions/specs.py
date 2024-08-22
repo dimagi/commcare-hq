@@ -692,7 +692,11 @@ def _get_user(domain, doc_id):
         # 'is_account_confirmed',
         # 'user_location_id',
     )
-    user = CommCareUser.get_by_user_id(doc_id, domain)
+    try:
+        user = CommCareUser.get_by_user_id(doc_id, domain)
+    except CouchUser.AccountTypeError:
+        # user is a WebUser not a CommCareUser
+        return None
     if not user:
         return None
 

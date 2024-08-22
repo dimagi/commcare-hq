@@ -83,6 +83,13 @@ hqDefine('geospatial/js/models', [
             var color = self.isSelected() ? self.markerColors.selected : self.markerColors.default;
             changeMarkerColor(self, color);
         });
+
+        self.getJson = function () {
+            return {
+                'id': self.itemId,
+                'text': self.itemData.name,
+            };
+        };
     };
 
     var GroupedCaseMapItem = function (itemId, itemData, link) {
@@ -811,6 +818,198 @@ hqDefine('geospatial/js/models', [
         }
     };
 
+    var AssignmentRow = function (caseName, caseId, userId, userName, userPrimaryLocName, mapItem) {
+        let self = this;
+
+        self.caseName = ko.observable(caseName);
+        self.caseId = caseId;
+        self.assignedUsername = ko.observable(userName);
+        self.assignedUserId = userId;
+        self.assignedUserPrimaryLocName = ko.observable(userPrimaryLocName);
+        self.mapItem = mapItem;
+        self.isSelected = ko.observable(false);
+
+        self.getJson = function () {
+            return {
+                caseName: self.caseName(),
+                caseId: self.caseId,
+                assignedUsername: self.assignedUsername(),
+                assignedUserId: self.assignedUserId,
+                assignedUserPrimaryLocName: self.assignedUserPrimaryLocName(),
+            };
+        };
+
+        return self;
+    };
+
+    var AssignmentManager = function (mapModel, disbursementModel) {
+        let self = this;
+
+        const emptyColStr = '---';
+
+        self.itemsPerPage = ko.observable(5);
+        self.totalItems = ko.observable(0);
+        self.currentPage = ko.observable(1);
+
+        self.mapModel = mapModel;
+        self.disbursementModel = disbursementModel;
+
+        self.caseData = [];
+        self.filteredCaseData = ko.observableArray([]);
+        self.caseDataPage = ko.computed(function () {
+            const end = self.currentPage() * self.itemsPerPage();
+            const start = end - self.itemsPerPage();
+            return self.filteredCaseData().slice(start, end);
+        });
+
+        self.userData = ko.observableArray([]);
+        self.canOpenModal = ko.computed(function () {
+            return self.mapModel.caseGroupsIndex.length;
+        });
+
+        self.selectedUserId = ko.observable();
+        self.includeRelatedCases = ko.observable(false);
+
+        self.assignedFilter = ko.observable();
+        self.assignedFilter.subscribe(() => {
+            if (self.assignedFilter() === 'all') {
+                self.filteredCaseData(self.caseData);
+            } else {
+                self.filteredCaseData(self.caseData.filter(function (caseItem) {
+                    if (self.assignedFilter() === 'unassigned') {
+                        return !caseItem.assignedUserId;
+                    }
+                    return caseItem.assignedUserId;
+                }));
+            }
+            self.totalItems(self.filteredCaseData().length);
+            self.goToPage(1);
+        });
+
+        self.hasCheckedRows = ko.computed(function () {
+            return _.some(self.caseDataPage(), function (caseItem) {
+                return caseItem.isSelected();
+            });
+        });
+
+        self.isAllChecked = ko.observable(false);
+        self.toggleSelectAll = function (selectAll) {
+            self.isAllChecked(selectAll);
+            for (const caseItem of self.caseDataPage()) {
+                caseItem.isSelected(self.isAllChecked());
+            }
+        };
+
+        self.loadCaseData = function () {
+            const groupData = self.mapModel.caseGroupsIndex;
+            self.caseData = [];
+            for (const item of self.mapModel.caseMapItems()) {
+                const assignedUserId = groupData[item.itemId].assignedUserId;
+                let assignedUsername = emptyColStr;
+                let primaryLocName = emptyColStr;
+                if (assignedUserId) {
+                    const userData = groupData[assignedUserId].item.itemData;
+                    assignedUsername = userData.name;
+                    primaryLocName = userData.primary_loc_name;
+                }
+                self.caseData.push(
+                    new AssignmentRow(
+                        item.itemData.name, item.itemId, assignedUserId, assignedUsername, primaryLocName, item
+                    )
+                );
+            }
+
+            loadUserData();
+            self.filteredCaseData(self.caseData);
+            self.totalItems(self.filteredCaseData().length);
+        };
+
+        function loadUserData() {
+            self.userData([]);
+            for (const item of self.mapModel.userMapItems()) {
+                self.userData.push(item.getJson());
+            }
+
+            $('#user-assignment-select').select2({
+                placeholder: gettext('No user selected (unassign mode)'),
+                allowClear: true,
+                data: self.userData(),
+            }).val(null).trigger('change');
+        }
+
+        self.goToPage = function (pageNumber) {
+            self.toggleSelectAll(false);
+            self.currentPage(pageNumber);
+        };
+
+        self.assignUserToCases = function () {
+            const selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()];
+            for (const caseItem of self.caseDataPage()) {
+                if (!caseItem.isSelected()) {
+                    continue;
+                }
+
+                caseItem.assignedUsername(
+                    (selectedUser) ? selectedUser.item.itemData.name : emptyColStr
+                );
+                caseItem.assignedUserPrimaryLocName(
+                    (selectedUser) ? selectedUser.item.itemData.primary_loc_name : emptyColStr
+                );
+                caseItem.assignedUserId = self.selectedUserId();
+                caseItem.isSelected(false);
+            }
+        };
+
+        self.finishAssignment = function () {
+            let userCasesToConnect = {};
+            let casesToClear = [];
+            for (const caseItem of self.caseData) {
+                const userItem = self.mapModel.caseGroupsIndex[caseItem.assignedUserId];
+                const groupId = (userItem) ? userItem.groupId : null;
+                self.mapModel.caseGroupsIndex[caseItem.caseId].assignedUserId = caseItem.assignedUserId;
+                self.mapModel.caseGroupsIndex[caseItem.caseId].groupId = groupId;
+
+                casesToClear.push(caseItem.mapItem);
+                if (caseItem.assignedUserId) {
+                    if (!userCasesToConnect[caseItem.assignedUserId]) {
+                        userCasesToConnect[caseItem.assignedUserId] = [];
+                    }
+                    userCasesToConnect[caseItem.assignedUserId].push(caseItem.mapItem);
+                }
+            }
+
+            self.disbursementModel.clearConnectionLines(casesToClear);
+            for (const userId in userCasesToConnect) {
+                const user = self.mapModel.caseGroupsIndex[userId].item;
+                const cases = userCasesToConnect[userId];
+                self.disbursementModel.connectUserWithCasesOnMap(user, cases);
+            }
+        };
+
+        self.exportAssignments = function () {
+            const headers = [
+                gettext('Case Name'),
+                gettext('Case ID'),
+                gettext('Assigned User ID'),
+                gettext('Assigned Username'),
+                gettext('Assigned User Primary Location'),
+            ];
+            const cols = [
+                'caseName',
+                'caseId',
+                'assignedUserId',
+                'assignedUsername',
+                'assignedUserPrimaryLocName',
+            ];
+            const casesToExport = self.filteredCaseData().map(function (caseItem) {
+                return caseItem.getJson();
+            });
+            utils.downloadCsv(casesToExport, headers, cols, 'Case Assignment Export');
+        };
+
+        return self;
+    };
+
     return {
         MissingGPSModel: MissingGPSModel,
         SavedPolygon: SavedPolygon,
@@ -818,5 +1017,6 @@ hqDefine('geospatial/js/models', [
         GroupedCaseMapItem: GroupedCaseMapItem,
         Map: Map,
         PolygonFilter: PolygonFilter,
+        AssignmentManager: AssignmentManager,
     };
 });

@@ -65,11 +65,10 @@ class.
 """
 import inspect
 import json
-import traceback
 import uuid
 from collections import defaultdict
+from contextlib import nullcontext
 from datetime import datetime, timedelta
-from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.db import models, router
@@ -120,6 +119,7 @@ from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 from .const import (
+    ENDPOINT_TIMER,
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
@@ -400,11 +400,6 @@ class Repeater(RepeaterSuperProxy):
             next_check=now,
             payload_id=payload.get_id
         )
-        metrics_counter('commcare.repeaters.new_record', tags={
-            'domain': self.domain,
-            'doc_type': self.repeater_type,
-            'mode': 'sync' if fire_synchronously else 'async'
-        })
         repeat_record.save()
 
         if fire_synchronously:
@@ -432,12 +427,15 @@ class Repeater(RepeaterSuperProxy):
         self.is_deleted = True
         Repeater.objects.filter(id=self.repeater_id).update(is_deleted=True)
 
-    def fire_for_record(self, repeat_record):
+    def _time_request(self, repeat_record, payload, timing_context):
+        with timing_context(ENDPOINT_TIMER) if timing_context else nullcontext():
+            return self.send_request(repeat_record, payload)
+
+    def fire_for_record(self, repeat_record, timing_context=None):
         payload = self.get_payload(repeat_record)
         try:
-            response = self.send_request(repeat_record, payload)
+            response = self._time_request(repeat_record, payload, timing_context)
         except (Timeout, ConnectionError) as error:
-            log_repeater_timeout_in_datadog(self.domain)
             self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
             self.handle_response(err, repeat_record)
@@ -469,11 +467,13 @@ class Repeater(RepeaterSuperProxy):
 
     def handle_response(self, result, repeat_record):
         """
-        route the result to the success, failure, or exception handlers
+        route the result to the success, failure, timeout, or exception handlers
 
         result may be either a response object or an exception
         """
-        if isinstance(result, Exception):
+        if isinstance(result, RequestConnectionError):
+            repeat_record.handle_timeout(result)
+        elif isinstance(result, Exception):
             repeat_record.handle_exception(result)
         elif is_response(result) and 200 <= result.status_code < 300 or result is True:
             repeat_record.handle_success(result)
@@ -1147,13 +1147,11 @@ class RepeatRecord(models.Model):
     def repeater_type(self):
         return self.repeater.repeater_type
 
-    def fire(self, force_send=False):
+    def fire(self, force_send=False, timing_context=None):
         if force_send or not self.succeeded:
             try:
-                self.repeater.fire_for_record(self)
+                self.repeater.fire_for_record(self, timing_context=timing_context)
             except Exception as e:
-                log_repeater_error_in_datadog(self.domain, status_code=None,
-                                              repeater_type=self.repeater_type)
                 self.handle_payload_exception(e)
                 raise
 
@@ -1201,12 +1199,19 @@ class RepeatRecord(models.Model):
         self.add_success_attempt(response)
 
     def handle_failure(self, response):
+        log_repeater_error_in_datadog(self.domain, response.status_code, self.repeater_type)
         self.add_server_failure_attempt(format_response(response))
 
     def handle_exception(self, exception):
+        log_repeater_error_in_datadog(self.domain, None, self.repeater_type)
         self.add_client_failure_attempt(str(exception))
 
+    def handle_timeout(self, exception):
+        log_repeater_timeout_in_datadog(self.domain)
+        self.add_server_failure_attempt(str(exception))
+
     def handle_payload_exception(self, exception):
+        log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
         self.add_client_failure_attempt(str(exception), retry=False)
 
     def cancel(self):
@@ -1268,84 +1273,6 @@ def _get_retry_interval(last_checked, now):
     interval = max(MIN_RETRY_WAIT, interval)
     interval = min(MAX_RETRY_WAIT, interval)
     return interval
-
-
-def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:
-    try:
-        return repeater.get_payload(repeat_record)
-    except Exception as err:
-        log_repeater_error_in_datadog(
-            repeater.domain,
-            status_code=None,
-            repeater_type=repeater.__class__.__name__
-        )
-        repeat_record.add_payload_exception_attempt(
-            message=str(err),
-            tb_str=traceback.format_exc()
-        )
-        raise
-
-
-def send_request(
-    repeater: Repeater,
-    repeat_record: RepeatRecord,
-    payload: Any,
-) -> bool:
-    """
-    Calls ``repeater.send_request()`` and handles the result.
-
-    Returns True on success or cancelled, which means the caller should
-    not retry. False means a retry should be attempted later.
-    """
-
-    def is_success(resp):
-        return (
-            is_response(resp)
-            and 200 <= resp.status_code < 300
-            # `response` is `True` if the payload did not need to be
-            # sent. (This can happen, for example, with DHIS2 if the
-            # form that triggered the forwarder doesn't contain data
-            # for a DHIS2 Event.)
-            or resp is True
-        )
-
-    def allow_retries(response):
-        # respect the `retry` field of RepeaterResponse
-        return getattr(response, 'retry', True)
-
-    def later_might_be_better(resp):
-        return is_response(resp) and resp.status_code in (
-            502,  # Bad Gateway
-            503,  # Service Unavailable
-            504,  # Gateway Timeout
-        )
-
-    try:
-        response = repeater.send_request(repeat_record, payload)
-    except (Timeout, ConnectionError) as err:
-        log_repeater_timeout_in_datadog(repeat_record.domain)
-        message = str(RequestConnectionError(err))
-        repeat_record.add_server_failure_attempt(message)
-    except Exception as err:
-        repeat_record.add_client_failure_attempt(str(err))
-    else:
-        if is_success(response):
-            if is_response(response):
-                # Log success in Datadog if the payload was sent.
-                log_repeater_success_in_datadog(
-                    repeater.domain,
-                    response.status_code,
-                    repeater_type=repeater.__class__.__name__
-                )
-            repeat_record.add_success_attempt(response)
-        else:
-            message = format_response(response)
-            if later_might_be_better(response):
-                repeat_record.add_server_failure_attempt(message)
-            else:
-                retry = allow_retries(response)
-                repeat_record.add_client_failure_attempt(message, retry)
-    return repeat_record.state in (State.Success, State.Cancelled, State.Empty)  # Don't retry
 
 
 def has_failed(record):
