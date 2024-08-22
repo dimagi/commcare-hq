@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,20 +1,23 @@
+@@ -1,20 +1,16 @@
  .full-width {
    width: 100%;
 +  margin-left: 0;
@@ -8,26 +8,28 @@
 +  max-width: none;  // clear any max-widths set by bootstrap, such as in .container
  }
  
- .sidebar-push {
+-.sidebar-push {
 -  @media (min-width: @screen-md-min) {
+-    margin-left: 310px;
++#sidebar-contents {
++  background: transparent;
 +  @include media-breakpoint-up(lg) {
-     margin-left: 310px;
++    width: 300px;
    }
- }
- 
- #sidebar-region {
-   background: transparent;
+-}
+-
+-#sidebar-region {
+-  background: transparent;
 -  @media (min-width: @screen-md-min) {
-+  @include media-breakpoint-up(lg) {
-     width: 300px;
-     position: absolute;
-   }
+-    width: 300px;
+-    position: absolute;
+-  }
 -  @media (max-width: @screen-sm-max) {
 +  @include media-breakpoint-down(lg) {
      max-width: 600px;
      margin: auto;
    }
-@@ -66,35 +69,39 @@
+@@ -66,35 +62,39 @@
  
  .query-description {
    a {
