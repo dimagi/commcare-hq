@@ -39,7 +39,6 @@ module.exports = {
         "nv": false,
         "d3": false,
         "require": false,
-        "module": false,
         "__dirname": false,
         "process": false,
     },
