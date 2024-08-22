@@ -1,3 +1,4 @@
+/* eslint-env node */
 const commonDefault = require("./webpack.common");
 const webpack = require('webpack');
 const utils = require('./utils');
