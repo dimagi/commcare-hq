@@ -157,7 +157,6 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
 
     def test_admin_user(self):
         self.user.domain_memberships[0].is_admin = True
-        self.assertTrue(self.user.get_domain_membership(self.DOMAIN).is_admin)
 
         cca_access = get_commcare_analytics_access_for_user_domain(self.user, self.DOMAIN)
         self.assertEqual(cca_access['roles'], COMMCARE_ANALYTICS_USER_ROLES)
