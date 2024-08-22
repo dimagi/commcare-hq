@@ -741,3 +741,40 @@ class TestApiThrottle(APIResourceTest):
                 self.client.get(self.endpoint)
 
                 hq_should_be_throttled.assert_called_with(ApiIdentifier(domain=self.domain.name, username=self.user.username))
+
+
+class TestUrls(APIResourceTest):
+    resource = v0_5.CommCareUserResource
+    api_name = 'v0.5'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        commcare_user = CommCareUser.create(domain=cls.domain.name, username='fake_user', password='*****',
+                                            created_by=None, created_via=None)
+        cls.addClassCleanup(commcare_user.delete, cls.domain.name, deleted_by=None)
+        cls.user_id = commcare_user.user_id
+
+    def test_v0_5(self):
+        url = reverse('api_dispatch_detail', kwargs={
+            'resource_name': 'user',
+            'domain': self.domain.name,
+            'api_name': 'v0.5',
+            'pk': self.user_id,
+        })
+        self.assertEqual(url, f'/a/qwerty/api/v0.5/user/{self.user_id}/')
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.json()['resource_uri'],
+                         f'/a/qwerty/api/v0.5/user/{self.user_id}/')
+
+    def test_v1(self):
+        url = reverse('api_dispatch_detail', kwargs={
+            'resource_name': 'user',
+            'domain': self.domain.name,
+            'api_name': 'v1',
+            'pk': self.user_id,
+        })
+        self.assertEqual(url, f'/a/qwerty/api/user/v1/{self.user_id}/')
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.json()['resource_uri'],
+                         f'/a/qwerty/api/user/v1/{self.user_id}/')
