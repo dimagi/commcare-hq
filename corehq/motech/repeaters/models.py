@@ -402,10 +402,15 @@ class Repeater(RepeaterSuperProxy):
         )
         repeat_record.save()
 
+        if self.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain):
+            # no need to go any further if the repeater or domain is paused
+            return repeat_record
+
         if fire_synchronously:
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
             repeat_record.__dict__["repeater"] = self
+
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
