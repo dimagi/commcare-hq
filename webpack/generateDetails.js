@@ -1,3 +1,6 @@
+/* eslint-disable no-useless-escape */
+// NOTE: double escapes are needed for file path delimiters in webpack regexes for cross-platform support
+
 const fs = require('fs');
 const path = require('path');
 const appPaths = require('./appPaths');
