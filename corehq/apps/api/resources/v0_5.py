@@ -1391,8 +1391,6 @@ def get_cca_user_roles(request, domain):
         )
 
     try:
-        if request.method == 'GET':
-            return JsonResponse(get_commcare_analytics_access_for_user_domain(request.couch_user, domain))
-        return JsonResponse({'error': "Request method not allowed"}, status=405)
+        return JsonResponse(get_commcare_analytics_access_for_user_domain(request.couch_user, domain))
     except BadRequest as e:
         return JsonResponse({'error': str(e)}, status=400)
