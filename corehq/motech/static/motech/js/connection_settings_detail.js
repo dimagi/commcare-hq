@@ -143,6 +143,11 @@ hqDefine("motech/js/connection_settings_detail", [
                 plaintext_password: $('#id_plaintext_password').val(),
                 client_id: $('#id_client_id').val(),
                 plaintext_client_secret: $('#id_plaintext_client_secret').val(),
+                pass_credentials_in_header: $('#id_pass_credentials_in_header').prop('checked'),
+                include_client_id: $('#id_include_client_id').prop('checked'),
+                scope: $('#id_scope').val(),
+                token_url: $('#id_token_url').val(),
+                auth_preset: $('#id_auth_preset').val(),
                 skip_cert_verify: $('#id_skip_cert_verify').prop('checked'),
             };
             $testConnectionButton.disableButton();
