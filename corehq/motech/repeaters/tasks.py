@@ -5,6 +5,7 @@ from django.conf import settings
 
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
+from ddtrace import tracer
 
 from dimagi.utils.couch import get_redis_lock
 
@@ -137,6 +138,7 @@ def retry_process_repeat_record(repeat_record_id, domain):
     _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
+@tracer.wrap(name="repeaters.process_record")
 def _process_repeat_record(repeat_record):
     request_duration = action = None
     with TimingContext('process_repeat_record') as timer:
