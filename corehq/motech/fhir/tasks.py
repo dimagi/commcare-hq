@@ -393,6 +393,25 @@ def create_parent_indices(
         device_id=f'FHIRImportConfig-{importer.pk}',
     )
 
+import requests, jwt, time, uuid
+def generate_epic_jwt():
+    key = settings.EPIC_PRIVATE_KEY
+    # token will expire in 4 mins
+    exp = int(time.time()) + 240
+    jti = str(uuid.uuid4())
+    header = {
+        "alg": "RS256",
+        "typ": "JWT",
+        }
+    payload = {
+        "iss": settings.EPIC_CLIENT_ID,
+        "sub": settings.EPIC_CLIENT_ID,
+        "aud": "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
+        "jti": jti,
+        "exp": exp
+        }
+    token = jwt.encode(payload, key, algorithm="RS256", headers=header)
+    return token
 
 class ServiceRequestNotActive(Exception):
     pass
