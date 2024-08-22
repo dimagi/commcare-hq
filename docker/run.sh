@@ -212,7 +212,7 @@ function _run_tests {
 
     function _test_javascript {
         SKIP_GEVENT_PATCHING=1 ./manage.py migrate --noinput
-        yarn build
+        su cchq -c "yarn build"
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         _wait_for_runserver
         logmsg INFO "grunt test ${js_test_args[*]}"
