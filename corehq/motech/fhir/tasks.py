@@ -413,5 +413,20 @@ def generate_epic_jwt():
     token = jwt.encode(payload, key, algorithm="RS256", headers=header)
     return token
 
+def request_epic_access_token():
+    headers = {
+        "Content_Type": "application/x-www-form-urlencoded",
+        }
+    data = {
+        "grant_type": "client_credentials",
+        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+        "client_assertion": generate_epic_jwt()
+        }
+    url = "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token"
+    response = requests.post(url, data=data, headers=headers)
+    if response.status_code == 200:
+        return response.json().get('access_token')
+    elif response.status_code >= 400:
+        return response.json().get('error')
 class ServiceRequestNotActive(Exception):
     pass
