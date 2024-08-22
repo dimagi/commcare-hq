@@ -1,7 +1,7 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load statici18n %}
-{% requirejs_main %}
+{% requirejs_main %} {# todo, figure out webpack hooks for js tests #}
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
@@ -21,14 +21,14 @@
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       <script src="{% static 'mocha/mocha.js' %}"></script>
       <script src="{% static 'chai/chai.js' %}"></script>
       <script src="{% static 'sinon/pkg/sinon.js' %}"></script>
     {% endif %}
 
     <!-- Core Libraries -->
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% block core_libraries %}
         {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
       {% endblock %}
@@ -51,7 +51,7 @@
     <div id="mocha-sandbox"></div>
     {% block mocha_tests %}{% endblock %}
 
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       <script charset="utf-8">
         hqImport("mocha/js/main").run();
       </script>
