@@ -363,5 +363,5 @@
     - ['org.commcare.respiratory', 'Breath Counter']
     - ['com.simprints.id', 'Simprints ID']
   default: []  # multiSelect default takes a list
-  since: '2.53'
+  since: '2.54'
   force: true
