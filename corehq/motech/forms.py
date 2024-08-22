@@ -166,7 +166,7 @@ class ConnectionSettingsForm(forms.ModelForm):
                 ),
                 id="div_id_oauth_settings",
             ),
-            twbscrispy.PrependedText('skip_cert_verify', ''),
+            crispy.Field('skip_cert_verify'),
             self.test_connection_button,
 
             twbscrispy.StrictButton(
