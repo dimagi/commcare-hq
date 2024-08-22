@@ -49,14 +49,15 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
 
             $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                 const app = appCollection.find(function (app) {
+                    const currCopyOf = app.get('copy_of');
                     // Prevents breaking if a web apps session spans pre and post deploy. Can remove post deploy.
                     if (app.id && app.id === params.appId) {
                         return app;
                     }
-                    if (app.get('copy_of') && app.get('copy_of') === params.appId) {
+                    if (currCopyOf && currCopyOf === params.appId) {
                         return app;
                     }
-                    if (app.get('copy_of') && (app.get('copy_of') === params.copyOf)) {
+                    if (currCopyOf && (currCopyOf === params.copyOf)) {
                         return app;
                     }
                 });
@@ -73,8 +74,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     }
                 }
                 let appId = params.appId;
+                const copyOf = app.get('copy_of');
                 if (!params.preview) {
-                    if (app.get('copy_of') && app.get('copy_of') === params.appId) {
+                    if (copyOf && copyOf === params.appId) {
                         appId = app.id;
                     }
                 }
