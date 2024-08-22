@@ -138,14 +138,14 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         cls.domain = create_domain(cls.DOMAIN)
         cls.user = WebUser.create("domain1", cls.USERNAME, cls.PASSWORD, None, None)
 
-        cls.hq_no_cca_role = cls.create_role("No CCA role", analytics_roles=None)
+        cls.hq_no_cca_role = cls._create_role("No CCA role", analytics_roles=None)
 
         cls.limited_cca_roles = [
             COMMCARE_ANALYTICS_GAMMA,
             COMMCARE_ANALYTICS_SQL_LAB,
         ]
-        cls.hq_limited_cca_role = cls.create_role("Limited CCA role", analytics_roles=cls.limited_cca_roles)
-        cls.hq_all_cca_roles_role = cls.create_role("All CCA roles", analytics_roles=[], all_roles=True)
+        cls.hq_limited_cca_role = cls._create_role("Limited CCA role", analytics_roles=cls.limited_cca_roles)
+        cls.hq_all_cca_roles_role = cls._create_role("All CCA roles", analytics_roles=[], all_roles=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -188,7 +188,7 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         self.assertEqual(cca_access['roles'], COMMCARE_ANALYTICS_USER_ROLES)
 
     @classmethod
-    def create_role(cls, role_name, analytics_roles=None, all_roles=False):
+    def _create_role(cls, role_name, analytics_roles=None, all_roles=False):
         if analytics_roles is None:
             analytics_roles = []
         permissions_infos = [PermissionInfo('commcare_analytics_roles', analytics_roles)]
