@@ -50,6 +50,7 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
         NO_ANSWER: null,
+        NO_FILE_SELECTED: "No file selected.",
 
         // UI
         LABEL_WIDTH: 'col-md-4',
