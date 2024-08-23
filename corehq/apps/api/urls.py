@@ -30,37 +30,6 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
 from corehq.motech.generic_inbound.views import generic_inbound_api
 
-api_urlpatterns = [
-    v0_4.ApplicationResource.get_urlpattern('v1'),
-    v0_4.CommCareCaseResource.get_urlpattern('v1'),
-    v0_4.XFormInstanceResource.get_urlpattern('v1'),
-    v0_4.SingleSignOnResource.get_urlpattern('v1'),
-    v0_5.CommCareUserResource.get_urlpattern('v1'),
-    v0_5.WebUserResource.get_urlpattern('v1'),
-    v0_5.GroupResource.get_urlpattern('v1'),
-    v0_5.BulkUserResource.get_urlpattern('v1'),
-    fixtures.v0_1.InternalFixtureResource.get_urlpattern('v1'),
-    fixtures.v0_1.FixtureResource.get_urlpattern('v1'),
-    v0_5.DeviceReportResource.get_urlpattern('v1'),
-    DomainMetadataResource.get_urlpattern('v1'),
-    locations.v0_5.LocationResource.get_urlpattern('v1'),
-    locations.v0_6.LocationResource.get_urlpattern('v2'),
-    locations.v0_5.LocationTypeResource.get_urlpattern('v1'),
-    v0_5.SimpleReportConfigurationResource.get_urlpattern('v1'),
-    v0_5.ConfigurableReportDataResource.get_urlpattern('v1'),
-    v0_5.DataSourceConfigurationResource.get_urlpattern('v1'),
-    DomainForms.get_urlpattern('v1'),
-    DomainCases.get_urlpattern('v1'),
-    DomainUsernames.get_urlpattern('v1'),
-    locations.v0_1.InternalLocationResource.get_urlpattern('v1'),
-    v0_5.ODataCaseResource.get_urlpattern('v1'),
-    v0_5.ODataFormResource.get_urlpattern('v1'),
-    fixtures.v0_1.LookupTableResource.get_urlpattern('v1'),
-    fixtures.v0_1.LookupTableItemResource.get_urlpattern('v1'),
-    fixtures.v0_6.LookupTableItemResource.get_urlpattern('v2'),
-    v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
-]
-
 _OLD_API_LIST = (
     ((0, 3), (
         v0_3.CommCareCaseResource,
@@ -127,25 +96,51 @@ def versioned_apis(api_list):
         yield url(r'^', include(api.urls))
 
 
-def _old_api_url_patterns():
-    # todo: these have to come first to short-circuit tastypie's matching
-    yield path('v0.5/odata/', include(odata_urlpatterns))
-    yield url(r'v0.5/messaging-event/$', messaging_events, name="api_messaging_event_list")
-    yield url(r'v0.5/messaging-event/(?P<event_id>\d+)/$', messaging_events, name="api_messaging_event_detail")
-    yield url(r'v0\.6/case/bulk-fetch/$', case_api_bulk_fetch, name='case_api_bulk_fetch')
+urlpatterns = [
+    path('v0.5/odata/', include(odata_urlpatterns)),
+    url(r'v0.5/messaging-event/$', messaging_events, name="api_messaging_event_list"),
+    url(r'v0.5/messaging-event/(?P<event_id>\d+)/$', messaging_events, name="api_messaging_event_detail"),
+    url(r'v0\.6/case/bulk-fetch/$', case_api_bulk_fetch, name='case_api_bulk_fetch'),
     # match v0.6/case/ AND v0.6/case/e0ad6c2e-514c-4c2b-85a7-da35bbeb1ff1/ trailing slash optional
-    yield url(r'v0\.6/case(?:/(?P<case_id>[\w\-,]+))?/?$', case_api, name='case_api')
-    yield from versioned_apis(_OLD_API_LIST)
-    yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(),
-              name="api_case_attachment")
-    yield url(r'^form/attachment/(?P<instance_id>[\w\-:]+)/(?P<attachment_id>.*)$', view_form_attachment,
-              name="api_form_attachment")
+    url(r'v0\.6/case(?:/(?P<case_id>[\w\-,]+))?/?$', case_api, name='case_api'),
+    path('', include(list(versioned_apis(_OLD_API_LIST)))),
+    url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(),
+        name="api_case_attachment"),
+    url(r'^form/attachment/(?P<instance_id>[\w\-:]+)/(?P<attachment_id>.*)$', view_form_attachment,
+        name="api_form_attachment"),
+    path('case/custom/<slug:api_id>/', generic_inbound_api, name="generic_inbound_api"),
+    url(r'v0.5/ucr/', v0_5.get_ucr_data, name="api_get_ucr_data"),
+    v0_4.ApplicationResource.get_urlpattern('v1'),
+    v0_4.CommCareCaseResource.get_urlpattern('v1'),
+    v0_4.XFormInstanceResource.get_urlpattern('v1'),
+    v0_4.SingleSignOnResource.get_urlpattern('v1'),
+    v0_5.CommCareUserResource.get_urlpattern('v1'),
+    v0_5.WebUserResource.get_urlpattern('v1'),
+    v0_5.GroupResource.get_urlpattern('v1'),
+    v0_5.BulkUserResource.get_urlpattern('v1'),
+    fixtures.v0_1.InternalFixtureResource.get_urlpattern('v1'),
+    fixtures.v0_1.FixtureResource.get_urlpattern('v1'),
+    v0_5.DeviceReportResource.get_urlpattern('v1'),
+    DomainMetadataResource.get_urlpattern('v1'),
+    locations.v0_5.LocationResource.get_urlpattern('v1'),
+    locations.v0_6.LocationResource.get_urlpattern('v2'),
+    locations.v0_5.LocationTypeResource.get_urlpattern('v1'),
+    v0_5.SimpleReportConfigurationResource.get_urlpattern('v1'),
+    v0_5.ConfigurableReportDataResource.get_urlpattern('v1'),
+    v0_5.DataSourceConfigurationResource.get_urlpattern('v1'),
+    DomainForms.get_urlpattern('v1'),
+    DomainCases.get_urlpattern('v1'),
+    DomainUsernames.get_urlpattern('v1'),
+    locations.v0_1.InternalLocationResource.get_urlpattern('v1'),
+    v0_5.ODataCaseResource.get_urlpattern('v1'),
+    v0_5.ODataFormResource.get_urlpattern('v1'),
+    fixtures.v0_1.LookupTableResource.get_urlpattern('v1'),
+    fixtures.v0_1.LookupTableItemResource.get_urlpattern('v1'),
+    fixtures.v0_6.LookupTableItemResource.get_urlpattern('v2'),
+    v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
+]
 
-    yield path('case/custom/<slug:api_id>/', generic_inbound_api, name="generic_inbound_api")
-    yield url(r'v0.5/ucr/', v0_5.get_ucr_data, name="api_get_ucr_data")
 
-
-urlpatterns = list(_old_api_url_patterns()) + api_urlpatterns
 
 ADMIN_API_LIST = (
     v0_5.AdminWebUserResource,
