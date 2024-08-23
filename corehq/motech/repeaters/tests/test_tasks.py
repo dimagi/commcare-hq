@@ -249,6 +249,22 @@ class TestProcessRepeatRecord(TestCase):
 
 class TestIterReadyRepeaterIDsForever(SimpleTestCase):
 
+    @staticmethod
+    def all_ready_ids_by_domain():
+        return [
+            {
+                # See test_iter_ready_repeater_ids_once()
+                'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
+                'domain2': ['repeater_id4', 'repeater_id5'],
+                'domain3': ['repeater_id6'],
+            },
+            {
+                'domain1': ['repeater_id1', 'repeater_id2'],
+                'domain2': ['repeater_id4']
+            },
+            {},
+        ]
+
     def test_no_ready_repeaters(self):
         with (
             patch('corehq.motech.repeaters.tasks.iter_ready_repeater_ids_once',
@@ -284,26 +300,14 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
 
     def test_successive_loops(self):
         with (
-            patch(
-                'corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
-                side_effect=[
-                    {
-                        # See test_iter_ready_repeater_ids_once()
-                        'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
-                        'domain2': ['repeater_id4', 'repeater_id5'],
-                        'domain3': ['repeater_id6'],
-                    },
-                    {
-                        'domain1': ['repeater_id1', 'repeater_id2'],
-                        'domain2': ['repeater_id4']
-                    },
-                    {},
-                ]
-            ),
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
+                  side_effect=self.all_ready_ids_by_domain()),
             patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
                   return_value=True),
             patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
                   return_value=True),
+            patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
+                  return_value=False),
             patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
         ):
             repeaters = list(iter_ready_repeater_ids_forever())
@@ -321,6 +325,31 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
                 # Second loop
                 ('domain1', 'repeater_id1'),
                 ('domain2', 'repeater_id4'),
+                ('domain1', 'repeater_id2'),
+            ])
+
+    def test_rate_limit(self):
+        with (
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
+                  side_effect=self.all_ready_ids_by_domain()),
+            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
+                  return_value=True),
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
+                  return_value=True),
+            patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
+                  side_effect=lambda dom, rep: dom == 'domain2' and rep == 'repeater_id4'),
+            patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
+        ):
+            repeaters = list(iter_ready_repeater_ids_forever())
+            self.assertEqual(len(repeaters), 7)
+            repeater_ids = [(r[0], r[1]) for r in repeaters]
+            self.assertEqual(repeater_ids, [
+                ('domain1', 'repeater_id1'),
+                ('domain3', 'repeater_id6'),
+                ('domain1', 'repeater_id2'),
+                ('domain2', 'repeater_id5'),
+                ('domain1', 'repeater_id3'),
+                ('domain1', 'repeater_id1'),
                 ('domain1', 'repeater_id2'),
             ])
 
