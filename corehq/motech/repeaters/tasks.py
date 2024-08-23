@@ -260,6 +260,8 @@ def iter_ready_repeater_ids_forever():
                 continue
             if not domain_can_forward_now(domain):
                 continue
+            if rate_limit_repeater(domain, repeater_id):
+                continue
 
             lock = get_repeater_lock(repeater_id)
             lock_token = uuid.uuid1().hex  # The same way Lock does it
