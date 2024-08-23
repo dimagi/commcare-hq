@@ -87,4 +87,4 @@ corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
 .direnv
 
 # webpack build related
-/webpack/*.json
+/webpack/_build/
