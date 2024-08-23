@@ -1,10 +1,36 @@
-'use strict';
+/* eslint-env node */
+/* eslint-disable no-useless-escape */
+// NOTE: double escapes are needed for file path delimiters in webpack regexes for cross-platform support
 
 const fs = require('fs');
 const path = require('path');
 const appPaths = require('./appPaths');
 
 const scanTemplates = function (dir, entryRegex, allAppPaths, details, isProdMode) {
+    /**
+     * This recursively scans all template files within a given directory, looking
+     * for a metch to the `entryRegex` specified above. The first group this entry regex
+     * (`match[1]`) should return the webpack entry name, eg `hqwebapp/js/some_page`.
+     *
+     * As they are discovered, entries are appended to the `details.entries` dictionary.
+     * Additionally, `details.aliases` is updated when an app alias is first found,
+     * eg `hqwebapp/js` (the first two folders in the entry name).
+     * Lastly, the (unique) application name is added to `details.appsWithEntries`
+     *
+     * @param dir - path to directory to begin scanning
+     * @param entryRegex -  regex for identifying an entry in an .html page (see examples below)
+     * @param allAppPaths (dict) - keys are all the applications being scanned
+     *                             and values are paths to each application's folder
+     * @param details (dict) - the dictionary that will be modified by this function, formatted as follows:
+     *                          {
+     *                              entries: {},
+     *                              aliases: {},
+     *                              appsWithEntries: [],
+     *                          }
+     * @param isProdMode (boolean) - `true` if this should be run in production mode, the difference
+     *                          being that entry filenames end in `.[contenthash].js`, which is necessary for
+     *                          cache busting on production.
+     */
     const files = fs.readdirSync(dir);
 
     files.forEach((file) => {
@@ -48,6 +74,19 @@ const scanTemplates = function (dir, entryRegex, allAppPaths, details, isProdMod
 };
 
 const getDetails = function (entryRegex, allAppPaths, isProdMode) {
+    /**
+     * Generates the details for a given `entryRegex`.
+     *
+     * @param entryRegex - regex for identifying an entry in an .html page (see examples below)
+     * @param allAppPaths (dict) - keys are all the applications being scanned for entries (all applications that
+     *                             have `template` folders). The values are paths to each application's root folder.
+     *                             eg. `"hqwebapp": "/path/to/corehq/apps/hqwebapp"`
+     * @param isProdMode (boolean) - `true` if this should be run in production mode, the difference
+     *                          being that entry filenames end in `.[contenthash].js`, which is necessary for
+     *                          cache busting on production.
+     *
+     * @type {{entries: {}, aliases: {}, appsWithEntries: []}}
+     */
     const details = {
         entries: {},
         aliases: {},
