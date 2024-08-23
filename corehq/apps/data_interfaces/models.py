@@ -1158,7 +1158,13 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 # We've decided skipping this record and recording an error is likely the safest way to handle this
                 # Hopefully, these errors allow us to track down the underlying bug or infrastructure issue
                 # and fix the issue at the source
-                raise ValueError(f'Unable to find current ElasticSearch data for: {case.case_id}')
+
+                # TODO: Commenting this line out, as it has caused us to surpass our sentry error quota
+                # we should figure out whether this can be safely handled, or what truly constitutes an error,
+                # but disabling this to avoid further quota issues.
+                # raise ValueError(f'Unable to find current ElasticSearch data for: {case.case_id}')
+                # Ignore this result for now
+                return CaseRuleActionResult(num_errors=1)
             else:
                 # Normal processing can involve latency between when a case is written to the database and when
                 # it arrives in ElasticSearch. If this case was modified within the acceptable latency window,

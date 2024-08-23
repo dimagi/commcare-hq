@@ -33,7 +33,7 @@ hqDefine("motech/js/connection_settings_detail", [
 
         });
 
-        $authTypeSelect.change(function () {
+        $authTypeSelect.change(function (e, fromInitial) {
             let visible = {},
                 allFields = {
                     'username': gettext("Username"),
@@ -82,7 +82,7 @@ hqDefine("motech/js/connection_settings_detail", [
                     div.removeClass("d-none");
                     let label = visible[field] || allFields[field];
                     let labelElement = div.find('label');
-                    if (label && labelElement.length > 0 && labelElement.text() !== label) {
+                    if (!fromInitial && label && labelElement.length > 0 && labelElement.text() !== label) {
                         labelElement.text(label);
                         let fieldElement = $('#id_' + field);
                         fieldElement.val('');  // clear current value
@@ -162,7 +162,7 @@ hqDefine("motech/js/connection_settings_detail", [
         });
 
         // Set initial state
-        $authTypeSelect.trigger('change');
+        $authTypeSelect.trigger('change', [true]);
         $authPreset.trigger('change');
         $('#id_url').trigger('change');
     });

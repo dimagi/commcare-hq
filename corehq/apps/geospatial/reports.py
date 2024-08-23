@@ -109,6 +109,7 @@ class CaseManagementMap(BaseCaseMapReport):
             DataTablesColumn(_("case_id"), prop_name="type.exact"),
             DataTablesColumn(_("gps_point"), prop_name="type.exact"),
             DataTablesColumn(_("link"), prop_name="name.exact", css_class="case-name-link"),
+            DataTablesColumn(_("name"), prop_name="name.exact"),
         )
         headers.custom_sort = [[2, 'desc']]
         return headers
@@ -125,7 +126,8 @@ class CaseManagementMap(BaseCaseMapReport):
             cases.append([
                 display.case_id,
                 coordinates,
-                display.case_link
+                display.case_link,
+                display.case_name,
             ])
         return cases
 

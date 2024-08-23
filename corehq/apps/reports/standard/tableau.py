@@ -9,7 +9,7 @@ from no_exceptions.exceptions import Http403
 import requests
 
 from corehq import toggles
-from corehq.apps.reports.models import TableauVisualization
+from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.permissions import location_safe
@@ -90,12 +90,12 @@ def tableau_visualization_ajax(request, domain):
             id=visualization_data.pop('viz_id'))):
         raise Http403
 
-    if toggles.EMBED_TABLEAU_REPORT_BY_USER.enabled(domain):
+    if TableauServer.objects.get(domain=domain).get_reports_using_role:
+        tableau_username = f"HQ/{request.couch_user.get_role(domain).name}"
+    else:
         # An equivalent Tableau user with the username "HQ/{username}" must exist.
         tableau_username = f"HQ/{request.couch_user.username}"
-    else:
-        # An equivalent Tableau user with the username "HQ/{role name}" must exist.
-        tableau_username = f"HQ/{request.couch_user.get_role(domain).name}"
+
     tabserver_url = 'https://{}/trusted/'.format(server_name)
     post_arguments = {'username': tableau_username}
 
