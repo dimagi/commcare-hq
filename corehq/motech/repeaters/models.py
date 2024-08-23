@@ -1164,7 +1164,9 @@ class RepeatRecord(models.Model):
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
             process_repeat_record,
+            process_datasource_repeat_record,
             retry_process_repeat_record,
+            retry_process_datasource_repeat_record,
         )
 
         if self.next_check is None or self.next_check > datetime.utcnow():
@@ -1184,8 +1186,12 @@ class RepeatRecord(models.Model):
             # data from overwriting the work of another.
             return
 
-        # separated for improved datadog reporting
-        task = retry_process_repeat_record if is_retry else process_repeat_record
+        if self.repeater_type in ['DataSourceRepeater']:
+            # separated for improved datadog reporting
+            task = retry_process_datasource_repeat_record if is_retry else process_datasource_repeat_record
+        else:
+            # separated for improved datadog reporting
+            task = retry_process_repeat_record if is_retry else process_repeat_record
         if fire_synchronously:
             task(self.id, self.domain)
         else:
