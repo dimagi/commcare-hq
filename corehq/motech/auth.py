@@ -227,7 +227,7 @@ class OAuth2ClientGrantManager(AuthManager):
             else:
                 self.last_token = session.fetch_token(
                     token_url=self.token_url,
-                    client_id=self.client_id,
+                    include_client_id=True,
                     client_secret=self.client_secret,
                 )
 
@@ -318,7 +318,7 @@ class OAuth2PasswordGrantManager(AuthManager):
                     token_url=self.token_url,
                     username=self.username,
                     password=self.password,
-                    client_id=self.client_id,
+                    include_client_id=True,
                     client_secret=self.client_secret,
                 )
 
