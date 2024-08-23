@@ -86,6 +86,7 @@ from requests.exceptions import ConnectionError, RequestException, Timeout
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
+from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.parsing import json_format_datetime
 
@@ -946,21 +947,19 @@ class RepeatRecordManager(models.Manager):
 
     def iter_partition(self, start, partition, total_partitions):
         from django.db.models import F
-        query = self.annotate(partition_id=F("id") % total_partitions).filter(
-            partition_id=partition,
-            next_check__isnull=False,
-            next_check__lt=start,
-        ).order_by("next_check", "id")
-        offset = {}
-        while True:
-            result = list(query.filter(**offset)[:1000])
-            yield from result
-            if len(result) < 1000:
-                break
-            offset = {
-                "next_check__gte": result[-1].next_check,
-                "id__gt": result[-1].id,
-            }
+        # Grab IDs first because this table sees too much churn to paginate correctly
+        ids = (
+            self.annotate(partition_id=F("id") % total_partitions)
+            .filter(
+                partition_id=partition,
+                next_check__isnull=False,
+                next_check__lt=start,
+            )
+            .order_by("next_check")
+            .values_list("id", flat=True)
+        )
+        for chunk in chunked(ids, 1000):
+            yield from self.filter(id__in=chunk)
 
     def get_domains_with_records(self):
         return self.order_by().values_list("domain", flat=True).distinct()
