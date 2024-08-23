@@ -203,8 +203,11 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL, value_key
         result = fn()
         if isinstance(result, Iterable):
             for obj in result:
+                assert isinstance(obj, dict)
                 value = obj.pop(value_key)
                 tags = obj
+                # tags can be expensive so add conservatively
+                assert len(tags) <= 1
                 metrics_gauge(name, value, multiprocess_mode=multiprocess_mode, tags=tags)
         else:
             metrics_gauge(name, result, multiprocess_mode=multiprocess_mode)
