@@ -194,6 +194,10 @@ VERSIONED_USER_API_LIST = (
     )),
 )
 
-user_urlpatterns = list(versioned_apis(VERSIONED_USER_API_LIST))
+user_urlpatterns = [
+    path('', include(list(versioned_apis(VERSIONED_USER_API_LIST)))),
+    v0_5.IdentityResource.get_urlpattern('v1'),
+    UserDomainsResource.get_urlpattern('v1'),
+]
 
 waf_allow('XSS_BODY', hard_code_pattern=r'^/a/([\w\.:-]+)/api/v([\d\.]+)/form/$')

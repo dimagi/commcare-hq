@@ -832,7 +832,7 @@ UserDomain = namedtuple('UserDomain', 'domain_name project_name')
 UserDomain.__new__.__defaults__ = ('', '')
 
 
-class UserDomainsResource(CorsResourceMixin, Resource):
+class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
     domain_name = fields.CharField(attribute='domain_name')
     project_name = fields.CharField(attribute='project_name')
 
@@ -882,7 +882,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         return results
 
 
-class IdentityResource(CorsResourceMixin, Resource):
+class IdentityResource(ApiVersioningMixin, CorsResourceMixin, Resource):
     id = fields.CharField(attribute='get_id', readonly=True)
     username = fields.CharField(attribute='username', readonly=True)
     first_name = fields.CharField(attribute='first_name', readonly=True)

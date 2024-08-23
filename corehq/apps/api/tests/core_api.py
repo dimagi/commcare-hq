@@ -778,3 +778,15 @@ class TestUrls(APIResourceTest):
         response = self._assert_auth_get_resource(url)
         self.assertEqual(response.json()['resource_uri'],
                          f'/a/qwerty/api/user/v1/{self.user_id}/')
+
+    def test_user_scoped_api(self):
+        for version, expected_url in [
+                ('v0.5', '/api/v0.5/identity/'),
+                ('v1', '/api/identity/v1/'),
+        ]:
+            url = reverse('api_dispatch_list', kwargs={
+                'resource_name': 'identity',
+                'api_name': version,
+            })
+            self.assertEqual(url, expected_url)
+            self.assertEqual(self._assert_auth_get_resource(url).status_code, 200)
