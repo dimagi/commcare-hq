@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.models import XFormInstance
@@ -15,6 +15,7 @@ from corehq.motech.repeaters.models import Repeater, RepeatRecord
 from corehq.motech.repeaters.tasks import (
     _process_repeat_record,
     delete_old_request_logs,
+    iter_ready_repeater_ids_forever,
 )
 
 from ..const import State
@@ -241,3 +242,59 @@ class TestProcessRepeatRecord(TestCase):
         self.mock_domain_can_forward = patch_domain_can_forward.start()
         self.mock_domain_can_forward.return_value = True
         self.addCleanup(patch_domain_can_forward.stop)
+
+
+class TestIterReadyRepeaterIDsForever(SimpleTestCase):
+
+    def test_no_ready_repeaters(self):
+        with (
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
+                  return_value=[]),  # <--
+            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
+                  return_value=True),
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
+                  return_value=True)
+        ):
+            self.assertFalse(next(iter_ready_repeater_ids_forever(), False))
+
+    def test_domain_cant_forward_now(self):
+        with (
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
+                  return_value=[Repeater()]),
+            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
+                  return_value=False),  # <--
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
+                  return_value=True)
+        ):
+            self.assertFalse(next(iter_ready_repeater_ids_forever(), False))
+
+    def test_process_repeaters_not_enabled(self):
+        with (
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
+                  return_value=[Repeater()]),
+            patch('corehq.motech.repeaters.models.domain_can_forward',
+                  return_value=True),
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
+                  return_value=False)  # <--
+        ):
+            self.assertFalse(next(iter_ready_repeater_ids_forever(), False))
+
+    def test_successive_loops(self):
+        repeater_1 = Repeater(domain=DOMAIN, name='foo')
+        repeater_2 = Repeater(domain=DOMAIN, name='bar')
+        with (
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.all_ready',
+                  side_effect=[[repeater_1, repeater_2], [repeater_1], []]),
+            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
+                  return_value=True),
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
+                  return_value=True)
+        ):
+            repeaters = list(iter_ready_repeater_ids_forever())
+            self.assertEqual(len(repeaters), 3)
+            repeater_ids = [r[1] for r in repeaters]
+            self.assertEqual(repeater_ids, [
+                repeater_1.repeater_id,
+                repeater_2.repeater_id,
+                repeater_1.repeater_id,
+            ])
