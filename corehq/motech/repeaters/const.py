@@ -17,6 +17,8 @@ ENDPOINT_TIMER = 'endpoint_timer'
 MAX_ATTEMPTS = 3
 # Number of exponential backoff attempts to an offline endpoint
 MAX_BACKOFF_ATTEMPTS = 6
+# Minutes past next_check time that make a record "overdue"
+OVERDUE_THRESHOLD = 10
 
 
 class State(IntegerChoices):

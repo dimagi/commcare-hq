@@ -125,6 +125,7 @@ from .const import (
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
+    OVERDUE_THRESHOLD,
     State,
 )
 from .exceptions import RequestConnectionError, UnknownRepeater
@@ -916,7 +917,13 @@ class RepeatRecordManager(models.Manager):
             result[repeater_id][state] = count
         return result
 
-    def count_overdue_by_partition(self, threshold=timedelta(minutes=10)):
+    def count_overdue(self, threshold=timedelta(minutes=OVERDUE_THRESHOLD)):
+        return self.filter(
+            next_check__isnull=False,
+            next_check__lt=datetime.utcnow() - threshold
+        ).count()
+
+    def count_overdue_by_partition(self, threshold=timedelta(minutes=OVERDUE_THRESHOLD)):
         return (
             self.annotate(partition_id=models.F("id") % settings.CHECK_REPEATERS_PARTITION_COUNT)
             .filter(next_check__isnull=False, next_check__lt=datetime.utcnow() - threshold)

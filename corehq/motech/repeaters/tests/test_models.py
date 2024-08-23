@@ -589,6 +589,16 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.assertEqual(counts[missing_id][State.Cancelled], 0)
         self.assertEqual(counts[missing_id][State.Success], 0)
 
+    def test_count_overdue(self):
+        now = datetime.utcnow()
+        self.new_record(next_check=now - timedelta(hours=2))
+        self.new_record(next_check=now - timedelta(hours=1))
+        self.new_record(next_check=now - timedelta(minutes=15))
+        self.new_record(next_check=now - timedelta(minutes=5))
+        self.new_record(next_check=None, state=State.Success)
+        overdue = RepeatRecord.objects.count_overdue()
+        self.assertEqual(overdue, 3)
+
     @override_settings(CHECK_REPEATERS_PARTITION_COUNT=2)
     def test_count_overdue_for_partition(self):
         from collections import defaultdict
