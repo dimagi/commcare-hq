@@ -1169,6 +1169,9 @@ class RepeatRecord(models.Model):
             retry_process_repeat_record,
         )
 
+        if toggles.PROCESS_REPEATERS.enabled(self.domain, toggles.NAMESPACE_DOMAIN):
+            return
+
         if self.next_check is None or self.next_check > datetime.utcnow():
             return
 
@@ -1320,4 +1323,11 @@ def domain_can_forward(domain):
     return domain and (
         domain_has_privilege(domain, ZAPIER_INTEGRATION)
         or domain_has_privilege(domain, DATA_FORWARDING)
+    )
+
+
+def domain_can_forward_now(domain):
+    return (
+        domain_can_forward(domain)
+        and not toggles.PAUSE_DATA_FORWARDING.enabled(domain)
     )
