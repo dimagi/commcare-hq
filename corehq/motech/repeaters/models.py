@@ -107,6 +107,7 @@ from corehq.motech.const import (
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.apps import REPEATER_CLASS_MAP
+from corehq.motech.repeaters.const import CHECK_REPEATERS_PARTITION_COUNT
 from corehq.motech.repeaters.optionvalue import OptionValue
 from corehq.motech.requests import simple_request
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
@@ -915,11 +916,13 @@ class RepeatRecordManager(models.Manager):
             result[repeater_id][state] = count
         return result
 
-    def count_overdue(self, threshold=timedelta(minutes=10)):
-        return self.filter(
-            next_check__isnull=False,
-            next_check__lt=datetime.utcnow() - threshold
-        ).count()
+    def count_overdue_by_partition(self, threshold=timedelta(minutes=10)):
+        return (
+            self.annotate(partition_id=models.F("id") % CHECK_REPEATERS_PARTITION_COUNT)
+            .filter(next_check__isnull=False, next_check__lt=datetime.utcnow() - threshold)
+            .values("partition_id")
+            .annotate(count=models.Count("partition_id"))
+        )
 
     def iterate(self, domain, repeater_id=None, state=None, chunk_size=1000):
         db = router.db_for_read(self.model)
