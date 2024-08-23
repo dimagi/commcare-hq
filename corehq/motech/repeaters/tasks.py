@@ -11,6 +11,11 @@ from dimagi.utils.couch import get_redis_lock
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
+from corehq.motech.rate_limiter import (
+    rate_limit_repeater,
+    report_repeater_attempt,
+    report_repeater_usage,
+)
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,
     metrics_counter,
@@ -27,15 +32,16 @@ from .const import (
     CHECK_REPEATERS_PARTITION_COUNT,
     ENDPOINT_TIMER,
     MAX_RETRY_WAIT,
+    PROCESS_REPEATERS_INTERVAL,
+    PROCESS_REPEATERS_KEY,
     RATE_LIMITER_DELAY_RANGE,
     State,
 )
-from .models import RepeatRecord, domain_can_forward
-
-from ..rate_limiter import (
-    rate_limit_repeater,
-    report_repeater_attempt,
-    report_repeater_usage,
+from .models import (
+    Repeater,
+    RepeatRecord,
+    domain_can_forward,
+    domain_can_forward_now,
 )
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
@@ -213,6 +219,55 @@ def _process_repeat_record(repeat_record):
                 'action': action,
             },
         )
+
+
+@periodic_task(
+    run_every=PROCESS_REPEATERS_INTERVAL,
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
+def process_repeaters():
+    """
+    Processes repeaters, instead of processing repeat records
+    independently the way that ``check_repeaters()`` does.
+    """
+    process_repeater_lock = get_redis_lock(
+        PROCESS_REPEATERS_KEY,
+        timeout=24 * 60 * 60,
+        name=PROCESS_REPEATERS_KEY,
+    )
+    if not process_repeater_lock.acquire(blocking=False):
+        return
+    try:
+        for domain, repeater_id in iter_ready_repeater_ids_forever():
+            process_repeater.delay(domain, repeater_id)
+    finally:
+        process_repeater_lock.release()
+
+
+def iter_ready_repeater_ids_forever():
+    """
+    Cycles through repeaters (repeatedly ;) ) until there are no more
+    repeat records ready to be sent.
+    """
+    while True:
+        yielded = False
+        for repeater in Repeater.objects.all_ready():
+            if not toggles.PROCESS_REPEATERS.enabled(repeater.domain):
+                continue
+            if not domain_can_forward_now(repeater.domain):
+                continue
+            yielded = True
+            yield repeater.domain, repeater.repeater_id
+
+        if not yielded:
+            # No repeaters are ready, or their domains can't forward or
+            # are paused.
+            return
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeater(domain, repeater_id):
+    ...
 
 
 metrics_gauge_task(
