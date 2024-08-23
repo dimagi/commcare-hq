@@ -255,22 +255,59 @@ def iter_ready_repeater_ids_forever():
     """
     while True:
         yielded = False
-        for repeater in Repeater.objects.all_ready():
-            if not toggles.PROCESS_REPEATERS.enabled(repeater.domain):
+        for domain, repeater_id in iter_ready_repeater_ids_once():
+            if not toggles.PROCESS_REPEATERS.enabled(domain, toggles.NAMESPACE_DOMAIN):
                 continue
-            if not domain_can_forward_now(repeater.domain):
+            if not domain_can_forward_now(domain):
                 continue
 
-            lock = get_repeater_lock(repeater.repeater_id)
+            lock = get_repeater_lock(repeater_id)
             lock_token = uuid.uuid1().hex  # The same way Lock does it
             if lock.acquire(blocking=False, token=lock_token):
                 yielded = True
-                yield repeater.domain, repeater.repeater_id, lock_token
+                yield domain, repeater_id, lock_token
 
         if not yielded:
             # No repeaters are ready, or their domains can't forward or
             # are paused.
             return
+
+
+def iter_ready_repeater_ids_once():
+    """
+    Yields domain-repeater_id tuples in a round-robin fashion.
+
+    e.g. ::
+        ('domain1', 'repeater_id1'),
+        ('domain2', 'repeater_id2'),
+        ('domain3', 'repeater_id3'),
+        ('domain1', 'repeater_id4'),
+        ('domain2', 'repeater_id5'),
+        ...
+
+    """
+
+    def iter_domain_repeaters(dom):
+        try:
+            rep_id = repeater_ids_by_domain[dom].pop(0)
+        except IndexError:
+            return
+        else:
+            yield rep_id
+
+    repeater_ids_by_domain = Repeater.objects.get_all_ready_ids_by_domain()
+    while True:
+        if not repeater_ids_by_domain:
+            return
+        for domain in list(repeater_ids_by_domain.keys()):
+            try:
+                repeater_id = next(iter_domain_repeaters(domain))
+            except StopIteration:
+                # We've exhausted the repeaters for this domain
+                del repeater_ids_by_domain[domain]
+                continue
+            else:
+                yield domain, repeater_id
 
 
 def get_repeater_lock(repeater_id):
