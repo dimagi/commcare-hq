@@ -642,16 +642,15 @@ class CaseDeduplicationActionTest(TestCase):
         self.assertEqual(created_duplicates.count(), 0)
 
     @patch("corehq.apps.data_interfaces.models.case_matching_rule_criteria_exists_in_es")
-    def test_raises_error_when_case_not_in_elasticsearch(self, mock_case_exists):
+    def test_returns_error_result_when_case_not_in_elasticsearch(self, mock_case_exists):
         current_time = datetime(year=2024, month=2, day=5, hour=10)
         case = self._create_case()
         case.server_modified_on = current_time - timedelta(hours=1, seconds=1)
         mock_case_exists.return_value = False
 
-        with self.assertRaisesRegex(
-                ValueError, f'Unable to find current ElasticSearch data for: {case.case_id}'):
-            with freeze_time(current_time):
-                self.rule.run_rule(case, datetime.now())
+        result = self.rule.run_rule(case, datetime.now())
+        self.assertEqual(result.num_updates, 0)
+        self.assertEqual(result.num_errors, 1)
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
     def test_case_no_longer_duplicate(self, find_duplicates_mock):
