@@ -250,6 +250,13 @@ class RepeaterManager(models.Manager):
                 .filter(next_attempt_not_in_the_future)
                 .filter(repeat_records_ready_to_send))
 
+    def get_all_ready_ids_by_domain(self):
+        results = defaultdict(list)
+        query = self.all_ready().values_list('domain', 'id')
+        for (domain, id_uuid) in query.all():
+            results[domain].append(id_uuid.hex)
+        return results
+
     def get_queryset(self):
         repeater_obj = self.model()
         if type(repeater_obj).__name__ == "Repeater":

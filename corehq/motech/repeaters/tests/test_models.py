@@ -196,6 +196,14 @@ class RepeaterManagerTests(RepeaterTestCase):
             self.assertEqual(len(repeaters), 1)
             self.assertEqual(repeaters[0].id, self.repeater.id)
 
+    def test_all_ready_ids(self):
+        with make_repeat_record(self.repeater, RECORD_PENDING_STATE):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
+
 
 @contextmanager
 def make_repeat_record(repeater, state):
