@@ -1,10 +1,13 @@
 import random
+import uuid
 from datetime import datetime, timedelta
 
 from django.conf import settings
 
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
+from django_redis import get_redis_connection
+from redis.lock import Lock
 
 from dimagi.utils.couch import get_redis_lock
 
@@ -24,6 +27,7 @@ from corehq.util.metrics import (
     metrics_histogram_timer,
 )
 from corehq.util.metrics.const import MPM_MAX
+from corehq.util.metrics.lockmeter import MeteredLock
 from corehq.util.timer import TimingContext
 
 from .const import (
@@ -238,8 +242,8 @@ def process_repeaters():
     if not process_repeater_lock.acquire(blocking=False):
         return
     try:
-        for domain, repeater_id in iter_ready_repeater_ids_forever():
-            process_repeater.delay(domain, repeater_id)
+        for domain, repeater_id, lock_token in iter_ready_repeater_ids_forever():
+            process_repeater.delay(domain, repeater_id, lock_token)
     finally:
         process_repeater_lock.release()
 
@@ -256,8 +260,12 @@ def iter_ready_repeater_ids_forever():
                 continue
             if not domain_can_forward_now(repeater.domain):
                 continue
-            yielded = True
-            yield repeater.domain, repeater.repeater_id
+
+            lock = get_repeater_lock(repeater.repeater_id)
+            lock_token = uuid.uuid1().hex  # The same way Lock does it
+            if lock.acquire(blocking=False, token=lock_token):
+                yielded = True
+                yield repeater.domain, repeater.repeater_id, lock_token
 
         if not yielded:
             # No repeaters are ready, or their domains can't forward or
@@ -265,8 +273,16 @@ def iter_ready_repeater_ids_forever():
             return
 
 
+def get_repeater_lock(repeater_id):
+    redis = get_redis_connection()
+    name = f'process_repeater_{repeater_id}'
+    three_hours = 3 * 60 * 60
+    lock = Lock(redis, name, timeout=three_hours)
+    return MeteredLock(lock, name)
+
+
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeater(domain, repeater_id):
+def process_repeater(domain, repeater_id, lock_token):
     ...
 
 
