@@ -851,7 +851,7 @@ CHECK_REPEATERS_PARTITION_COUNT = 1
 ENABLE_PRELOGIN_SITE = False
 
 # dimagi.com urls
-PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
+PRICING_PAGE_URL = "https://www.dimagi.com/commcare-pricing/"
 
 # Sumologic log aggregator
 SUMOLOGIC_URL = None
