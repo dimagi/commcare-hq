@@ -1,10 +1,11 @@
 /* eslint-env node */
 const path = require("path");
+const appPaths = require("./appPaths");
 const fs = require("fs");
 
 const __BASE = path.resolve(__dirname, '..');
-const SETTINGS_FILE = path.resolve(__dirname, 'settings.json');
-const DETAILS_FILE = path.resolve(__dirname, 'details.json');
+const SETTINGS_FILE = path.join(appPaths.BUILD_ARTIFACTS_DIR, 'settings.json');
+const DETAILS_FILE = path.join(appPaths.BUILD_ARTIFACTS_DIR, 'details.json');
 
 const fetchJsonDataOrDefault = function (filePath, defaultData) {
     let fetchedData = defaultData;

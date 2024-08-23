@@ -106,6 +106,11 @@ const getDetails = function (entryRegex, allAppPaths, isProdMode) {
 
 // When run from the command line:
 if (require.main === module) {
+
+    if (!fs.existsSync(appPaths.BUILD_ARTIFACTS_DIR)) {
+        fs.mkdirSync(appPaths.BUILD_ARTIFACTS_DIR);
+    }
+
     const isProductionMode = process.argv.includes('--prod');
     const allAppPaths = appPaths.getAllAppPaths();
 
@@ -136,7 +141,7 @@ if (require.main === module) {
     );
 
     fs.writeFileSync(
-        path.resolve(__dirname, 'details.json'),
+        path.join(appPaths.BUILD_ARTIFACTS_DIR, 'details.json'),
         JSON.stringify({
             entries: defaultDetails.entries,
             b3Entries: b3Details.entries,

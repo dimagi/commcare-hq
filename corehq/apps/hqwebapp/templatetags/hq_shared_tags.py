@@ -748,7 +748,7 @@ class WebpackMainNode(RequireJSMainNode):
 try:
     from get_webpack_manifest import get_webpack_manifest
     webpack_manifest = get_webpack_manifest()
-    webpack_manifest_b3 = get_webpack_manifest('webpack/manifest_b3.json')
+    webpack_manifest_b3 = get_webpack_manifest('webpack/_build/manifest_b3.json')
 except (ImportError, SyntaxError):
     webpack_manifest = {}
     webpack_manifest_b3 = {}

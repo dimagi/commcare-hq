@@ -8,7 +8,7 @@ def get_webpack_manifest(path=None):
     manifest = {}
 
     if not path:
-        path = os.path.join('webpack/manifest.json')
+        path = os.path.join('webpack/_build/manifest.json')
     if not os.path.exists(path):
         if not settings.UNIT_TESTING and settings.DEBUG:
             warnings.warn("\x1b[33;20m"  # yellow color

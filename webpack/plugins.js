@@ -1,6 +1,7 @@
 /* eslint-env node */
 const path = require('path');
 const fs = require('fs');
+const appPaths = require('./appPaths');
 
 class EntryChunksPlugin {
     /**
@@ -40,7 +41,7 @@ class EntryChunksPlugin {
             });
 
             fs.writeFileSync(
-                path.resolve(__dirname, this.options.filename || 'manifest.json'),
+                path.join(appPaths.BUILD_ARTIFACTS_DIR, this.options.filename || 'manifest.json'),
                 JSON.stringify(manifest, null, 2)
             );
 
