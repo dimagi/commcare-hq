@@ -71,6 +71,8 @@ from contextlib import nullcontext
 from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from ddtrace import tracer
+
 from django.db import models, router
 from django.db.models.base import Deferred
 from django.dispatch import receiver
@@ -432,22 +434,26 @@ class Repeater(RepeaterSuperProxy):
             return self.send_request(repeat_record, payload)
 
     def fire_for_record(self, repeat_record, timing_context=None):
-        payload = self.get_payload(repeat_record)
-        try:
-            response = self._time_request(repeat_record, payload, timing_context)
-        except (Timeout, ConnectionError) as error:
-            self.handle_response(RequestConnectionError(error), repeat_record)
-        except RequestException as err:
-            self.handle_response(err, repeat_record)
-        except (PossibleSSRFAttempt, CannotResolveHost):
-            self.handle_response(Exception("Invalid URL"), repeat_record)
-        except Exception:
-            # This shouldn't ever happen in normal operation and would mean code broke
-            # we want to notify ourselves of the error detail and tell the user something vague
-            notify_exception(None, "Unexpected error sending repeat record request")
-            self.handle_response(Exception("Internal Server Error"), repeat_record)
-        else:
-            self.handle_response(response, repeat_record)
+        with tracer.trace("repeaters.get_payload") as span:
+            payload = self.get_payload(repeat_record)
+            span.set_tag("type", repeat_record.repeater_type)
+
+        with tracer.trace("repeaters.send_payload"):
+            try:
+                response = self._time_request(repeat_record, payload, timing_context)
+            except (Timeout, ConnectionError) as error:
+                self.handle_response(RequestConnectionError(error), repeat_record)
+            except RequestException as err:
+                self.handle_response(err, repeat_record)
+            except (PossibleSSRFAttempt, CannotResolveHost):
+                self.handle_response(Exception("Invalid URL"), repeat_record)
+            except Exception:
+                # This shouldn't ever happen in normal operation and would mean code broke
+                # we want to notify ourselves of the error detail and tell the user something vague
+                notify_exception(None, "Unexpected error sending repeat record request")
+                self.handle_response(Exception("Internal Server Error"), repeat_record)
+            else:
+                self.handle_response(response, repeat_record)
 
     @memoized
     def get_payload(self, repeat_record):
