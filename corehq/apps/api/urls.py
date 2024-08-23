@@ -1,3 +1,28 @@
+"""
+The CommCareHQ API is comprised of resources, representing individual data
+models. Each resource may contain multiple endpoints (list, detail, etc), and
+may have multiple versions.
+
+Historically, resources were versioned together, so making a backwards
+incompatible change to one required bumping the version for everything. This
+was our standard up through API version 0.6. URLS looked like this:
+
+    /a/mydomain/api/v0.5/user/
+
+In 2024 we switched to versioning resources independently and dropped the minor
+versioning, such that new URLs look like this, with the resource name first:
+
+    /a/mydomain/api/user/v1/
+
+To manage the transition, all v0.5 URls are duplicated as v1, and v0.6 URLs are
+duplicated as v2.
+
+Additive and otherwise backwards-compatible changes can be done without bumping
+versions. This includes things like adding a new field or filter parameter, as
+we don't expect such changes to disrupt existing integrations. To introduce
+breaking changes, make the new version of the resource available at the next
+version number up.
+"""
 from django.http import HttpResponseNotFound
 from django.urls import include, path
 from django.urls import re_path as url
