@@ -73,6 +73,7 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from django.conf import settings
 from django.db import models, router
 from django.db.models.base import Deferred
 from django.dispatch import receiver
@@ -385,9 +386,21 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def repeat_records_ready(self):
-        return self.repeat_records.filter(state__in=(State.Pending, State.Fail))
+        """
+        A QuerySet of repeat records in the Pending or Fail state in the
+        order in which they were registered
+        """
+        return (
+            self.repeat_records
+            .filter(state__in=(State.Pending, State.Fail))
+            .order_by('registered_at')
+        )
 
-    def set_next_attempt(self):
+    @property
+    def num_workers(self):
+        return settings.DEFAULT_REPEATER_WORKERS
+
+    def set_backoff(self):
         now = datetime.utcnow()
         interval = _get_retry_interval(self.last_attempt_at, now)
         self.last_attempt_at = now
@@ -400,7 +413,7 @@ class Repeater(RepeaterSuperProxy):
             next_attempt_at=now + interval,
         )
 
-    def reset_next_attempt(self):
+    def reset_backoff(self):
         if self.last_attempt_at or self.next_attempt_at:
             self.last_attempt_at = None
             self.next_attempt_at = None
@@ -1206,7 +1219,9 @@ class RepeatRecord(models.Model):
                 raise
             except Exception as e:
                 self.handle_payload_error(str(e), traceback_str=traceback.format_exc())
-                raise
+            finally:
+                return self.state
+        return None
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
