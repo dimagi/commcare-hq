@@ -65,6 +65,7 @@ class.
 """
 import inspect
 import json
+import traceback
 import uuid
 from collections import defaultdict
 from contextlib import nullcontext
