@@ -177,7 +177,7 @@ def metrics_histogram(
     )
 
 
-def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
+def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL, value_key='count'):
     """
     Helper for easily registering gauges to run periodically
 
@@ -192,6 +192,7 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
 
     kwargs:
         multiprocess_mode: See PrometheusMetrics._gauge for documentation.
+        value_key: if fn returns an Iterable, treat this key as the value to gauge and the rest as tags
     """
     _enforce_prefix(name, 'commcare')
 
@@ -199,7 +200,17 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     @wraps(fn)
     def inner():
         from corehq.util.metrics import metrics_gauge
-        metrics_gauge(name, fn(), multiprocess_mode=multiprocess_mode)
+        result = fn()
+        if isinstance(result, Iterable):
+            for obj in result:
+                assert isinstance(obj, dict)
+                value = obj.pop(value_key)
+                tags = obj
+                # tags can be expensive so add conservatively
+                assert len(tags) <= 1
+                metrics_gauge(name, value, multiprocess_mode=multiprocess_mode, tags=tags)
+        else:
+            metrics_gauge(name, result, multiprocess_mode=multiprocess_mode)
 
     return inner
 
