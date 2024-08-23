@@ -76,6 +76,18 @@ hqDefine("locations/js/widgets", [
                 },
                 processResults: function (data, params) {
                     var more = (params.page || 1) * 10 < data.total;
+                    var selected_locations = $select[0].selectedOptions
+                    if (selected_locations.length > 0) {
+                        var loc_ids = []
+                        for (var i in selected_locations) {
+                            loc_ids.push(selected_locations[i].value)
+                        }
+                        for (var i in data.results) {
+                            if (loc_ids.indexOf(data.results[i].id) > -1) {
+                                data.results[i].disabled = "disabled"
+                            }
+                        }
+                    }
                     return {
                         results: data.results,
                         pagination: { more: more },
