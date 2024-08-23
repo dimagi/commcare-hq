@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
+from celery import chord
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django_redis import get_redis_connection
@@ -322,7 +323,99 @@ def get_repeater_lock(repeater_id):
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeater(domain, repeater_id, lock_token):
-    ...
+
+    def get_task_signature(repeat_record):
+        task_ = {
+            State.Pending: process_pending_repeat_record,
+            State.Fail: process_failed_repeat_record,
+        }[repeat_record.state]
+        return task_.s(repeat_record.id, repeat_record.domain)
+
+    repeater = Repeater.objects.get(domain=domain, id=repeater_id)
+    repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
+    header_tasks = [get_task_signature(rr) for rr in repeat_records]
+    chord(header_tasks)(update_repeater.s(repeater_id, lock_token))
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_pending_repeat_record(repeat_record_id, domain):
+    # NOTE: Keep separate from `process_failed_repeat_record()` for
+    # monitoring purposes. `domain` is for tagging in Datadog
+    return process_ready_repeat_record(repeat_record_id)
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_failed_repeat_record(repeat_record_id, domain):
+    # NOTE: Keep separate from `process_pending_repeat_record()` for
+    # monitoring purposes. `domain` is for tagging in Datadog
+    return process_ready_repeat_record(repeat_record_id)
+
+
+def process_ready_repeat_record(repeat_record_id):
+    state_or_none = None
+    with TimingContext('process_repeat_record') as timer:
+        try:
+            repeat_record = (
+                RepeatRecord.objects
+                .prefetch_related('repeater', 'attempt_set')
+                .get(id=repeat_record_id)
+            )
+            report_repeater_attempt(repeat_record.repeater.repeater_id)
+            if not is_repeat_record_ready(repeat_record):
+                return None
+            with timer('fire_timing') as fire_timer:
+                state_or_none = repeat_record.fire(timing_context=fire_timer)
+            report_repeater_usage(
+                repeat_record.domain,
+                # round up to the nearest millisecond, meaning always at least 1ms
+                milliseconds=int(fire_timer.duration * 1000) + 1
+            )
+        except Exception:
+            logging.exception(f'Failed to process repeat record {repeat_record_id}')
+    return state_or_none
+
+
+def is_repeat_record_ready(repeat_record):
+    # Fail loudly if repeat_record is not ready.
+    # process_ready_repeat_record() will log an exception.
+    assert repeat_record.state in (State.Pending, State.Fail)
+
+    # The repeater could have been paused or rate-limited while it was
+    # being processed
+    return (
+        not repeat_record.repeater.is_paused
+        and not toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain)
+        and not rate_limit_repeater(
+            repeat_record.domain,
+            repeat_record.repeater.repeater_id
+        )
+    )
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def update_repeater(repeat_record_states, repeater_id, lock_token):
+    """
+    Determines whether the repeater should back off, based on the
+    results of ``_process_repeat_record()`` tasks.
+    """
+    try:
+        repeater = Repeater.objects.get(id=repeater_id)
+        if any(s == State.Success for s in repeat_record_states):
+            # At least one repeat record was sent successfully. The
+            # remote endpoint is healthy.
+            repeater.reset_backoff()
+        elif all(s in (State.Empty, State.InvalidPayload, None)
+                 for s in repeat_record_states):
+            # We can't tell anything about the remote endpoint.
+            # (_process_repeat_record() can return None on an exception.)
+            pass
+        else:
+            # All sent payloads failed. Try again later.
+            repeater.set_backoff()
+    finally:
+        lock = get_repeater_lock(repeater_id)
+        lock.local.token = lock_token
+        lock.release()
 
 
 metrics_gauge_task(
