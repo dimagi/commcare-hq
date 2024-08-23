@@ -288,7 +288,8 @@ class TestIterReadyRepeatersForever(SimpleTestCase):
             patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
                   return_value=True),
             patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
-                  return_value=True)
+                  return_value=True),
+            patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
         ):
             repeaters = list(iter_ready_repeaters_forever())
             self.assertEqual(len(repeaters), 3)
