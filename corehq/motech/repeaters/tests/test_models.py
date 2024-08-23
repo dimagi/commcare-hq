@@ -590,7 +590,6 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.assertEqual(counts[missing_id][State.Success], 0)
 
     @override_settings(CHECK_REPEATERS_PARTITION_COUNT=2)
-    @patch('corehq.motech.repeaters.models.CHECK_REPEATERS_PARTITION_COUNT', 2)
     def test_count_overdue_for_partition(self):
         from collections import defaultdict
         now = datetime.utcnow()

@@ -71,6 +71,7 @@ from contextlib import nullcontext
 from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from django.conf import settings
 from django.db import models, router
 from django.db.models.base import Deferred
 from django.dispatch import receiver
@@ -107,7 +108,6 @@ from corehq.motech.const import (
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.apps import REPEATER_CLASS_MAP
-from corehq.motech.repeaters.const import CHECK_REPEATERS_PARTITION_COUNT
 from corehq.motech.repeaters.optionvalue import OptionValue
 from corehq.motech.requests import simple_request
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
@@ -918,7 +918,7 @@ class RepeatRecordManager(models.Manager):
 
     def count_overdue_by_partition(self, threshold=timedelta(minutes=10)):
         return (
-            self.annotate(partition_id=models.F("id") % CHECK_REPEATERS_PARTITION_COUNT)
+            self.annotate(partition_id=models.F("id") % settings.CHECK_REPEATERS_PARTITION_COUNT)
             .filter(next_check__isnull=False, next_check__lt=datetime.utcnow() - threshold)
             .values("partition_id")
             .annotate(count=models.Count("partition_id"))
