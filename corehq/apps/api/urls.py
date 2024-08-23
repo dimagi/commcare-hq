@@ -147,7 +147,6 @@ urlpatterns = [
 ]
 
 
-
 ADMIN_API_LIST = (
     v0_5.AdminWebUserResource,
     DomainMetadataResource,
@@ -174,20 +173,8 @@ ADMIN_API_LIST = (
     accounting.BillingRecordResource,
     MaltResource,
     GIRResource,
-)
-
-
-# these APIs are duplicated to /hq/admin/global for backwards compatibility
-GLOBAL_USER_API_LIST = (
     UserDomainsResource,
 )
-
-NON_GLOBAL_USER_API_LIST = (
-    v0_5.IdentityResource,
-)
-
-
-USER_API_LIST = GLOBAL_USER_API_LIST + NON_GLOBAL_USER_API_LIST
 
 
 def _get_global_api_url_patterns(resources):
@@ -197,16 +184,15 @@ def _get_global_api_url_patterns(resources):
     return url(r'^', include(api.urls))
 
 
-admin_urlpatterns = [
-    _get_global_api_url_patterns(ADMIN_API_LIST),
-    _get_global_api_url_patterns(GLOBAL_USER_API_LIST),
-]
+admin_urlpatterns = [_get_global_api_url_patterns(ADMIN_API_LIST)]
 
-
+# Not domain-scoped
 VERSIONED_USER_API_LIST = (
-    ((0, 5), USER_API_LIST),
+    ((0, 5), (
+        v0_5.IdentityResource,
+        UserDomainsResource,
+    )),
 )
-
 
 user_urlpatterns = list(versioned_apis(VERSIONED_USER_API_LIST))
 
