@@ -268,6 +268,7 @@ class Repeater(RepeaterSuperProxy):
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
+    max_workers = models.IntegerField(default=0)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
@@ -370,7 +371,10 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def num_workers(self):
-        return settings.DEFAULT_REPEATER_WORKERS
+        # If num_workers is 1, repeat records are sent in the order in
+        # which they were registered.
+        num_workers = self.max_workers or settings.DEFAULT_REPEATER_WORKERS
+        return min(num_workers, settings.MAX_REPEATER_WORKERS)
 
     def set_backoff(self):
         now = datetime.utcnow()
