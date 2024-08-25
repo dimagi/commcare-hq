@@ -1289,6 +1289,272 @@ class TestRelatedDocExpressionWebUser(TestCase):
         self.assertIsNone(value)
 
 
+class RelatedCaseExpressionTest(SimpleTestCase):
+
+    case_id_expr_spec = {
+        'type': 'related_case',
+        'case_id_expression': {
+            'type': 'property_name',
+            'property_name': 'parent_id'
+        },
+        'value_expression': {
+            'type': 'property_name',
+            'property_name': 'related_property'
+        }
+    }
+
+    ext_id_expr_spec = {
+        'type': 'related_case',
+        'external_id_expression': {
+            'type': 'property_name',
+            'property_name': 'parent_external_id'
+        },
+        'value_expression': {
+            'type': 'property_name',
+            'property_name': 'related_property'
+        }
+    }
+
+    nested_expr_spec = {
+        "type": "related_case",
+        "case_id_expression": {
+            "type": "property_name",
+            "property_name": "parent_id"
+        },
+        "value_expression": {
+            "type": "related_case",
+            "external_id_expression": {
+                "type": "property_name",
+                "property_name": "parent_external_id"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "related_property"
+            }
+        }
+    }
+
+    def setUp(self):
+
+        def get_case(case_id, domain):
+            doc = self.database.get(case_id)
+            if doc is None:
+                raise CaseNotFound
+            return Config(to_json=lambda: doc)
+
+        def get_case_by_external_id(domain, external_id, raise_multiple):
+            doc = self.database.get(external_id)
+            if doc is None:
+                raise CaseNotFound
+            return Config(to_json=lambda: doc)
+
+        get_case_patch = patch.object(CommCareCase.objects, 'get_case', get_case)
+        get_case_patch.start()
+        self.addCleanup(get_case_patch.stop)
+
+        get_case_by_external_id_patch = patch.object(
+            CommCareCase.objects,
+            'get_case_by_external_id',
+            get_case_by_external_id,
+        )
+        get_case_by_external_id_patch.start()
+        self.addCleanup(get_case_by_external_id_patch.stop)
+
+        self.database = {}
+
+    def test_lookup_by_case_id(self):
+        case_id_expression = ExpressionFactory.from_spec(self.case_id_expr_spec)
+        related_case_id = 'related-case-id'
+        related_case = {
+            'domain': 'test-domain',
+            'related_property': 'foo'
+        }
+        my_case = {
+            'domain': 'test-domain',
+            'parent_id': related_case_id,
+        }
+        self.database = {
+            'my-id': my_case,
+            related_case_id: related_case
+        }
+        my_context = EvaluationContext(my_case, 0)
+        self.assertEqual(case_id_expression(my_case, my_context), 'foo')
+
+    def test_lookup_by_external_id(self):
+        ext_id_expression = ExpressionFactory.from_spec(self.ext_id_expr_spec)
+        related_external_id = 'related-external-id'
+        related_case = {
+            'domain': 'test-domain',
+            'related_property': 'foo'
+        }
+        my_case = {
+            'domain': 'test-domain',
+            'parent_external_id': related_external_id,
+        }
+        self.database = {
+            'my-id': my_case,
+            related_external_id: related_case
+        }
+        my_context = EvaluationContext(my_case, 0)
+        self.assertEqual(ext_id_expression(my_case, my_context), 'foo')
+
+    def test_both_ids_spec(self):
+        both_ids_spec = {
+            'type': 'related_case',
+            'case_id_expression': {
+                'type': 'property_name',
+                'property_name': 'parent_id'
+            },
+            'external_id_expression': {
+                'type': 'property_name',
+                'property_name': 'parent_external_id'
+            },
+            'value_expression': {
+                'type': 'property_name',
+                'property_name': 'related_property'
+            }
+        }
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec(both_ids_spec)
+
+    def test_neither_ids_spec(self):
+        neither_ids_spec = {
+            'type': 'related_case',
+            'value_expression': {
+                'type': 'property_name',
+                'property_name': 'related_property'
+            }
+        }
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec(neither_ids_spec)
+
+    def test_related_case_id_not_found(self):
+        case_id_expression = ExpressionFactory.from_spec(self.case_id_expr_spec)
+        my_case = {
+            'domain': 'test-domain',
+            'parent_id': 'some-missing-id',
+        }
+        my_context = EvaluationContext(my_case, 0)
+        self.assertIsNone(case_id_expression(my_case, my_context))
+
+    def test_related_external_id_not_found(self):
+        ext_id_expression = ExpressionFactory.from_spec(self.ext_id_expr_spec)
+        my_case = {
+            'domain': 'test-domain',
+            'parent_external_id': 'some-missing-id',
+        }
+        my_context = EvaluationContext(my_case, 0)
+        self.assertIsNone(ext_id_expression(my_case, my_context))
+
+    def test_cross_domain_case_id_lookup(self):
+        case_id_expression = ExpressionFactory.from_spec(self.case_id_expr_spec)
+        related_id = 'cross-domain-id'
+        related_case = {
+            'domain': 'wrong-domain',
+            'related_property': 'foo'
+        }
+        my_case = {
+            'domain': 'test-domain',
+            'parent_id': related_id,
+        }
+        self.database = {
+            'my-id': my_case,
+            related_id: related_case
+        }
+        my_context = EvaluationContext(my_case, 0)
+        self.assertIsNone(case_id_expression(my_case, my_context))
+
+    def test_cross_domain_external_id_lookup(self):
+        ext_id_expression = ExpressionFactory.from_spec(self.ext_id_expr_spec)
+        related_id = 'cross-domain-id'
+        related_case = {
+            'domain': 'wrong-domain',
+            'related_property': 'foo'
+        }
+        my_case = {
+            'domain': 'test-domain',
+            'parent_external_id': related_id,
+        }
+        self.database = {
+            'my-id': my_case,
+            related_id: related_case
+        }
+        my_context = EvaluationContext(my_case, 0)
+        self.assertIsNone(ext_id_expression(my_case, my_context))
+
+    def test_nested_lookup(self):
+        nested_expression = ExpressionFactory.from_spec(self.nested_expr_spec)
+
+        related_external_id = 'nested-external-id'
+        related_case_2 = {
+            'domain': 'test-domain',
+            'related_property': 'bar',
+        }
+
+        related_case_id = 'nested-case-id'
+        related_case_1 = {
+            'domain': 'test-domain',
+            'parent_external_id': related_external_id,
+            'related_property': 'foo',
+        }
+
+        my_case = {
+            'domain': 'test-domain',
+            'parent_id': related_case_id,
+        }
+
+        self.database = {
+            'my-id': my_case,
+            related_case_id: related_case_1,
+            related_external_id: related_case_2
+        }
+
+        my_context = EvaluationContext(my_case, 0)
+        self.assertEqual('bar', nested_expression(my_case, my_context))
+
+    def test_nested_lookup_cross_domains(self):
+        nested_expression = ExpressionFactory.from_spec(self.nested_expr_spec)
+
+        related_external_id = 'nested-external-id'
+        related_case_2 = {
+            'domain': 'wrong-domain',
+            'related_property': 'bar',
+        }
+
+        related_case_id = 'nested-case-id'
+        related_case_1 = {
+            'domain': 'test-domain',
+            'parent_external_id': related_external_id,
+            'related_property': 'foo',
+        }
+
+        my_case = {
+            'domain': 'test-domain',
+            'parent_id': related_case_id,
+        }
+
+        self.database = {
+            'my-id': my_case,
+            related_case_id: related_case_1,
+            related_external_id: related_case_2
+        }
+
+        my_context = EvaluationContext(my_case, 0)
+        self.assertIsNone(nested_expression(my_case, my_context))
+
+    def test_caching(self):
+        case_id_expression = ExpressionFactory.from_spec(self.case_id_expr_spec)
+        self.test_lookup_by_case_id()
+
+        my_case = self.database.get('my-id')
+        my_context = EvaluationContext(my_case, 0)
+        self.assertEqual('foo', case_id_expression(my_case, my_context))
+
+        my_case = self.database.get('my-id')
+        self.database.clear()
+        self.assertEqual('foo', case_id_expression(my_case, my_context))
+
+
 class TestFormsExpressionSpec(TestCase):
 
     @classmethod

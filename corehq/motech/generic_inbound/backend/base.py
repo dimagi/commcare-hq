@@ -60,6 +60,7 @@ class BaseApiBackend:
 
     def get_context(self):
         return get_evaluation_context(
+            domain=self.request_data.domain,
             restore_user=self.request_data.restore_user,
             method=self.request_data.request_method,
             query=self.request_data.query,
