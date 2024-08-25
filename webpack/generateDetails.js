@@ -114,19 +114,22 @@ if (require.main === module) {
     const isProductionMode = process.argv.includes('--prod');
     const allAppPaths = appPaths.getAllAppPaths();
 
-    // guarantee that these aliases are always generated
-    const aliases = {
-        'analytix/js': path.join(allAppPaths.analytix, 'static/analytix/js'),
-        'hqwebapp/js': path.join(allAppPaths.hqwebapp, 'static/hqwebapp/js'),
-        'notifications/js': path.join(allAppPaths.notifications, 'static/notifications/js'),
-    };
-
-    // guarantee that these apps are always included
-    const appsWithEntries = [
+    // Always build with these applications even if there are no webpack entries found within
+    // the application templates.
+    // Applications are often listed here if there are entries from other apps referencing modules in
+    // these apps, but there are no existing webpack entries from these apps (yet).
+    const alwaysIncludeApps = [
         "analytix",
         "hqwebapp",
         "notifications",
     ];
+    const aliases = {};
+    const appsWithEntries = [];
+    alwaysIncludeApps.forEach((appName) => {
+        let appDir = `${appName}/js`;
+        aliases[appDir] = path.join(allAppPaths[appName], `static/${appDir}`);
+        appsWithEntries.push(appName);
+    });
 
     // This splits the builds into bootstrap 5 and bootstrap 3 versions
     const defaultDetails = getDetails(
