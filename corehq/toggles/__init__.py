@@ -1965,6 +1965,17 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+PROCESS_REPEATERS = StaticToggle(
+    'process_repeaters',
+    'Process repeaters instead of processing repeat records independently',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Manages repeat records through their repeater in order to make
+    smarter decisions about remote endpoints.
+    """
+)
+
 DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     'do_not_rate_limit_submissions',
     'Do not rate limit submissions for this project, on a temporary basis.',
