@@ -51,7 +51,7 @@ def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):
             if definition.include_child_locations:
                 owners_ids = user_ids_at_locations_and_descendants([definition.location_id])
                 sql_loc = SQLLocation.objects.get(location_id=definition.location_id)
-                owners_ids.append(sql_loc.get_descendants().values_list('location_id', flat=True))
+                owners_ids.extend(sql_loc.get_descendants().values_list('location_id', flat=True))
             else:
                 owners_ids = user_ids_at_locations([definition.location_id])
 
