@@ -1,9 +1,10 @@
-'use strict';
+/* eslint-env node */
 
 const fs = require('fs');
 const path = require('path');
 
 const __BASE = path.resolve(__dirname, '..');
+const BUILD_ARTIFACTS_DIR = path.resolve(__dirname, '_build');
 const TEMPLATES_DIR = 'templates';
 const APPS_PATH = path.resolve(__BASE, 'corehq', 'apps');
 const EX_SUBMODULES_PATH = path.resolve(__BASE, 'corehq', 'ex-submodules');
@@ -32,6 +33,11 @@ const appRenames = {
 };
 
 const hasTemplateFolder = function (dirEnt) {
+    /**
+     * Returns `true` if `dirEnt` has a `templates` folder.
+     *
+     * @type {boolean}
+     */
     const templatePath = path.resolve(APPS_PATH, dirEnt.name, TEMPLATES_DIR);
     try {
         return fs.readdirSync(templatePath);
@@ -60,4 +66,5 @@ const getAllAppPaths = function () {
 module.exports = {
     getAllAppPaths: getAllAppPaths,
     TEMPLATES_DIR: TEMPLATES_DIR,
+    BUILD_ARTIFACTS_DIR: BUILD_ARTIFACTS_DIR,
 };

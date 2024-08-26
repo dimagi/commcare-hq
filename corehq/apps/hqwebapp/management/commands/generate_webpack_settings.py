@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 
 import corehq
 
-WEBPACK_BASE_DIR = Path(corehq.__file__).resolve().parent.parent / "webpack"
+WEBPACK_BUILD_DIR = Path(corehq.__file__).resolve().parent.parent / "webpack" / "_build"
 
 
 class Command(BaseCommand):
@@ -17,5 +17,6 @@ class Command(BaseCommand):
         webpack_settings = {
             'staticfilesPath': settings.STATIC_ROOT,
         }
-        with open(WEBPACK_BASE_DIR / "settings.json", "w") as f:
+        WEBPACK_BUILD_DIR.mkdir(parents=True, exist_ok=True)
+        with open(WEBPACK_BUILD_DIR / "settings.json", "w") as f:
             json.dump(webpack_settings, f)
