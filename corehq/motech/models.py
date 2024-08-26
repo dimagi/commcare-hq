@@ -103,6 +103,8 @@ class ConnectionSettings(models.Model):
     token_url = models.CharField(max_length=255, blank=True, null=True)
     refresh_url = models.CharField(max_length=255, blank=True, null=True)
     pass_credentials_in_header = models.BooleanField(default=None, null=True)
+    include_client_id = models.BooleanField(default=None, null=True)
+    scope = models.TextField(null=True, blank=True)
     notify_addresses_str = models.CharField(max_length=255, default="")
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
@@ -204,6 +206,8 @@ class ConnectionSettings(models.Model):
                 token_url=self.token_url,
                 refresh_url=self.refresh_url,
                 pass_credentials_in_header=self.pass_credentials_in_header,
+                include_client_id=self.include_client_id,
+                scope=self.scope or None,
                 connection_settings=self,
             )
 
@@ -237,6 +241,8 @@ class ConnectionSettings(models.Model):
                 token_url=self.token_url,
                 refresh_url=self.refresh_url,
                 pass_credentials_in_header=self.pass_credentials_in_header,
+                include_client_id=self.include_client_id,
+                scope=self.scope or None,
                 connection_settings=self,
             )
         raise ValueError(f'Unknown auth type {self.auth_type!r}')
