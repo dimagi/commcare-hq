@@ -26,6 +26,9 @@ hqDefine("locations/js/widgets", [
         // Select is hidden on locations tab. Calculate width from visible select.
         if (basicInfoTabActive) {
             const visibleSelect = $('#basic-info').find('.controls > .select')[0];
+            if (!visibleSelect) {
+                return name;
+            }
             containerWidthPixels = $(visibleSelect).parent().width();
         // Default to select2 setting for overflow
         } else if (containerWidthPixels < 0) {
