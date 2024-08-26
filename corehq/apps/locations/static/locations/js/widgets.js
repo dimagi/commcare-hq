@@ -22,7 +22,17 @@ hqDefine("locations/js/widgets", [
 
     function truncateLocationName(name, select) {
         const nameWidthPixels = getSelectTextWidth(name, select);
-        const containerWidthPixels = select.parent().width();
+        const basicInfoTabActive = $('#basic-info').hasClass('active');
+        let containerWidthPixels = select.parent().width();
+
+        // Select is hidden on locations tab. Calculate width from visible select.
+        if (basicInfoTabActive) {
+            const visibleSelect = $('#basic-info').find('.controls > .select')[0];
+            containerWidthPixels = $(visibleSelect).parent().width();
+        // Default to select2 setting for overflow
+        } else if (containerWidthPixels < 0) {
+            return name;
+        }
         let truncatedName;
         if (nameWidthPixels > containerWidthPixels) {
             // Conservative calc of the number of chars that will fit the container
