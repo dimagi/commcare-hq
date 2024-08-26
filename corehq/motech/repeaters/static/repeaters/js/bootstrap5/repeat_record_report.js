@@ -1,6 +1,7 @@
 /* globals ace */
+'use strict';
 hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+    const initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         selectAll = document.getElementById('select-all'),
         selectPending = document.getElementById('select-pending'),
         selectCancelled = document.getElementById('select-cancelled'),
@@ -48,16 +49,17 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
                 },
             });
         });
-        var editor = null;
+
+        let editor = null;
         $('#view-record-payload-modal').on('shown.bs.modal', function (event) {
-            var recordData = $(event.relatedTarget).data(),
+            const recordData = $(event.relatedTarget).data(),
                 $modal = $(this);
 
             $.get({
                 url: initialPageData.reverse("repeat_record"),
                 data: { record_id: recordData.recordId },
                 success: function (data) {
-                    var $payload = $modal.find('.payload'),
+                    const $payload = $modal.find('.payload'),
                         contentType = data.content_type;
 
                     if (editor === null) {
@@ -82,7 +84,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
                     editor.session.setValue(data.payload);
                 },
                 error: function (data) {
-                    var defaultText = gettext('Failed to fetch payload'),
+                    const defaultText = gettext('Failed to fetch payload'),
                         errorMessage = data.responseJSON ? data.responseJSON.error : null;
 
                     $modal.find('.modal-body').text(errorMessage || defaultText);
@@ -97,7 +99,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         });
 
         $('#report-content').on('click', '.resend-record-payload', function () {
-            var $btn = $(this),
+            const $btn = $(this),
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
@@ -110,7 +112,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         });
 
         $('#report-content').on('click', '.cancel-record-payload', function () {
-            var $btn = $(this),
+            const $btn = $(this),
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
@@ -123,7 +125,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         });
 
         $('#report-content').on('click', '.requeue-record-payload', function () {
-            var $btn = $(this),
+            const $btn = $(this),
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
@@ -136,9 +138,9 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         });
 
         $('#confirm-button').on('click', function () {
-            var requestBody = getRequestBody(),
-                action = getAction(),
-                $btn;
+            const requestBody = getRequestBody(),
+                action = getAction();
+            let $btn;
 
             $popUp.modal('hide');  /* todo B5: plugin:modal */
             if (action === 'resend') {
@@ -157,7 +159,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         });
 
         function performAction(action) {
-            var bulkSelection = bulkSelectionChecked();
+            const bulkSelection = bulkSelectionChecked();
             if (bulkSelection || areRecordsChecked()) {
                 if (bulkSelection) { setFlag(bulkSelection); }
                 // only applies to checked items, not bulk selections
@@ -184,8 +186,8 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         }
 
         function areRecordsChecked() {
-            var items = document.getElementsByName('xform_ids');
-            for (var item of items) {
+            const items = document.getElementsByName('xform_ids');
+            for (const item of items) {
                 if (item.checked) {
                     return true;
                 }
@@ -194,13 +196,13 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         }
 
         function isActionPossibleForCheckedItems(action) {
-            var items = document.getElementsByName('xform_ids');
-            for (var item of items) {
+            const items = document.getElementsByName('xform_ids');
+            for (const item of items) {
                 if (item.checked) {
-                    var id = item.getAttribute('data-id');
-                    var query = '[data-record-id="' + id + '"][class="btn btn-default ' + action + '-record-payload"]';
-                    var button = document.querySelector(query);
-                    if (button == null) {
+                    const id = item.getAttribute('data-id');
+                    const query = `[data-record-id="${id}"][class="btn btn-default ${action}-record-payload"]`;
+                    const button = document.querySelector(query);
+                    if (!button) {
                         return false;
                     }
                 }
@@ -227,10 +229,10 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         }
 
         function getRecordIds() {
-            var records = document.getElementsByName('xform_ids'),
-                recordIds = '';
-            for (var record of records) {
-                if (record.type == 'checkbox' && record.checked == true) {
+            const recordEls = document.getElementsByName('xform_ids');
+            let recordIds = '';
+            for (const record of recordEls) {
+                if (record.type === 'checkbox' && record.checked) {
                     recordIds += record.getAttribute('data-id') + ' ';
                 }
             }

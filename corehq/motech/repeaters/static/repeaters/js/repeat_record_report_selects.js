@@ -1,6 +1,6 @@
-/* globals ace */
-hqDefine('repeaters/js/repeat_record_report_selects', function() {
-    var items = document.getElementsByName('xform_ids'),
+'use strict';
+hqDefine('repeaters/js/repeat_record_report_selects', function () {
+    const items = document.getElementsByName('xform_ids'),
         selectAll = document.getElementById('select-all'),
         selectPending = document.getElementById('select-pending'),
         selectCancelled = document.getElementById('select-cancelled'),
@@ -53,22 +53,24 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
     });
 
     $('body').on('DOMNodeInserted', 'tbody', function () {
-      for (var i = 0; i < items.length; i++) {
-            $(items[i]).on('click', uncheckSelects);
+        for (const item of items) {
+            $(item).on('click', uncheckSelects);
         }
     });
 
     function selectItems() {
-        for (var i = 0; i < items.length; i++) {
-            if (items[i].type == 'checkbox')
-                items[i].checked = true;
+        for (const item of items) {
+            if (item.type === 'checkbox') {
+                item.checked = true;
+            }
         }
     }
 
     function unSelectItems() {
-        for (var i = 0; i < items.length; i++) {
-            if (items[i].type == 'checkbox')
-                items[i].checked = false;
+        for (const item of items) {
+            if (item.type === 'checkbox') {
+                item.checked = false;
+            }
         }
     }
 
@@ -95,15 +97,15 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
     }
 
     function checkMultipleItems(action) {
-        for (var i = 0; i < items.length; i++) {
-            var id = items[i].getAttribute('data-id');
-            var query = '[data-record-id="' + id + '"][class="btn btn-default ' + action + '-record-payload"]';
-            var button = document.querySelector(query);
-            if (button != null && items[i].type == 'checkbox') {
-                if (items[i].checked) {
-                    items[i].checked = false;
+        for (const item of items) {
+            const id = item.getAttribute('data-id');
+            const query = `[data-record-id="${id}"][class="btn btn-default ${action}-record-payload"]`;
+            const button = document.querySelector(query);
+            if (!!button && item.type === 'checkbox') {
+                if (item.checked) {
+                    item.checked = false;
                 } else {
-                    items[i].checked = true;
+                    item.checked = true;
                 }
             }
         }
