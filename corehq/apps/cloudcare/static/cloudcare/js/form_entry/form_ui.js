@@ -732,7 +732,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         });
 
         // Header and captions
-        self.showHeader = oneQuestionPerScreen || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
+        self.showHeader = oneQuestionPerScreen || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown) || self.showDelete;
 
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);

@@ -2399,6 +2399,7 @@ msgstr "Tipo de Caso"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Case ID"
 msgstr ""
 
@@ -3380,6 +3381,7 @@ msgid "Group Center Coordinates"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Case Name"
 msgstr "Nome do Caso"
 
@@ -3480,6 +3482,24 @@ msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Please enter the name for the area!"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "No user selected (unassign mode)"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Assigned User ID"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+#, fuzzy
+#| msgid "Username"
+msgid "Assigned Username"
+msgstr "Nome de usuário"
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Assigned User Primary Location"
 msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js

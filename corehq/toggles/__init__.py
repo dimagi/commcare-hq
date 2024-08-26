@@ -1982,6 +1982,27 @@ RATE_LIMIT_REPEATERS = DynamicallyPredictablyRandomToggle(
     """
 )
 
+RATE_LIMIT_REPEATER_ATTEMPTS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_repeater_attempts',
+    'Apply rate limiting to attempts for data forwarding (repeaters)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    In addition to the rate limits based on time spent waiting, these rate limits ensure a project
+    is limited to how many records they can attempt to forward in a given time window.
+    """
+)
+
+DECREASE_REPEATER_TIMEOUT = StaticToggle(
+    'decrease_repeater_timeout',
+    'Decrease the request timeout value when forwarding data to external endpoints.',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Decreases the request timeout from 5 minutes to 1 minute for repeater endpoints when enabled.
+    """
+)
+
 TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
     'test_form_submission_rate_limit_response',
     "Respond to all form submissions with a 429 response",
@@ -2471,17 +2492,6 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     owner='Simon Kelly'
 )
 
-EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
-    'embed_tableau_report_by_user',
-    'Use a Tableau username "HQ/{username}" to embed reports instead of "HQ/{role name}"',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
-                'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
-                'to Tableau to get the embedded report.',
-    parent_toggles=[EMBEDDED_TABLEAU]
-)
-
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
@@ -2499,7 +2509,7 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBED_TABLEAU_REPORT_BY_USER],
+    parent_toggles=[EMBEDDED_TABLEAU],
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
 
