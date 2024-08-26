@@ -10,7 +10,7 @@ from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.repeaters.forms import GenericRepeaterForm
 
 
-class CaseExpressionRepeaterForm(GenericRepeaterForm):
+class BaseExpressionRepeaterForm(GenericRepeaterForm):
     configured_filter = JsonField(expected_type=dict, help_text=help_text.CONFIGURED_FILTER)
     configured_expression = JsonField(expected_type=dict)
     url_template = CharField(
