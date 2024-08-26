@@ -1027,8 +1027,11 @@ hqDefine('geospatial/js/models', [
                 dataType: 'json',
                 data: JSON.stringify(requestData),
                 contentType: "application/json; charset=utf-8",
-                success: function () {
-                    alertUser.alert_user(gettext("Cases were assigned successfully."), 'success', false, true);
+                success: function (response) {
+                    if (!response.success) {
+                        return alertUser.alert_user(response.message, 'danger');
+                    }
+                    alertUser.alert_user(response.message, 'success', false, true);
                 },
                 error: function (response) {
                     const responseText = response.responseText;

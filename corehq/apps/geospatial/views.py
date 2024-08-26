@@ -475,7 +475,7 @@ class CasesReassignmentView(BaseDomainView):
 
         update_cases_owner(domain, case_id_to_owner_id)
 
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
 
     def _add_related_case(self, case_id_to_owner_id, case_id, related_case_id):
         if related_case_id not in case_id_to_owner_id:
