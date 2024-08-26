@@ -352,6 +352,11 @@ class DomainGlobalSettingsForm(forms.Form):
     delete_logo = BooleanField(
         label=gettext_lazy("Delete Logo"),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Delete Logo after Submitting this Form"
+            ),
+        ),
         help_text=gettext_lazy("Delete your custom logo and use the standard one.")
     )
     logo_for_system_emails = ImageField(
@@ -365,6 +370,11 @@ class DomainGlobalSettingsForm(forms.Form):
     call_center_enabled = BooleanField(
         label=gettext_lazy("Call Center Application"),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Enable Call Center Application"
+            ),
+        ),
         help_text=gettext_lazy("Call Center mode is a CommCare HQ module for managing "
                     "call center workflows. It is still under "
                     "active development. Do not enable for your domain unless "
@@ -437,8 +447,13 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     release_mode_visibility = BooleanField(
-        label=gettext_lazy("Enable Release Mode"),
+        label=gettext_lazy("Release Mode"),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Enable Release Mode"
+            ),
+        ),
         help_text=gettext_lazy(
             """
             Check this box to enable release mode setting on the app release page.
@@ -450,8 +465,13 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     orphan_case_alerts_warning = BooleanField(
-        label=gettext_lazy("Show Orphan Case Alerts on Mobile Worker Edit Page"),
+        label=gettext_lazy("Orphan Case Alerts"),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Show Orphan Case Alerts on Mobile Worker Edit Page"
+            ),
+        ),
         help_text=gettext_lazy(
             """
             Displays a warning message on the mobile worker location edit page
@@ -463,8 +483,13 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     exports_use_elasticsearch = BooleanField(
-        label=gettext_lazy("Use elasticsearch when fetching apps for exports"),
+        label=gettext_lazy("Elasticsearch Exports"),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Use elasticsearch when fetching apps for exports"
+            ),
+        ),
         help_text=gettext_lazy(
             """
             (Internal) Fetches apps using elasticsearch instead of couch in exports
@@ -477,22 +502,6 @@ class DomainGlobalSettingsForm(forms.Form):
         self.domain = self.project.name
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = hqcrispy.HQFormHelper(self)
-        self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
-        self.helper[7] = twbscrispy.PrependedText('call_center_enabled', '')
-        self.helper[15] = twbscrispy.PrependedText('release_mode_visibility', '')
-        self.helper[16] = twbscrispy.PrependedText('orphan_case_alerts_warning', '')
-        self.helper[17] = twbscrispy.PrependedText('exports_use_elasticsearch', '')
-        self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
-        self.helper.layout.append(
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Update Basic Info"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
-            )
-        )
         self.fields['default_timezone'].label = gettext_lazy('Default timezone')
 
         if not self.can_use_custom_logo:
@@ -527,6 +536,48 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['exports_use_elasticsearch']
         else:
             self._handle_exports_use_elasticsearch_setting_value()
+
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Edit Basic Information"),
+                'hr_name',
+                'project_description',
+                'default_timezone',
+                crispy.Div(*self.get_extra_fields()),
+                hqcrispy.CheckboxField('release_mode_visibility'),
+                hqcrispy.CheckboxField('orphan_case_alerts_warning'),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Basic Info"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def get_extra_fields(self):
+        extra_fields = [
+            'default_geocoder_location',  # might be removed in subclass (only following original logic)
+        ]
+        if self.can_use_custom_logo:
+            extra_fields.extend([
+                'logo',
+                hqcrispy.CheckboxField('delete_logo'),
+            ])
+        if self.project.call_center_config.enabled:
+            extra_fields.extend([
+                hqcrispy.CheckboxField('call_center_enabled'),
+                'call_center_type',
+                'call_center_case_owner',
+                'call_center_case_type',
+            ])
+        if MOBILE_UCR.enabled(self.domain):
+            extra_fields.append('mobile_ucr_sync_interval')
+        if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
+            extra_fields.append('exports_use_elasticsearch')
+        return extra_fields
 
     def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
@@ -774,6 +825,16 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
             del self.fields['cloudcare_releases']
         if not domain_has_privilege(self.domain, privileges.GEOCODER):
             del self.fields['default_geocoder_location']
+
+    def get_extra_fields(self):
+        extra_fields = super().get_extra_fields()
+        if not (self.project.cloudcare_releases == 'default'
+                or not domain_has_privilege(self.domain, privileges.CLOUDCARE)):
+            extra_fields.append('cloudcare_releases')
+        if (not domain_has_privilege(self.domain, privileges.GEOCODER)
+                and 'default_geocoder_location' in extra_fields):
+            extra_fields.remove('default_geocoder_location')
+        return extra_fields
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
