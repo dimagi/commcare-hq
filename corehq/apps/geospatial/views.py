@@ -29,6 +29,7 @@ from corehq.apps.es.users import missing_or_empty_user_data_property
 from corehq.apps.geospatial.filters import GPSDataFilter
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
+from corehq.apps.geospatial.tasks import geo_cases_reassignment_update_owners
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.locations.models import SQLLocation
@@ -444,6 +445,7 @@ def get_users_with_gps(request, domain):
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
     MAX_REASSIGNMENT_REQUEST_CASES = 100
+    SYNC_CASES_UPDATE_THRESHOLD = 1000
 
     def post(self, request, domain, *args, **kwargs):
         try:
@@ -473,9 +475,20 @@ class CasesReassignmentView(BaseDomainView):
             for child_case_id, parent_case_id in child_to_parent_case_id.items():
                 self._add_related_case(case_id_to_owner_id, child_case_id, parent_case_id)
 
-        update_cases_owner(domain, case_id_to_owner_id)
+        if len(case_id_to_owner_id) <= self.SYNC_CASES_UPDATE_THRESHOLD:
+            update_cases_owner(domain, case_id_to_owner_id)
+            return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
+        else:
+            return self.process_as_async(case_id_to_owner_id)
 
-        return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
+    def process_as_async(self, case_id_to_owner_id):
+        geo_cases_reassignment_update_owners.apply_async((self.domain, case_id_to_owner_id))
+        return JsonResponse(
+            {
+                'success': True,
+                'message': _('Cases reassignment request is accepted and will be completed in some time')
+            }
+        )
 
     def _add_related_case(self, case_id_to_owner_id, case_id, related_case_id):
         if related_case_id not in case_id_to_owner_id:
