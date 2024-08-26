@@ -24,4 +24,5 @@ class Command(BaseCommand):
                 include_docs=False,
             ).one()
             num_groups = row['value'] if row else 0
-            self.stdout.write(f"{domain}\t{edition}\t{num_users}\t{num_groups}")
+            if num_groups > 10:
+                self.stdout.write(f"{domain}\t{edition}\t{num_users}\t{num_groups}")
