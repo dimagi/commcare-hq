@@ -30,7 +30,7 @@ from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
-from corehq.util.test_utils import create_and_save_a_case, flag_enabled
+from corehq.util.test_utils import create_and_save_a_case, flag_enabled, privilege_enabled
 
 
 @es_test
@@ -537,18 +537,14 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
         )
 
     @patch('corehq.pillows.case_search.get_gps_properties', return_value={'coords'})
+    @privilege_enabled(DATA_DICTIONARY)
     def test_geopoint_query_for_gps_properties(self, _):
-        def mock_handler(domain, privilege):
-            return privilege == DATA_DICTIONARY
-
-        with patch('corehq.pillows.case_search.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.side_effect = mock_handler
-            self._bootstrap_cases_in_es_for_domain(self.domain, [
-                {'_id': 'c1', 'coords': "42.373611 -71.110558 0 0"},
-                {'_id': 'c2', 'coords': "42 Wallaby Way"},
-                {'_id': 'c3', 'coords': "-33.856159 151.215256 0 0"},
-                {'_id': 'c4', 'coords': "-33.8373 151.225"},
-            ])
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'coords': "42.373611 -71.110558 0 0"},
+            {'_id': 'c2', 'coords': "42 Wallaby Way"},
+            {'_id': 'c3', 'coords': "-33.856159 151.215256 0 0"},
+            {'_id': 'c4', 'coords': "-33.8373 151.225"},
+        ])
         res = CaseSearchES().domain(self.domain).set_query(
             case_property_geo_distance('coords', GeoPoint(-33.1, 151.8), kilometers=1000),
         ).get_ids()

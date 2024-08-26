@@ -23,7 +23,7 @@ from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     delete_case_search_cases,
 )
-from corehq.util.test_utils import create_and_save_a_case
+from corehq.util.test_utils import create_and_save_a_case, privilege_enabled
 
 
 @es_test(requires=[case_search_adapter])
@@ -98,10 +98,8 @@ class CaseSearchPillowTest(TestCase):
     def _get_kafka_seq(self):
         return get_topic_offset(topics.CASE_SQL)
 
+    @privilege_enabled(privileges.DATA_DICTIONARY)
     def test_geopoint_property(self):
-        def mock_handler(domain, privilege):
-            return privilege == privileges.DATA_DICTIONARY
-
         CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
         self._make_data_dictionary(gps_properties=['coords', 'short_coords', 'other_coords'])
         case = self._make_case(case_properties={
@@ -110,9 +108,7 @@ class CaseSearchPillowTest(TestCase):
             'other_coords': '42 Wallaby Way',
             'not_coords': '-33.8561 151.2152 0 0',
         })
-        with patch('corehq.pillows.case_search.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.side_effect = mock_handler
-            CaseSearchReindexerFactory(domain=self.domain).build().reindex()
+        CaseSearchReindexerFactory(domain=self.domain).build().reindex()
         manager.index_refresh(case_search_adapter.index_name)
         es_case = CaseSearchES().doc_id(case.case_id).run().hits[0]
         self.assertEqual(
