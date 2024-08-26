@@ -20,6 +20,8 @@ hqDefine("motech/js/connection_settings_detail", [
                     'token_url',
                     'refresh_url',
                     'pass_credentials_in_header',
+                    'include_client_id',
+                    'scope',
                 ];
             if (authPreset === 'CUSTOM') {
                 _.each(customAuthPresetFields, function (field) {
@@ -33,7 +35,7 @@ hqDefine("motech/js/connection_settings_detail", [
 
         });
 
-        $authTypeSelect.change(function () {
+        $authTypeSelect.change(function (e, fromInitial) {
             let visible = {},
                 allFields = {
                     'username': gettext("Username"),
@@ -82,7 +84,7 @@ hqDefine("motech/js/connection_settings_detail", [
                     div.removeClass("d-none");
                     let label = visible[field] || allFields[field];
                     let labelElement = div.find('label');
-                    if (label && labelElement.length > 0 && labelElement.text() !== label) {
+                    if (!fromInitial && label && labelElement.length > 0 && labelElement.text() !== label) {
                         labelElement.text(label);
                         let fieldElement = $('#id_' + field);
                         fieldElement.val('');  // clear current value
@@ -141,6 +143,11 @@ hqDefine("motech/js/connection_settings_detail", [
                 plaintext_password: $('#id_plaintext_password').val(),
                 client_id: $('#id_client_id').val(),
                 plaintext_client_secret: $('#id_plaintext_client_secret').val(),
+                pass_credentials_in_header: $('#id_pass_credentials_in_header').prop('checked'),
+                include_client_id: $('#id_include_client_id').prop('checked'),
+                scope: $('#id_scope').val(),
+                token_url: $('#id_token_url').val(),
+                auth_preset: $('#id_auth_preset').val(),
                 skip_cert_verify: $('#id_skip_cert_verify').prop('checked'),
             };
             $testConnectionButton.disableButton();
@@ -162,7 +169,7 @@ hqDefine("motech/js/connection_settings_detail", [
         });
 
         // Set initial state
-        $authTypeSelect.trigger('change');
+        $authTypeSelect.trigger('change', [true]);
         $authPreset.trigger('change');
         $('#id_url').trigger('change');
     });

@@ -2002,6 +2002,16 @@ RATE_LIMIT_REPEATER_ATTEMPTS = DynamicallyPredictablyRandomToggle(
     """
 )
 
+DECREASE_REPEATER_TIMEOUT = StaticToggle(
+    'decrease_repeater_timeout',
+    'Decrease the request timeout value when forwarding data to external endpoints.',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Decreases the request timeout from 5 minutes to 1 minute for repeater endpoints when enabled.
+    """
+)
+
 TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
     'test_form_submission_rate_limit_response',
     "Respond to all form submissions with a 429 response",
@@ -2489,15 +2499,6 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Simon Kelly'
-)
-
-EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
-    'embed_tableau_report_by_user',
-    'Use a Tableau username "HQ/{username}" to embed reports instead of "HQ/{role name}"',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='This flag is now deprecated and will be removed.',
-    parent_toggles=[EMBEDDED_TABLEAU]
 )
 
 APPLICATION_RELEASE_LOGS = StaticToggle(
