@@ -1,18 +1,16 @@
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 from uuid import uuid4
-
-from dateutil.parser import isoparse
 
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from dateutil.parser import isoparse
 from freezegun import freeze_time
-
 from nose.tools import assert_in, assert_raises
 
 from corehq.motech.models import ConnectionSettings
@@ -23,6 +21,7 @@ from ..const import (
     MAX_BACKOFF_ATTEMPTS,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
+    RECORD_INVALIDPAYLOAD_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
     State,
@@ -34,6 +33,7 @@ from ..models import (
     format_response,
     get_all_repeater_types,
     is_response,
+    is_success_response,
 )
 
 DOMAIN = 'test-domain'
@@ -192,6 +192,14 @@ class RepeaterManagerTests(RepeaterTestCase):
             repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(repeaters), 1)
             self.assertEqual(repeaters[0].id, self.repeater.id)
+
+    def test_all_ready_ids(self):
+        with make_repeat_record(self.repeater, RECORD_PENDING_STATE):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
 
 
 @contextmanager
@@ -362,17 +370,17 @@ class AttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
-    def test_add_payload_exception_attempt(self):
+    def test_add_payload_error_attempt(self):
         message = 'ValueError: Schema validation failed'
         tb_str = 'Traceback ...'
-        self.repeat_record.add_payload_exception_attempt(message=message,
-                                                         tb_str=tb_str)
-        self.assertEqual(self.repeat_record.state, RECORD_CANCELLED_STATE)
+        self.repeat_record.add_payload_error_attempt(message=message,
+                                                     traceback_str=tb_str)
+        self.assertEqual(self.repeat_record.state, RECORD_INVALIDPAYLOAD_STATE)
         # Note: Our payload issues do not affect how we deal with their
         #       server issues:
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
-                         RECORD_CANCELLED_STATE)
+                         RECORD_INVALIDPAYLOAD_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, tb_str)
 
@@ -815,3 +823,20 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
         with patch.object(RepeatRecord, "num_attempts", 2), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertFalse(repeat_record.exceeded_max_retries)
+
+
+class TestIsSuccessResponse(SimpleTestCase):
+
+    def test_true_response(self):
+        self.assertTrue(is_success_response(True))
+
+    def test_status_201_response(self):
+        response = Mock(status_code=201)
+        self.assertTrue(is_success_response(response))
+
+    def test_status_404_response(self):
+        response = Mock(status_code=404)
+        self.assertFalse(is_success_response(response))
+
+    def test_none_response(self):
+        self.assertFalse(is_success_response(None))
