@@ -827,3 +827,27 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
              " or consider deselecting 'include related cases'."
              " Reach out to support for if you still need assistance.")
         )
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_LIMIT', 3)
+    def test_cases_reassignment_max_limit_error(self):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+                'include_related_cases': True,
+            }
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            ("Max limit for cases to be reassigned including related cases exceeded."
+             " Please select a lower value to update at time or reach out to support")
+        )

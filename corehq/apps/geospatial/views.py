@@ -468,6 +468,12 @@ class CasesReassignmentView(BaseDomainView):
         except ValidationError as error:
             return HttpResponseBadRequest(error)
 
+        if len(case_id_to_owner_id) > self.ASYNC_CASES_LIMIT:
+            return HttpResponseBadRequest(
+                _("Max limit for cases to be reassigned including related cases exceeded."
+                  " Please select a lower value to update at time or reach out to support")
+            )
+
         if len(case_id_to_owner_id) <= self.SYNC_CASES_UPDATE_THRESHOLD:
             update_cases_owner(domain, case_id_to_owner_id)
             return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
