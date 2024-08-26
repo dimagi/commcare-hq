@@ -72,7 +72,7 @@ class CaseDocumentStore(DocumentStore):
                 )
                 if case:
                     return case.to_json()
-                raise CaseNotFound(f'external_id: {external_id!r}')
+                raise CaseNotFound(f"external_id: '{external_id}'")
         except (CaseNotFound, CommCareCase.MultipleObjectsReturned) as e:
             raise DocumentNotFoundError(e)
 
