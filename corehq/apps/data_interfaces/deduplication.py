@@ -6,7 +6,8 @@ from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import CaseSearchES, case_property_missing
-from corehq.apps.locations.dbaccessors import user_ids_at_locations
+from corehq.apps.locations.dbaccessors import user_ids_at_locations, user_ids_at_locations_and_descendants
+from corehq.apps.locations.models import SQLLocation
 from corehq.messaging.util import MessagingRuleProgressHelper
 
 DUPLICATE_LIMIT = 1000
@@ -47,7 +48,13 @@ def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):
                 )
         elif isinstance(definition, LocationFilterDefinition):
             # Get all users owning cases at definition.location_id
-            owners_ids = user_ids_at_locations([definition.location_id])
+            if definition.include_child_locations:
+                owners_ids = user_ids_at_locations_and_descendants([definition.location_id])
+                sql_loc = SQLLocation.objects.get(location_id=definition.location_id)
+                owners_ids.extend(sql_loc.get_descendants().values_list('location_id', flat=True))
+            else:
+                owners_ids = user_ids_at_locations([definition.location_id])
+
             # Add the definition.location_id for cases which belong to definition.location_id
             owners_ids.append(definition.location_id)
 
