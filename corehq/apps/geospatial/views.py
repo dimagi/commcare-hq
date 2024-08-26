@@ -447,6 +447,7 @@ class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
     MAX_REASSIGNMENT_REQUEST_CASES = 100
     SYNC_CASES_UPDATE_THRESHOLD = 1000
+    ASYNC_CASES_LIMIT = 5000
 
     def post(self, request, domain, *args, **kwargs):
         try:
@@ -475,6 +476,12 @@ class CasesReassignmentView(BaseDomainView):
             child_to_parent_case_id = self.get_parent_cases(domain, request_cases_id)
             for child_case_id, parent_case_id in child_to_parent_case_id.items():
                 self._add_related_case(case_id_to_owner_id, child_case_id, parent_case_id)
+
+        if len(case_id_to_owner_id) > self.ASYNC_CASES_LIMIT:
+            return HttpResponseBadRequest(
+                _("Max limit for cases to be reassigned including related cases exceeded."
+                  " Please select a lower value to update at time or reach out to support")
+            )
 
         if len(case_id_to_owner_id) <= self.SYNC_CASES_UPDATE_THRESHOLD:
             update_cases_owner(domain, case_id_to_owner_id)
