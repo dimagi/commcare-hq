@@ -444,8 +444,8 @@ def get_users_with_gps(request, domain):
 @method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
-    MAX_REASSIGNMENT_REQUEST_CASES = 100
-    SYNC_CASES_UPDATE_THRESHOLD = 1000
+    MAX_REASSIGNMENT_REQUEST_CASES = 25
+    SYNC_CASES_UPDATE_THRESHOLD = 10
     ASYNC_CASES_LIMIT = 5000
 
     def post(self, request, domain, *args, **kwargs):

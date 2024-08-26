@@ -7,6 +7,8 @@ from corehq.apps.geospatial.utils import update_cases_owner
 
 @task(queue="background_queue", ignore_result=False)
 def geo_cases_reassignment_update_owners(domain, case_id_to_owner_id):
+    from time import sleep
+    sleep(30)
     update_cases_owner(domain, case_id_to_owner_id)
 
 
