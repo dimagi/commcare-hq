@@ -43,6 +43,7 @@ from corehq.util.timezones.utils import get_timezone
 from .const import GPS_POINT_CASE_PROPERTY, POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoConfig, GeoPolygon
 from .utils import (
+    CeleryTaskExistenceHelper,
     create_case_with_gps_property,
     get_geo_case_property,
     get_geo_user_property,
@@ -482,7 +483,16 @@ class CasesReassignmentView(BaseDomainView):
             return self.process_as_async(case_id_to_owner_id)
 
     def process_as_async(self, case_id_to_owner_id):
-        geo_cases_reassignment_update_owners.apply_async((self.domain, case_id_to_owner_id))
+        task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
+        task_existence_helper = CeleryTaskExistenceHelper(task_key)
+
+        if task_existence_helper.is_active():
+            return HttpResponseBadRequest(
+                _('A case reassignment task is currently in progress. Please try again after some time')
+            )
+
+        geo_cases_reassignment_update_owners.delay(self.domain, case_id_to_owner_id, task_key)
+        task_existence_helper.mark_active()
         return JsonResponse(
             {
                 'success': True,
