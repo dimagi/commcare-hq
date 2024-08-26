@@ -29,7 +29,7 @@ from corehq.apps.es.users import missing_or_empty_user_data_property
 from corehq.apps.geospatial.filters import GPSDataFilter
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
-from corehq.apps.geospatial.tasks import geo_cases_reassignment_update_owners
+from corehq.apps.geospatial.tasks import geo_cases_reassignment_update_owners, is_task_invoked_and_not_completed
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.locations.models import SQLLocation
@@ -482,7 +482,13 @@ class CasesReassignmentView(BaseDomainView):
             return self.process_as_async(case_id_to_owner_id)
 
     def process_as_async(self, case_id_to_owner_id):
-        geo_cases_reassignment_update_owners.apply_async((self.domain, case_id_to_owner_id))
+        task_id = f'geo_cases_reassignment_update_owners_{self.domain}'
+        if is_task_invoked_and_not_completed(task_id):
+            return HttpResponseBadRequest(
+                _('A case reassignment task is currently in progress. Please try again after some time')
+            )
+
+        geo_cases_reassignment_update_owners.apply_async((self.domain, case_id_to_owner_id), task_id=task_id)
         return JsonResponse(
             {
                 'success': True,
