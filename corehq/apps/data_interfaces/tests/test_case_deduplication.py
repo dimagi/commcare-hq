@@ -77,6 +77,7 @@ class FindingDuplicatesQueryTest(TestCase):
         # Create a filter criteria of cases to consider
         definition = LocationFilterDefinition.objects.create(
             location_id='mustafar_id',
+            include_child_locations=False,
         )
         criteria = CaseRuleCriteria(rule=rule)
         criteria.definition = definition
