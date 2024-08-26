@@ -113,11 +113,14 @@ class TestDomainForwardingOptionsView(TestCase):
         self.assertEqual(repeater.count_State, {
             # templates that reference `count_State` may need to be
             # updated if the keys in this dict change
-            'Pending': 1,
-            'Fail': 0,
-            'Success': 0,
             'Cancelled': 0,
             'Empty': 0,
+            'EmptyOrSuccess': 0,
+            'Fail': 0,
+            'InvalidOrCancelled': 0,
+            'InvalidPayload': 0,
+            'Pending': 1,
+            'Success': 0
         })
 
 
