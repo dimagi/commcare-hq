@@ -352,18 +352,6 @@ class Repeater(RepeaterSuperProxy):
     def repeat_records_ready(self):
         return self.repeat_records.filter(state__in=(State.Pending, State.Fail))
 
-    @property
-    def is_ready(self):
-        """
-        Returns True if there are repeat records to be sent.
-        """
-        if self.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(self.domain):
-            return False
-        if not (self.next_attempt_at is None
-                or self.next_attempt_at < timezone.now()):
-            return False
-        return self.repeat_records_ready.exists()
-
     def set_next_attempt(self):
         now = datetime.utcnow()
         interval = _get_retry_interval(self.last_attempt_at, now)
