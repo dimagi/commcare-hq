@@ -931,10 +931,10 @@ hqDefine("cloudcare/js/form_entry/entries", [
         // Tracks whether file entry has already been cleared, preventing an additional failing request to Formplayer
         self.cleared = false;
         self.buildBroadcastTopics(options);
-        self.uploadFile = function() {
+        self.uploadFile = function () {
             document.getElementById(self.entryId).click();
-        }
-        self.fileNameDisplay = ko.observable(constants.NO_FILE_SELECTED)
+        };
+        self.fileNameDisplay = ko.observable(constants.NO_FILE_SELECTED);
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
@@ -942,7 +942,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         var self = this;
         if (newValue === "" && self.question.filename()) {
             self.question.hasAnswered = true;
-            self.fileNameDisplay(self.question.filename())
+            self.fileNameDisplay(self.question.filename());
         } else if (newValue !== constants.NO_ANSWER && newValue !== "") {
             // Input has changed and validation will be checked
             if (newValue !== self.answer()) {
@@ -950,7 +950,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
                 self.cleared = false;
             }
             var fixedNewValue = newValue.replace(constants.FILE_PREFIX, "");
-            self.fileNameDisplay(fixedNewValue)
+            self.fileNameDisplay(fixedNewValue);
             self.answer(fixedNewValue);
         } else {
             self.onClear();
