@@ -545,6 +545,8 @@ class DomainGlobalSettingsForm(forms.Form):
                 'logo',
                 hqcrispy.CheckboxField('delete_logo'),
             ])
+        if self.system_emails_logo_enabled:
+            extra_fields.append('logo_for_system_emails')
         if self.project.call_center_config.enabled:
             extra_fields.extend([
                 hqcrispy.CheckboxField('call_center_enabled'),
