@@ -687,6 +687,28 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
 
     @flag_enabled('GEOSPATIAL')
+    def test_cases_reassignment_with_related_case_in_request(self):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+            self.related_case_1.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+                'include_related_cases': True,
+            }
+        )
+
+        self._refresh_cases()
+        self._assert_for_request_cases_success(response)
+        self.assertEqual(self.related_case_1.owner_id, self.user_a.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
+
+    @flag_enabled('GEOSPATIAL')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.MAX_REASSIGNMENT_REQUEST_CASES', 1)
     def test_cases_reassignment_cases_limit_error(self, *args):
         case_id_to_owner_id = {
