@@ -151,6 +151,7 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
+    @patch("corehq.apps.export.views.new.get_case_types_for_domain", lambda *a: ['random_case'])
     def test_create_case_export(self):
         resp = self.client.get(
             reverse(CreateNewCustomCaseExportView.urlname, args=[self.domain.name]),
