@@ -261,6 +261,8 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             form_query_string=form_query_string,
             form_query_string_pending=form_query_string_pending,
             form_query_string_cancelled=form_query_string_cancelled,
+            payload_id=self.payload_id,
+            repeater_id=self.repeater_id,
         )
         return context
 
@@ -390,8 +392,8 @@ def _schedule_task_with_flag(
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
 ):
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    payload_id = request.POST.get('payload_id') or None
-    repeater_id = request.POST.get('repeater') or None
+    payload_id = request.POST.get('payload_id', None)
+    repeater_id = request.POST.get('repeater_id', None)
     task = task_generate_ids_and_operate_on_payloads.delay(
         payload_id, repeater_id, domain, action)
     task_ref.set_task(task)

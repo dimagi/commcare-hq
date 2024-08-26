@@ -136,22 +136,22 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', function () {
         });
 
         $('#confirm-button').on('click', function () {
-            var itemsToSend = getCheckboxes(),
+            var requestBody = getRequestBody(),
                 action = getAction(),
                 $btn;
             $popUp.modal('hide');
             if (action === 'resend') {
                 $btn = $('#resend-all-button');
                 $btn.disableButton();
-                postResend($btn, itemsToSend);
+                postResend($btn, requestBody);
             } else if (action === 'cancel') {
                 $btn = $('#cancel-all-button');
                 $btn.disableButton();
-                postOther($btn, itemsToSend, action);
+                postOther($btn, requestBody, action);
             } else if (action === 'requeue') {
                 $btn = $('#requeue-all-button');
                 $btn.disableButton();
-                postOther($btn, itemsToSend, action);
+                postOther($btn, requestBody, action);
             }
         });
 
@@ -208,43 +208,48 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', function () {
             return true;
         }
 
-        function getCheckboxes() {
-            if (selectAll.checked) {
-                return selectAll.getAttribute('data-id');
-            } else if (selectPending.checked) {
-                return selectPending.getAttribute('data-id');
-            } else if (selectCancelled.checked) {
-                return selectCancelled.getAttribute('data-id');
+        function getRequestBody() {
+            const bulkSelectors = [selectAll, selectPending, selectCancelled];
+            if (bulkSelectors.some(selector => selector.checked)) {
+                return getBulkSelectionProperties();
             } else {
-                var items = document.getElementsByName('xform_ids'),
-                    itemsToSend = '';
-                for (var i = 0; i < items.length; i++) {
-                    if (items[i].type == 'checkbox' && items[i].checked == true) {
-                        itemsToSend += items[i].getAttribute('data-id') + ' '
-                    }
-                }
-
-                return itemsToSend;
+                return getRecordIds();
             }
         }
 
-        function postResend(btn, arg) {
+        function getBulkSelectionProperties() {
+            return {
+                payload_id: initialPageData.get('payload_id'),
+                repeater_id: initialPageData.get('repeater_id'),
+                flag: getFlag(),
+            };
+        }
+
+        function getRecordIds() {
+            var records = document.getElementsByName('xform_ids'),
+                recordIds = '';
+            for (var record of records) {
+                if (record.type == 'checkbox' && record.checked == true) {
+                    recordIds += record.getAttribute('data-id') + ' ';
+                }
+            }
+            return {record_id: recordIds};
+        }
+
+        function postResend(btn, data) {
             $.post({
                 url: initialPageData.reverse("repeat_record"),
-                data: {
-                    record_id: arg,
-                    flag: getFlag(),
-                },
-                success: function (data) {
+                data: data,
+                success: function (response) {
                     btn.removeSpinnerFromButton();
-                    if (data.success) {
+                    if (response.success) {
                         btn.text(gettext('Success!'));
                         btn.addClass('btn-success');
                     } else {
                         btn.text(gettext('Failed'));
                         btn.addClass('btn-danger');
                         $('#payload-error-modal').modal('show');
-                        $('#payload-error-modal .error-message').text(data.failure_reason);
+                        $('#payload-error-modal .error-message').text(response.failure_reason);
                     }
                 },
                 error: function () {
@@ -255,13 +260,10 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', function () {
             });
         }
 
-        function postOther(btn, arg, action) {
+        function postOther(btn, data, action) {
             $.post({
                 url: initialPageData.reverse(action + '_repeat_record'),
-                data: {
-                    record_id: arg,
-                    flag: getFlag(),
-                },
+                data: data,
                 success: function () {
                     btn.removeSpinnerFromButton();
                     btn.text(gettext('Success!'));

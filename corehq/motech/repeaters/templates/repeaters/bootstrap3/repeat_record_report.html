@@ -91,6 +91,8 @@
     {% registerurl 'repeat_record' domain %}
     {% registerurl 'cancel_repeat_record' domain %}
     {% registerurl 'requeue_repeat_record' domain %}
+    {% initial_page_data 'payload_id' payload_id %}
+    {% initial_page_data 'repeater_id' repeater_id %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
