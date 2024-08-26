@@ -547,7 +547,7 @@ class DomainGlobalSettingsForm(forms.Form):
             ])
         if self.system_emails_logo_enabled:
             extra_fields.append('logo_for_system_emails')
-        if self.project.call_center_config.enabled:
+        if self.project and self.project.call_center_config.enabled:
             extra_fields.extend([
                 hqcrispy.CheckboxField('call_center_enabled'),
                 'call_center_type',
