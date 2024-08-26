@@ -2,6 +2,7 @@ import jsonschema
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.const import ONE_DAY
 from couchforms.geopoint import GeoPoint
 from dimagi.utils.chunked import chunked
 
@@ -10,6 +11,7 @@ from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 
 @quickcache(['domain'], timeout=24 * 60 * 60)
@@ -185,3 +187,24 @@ def update_cases_owner(domain, case_id_to_owner_id, chunk_size=100):
             domain=domain,
             device_id='corehq.apps.geospatial.utils.update_cases_owners'
         )
+
+
+class CeleryTaskExistenceHelper(object):
+    """
+    Simple Helper class using redis to check whether a given celery task exists and is not processed yet.
+    """
+
+    def __init__(self, task_key):
+        self.task_key = task_key
+        self._client = get_redis_client()
+
+    def mark_active(self, timeout=ONE_DAY):
+        # Timeout here is just a fail safe mechanism in case task is not processed by Celery
+        # due to unexpected circumstances
+        self._client.set(self.task_key, 'ACTIVE', timeout=timeout)
+
+    def is_active(self):
+        return self._client.has_key(self.task_key)
+
+    def mark_inactive(self):
+        return self._client.delete(self.task_key)
