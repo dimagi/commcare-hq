@@ -7,7 +7,6 @@ from django.http import (
     HttpRequest,
     HttpResponse,
     JsonResponse,
-    QueryDict,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -248,19 +247,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         total_pending = RepeatRecord.objects.filter(where, state=State.Pending).count()  # include State.Fail?
         total_cancelled = RepeatRecord.objects.filter(where, state=State.Cancelled).count()
 
-        form_query_string = self.request.GET.urlencode()
-        form_query_string_cancelled = _change_record_state(
-            self.request.GET, 'CANCELLED').urlencode()
-        form_query_string_pending = _change_record_state(
-            self.request.GET, 'PENDING').urlencode()
-
         context.update(
             total=total,
             total_pending=total_pending,
             total_cancelled=total_cancelled,
-            form_query_string=form_query_string,
-            form_query_string_pending=form_query_string_pending,
-            form_query_string_cancelled=form_query_string_cancelled,
             payload_id=self.payload_id,
             repeater_id=self.repeater_id,
         )
@@ -374,16 +364,6 @@ def _get_record_ids_from_request(request):
 
 def _get_flag(request: HttpRequest) -> str:
     return request.POST.get('flag') or ''
-
-
-def _change_record_state(query_dict: QueryDict, state: str) -> QueryDict:
-    if not state:
-        return query_dict
-    if 'record_state' in query_dict:
-        query_dict = query_dict.copy()  # Don't cause side effects. Also,
-        # request.GET is immutable and will raise AttributeError.
-        query_dict['record_state'] = state
-    return query_dict
 
 
 def _schedule_task_with_flag(
