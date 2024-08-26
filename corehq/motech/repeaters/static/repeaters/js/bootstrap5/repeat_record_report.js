@@ -4,7 +4,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         selectAll = document.getElementById('select-all'),
         cancelAll = document.getElementById('cancel-all'),
         requeueAll = document.getElementById('requeue-all'),
-        $popUp = $('#are-you-sure');
+        $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
 
     $(function () {
@@ -136,18 +136,20 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         });
 
         $('#confirm-button').on('click', function () {
-            var itemsToSend = getCheckboxes(), action = getAction(), $btn;
+            var itemsToSend = getCheckboxes(),
+                action = getAction(),
+                $btn;
 
             $popUp.modal('hide');  /* todo B5: plugin:modal */
-            if (action == 'resend') {
+            if (action === 'resend') {
                 $btn = $('#resend-all-button');
                 $btn.disableButton();
                 postResend($btn, itemsToSend);
-            } else if (action == 'cancel') {
+            } else if (action === 'cancel') {
                 $btn = $('#cancel-all-button');
                 $btn.disableButton();
                 postOther($btn, itemsToSend, action);
-            } else if (action == 'requeue') {
+            } else if (action === 'requeue') {
                 $btn = $('#requeue-all-button');
                 $btn.disableButton();
                 postOther($btn, itemsToSend, action);
