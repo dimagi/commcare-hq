@@ -44,6 +44,7 @@ class TestGenericInboundAPI(SimpleTestCase):
         configurable_api.get_validations = lambda: []
         user = MockUser()
         context = get_evaluation_context(
+            domain=self.domain_name,
             restore_user=user,
             method='post',
             query={},
@@ -62,6 +63,7 @@ class TestGenericInboundAPI(SimpleTestCase):
         )
         user = MockUser()
         context = get_evaluation_context(
+            domain=self.domain_name,
             restore_user=user,
             method='post',
             query={},
@@ -74,6 +76,7 @@ class TestGenericInboundAPI(SimpleTestCase):
         configurable_api = _get_api_with_filter(self.domain_name)
         user = MockUser()
         context = get_evaluation_context(
+            domain=self.domain_name,
             restore_user=user,
             method='post',
             query={},
@@ -86,6 +89,7 @@ class TestGenericInboundAPI(SimpleTestCase):
         configurable_api = _get_api_with_filter(self.domain_name)
         user = MockUser()
         context = get_evaluation_context(
+            domain=self.domain_name,
             restore_user=user,
             method='post',
             query={},
@@ -99,6 +103,7 @@ class TestGenericInboundAPI(SimpleTestCase):
         configurable_api = _get_api_with_validation(self.domain_name)
         user = MockUser()
         context = get_evaluation_context(
+            domain=self.domain_name,
             restore_user=user,
             method='post',
             query={},
@@ -127,6 +132,7 @@ class TestGenericInboundAPI(SimpleTestCase):
         user = MockUser()
         # 1st validation should fail, 2nd should succeed
         context = get_evaluation_context(
+            domain=self.domain_name,
             restore_user=user,
             method='post',
             query={},

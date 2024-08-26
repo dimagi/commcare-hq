@@ -128,8 +128,9 @@ def make_processing_attempt(response, request_log, is_retry=False):
     )
 
 
-def get_evaluation_context(restore_user, method, query, headers, body):
+def get_evaluation_context(domain, restore_user, method, query, headers, body):
     return EvaluationContext({
+        'domain': domain,
         'request': {
             'method': method,
             'query': query,
