@@ -27,9 +27,8 @@ hqDefine("locations/js/widgets", [
         if (basicInfoTabActive) {
             const visibleSelect = $('#basic-info').find('.controls > .select')[0];
             containerWidthPixels = $(visibleSelect).parent().width();
-        }
         // Default to select2 setting for overflow
-        else if (containerWidthPixels < 0) {
+        } else if (containerWidthPixels < 0) {
             return name;
         }
         let truncatedName;
