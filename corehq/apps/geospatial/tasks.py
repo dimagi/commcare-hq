@@ -1,3 +1,6 @@
+from celery import states
+from celery.result import AsyncResult
+
 from corehq.apps.celery import task
 from corehq.apps.geospatial.utils import CeleryTaskTracker, update_cases_owner
 
