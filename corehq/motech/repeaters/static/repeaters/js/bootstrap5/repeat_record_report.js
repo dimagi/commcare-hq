@@ -2,8 +2,8 @@
 hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         selectAll = document.getElementById('select-all'),
-        cancelAll = document.getElementById('cancel-all'),
-        requeueAll = document.getElementById('requeue-all'),
+        selectPending = document.getElementById('select-pending'),
+        selectCancelled = document.getElementById('select-cancelled'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
 
@@ -178,11 +178,11 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
             if (selectAll.checked) {
                 setFlag('select_all');
                 return true;
-            } else if (cancelAll.checked) {
-                setFlag('cancel_all');
+            } else if (selectPending.checked) {
+                setFlag('select_pending');
                 return true;
-            } else if (requeueAll.checked) {
-                setFlag('requeue_all');
+            } else if (selectCancelled.checked) {
+                setFlag('select_cancelled');
                 return true;
             }
 
@@ -214,10 +214,10 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         function getCheckboxes() {
             if (selectAll.checked) {
                 return selectAll.getAttribute('data-id');
-            } else if (cancelAll.checked) {
-                return cancelAll.getAttribute('data-id');
-            } else if (requeueAll.checked) {
-                return requeueAll.getAttribute('data-id');
+            } else if (selectPending.checked) {
+                return selectPending.getAttribute('data-id');
+            } else if (selectCancelled.checked) {
+                return selectCancelled.getAttribute('data-id');
             } else {
                 var items = document.getElementsByName('xform_ids'),
                     itemsToSend = '';

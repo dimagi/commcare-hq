@@ -1,9 +1,9 @@
 /* globals ace */
 hqDefine('repeaters/js/repeat_record_report_selects', function() {
     var items = document.getElementsByName('xform_ids'),
-        all = document.getElementById('select-all'),
-        allCancel = document.getElementById('cancel-all'),
-        allRequeue = document.getElementById('requeue-all'),
+        selectAll = document.getElementById('select-all'),
+        selectPending = document.getElementById('select-pending'),
+        selectCancelled = document.getElementById('select-cancelled'),
         buttonCancel = document.getElementById('cancel-all-button'),
         buttonRequeue = document.getElementById('requeue-all-button');
 
@@ -18,9 +18,9 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
     });
 
     $('#select-all').on('click', function () {
-        if (all.checked) {
+        if (selectAll.checked) {
             selectItems();
-            uncheck(allCancel, allRequeue);
+            uncheck(selectPending, selectCancelled);
             turnOffCancelRequeue();
         } else {
             unSelectItems();
@@ -28,11 +28,11 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
         }
     });
 
-    $('#cancel-all').on('click', function () {
+    $('#select-pending').on('click', function () {
         unSelectItems();
-        uncheck(all, allRequeue);
+        uncheck(selectAll, selectCancelled);
         turnOnCancelRequeue();
-        if (allCancel.checked) {
+        if (selectPending.checked) {
             buttonRequeue.disabled = true;
             checkMultipleItems('cancel');
         } else {
@@ -40,11 +40,11 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
         }
     });
 
-    $('#requeue-all').on('click', function () {
+    $('#select-cancelled').on('click', function () {
         unSelectItems();
-        uncheck(all, allCancel);
+        uncheck(selectAll, selectPending);
         turnOnCancelRequeue();
-        if (allRequeue.checked) {
+        if (selectCancelled.checked) {
             buttonCancel.disabled = true;
             checkMultipleItems('requeue');
         } else {
@@ -78,9 +78,9 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
     }
 
     function uncheckSelects() {
-        all.checked = false;
-        allCancel.checked = false;
-        allRequeue.checked = false;
+        selectAll.checked = false;
+        selectPending.checked = false;
+        selectCancelled.checked = false;
         turnOnCancelRequeue();
     }
 

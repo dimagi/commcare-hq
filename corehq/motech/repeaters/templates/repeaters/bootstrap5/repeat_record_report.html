@@ -46,11 +46,11 @@
                 {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >  {# todo B5: css:checkbox #}
-              <input type="checkbox" id="cancel-all" data-id="{{ form_query_string_pending|urlencode }}">  {# todo B5: css:checkbox #}
+              <input type="checkbox" id="select-pending" data-id="{{ form_query_string_pending|urlencode }}">  {# todo B5: css:checkbox #}
                 {% blocktrans %}Select {{ total_pending }} pending payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >  {# todo B5: css:checkbox #}
-              <input type="checkbox" id="requeue-all" data-id="{{ form_query_string_cancelled|urlencode }}">  {# todo B5: css:checkbox #}
+              <input type="checkbox" id="select-cancelled" data-id="{{ form_query_string_cancelled|urlencode }}">  {# todo B5: css:checkbox #}
                 {% blocktrans %}Select {{ total_cancelled }} cancelled payloads{% endblocktrans %}
             </label>
           </div>

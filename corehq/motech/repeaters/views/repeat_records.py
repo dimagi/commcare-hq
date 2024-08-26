@@ -345,7 +345,7 @@ class RepeatRecordView(View):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
-    if _get_flag(request) == 'cancel_all':
+    if _get_flag(request) == 'select_pending':
         _schedule_task_with_flag(request, domain, 'cancel')
     else:
         _schedule_task_without_flag(request, domain, 'cancel')
@@ -357,7 +357,7 @@ def cancel_repeat_record(request, domain):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
-    if _get_flag(request) == 'requeue_all':
+    if _get_flag(request) == 'select_cancelled':
         _schedule_task_with_flag(request, domain, 'requeue')
     else:
         _schedule_task_without_flag(request, domain, 'requeue')
