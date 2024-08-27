@@ -374,6 +374,7 @@ def _schedule_task_with_flag(
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
     payload_id = request.POST.get('payload_id', None)
     repeater_id = request.POST.get('repeater_id', None)
+    #TODO: validate that at least a repeater id or payload id is specified before scheduling task
     task = task_generate_ids_and_operate_on_payloads.delay(
         payload_id, repeater_id, domain, action)
     task_ref.set_task(task)

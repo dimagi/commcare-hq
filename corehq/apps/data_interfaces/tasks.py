@@ -214,25 +214,11 @@ def task_generate_ids_and_operate_on_payloads(
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
 ) -> dict:
-    repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain)
+    repeat_record_ids = RepeatRecord.objects.get_repeat_record_ids(
+        domain, repeater_id=repeater_id, payload_id=payload_id
+    )
     return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)
-
-
-def _get_repeat_record_ids(payload_id, repeater_id, domain):
-    if payload_id:
-        queryset = RepeatRecord.objects.filter(
-            domain=domain,
-            payload_id=payload_id,
-        )
-    elif repeater_id:
-        queryset = RepeatRecord.objects.filter(
-            domain=domain,
-            repeater__id=repeater_id,
-        )
-    else:
-        return []
-    return list(queryset.order_by().values_list("id", flat=True))
 
 
 @task
