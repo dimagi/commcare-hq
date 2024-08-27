@@ -1,13 +1,15 @@
 import jsonschema
 from jsonobject.exceptions import BadValueError
 
+from casexml.apps.case.mock import CaseBlock
 from couchforms.geopoint import GeoPoint
+from dimagi.utils.chunked import chunked
 
+from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.hqcase.case_helper import CaseHelper
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
-
-from .models import GeoConfig
 
 
 @quickcache(['domain'], timeout=24 * 60 * 60)
@@ -165,3 +167,21 @@ def geojson_to_es_geoshape(geojson):
     es_geoshape = geojson['geometry'].copy()
     es_geoshape['type'] = es_geoshape['type'].lower()
     return es_geoshape
+
+
+def update_cases_owner(domain, case_id_to_owner_id, chunk_size=100):
+    for case_ids in chunked(case_id_to_owner_id.keys(), chunk_size):
+        case_blocks = []
+        for case_id in case_ids:
+            case_blocks.append(
+                CaseBlock(
+                    create=False,
+                    case_id=case_id,
+                    owner_id=case_id_to_owner_id[case_id]
+                ).as_text()
+            )
+        submit_case_blocks(
+            case_blocks=case_blocks,
+            domain=domain,
+            device_id='corehq.apps.geospatial.utils.update_cases_owners'
+        )
