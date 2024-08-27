@@ -59,7 +59,17 @@ hqDefine("cloudcare/js/formplayer/apps/api", [
                 return null;
             }
             var appCollection = Collections(apps);
-            return appCollection.get(id);
+            let fetchedApp = appCollection.get(id);
+            if (!appCollection.get(id)) {
+                for (let currApp of appCollection.models) {
+                    if (currApp.get("copy_of") === id) {
+                        fetchedApp = currApp;
+                        break;
+                    }
+                };
+            }
+
+            return fetchedApp;
         },
     };
 
