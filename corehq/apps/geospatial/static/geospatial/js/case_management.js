@@ -1,6 +1,6 @@
 'use strict';
 
-hqDefine("geospatial/js/geospatial_map", [
+hqDefine("geospatial/js/case_management", [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "knockout",
@@ -275,7 +275,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 // disbursement if this is the case
                 const hasValidData = selectedCases.length && selectedUsers.length;
                 if (!hasValidData) {
-                    const errorMessage = gettext("Please ensure that the filtered area includes both cases" +
+                    const errorMessage = gettext("Please ensure that the filtered area includes both cases " +
                                                  "and mobile workers before attempting to run disbursement.");
                     disbursementRunner.disbursementErrorMessage(errorMessage);
                 } else {
@@ -431,7 +431,7 @@ hqDefine("geospatial/js/geospatial_map", [
     }
 
     function initAssignmentReview() {
-        const $manageAssignmentModal = $("#review-assignments");
+        const $manageAssignmentModal = $("#assignments-results");
         if ($manageAssignmentModal.length) {
             assignmentManagerModel = models.AssignmentManager(mapModel, disbursementRunner);
             $manageAssignmentModal.koApplyBindings(assignmentManagerModel);
