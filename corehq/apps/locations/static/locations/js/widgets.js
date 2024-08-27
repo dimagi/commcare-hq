@@ -14,9 +14,7 @@ hqDefine("locations/js/widgets", [
         _.each($source.select2('data'), function (result) {
             const fullLengthName = result.text || result.name;
             const truncatedName = truncateLocationName(fullLengthName, $select);
-            var $option = new Option(truncatedName, result.id);
-            $option.setAttribute('title', result.tooltip || result.title);
-            $select.append($option);
+            $select.append(new Option(truncatedName, result.id));
         });
     }
 
@@ -98,9 +96,7 @@ hqDefine("locations/js/widgets", [
                 },
             },
             templateResult: function (result) {
-                var $option = new Option(result.text);
-                $option.setAttribute('title', result.tooltip);
-                return $option;
+                return result.text || result.name;
             },
             templateSelection: function (result) {
                 const fullLengthName = result.text || result.name;
@@ -115,9 +111,7 @@ hqDefine("locations/js/widgets", [
                 initial = [initial];
             }
             _.each(initial, function (result) {
-                var $option = new Option(result.text, result.id);
-                $option.setAttribute('title', result.tooltip);
-                $select.append($option);
+                $select.append(new Option(result.text, result.id));
             });
             $select.val(_.pluck(initial, 'id')).trigger('change');
         }
@@ -144,9 +138,7 @@ hqDefine("locations/js/widgets", [
             // This custom event is fired in autocomplete_select_widget.html
             if ($source.hasClass("select2-hidden-accessible")) {
                 updateSelect2($source, $select);
-                var $option = new Option(value.text, value.id);
-                $option.setAttribute('title', value.tooltip);
-                $select.append($option);
+                $select.append(new Option(value.text, value.id));
                 $select.val(value.id).trigger("change");
             } else {
                 $source.on('select-ready', function () {
