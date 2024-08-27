@@ -49,15 +49,15 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
 
             $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                 const app = appCollection.find(function (app) {
-                    const currCopyOf = app.get('copy_of');
+                    const currPrimaryAppId = app.get('copy_of');
                     // Prevents breaking if a web apps session spans pre and post deploy. Can remove post deploy.
                     if (app.id && app.id === params.appId) {
                         return app;
                     }
-                    if (currCopyOf && currCopyOf === params.appId) {
+                    if (currPrimaryAppId && currPrimaryAppId === params.appId) {
                         return app;
                     }
-                    if (currCopyOf && (currCopyOf === params.copyOf)) {
+                    if (currPrimaryAppId && (currPrimaryAppId === params.copyOf)) {
                         return app;
                     }
                 });
