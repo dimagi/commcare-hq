@@ -41,6 +41,7 @@ from corehq.motech.models import RequestLog
 
 from ..const import State, RECORD_CANCELLED_STATE
 from ..models import RepeatRecord
+from ..exceptions import BulkActionMissingParameters
 from .repeat_record_display import RepeatRecordDisplay
 
 
@@ -327,7 +328,10 @@ class RepeatRecordView(View):
     def post(self, request, domain):
         # Retriggers a repeat record
         if _get_flag(request):
-            _schedule_task_with_flag(request, domain, 'resend')
+            try:
+                _schedule_task_with_flag(request, domain, 'resend')
+            except BulkActionMissingParameters:
+                return _missing_parameters_response()
         else:
             _schedule_task_without_flag(request, domain, 'resend')
         return JsonResponse({'success': True})
@@ -338,7 +342,10 @@ class RepeatRecordView(View):
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
     if _get_flag(request) == 'select_pending':
-        _schedule_task_with_flag(request, domain, 'cancel')
+        try:
+            _schedule_task_with_flag(request, domain, 'cancel')
+        except BulkActionMissingParameters:
+            return _missing_parameters_response()
     else:
         _schedule_task_without_flag(request, domain, 'cancel')
 
@@ -350,11 +357,24 @@ def cancel_repeat_record(request, domain):
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
     if _get_flag(request) == 'select_cancelled':
-        _schedule_task_with_flag(request, domain, 'requeue')
+        try:
+            _schedule_task_with_flag(request, domain, 'requeue')
+        except BulkActionMissingParameters:
+            return _missing_parameters_response()
     else:
         _schedule_task_without_flag(request, domain, 'requeue')
 
     return HttpResponse('OK')
+
+
+def _missing_parameters_response():
+    return JsonResponse(
+        {
+            "failure_reason": _(
+                "Please filter to a specific repeater or payload before attempting a bulk action."
+            )
+        }
+    )
 
 
 def _get_record_ids_from_request(request):
@@ -374,7 +394,8 @@ def _schedule_task_with_flag(
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
     payload_id = request.POST.get('payload_id', None)
     repeater_id = request.POST.get('repeater_id', None)
-    #TODO: validate that at least a repeater id or payload id is specified before scheduling task
+    if not any([repeater_id, payload_id]):
+        raise BulkActionMissingParameters
     task = task_generate_ids_and_operate_on_payloads.delay(
         payload_id, repeater_id, domain, action)
     task_ref.set_task(task)
