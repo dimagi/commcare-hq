@@ -240,8 +240,10 @@ class TestToManyDictField(TestCase):
         }
 
         source_objs = [
-            ToManyDictSourceModel(other_model_ids={ 'first_other': 'foo', 'second_other': 'bar'}, other_model_dict=dest_objs),
-            ToManyDictSourceModel(other_model_ids={ 'first_other': 'bar', 'second_other': 'baz'}, other_model_dict=dest_objs)
+            ToManyDictSourceModel(other_model_ids={'first_other': 'foo', 'second_other': 'bar'},
+                                  other_model_dict=dest_objs),
+            ToManyDictSourceModel(other_model_ids={'first_other': 'bar', 'second_other': 'baz'},
+                                  other_model_dict=dest_objs)
         ]
 
         source_resource = ToManyDictSourceResource(source_objs)
@@ -733,14 +735,16 @@ class TestApiThrottle(APIResourceTest):
         with patch('corehq.apps.api.resources.meta.HQThrottle.should_be_throttled') as hq_should_be_throttled:
 
             self.client.get(self.endpoint)
-            hq_should_be_throttled.assert_called_with(ApiIdentifier(domain=self.domain.name, username=self.user.username))
+            hq_should_be_throttled.assert_called_with(
+                ApiIdentifier(domain=self.domain.name, username=self.user.username))
 
             with patch('corehq.apps.api.resources.meta.API_THROTTLE_WHITELIST.enabled') as toggle_patch:
                 toggle_patch.return_value = True
 
                 self.client.get(self.endpoint)
 
-                hq_should_be_throttled.assert_called_with(ApiIdentifier(domain=self.domain.name, username=self.user.username))
+                hq_should_be_throttled.assert_called_with(
+                    ApiIdentifier(domain=self.domain.name, username=self.user.username))
 
 
 class TestUrls(APIResourceTest):

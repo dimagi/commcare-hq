@@ -9,10 +9,7 @@ from tastypie.resources import ModelResource
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.resources import HqBaseResource
-from corehq.apps.api.resources.auth import (
-    DomainAdminAuthentication,
-    RequirePermissionAuthentication,
-)
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import absolute_reverse
 

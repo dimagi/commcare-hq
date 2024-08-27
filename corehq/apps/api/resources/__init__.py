@@ -2,7 +2,7 @@ import json
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
-from django.urls import NoReverseMatch, include, path, re_path
+from django.urls import NoReverseMatch, include, re_path
 
 from tastypie import http
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, InvalidSortError
@@ -117,8 +117,10 @@ class ApiVersioningMixin:
         return self.prepend_urls() + [
             re_path(r"^$", self.wrap_view('dispatch_list'), name="api_dispatch_list"),
             re_path(r"^schema/$", self.wrap_view('get_schema'), name="api_get_schema"),
-            re_path(r"^set/(?P<%s_list>.*?)/$" % (self._meta.detail_uri_name), self.wrap_view('get_multiple'), name="api_get_multiple"),
-            re_path(r"^(?P<%s>.*?)/$" % (self._meta.detail_uri_name), self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            re_path(r"^set/(?P<%s_list>.*?)/$" % (self._meta.detail_uri_name),
+                    self.wrap_view('get_multiple'), name="api_get_multiple"),
+            re_path(r"^(?P<%s>.*?)/$" % (self._meta.detail_uri_name),
+                    self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
 
 
