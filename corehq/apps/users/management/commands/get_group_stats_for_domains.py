@@ -17,7 +17,7 @@ class Command(BaseCommand):
         self.stdout.write("User ID\tNum Groups\tNum Devices\tNum Users in Group\tIs Unique")
         for group in Group.by_domain(domain):
             num_users_in_group = len(group.users)
-            if num_users_in_group > 5:
+            if num_users_in_group > 2:
                 # likely test users
                 continue
             if num_users_in_group not in group_lengths_users_groups:
