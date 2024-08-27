@@ -12,18 +12,30 @@ class Command(BaseCommand):
 
     def handle(self, domain, **options):
         # figure out how many unique devices each user has signed into and number of groups
-        user_to_group = {}
-        self.stdout.write("User ID\tNum Groups\tNum Devices")
+        group_lengths_users_groups = {}
+        self.stdout.write("User ID\tNum Groups\tNum Devices\tNum Users in Group\tIs Unique")
         for group in Group.by_domain(domain):
+            num_users_in_group = len(group.users)
+            if num_users_in_group > 10:
+                # likely test users
+                continue
+            if num_users_in_group not in group_lengths_users_groups:
+                group_lengths_users_groups[num_users_in_group] = {}
+
             if group.case_sharing and group.users:
                 for user_id in group.users:
-                    if user_id not in user_to_group:
-                        user_to_group[user_id] = 1
-                    else:
-                        user_to_group[user_id] += 1
-        for user_id, num_groups in user_to_group.items():
-            if num_groups > 1:
-                cc_user = CommCareUser.get_by_user_id(user_id)
-                num_devices = len(cc_user.devices)
-                if num_devices > 2 and cc_user.is_active:
-                    self.stdout.write(f"{user_id}\t{num_groups}\t{num_devices}")
+                    if user_id not in group_lengths_users_groups[num_users_in_group]:
+                        group_lengths_users_groups[num_users_in_group][user_id] = 0
+
+                    group_lengths_users_groups[num_users_in_group][user_id] += 1
+        unique_user_ids = []
+        for num_users_in_group, user_to_group in group_lengths_users_groups.items():
+            for user_id, num_groups in user_to_group.items():
+                is_unique = "YES" if user_id not in unique_user_ids else "NO"
+                unique_user_ids.append(user_id)
+                if num_groups > 1:
+                    cc_user = CommCareUser.get_by_user_id(user_id)
+                    num_devices = len(cc_user.devices)
+                    if num_devices > 2 and cc_user.is_active:
+                        self.stdout.write(f"{user_id}\t{num_groups}\t{num_devices}"
+                                          f"\t{num_users_in_group}\t{is_unique}")
