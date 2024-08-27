@@ -708,7 +708,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
 
     @flag_enabled('GEOSPATIAL')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.MAX_REASSIGNMENT_REQUEST_CASES', 1)
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.REQUEST_CASES_LIMIT', 1)
     def test_cases_reassignment_cases_limit_error(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -738,7 +738,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(response.content.decode("utf-8"), "POST Body must be a valid json")
 
     @flag_enabled('GEOSPATIAL')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.SYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.process_as_async')
     def test_cases_reassignment_async_invocation(self, mocked_process_as_async):
         mocked_process_as_async.return_value = JsonResponse({})
@@ -758,7 +758,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         mocked_process_as_async.assert_called_once()
 
     @flag_enabled('GEOSPATIAL')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.SYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
     @patch('corehq.apps.geospatial.views.CeleryTaskExistenceHelper.is_active', return_value=False)
     def test_cases_reassignment_async(self, *args):
         case_id_to_owner_id = {
@@ -780,7 +780,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
 
     @flag_enabled('GEOSPATIAL')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.SYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
     @patch('corehq.apps.geospatial.views.CeleryTaskExistenceHelper.is_active', return_value=True)
     def test_cases_reassignment_async_task_invoked_and_not_completed(self, *args):
         case_id_to_owner_id = {
@@ -800,7 +800,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode("utf-8"),
-            "A case reassignment task is currently in progress. Please try again after some time"
+            "Case reassignment is currently in progress. Please try again later."
         )
 
     @flag_enabled('GEOSPATIAL')
@@ -823,6 +823,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode("utf-8"),
-            ("Max limit for cases to be reassigned including related cases exceeded."
-             " Please select a lower value to update at time or reach out to support")
+            ("Case reassignment limit exceeded. Please select fewer cases to update"
+             " or consider deselecting 'include related cases'."
+             " Reach out to support for if you still need assistance.")
         )

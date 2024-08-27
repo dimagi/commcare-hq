@@ -445,8 +445,8 @@ def get_users_with_gps(request, domain):
 @method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
-    MAX_REASSIGNMENT_REQUEST_CASES = 100
-    SYNC_CASES_UPDATE_THRESHOLD = 1000
+    REQUEST_CASES_LIMIT = 100
+    ASYNC_CASES_UPDATE_THRESHOLD = 1000
     ASYNC_CASES_LIMIT = 5000
 
     def post(self, request, domain, *args, **kwargs):
@@ -459,10 +459,10 @@ class CasesReassignmentView(BaseDomainView):
 
         case_id_to_owner_id = request_data.get('case_id_to_owner_id', {})
         include_related_cases = request_data.get('include_related_cases')
-        if len(case_id_to_owner_id) > self.MAX_REASSIGNMENT_REQUEST_CASES:
+        if len(case_id_to_owner_id) > self.REQUEST_CASES_LIMIT:
             return HttpResponseBadRequest(
                 _("Maximum number of cases that can be reassigned is {limit}").format(
-                    limit=self.MAX_REASSIGNMENT_REQUEST_CASES
+                    limit=self.REQUEST_CASES_LIMIT
                 )
             )
 
@@ -479,11 +479,12 @@ class CasesReassignmentView(BaseDomainView):
 
         if len(case_id_to_owner_id) > self.ASYNC_CASES_LIMIT:
             return HttpResponseBadRequest(
-                _("Max limit for cases to be reassigned including related cases exceeded."
-                  " Please select a lower value to update at time or reach out to support")
+                _("Case reassignment limit exceeded. Please select fewer cases to update or"
+                  " consider deselecting 'include related cases'."
+                  " Reach out to support for if you still need assistance.")
             )
 
-        if len(case_id_to_owner_id) <= self.SYNC_CASES_UPDATE_THRESHOLD:
+        if len(case_id_to_owner_id) <= self.ASYNC_CASES_UPDATE_THRESHOLD:
             update_cases_owner(domain, case_id_to_owner_id)
             return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
         else:
@@ -495,7 +496,7 @@ class CasesReassignmentView(BaseDomainView):
 
         if task_existence_helper.is_active():
             return HttpResponseBadRequest(
-                _('A case reassignment task is currently in progress. Please try again after some time')
+                _('Case reassignment is currently in progress. Please try again later.')
             )
 
         geo_cases_reassignment_update_owners.delay(self.domain, case_id_to_owner_id, task_key)
