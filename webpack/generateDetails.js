@@ -1,10 +1,36 @@
-'use strict';
+/* eslint-env node */
+/* eslint-disable no-useless-escape */
+// NOTE: double escapes are needed for file path delimiters in webpack regexes for cross-platform support
 
 const fs = require('fs');
 const path = require('path');
 const appPaths = require('./appPaths');
 
 const scanTemplates = function (dir, entryRegex, allAppPaths, details, isProdMode) {
+    /**
+     * This recursively scans all template files within a given directory, looking
+     * for a metch to the `entryRegex` specified above. The first group this entry regex
+     * (`match[1]`) should return the webpack entry name, eg `hqwebapp/js/some_page`.
+     *
+     * As they are discovered, entries are appended to the `details.entries` dictionary.
+     * Additionally, `details.aliases` is updated when an app alias is first found,
+     * eg `hqwebapp/js` (the first two folders in the entry name).
+     * Lastly, the (unique) application name is added to `details.appsWithEntries`
+     *
+     * @param dir - path to directory to begin scanning
+     * @param entryRegex -  regex for identifying an entry in an .html page (see examples below)
+     * @param allAppPaths (dict) - keys are all the applications being scanned
+     *                             and values are paths to each application's folder
+     * @param details (dict) - the dictionary that will be modified by this function, formatted as follows:
+     *                          {
+     *                              entries: {},
+     *                              aliases: {},
+     *                              appsWithEntries: [],
+     *                          }
+     * @param isProdMode (boolean) - `true` if this should be run in production mode, the difference
+     *                          being that entry filenames end in `.[contenthash].js`, which is necessary for
+     *                          cache busting on production.
+     */
     const files = fs.readdirSync(dir);
 
     files.forEach((file) => {
@@ -48,6 +74,19 @@ const scanTemplates = function (dir, entryRegex, allAppPaths, details, isProdMod
 };
 
 const getDetails = function (entryRegex, allAppPaths, isProdMode) {
+    /**
+     * Generates the details for a given `entryRegex`.
+     *
+     * @param entryRegex - regex for identifying an entry in an .html page (see examples below)
+     * @param allAppPaths (dict) - keys are all the applications being scanned for entries (all applications that
+     *                             have `template` folders). The values are paths to each application's root folder.
+     *                             eg. `"hqwebapp": "/path/to/corehq/apps/hqwebapp"`
+     * @param isProdMode (boolean) - `true` if this should be run in production mode, the difference
+     *                          being that entry filenames end in `.[contenthash].js`, which is necessary for
+     *                          cache busting on production.
+     *
+     * @type {{entries: {}, aliases: {}, appsWithEntries: []}}
+     */
     const details = {
         entries: {},
         aliases: {},
@@ -67,22 +106,30 @@ const getDetails = function (entryRegex, allAppPaths, isProdMode) {
 
 // When run from the command line:
 if (require.main === module) {
+
+    if (!fs.existsSync(appPaths.BUILD_ARTIFACTS_DIR)) {
+        fs.mkdirSync(appPaths.BUILD_ARTIFACTS_DIR);
+    }
+
     const isProductionMode = process.argv.includes('--prod');
     const allAppPaths = appPaths.getAllAppPaths();
 
-    // guarantee that these aliases are always generated
-    const aliases = {
-        'analytix/js': path.join(allAppPaths.analytix, 'static/analytix/js'),
-        'hqwebapp/js': path.join(allAppPaths.hqwebapp, 'static/hqwebapp/js'),
-        'notifications/js': path.join(allAppPaths.notifications, 'static/notifications/js'),
-    };
-
-    // guarantee that these apps are always included
-    const appsWithEntries = [
+    // Always build with these applications even if there are no webpack entries found within
+    // the application templates.
+    // Applications are often listed here if there are entries from other apps referencing modules in
+    // these apps, but there are no existing webpack entries from these apps (yet).
+    const alwaysIncludeApps = [
         "analytix",
         "hqwebapp",
         "notifications",
     ];
+    const aliases = {};
+    const appsWithEntries = [];
+    alwaysIncludeApps.forEach((appName) => {
+        let appDir = `${appName}/js`;
+        aliases[appDir] = path.join(allAppPaths[appName], `static/${appDir}`);
+        appsWithEntries.push(appName);
+    });
 
     // This splits the builds into bootstrap 5 and bootstrap 3 versions
     const defaultDetails = getDetails(
@@ -97,7 +144,7 @@ if (require.main === module) {
     );
 
     fs.writeFileSync(
-        path.resolve(__dirname, 'details.json'),
+        path.join(appPaths.BUILD_ARTIFACTS_DIR, 'details.json'),
         JSON.stringify({
             entries: defaultDetails.entries,
             b3Entries: b3Details.entries,
