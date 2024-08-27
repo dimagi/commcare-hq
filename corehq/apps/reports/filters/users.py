@@ -284,8 +284,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def selected(self):
         selected_ids = self.request.GET.getlist(self.slug)
         if not selected_ids:
-            return [{'id': url_id, 'text': text}
-                    for url_id, text in self.get_default_selections()]
+            return [{'id': selection_tuple[0], 'text': selection_tuple[1]}
+                    for selection_tuple in self.get_default_selections()]
 
         selected = (self.selected_static_options(selected_ids)
                     + self._selected_user_entries(selected_ids)
