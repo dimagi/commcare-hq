@@ -10,6 +10,13 @@ class Command(BaseCommand):
         parser.add_argument('domain')
 
     def handle(self, domain, **options):
+        user_to_group = {}
         for group in Group.by_domain(domain):
             if group.case_sharing and group.users:
-                self.stdout.write(f"{group.name}\t{group.get_id}\t{len(group.users)}")
+                for user_id in group.users:
+                    if user_id not in user_to_group:
+                        user_to_group[user_id] = 0
+                    else:
+                        user_to_group[user_id] += 1
+        for user_id, num_groups in user_to_group.items():
+            print(f"{user_id}\t{num_groups}")
