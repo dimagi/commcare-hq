@@ -15,7 +15,7 @@ hqDefine("locations/js/widgets", [
             const fullLengthName = result.text || result.name;
             const truncatedName = truncateLocationName(fullLengthName, $select);
             var $option = new Option(truncatedName, result.id);
-            $option.setAttribute('title', result.tooltip || result.title);
+            $option.setAttribute('title', result.title);
             $select.append($option);
         });
     }
@@ -98,9 +98,7 @@ hqDefine("locations/js/widgets", [
                 },
             },
             templateResult: function (result) {
-                var $option = new Option(result.text);
-                $option.setAttribute('title', result.tooltip);
-                return $option;
+                return result.text || result.name;
             },
             templateSelection: function (result) {
                 const fullLengthName = result.text || result.name;
@@ -116,7 +114,7 @@ hqDefine("locations/js/widgets", [
             }
             _.each(initial, function (result) {
                 var $option = new Option(result.text, result.id);
-                $option.setAttribute('title', result.tooltip);
+                $option.setAttribute('title', result.title);
                 $select.append($option);
             });
             $select.val(_.pluck(initial, 'id')).trigger('change');
@@ -145,7 +143,7 @@ hqDefine("locations/js/widgets", [
             if ($source.hasClass("select2-hidden-accessible")) {
                 updateSelect2($source, $select);
                 var $option = new Option(value.text, value.id);
-                $option.setAttribute('title', value.tooltip);
+                $option.setAttribute('title', value.title);
                 $select.append($option);
                 $select.val(value.id).trigger("change");
             } else {
