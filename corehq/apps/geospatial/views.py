@@ -499,7 +499,7 @@ class CasesReassignmentView(BaseDomainView):
         return JsonResponse(
             {
                 'success': True,
-                'message': _('Cases reassignment request is accepted and will be completed in some time')
+                'message': _('Case reassignment request has been accepted and will be completed in some time')
             }
         )
 

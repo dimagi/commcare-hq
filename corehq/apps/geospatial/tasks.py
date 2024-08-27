@@ -11,7 +11,7 @@ def geo_cases_reassignment_update_owners(domain, case_id_to_owner_id):
 
 
 def is_task_invoked_and_not_completed(task_id):
-    """Returns True is a task is invoked and is executing or waiting to be executed.
+    """Returns True if a task is invoked and is executing or waiting to be executed.
     NOTE: Only works for tasks that store results i.e. ignore_result must be False.
     NOTE: Celery states.PENDING is a bit ambiguous as it could mean two things one, task was never invoked and two
     task was invoked but still waiting to picked up.
