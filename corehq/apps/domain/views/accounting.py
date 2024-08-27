@@ -971,6 +971,17 @@ class SelectPlanView(DomainAccountingSettings):
     edition = None
     lead_text = gettext_lazy("Please select a plan below that fits your organization's needs.")
 
+    def dispatch(self, request, *args, **kwargs):
+        if not self.can_change_subscription:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def can_change_subscription(self):
+        subscription = self.current_subscription
+        is_annual_plan = subscription.plan_version.plan.is_annual_plan
+        return not is_annual_plan
+
     @property
     @memoized
     def can_domain_unpause(self):
