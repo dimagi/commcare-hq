@@ -199,7 +199,7 @@ class EmwfOptionsController(object):
         results = [
             {'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
             {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} if len(entry) == 3 else
-            {'id': entry[0], 'text': entry[1], 'is_active': entry[2], 'tooltip': entry[3]} for entry
+            {'id': entry[0], 'text': entry[1], 'is_active': entry[2], 'title': entry[3]} for entry
             in options
         ]
 

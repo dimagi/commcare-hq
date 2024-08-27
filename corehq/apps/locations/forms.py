@@ -68,7 +68,7 @@ class LocationSelectWidget(forms.Widget):
         initial_data = [{
             'id': loc.location_id,
             'text': loc.display_name if use_location_display_name else loc.get_path_display(),
-            'tooltip': loc.get_path_display() if use_location_display_name else loc.display_name,
+            'title': loc.get_path_display() if use_location_display_name else loc.display_name,
         } for loc in locations]
 
         return get_template(self.template).render({
