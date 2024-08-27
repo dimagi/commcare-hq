@@ -10,7 +10,7 @@ hqDefine('case_importer/js/excel_fields', [
     _,
     levenshtein
 ) {
-    function excelFieldRows(excelFields, caseFieldSpecs) {
+    function excelFieldRows(excelFields, caseFieldSpecs, systemFields) {
         var self = {
             excelFields: excelFields,
             caseFieldSpecs: caseFieldSpecs,
@@ -65,7 +65,7 @@ hqDefine('case_importer/js/excel_fields', [
             });
             row.createNewChecked = ko.computed({
                 read: function () {
-                    return _.isEmpty(row.caseFieldSpec());
+                    return row.isCustom();
                 },
                 write: row.isCustom,
             });
@@ -81,7 +81,8 @@ hqDefine('case_importer/js/excel_fields', [
                     row.isCustom(false);
                     row.selectedCaseField(field);
                 } else {
-                    row.isCustom(true);
+                    var spec = _(caseFieldSpecs).findWhere({field});
+                    row.isCustom(_.isEmpty(spec) && !_(systemFields).contains(field));
                     row.selectedCaseField(null);
                 }
             };
