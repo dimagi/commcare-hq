@@ -66,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/apps/api", [
                         fetchedApp = currApp;
                         break;
                     }
-                };
+                }
             }
 
             return fetchedApp;
