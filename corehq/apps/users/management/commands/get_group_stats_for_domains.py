@@ -13,6 +13,7 @@ class Command(BaseCommand):
     def handle(self, domain, **options):
         # figure out how many unique devices each user has signed into and number of groups
         group_lengths_users_groups = {}
+        all_user_ids = []
         self.stdout.write("User ID\tNum Groups\tNum Devices\tNum Users in Group\tIs Unique")
         for group in Group.by_domain(domain):
             num_users_in_group = len(group.users)
@@ -28,11 +29,10 @@ class Command(BaseCommand):
                         group_lengths_users_groups[num_users_in_group][user_id] = 0
 
                     group_lengths_users_groups[num_users_in_group][user_id] += 1
-        unique_user_ids = []
+                    all_user_ids.append(user_id)
         for num_users_in_group, user_to_group in group_lengths_users_groups.items():
             for user_id, num_groups in user_to_group.items():
-                is_unique = "YES" if user_id not in unique_user_ids else "NO"
-                unique_user_ids.append(user_id)
+                is_unique = "YES" if all_user_ids.count(user_id) == 1 else "NO"
                 if num_groups > 1:
                     cc_user = CommCareUser.get_by_user_id(user_id)
                     num_devices = len(cc_user.devices)
