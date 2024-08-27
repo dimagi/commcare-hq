@@ -32,7 +32,7 @@ class TestTasks(TestCase):
 
         mock_get_repeat_record_ids.assert_called_once()
         mock_get_repeat_record_ids.assert_called_with(
-            'test_domain', repeater_id='deadbeef', payload_id='c0ffee')
+            'test_domain', repeater_id='deadbeef', state=None, payload_id='c0ffee')
 
         mock_operate_on_payloads.assert_called_once()
         mock_operate_on_payloads.assert_called_with(

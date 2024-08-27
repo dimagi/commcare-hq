@@ -386,6 +386,15 @@ def _get_flag(request: HttpRequest) -> str:
     return request.POST.get('flag') or ''
 
 
+def _get_state_from_request(request):
+    flag = _get_flag(request)
+    return {
+        'select_all': None,
+        'select_pending': State.Pending,
+        'select_cancelled': State.Cancelled,
+    }[flag]
+
+
 def _schedule_task_with_flag(
     request: HttpRequest,
     domain: str,
@@ -396,8 +405,9 @@ def _schedule_task_with_flag(
     repeater_id = request.POST.get('repeater_id', None)
     if not any([repeater_id, payload_id]):
         raise BulkActionMissingParameters
+    state = _get_state_from_request(request)
     task = task_generate_ids_and_operate_on_payloads.delay(
-        payload_id, repeater_id, domain, action)
+        payload_id, repeater_id, domain, action, state=state)
     task_ref.set_task(task)
 
 

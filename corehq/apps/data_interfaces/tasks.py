@@ -213,9 +213,10 @@ def task_generate_ids_and_operate_on_payloads(
     repeater_id: Optional[str],
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    state=None,
 ) -> dict:
     repeat_record_ids = RepeatRecord.objects.get_repeat_record_ids(
-        domain, repeater_id=repeater_id, payload_id=payload_id
+        domain, repeater_id=repeater_id, state=state, payload_id=payload_id,
     )
     return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)
