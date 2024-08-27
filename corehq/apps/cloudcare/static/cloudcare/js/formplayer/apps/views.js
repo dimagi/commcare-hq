@@ -29,7 +29,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("app:select", this.model.get('_id'));
+            FormplayerFrontend.trigger("app:select", this.model.get('copy_of'));
         },
 
         rowKeyAction: function (e) {
