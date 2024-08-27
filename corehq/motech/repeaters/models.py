@@ -469,6 +469,25 @@ class Repeater(RepeaterSuperProxy):
         else:
             self.handle_response(response, repeat_record)
 
+    def merge_records(self):
+        """
+        Some subclasses of ``Repeater`` may be able to merge repeat
+        records ready to be sent, e.g. CaseRepeater can merge updates
+        to the same case, and DataSourceRepeater can merge updates to
+        the same data source. ``merge_records()`` does the following:
+
+        * Selects payloads for merging
+        * Registers a new repeat record for each group of payloads
+        * Cancels the merged repeat records
+
+        New repeat records store a list of payload IDs in their
+        ``payload_id`` field.
+
+        ``Repeater.payload_doc()`` returns the merged payloads based on
+        the IDs in new repeat record's ``payload_id`` field.
+        """
+        pass
+
     @memoized
     def get_payload(self, repeat_record):
         return self.generator.get_payload(repeat_record, self.payload_doc(repeat_record))

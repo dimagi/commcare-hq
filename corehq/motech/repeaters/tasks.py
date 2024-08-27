@@ -332,6 +332,7 @@ def process_repeater(domain, repeater_id, lock_token):
         return task_.s(repeat_record.id, repeat_record.domain)
 
     repeater = Repeater.objects.get(domain=domain, id=repeater_id)
+    repeater.merge_records()
     repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
     header_tasks = [get_task_signature(rr) for rr in repeat_records]
     chord(header_tasks)(update_repeater.s(repeater_id, lock_token))
