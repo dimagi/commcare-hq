@@ -260,7 +260,7 @@ def test_flag_extended_changed_javascript_plugins_bootstrap5():
 def test_file_contains_reference_to_path():
     filedata = """
     {# Our Libraries #}
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'foobarapp/js/bugz.js' %}"></script>
         <script src="{% static 'foobarapp/js/privileges.js' %}"></script>
@@ -274,7 +274,7 @@ def test_file_contains_reference_to_path():
 def test_file_does_not_contain_reference_to_path():
     filedata = """
     {# Our Libraries #}
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'foobarapp/js/bugz_two.js' %}"></script>
         <script src="{% static 'foobarapp/js/privileges.js' %}"></script>
@@ -309,7 +309,7 @@ def test_javascript_file_does_not_contain_reference_to_path():
 def test_replace_path_references():
     filedata = """
     {# Our Libraries #}
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'foobarapp/js/bugz.js' %}"></script>
         <script src="{% static 'foobarapp/js/privileges.js' %}"></script>
@@ -321,7 +321,7 @@ def test_replace_path_references():
     result = replace_path_references(filedata, "foobarapp/js/bugz.js", "foobarapp/js/bootstrap3/bugz.js")
     expected_result = """
     {# Our Libraries #}
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'foobarapp/js/bootstrap3/bugz.js' %}"></script>
         <script src="{% static 'foobarapp/js/privileges.js' %}"></script>
