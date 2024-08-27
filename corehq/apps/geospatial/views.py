@@ -479,8 +479,9 @@ class CasesReassignmentView(BaseDomainView):
 
         if len(case_id_to_owner_id) > self.ASYNC_CASES_LIMIT:
             return HttpResponseBadRequest(
-                _("Max limit for cases to be reassigned including related cases exceeded."
-                  " Please select a lower value to update at time or reach out to support")
+                _("Maximum limit for cases to be reassigned including related cases exceeded."
+                  " Please select a lower value to update at time or consider deselecting 'include related cases'."
+                  " Reach out to support if the issue still persists.")
             )
 
         if len(case_id_to_owner_id) <= self.SYNC_CASES_UPDATE_THRESHOLD:

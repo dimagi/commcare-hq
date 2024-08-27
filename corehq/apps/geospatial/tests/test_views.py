@@ -823,6 +823,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode("utf-8"),
-            ("Max limit for cases to be reassigned including related cases exceeded."
-             " Please select a lower value to update at time or reach out to support")
+            ("Maximum limit for cases to be reassigned including related cases exceeded."
+             " Please select a lower value to update at time or consider deselecting 'include related cases'."
+             " Reach out to support if the issue still persists.")
         )
