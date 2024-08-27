@@ -15,7 +15,7 @@ class Command(BaseCommand):
             if group.case_sharing and group.users:
                 for user_id in group.users:
                     if user_id not in user_to_group:
-                        user_to_group[user_id] = 0
+                        user_to_group[user_id] = 1
                     else:
                         user_to_group[user_id] += 1
         for user_id, num_groups in user_to_group.items():
