@@ -76,19 +76,14 @@ hqDefine("locations/js/widgets", [
                 },
                 processResults: function (data, params) {
                     var more = (params.page || 1) * 10 < data.total;
-                    var selectedLocations = $select[0].selectedOptions;
+                    let selectedLocations = Array.from($select[0].selectedOptions);
                     if (selectedLocations.length > 0) {
-                        var locIds = [];
-                        for (var i in selectedLocations) {
-                            if (selectedLocations[i].value) {
-                                locIds.push(selectedLocations[i].value);
+                        let locIds = selectedLocations.map(option => option.value);
+                        data.results.forEach(result => {
+                            if (locIds.includes(result.id)) {
+                                result.disabled = true;
                             }
-                        }
-                        for (var j in data.results) {
-                            if (locIds.indexOf(data.results[j].id) > -1) {
-                                data.results[j].disabled = "disabled";
-                            }
-                        }
+                        });
                     }
                     return {
                         results: data.results,
