@@ -10,7 +10,7 @@ hqDefine('case_importer/js/excel_fields', [
     _,
     levenshtein
 ) {
-    function excelFieldRows(excelFields, caseFieldSpecs) {
+    function excelFieldRows(excelFields, caseFieldSpecs, systemFields) {
         var self = {
             excelFields: excelFields,
             caseFieldSpecs: caseFieldSpecs,
@@ -30,6 +30,30 @@ hqDefine('case_importer/js/excel_fields', [
                 customCaseField: ko.observable(excelField),
                 isCustom: ko.observable(false),
             };
+            row.hasValue = ko.computed(function () {
+                return row.isCustom() || row.selectedCaseField();
+            });
+            row.excelFieldAttrs = ko.computed(function () {
+                var result = {};
+                if (row.hasValue()) {
+                    result.name = 'excel_field[]';
+                }
+                return result;
+            }),
+            row.caseFieldAttrs = ko.computed(function () {
+                var result = {};
+                if (row.hasValue()) {
+                    result.name = 'case_field[]';
+                }
+                return result;
+            }),
+            row.customFieldAttrs = ko.computed(function () {
+                var result = {};
+                if (row.hasValue()) {
+                    result.name = 'custom_field[]';
+                }
+                return result;
+            }),
             row.selectedCaseFieldOrBlank = ko.computed({
                 read: function () {
                     return row.isCustom() ? '' : row.selectedCaseField();
@@ -65,7 +89,7 @@ hqDefine('case_importer/js/excel_fields', [
             });
             row.createNewChecked = ko.computed({
                 read: function () {
-                    return _.isEmpty(row.caseFieldSpec());
+                    return row.isCustom();
                 },
                 write: row.isCustom,
             });
@@ -75,13 +99,14 @@ hqDefine('case_importer/js/excel_fields', [
 
             row.reset = function () {
                 var field = row.excelField();
+                var spec = _(caseFieldSpecs).findWhere({field}) || {};
                 field = field && sanitizeCaseField(field);
                 row.customCaseField(field);
                 if (!field || _(self.caseFieldsInMenu).contains(field)) {
                     row.isCustom(false);
                     row.selectedCaseField(field);
                 } else {
-                    row.isCustom(true);
+                    row.isCustom(_.isEmpty(spec) && !_(systemFields).contains(field));
                     row.selectedCaseField(null);
                 }
             };

@@ -10,7 +10,8 @@
   </td>
 
   <td class="col-md-3">
-    <select class="form-control excel_field" name="excel_field[]" data-bind="
+    <select class="form-control excel_field" data-bind="
+        attr: excelFieldAttrs,
         options: $root.excelFields,
         optionsCaption: '{% trans_html_attr 'Select field from excel' %}',
         value: excelField
@@ -22,15 +23,17 @@
   </td>
 
   <td class="col-md-3">
-    <input type="text" name="custom_field[]"
+    <input type="text"
            class="custom_field form-control"
            placeholder="Enter new property name"
            data-bind="
+        attr: customFieldAttrs,
         visible: isCustom(),
         value: customCaseFieldOrBlank
     "/>
 
-    <select class="form-control case_field" name="case_field[]" data-bind="
+    <select class="form-control case_field" data-bind="
+        attr: caseFieldAttrs,
         visible: !isCustom(),
         options: $root.caseFieldSpecsInMenu,
         optionsCaption: '{% trans_html_attr 'Select property name' %}',
