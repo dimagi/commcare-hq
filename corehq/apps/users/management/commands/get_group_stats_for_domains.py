@@ -26,10 +26,10 @@ class Command(BaseCommand):
             if group.case_sharing and group.users:
                 for user_id in group.users:
                     if user_id not in group_lengths_users_groups[num_users_in_group]:
+                        all_user_ids.append(user_id)
                         group_lengths_users_groups[num_users_in_group][user_id] = 0
 
                     group_lengths_users_groups[num_users_in_group][user_id] += 1
-                    all_user_ids.append(user_id)
         for num_users_in_group, user_to_group in group_lengths_users_groups.items():
             for user_id, num_groups in user_to_group.items():
                 is_unique = "YES" if all_user_ids.count(user_id) == 1 else "NO"
