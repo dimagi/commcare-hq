@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CommCareUser
 
 
 class Command(BaseCommand):
@@ -10,7 +11,9 @@ class Command(BaseCommand):
         parser.add_argument('domain')
 
     def handle(self, domain, **options):
+        # figure out how many unique devices each user has signed into and number of groups
         user_to_group = {}
+        self.stdout.write("User ID\tNum Groups\tNum Devices")
         for group in Group.by_domain(domain):
             if group.case_sharing and group.users:
                 for user_id in group.users:
@@ -19,4 +22,8 @@ class Command(BaseCommand):
                     else:
                         user_to_group[user_id] += 1
         for user_id, num_groups in user_to_group.items():
-            print(f"{user_id}\t{num_groups}")
+            if num_groups > 1:
+                cc_user = CommCareUser.get_by_user_id(user_id)
+                num_devices = len(cc_user.devices)
+                if num_devices > 2:
+                    self.stdout.write(f"{user_id}\t{num_groups}\t{num_devices}")
