@@ -89,6 +89,15 @@ hqDefine("locations/js/widgets", [
                 },
                 processResults: function (data, params) {
                     var more = (params.page || 1) * 10 < data.total;
+                    let selectedLocations = Array.from($select[0].selectedOptions);
+                    if (selectedLocations.length > 0) {
+                        let locIds = selectedLocations.map(option => option.value);
+                        data.results.forEach(result => {
+                            if (locIds.includes(result.id)) {
+                                result.disabled = true;
+                            }
+                        });
+                    }
                     return {
                         results: data.results,
                         pagination: { more: more },
