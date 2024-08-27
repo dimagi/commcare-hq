@@ -25,5 +25,5 @@ class Command(BaseCommand):
             if num_groups > 1:
                 cc_user = CommCareUser.get_by_user_id(user_id)
                 num_devices = len(cc_user.devices)
-                if num_devices > 2:
+                if num_devices > 2 and cc_user.is_active:
                     self.stdout.write(f"{user_id}\t{num_groups}\t{num_devices}")
