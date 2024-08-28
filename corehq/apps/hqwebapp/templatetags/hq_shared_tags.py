@@ -429,8 +429,8 @@ def prelogin_url(urlname):
     Fetches the correct dimagi.com url for a "prelogin" view.
     """
     urlname_to_url = {
-        'go_to_pricing': 'https://dimagi.com/commcare/pricing/',
-        'public_pricing': 'https://dimagi.com/commcare/pricing/',
+        'go_to_pricing': 'https://dimagi.com/commcare-pricing/',
+        'public_pricing': 'https://dimagi.com/commcare-pricing/',
 
     }
     return urlname_to_url.get(urlname, 'https://dimagi.com/commcare/')
@@ -748,7 +748,7 @@ class WebpackMainNode(RequireJSMainNode):
 try:
     from get_webpack_manifest import get_webpack_manifest
     webpack_manifest = get_webpack_manifest()
-    webpack_manifest_b3 = get_webpack_manifest('webpack/manifest_b3.json')
+    webpack_manifest_b3 = get_webpack_manifest('webpack/_build/manifest_b3.json')
 except (ImportError, SyntaxError):
     webpack_manifest = {}
     webpack_manifest_b3 = {}
@@ -765,12 +765,13 @@ def webpack_bundles(entry_name):
         bundles = webpack_manifest_b3.get(entry_name, [])
         webpack_folder = 'webpack_b3'
     if not bundles:
-        warnings.warn(f"\x1b[33;20m"  # yellow color
-                      f"\n\n\nNo webpack manifest entry found for '{entry_name}'"
-                      f"\nPage may have javascript errors!"
-                      f"\nDid you try restarting `yarn dev` and `runserver`?\n\n"
-                      f"\x1b[0m")
-        if bootstrap_version == BOOTSTRAP_3:
+        if not settings.UNIT_TESTING and settings.DEBUG:
+            warnings.warn(f"\x1b[33;20m"  # yellow color
+                          f"\n\n\nNo webpack manifest entry found for '{entry_name}'"
+                          f"\nPage may have javascript errors!"
+                          f"\nDid you try restarting `yarn dev` and `runserver`?\n\n"
+                          f"\x1b[0m")
+        if bootstrap_version == BOOTSTRAP_3 and not settings.UNIT_TESTING and settings.DEBUG:
             warnings.warn("\x1b[33;20m"  # yellow color
                           "Additionally, did you remember to use `webpack_main_b3` "
                           "for this Bootstrap 3 module?\n\n"

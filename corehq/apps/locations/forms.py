@@ -45,14 +45,15 @@ from crispy_forms.utils import flatatt
 
 class LocationSelectWidget(forms.Widget):
     def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None,
-                 include_locations_with_no_users_allowed=True):
+                 for_user_location_selection=False):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
         self.placeholder = placeholder
         url_name = 'location_search'
-        if not include_locations_with_no_users_allowed and toggles.LOCATION_HAS_USERS.enabled(self.domain):
+        if (for_user_location_selection
+                and toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain)):
             url_name = 'location_search_has_users_only'
         self.query_url = reverse(url_name, args=[self.domain])
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'

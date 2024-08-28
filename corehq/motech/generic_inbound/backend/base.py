@@ -26,8 +26,8 @@ class BaseApiBackend:
         It can also be used for basic errors that don't require additional context."""
         raise NotImplementedError
 
-    def __init__(self, api_model, request_data):
-        self.api_model = api_model
+    def __init__(self, configurable_api, request_data):
+        self.configurable_api = configurable_api
         self.request_data = request_data
 
     def run(self):
@@ -37,7 +37,7 @@ class BaseApiBackend:
                 self.request_data.couch_user,
                 self.request_data.user_agent,
                 self.get_context(),
-                self.api_model,
+                self.configurable_api,
             )
             return self.get_success_response(response_json)
         except GenericInboundRequestFiltered:
@@ -60,11 +60,12 @@ class BaseApiBackend:
 
     def get_context(self):
         return get_evaluation_context(
-            self.request_data.restore_user,
-            self.request_data.request_method,
-            self.request_data.query,
-            self.request_data.headers,
-            self._get_body_for_eval_context()
+            domain=self.request_data.domain,
+            restore_user=self.request_data.restore_user,
+            method=self.request_data.request_method,
+            query=self.request_data.query,
+            headers=self.request_data.headers,
+            body=self._get_body_for_eval_context()
         )
 
     def get_success_response(self, response_json):
@@ -90,11 +91,12 @@ class BaseApiBackend:
         raise NotImplementedError
 
 
-def _execute_generic_api(domain, couch_user, device_id, context, api_model):
-    _apply_api_filter(api_model, context)
-    _validate_api_request(api_model, context)
+def _execute_generic_api(domain, couch_user, device_id, context, configurable_api):
+    # context is all data returned in structure corehq.motech.generic_inbound.utils.get_evaluation_context
+    _apply_api_filter(configurable_api, context)
+    _validate_api_request(configurable_api, context)
 
-    data = api_model.parsed_expression(context.root_doc, context)
+    data = configurable_api.parsed_expression(context.root_doc, context)
 
     if not isinstance(data, list):
         # the bulk API always requires a list
@@ -122,6 +124,7 @@ def _apply_api_filter(api, eval_context):
     if not api_filter:
         return False
 
+    # root_doc here is the all data available as in corehq.motech.generic_inbound.utils.get_evaluation_context
     if not api_filter(eval_context.root_doc, eval_context):
         raise GenericInboundRequestFiltered()
 
