@@ -257,8 +257,6 @@ def iter_ready_repeater_ids_forever():
     while True:
         yielded = False
         for domain, repeater_id in iter_ready_repeater_ids_once():
-            if not toggles.PROCESS_REPEATERS.enabled(domain, toggles.NAMESPACE_DOMAIN):
-                continue
             if not domain_can_forward_now(domain):
                 continue
             if rate_limit_repeater(domain, repeater_id):
@@ -298,7 +296,7 @@ def iter_ready_repeater_ids_once():
         else:
             yield rep_id
 
-    repeater_ids_by_domain = Repeater.objects.get_all_ready_ids_by_domain()
+    repeater_ids_by_domain = get_repeater_ids_by_domain()
     while True:
         if not repeater_ids_by_domain:
             return
@@ -319,6 +317,16 @@ def get_repeater_lock(repeater_id):
     three_hours = 3 * 60 * 60
     lock = Lock(redis, name, timeout=three_hours)
     return MeteredLock(lock, name)
+
+
+def get_repeater_ids_by_domain():
+    repeater_ids_by_domain = Repeater.objects.get_all_ready_ids_by_domain()
+    enabled_domains = set(toggles.PROCESS_REPEATERS.get_enabled_domains())
+    return {
+        domain: repeater_ids
+        for domain, repeater_ids in repeater_ids_by_domain.items()
+        if domain in enabled_domains
+    }
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -384,7 +392,7 @@ def is_repeat_record_ready(repeat_record):
     # being processed
     return (
         not repeat_record.repeater.is_paused
-        and not toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain)
+        and domain_can_forward_now(repeat_record.domain)
         and not rate_limit_repeater(
             repeat_record.domain,
             repeat_record.repeater.repeater_id
