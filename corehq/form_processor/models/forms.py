@@ -653,7 +653,10 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def device_id(self):
-        return self.metadata and self.metadata.deviceID
+        try:
+            return self.metadata and self.metadata.deviceID
+        except MissingFormXml:
+            pass
 
     @memoized
     def get_sync_token(self):
