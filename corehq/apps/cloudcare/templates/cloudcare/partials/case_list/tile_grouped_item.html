@@ -8,7 +8,7 @@
   <div class="group-data collapsible-tile-content">
     <div class="<%- prefix %>-cell-grid-style">
       <% for (let [index, datum] of Object.entries(indexedHeaderData)) { %>
-        <div class="<%- prefix %>-grid-style-<%- index %> box" >
+        <div class="<%- prefix %>-grid-style-<%- index %> box p-3" >
           <% if (styles[index].displayFormat === 'ClickableIcon') {
           if(resolveUri(datum)) { %>
             <button class="clickable-icon">
@@ -29,12 +29,12 @@
       <% }; %>
     </div>
 
-    <div class="group-rows">
+    <div class="group-rows gap-0">
       <% _.each(indexedRowDataList, function(indexedRowData) { %>
         <div class="<%- prefix %>-cell-grid-style group-row">
           <% for (let index in indexedRowData) { %>
             <% let datum = indexedRowData[index]; %>
-            <div class="<%- prefix %>-grid-style-<%- index %> box">
+            <div class="<%- prefix %>-grid-style-<%- index %> box p-3">
               <% if (styles[index].displayFormat === 'Image') {
                 if(resolveUri(datum)) { %>
                   <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
