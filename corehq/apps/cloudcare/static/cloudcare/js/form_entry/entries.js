@@ -934,7 +934,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         self.uploadFile = function () {
             document.getElementById(self.entryId).click();
         };
-        self.fileNameDisplay = ko.observable(constants.NO_FILE_SELECTED);
+        self.fileNameDisplay = ko.observable(gettext("No file selected."));
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
@@ -1013,7 +1013,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         self.question.error(null);
         self.question.onClear();
         self.broadcastMessages(self.question, constants.NO_ANSWER);
-        self.fileNameDisplay(constants.NO_FILE_SELECTED);
+        self.fileNameDisplay(gettext("No file selected."));
     };
 
     /**
