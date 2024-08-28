@@ -419,12 +419,7 @@ class CreateNewCustomCaseExportView(BaseExportView):
         ):
             messages.error(
                 request,
-                _(
-                    "Case type '%(case_type)' does not exist for this project."
-                ) % {
-                    'case_type': case_type,
-                    'domain': self.domain
-                }
+                _("Case type '{case_type}' does not exist for this project.").format(case_type=case_type)
             )
             url = self.export_home_url
             return HttpResponseRedirect(url)
