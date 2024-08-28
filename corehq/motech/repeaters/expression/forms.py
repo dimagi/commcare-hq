@@ -18,9 +18,34 @@ class CaseExpressionRepeaterForm(GenericRepeaterForm):
         help_text=_("Items to add to the end of the URL. Please see the documentation for more information.")
     )
 
+    update_case_filter_expression = JsonField(
+        expected_type=dict, required=False,
+        label=_("Response case update filter expression"),
+        help_text=_(
+            "Use this to determine if the response should create or update a case. "
+            "If left blank, the response will be ignored. "
+            'For more info see <a target="_blank" href="'
+            'https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146602964/Configurable+Repeaters'
+            '">these docs</a>'
+        )
+    )
+    update_case_expression = JsonField(
+        expected_type=dict, required=False,
+        label=_("Response case update expression"),
+        help_text=_(
+            "Use this to create a Case API payload which will be used to create or update a case. "
+            'For more info see <a target="_blank" href="'
+            'https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146602964/Configurable+Repeaters'
+            '">these docs</a>'
+        )
+    )
+
     def get_ordered_crispy_form_fields(self):
         fields = super().get_ordered_crispy_form_fields()
-        return fields + ['url_template', 'configured_filter', 'configured_expression']
+        return fields + [
+            'url_template', 'configured_filter', 'configured_expression',
+            'update_case_filter_expression', 'update_case_expression'
+        ]
 
     def clean_configured_expression(self):
         try:

@@ -1,17 +1,21 @@
-from django.utils.translation import gettext_lazy as _
+from json import JSONDecodeError
 
+from django.utils.translation import gettext_lazy as _
 from memoized import memoized
 
+from corehq.apps.hqcase.api.updates import handle_case_update
+from corehq.apps.hqcase.case_helper import UserDuck
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.motech.repeaters.expression.repeater_generators import ArcGISFormExpressionPayloadGenerator
 from corehq.motech.repeaters.expression.repeater_generators import (
     ExpressionPayloadGenerator,
 )
-from corehq.motech.repeaters.models import OptionValue, Repeater
-from corehq.motech.repeaters.expression.repeater_generators import ArcGISFormExpressionPayloadGenerator
-from corehq.toggles import EXPRESSION_REPEATER, ARCGIS_INTEGRATION
+from corehq.motech.repeaters.models import OptionValue, Repeater, is_response, is_success_response
+from corehq.toggles import ARCGIS_INTEGRATION, EXPRESSION_REPEATER
+from dimagi.utils.logging import notify_exception
 
 
 class BaseExpressionRepeater(Repeater):
@@ -25,6 +29,9 @@ class BaseExpressionRepeater(Repeater):
     configured_expression = OptionValue(default=dict)
     url_template = OptionValue(default=None)
 
+    update_case_filter_expression = OptionValue(default=dict)
+    update_case_expression = OptionValue(default=dict)
+
     payload_generator_classes = (ExpressionPayloadGenerator,)
 
     @property
@@ -36,6 +43,20 @@ class BaseExpressionRepeater(Repeater):
     @memoized
     def parsed_expression(self):
         return ExpressionFactory.from_spec(self.configured_expression, FactoryContext.empty(domain=self.domain))
+
+    @property
+    @memoized
+    def parsed_case_update_filter(self):
+        return FilterFactory.from_spec(
+            self.update_case_filter_expression, FactoryContext.empty(domain=self.domain)
+        )
+
+    @property
+    @memoized
+    def parsed_case_update_expression(self):
+        return ExpressionFactory.from_spec(
+            self.update_case_expression, FactoryContext.empty(domain=self.domain)
+        )
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -62,6 +83,35 @@ class BaseExpressionRepeater(Repeater):
                 self.payload_doc(repeat_record),
             )
         return base_url
+
+    def handle_response(self, response, repeat_record):
+        super().handle_response(response, repeat_record)
+        if self.update_case_filter_expression and is_response(response):
+            try:
+                self._process_response_as_case_update(response, repeat_record)
+            except Exception as e:
+                notify_exception(None, "Error processing response from Repeater request", e)
+
+    def _process_response_as_case_update(self, response, repeat_record):
+        domain = repeat_record.domain
+        context = get_evaluation_context(domain, repeat_record, self.payload_doc(repeat_record), response)
+        if not self.parsed_case_update_filter(context.root_doc, context):
+            return False
+
+        self._perform_case_update(domain, context)
+        return True
+
+    def _perform_case_update(self, domain, context):
+        data = self.parsed_case_update_expression(context.root_doc, context)
+        if data:
+            data = data if isinstance(data, list) else [data]
+            handle_case_update(
+                domain=domain,
+                data=data,
+                user=UserDuck('system', ''),
+                device_id=f'{__name__}.{self.__class__.__name__}',
+                is_creation=False,
+            )
 
 
 class CaseExpressionRepeater(BaseExpressionRepeater):
@@ -120,3 +170,23 @@ class ArcGISFormExpressionRepeater(FormExpressionRepeater):
             super(ArcGISFormExpressionRepeater, cls).available_for_domain(domain)
             and ARCGIS_INTEGRATION.enabled(domain)
         )
+
+
+def get_evaluation_context(domain, repeat_record, payload_doc, response):
+    try:
+        body = response.json()
+    except JSONDecodeError:
+        body = response.text
+    return EvaluationContext({
+        'domain': domain,
+        'success': is_success_response(response),
+        'payload': {
+            'id': repeat_record.payload_id,
+            'doc': payload_doc,
+        },
+        'response': {
+            'status_code': response.status_code,
+            'headers': response.headers,
+            'body': body,
+        },
+    })
