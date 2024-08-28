@@ -58,7 +58,6 @@ from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import (
-    LOCATION_HAS_USERS,
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
@@ -1161,7 +1160,7 @@ class SelectUserLocationForm(forms.Form):
         self.domain = domain
         self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations',
-            include_locations_with_no_users_allowed=False
+            for_user_location_selection=True
         )
         self.fields['assigned_locations'].help_text = ExpandedMobileWorkerFilter.location_search_help
         self.fields['primary_location'].widget = PrimaryLocationWidget(
@@ -1178,7 +1177,7 @@ class SelectUserLocationForm(forms.Form):
             locations = get_locations_from_ids(location_ids, self.domain)
         except SQLLocation.DoesNotExist:
             raise forms.ValidationError(_('One or more of the locations was not found.'))
-        if LOCATION_HAS_USERS.enabled(self.domain) and locations.filter(location_type__has_users=False).exists():
+        if locations.filter(location_type__has_users=False).exists():
             raise forms.ValidationError(
                 _('One or more of the locations you specified cannot have users assigned.'))
         return [location.location_id for location in locations]
@@ -1635,7 +1634,7 @@ class UserFilterForm(forms.Form):
             id='id_location_id',
             placeholder=_("All Locations"),
             attrs={'data-bind': 'value: location_id'},
-            include_locations_with_no_users_allowed=False
+            for_user_location_selection=True
         )
         self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
             url=self.fields['location_id'].widget.query_url
