@@ -2,10 +2,12 @@
 hqDefine("locations/js/widgets", [
     'jquery',
     'underscore',
+    'hqwebapp/js/toggles',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
-    _
+    _,
+    toggles
 ) {
     // Update the options available to one select2 to be
     // the selected values from another (multiselect) select2
@@ -76,14 +78,16 @@ hqDefine("locations/js/widgets", [
                 },
                 processResults: function (data, params) {
                     var more = (params.page || 1) * 10 < data.total;
-                    let selectedLocations = Array.from($select[0].selectedOptions);
-                    if (selectedLocations.length > 0) {
-                        let locIds = selectedLocations.map(option => option.value);
-                        data.results.forEach(result => {
-                            if (locIds.includes(result.id)) {
-                                result.disabled = true;
-                            }
-                        });
+                    if (toggles.toggleEnabled('LOCATION_FIELD_USER_PROVISIONING')) {
+                        let selectedLocations = Array.from($select[0].selectedOptions);
+                        if (selectedLocations.length > 0) {
+                            let locIds = selectedLocations.map(option => option.value);
+                            data.results.forEach(result => {
+                                if (locIds.includes(result.id)) {
+                                    result.disabled = true;
+                                }
+                            });
+                        }
                     }
                     return {
                         results: data.results,
