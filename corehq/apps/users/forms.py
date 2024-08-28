@@ -57,10 +57,12 @@ from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
+from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.toggles import (
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
+from corehq.util.global_request import get_request_domain
 
 from ..hqwebapp.signals import clear_login_attempts
 from .audit.change_messages import UserChangeMessage
@@ -1124,9 +1126,11 @@ class PrimaryLocationWidget(forms.Widget):
         if value:
             try:
                 loc = SQLLocation.objects.get(location_id=value)
+                use_location_display_name = USE_LOCATION_DISPLAY_NAME.enabled(get_request_domain())
                 initial_data = {
                     'id': loc.location_id,
-                    'text': loc.get_path_display(),
+                    'text': loc.display_name if use_location_display_name else loc.get_path_display(),
+                    'title': loc.get_path_display() if use_location_display_name else loc.display_name,
                 }
             except SQLLocation.DoesNotExist:
                 pass

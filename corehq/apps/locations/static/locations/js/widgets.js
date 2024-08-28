@@ -16,7 +16,9 @@ hqDefine("locations/js/widgets", [
         _.each($source.select2('data'), function (result) {
             const fullLengthName = result.text || result.name;
             const truncatedName = truncateLocationName(fullLengthName, $select);
-            $select.append(new Option(truncatedName, result.id));
+            var $option = new Option(truncatedName, result.id);
+            $option.setAttribute('title', result.title);
+            $select.append($option);
         });
     }
 
@@ -124,7 +126,9 @@ hqDefine("locations/js/widgets", [
                 initial = [initial];
             }
             _.each(initial, function (result) {
-                $select.append(new Option(result.text, result.id));
+                var $option = new Option(result.text, result.id);
+                $option.setAttribute('title', result.title);
+                $select.append($option);
             });
             $select.val(_.pluck(initial, 'id')).trigger('change');
         }
@@ -151,7 +155,9 @@ hqDefine("locations/js/widgets", [
             // This custom event is fired in autocomplete_select_widget.html
             if ($source.hasClass("select2-hidden-accessible")) {
                 updateSelect2($source, $select);
-                $select.append(new Option(value.text, value.id));
+                var $option = new Option(value.text, value.id);
+                $option.setAttribute('title', value.title);
+                $select.append($option);
                 $select.val(value.id).trigger("change");
             } else {
                 $source.on('select-ready', function () {
