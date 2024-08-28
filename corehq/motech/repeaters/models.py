@@ -1373,6 +1373,7 @@ def domain_can_forward(domain):
     )
 
 
+@quickcache(['domain'], timeout=60)
 def domain_can_forward_now(domain):
     return (
         domain_can_forward(domain)

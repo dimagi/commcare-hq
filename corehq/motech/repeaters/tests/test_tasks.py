@@ -19,6 +19,7 @@ from corehq.motech.repeaters.models import FormRepeater, Repeater, RepeatRecord
 from corehq.motech.repeaters.tasks import (
     _process_repeat_record,
     delete_old_request_logs,
+    get_repeater_ids_by_domain,
     iter_ready_repeater_ids_forever,
     iter_ready_repeater_ids_once,
     process_repeater,
@@ -275,34 +276,34 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
 
     def test_no_ready_repeaters(self):
         with (
-            patch('corehq.motech.repeaters.tasks.iter_ready_repeater_ids_once',
-                  return_value=[]),  # <--
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
+                  return_value={}),  # <--
             patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
                   return_value=True),
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
-                  return_value=True)
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
+                  return_value=['domain1', 'domain2', 'domain3']),
         ):
             self.assertFalse(next(iter_ready_repeater_ids_forever(), False))
 
     def test_domain_cant_forward_now(self):
         with (
-            patch('corehq.motech.repeaters.tasks.iter_ready_repeater_ids_once',
-                  return_value=[(DOMAIN, 'abc123')]),
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
+                  side_effect=self.all_ready_ids_by_domain()),
             patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
                   return_value=False),  # <--
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
-                  return_value=True)
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
+                  return_value=['domain1', 'domain2', 'domain3']),
         ):
             self.assertFalse(next(iter_ready_repeater_ids_forever(), False))
 
     def test_process_repeaters_not_enabled(self):
         with (
-            patch('corehq.motech.repeaters.tasks.iter_ready_repeater_ids_once',
-                  return_value=[(DOMAIN, 'abc123')]),
-            patch('corehq.motech.repeaters.models.domain_can_forward',
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
+                  side_effect=self.all_ready_ids_by_domain()),
+            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
                   return_value=True),
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
-                  return_value=False)  # <--
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
+                  return_value=[]),  # <--
         ):
             self.assertFalse(next(iter_ready_repeater_ids_forever(), False))
 
@@ -312,8 +313,8 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
                   side_effect=self.all_ready_ids_by_domain()),
             patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
                   return_value=True),
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
-                  return_value=True),
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
+                  return_value=['domain1', 'domain2', 'domain3']),
             patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
                   return_value=False),
             patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
@@ -342,8 +343,8 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
                   side_effect=self.all_ready_ids_by_domain()),
             patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
                   return_value=True),
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
-                  return_value=True),
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
+                  return_value=['domain1', 'domain2', 'domain3']),
             patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
                   side_effect=lambda dom, rep: dom == 'domain2' and rep == 'repeater_id4'),
             patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
@@ -361,15 +362,43 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
                 ('domain1', 'repeater_id2'),
             ])
 
+    def test_disabled_domains_excluded(self):
+        with (
+            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
+                  side_effect=self.all_ready_ids_by_domain()),
+            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
+                  return_value=True),
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
+                  return_value=['domain2', 'domain3']),  # <--
+            patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
+                  return_value=False),
+            patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
+        ):
+            repeaters = list(iter_ready_repeater_ids_forever())
+            self.assertEqual(len(repeaters), 4)
+            repeater_ids = [(r[0], r[1]) for r in repeaters]
+            self.assertEqual(repeater_ids, [
+                ('domain2', 'repeater_id4'),
+                ('domain3', 'repeater_id6'),
+                ('domain2', 'repeater_id5'),
+                ('domain2', 'repeater_id4'),
+            ])
+
 
 def test_iter_ready_repeater_ids_once():
-    with patch(
-        'corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
-        return_value={
-            'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
-            'domain2': ['repeater_id4', 'repeater_id5'],
-            'domain3': ['repeater_id6'],
-        }
+    with (
+        patch(
+            'corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
+            return_value={
+                'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
+                'domain2': ['repeater_id4', 'repeater_id5'],
+                'domain3': ['repeater_id6'],
+            }
+        ),
+        patch(
+            'corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
+            return_value=['domain1', 'domain2', 'domain3'],
+        ),
     ):
         pairs = list(iter_ready_repeater_ids_once())
         assert_equal(pairs, [
@@ -387,12 +416,41 @@ def test_iter_ready_repeater_ids_once():
         ])
 
 
+def test_get_repeater_ids_by_domain():
+    with (
+        patch(
+            'corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
+            return_value={
+                'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
+                'domain2': ['repeater_id4', 'repeater_id5'],
+                'domain3': ['repeater_id6'],
+            }
+        ),
+        patch(
+            'corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
+            return_value=['domain2', 'domain3', 'domain4'],
+        ),
+    ):
+        repeater_ids_by_domain = get_repeater_ids_by_domain()
+        assert_equal(repeater_ids_by_domain, {
+            'domain2': ['repeater_id4', 'repeater_id5'],
+            'domain3': ['repeater_id6'],
+        })
+
+
 @flag_enabled('PROCESS_REPEATERS')
 class TestProcessRepeater(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+
+        can_forward_now_patch = patch(
+            'corehq.motech.repeaters.tasks.domain_can_forward_now',
+            return_value=True,
+        )
+        can_forward_now_patch = can_forward_now_patch.start()
+        cls.addClassCleanup(can_forward_now_patch.stop)
 
         cls.set_backoff_patch = patch.object(FormRepeater, 'set_backoff')
         cls.set_backoff_patch.start()
