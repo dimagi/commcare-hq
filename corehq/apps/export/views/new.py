@@ -420,7 +420,7 @@ class CreateNewCustomCaseExportView(BaseExportView):
             messages.error(
                 request,
                 _(
-                    "Case type '%(case_type)' does not exist in domain %(domain)"
+                    "Case type '%(case_type)' does not exist for this project."
                 ) % {
                     'case_type': case_type,
                     'domain': self.domain
