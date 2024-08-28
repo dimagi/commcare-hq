@@ -227,6 +227,9 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
         case = CommCareCase.objects.get_case(repeat_record.payload_id, self.domain)
         self.assertEqual(case.get_case_property('prop_from_response'), 'aResponseValue')
 
+        # case shouldn't be eligible to forward again because it was just updated by the repeater
+        self.assertFalse(self.repeater.allowed_to_forward(case))
+
 
 class ArcGISExpressionRepeaterTest(BaseExpressionRepeaterTest):
 

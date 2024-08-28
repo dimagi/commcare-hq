@@ -5,10 +5,11 @@ from memoized import memoized
 
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.case_helper import UserDuck
+from corehq.apps.hqcase.utils import REPEATER_RESPONSE_XMLNS
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.models import CaseTransaction, CommCareCase, XFormInstance
 from corehq.motech.repeaters.expression.repeater_generators import ArcGISFormExpressionPayloadGenerator
 from corehq.motech.repeaters.expression.repeater_generators import (
     ExpressionPayloadGenerator,
@@ -109,9 +110,14 @@ class BaseExpressionRepeater(Repeater):
                 domain=domain,
                 data=data,
                 user=UserDuck('system', ''),
-                device_id=f'{__name__}.{self.__class__.__name__}',
+                device_id=self.device_id,
                 is_creation=False,
+                xmlns=REPEATER_RESPONSE_XMLNS,
             )
+
+    @property
+    def device_id(self):
+        return f'{__name__}.{self.__class__.__name__}:{self.id}'
 
 
 class CaseExpressionRepeater(BaseExpressionRepeater):
@@ -129,6 +135,14 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
     @memoized
     def payload_doc(self, repeat_record):
         return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain).to_json()
+
+    def allowed_to_forward(self, payload):
+        allowed = super().allowed_to_forward(payload)
+        if allowed:
+            # prevent data forwarding loops
+            transaction = CaseTransaction.objects.get_most_recent_form_transaction(payload.case_id)
+            return transaction and transaction.xmlns != REPEATER_RESPONSE_XMLNS
+        return False
 
 
 class FormExpressionRepeater(BaseExpressionRepeater):
