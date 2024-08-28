@@ -230,10 +230,12 @@ class RepeaterManager(models.Manager):
         repeat_records_ready_to_send = models.Q(
             repeat_records__state__in=(State.Pending, State.Fail)
         )
-        return (self.get_queryset()
-                .filter(not_paused)
-                .filter(next_attempt_not_in_the_future)
-                .filter(repeat_records_ready_to_send))
+        return (
+            self.get_queryset()
+            .filter(not_paused)
+            .filter(next_attempt_not_in_the_future)
+            .filter(repeat_records_ready_to_send)
+        )
 
     def get_queryset(self):
         repeater_obj = self.model()
@@ -272,6 +274,13 @@ class Repeater(RepeaterSuperProxy):
 
     class Meta:
         db_table = 'repeaters_repeater'
+        indexes = [
+            models.Index(
+                fields=['next_attempt_at'],
+                condition=models.Q(is_paused=False),
+                name='next_attempt_at_not_paused_idx',
+            ),
+        ]
 
     payload_generator_classes = ()
 
@@ -978,11 +987,17 @@ class RepeatRecordManager(models.Manager):
 class RepeatRecord(models.Model):
     domain = models.CharField(max_length=126)
     payload_id = models.CharField(max_length=255)
-    repeater = models.ForeignKey(Repeater,
-                                 on_delete=DB_CASCADE,
-                                 db_column="repeater_id_",
-                                 related_name='repeat_records')
-    state = models.PositiveSmallIntegerField(choices=State.choices, default=State.Pending)
+    repeater = models.ForeignKey(
+        Repeater,
+        on_delete=DB_CASCADE,
+        db_column="repeater_id_",
+        related_name='repeat_records',
+    )
+    state = models.PositiveSmallIntegerField(
+        choices=State.choices,
+        default=State.Pending,
+        db_index=True,
+    )
     registered_at = models.DateTimeField()
     next_check = models.DateTimeField(null=True, default=None)
     max_possible_tries = models.IntegerField(default=MAX_BACKOFF_ATTEMPTS)
