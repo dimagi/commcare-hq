@@ -1042,6 +1042,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/add_gateway.html
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 #: corehq/motech/dhis2/templates/dhis2/dhis2_entity_config.html
 #: corehq/motech/openmrs/templates/openmrs/partials/openmrs_importer_template.html
 msgid "Remove"
@@ -1154,6 +1155,7 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
 #: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
@@ -4831,6 +4833,7 @@ msgstr ""
 #: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
 #: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
 #: corehq/motech/templates/motech/connection_settings.html
 #: corehq/tabs/tabclasses.py
@@ -6084,6 +6087,7 @@ msgid "Releases"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+#: corehq/apps/domain/forms.py
 msgid "Release Mode"
 msgstr ""
 
@@ -13866,15 +13870,6 @@ msgid "Add Case Property"
 msgstr "Ajouter une propriété de dossier"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            <strong>%(feat_name)s</strong> is only "
-#| "available for the %(req_plan)s\n"
-#| "                            Plan and higher. Your subscription to "
-#| "%(current_plan)s Plan is under a\n"
-#| "                            trial period.\n"
-#| "                        "
 msgid ""
 "\n"
 "                        A case property with this name already exists.\n"
@@ -13883,11 +13878,6 @@ msgid ""
 "                        properties.\n"
 "                      "
 msgstr ""
-"\n"
-"<strong>%(feat_name)s</strong> est uniquement disponible pour le "
-"%(req_plan)s\n"
-"plan ou plus. Votre suscription au %(current_plan)s plan est une \n"
-"période d’essayage."
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
@@ -15699,6 +15689,10 @@ msgid "Delete Logo"
 msgstr "Supprimer le logo"
 
 #: corehq/apps/domain/forms.py
+msgid "Delete Logo after Submitting this Form"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Delete your custom logo and use the standard one."
 msgstr "Supprimer votre logo personnalisé et utiliser un logo standard."
 
@@ -15715,6 +15709,12 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Call Center Application"
+msgstr "Application de centre d'appel"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Call Center Application"
+msgid "Enable Call Center Application"
 msgstr "Application de centre d'appel"
 
 #: corehq/apps/domain/forms.py
@@ -15835,6 +15835,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Maintenance Alerts"
+msgid "Orphan Case Alerts"
+msgstr "Alertes maintenance"
+
+#: corehq/apps/domain/forms.py
 msgid "Show Orphan Case Alerts on Mobile Worker Edit Page"
 msgstr ""
 
@@ -15853,16 +15859,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Default timezone"
+msgstr "Fuseau horaire par défaut"
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr "Modifier les informations de base"
 
 #: corehq/apps/domain/forms.py
 msgid "Update Basic Info"
 msgstr "Mettre à jour les infos de base"
-
-#: corehq/apps/domain/forms.py
-msgid "Default timezone"
-msgstr "Fuseau horaire par défaut"
 
 #: corehq/apps/domain/forms.py
 msgid "Logo exceeds {} MB size limit"
@@ -22894,10 +22900,8 @@ msgid "link"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
-#, fuzzy
-#| msgid "Username"
 msgid "name"
-msgstr "Nom d'utilisateur"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/geospatial/reports.py
 msgid "Case Grouping"
@@ -22989,10 +22993,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#, fuzzy
-#| msgid "Payment Status"
 msgid "Assignment Status"
-msgstr "Statut du Paiement"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
 #: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
@@ -23004,52 +23006,36 @@ msgid "Show All"
 msgstr "Afficher tous"
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#, fuzzy
-#| msgid "Read Only"
 msgid "Assigned Only"
-msgstr "Lecture seule"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#, fuzzy
-#| msgid "Unsigned Jar"
 msgid "Unassigned Only"
-msgstr "Jar non signée"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#, fuzzy
-#| msgid "Select Mobile Worker"
 msgid "Select mobile worker for case assignment"
-msgstr "Sélectionner un utilisateur mobile"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#, fuzzy
-#| msgid "Reactivate Mobile Worker"
 msgid "Potential Mobile Worker"
-msgstr "Réactiver utilisateur mobile"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#, fuzzy
-#| msgid "SMS Mobile Worker Registration"
 msgid "Mobile Worker Primary Location"
-msgstr "Enregistrement d'un utilisateur mobile par SMS"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#, fuzzy
-#| msgid "No related cases"
 msgid "Include related cases"
-msgstr "Aucun dossier relié"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#, fuzzy
-#| msgid "Reassign Cases"
 msgid "Assign Cases"
-msgstr "Transférer les dossiers"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#, fuzzy
-#| msgid "Reassign Cases"
 msgid "Unassign Cases"
-msgstr "Transférer les dossiers"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
 #: corehq/apps/registration/forms.py
@@ -23298,10 +23284,8 @@ msgid "Layers"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Results"
 msgid "Review Results"
-msgstr "Résultats"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Selected Mobile Workers"
@@ -39761,6 +39745,34 @@ msgstr ""
 msgid "Update Expression"
 msgstr ""
 
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid ""
+"\n"
+"                    Delete expression <strong data-bind=\"text: name\"></"
+"strong>?\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid ""
+"\n"
+"                    Yes, delete the <strong data-bind=\"text: name\"></"
+"strong> expression.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+#, fuzzy
+#| msgid "Deleting Group..."
+msgid "Deleting Expression..."
+msgstr "Suppression de groupe en cours..."
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+#, fuzzy
+#| msgid "Delete Version"
+msgid "Delete Expression"
+msgstr "Supprimer la version"
+
 #: corehq/apps/userreports/templates/userreports/userreports_base.html
 #: corehq/tabs/tabclasses.py
 msgid "Tools"
@@ -45366,6 +45378,24 @@ msgid "Pass credentials in Basic Auth header when requesting a token"
 msgstr ""
 
 #: corehq/motech/forms.py
+#, fuzzy
+#| msgid "Include in Download"
+msgid "Include client ID"
+msgstr "Inclure dans le Téléchargement"
+
+#: corehq/motech/forms.py
+msgid "Send the client ID in the body of the token request"
+msgstr ""
+
+#: corehq/motech/forms.py
+msgid "Scope"
+msgstr ""
+
+#: corehq/motech/forms.py
+msgid "Space-separated list of scopes e.g. \"read write\""
+msgstr ""
+
+#: corehq/motech/forms.py
 msgid "Do not use in a production environment"
 msgstr ""
 
@@ -45808,6 +45838,13 @@ msgid "Cancelled"
 msgstr "Annulé"
 
 #: corehq/motech/repeaters/const.py
+#: corehq/motech/repeaters/views/repeat_record_display.py
+#, fuzzy
+#| msgid "Invalid Date"
+msgid "Invalid Payload"
+msgstr "Date invalide"
+
+#: corehq/motech/repeaters/const.py
 msgid "Is enabled"
 msgstr ""
 
@@ -46245,16 +46282,12 @@ msgid "Response body"
 msgstr "Organe de réponse"
 
 #: corehq/motech/templates/motech/log_detail.html
-#, fuzzy
-#| msgid "Request params"
 msgid "Request duration (ms)"
-msgstr "Pramètres de requête"
+msgstr ""
 
 #: corehq/motech/templates/motech/logs.html
-#, fuzzy
-#| msgid "Duration"
 msgid "Duration (ms)"
-msgstr "Durée"
+msgstr ""
 
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
@@ -46287,6 +46320,12 @@ msgstr ""
 #: corehq/motech/views.py
 msgid "Used By"
 msgstr "Utilisé par"
+
+#: corehq/motech/views.py
+#, fuzzy
+#| msgid "Please enter digits only."
+msgid "Please enter client secret again."
+msgstr "Veuillez entrer des chiffres seulement."
 
 #: corehq/motech/views.py
 msgid "Please enter API password again."
