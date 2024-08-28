@@ -157,7 +157,7 @@
     - ['2.0', '2.0']
   default: '2.0'
   disabled: true
-  disabled_txt: Oops! This setting has been discontinued. We recommend you change this setting to Version 2, and it will no longer appear on your settings page.
+  disabled_txt: This setting has been discontinued. We recommend you change this setting to Version 2. Upon doing so this setting will no longer appear on this page.
 
 
 - id: location_fixture_restore
