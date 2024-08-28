@@ -140,7 +140,17 @@ hqDefine('cloudcare/js/markdown', [
             // lazy init to avoid dependency order issues
             md = initMd();
         }
-        return md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
+        var rendered = md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"))
+        // EXTREMELY HACKY FEELING
+        // hmmm I could also probably hack in some padding
+        // actually nah that'd be one above this is just within the div or whatever
+        if (rendered.includes('<p><strong>')) {
+            rendered = rendered.replace('<p><strong>', '<p class="mb-0"><strong>')
+        }
+        if (rendered.includes('<h6>')) {
+            rendered = rendered.replace('<h6>', '<h6 class="mb-0">')
+        }
+        return rendered
     }
 
     /**
