@@ -428,5 +428,23 @@ def request_epic_access_token():
         return response.json().get('access_token')
     elif response.status_code >= 400:
         return response.raise_for_status()
+    
+def get_epic_appointments_for_patient(mrn):
+    appointments = []
+    access_token = request_epic_access_token()
+    headers={
+        'authorization': 'Bearer %s' % access_token,
+        }
+    url = f"https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Appointment?&patient={mrn}&service-category=appointment"
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        json_response = convert_xform_to_json(response.content)
+        entries = json_response['entry']
+        for entry in entries:
+            appointments.append(entry)
+    elif response.status_code >= 400:
+        response.raise_for_status()
+    return appointments
+    
 class ServiceRequestNotActive(Exception):
     pass
