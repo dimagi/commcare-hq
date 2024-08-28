@@ -427,6 +427,6 @@ def request_epic_access_token():
     if response.status_code == 200:
         return response.json().get('access_token')
     elif response.status_code >= 400:
-        return response.json().get('error')
+        return response.raise_for_status()
 class ServiceRequestNotActive(Exception):
     pass
