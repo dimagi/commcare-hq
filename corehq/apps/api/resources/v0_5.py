@@ -26,6 +26,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 
 import pytz
 from memoized import memoized_property
@@ -131,6 +132,7 @@ from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
+from corehq.apps.users.role_utils import get_commcare_analytics_access_for_user_domain
 
 from ..exceptions import UpdateUserException
 from ..user_updates import update
@@ -1376,3 +1378,19 @@ def get_datasource_data(request, config_id, domain):
     query = cursor_based_query_for_datasource(request_params, datasource_adapter)
     data = response_for_cursor_based_pagination(request, query, request_params, datasource_adapter)
     return JsonResponse(data)
+
+
+@require_GET
+@api_auth()
+@requires_privilege_with_fallback(privileges.API_ACCESS)
+@api_throttle
+def get_cca_user_roles(request, domain):
+    if not toggles.SUPERSET_ANALYTICS.enabled(domain):
+        return HttpResponseForbidden(
+            _("This domain requires the superset-analytics flag to access this endpoint.")
+        )
+
+    try:
+        return JsonResponse(get_commcare_analytics_access_for_user_domain(request.couch_user, domain))
+    except BadRequest as e:
+        return JsonResponse({'error': str(e)}, status=400)
