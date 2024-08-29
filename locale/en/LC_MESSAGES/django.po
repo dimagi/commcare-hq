@@ -926,6 +926,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/add_gateway.html
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 #: corehq/motech/dhis2/templates/dhis2/dhis2_entity_config.html
 #: corehq/motech/openmrs/templates/openmrs/partials/openmrs_importer_template.html
 msgid "Remove"
@@ -1038,6 +1039,7 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
 #: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
@@ -4537,6 +4539,7 @@ msgstr ""
 #: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
 #: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
 #: corehq/motech/templates/motech/connection_settings.html
 #: corehq/tabs/tabclasses.py
@@ -5761,6 +5764,7 @@ msgid "Releases"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+#: corehq/apps/domain/forms.py
 msgid "Release Mode"
 msgstr ""
 
@@ -15130,6 +15134,10 @@ msgid "Delete Logo"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Delete Logo after Submitting this Form"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Delete your custom logo and use the standard one."
 msgstr ""
 
@@ -15146,6 +15154,10 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Call Center Application"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Enable Call Center Application"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -15256,6 +15268,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Orphan Case Alerts"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Show Orphan Case Alerts on Mobile Worker Edit Page"
 msgstr ""
 
@@ -15274,15 +15290,15 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Default timezone"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Update Basic Info"
-msgstr ""
-
-#: corehq/apps/domain/forms.py
-msgid "Default timezone"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -38467,6 +38483,30 @@ msgstr ""
 msgid "Update Expression"
 msgstr ""
 
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid ""
+"\n"
+"                    Delete expression <strong data-bind=\"text: name\"></"
+"strong>?\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid ""
+"\n"
+"                    Yes, delete the <strong data-bind=\"text: name\"></"
+"strong> expression.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid "Deleting Expression..."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid "Delete Expression"
+msgstr ""
+
 #: corehq/apps/userreports/templates/userreports/userreports_base.html
 #: corehq/tabs/tabclasses.py
 msgid "Tools"
@@ -43947,6 +43987,22 @@ msgid "Pass credentials in Basic Auth header when requesting a token"
 msgstr ""
 
 #: corehq/motech/forms.py
+msgid "Include client ID"
+msgstr ""
+
+#: corehq/motech/forms.py
+msgid "Send the client ID in the body of the token request"
+msgstr ""
+
+#: corehq/motech/forms.py
+msgid "Scope"
+msgstr ""
+
+#: corehq/motech/forms.py
+msgid "Space-separated list of scopes e.g. \"read write\""
+msgstr ""
+
+#: corehq/motech/forms.py
 msgid "Do not use in a production environment"
 msgstr ""
 
@@ -44386,6 +44442,11 @@ msgstr ""
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Cancelled"
+msgstr ""
+
+#: corehq/motech/repeaters/const.py
+#: corehq/motech/repeaters/views/repeat_record_display.py
+msgid "Invalid Payload"
 msgstr ""
 
 #: corehq/motech/repeaters/const.py
@@ -44857,6 +44918,10 @@ msgstr ""
 
 #: corehq/motech/views.py
 msgid "Used By"
+msgstr ""
+
+#: corehq/motech/views.py
+msgid "Please enter client secret again."
 msgstr ""
 
 #: corehq/motech/views.py

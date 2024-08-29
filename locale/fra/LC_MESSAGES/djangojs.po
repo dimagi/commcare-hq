@@ -3521,22 +3521,16 @@ msgid "No user selected (unassign mode)"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-#, fuzzy
-#| msgid "User ID"
 msgid "Assigned User ID"
-msgstr "Identifiant d'utilisateur"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-#, fuzzy
-#| msgid "Username"
 msgid "Assigned Username"
-msgstr "Nom d'utilisateur"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-#, fuzzy
-#| msgid "Choose a primary location"
 msgid "Assigned User Primary Location"
-msgstr "Choisir un site principal"
+msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"

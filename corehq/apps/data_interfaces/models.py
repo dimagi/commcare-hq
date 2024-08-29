@@ -755,6 +755,14 @@ class LocationFilterDefinition(CaseRuleCriteriaDefinition):
     def location(self):
         return SQLLocation.by_location_id(self.location_id)
 
+    def get_location_ids(self):
+        if self.include_child_locations:
+            location_ids = list(SQLLocation.objects.get_locations_and_children_ids([self.location_id]))
+        else:
+            location_ids = [self.location_id]
+
+        return location_ids
+
     def to_dict(self):
         return {
             'location_id': self.location_id,
