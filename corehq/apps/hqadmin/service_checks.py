@@ -78,9 +78,7 @@ def check_all_rabbitmq():
         return ServiceStatus(True, 'RabbitMQ OK')
 
     else:
-        return ServiceStatus(False, '; '.join(['{}:{}'.format(rabbit[0], rabbit[1])
-                                        for rabbit in unwell_rabbits])
-                      )
+        return ServiceStatus(False, "; ".join(["{}:{}".format(rabbit[0], rabbit[1]) for rabbit in unwell_rabbits]))
 
 
 def check_rabbitmq(broker_url):
@@ -180,8 +178,9 @@ def check_celery():
                     bad_queues.append(
                         f"{queue} has been blocked for {blockage_duration} (max allowed is {threshold})"
                     )
-                elif (heartbeat_time_to_start is not None and
-                      heartbeat_time_to_start > max(threshold, datetime.timedelta(minutes=5))):
+                elif heartbeat_time_to_start is not None and heartbeat_time_to_start > max(
+                    threshold, datetime.timedelta(minutes=5)
+                ):
                     bad_queues.append(
                         f"{queue} is delayed for {heartbeat_time_to_start} (max allowed is {threshold})"
                     )
@@ -198,7 +197,7 @@ def check_postgres():
     for db in settings.DATABASES:
         db_conn = connections[db]
         try:
-            c = db_conn.cursor()
+            db_conn.cursor()
             c_status = 'OK'
         except OperationalError:
             c_status = 'FAIL'
