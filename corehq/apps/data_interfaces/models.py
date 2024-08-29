@@ -560,13 +560,11 @@ class CaseRuleCriteriaDefinition(models.Model):
 
 
 class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
-    # True when today < (the date in property_name + property_value days)
-    MATCH_DAYS_BEFORE = 'DAYS_BEFORE'
+    MATCH_DAYS_LESS_THAN = 'DAYS_BEFORE'
     MATCH_DAYS_LESS_OR_EQUAL = 'DAYS_LESS_OR_EQUAL'
 
-    # True when today >= (the date in property_name + property_value days)
-    MATCH_DAYS_AFTER = 'DAYS'
     MATCH_DAYS_GREATER_THAN = 'GREATER_THAN_DAYS'
+    MATCH_DAYS_GREATER_OR_EQUAL = 'DAYS'
 
     MATCH_EQUAL = 'EQUAL'
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
@@ -575,8 +573,8 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     MATCH_REGEX = 'REGEX'
 
     MATCH_CHOICES = (
-        MATCH_DAYS_BEFORE,
-        MATCH_DAYS_AFTER,
+        MATCH_DAYS_LESS_THAN,
+        MATCH_DAYS_GREATER_OR_EQUAL,
         MATCH_EQUAL,
         MATCH_NOT_EQUAL,
         MATCH_HAS_VALUE,
@@ -602,17 +600,17 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
 
         return timestamp
 
-    def check_days_before(self, case, now):
+    def check_days_less_than(self, case, now):
         return self.check_days(case, now, operator.lt)
 
     def check_days_less_or_equal(self, case, now):
         return self.check_days(case, now, operator.le)
 
-    def check_days_after(self, case, now):
-        return self.check_days(case, now, operator.ge)
-
     def check_days_greater_than(self, case, now):
         return self.check_days(case, now, operator.gt)
+
+    def check_days_greater_or_equal(self, case, now):
+        return self.check_days(case, now, operator.ge)
 
     def check_days(self, case, now, predicate):
         values = self.get_case_values(case)
@@ -672,9 +670,9 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
 
     def matches(self, case, now):
         return {
-            self.MATCH_DAYS_BEFORE: self.check_days_before,
+            self.MATCH_DAYS_LESS_THAN: self.check_days_less_than,
             self.MATCH_DAYS_LESS_OR_EQUAL: self.check_days_less_or_equal,
-            self.MATCH_DAYS_AFTER: self.check_days_after,
+            self.MATCH_DAYS_GREATER_OR_EQUAL: self.check_days_greater_or_equal,
             self.MATCH_DAYS_GREATER_THAN: self.check_days_greater_than,
             self.MATCH_EQUAL: self.check_equal,
             self.MATCH_NOT_EQUAL: self.check_not_equal,

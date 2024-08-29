@@ -71,7 +71,7 @@ class MatchPropertyDefinitionTests(SimpleTestCase):
         definition = MatchPropertyDefinition(
             property_name='test_date',
             property_value=0,
-            match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_THAN
         )
         case = CommCareCase(case_json={
             'test_date': date(year=2024, month=10, day=2)
@@ -83,7 +83,7 @@ class MatchPropertyDefinitionTests(SimpleTestCase):
         definition = MatchPropertyDefinition(
             property_name='test_date',
             property_value=0,
-            match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_THAN
         )
 
         case = CommCareCase(case_json={
@@ -96,7 +96,7 @@ class MatchPropertyDefinitionTests(SimpleTestCase):
         definition = MatchPropertyDefinition(
             property_name='test_date',
             property_value=0,
-            match_type=MatchPropertyDefinition.MATCH_DAYS_AFTER
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL
         )
 
         case = CommCareCase(case_json={
@@ -109,7 +109,7 @@ class MatchPropertyDefinitionTests(SimpleTestCase):
         definition = MatchPropertyDefinition(
             property_name='test_date',
             property_value=0,
-            match_type=MatchPropertyDefinition.MATCH_DAYS_AFTER
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL
         )
 
         case = CommCareCase(case_json={
