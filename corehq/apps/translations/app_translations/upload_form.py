@@ -113,6 +113,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 except BulkAppTranslationsException as e:
                     self.msgs.append((messages.warning, str(e)))
 
+        breakpoint()
         save_xform(self.app, self.form, etree.tostring(self.xform.xml, encoding='utf-8'))
 
         return [(t, _('Error in {sheet}: {msg}').format(sheet=self.sheet_name, msg=m)) for (t, m) in self.msgs]
@@ -142,11 +143,6 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             if not trans_el.exists():
                 new_trans_el = copy.deepcopy(template_translation_el.xml)
                 new_trans_el.set('lang', lang)
-                if lang != self.app.langs[0]:
-                    # If the language isn't the default language
-                    new_trans_el.attrib.pop('default', None)
-                else:
-                    new_trans_el.set('default', '')
                 self.itext.xml.append(new_trans_el)
 
     def _populate_markdown_stats(self, rows):
