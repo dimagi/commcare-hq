@@ -574,6 +574,8 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
 
     MATCH_CHOICES = (
         MATCH_DAYS_LESS_THAN,
+        MATCH_DAYS_LESS_OR_EQUAL,
+        MATCH_DAYS_GREATER_THAN,
         MATCH_DAYS_GREATER_OR_EQUAL,
         MATCH_EQUAL,
         MATCH_NOT_EQUAL,

@@ -309,6 +309,8 @@ class CaseRuleCriteriaForm(forms.Form):
     def constants(self):
         return {
             'MATCH_DAYS_LESS_THAN': MatchPropertyDefinition.MATCH_DAYS_LESS_THAN,
+            'MATCH_DAYS_LESS_OR_EQUAL': MatchPropertyDefinition.MATCH_DAYS_LESS_OR_EQUAL,
+            'MATCH_DAYS_GREATER_THAN': MatchPropertyDefinition.MATCH_DAYS_GREATER_THAN,
             'MATCH_DAYS_GREATER_OR_EQUAL': MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL,
             'MATCH_EQUAL': MatchPropertyDefinition.MATCH_EQUAL,
             'MATCH_NOT_EQUAL': MatchPropertyDefinition.MATCH_NOT_EQUAL,

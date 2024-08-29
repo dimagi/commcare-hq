@@ -200,6 +200,8 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                     self.criteria.push(obj);
                 } else if (
                     value.match_type === constants.MATCH_DAYS_LESS_THAN ||
+                    value.match_type === constants.MATCH_DAYS_LESS_OR_EQUAL ||
+                    value.match_type === constants.MATCH_DAYS_GREATER_THAN ||
                     value.match_type === constants.MATCH_DAYS_GREATER_OR_EQUAL
                 ) {
                     var days = Number.parseInt(value.property_value);
