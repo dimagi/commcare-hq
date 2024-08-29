@@ -19,6 +19,9 @@ import urllib3
 
 import attr
 import gevent
+
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import (
     get_kafka_client,
@@ -124,6 +127,7 @@ def check_elasticsearch():
     try:
         cluster_health = check_es_cluster_health()
     except Exception:
+        notify_exception(None, message="Error while checking elasticsearch cluster health")
         return ServiceStatus(False, "Something went wrong checking cluster health")
 
     if cluster_health == 'red':
