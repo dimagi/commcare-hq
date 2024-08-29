@@ -230,6 +230,10 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
         # case shouldn't be eligible to forward again because it was just updated by the repeater
         self.assertFalse(self.repeater.allowed_to_forward(case))
 
+        # case should be eligible to forward by a different repeater (one with a different id)
+        self.repeater.id = "a different repeater"
+        self.assertTrue(self.repeater.allowed_to_forward(case))
+
 
 class ArcGISExpressionRepeaterTest(BaseExpressionRepeaterTest):
 

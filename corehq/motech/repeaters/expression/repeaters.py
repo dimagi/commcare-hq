@@ -141,8 +141,10 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
         if allowed:
             # prevent data forwarding loops
             transaction = CaseTransaction.objects.get_most_recent_form_transaction(payload.case_id)
-            # TODO: also check device ID once it's available
-            return transaction and transaction.xmlns != REPEATER_RESPONSE_XMLNS
+            return transaction and not (
+                transaction.xmlns == REPEATER_RESPONSE_XMLNS
+                and transaction.device_id == self.device_id
+            )
         return False
 
 
