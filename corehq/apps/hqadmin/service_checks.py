@@ -123,7 +123,11 @@ def check_kafka():
 
 @change_log_level('urllib3.connectionpool', logging.WARNING)
 def check_elasticsearch():
-    cluster_health = check_es_cluster_health()
+    try:
+        cluster_health = check_es_cluster_health()
+    except Exception:
+        return ServiceStatus(False, "Something went wrong checking cluster health")
+
     if cluster_health == 'red':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
