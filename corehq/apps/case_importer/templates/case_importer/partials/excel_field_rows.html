@@ -65,6 +65,16 @@
         {% endblocktrans %}
       </p>
     <!--/ko-->
+    <!--ko if: isSystemProperty-->
+      <p class="help-block text-warning">
+        <i class="fa fa-question-circle"></i>
+        {% blocktrans %}
+          Importing a system property may have unexpected results such as
+          adding a duplicate field to case exports. Consider using a
+          different property name.
+        {% endblocktrans %}
+      </p>
+    <!--/ko-->
   </td>
 
   <td>

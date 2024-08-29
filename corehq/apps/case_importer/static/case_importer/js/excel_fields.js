@@ -11,6 +11,7 @@ hqDefine('case_importer/js/excel_fields', [
     levenshtein
 ) {
     function excelFieldRows(excelFields, caseFieldSpecs, systemFields) {
+        systemFields = _(systemFields);
         var self = {
             excelFields: excelFields,
             caseFieldSpecs: caseFieldSpecs,
@@ -79,7 +80,7 @@ hqDefine('case_importer/js/excel_fields', [
                     row.selectedCaseField(field);
                 } else {
                     var spec = _(caseFieldSpecs).findWhere({field});
-                    row.isCustom(_.isEmpty(spec) && !_(systemFields).contains(field));
+                    row.isCustom(_.isEmpty(spec) && !systemFields.contains(field));
                     row.selectedCaseField(null);
                 }
             };
@@ -99,6 +100,9 @@ hqDefine('case_importer/js/excel_fields', [
                     return suggestion.distance < 4;
                 });
                 return _.chain(suggestions).sortBy('distance').pluck('field').value();
+            });
+            row.isSystemProperty = ko.computed(function () {
+                return row.isCustom() && systemFields.contains(row.customCaseField());
             });
 
             self.mappingRows.push(row);
