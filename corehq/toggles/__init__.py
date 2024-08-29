@@ -976,6 +976,14 @@ WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     owner='Jenny Schweers',
 )
 
+LOCATION_FIELD_USER_PROVISIONING = FeatureRelease(
+    'location_field_user_provisioning',
+    'USH: Holding feature flag for various works relating to the location field',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Minha Lee',
+)
+
 WEB_APPS_ANCHORED_SUBMIT = StaticToggle(
     'web_apps_anchored_submit',
     'USH: Keep submit button anchored at the bottom of screen for forms in Web Apps',
@@ -2904,14 +2912,16 @@ SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
 
 USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
     'ush_restore_file_location_case_sync_restriction',
-    'USH: Limit the location-owned cases that show up in a user\'s restore file',
+    'USH: Limit the location-owned cases in a user\'s restore file, and allow marking whether a '
+    'location can have users assigned or not.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2252210196/Prevent+Syncing+of+Lower+Level+Locations',  # noqa: E501
     description="""
     In the 'Organizational Level' section of location management, web admins can specify which org level to
     expand to when syncing the location-owned cases included in a user's restore file. Limits cases in a user's
-    restore file and thus can improve performance.
+    restore file and thus can improve performance. Also allows marking whether a location can have users assigned
+    to it.
     """
 )
 
@@ -2935,12 +2945,5 @@ SMART_LINKS_FOR_WEB_USERS = StaticToggle(
     slug='smart_links_for_web_users',
     label='USH: Allow web users to use smart links without logging in as before',
     tag=TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
-LOCATION_HAS_USERS = StaticToggle(
-    slug='location_has_users',
-    label='USH Dev: Allows marking whether a location should have users assigned or not.',
-    tag=TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
 )
