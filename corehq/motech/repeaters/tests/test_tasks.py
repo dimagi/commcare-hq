@@ -304,6 +304,8 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
                   return_value=True),
             patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
                   return_value=[]),  # <--
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
+                  return_value=False),  # <--
         ):
             self.assertFalse(next(iter_ready_repeater_ids_forever(), False))
 
@@ -369,7 +371,9 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
             patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
                   return_value=True),
             patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
-                  return_value=['domain2', 'domain3']),  # <--
+                  return_value=['domain2']),  # <--
+            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
+                  side_effect=lambda dom, __: dom == 'domain3'),  # <--
             patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
                   return_value=False),
             patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
@@ -428,8 +432,11 @@ def test_get_repeater_ids_by_domain():
         ),
         patch(
             'corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
-            return_value=['domain2', 'domain3', 'domain4'],
+            return_value=['domain2', 'domain4'],
         ),
+        patch(
+            'corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
+            side_effect=lambda dom, __: dom == 'domain3'),
     ):
         repeater_ids_by_domain = get_repeater_ids_by_domain()
         assert_equal(repeater_ids_by_domain, {
