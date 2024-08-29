@@ -103,7 +103,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
-            postResend($btn, recordId);
+            postResend($btn, {'record_id': recordId});
         });
 
         $('#resend-all-button').on('click', function () {
@@ -116,7 +116,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
-            postOther($btn, recordId, 'cancel');
+            postOther($btn, {'record_id': recordId}, 'cancel');
         });
 
         $('#cancel-all-button').on('click', function () {
@@ -129,7 +129,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
-            postOther($btn, recordId, 'requeue');
+            postOther($btn, {'record_id': recordId}, 'requeue');
         });
 
         $('#requeue-all-button').on('click', function () {
