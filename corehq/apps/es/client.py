@@ -439,8 +439,19 @@ class ElasticManageAdapter(BaseAdapter):
             "conflicts": "proceed"
         }
 
-        # Should be removed after ES 5-6 migration
-        if copy_doc_ids:
+    # Should be removed after ES 5-6 migration
+        if copy_doc_ids and source == const.HQ_USERS_INDEX_NAME:
+            # Remove password from form index
+            reindex_body["script"] = {
+                "lang": "painless",
+                "source": """
+                ctx._source.remove('password');
+                if (!ctx._source.containsKey('doc_id')) {
+                    ctx._source['doc_id'] = ctx._id;
+                }
+                """
+            }
+        elif copy_doc_ids:
             reindex_body["script"] = {
                 "lang": "painless",
                 "source": """
@@ -646,7 +657,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         try:
             result = self._search(query, **kw)
             self._fix_hits_in_result(result)
-            self._report_and_fail_on_shard_failures(result)
+            self._report_and_fail_on_shard_failures(result, {"index": self.canonical_name})
         except ElasticsearchException as exc:
             raise ESError(exc)
         return result
@@ -687,7 +698,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         # TODO: standardize all result collections returned by this class.
         try:
             for result in self._scroll(query, scroll, size):
-                self._report_and_fail_on_shard_failures(result)
+                self._report_and_fail_on_shard_failures(result, {"index": self.canonical_name})
                 self._fix_hits_in_result(result)
                 for hit in result["hits"]["hits"]:
                     yield hit
@@ -991,7 +1002,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             self._fix_hit(hit)
 
     @staticmethod
-    def _report_and_fail_on_shard_failures(result):
+    def _report_and_fail_on_shard_failures(result, tags):
         """
         Raise an ESShardFailure if there are shard failures in a search result
         (JSON) and report to datadog.
@@ -1004,7 +1015,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         if not isinstance(result, dict):
             raise ValueError(f"invalid Elastic result object: {result}")
         if result.get("_shards", {}).get("failed"):
-            metrics_counter("commcare.es.partial_results")
+            metrics_counter("commcare.es.partial_results", tags=tags)
             # Example message:
             #   "_shards: {"successful": 4, "failed": 1, "total": 5}"
             shard_info = json.dumps(result["_shards"])

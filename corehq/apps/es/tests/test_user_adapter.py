@@ -33,6 +33,18 @@ class TestFromPythonInElasticUser(TestCase):
         user_adapter.from_python(self.user.to_json())
         user_adapter.from_python(self.web_user.to_json())
 
+    def test_from_python_removes_password_field(self):
+        user_obj = self.user.to_json()
+        self.assertIn('password', user_obj)
+        user_es_obj = user_adapter.from_python(user_obj)
+        self.assertNotIn('password', user_es_obj)
+
+    def test_from_python_works_fine_if_password_field_not_present(self):
+        user_obj = self.user.to_json()
+        user_obj.pop('password')
+        user_es_obj = user_adapter.from_python(user_obj)
+        self.assertNotIn('password', user_es_obj)
+
     def test_from_python_raises_for_other_objects(self):
         self.assertRaises(TypeError, user_adapter.from_python, set)
 

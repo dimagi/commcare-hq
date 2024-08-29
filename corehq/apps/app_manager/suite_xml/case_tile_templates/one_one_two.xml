@@ -4,7 +4,9 @@
       <locale id="{title_text_id}"/>
     </text>
   </title>
-
+  <variables>
+    {custom_variables}
+  </variables>
   <field>
     <style
         horz-align="left"

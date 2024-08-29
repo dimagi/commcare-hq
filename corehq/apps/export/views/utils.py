@@ -8,7 +8,6 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.generic import View
 
-import pytz
 from memoized import memoized
 
 from dimagi.utils.web import get_url_base, json_response
@@ -55,19 +54,9 @@ from corehq.apps.users.permissions import (
 from corehq.blobs.exceptions import NotFound
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
-from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.timezones.utils import get_timezone
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
-
-
-def get_timezone(domain, couch_user):
-    if not domain:
-        return pytz.utc
-    else:
-        try:
-            return get_timezone_for_user(couch_user, domain)
-        except AttributeError:
-            return get_timezone_for_user(None, domain)
 
 
 def user_can_view_deid_exports(domain, couch_user):
@@ -162,7 +151,7 @@ class DailySavedExportMixin(object):
         )
         instance.is_daily_saved_export = True
 
-        span = datespan_from_beginning(self.domain_object, get_timezone(self.domain, self.request.couch_user))
+        span = datespan_from_beginning(self.domain_object, get_timezone(self.request, self.domain))
         instance.filters.date_period = DatePeriod(
             period_type="since", begin=span.startdate.date()
         )
@@ -335,7 +324,6 @@ class DataFileDownloadList(BaseProjectDataView):
     def get_context_data(self, **kwargs):
         context = super(DataFileDownloadList, self).get_context_data(**kwargs)
         context.update({
-            'timezone': get_timezone_for_user(self.request.couch_user, self.domain),
             'data_files': DataFile.get_all(self.domain),
             'is_admin': can_upload_data_files(self.domain, self.request.couch_user),
             'url_base': get_url_base(),

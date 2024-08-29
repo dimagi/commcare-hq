@@ -3,10 +3,11 @@ from django.utils.translation import gettext as _
 
 from corehq.motech.repeaters.const import (
     RECORD_CANCELLED_STATE,
+    RECORD_EMPTY_STATE,
     RECORD_FAILURE_STATE,
+    RECORD_INVALIDPAYLOAD_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
-    RECORD_EMPTY_STATE,
 )
 from corehq.util.timezones.conversions import ServerTime
 
@@ -28,8 +29,8 @@ class RepeatRecordDisplay:
         return self._format_date(self.record.last_checked)
 
     @property
-    def next_attempt_at(self):
-        return self._format_date(self.record.next_attempt_at)
+    def next_check(self):
+        return self._format_date(self.record.next_check)
 
     @property
     def url(self):
@@ -70,6 +71,9 @@ def _get_state_tuple(record):
     elif record.state == RECORD_EMPTY_STATE:
         label_cls = 'success'
         label_text = _('Empty')
+    elif record.state == RECORD_INVALIDPAYLOAD_STATE:
+        label_cls = 'danger'
+        label_text = _('Invalid Payload')
     else:
         label_cls = ''
         label_text = ''

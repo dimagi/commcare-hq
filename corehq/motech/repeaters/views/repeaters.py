@@ -28,7 +28,7 @@ from ..const import State
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
-    SQLRepeatRecord,
+    RepeatRecord,
     get_all_repeater_types,
 )
 
@@ -53,6 +53,14 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
             for repeater in repeaters:
                 assert not hasattr(repeater, "count_State"), repeater.count_State
                 repeater.count_State = {s.name: state_counts[repeater.id][s] for s in State}
+                repeater.count_State['EmptyOrSuccess'] = (
+                    repeater.count_State[State.Empty.name]
+                    + repeater.count_State[State.Success.name]
+                )
+                repeater.count_State['InvalidOrCancelled'] = (
+                    repeater.count_State[State.InvalidPayload.name]
+                    + repeater.count_State[State.Cancelled.name]
+                )
             return repeaters
 
         return [
@@ -68,7 +76,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        state_counts = SQLRepeatRecord.objects.count_by_repeater_and_state(domain=self.domain)
+        state_counts = RepeatRecord.objects.count_by_repeater_and_state(domain=self.domain)
         return {
             'report': 'repeat_record_report',
             'repeater_types_info': self.get_repeater_types_info(state_counts),

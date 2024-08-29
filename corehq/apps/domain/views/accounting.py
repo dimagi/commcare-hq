@@ -247,7 +247,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 else:
                     days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
-                        'can_renew': days_left <= 30,
+                        'can_renew': days_left <= 90,
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
 
@@ -963,13 +963,10 @@ PlanOption = namedtuple(
 )
 
 
-class SelectPlanView(DomainAccountingSettings):
-    template_name = 'domain/select_plan.html'
-    urlname = 'domain_select_plan'
+class PlanViewBase(DomainAccountingSettings):
     page_title = gettext_lazy("Change Plan")
-    step_title = gettext_lazy("Select Plan")
-    edition = None
     lead_text = gettext_lazy("Please select a plan below that fits your organization's needs.")
+    edition = None
 
     @property
     @memoized
@@ -1060,7 +1057,7 @@ class SelectPlanView(DomainAccountingSettings):
 
     @property
     def main_context(self):
-        context = super(SelectPlanView, self).main_context
+        context = super().main_context
         context.update({
             'steps': self.steps,
             'step_title': self.step_title,
@@ -1104,7 +1101,24 @@ class SelectPlanView(DomainAccountingSettings):
         }
 
 
-class SelectedEnterprisePlanView(SelectPlanView):
+class SelectPlanView(PlanViewBase):
+    template_name = 'domain/select_plan.html'
+    urlname = 'domain_select_plan'
+    step_title = gettext_lazy("Select Plan")
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.can_change_subscription:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def can_change_subscription(self):
+        subscription = self.current_subscription
+        is_annual_plan = subscription.plan_version.plan.is_annual_plan
+        return not is_annual_plan
+
+
+class SelectedEnterprisePlanView(PlanViewBase):
     template_name = 'domain/selected_enterprise_plan.html'
     urlname = 'enterprise_request_quote'
     step_title = gettext_lazy("Contact Dimagi")
@@ -1146,7 +1160,7 @@ class SelectedEnterprisePlanView(SelectPlanView):
         return self.get(request, *args, **kwargs)
 
 
-class SelectedAnnualPlanView(SelectPlanView):
+class SelectedAnnualPlanView(PlanViewBase):
     template_name = 'domain/selected_annual_plan.html'
     urlname = 'annual_plan_request_quote'
     step_title = gettext_lazy("Contact Dimagi")
@@ -1208,7 +1222,7 @@ class SelectedAnnualPlanView(SelectPlanView):
         return self.get(request, *args, **kwargs)
 
 
-class ConfirmSelectedPlanView(SelectPlanView):
+class ConfirmSelectedPlanView(PlanViewBase):
     template_name = 'domain/confirm_plan.html'
     urlname = 'confirm_selected_plan'
 
@@ -1529,7 +1543,7 @@ class SubscriptionMixin(object):
         return subscription
 
 
-class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
+class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
     page_title = gettext_lazy("Renew Plan")
     step_title = gettext_lazy("Renew Plan")
@@ -1541,6 +1555,23 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
             _("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"),
             plan=_(self.current_subscription.plan_version.plan.edition)
         )
+
+    @property
+    def plan_is_self_renewable(self):
+        return self.subscription.plan_version.plan.edition in SoftwarePlanEdition.SELF_RENEWABLE_EDITIONS
+
+    @property
+    def renewal_choices(self):
+        edition = self.subscription.plan_version.plan.edition
+        if not self.plan_is_self_renewable:
+            return {}
+
+        monthly_plan = DefaultProductPlan.get_default_plan_version(
+            edition=edition, is_annual_plan=False)
+        annual_plan = DefaultProductPlan.get_default_plan_version(
+            edition=edition, is_annual_plan=True)
+        return {'monthly_plan': monthly_plan.user_facing_description,
+                'annual_plan': annual_plan.user_facing_description}
 
     @property
     def page_context(self):
@@ -1557,13 +1588,16 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         context.update({
             'current_edition': current_edition,
             'plan': self.subscription.plan_version.user_facing_description,
+            'is_annual_plan': self.subscription.plan_version.plan.is_annual_plan,
+            'is_self_renewable_plan': self.plan_is_self_renewable,
+            'renewal_choices': self.renewal_choices,
             'tile_css': 'tile-{}'.format(current_edition.lower()),
             'is_renewal_page': True,
         })
         return context
 
 
-class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
+class ConfirmSubscriptionRenewalView(PlanViewBase, DomainAccountingSettings,
                                      AsyncHandlerMixin, SubscriptionMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'
@@ -1584,7 +1618,8 @@ class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
     @property
     @memoized
     def next_plan_version(self):
-        plan_version = DefaultProductPlan.get_default_plan_version(self.new_edition)
+        plan_version = DefaultProductPlan.get_default_plan_version(self.new_edition,
+                                                                   is_annual_plan=self.is_annual_plan)
         if plan_version is None:
             try:
                 # needed for sending to sentry
@@ -1625,6 +1660,10 @@ class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
     @property
     def new_edition(self):
         return self.request.POST.get('plan_edition').title()
+
+    @property
+    def is_annual_plan(self):
+        return self.request.POST.get('is_annual_plan', '').lower() == 'true'
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:

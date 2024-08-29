@@ -15,6 +15,8 @@
  *    as well as a minimum length requirment (the length is configurable).
  *  - If any validation is being used, we automatically generate a suggested password that passes validation.
  */
+'use strict';
+
 hqDefine("users/js/mobile_workers",[
     'jquery',
     'knockout',
@@ -79,6 +81,7 @@ hqDefine("users/js/mobile_workers",[
             profiles: initialPageData.get('custom_fields_profiles'),
             profile_slug: initialPageData.get('custom_fields_profile_slug'),
             slugs: initialPageData.get('custom_fields_slugs'),
+            can_edit_original_profile: initialPageData.get('can_edit_original_profile'),
         });
 
         self.email.extend({

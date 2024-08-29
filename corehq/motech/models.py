@@ -51,6 +51,7 @@ class RequestLogEntry:
     response_status: int
     response_headers: dict
     response_body: str
+    duration: int
 
 
 class ConnectionQuerySet(models.QuerySet):
@@ -94,7 +95,7 @@ class ConnectionSettings(models.Model):
         choices=api_auth_settings_choices,
     )
     username = models.CharField(max_length=255, null=True, blank=True)
-    password = models.CharField(max_length=255, blank=True)
+    password = models.CharField(max_length=1023, blank=True)
     # OAuth 2.0 Password Grant needs username, password, client_id & client_secret
     client_id = models.CharField(max_length=255, null=True, blank=True)
     client_secret = models.CharField(max_length=255, blank=True)
@@ -102,6 +103,8 @@ class ConnectionSettings(models.Model):
     token_url = models.CharField(max_length=255, blank=True, null=True)
     refresh_url = models.CharField(max_length=255, blank=True, null=True)
     pass_credentials_in_header = models.BooleanField(default=None, null=True)
+    include_client_id = models.BooleanField(default=None, null=True)
+    scope = models.TextField(null=True, blank=True)
     notify_addresses_str = models.CharField(max_length=255, default="")
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
@@ -203,6 +206,8 @@ class ConnectionSettings(models.Model):
                 token_url=self.token_url,
                 refresh_url=self.refresh_url,
                 pass_credentials_in_header=self.pass_credentials_in_header,
+                include_client_id=self.include_client_id,
+                scope=self.scope or None,
                 connection_settings=self,
             )
 
@@ -225,7 +230,7 @@ class ConnectionSettings(models.Model):
                 self.plaintext_password,
             )
         if self.auth_type == APIKEY_AUTH:
-            return ApiKeyAuthManager(self.plaintext_password)
+            return ApiKeyAuthManager(self.username, self.plaintext_password)
         if self.auth_type == OAUTH2_PWD:
             return OAuth2PasswordGrantManager(
                 self.url,
@@ -236,6 +241,8 @@ class ConnectionSettings(models.Model):
                 token_url=self.token_url,
                 refresh_url=self.refresh_url,
                 pass_credentials_in_header=self.pass_credentials_in_header,
+                include_client_id=self.include_client_id,
+                scope=self.scope or None,
                 connection_settings=self,
             )
         raise ValueError(f'Unknown auth type {self.auth_type!r}')
@@ -279,6 +286,12 @@ class ConnectionSettings(models.Model):
         self.is_deleted = True
         self.save()
 
+    def clear_caches(self):
+        try:
+            del self.used_by
+        except AttributeError:
+            pass
+
 
 class RequestLog(models.Model):
     """
@@ -302,6 +315,7 @@ class RequestLog(models.Model):
     response_status = models.IntegerField(null=True, db_index=True)
     response_headers = jsonfield.JSONField(blank=True, null=True)
     response_body = models.TextField(blank=True, null=True)
+    duration = models.IntegerField(null=True)  # milliseconds
 
     class Meta:
         db_table = 'dhis2_jsonapilog'
@@ -321,4 +335,5 @@ class RequestLog(models.Model):
             response_status=log_entry.response_status,
             response_headers=log_entry.response_headers,
             response_body=as_text(log_entry.response_body)[:MAX_REQUEST_LOG_LENGTH],
+            duration=log_entry.duration,
         )

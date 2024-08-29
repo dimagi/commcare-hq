@@ -105,7 +105,7 @@ def _domain_has_new_fields(domain, field_names):
 def _get_sync_usercase_helper(user, domain, case_type, owner_id, case=None):
     fields = _get_user_case_fields(user, case_type, owner_id, domain)
     case = case or CommCareCase.objects.get_case_by_external_id(domain, user.user_id, case_type)
-    close = user.to_be_deleted() or not user.is_active
+    close = user.to_be_deleted() or not user.is_active or domain not in user.get_domains()
     user_case_helper = _UserCaseHelper(domain, owner_id, user.user_id)
 
     def case_should_be_reopened(case, user_case_should_be_closed):

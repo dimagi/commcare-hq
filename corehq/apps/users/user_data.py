@@ -1,17 +1,24 @@
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from corehq.apps.users.util import user_location_data
 
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.custom_data_fields.models import (
+    COMMCARE_LOCATION_ID,
+    COMMCARE_LOCATION_IDS,
+    COMMCARE_PRIMARY_CASE_SHARING_ID,
     COMMCARE_PROJECT,
     PROFILE_SLUG,
     CustomDataFieldsProfile,
     CustomDataFieldsDefinition,
     is_system_key,
 )
+
+LOCATION_KEYS = {COMMCARE_LOCATION_ID, COMMCARE_LOCATION_IDS, COMMCARE_PRIMARY_CASE_SHARING_ID}
 
 
 class UserDataError(Exception):
@@ -60,16 +67,36 @@ class UserData:
 
     @property
     def _provided_by_system(self):
-        return {
+        provided_data = {
             **(self.profile.fields if self.profile else {}),
             PROFILE_SLUG: self.profile_id or '',
             COMMCARE_PROJECT: self.domain,
         }
 
+        def _add_location_data():
+            if self._couch_user.get_location_id(self.domain):
+                provided_data[COMMCARE_LOCATION_ID] = self._couch_user.get_location_id(self.domain)
+                provided_data[COMMCARE_PRIMARY_CASE_SHARING_ID] = self._couch_user.get_location_id(self.domain)
+
+            if self._couch_user.get_location_ids(self.domain):
+                provided_data[COMMCARE_LOCATION_IDS] = user_location_data(
+                    self._couch_user.get_location_ids(self.domain))
+
+        # Some test don't have an actual user existed
+        # Web User don't store location fields in user data
+        if (self._couch_user or not settings.UNIT_TESTING) and self._couch_user.is_commcare_user():
+            _add_location_data()
+
+        return provided_data
+
+    @property
+    def _system_keys(self):
+        return set(self._provided_by_system.keys()) | LOCATION_KEYS
+
     def to_dict(self):
         return {
             **self._schema_defaults,
-            **self._local_to_user,
+            **{k: v for k, v in self._local_to_user.items() if k not in self._system_keys},
             **self._provided_by_system,
         }
 
@@ -116,7 +143,9 @@ class UserData:
             non_empty_existing_fields = {k for k, v in self._local_to_user.items() if v}
             if set(new_profile.fields).intersection(non_empty_existing_fields):
                 raise UserDataError(_("Profile conflicts with existing data"))
-        self._profile_id = profile_id
+            self._profile_id = profile_id
+        else:
+            self._profile_id = None
 
     @cached_property
     def profile(self):
@@ -160,8 +189,8 @@ class UserData:
         return self.to_dict().get(key, default)
 
     def __setitem__(self, key, value):
-        if key in self._provided_by_system:
-            if value == self._provided_by_system[key]:
+        if key in self._system_keys:
+            if value == self._provided_by_system.get(key, object()):
                 return
             raise UserDataError(_("'{}' cannot be set directly").format(key))
         self._local_to_user[key] = value
@@ -180,21 +209,21 @@ class UserData:
             self.profile_id = profile_id
         for k, v in data.items():
             if k != PROFILE_SLUG:
-                if v or k not in self._provided_by_system:
+                if v or k not in self._system_keys:
                     self[k] = v
         return original != self.to_dict() or original_profile != self.profile_id
 
     def __delitem__(self, key):
-        if key in self._provided_by_system:
+        if key in self._system_keys:
             raise UserDataError(_("{} cannot be deleted").format(key))
         del self._local_to_user[key]
 
     def pop(self, key, default=...):
+        if key in self._system_keys:
+            raise UserDataError(_("{} cannot be deleted").format(key))
         try:
             ret = self._local_to_user[key]
         except KeyError as e:
-            if key in self._provided_by_system:
-                raise UserDataError(_("{} cannot be deleted").format(key)) from e
             if default != ...:
                 return default
             raise e
