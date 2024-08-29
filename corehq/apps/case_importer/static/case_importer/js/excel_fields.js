@@ -30,6 +30,9 @@ hqDefine('case_importer/js/excel_fields', [
                 customCaseField: ko.observable(excelField),
                 isCustom: ko.observable(false),
             };
+            row.hasValue = ko.computed(function () {
+                return row.isCustom() || row.selectedCaseField();
+            });
             row.selectedCaseFieldOrBlank = ko.computed({
                 read: function () {
                     return row.isCustom() ? '' : row.selectedCaseField();
