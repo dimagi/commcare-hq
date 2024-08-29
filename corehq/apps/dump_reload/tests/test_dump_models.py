@@ -85,6 +85,7 @@ IGNORE_MODELS = {
     "pillowtop.KafkaCheckpoint",
     "project_limits.DynamicRateDefinition",
     "project_limits.RateLimitedTwoFactorLog",
+    "project_limits.PillowLagGaugeDefinition",
 
     # 'registry' models only make sense across multiple domains
     "registry.DataRegistry",
