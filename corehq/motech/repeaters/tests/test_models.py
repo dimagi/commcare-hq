@@ -16,7 +16,7 @@ from nose.tools import assert_in
 
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeater_helpers import RepeaterResponse
-from corehq.util.test_utils import _create_case
+from corehq.util.test_utils import _create_case, flag_enabled
 
 from ..const import (
     MAX_ATTEMPTS,
@@ -554,6 +554,25 @@ class TestAttemptForwardNow(RepeaterTestCase):
         self.assert_not_called(retry_process)
 
     def test_fire_synchronously(self, process, retry_process):
+        rec = self.new_record()
+        rec.attempt_forward_now(fire_synchronously=True)
+
+        process.assert_called_once()
+        self.assert_not_called(retry_process)
+
+    @flag_enabled('PROCESS_REPEATERS')
+    def test_process_repeaters_enabled(self, process, retry_process):
+        rec = self.new_record()
+        rec.attempt_forward_now()
+
+        self.assert_not_called(process, retry_process)
+
+    @flag_enabled('PROCESS_REPEATERS')
+    def test_fire_synchronously_process_repeaters_enabled(
+            self,
+            process,
+            retry_process,
+    ):
         rec = self.new_record()
         rec.attempt_forward_now(fire_synchronously=True)
 

@@ -1231,7 +1231,17 @@ class RepeatRecord(models.Model):
             retry_process_datasource_repeat_record,
         )
 
-        if toggles.PROCESS_REPEATERS.enabled(self.domain, toggles.NAMESPACE_DOMAIN):
+        def is_new_synchronous_case_repeater_record():
+            """
+            Repeat record is a new record for a synchronous case repeater
+            See corehq.motech.repeaters.signals.fire_synchronous_case_repeaters
+            """
+            return fire_synchronously and self.state == State.Pending
+
+        if (
+            toggles.PROCESS_REPEATERS.enabled(self.domain, toggles.NAMESPACE_DOMAIN)
+            and not is_new_synchronous_case_repeater_record()
+        ):
             return
 
         if self.next_check is None or self.next_check > datetime.utcnow():
