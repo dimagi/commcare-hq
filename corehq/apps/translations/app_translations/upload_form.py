@@ -89,6 +89,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         for lang in self.langs:
             translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
             assert translation_node.exists()
+            self._modify_default_lang_if_needed(lang, translation_node)
 
             for row in rows:
                 if row['label'] in label_ids_to_skip:
@@ -142,12 +143,13 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             if not trans_el.exists():
                 new_trans_el = copy.deepcopy(template_translation_el.xml)
                 new_trans_el.set('lang', lang)
-                if lang != self.app.langs[0]:
-                    # If the language isn't the default language
-                    new_trans_el.attrib.pop('default', None)
-                else:
-                    new_trans_el.set('default', '')
                 self.itext.xml.append(new_trans_el)
+
+    def _modify_default_lang_if_needed(self, lang, trans_el):
+        if lang != self.app.default_language:
+            trans_el.attrib.pop('default', None)
+        else:
+            trans_el.set('default', '')
 
     def _populate_markdown_stats(self, rows):
         # Aggregate Markdown vetoes, and translations that currently have Markdown
