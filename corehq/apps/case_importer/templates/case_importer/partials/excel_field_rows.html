@@ -58,7 +58,7 @@
         </p>
     </div>
     <!--ko if: caseFieldSuggestions().length-->
-      <p class="help-block text-warning">
+      <p class="help-block text-info">
         <i class="fa fa-question-circle"></i>
         {% blocktrans with '<!--ko foreach: caseFieldSuggestions--><!--ko if: $index() !== 0-->, <!--/ko--><strong data-bind="text: $data"></strong><!--/ko-->' as suggestion %}
           Did you mean "{{ suggestion }}" instead?
