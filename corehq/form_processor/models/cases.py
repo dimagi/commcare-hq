@@ -1386,6 +1386,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def xmlns(self):
         return self.details.get('xmlns', None) if self.details else None
 
+    @property
+    def device_id(self):
+        return self.details.get('device_id', None) if self.details else None
+
     @classmethod
     @memoized
     def case_rebuild_types(cls):
@@ -1476,7 +1480,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
                 server_date=xform.received_on,
                 type=transaction_type,
                 revoked=not xform.is_normal,
-                details=FormSubmissionDetail(xmlns=xform.xmlns).to_json()
+                details=FormSubmissionDetail(xmlns=xform.xmlns, device_id=xform.device_id).to_json()
             )
 
     @classmethod
@@ -1544,6 +1548,7 @@ class CaseTransactionDetail(JsonObject):
 class FormSubmissionDetail(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_FORM
     xmlns = StringProperty()
+    device_id = StringProperty()
 
 
 class RebuildWithReason(CaseTransactionDetail):
