@@ -84,7 +84,7 @@
         <div class="col-md-6">
           <select class="form-control hqwebapp-select2" name="search_column" id="search_column" {% if is_bulk_import %}disabled="disabled"{% endif %}>
             {% for column in columns %}
-              <option value="{{column|escape}}">
+              <option value="{{column|escape}}" {% if column == "caseid" %}selected{% endif %}>
                 {{column|escape}}
               </option>
             {% endfor %}
