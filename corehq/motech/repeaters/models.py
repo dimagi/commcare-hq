@@ -1006,6 +1006,17 @@ class RepeatRecordManager(models.Manager):
     def get_domains_with_records(self):
         return self.order_by().values_list("domain", flat=True).distinct()
 
+    def get_repeat_record_ids(self, domain, repeater_id=None, state=None, payload_id=None):
+        where = models.Q(domain=domain)
+        if repeater_id:
+            where &= models.Q(repeater__id=repeater_id)
+        if state:
+            where &= models.Q(state=state)
+        if payload_id:
+            where &= models.Q(payload_id=payload_id)
+
+        return list(self.filter(where).order_by().values_list("id", flat=True))
+
 
 class RepeatRecord(models.Model):
     domain = models.CharField(max_length=126)
