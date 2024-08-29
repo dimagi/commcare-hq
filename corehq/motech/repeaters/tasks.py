@@ -321,11 +321,15 @@ def get_repeater_lock(repeater_id):
 
 def get_repeater_ids_by_domain():
     repeater_ids_by_domain = Repeater.objects.get_all_ready_ids_by_domain()
-    enabled_domains = set(toggles.PROCESS_REPEATERS.get_enabled_domains())
+    always_enabled_domains = set(toggles.PROCESS_REPEATERS.get_enabled_domains())
     return {
         domain: repeater_ids
         for domain, repeater_ids in repeater_ids_by_domain.items()
-        if domain in enabled_domains
+        if (
+            domain in always_enabled_domains
+            # FeatureRelease toggle: Check whether domain is randomly enabled
+            or toggles.PROCESS_REPEATERS.enabled(domain, toggles.NAMESPACE_DOMAIN)
+        )
     }
 
 
