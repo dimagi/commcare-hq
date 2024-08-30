@@ -5,18 +5,19 @@ from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.form_processor.models import CommCareCase
-from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import create_case
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.utils import (
+    create_case_with_gps_property,
     get_geo_case_property,
     get_geo_user_property,
     set_case_gps_property,
     set_user_gps_property,
-    create_case_with_gps_property,
+    update_cases_owner,
 )
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.tests.utils import create_case
 
 
 class TestGetGeoProperty(TestCase):
@@ -116,3 +117,48 @@ class TestSetGPSProperty(TestCase):
         set_user_gps_property(self.DOMAIN, submit_data)
         user = CommCareUser.get_by_user_id(self.user.user_id, self.DOMAIN)
         self.assertEqual(user.get_user_data(self.DOMAIN)[GPS_POINT_CASE_PROPERTY], '1.23 4.56 0.0 0.0')
+
+
+class TestUpdateCasesOwner(TestCase):
+    domain = 'test-domain'
+
+    def setUp(self):
+        super().setUp()
+        self.user_a = CommCareUser.create(self.domain, 'User_A', '1234', None, None)
+        self.case_1 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_a.user_id)
+        self.case_2 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_a.user_id)
+
+        self.user_b = CommCareUser.create(self.domain, 'User_B', '1234', None, None)
+        self.case_3 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_b.user_id)
+        self.case_4 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_b.user_id)
+
+    def tearDown(self):
+        self.user_a.delete(self.domain, None)
+        self.user_b.delete(self.domain, None)
+        CommCareCase.objects.hard_delete_cases(
+            self.domain,
+            [self.case_1.case_id, self.case_2.case_id, self.case_3.case_id, self.case_4.case_id]
+        )
+        super().tearDown()
+
+    def _refresh_cases(self):
+        self.case_1.refresh_from_db()
+        self.case_2.refresh_from_db()
+        self.case_3.refresh_from_db()
+        self.case_4.refresh_from_db()
+
+    def test_update_cases_owner(self):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_b.user_id,
+            self.case_3.case_id: self.user_a.user_id,
+            self.case_4.case_id: self.user_a.user_id,
+        }
+
+        update_cases_owner(self.domain, case_id_to_owner_id, chunk_size=2)
+
+        self._refresh_cases()
+        assert self.case_1.owner_id == self.user_b.user_id
+        assert self.case_2.owner_id == self.user_b.user_id
+        assert self.case_3.owner_id == self.user_a.user_id
+        assert self.case_4.owner_id == self.user_a.user_id
