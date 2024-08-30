@@ -1,3 +1,4 @@
+import logging
 from json import JSONDecodeError
 
 from django.utils.translation import gettext_lazy as _
@@ -17,6 +18,8 @@ from corehq.motech.repeaters.expression.repeater_generators import (
 from corehq.motech.repeaters.models import OptionValue, Repeater, is_response, is_success_response
 from corehq.toggles import ARCGIS_INTEGRATION, EXPRESSION_REPEATER
 from dimagi.utils.logging import notify_exception
+
+logger = logging.getLogger(__name__)
 
 
 class BaseExpressionRepeater(Repeater):
@@ -139,11 +142,20 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
     def allowed_to_forward(self, payload):
         allowed = super().allowed_to_forward(payload)
         if allowed:
-            # prevent data forwarding loops
-            transaction = CaseTransaction.objects.get_most_recent_form_transaction(payload.case_id)
-            return transaction and not (
-                transaction.xmlns == REPEATER_RESPONSE_XMLNS
-                and transaction.device_id == self.device_id
+            transactions = CaseTransaction.objects.get_last_n_recent_form_transaction(payload.case_id, 2)
+            # last 2 transactions were from repeater updates. This suggests a cycle.
+            possible_cycle = {t.xmlns for t in transactions} == {REPEATER_RESPONSE_XMLNS}
+            if possible_cycle:
+                logger.warning(
+                    f"Possible data forwarding loop detected for case {payload.case_id}. "
+                    f"Transactions: {[t.id for t in transactions]}"
+                )
+                return False
+            last_transaction = transactions[0] if transactions else None
+            return last_transaction and not (
+                # last update was from this repeater, ignore
+                last_transaction.xmlns == REPEATER_RESPONSE_XMLNS
+                and last_transaction.device_id == self.device_id
             )
         return False
 
