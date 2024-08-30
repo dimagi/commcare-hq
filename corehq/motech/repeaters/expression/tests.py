@@ -172,7 +172,7 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
     def test_process_response_filter(self):
         self.factory.create_case(case_type='forward-me')
         repeat_record = self.repeat_records(self.domain).all()[0]
-        self.repeater.update_case_filter_expression = {
+        self.repeater.case_action_filter_expression = {
             "type": "boolean_expression",
             "expression": {
                 "type": "jsonpath",
@@ -193,7 +193,7 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
     def test_process_response(self):
         self.factory.create_case(case_type='forward-me')
         repeat_record = self.repeat_records(self.domain).all()[0]
-        self.repeater.update_case_filter_expression = {
+        self.repeater.case_action_filter_expression = {
             "type": "boolean_expression",
             "expression": {
                 "type": "jsonpath",
@@ -202,7 +202,7 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
             "operator": "eq",
             "property_value": 200,
         }
-        self.repeater.update_case_expression = {
+        self.repeater.case_action_expression = {
             'type': 'dict',
             'properties': {
                 'create': False,

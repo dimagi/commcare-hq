@@ -22,11 +22,11 @@ class AddCaseExpressionRepeaterView(AddRepeaterView):
             self.add_repeater_form.cleaned_data['configured_expression']
         )
         repeater.url_template = self.add_repeater_form.cleaned_data['url_template']
-        repeater.update_case_filter_expression = (
-            self.add_repeater_form.cleaned_data['update_case_filter_expression']
+        repeater.case_action_filter_expression = (
+            self.add_repeater_form.cleaned_data['case_action_filter_expression']
         )
-        repeater.update_case_expression = (
-            self.add_repeater_form.cleaned_data['update_case_expression']
+        repeater.case_action_expression = (
+            self.add_repeater_form.cleaned_data['case_action_expression']
         )
         return repeater
 

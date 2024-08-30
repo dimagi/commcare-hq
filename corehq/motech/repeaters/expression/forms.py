@@ -11,8 +11,8 @@ from corehq.motech.repeaters.forms import GenericRepeaterForm
 
 
 LABELS = {
-    'update_case_filter_expression': _("Response case update filter expression"),
-    'update_case_expression': _("Response case update expression"),
+    'case_action_filter_expression': _("Response case update filter expression"),
+    'case_action_expression': _("Response case update expression"),
 }
 
 
@@ -24,9 +24,9 @@ class CaseExpressionRepeaterForm(GenericRepeaterForm):
         help_text=_("Items to add to the end of the URL. Please see the documentation for more information.")
     )
 
-    update_case_filter_expression = JsonField(
+    case_action_filter_expression = JsonField(
         expected_type=dict, required=False,
-        label=LABELS['update_case_filter_expression'],
+        label=LABELS['case_action_filter_expression'],
         help_text=_(
             "Use this to determine if the response should create or update a case. "
             "If left blank, the response will be ignored. "
@@ -35,9 +35,9 @@ class CaseExpressionRepeaterForm(GenericRepeaterForm):
             '">these docs</a>'
         )
     )
-    update_case_expression = JsonField(
+    case_action_expression = JsonField(
         expected_type=dict, required=False,
-        label=LABELS['update_case_expression'],
+        label=LABELS['case_action_expression'],
         help_text=_(
             "Use this to create a Case API payload which will be used to create or update a case. "
             'For more info see <a target="_blank" href="'
@@ -50,7 +50,7 @@ class CaseExpressionRepeaterForm(GenericRepeaterForm):
         fields = super().get_ordered_crispy_form_fields()
         return fields + [
             'url_template', 'configured_filter', 'configured_expression',
-            'update_case_filter_expression', 'update_case_expression'
+            'case_action_filter_expression', 'case_action_expression'
         ]
 
     def clean_configured_expression(self):
@@ -71,8 +71,8 @@ class CaseExpressionRepeaterForm(GenericRepeaterForm):
 
         return self.cleaned_data['configured_filter']
 
-    def clean_update_case_expression(self):
-        raw = self.cleaned_data.get('update_case_expression')
+    def clean_case_action_expression(self):
+        raw = self.cleaned_data.get('case_action_expression')
         if raw:
             try:
                 ExpressionFactory.from_spec(
@@ -83,8 +83,8 @@ class CaseExpressionRepeaterForm(GenericRepeaterForm):
 
         return raw
 
-    def clean_update_case_filter_expression(self):
-        raw = self.cleaned_data.get('update_case_filter_expression')
+    def clean_case_action_filter_expression(self):
+        raw = self.cleaned_data.get('case_action_filter_expression')
         if raw:
             try:
                 FilterFactory.from_spec(raw)
@@ -95,11 +95,11 @@ class CaseExpressionRepeaterForm(GenericRepeaterForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        case_filter = bool(cleaned_data.get('update_case_filter_expression'))
-        case_operation = bool(cleaned_data.get('update_case_expression'))
+        case_filter = bool(cleaned_data.get('case_action_filter_expression'))
+        case_operation = bool(cleaned_data.get('case_action_expression'))
         if case_filter ^ case_operation:
-            field = 'update_case_expression' if case_filter else 'update_case_filter_expression'
-            other = 'update_case_filter_expression' if case_filter else 'update_case_expression'
+            field = 'case_action_expression' if case_filter else 'case_action_filter_expression'
+            other = 'case_action_filter_expression' if case_filter else 'case_action_expression'
             raise ValidationError({
                 field: _("This field is required when '{other}' is provided").format(
                     other=LABELS[other]

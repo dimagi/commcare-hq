@@ -30,8 +30,8 @@ class BaseExpressionRepeater(Repeater):
     configured_expression = OptionValue(default=dict)
     url_template = OptionValue(default=None)
 
-    update_case_filter_expression = OptionValue(default=dict)
-    update_case_expression = OptionValue(default=dict)
+    case_action_filter_expression = OptionValue(default=dict)
+    case_action_expression = OptionValue(default=dict)
 
     payload_generator_classes = (ExpressionPayloadGenerator,)
 
@@ -47,16 +47,16 @@ class BaseExpressionRepeater(Repeater):
 
     @property
     @memoized
-    def parsed_case_update_filter(self):
+    def parsed_case_action_filter(self):
         return FilterFactory.from_spec(
-            self.update_case_filter_expression, FactoryContext.empty(domain=self.domain)
+            self.case_action_filter_expression, FactoryContext.empty(domain=self.domain)
         )
 
     @property
     @memoized
-    def parsed_case_update_expression(self):
+    def parsed_case_action_expression(self):
         return ExpressionFactory.from_spec(
-            self.update_case_expression, FactoryContext.empty(domain=self.domain)
+            self.case_action_expression, FactoryContext.empty(domain=self.domain)
         )
 
     @classmethod
@@ -87,7 +87,7 @@ class BaseExpressionRepeater(Repeater):
 
     def handle_response(self, response, repeat_record):
         super().handle_response(response, repeat_record)
-        if self.update_case_filter_expression and is_response(response):
+        if self.case_action_filter_expression and is_response(response):
             try:
                 self._process_response_as_case_update(response, repeat_record)
             except Exception as e:
@@ -96,14 +96,14 @@ class BaseExpressionRepeater(Repeater):
     def _process_response_as_case_update(self, response, repeat_record):
         domain = repeat_record.domain
         context = get_evaluation_context(domain, repeat_record, self.payload_doc(repeat_record), response)
-        if not self.parsed_case_update_filter(context.root_doc, context):
+        if not self.parsed_case_action_filter(context.root_doc, context):
             return False
 
         self._perform_case_update(domain, context)
         return True
 
     def _perform_case_update(self, domain, context):
-        data = self.parsed_case_update_expression(context.root_doc, context)
+        data = self.parsed_case_action_expression(context.root_doc, context)
         if data:
             data = data if isinstance(data, list) else [data]
             handle_case_update(
