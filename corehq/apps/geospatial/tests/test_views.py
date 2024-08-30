@@ -739,7 +739,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
 
     @flag_enabled('GEOSPATIAL')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.SYNC_CASES_UPDATE_THRESHOLD', 2)
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.process_as_async')
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView._process_as_async')
     def test_cases_reassignment_async_invocation(self, mocked_process_as_async):
         mocked_process_as_async.return_value = JsonResponse({})
         case_id_to_owner_id = {
