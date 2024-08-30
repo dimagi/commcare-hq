@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.utils.translation import gettext as _
 
 from eulxml.xpath import serialize
@@ -93,6 +95,50 @@ def fuzzy_match(node, context):
     value = unwrap_value(node.args[1], context)
 
     return case_property_query(property_name, value, fuzzy=True)
+
+
+def fuzzy_date(node, context):
+    """fuzzy-match(dob, '2024-12-03')"""
+    confirm_args_count(node, 2)
+    property_name = _property_name_to_string(node.args[0], node)
+    value = unwrap_value(node.args[1], context)
+
+    return case_property_query(property_name, date_permutations(value))
+
+
+def date_permutations(date_str):
+    [year, month, day] = date_str.split('-')
+    decade_flipped = year[:2:] + year[2::][::-1]
+    reverse_month = month[::-1]
+    reverse_day = day[::-1]
+    permutations = [
+        date_str,
+        f"{year}-{day}-{month}",
+        f"{year}-{reverse_month}-{day}",
+        f"{year}-{day}-{reverse_month}",
+        f"{year}-{month}-{reverse_day}",
+        f"{year}-{reverse_day}-{month}",
+        f"{year}-{reverse_month}-{reverse_day}",
+        f"{year}-{reverse_day}-{reverse_month}",
+        f"{decade_flipped}-{month}-{day}",
+        f"{decade_flipped}-{day}-{month}",
+        f"{decade_flipped}-{reverse_month}-{day}",
+        f"{decade_flipped}-{day}-{reverse_month}",
+        f"{decade_flipped}-{month}-{reverse_day}",
+        f"{decade_flipped}-{reverse_day}-{month}",
+        f"{decade_flipped}-{reverse_month}-{reverse_day}",
+        f"{decade_flipped}-{reverse_day}-{reverse_month}"
+    ]
+    valid_permutations = [p for p in permutations if validate_date(p)]
+    return valid_permutations
+
+
+def validate_date(date_text):
+    try:
+        datetime.strptime(date_text, '%Y-%m-%d')  # change the date format if needed
+        return True
+    except ValueError:
+        return False
 
 
 def _property_name_to_string(value, node):
