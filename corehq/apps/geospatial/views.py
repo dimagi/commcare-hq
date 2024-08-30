@@ -458,7 +458,6 @@ class CasesReassignmentView(BaseDomainView):
             )
 
         case_id_to_owner_id = request_data.get('case_id_to_owner_id', {})
-        include_related_cases = request_data.get('include_related_cases')
         if len(case_id_to_owner_id) > self.MAX_REASSIGNMENT_REQUEST_CASES:
             return HttpResponseBadRequest(
                 _("Maximum number of cases that can be reassigned is {limit}").format(
@@ -466,6 +465,7 @@ class CasesReassignmentView(BaseDomainView):
                 )
             )
 
+        include_related_cases = request_data.get('include_related_cases')
         if include_related_cases:
             request_cases_id = list(case_id_to_owner_id.keys())
             parent_to_child_cases_id = self.get_child_cases(domain, request_cases_id)
@@ -489,36 +489,6 @@ class CasesReassignmentView(BaseDomainView):
             return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
         else:
             return self.process_as_async(case_id_to_owner_id)
-
-    def process_as_async(self, case_id_to_owner_id):
-        task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
-        task_existence_helper = CeleryTaskExistenceHelper(task_key)
-
-        if task_existence_helper.is_active():
-            return HttpResponseBadRequest(
-                _('Case reassignment is currently in progress. Please try again later.')
-            )
-
-        geo_cases_reassignment_update_owners.delay(self.domain, case_id_to_owner_id, task_key)
-        task_existence_helper.mark_active()
-        return JsonResponse(
-            {
-                'success': True,
-                'message': _('Case reassignment request has been accepted and will be completed in some time')
-            }
-        )
-
-    def _add_related_case(self, case_id_to_owner_id, case_id, related_case_id):
-        if related_case_id not in case_id_to_owner_id:
-            case_id_to_owner_id[related_case_id] = case_id_to_owner_id[case_id]
-
-    def _format_as_list(self, data):
-        if isinstance(data, dict):
-            data = [data]
-        return data
-
-    def _get_parent_index(self, doc):
-        return next((index for index in doc[INDICES_PATH] if index[IDENTIFIER] == 'parent'), None)
 
     def get_child_cases(self, domain, case_ids):
         case_docs = (
@@ -550,3 +520,33 @@ class CasesReassignmentView(BaseDomainView):
                 if parent_index:
                     child_to_parent_case_id[doc['doc_id']] = parent_index[REFERENCED_ID]
         return child_to_parent_case_id
+
+    def _format_as_list(self, data):
+        if isinstance(data, dict):
+            data = [data]
+        return data
+
+    def _get_parent_index(self, doc):
+        return next((index for index in doc[INDICES_PATH] if index[IDENTIFIER] == 'parent'), None)
+
+    def _add_related_case(self, case_id_to_owner_id, case_id, related_case_id):
+        if related_case_id not in case_id_to_owner_id:
+            case_id_to_owner_id[related_case_id] = case_id_to_owner_id[case_id]
+
+    def process_as_async(self, case_id_to_owner_id):
+        task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
+        task_existence_helper = CeleryTaskExistenceHelper(task_key)
+
+        if task_existence_helper.is_active():
+            return HttpResponseBadRequest(
+                _('Case reassignment is currently in progress. Please try again later.')
+            )
+
+        geo_cases_reassignment_update_owners.delay(self.domain, case_id_to_owner_id, task_key)
+        task_existence_helper.mark_active()
+        return JsonResponse(
+            {
+                'success': True,
+                'message': _('Case reassignment request has been accepted and will be completed in some time')
+            }
+        )
