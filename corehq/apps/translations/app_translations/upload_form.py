@@ -143,6 +143,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             if not trans_el.exists():
                 new_trans_el = copy.deepcopy(template_translation_el.xml)
                 new_trans_el.set('lang', lang)
+                self._update_default_attr_if_needed(new_trans_el, lang)
                 self.itext.xml.append(new_trans_el)
 
     def _update_default_attr_if_needed(self, node, node_lang):
