@@ -1,7 +1,7 @@
 "use strict";
 /**
  *  Handles communication with the google tag manager API.
- *  gtx is the filename because some ad blockers regex *gtm*
+ *  gtx is the filename because some ad blockers blocks 'gtm.js'*
  */
 hqDefine('analytix/js/gtx', [
     'jquery',
