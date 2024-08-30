@@ -120,7 +120,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         """
         Create new nodes if necessary and ensure existing nodes are up to date with the current app config
         """
-        template_node = self._get_template_translation_el()
+        template_node = self._get_template_translation_node()
         for lang in self.langs:
             translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
             if translation_node.exists():
@@ -128,23 +128,24 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             else:
                 self._create_translation_node(template_node, lang)
 
-    def _get_template_translation_el(self):
-        # Make language nodes for each language if they don't yet exist
-        #
+    def _get_template_translation_node(self):
         # Currently operating under the assumption that every xForm has at least
-        # one translation element, that each translation element has a text node
+        # one translation node, that each translation node has a text node
         # for each question and that each text node has a value node under it.
-        # Get a translation element to be used as a template for new elements, preferably of default lang
+        # Get a translation node to be used as a template for new nodes, preferably of default lang
         default_lang = self.app.default_language
-        default_trans_el = self.itext.find("./{f}translation[@lang='%s']" % default_lang)
-        if default_trans_el.exists():
-            return default_trans_el
+        default_node = self.itext.find("./{f}translation[@lang='%s']" % default_lang)
+        if default_node.exists():
+            return default_node
+
+        # If no default node found, fallback to finding any node
         non_default_langs = copy.copy(self.app.langs)
         non_default_langs.remove(default_lang)
         for lang in non_default_langs:
-            trans_el = self.itext.find("./{f}translation[@lang='%s']" % lang)
-            if trans_el.exists():
-                return trans_el
+            translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
+            if translation_node.exists():
+                return translation_node
+
         raise Exception(_("Form has no translation node present to be used as a template."))
 
     def _create_translation_node(self, template, lang):
