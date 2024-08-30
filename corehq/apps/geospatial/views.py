@@ -488,7 +488,7 @@ class CasesReassignmentView(BaseDomainView):
             update_cases_owner(domain, case_id_to_owner_id)
             return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
         else:
-            return self.process_as_async(case_id_to_owner_id)
+            return self._process_as_async(case_id_to_owner_id)
 
     def get_child_cases(self, domain, case_ids):
         case_docs = (
@@ -533,7 +533,7 @@ class CasesReassignmentView(BaseDomainView):
         if related_case_id not in case_id_to_owner_id:
             case_id_to_owner_id[related_case_id] = case_id_to_owner_id[case_id]
 
-    def process_as_async(self, case_id_to_owner_id):
+    def _process_as_async(self, case_id_to_owner_id):
         task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
         task_existence_helper = CeleryTaskExistenceHelper(task_key)
 
