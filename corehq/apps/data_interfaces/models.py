@@ -618,6 +618,8 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
         values = self.get_case_values(case)
         for date_to_check in values:
             date_to_check = _try_date_conversion(date_to_check)
+            if isinstance(date_to_check, datetime):
+                date_to_check = date_to_check.date()
 
             if not isinstance(date_to_check, date):
                 continue

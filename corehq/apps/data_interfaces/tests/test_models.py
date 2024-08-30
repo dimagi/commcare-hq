@@ -144,6 +144,19 @@ class MatchPropertyDefinitionTests(SimpleTestCase):
 
         self.assertFalse(definition.matches(case, datetime(year=2024, month=10, day=1, hour=5)))
 
+    def test_check_days_handles_case_dates_as_strings(self):
+        definition = MatchPropertyDefinition(
+            property_name='test_date',
+            property_value=0,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL
+        )
+
+        case = CommCareCase(case_json={
+            'test_date': '2024-10-01',
+        })
+
+        self.assertTrue(definition.matches(case, datetime(year=2024, month=10, day=1)))
+
 
 class CustomMatchDefinitionTests(SimpleTestCase):
     def test_to_dict_includes_all_fields(self):
