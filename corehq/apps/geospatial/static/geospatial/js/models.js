@@ -1038,7 +1038,7 @@ hqDefine('geospatial/js/models', [
                     if (responseText) {
                         alertUser.alert_user(responseText, 'danger');
                     } else {
-                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger', false, true);
                     }
                 },
             });
