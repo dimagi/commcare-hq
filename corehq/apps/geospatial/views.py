@@ -479,9 +479,9 @@ class CasesReassignmentView(BaseDomainView):
 
         if len(case_id_to_owner_id) > self.ASYNC_CASES_LIMIT:
             return HttpResponseBadRequest(
-                _("Maximum limit for cases to be reassigned including related cases exceeded."
-                  " Please select a lower value to update at time or consider deselecting 'include related cases'."
-                  " Reach out to support if the issue still persists.")
+                _("Case reassignment limit exceeded. Please select fewer cases to update or"
+                  " consider deselecting 'include related cases'."
+                  " Reach out to support for if you still need assistance.")
             )
 
         if len(case_id_to_owner_id) <= self.SYNC_CASES_UPDATE_THRESHOLD:
@@ -496,7 +496,7 @@ class CasesReassignmentView(BaseDomainView):
 
         if task_existence_helper.is_active():
             return HttpResponseBadRequest(
-                _('A case reassignment task is currently in progress. Please try again after some time')
+                _('Case reassignment is currently in progress. Please try again later.')
             )
 
         geo_cases_reassignment_update_owners.delay(self.domain, case_id_to_owner_id, task_key)
