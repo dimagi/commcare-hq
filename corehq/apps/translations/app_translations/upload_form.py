@@ -77,7 +77,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         # Setup
         rows = get_unicode_dicts(rows)
-        self._setup_translation_nodes()
+        self._update_or_create_translation_elements()
         self._populate_markdown_stats(rows)
         self.msgs = []
 
@@ -116,19 +116,19 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         return [(t, _('Error in {sheet}: {msg}').format(sheet=self.sheet_name, msg=m)) for (t, m) in self.msgs]
 
-    def _setup_translation_nodes(self):
+    def _update_or_create_translation_elements(self):
         """
-        Create new nodes if necessary and ensure existing nodes are up to date with the current app config
+        Create new elements if necessary and ensure existing elements are up to date with the current app config
         """
-        template_node = self._get_template_translation_node()
+        template_element = self._get_template_translation_element()
         for lang in self.langs:
-            translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
-            if translation_node.exists():
-                self._update_default_attr_if_needed(translation_node, lang)
+            translation_element = self.itext.find("./{f}translation[@lang='%s']" % lang)
+            if translation_element.exists():
+                self._update_default_attr_if_needed(translation_element, lang)
             else:
-                self._create_translation_node(template_node, lang)
+                self._create_translation_element(template_element, lang)
 
-    def _get_template_translation_node(self):
+    def _get_template_translation_element(self):
         # Currently operating under the assumption that every xForm has at least
         # one translation node, that each translation node has a text node
         # for each question and that each text node has a value node under it.
@@ -148,22 +148,22 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         raise Exception(_("Form has no translation node present to be used as a template."))
 
-    def _create_translation_node(self, template, lang):
-        translation_node = copy.deepcopy(template.xml)
-        translation_node.set('lang', lang)
-        self._update_default_attr_if_needed(translation_node, lang)
-        self.itext.xml.append(translation_node)
+    def _create_translation_element(self, template, lang):
+        translation_element = copy.deepcopy(template.xml)
+        translation_element.set('lang', lang)
+        self._update_default_attr_if_needed(translation_element, lang)
+        self.itext.xml.append(translation_element)
 
-    def _update_default_attr_if_needed(self, node, node_lang):
+    def _update_default_attr_if_needed(self, element, element_lang):
         """
-        A default language is set at both the app and form level (in translation nodes), and it is
-        possible that they can get out of sync. This ensures the translation node in a form is up to date
+        A default language is set at both the app and form level (in translation elements), and it is
+        possible that they can get out of sync. This ensures the translation element in a form is up to date
         with the app's default language.
         """
-        if node_lang != self.app.default_language:
-            node.attrib.pop('default', None)
+        if element_lang != self.app.default_language:
+            element.attrib.pop('default', None)
         else:
-            node.set('default', '')
+            element.set('default', '')
 
     def _populate_markdown_stats(self, rows):
         # Aggregate Markdown vetoes, and translations that currently have Markdown
