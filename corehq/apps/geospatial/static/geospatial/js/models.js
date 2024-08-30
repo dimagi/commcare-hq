@@ -1031,14 +1031,14 @@ hqDefine('geospatial/js/models', [
                     if (!response.success) {
                         return alertUser.alert_user(response.message, 'danger');
                     }
-                    alertUser.alert_user(response.message, 'success', false, true);
+                    alertUser.alert_user(response.message, 'success', append=false, fadeOut=true);
                 },
                 error: function (response) {
                     const responseText = response.responseText;
                     if (responseText) {
                         alertUser.alert_user(responseText, 'danger');
                     } else {
-                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger', append=false, fadeOut=true);
                     }
                 },
             });

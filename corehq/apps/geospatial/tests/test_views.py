@@ -800,7 +800,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode("utf-8"),
-            "A case reassignment task is currently in progress. Please try again after some time"
+            "Case reassignment is currently in progress. Please try again later."
         )
 
     @flag_enabled('GEOSPATIAL')
@@ -823,7 +823,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode("utf-8"),
-            ("Maximum limit for cases to be reassigned including related cases exceeded."
-             " Please select a lower value to update at time or consider deselecting 'include related cases'."
-             " Reach out to support if the issue still persists.")
+            ("Case reassignment limit exceeded. Please select fewer cases to update"
+             " or consider deselecting 'include related cases'."
+             " Reach out to support for if you still need assistance.")
         )
