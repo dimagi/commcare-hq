@@ -40,7 +40,7 @@ class GaugeDefinition(models.Model):
     key = models.CharField(max_length=512, blank=False, null=False, unique=True, db_index=True)
     wait_for_seconds = models.IntegerField(null=False)
     acceptable_value = models.FloatField(default=None, blank=True, null=True)
-    aggregator = models.CharField(max_length=10, null=False, choices=AGGREGATION_OPTIONS)
+    aggregator = models.CharField(max_length=10, null=True, blank=True, choices=AGGREGATION_OPTIONS)
     is_enabled = models.BooleanField(default=True)
 
     class Meta:
