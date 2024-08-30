@@ -98,6 +98,7 @@ def fuzzy_match(node, context):
 
 
 def fuzzy_date(node, context):
+    """fuzzy-match(dob, '2024-12-03')"""
     confirm_args_count(node, 2)
     property_name = _property_name_to_string(node.args[0], node)
     value = unwrap_value(node.args[1], context)
