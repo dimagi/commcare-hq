@@ -89,7 +89,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         for lang in self.langs:
             translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
             assert translation_node.exists()
-            self._modify_default_lang_if_needed(lang, translation_node)
+            self._update_default_attr_if_needed(translation_node, lang)
 
             for row in rows:
                 if row['label'] in label_ids_to_skip:
@@ -145,11 +145,16 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 new_trans_el.set('lang', lang)
                 self.itext.xml.append(new_trans_el)
 
-    def _modify_default_lang_if_needed(self, lang, trans_el):
-        if lang != self.app.default_language:
-            trans_el.attrib.pop('default', None)
+    def _update_default_attr_if_needed(self, node, node_lang):
+        """
+        A default language is set at both the app and form level (in translation nodes), and it is
+        possible that they can get out of sync. This ensures the translation node in a form is up to date
+        with the app's default language.
+        """
+        if node_lang != self.app.default_language:
+            node.attrib.pop('default', None)
         else:
-            trans_el.set('default', '')
+            node.set('default', '')
 
     def _populate_markdown_stats(self, rows):
         # Aggregate Markdown vetoes, and translations that currently have Markdown
