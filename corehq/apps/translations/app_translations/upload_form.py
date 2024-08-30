@@ -77,8 +77,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         # Setup
         rows = get_unicode_dicts(rows)
-        template_translation_el = self._get_template_translation_el()
-        self._add_missing_translation_elements_to_itext(template_translation_el)
+        self._setup_translation_nodes()
         self._populate_markdown_stats(rows)
         self.msgs = []
 
@@ -89,7 +88,6 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         for lang in self.langs:
             translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
             assert translation_node.exists()
-            self._update_default_attr_if_needed(translation_node, lang)
 
             for row in rows:
                 if row['label'] in label_ids_to_skip:
@@ -118,6 +116,18 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         return [(t, _('Error in {sheet}: {msg}').format(sheet=self.sheet_name, msg=m)) for (t, m) in self.msgs]
 
+    def _setup_translation_nodes(self):
+        """
+        Create new nodes if necessary and ensure existing nodes are up to date with the current app config
+        """
+        template_node = self._get_template_translation_el()
+        for lang in self.langs:
+            translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
+            if translation_node.exists():
+                self._update_default_attr_if_needed(translation_node, lang)
+            else:
+                self._create_translation_node(template_node, lang)
+
     def _get_template_translation_el(self):
         # Make language nodes for each language if they don't yet exist
         #
@@ -137,14 +147,11 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 return trans_el
         raise Exception(_("Form has no translation node present to be used as a template."))
 
-    def _add_missing_translation_elements_to_itext(self, template_translation_el):
-        for lang in self.langs:
-            trans_el = self.itext.find("./{f}translation[@lang='%s']" % lang)
-            if not trans_el.exists():
-                new_trans_el = copy.deepcopy(template_translation_el.xml)
-                new_trans_el.set('lang', lang)
-                self._update_default_attr_if_needed(new_trans_el, lang)
-                self.itext.xml.append(new_trans_el)
+    def _create_translation_node(self, template, lang):
+        translation_node = copy.deepcopy(template.xml)
+        translation_node.set('lang', lang)
+        self._update_default_attr_if_needed(translation_node, lang)
+        self.itext.xml.append(translation_node)
 
     def _update_default_attr_if_needed(self, node, node_lang):
         """
