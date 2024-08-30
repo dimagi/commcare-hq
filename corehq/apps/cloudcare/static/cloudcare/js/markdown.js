@@ -140,7 +140,18 @@ hqDefine('cloudcare/js/markdown', [
             // lazy init to avoid dependency order issues
             md = initMd();
         }
-        return md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
+        var rendered = md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"))
+        rendered = appendExtraStyleClass(rendered, '<p>', 'mb-0')
+        rendered = appendExtraStyleClass(rendered, '<h6>', 'mb-0')
+        return rendered
+    }
+
+    function appendExtraStyleClass(htmlString, element, styleClass) {
+        if (htmlString.includes(element)) {
+            var styledElement = element.slice(-(element.length), -1) + ' class="' + styleClass + '"' + element.slice(-1);
+            return htmlString.replace(element, styledElement)
+        }
+        return htmlString
     }
 
     /**
