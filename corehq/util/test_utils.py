@@ -784,19 +784,6 @@ def new_db_connection(alias=DEFAULT_DB_ALIAS):
         yield cn
 
 
-def require_db_context(fn):
-    """
-    Only run 'fn' in DB tests
-    :param fn: a setUpModule or tearDownModule function
-    """
-    @wraps(fn)
-    def inner(*args, **kwargs):
-        from corehq.apps.domain.models import Domain
-        if not isinstance(Domain.get_db(), mock.Mock):
-            return fn(*args, **kwargs)
-    return inner
-
-
 def disable_quickcache(test_case=None):
     """A patch/decorator that disables quickcache
 
