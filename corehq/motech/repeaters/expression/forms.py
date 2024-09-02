@@ -11,8 +11,8 @@ from corehq.motech.repeaters.forms import GenericRepeaterForm
 
 
 LABELS = {
-    'case_action_filter_expression': _("Response case update filter expression"),
-    'case_action_expression': _("Response case update expression"),
+    'case_action_filter_expression': _("Response case action filter expression"),
+    'case_action_expression': _("Response case action expression"),
 }
 
 
@@ -29,7 +29,7 @@ class CaseExpressionRepeaterForm(GenericRepeaterForm):
         label=LABELS['case_action_filter_expression'],
         help_text=_(
             "Use this to determine if the response should create or update a case. "
-            "If left blank, the response will be ignored. "
+            "If left blank, no action will be taken. "
             'For more info see <a target="_blank" href="'
             'https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146602964/Configurable+Repeaters'
             '">these docs</a>'
