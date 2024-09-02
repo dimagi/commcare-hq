@@ -101,7 +101,7 @@ class TagTest(SimpleTestCase):
                 {% extends "requirejs_base.html" %}
                 {% load hq_shared_tags %}
                 {% requirejs_main "requirejs/main" %}
-                {% block content %}{{requirejs_main}}{% endblock %}
+                {% block content %}{% if use_js_bundler %}{{requirejs_main}}{% endif %}{% endblock %}
             """).strip(),
             "requirejs/main after tag\nrequirejs/main",
         )
@@ -112,10 +112,11 @@ class TagTest(SimpleTestCase):
             self.render("""
                 {% load hq_shared_tags %}
                 {% requirejs_main %}
-                {% if requirejs_main %}unexpected truth{% endif %}
+                {% if use_js_bundler %}unexpected truth{% endif %}
+                {% if requirejs_main %}unexpected truth 2{% endif %}
                 {{requirejs_main}}
             """).strip(),
-            "None",
+            "",
         )
 
     def test_requirejs_main_in_context(self):
@@ -165,4 +166,77 @@ class TagTest(SimpleTestCase):
             self.render("""
                 {% load hq_shared_tags %}
                 {% requirejs_main 'x" %}
+            """)
+
+    def test_webpack_main(self):
+        self.assertEqual(
+            self.render("""
+                {% extends "webpack_base.html" %}
+                {% load hq_shared_tags %}
+                {% webpack_main "webpack/main" %}
+                {% block content %}{% if use_js_bundler %}{{webpack_main}}{% endif %}{% endblock %}
+            """).strip(),
+            "webpack/main after tag\nwebpack/main",
+        )
+
+    def test_webpack_main_no_arg(self):
+        # this version can be used in a base template that may or may not use webpack
+        self.assertEqual(
+            self.render("""
+                {% load hq_shared_tags %}
+                {% webpack_main %}
+                {% if use_js_bundler %}unexpected truth{% endif %}
+                {% if webpack_main %}unexpected truth 2{% endif %}
+                {{webpack_main}}
+            """).strip(),
+            "",
+        )
+
+    def test_webpack_main_in_context(self):
+        self.assertEqual(
+            self.render(
+                """
+                {% extends "webpack_base.html" %}
+                {% load hq_shared_tags %}
+                {% webpack_main "webpack/main" %}
+                {% block content %}{{webpack_main}}{% endblock %}
+                """,
+                {"webpack_main": "webpack/context"}
+            ).strip(),
+            "webpack/context before tag\n\n"
+            "webpack/context after tag\n"
+            "webpack/context",
+        )
+
+    def test_webpack_main_multiple_tags(self):
+        msg = r"multiple 'webpack_main' tags not allowed \(\"webpack/two\"\)"
+        with self.assertRaisesRegex(TemplateSyntaxError, msg):
+            self.render("""
+                {% load hq_shared_tags %}
+                {% webpack_main "webpack/one" %}
+                {% webpack_main "webpack/two" %}
+            """)
+
+    def test_webpack_main_too_short(self):
+        msg = r"bad 'webpack_main' argument: '"
+        with self.assertRaisesRegex(TemplateSyntaxError, msg):
+            self.render("""
+                {% load hq_shared_tags %}
+                {% webpack_main ' %}
+            """)
+
+    def test_webpack_main_bad_string(self):
+        msg = r"bad 'webpack_main' argument: \.'"
+        with self.assertRaisesRegex(TemplateSyntaxError, msg):
+            self.render("""
+                {% load hq_shared_tags %}
+                {% webpack_main .' %}
+            """)
+
+    def test_webpack_main_mismatched_delimiter(self):
+        msg = r"bad 'webpack_main' argument: 'x\""
+        with self.assertRaisesRegex(TemplateSyntaxError, msg):
+            self.render("""
+                {% load hq_shared_tags %}
+                {% webpack_main 'x" %}
             """)
