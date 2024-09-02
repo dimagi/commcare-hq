@@ -3679,10 +3679,6 @@ jquery-textchange@jmalonzo/bower-jquery-textchange#0.2.3:
   version "0.0.0"
   resolved "https://codeload.github.com/jmalonzo/bower-jquery-textchange/tar.gz/fd7d7c0ac5116861759cd467135307dc9aab7cdc"
 
-jquery-timeago@rmm5t/jquery-timeago#1.2.0:
-  version "0.0.0"
-  resolved "https://codeload.github.com/rmm5t/jquery-timeago/tar.gz/f2afbeaf787a93f01822d062fc80a571f4ebda48"
-
 jquery-tiny-pubsub@cowboy/jquery-tiny-pubsub#~0.7.0:
   version "0.0.0-ignored"
   resolved "https://codeload.github.com/cowboy/jquery-tiny-pubsub/tar.gz/d9b4a093221f43d1119aac088258c8d0ea2b183b"
