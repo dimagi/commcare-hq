@@ -491,6 +491,10 @@ class CasesReassignmentView(BaseDomainView):
             return self._process_as_async(case_id_to_owner_id)
 
     def get_child_cases(self, domain, case_ids):
+        """
+        For a given list of case_ids, finds their child case_ids
+        and returns a dict with key as the given case_id and value as the list of child case_id.
+        """
         case_docs = (
             CaseSearchES()
             .domain(domain)
@@ -506,6 +510,10 @@ class CasesReassignmentView(BaseDomainView):
         return parent_to_child_cases_id
 
     def get_parent_cases(self, domain, case_ids):
+        """
+        For a given list of case_ids, finds their parent case _id
+        and returns a dict with the key as the given case_id and value as their parent case_id.
+        """
         case_docs = (
             CaseSearchES()
             .domain(domain)
