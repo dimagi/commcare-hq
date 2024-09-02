@@ -41,6 +41,7 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
 
         user = {
             'id': 'user_id',
+            'doc_type': 'CommCareUser',
             'domain': 'champ_cameroon',
             'location_id': 'test_location_id'
         }
