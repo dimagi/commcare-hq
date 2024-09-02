@@ -10,7 +10,6 @@
   background: transparent;
   @include media-breakpoint-up(lg) {
     width: 300px;
-    margin-right: 10px;
   }
   @include media-breakpoint-down(lg) {
     max-width: 600px;
