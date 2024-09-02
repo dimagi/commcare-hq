@@ -159,7 +159,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         if (!appPreview && menuResponse.persistentMenu) {
             FormplayerFrontend.regions.getRegion('persistentMenu').show(
                 views.PersistentMenuView({
-                    collection: _toMenuCommands(menuResponse.persistentMenu, []),
+                    collection: _toMenuCommands(menuResponse.persistentMenu, [], menuResponse.selections),
                 }).render());
         } else {
             FormplayerFrontend.regions.getRegion('persistentMenu').empty();
@@ -170,7 +170,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         }
     };
 
-    var _toMenuCommands = function (menuCommands, priorSelections) {
+    var _toMenuCommands = function (menuCommands, priorSelections, activeSelection) {
         return new Backbone.Collection(_.map(menuCommands, function (menuCommand) {
             const command = _.pick(menuCommand, [
                 'index',
@@ -181,7 +181,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
             ]);
             // Store an array of the commands needed to navigate to each nested menu item
             command.selections = priorSelections.concat([command.index]);
-            command.commands = _toMenuCommands(command.commands, command.selections);
+            if (JSON.stringify(command.selections) === JSON.stringify(activeSelection)) {
+                command.isActiveSelection = true;
+            }
+            command.commands = _toMenuCommands(command.commands, command.selections, activeSelection);
             return new Backbone.Model(command);
         }));
     };

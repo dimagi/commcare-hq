@@ -3493,10 +3493,8 @@ msgid "Assigned User ID"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-#, fuzzy
-#| msgid "Username"
 msgid "Assigned Username"
-msgstr "Nome de usuário"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Assigned User Primary Location"

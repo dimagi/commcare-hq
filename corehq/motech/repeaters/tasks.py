@@ -137,6 +137,24 @@ def retry_process_repeat_record(repeat_record_id, domain):
     _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
+@task(queue=settings.CELERY_REPEAT_RECORD_DATASOURCE_QUEUE)
+def process_datasource_repeat_record(repeat_record_id, domain):
+    """
+    NOTE: Keep separate from retry_process_datasource_repeat_record for monitoring purposes
+    Domain is present here for domain tagging in datadog
+    """
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_DATASOURCE_QUEUE)
+def retry_process_datasource_repeat_record(repeat_record_id, domain):
+    """
+    NOTE: Keep separate from process_datasource_repeat_record for monitoring purposes
+    Domain is present here for domain tagging in datadog
+    """
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
+
+
 def _process_repeat_record(repeat_record):
     request_duration = action = None
     with TimingContext('process_repeat_record') as timer:
