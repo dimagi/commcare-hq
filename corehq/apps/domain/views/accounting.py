@@ -1561,17 +1561,31 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
         return self.subscription.plan_version.plan.edition in SoftwarePlanEdition.SELF_RENEWABLE_EDITIONS
 
     @property
+    @memoized
+    def monthly_plan_version(self):
+        edition = self.subscription.plan_version.plan.edition
+        return DefaultProductPlan.get_default_plan_version(
+            edition=edition, is_annual_plan=False)
+
+    @property
     def renewal_choices(self):
         edition = self.subscription.plan_version.plan.edition
         if not self.plan_is_self_renewable:
             return {}
 
-        monthly_plan = DefaultProductPlan.get_default_plan_version(
-            edition=edition, is_annual_plan=False)
+        monthly_plan = self.monthly_plan_version
         annual_plan = DefaultProductPlan.get_default_plan_version(
             edition=edition, is_annual_plan=True)
         return {'monthly_plan': monthly_plan.user_facing_description,
                 'annual_plan': annual_plan.user_facing_description}
+
+    @property
+    def downgrade_messages(self):
+        downgrades = get_change_status(self.subscription.plan_version, self.monthly_plan_version)[1]
+        downgrade_handler = DomainDowngradeStatusHandler(
+            self.domain_object, self.monthly_plan_version, downgrades,
+        )
+        return downgrade_handler.get_response()
 
     @property
     def page_context(self):
@@ -1591,6 +1605,7 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
             'is_annual_plan': self.subscription.plan_version.plan.is_annual_plan,
             'is_self_renewable_plan': self.plan_is_self_renewable,
             'renewal_choices': self.renewal_choices,
+            'downgrade_messages': self.downgrade_messages,
             'tile_css': 'tile-{}'.format(current_edition.lower()),
             'is_renewal_page': True,
         })
