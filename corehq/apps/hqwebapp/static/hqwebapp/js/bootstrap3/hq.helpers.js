@@ -35,11 +35,6 @@ hqDefine("hqwebapp/js/bootstrap3/hq.helpers", [
         $(this).parents('.alert').hide(150);
     });
 
-    if ($.timeago) {
-        $.timeago.settings.allowFuture = true;
-        $(".timeago").timeago();
-    }
-
     window.onerror = function (message, file, line, col, error) {
         var stack = error ? error.stack : null;
         if (!stack && (
