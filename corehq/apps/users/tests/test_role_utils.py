@@ -135,6 +135,7 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.domain = create_domain(cls.DOMAIN)
         cls.user = WebUser.create("domain1", cls.USERNAME, cls.PASSWORD, None, None)
 
@@ -154,6 +155,7 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
 
         cls.user.delete(deleted_by_domain=cls.domain.name, deleted_by=None)
         cls.domain.delete()
+        super().tearDownClass()
 
     def test_admin_user(self):
         self.user.domain_memberships[0].is_admin = True
