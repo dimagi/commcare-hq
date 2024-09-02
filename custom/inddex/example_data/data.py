@@ -30,13 +30,13 @@ def populate_inddex_domain(domain):
     user = _get_or_create_user(domain)
     _import_cases(domain, user)
     _import_fixtures(domain)
-    _rebuild_datasource(domain)
+    return _rebuild_datasource(domain)
 
 
-def _get_or_create_user(domain):
+def _get_or_create_user(domain, create=True):
     username = format_username('nick', domain)
     user = CommCareUser.get_by_username(username, strict=True)
-    if not user:
+    if not user and create:
         user = CommCareUser.create(domain, username, 'secret', None, None)
     return user
 
@@ -142,3 +142,4 @@ def _rebuild_datasource(domain):
     config_id = StaticDataSourceConfiguration.get_doc_id(
         domain, 'food_consumption_indicators')
     rebuild_indicators(config_id, source='populate_inddex_test_domain')
+    return config_id
