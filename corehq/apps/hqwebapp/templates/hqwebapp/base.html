@@ -428,6 +428,10 @@
       {% endcompress %}
     {% endif %}
 
+    {% if request.use_timeago and not use_js_bundler %}
+      <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
+    {% endif %}
+
     {% if request.use_multiselect and not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>

@@ -165,6 +165,9 @@ hqDefine("reports/js/bootstrap5/reports.async", function () {
 
                     // Assorted UI cleanup/initialization
                     $('.hq-report-time-notice').removeClass('hide');
+                    if ($.timeago) {
+                        $(".timeago").timeago();
+                    }
 
                     $('.loading-backdrop').fadeOut();
                     self.hqLoading.fadeOut();
