@@ -1,11 +1,8 @@
 import datetime
-import json
-import os
 from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.tests.utils import get_data_source_with_repeat
 from corehq.apps.userreports.util import get_indicator_adapter
 
@@ -19,7 +16,8 @@ class RepeatDataSourceTestMixin(object):
         self.config = get_data_source_with_repeat()
 
 
-@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions',
+       MagicMock(return_value=[]))
 class RepeatDataSourceConfigurationTest(RepeatDataSourceTestMixin, SimpleTestCase):
 
     def test_test_doc_matches(self):
@@ -76,6 +74,7 @@ class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
 
     def test_table_population(self):
         adapter = get_indicator_adapter(self.config)
+        self.addCleanup(adapter.drop_table)
         # Delete and create table
         adapter.rebuild_table()
 
