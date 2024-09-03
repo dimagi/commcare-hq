@@ -68,8 +68,7 @@ hqDefine("cloudcare/js/formplayer/spec/user_spec", [
                 assert.deepEqual(user.displayOptions, {
                     phoneMode: undefined, // we don't store this option
                     singleAppMode: undefined,
-                    landingPageAppMode: undefined,
-                    oneQuestionPerScreen: true,
+\                    oneQuestionPerScreen: true,
                     language: 'sindarin',
                 });
             });
