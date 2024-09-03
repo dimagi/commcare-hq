@@ -108,7 +108,7 @@ def fuzzy_date(node, context):
 
 def date_permutations(date_str):
     [year, month, day] = date_str.split('-')
-    decade_flipped = year[:2:] + year[2::][::-1]
+    decade_flipped = year[:2] + year[3] + year[2]
     reverse_month = month[::-1]
     reverse_day = day[::-1]
     permutations = [
