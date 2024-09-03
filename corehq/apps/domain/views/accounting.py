@@ -1118,18 +1118,15 @@ class SelectPlanView(PlanViewBase):
         return not is_annual_plan
 
 
-class SelectedEnterprisePlanView(PlanViewBase):
-    template_name = 'domain/selected_enterprise_plan.html'
-    urlname = 'enterprise_request_quote'
+class ContactFormViewBase(PlanViewBase):
     step_title = gettext_lazy("Contact Dimagi")
-    edition = SoftwarePlanEdition.ENTERPRISE
 
     @property
     def steps(self):
-        last_steps = super(SelectedEnterprisePlanView, self).steps
+        last_steps = super().steps
         last_steps.append({
             'title': _("2. Contact Dimagi"),
-            'url': reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]),
+            'url': reverse(self.urlname, args=[self.domain]),
         })
         return last_steps
 
@@ -1138,9 +1135,22 @@ class SelectedEnterprisePlanView(PlanViewBase):
     def is_not_redirect(self):
         return 'plan_edition' not in self.request.POST
 
+    def post(self, request, *args, **kwargs):
+        if self.is_not_redirect and self.contact_form.is_valid():
+            self.contact_form.send_message()
+            messages.success(request, _("Your request was sent to Dimagi. We will follow up shortly."))
+            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class SelectedEnterprisePlanView(ContactFormViewBase):
+    template_name = 'domain/selected_enterprise_plan.html'
+    urlname = 'enterprise_request_quote'
+    edition = SoftwarePlanEdition.ENTERPRISE
+
     @property
     @memoized
-    def enterprise_contact_form(self):
+    def contact_form(self):
         if self.request.method == 'POST' and self.is_not_redirect:
             return EnterprisePlanContactForm(self.domain, self.request.couch_user, data=self.request.POST)
         return EnterprisePlanContactForm(self.domain, self.request.couch_user)
@@ -1148,31 +1158,13 @@ class SelectedEnterprisePlanView(PlanViewBase):
     @property
     def page_context(self):
         return {
-            'enterprise_contact_form': self.enterprise_contact_form,
+            'enterprise_contact_form': self.contact_form,
         }
 
-    def post(self, request, *args, **kwargs):
-        if self.is_not_redirect and self.enterprise_contact_form.is_valid():
-            self.enterprise_contact_form.send_message()
-            messages.success(request, _("Your request was sent to Dimagi. "
-                                        "We will follow up shortly."))
-            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-        return self.get(request, *args, **kwargs)
 
-
-class SelectedAnnualPlanView(PlanViewBase):
+class SelectedAnnualPlanView(ContactFormViewBase):
     template_name = 'domain/selected_annual_plan.html'
     urlname = 'annual_plan_request_quote'
-    step_title = gettext_lazy("Contact Dimagi")
-
-    @property
-    def steps(self):
-        last_steps = super(SelectedAnnualPlanView, self).steps
-        last_steps.append({
-            'title': _("2. Contact Dimagi"),
-            'url': reverse(SelectedAnnualPlanView.urlname, args=[self.domain]),
-        })
-        return last_steps
 
     @property
     def on_annual_plan(self):
@@ -1180,11 +1172,6 @@ class SelectedAnnualPlanView(PlanViewBase):
             return False
         else:
             return self.current_subscription.plan_version.plan.is_annual_plan
-
-    @property
-    @memoized
-    def is_not_redirect(self):
-        return 'plan_edition' not in self.request.POST
 
     @property
     @memoized
@@ -1198,7 +1185,7 @@ class SelectedAnnualPlanView(PlanViewBase):
 
     @property
     @memoized
-    def annual_plan_contact_form(self):
+    def contact_form(self):
         if self.request.method == 'POST' and self.is_not_redirect:
             return AnnualPlanContactForm(self.domain, self.request.couch_user, self.on_annual_plan,
                                          data=self.request.POST)
@@ -1207,19 +1194,11 @@ class SelectedAnnualPlanView(PlanViewBase):
     @property
     def page_context(self):
         return {
-            'annual_plan_contact_form': self.annual_plan_contact_form,
+            'annual_plan_contact_form': self.contact_form,
             'on_annual_plan': self.on_annual_plan,
             'edition': self.edition,
             'selected_enterprise_plan': self.edition == SoftwarePlanEdition.ENTERPRISE
         }
-
-    def post(self, request, *args, **kwargs):
-        if self.is_not_redirect and self.annual_plan_contact_form.is_valid():
-            self.annual_plan_contact_form.send_message()
-            messages.success(request, _("Your request was sent to Dimagi. "
-                                        "We will try our best to follow up in a timely manner."))
-            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-        return self.get(request, *args, **kwargs)
 
 
 class ConfirmSelectedPlanView(PlanViewBase):
