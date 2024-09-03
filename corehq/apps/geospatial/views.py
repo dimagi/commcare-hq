@@ -41,6 +41,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
 
 from .const import GPS_POINT_CASE_PROPERTY, POLYGON_COLLECTION_GEOJSON_SCHEMA
+from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError
 from .models import GeoConfig, GeoPolygon
 from .utils import (
     CeleryTaskExistenceHelper,
@@ -458,37 +459,52 @@ class CasesReassignmentView(BaseDomainView):
             )
 
         case_id_to_owner_id = request_data.get('case_id_to_owner_id', {})
-        if len(case_id_to_owner_id) > self.REQUEST_CASES_LIMIT:
-            return HttpResponseBadRequest(
-                _("Maximum number of cases that can be reassigned is {limit}").format(
-                    limit=self.REQUEST_CASES_LIMIT
-                )
-            )
-
         include_related_cases = request_data.get('include_related_cases')
-        if include_related_cases:
-            request_cases_id = list(case_id_to_owner_id.keys())
-            parent_to_child_cases_id = self.get_child_cases(domain, request_cases_id)
-            for parent_case_id, child_cases_ids in parent_to_child_cases_id.items():
-                for child_case_id in child_cases_ids:
-                    self._add_related_case(case_id_to_owner_id, parent_case_id, child_case_id)
 
-            child_to_parent_case_id = self.get_parent_cases(domain, request_cases_id)
-            for child_case_id, parent_case_id in child_to_parent_case_id.items():
-                self._add_related_case(case_id_to_owner_id, child_case_id, parent_case_id)
-
-        if len(case_id_to_owner_id) > self.ASYNC_CASES_LIMIT:
-            return HttpResponseBadRequest(
-                _("Case reassignment limit exceeded. Please select fewer cases to update or"
-                  " consider deselecting 'include related cases'."
-                  " Reach out to support for if you still need assistance.")
-            )
+        try:
+            self._validate_request_cases_limit(case_id_to_owner_id)
+            if include_related_cases:
+                case_id_to_owner_id = self._include_related_cases(case_id_to_owner_id)
+        except CaseReassignmentValidationError as error:
+            return HttpResponseBadRequest(error)
 
         if len(case_id_to_owner_id) <= self.ASYNC_CASES_UPDATE_THRESHOLD:
             update_cases_owner(domain, case_id_to_owner_id)
             return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
         else:
             return self._process_as_async(case_id_to_owner_id)
+
+    def _validate_request_cases_limit(self, case_id_to_owner_id):
+        if len(case_id_to_owner_id) > self.REQUEST_CASES_LIMIT:
+            raise CaseReassignmentValidationError(
+                _("Maximum number of cases that can be reassigned is {limit}").format(
+                    limit=self.REQUEST_CASES_LIMIT
+                )
+            )
+
+    def _include_related_cases(self, case_id_to_owner_id):
+        request_cases_id = list(case_id_to_owner_id.keys())
+
+        parent_to_child_cases_id = self.get_child_cases(self.domain, request_cases_id)
+        for parent_case_id, child_cases_ids in parent_to_child_cases_id.items():
+            for child_case_id in child_cases_ids:
+                self._add_related_case(case_id_to_owner_id, parent_case_id, child_case_id)
+        self._validate_assignment_limit(case_id_to_owner_id)
+
+        child_to_parent_case_id = self.get_parent_cases(self.domain, request_cases_id)
+        for child_case_id, parent_case_id in child_to_parent_case_id.items():
+            self._add_related_case(case_id_to_owner_id, child_case_id, parent_case_id)
+        self._validate_assignment_limit(case_id_to_owner_id)
+
+        return case_id_to_owner_id
+
+    def _validate_assignment_limit(self, case_id_to_owner_id):
+        if len(case_id_to_owner_id) > self.ASYNC_CASES_LIMIT:
+            raise CaseReassignmentValidationError(
+                _("Case reassignment limit exceeded. Please select fewer cases to update or"
+                  " consider deselecting 'include related cases'."
+                  " Reach out to support for if you still need assistance.")
+            )
 
     def get_child_cases(self, domain, case_ids):
         """
