@@ -16,7 +16,11 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.models import UCRExpression
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.expression.repeaters import (ArcGISFormExpressionRepeater, CaseExpressionRepeater)
+from corehq.motech.repeaters.expression.repeaters import (
+    CaseExpressionRepeater,
+    ArcGISFormExpressionRepeater,
+    FormExpressionRepeater,
+)
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.util.test_utils import flag_enabled
 
@@ -33,6 +37,8 @@ class MockResponse:
 
 
 class BaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
+    xmlns = 'http://foo.org/bar/123'
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -60,6 +66,20 @@ class BaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
         return RepeatRecord.objects.filter(domain=domain_name, next_check__lt=later)
+
+    def _create_case_block(self, case_id):
+        return CaseBlock(
+            create=True,
+            case_id=case_id,
+            case_type='person',
+            case_name=uuid.uuid4().hex,
+        ).as_text()
+
+    def _create_case(self, xmlns):
+        return self.factory.post_case_blocks(
+            [self._create_case_block(uuid.uuid4().hex)],
+            xmlns=xmlns,
+        )[0]
 
 
 @flag_enabled('EXPRESSION_REPEATER')
@@ -235,9 +255,85 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
         self.assertTrue(self.repeater.allowed_to_forward(case))
 
 
-class ArcGISExpressionRepeaterTest(BaseExpressionRepeaterTest):
+class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
 
-    xmlns = 'http://foo.org/bar/123'
+    xform_xml_template = """<?xml version='1.0' ?>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="{}">
+
+            <meta>
+                <n3:location xmlns:n3="http://commcarehq.org/xforms">1.1 2.2 3.3 4.4</n3:location>
+                <instanceID>{}</instanceID>
+            </meta>
+        {}
+        </data>
+        """
+
+    case_id = uuid.uuid4().hex
+
+    def _create_repeater(self):
+        self.repeater = FormExpressionRepeater(
+            domain=self.domain,
+            connection_settings_id=self.connection.id,
+            configured_filter={
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "xmlns",
+                },
+                "operator": "eq",
+                "property_value": self.xmlns,
+            },
+            configured_expression={
+                "type": "dict",
+                "properties": {
+                    "case_id": {
+                        "type": "property_path",
+                        "property_path": ["form", "case", "@case_id"],
+                    },
+                    "properties": {
+                        "type": "dict",
+                        "properties": {
+                            "meta_gps_point": {
+                                "type": "property_path",
+                                "property_path": ["form", "meta", "location", "#text"],
+                            },
+                        },
+                    },
+                },
+            },
+        )
+        self.repeater.save()
+
+    @property
+    def expected_payload(self):
+        return json.dumps({
+            'case_id': self.case_id,
+            'properties': {
+                'meta_gps_point': '1.1 2.2 3.3 4.4'
+            }
+        })
+
+    def test_filter_forms(self):
+        forwardable_form = self._create_case(self.xmlns)
+        self._create_case(xmlns='http://do-not.org/forward')
+        self.assertEqual(RepeatRecord.objects.filter(domain=self.domain).count(), 1)
+        repeat_records = self.repeat_records(self.domain).all()
+        self.assertEqual(repeat_records[0].payload_id, forwardable_form.form_id)
+
+    def test_payload(self):
+        instance_id = uuid.uuid4().hex
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            instance_id,
+            self._create_case_block(self.case_id),
+        )
+        submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.assertEqual(repeat_record.get_payload(), self.expected_payload)
+
+
+class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
+
     xform_xml_template = """<?xml version='1.0' ?>
         <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="{}">
             <person_name>Timmy</person_name>
@@ -313,37 +409,9 @@ class ArcGISExpressionRepeaterTest(BaseExpressionRepeaterTest):
         )
         self.repeater.save()
 
-    def _create_case_block(self):
-        return CaseBlock(
-            create=True,
-            case_id=uuid.uuid4().hex,
-            case_type='person',
-            case_name=uuid.uuid4().hex,
-        ).as_text()
-
-    def _create_case(self, xmlns):
-        return self.factory.post_case_blocks(
-            [self._create_case_block()],
-            xmlns=xmlns,
-        )[0]
-
-    def test_filter_forms(self):
-        forwardable_form = self._create_case(self.xmlns)
-        self._create_case(xmlns='http://do-not.org/forward')
-        self.assertEqual(RepeatRecord.objects.filter(domain=self.domain).count(), 1)
-        repeat_records = self.repeat_records(self.domain).all()
-        self.assertEqual(repeat_records[0].payload_id, forwardable_form.form_id)
-
-    def test_payload(self):
-        instance_id = uuid.uuid4().hex
-        xform_xml = self.xform_xml_template.format(
-            self.xmlns,
-            instance_id,
-            self._create_case_block(),
-        )
-        submit_form_locally(xform_xml, self.domain)
-        repeat_record = self.repeat_records(self.domain).all()[0]
-        self.assertEqual(repeat_record.get_payload(), {
+    @property
+    def expected_payload(self):
+        return {
             'features': json.dumps([{
                 'attributes': {
                     'name': 'Timmy',
@@ -358,4 +426,4 @@ class ArcGISExpressionRepeaterTest(BaseExpressionRepeaterTest):
             }]),
             'f': 'json',
             'token': ''
-        })
+        }

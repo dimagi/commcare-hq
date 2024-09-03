@@ -1,13 +1,12 @@
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from corehq.motech.repeaters.expression.forms import CaseExpressionRepeaterForm
+from corehq.motech.repeaters.expression.forms import BaseExpressionRepeaterForm
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 
 
-class AddCaseExpressionRepeaterView(AddRepeaterView):
-    urlname = 'add_case_expression_repeater'
-    repeater_form_class = CaseExpressionRepeaterForm
+class BaseExpressionRepeaterView(AddRepeaterView):
+    repeater_form_class = BaseExpressionRepeaterForm
 
     @property
     def page_url(self):
@@ -31,15 +30,28 @@ class AddCaseExpressionRepeaterView(AddRepeaterView):
         return repeater
 
 
-class EditCaseExpressionRepeaterView(EditRepeaterView, AddCaseExpressionRepeaterView):
+class AddCaseExpressionRepeaterView(BaseExpressionRepeaterView):
+    urlname = 'add_case_expression_repeater'
+
+
+class EditCaseExpressionRepeaterView(EditRepeaterView, BaseExpressionRepeaterView):
     urlname = 'edit_case_expression_repeater'
     page_title = _("Edit Case Repeater")
 
 
-class AddArcGISFormExpressionRepeaterView(AddCaseExpressionRepeaterView):
+class AddFormExpressionRepeaterView(BaseExpressionRepeaterView):
+    urlname = 'add_form_expression_repeater'
+
+
+class EditFormExpressionRepeaterView(EditRepeaterView, BaseExpressionRepeaterView):
+    urlname = 'edit_form_expression_repeater'
+    page_title = _('Edit Form Repeater')
+
+
+class AddArcGISFormExpressionRepeaterView(BaseExpressionRepeaterView):
     urlname = 'add_arcgis_form_expression_repeater'
 
 
-class EditArcGISFormExpressionRepeaterView(EditRepeaterView, AddCaseExpressionRepeaterView):
+class EditArcGISFormExpressionRepeaterView(EditRepeaterView, BaseExpressionRepeaterView):
     urlname = 'edit_arcgis_form_expression_repeater'
     page_title = _("Edit ArcGIS Form Repeater")

@@ -1326,13 +1326,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 this.onClickHome();
             }
         },
-        onAttach: function () {
-            // Add class to #cloudcare-main so other elements can offset with CSS
-            FormplayerFrontend.regions.el.classList.add('has-breadcrumbs');
-        },
-        onBeforeDetach: function () {
-            FormplayerFrontend.regions.el.classList.remove('has-breadcrumbs');
-        },
     });
 
     const LanguageOptionView = Marionette.View.extend({
@@ -1506,10 +1499,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
                 imageUri = this.model.get('imageUri'),
-                  icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder', ENTITY_SELECT: 'fa-list-ul'};
+                icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder', ENTITY_SELECT: 'fa-list-ul'};
             return {
                 imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 iconClass: icons[this.model.get('navigationState')] || 'fa-arrow-up-right-from-square',
+                isActive: this.model.get('isActiveSelection'),
             };
         },
         onRender: function () {

@@ -51,7 +51,3 @@ $persistent-menu-image-size: 2rem;
     background-color: darken($cc-bg, 5);
   }
 }
-
-.flex-grow-if-not-empty:not(:empty) {
-  flex-grow: 1;
-}

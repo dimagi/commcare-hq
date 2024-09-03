@@ -11,11 +11,15 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.form_processor.models import CaseTransaction, CommCareCase, XFormInstance
-from corehq.motech.repeaters.expression.repeater_generators import ArcGISFormExpressionPayloadGenerator
+from corehq.motech.repeaters.expression.repeater_generators import (
+    ArcGISFormExpressionPayloadGenerator,
+    FormExpressionPayloadGenerator,
+)
 from corehq.motech.repeaters.expression.repeater_generators import (
     ExpressionPayloadGenerator,
 )
-from corehq.motech.repeaters.models import OptionValue, Repeater, is_response, is_success_response
+from corehq.motech.repeaters.models import OptionValue, Repeater
+from corehq.motech.repeaters.models import is_response, is_success_response
 from corehq.toggles import ARCGIS_INTEGRATION, EXPRESSION_REPEATER
 from dimagi.utils.logging import notify_exception
 
@@ -163,6 +167,7 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
 class FormExpressionRepeater(BaseExpressionRepeater):
 
     friendly_name = _("Configurable Form Repeater")
+    payload_generator_classes = (FormExpressionPayloadGenerator,)
 
     class Meta:
         app_label = 'repeaters'

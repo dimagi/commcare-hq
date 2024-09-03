@@ -96,6 +96,14 @@ button.clickable-icon {
   }
 }
 
+.query-button-container {
+  padding: 8px;
+  text-align: center;
+}
+.query-button-container .btn{
+  width: 48%;
+}
+
 .module-table .module-case-list-header {
   background-color: $cc-brand-low;
   color: white;

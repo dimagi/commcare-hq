@@ -532,7 +532,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
                     'subscriber__domain', flat=True))
 
     def has_enterprise_admin(self, email):
-        return self.is_customer_billing_account and email in self.enterprise_admin_emails
+        lower_emails = [e.lower() for e in self.enterprise_admin_emails]
+        return self.is_customer_billing_account and email.lower() in lower_emails
 
     def update_autopay_user(self, new_user, domain):
         if self.auto_pay_enabled and new_user != self.auto_pay_user:

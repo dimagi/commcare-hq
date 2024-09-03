@@ -16,7 +16,7 @@ LABELS = {
 }
 
 
-class CaseExpressionRepeaterForm(GenericRepeaterForm):
+class BaseExpressionRepeaterForm(GenericRepeaterForm):
     configured_filter = JsonField(expected_type=dict, help_text=help_text.CONFIGURED_FILTER)
     configured_expression = JsonField(expected_type=dict)
     url_template = CharField(
