@@ -41,7 +41,17 @@ class ExpressionPayloadGenerator(BasePayloadGenerator):
         )
 
 
-class ArcGISFormExpressionPayloadGenerator(ExpressionPayloadGenerator):
+class FormExpressionPayloadGenerator(ExpressionPayloadGenerator):
+    def get_payload(self, repeat_record, payload_doc, parsed_expression):
+        result = self._parse_payload(payload_doc, parsed_expression)
+        return json.dumps(result, cls=DjangoJSONEncoder)
+
+    def _parse_payload(self, payload_doc, parsed_expression):
+        payload_doc_json = payload_doc.to_json()
+        return parsed_expression(payload_doc_json, EvaluationContext(payload_doc_json))
+
+
+class ArcGISFormExpressionPayloadGenerator(FormExpressionPayloadGenerator):
 
     def get_url(self, repeat_record, url_template, payload_doc):
         if not (
@@ -55,8 +65,7 @@ class ArcGISFormExpressionPayloadGenerator(ExpressionPayloadGenerator):
         return 'application/x-www-form-urlencoded'
 
     def get_payload(self, repeat_record, payload_doc, parsed_expression):
-        payload_doc_json = payload_doc.to_json()
-        payload = parsed_expression(payload_doc_json, EvaluationContext(payload_doc_json))
+        payload = self._parse_payload(payload_doc, parsed_expression)
         conn_settings = repeat_record.repeater.connection_settings
         api_token = conn_settings.plaintext_password
         formatted_payload = {
