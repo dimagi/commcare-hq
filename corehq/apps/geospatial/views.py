@@ -464,6 +464,7 @@ class CasesReassignmentView(BaseDomainView):
         try:
             self._validate_request_cases_limit(case_id_to_owner_id)
             self._validate_request_case_ids(list(case_id_to_owner_id.keys()))
+            self._validate_request_owner_ids(set(case_id_to_owner_id.values()))
 
             if include_related_cases:
                 case_id_to_owner_id = self._include_related_cases(case_id_to_owner_id)
@@ -490,6 +491,14 @@ class CasesReassignmentView(BaseDomainView):
         if invalid_case_ids:
             raise CaseReassignmentValidationError(
                 _("Following Case ids in request are invalid: {}").format(invalid_case_ids)
+            )
+
+    def _validate_request_owner_ids(self, owner_ids):
+        existing_user_ids = UserES().domain(self.domain).user_ids(owner_ids).get_ids()
+        invalid_owner_ids = list(owner_ids - set(existing_user_ids))
+        if invalid_owner_ids:
+            raise CaseReassignmentValidationError(
+                _("Following Owner ids in request are invalid: {}").format(invalid_owner_ids)
             )
 
     def _include_related_cases(self, case_id_to_owner_id):
