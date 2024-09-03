@@ -120,8 +120,8 @@ hqDefine("locations/js/widgets", [
             },
             templateSelection: function (result) {
                 const fullLengthName = result.text || result.name;
-                const truncatedName = truncateLocationName(fullLengthName, $select);
                 if (toggles.toggleEnabled('LOCATION_FIELD_USER_PROVISIONING')) {
+                    const truncatedName = truncateLocationName(fullLengthName, $select);
                     return truncatedName;
                 } else {
                     return fullLengthName;
