@@ -1,10 +1,10 @@
 ## Product Description
-<!-- For non-invisible changes, describe user-facing effects. -->
+<!-- For non-invisible changes, describe user-facing effects and include screenshots. -->
 
 ## Technical Summary
 <!--
-    Provide a link to the ticket or document which prompted this change,
-    Describe the rationale and design decisions.
+    Provide a link to the ticket, design document, and/or technical specification
+    which prompted this change. Describe the rationale and design decisions.
 -->
 
 ## Feature Flag
