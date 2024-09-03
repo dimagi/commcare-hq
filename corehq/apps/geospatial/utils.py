@@ -171,7 +171,7 @@ def geojson_to_es_geoshape(geojson):
     return es_geoshape
 
 
-def update_cases_owner(domain, case_id_to_owner_id, chunk_size=100):
+def update_cases_owner(domain, case_id_to_owner_id, chunk_size=1):
     for case_ids in chunked(case_id_to_owner_id.keys(), chunk_size):
         case_blocks = []
         for case_id in case_ids:

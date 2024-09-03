@@ -29,7 +29,7 @@ from corehq.apps.es.users import missing_or_empty_user_data_property
 from corehq.apps.geospatial.filters import GPSDataFilter
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
-from corehq.apps.geospatial.tasks import geo_cases_reassignment_update_owners, is_task_invoked_and_not_completed
+from corehq.apps.geospatial.tasks import geo_cases_reassignment_update_owners
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.locations.models import SQLLocation
@@ -43,6 +43,7 @@ from corehq.util.timezones.utils import get_timezone
 from .const import GPS_POINT_CASE_PROPERTY, POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoConfig, GeoPolygon
 from .utils import (
+    CeleryTaskExistenceHelper,
     create_case_with_gps_property,
     get_geo_case_property,
     get_geo_user_property,
@@ -541,13 +542,16 @@ class CasesReassignmentView(BaseDomainView):
             case_id_to_owner_id[related_case_id] = case_id_to_owner_id[case_id]
 
     def _process_as_async(self, case_id_to_owner_id):
-        task_id = f'geo_cases_reassignment_update_owners_{self.domain}'
-        if is_task_invoked_and_not_completed(task_id):
+        task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
+        task_existence_helper = CeleryTaskExistenceHelper(task_key)
+
+        if task_existence_helper.is_active():
             return HttpResponseBadRequest(
                 _('Case reassignment is currently in progress. Please try again later.')
             )
 
-        geo_cases_reassignment_update_owners.apply_async((self.domain, case_id_to_owner_id), task_id=task_id)
+        geo_cases_reassignment_update_owners.apply_async((self.domain, case_id_to_owner_id, task_key))
+        task_existence_helper.mark_active()
         return JsonResponse(
             {
                 'success': True,

@@ -746,7 +746,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             self.case_1.case_id: self.user_b.user_id,
             self.case_2.case_id: self.user_a.user_id,
         }
-
+        # with real_redis_client():
         self.client.post(
             self.endpoint,
             content_type='application/json',
@@ -759,7 +759,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
 
     @flag_enabled('GEOSPATIAL')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.SYNC_CASES_UPDATE_THRESHOLD', 2)
-    @patch('corehq.apps.geospatial.views.is_task_invoked_and_not_completed', return_value=False)
+    @patch('corehq.apps.geospatial.views.CeleryTaskExistenceHelper.is_active', return_value=False)
     def test_cases_reassignment_async(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -781,7 +781,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
 
     @flag_enabled('GEOSPATIAL')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.SYNC_CASES_UPDATE_THRESHOLD', 2)
-    @patch('corehq.apps.geospatial.views.is_task_invoked_and_not_completed', return_value=True)
+    @patch('corehq.apps.geospatial.views.CeleryTaskExistenceHelper.is_active', return_value=True)
     def test_cases_reassignment_async_task_invoked_and_not_completed(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
