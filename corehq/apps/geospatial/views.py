@@ -51,7 +51,7 @@ from .utils import (
     get_lat_lon_from_dict,
     set_case_gps_property,
     set_user_gps_property,
-    update_cases_owner,
+    update_cases_owner, CaseOwnerUpdate,
 )
 from corehq.apps.case_search.const import INDICES_PATH, REFERENCED_ID, IDENTIFIER
 
@@ -463,22 +463,20 @@ class CasesReassignmentView(BaseDomainView):
 
         try:
             self._validate_request_cases_limit(case_id_to_owner_id)
+            self._validate_request_case_ids(list(case_id_to_owner_id.keys()))
+            self._validate_request_owner_ids(set(case_id_to_owner_id.values()))
+
+            case_owner_updates = CaseOwnerUpdate.from_case_to_owner_id_dict(case_id_to_owner_id)
             if include_related_cases:
-                case_id_to_owner_id = self._include_related_cases(case_id_to_owner_id)
+                self._include_related_cases(case_id_to_owner_id, case_owner_updates)
         except ValidationError as error:
             return HttpResponseBadRequest(error)
 
-        if len(case_id_to_owner_id) > self.ASYNC_CASES_LIMIT:
-            return HttpResponseBadRequest(
-                _("Max limit for cases to be reassigned including related cases exceeded."
-                  " Please select a lower value to update at time or reach out to support")
-            )
-
-        if len(case_id_to_owner_id) <= self.SYNC_CASES_UPDATE_THRESHOLD:
-            update_cases_owner(domain, case_id_to_owner_id)
+        if CaseOwnerUpdate.total_cases_count(case_owner_updates) <= self.SYNC_CASES_UPDATE_THRESHOLD:
+            update_cases_owner(domain, CaseOwnerUpdate.to_dict(case_owner_updates))
             return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
         else:
-            return self._process_as_async(case_id_to_owner_id)
+            return self._process_as_async(case_owner_updates)
 
     def _validate_request_cases_limit(self, case_id_to_owner_id):
         if len(case_id_to_owner_id) > self.REQUEST_CASES_LIMIT:
@@ -488,24 +486,34 @@ class CasesReassignmentView(BaseDomainView):
                 )
             )
 
-    def _include_related_cases(self, case_id_to_owner_id):
-        request_cases_id = list(case_id_to_owner_id.keys())
+    def _validate_request_case_ids(self, case_ids):
+        existing_case_ids = CaseSearchES().domain(self.domain).case_ids(case_ids).get_ids()
+        invalid_case_ids = list(set(case_ids) - set(existing_case_ids))
+        if invalid_case_ids:
+            raise ValidationError(_("Following Case ids in request are invalid: {}").format(invalid_case_ids))
 
-        parent_to_child_cases_id = self.get_child_cases(self.domain, request_cases_id)
+    def _validate_request_owner_ids(self, owner_ids):
+        existing_user_ids = UserES().domain(self.domain).user_ids(owner_ids).get_ids()
+        invalid_owner_ids = list(owner_ids - set(existing_user_ids))
+        if invalid_owner_ids:
+            raise ValidationError(_("Following Owner ids in request are invalid: {}").format(invalid_owner_ids))
+
+    def _include_related_cases(self, case_id_to_owner_id, case_owner_updates):
+        request_case_ids = list(case_id_to_owner_id.keys())
+
+        parent_to_child_cases_id = self.get_child_cases(self.domain, request_case_ids)
         for parent_case_id, child_cases_ids in parent_to_child_cases_id.items():
             for child_case_id in child_cases_ids:
-                self._add_related_case(case_id_to_owner_id, parent_case_id, child_case_id)
-        self._validate_assignment_limit(case_id_to_owner_id)
+                self._add_related_case(case_id_to_owner_id, parent_case_id, child_case_id, case_owner_updates)
+        self._validate_assignment_limit(case_owner_updates)
 
-        child_to_parent_case_id = self.get_parent_cases(self.domain, request_cases_id)
+        child_to_parent_case_id = self.get_parent_cases(self.domain, request_case_ids)
         for child_case_id, parent_case_id in child_to_parent_case_id.items():
-            self._add_related_case(case_id_to_owner_id, child_case_id, parent_case_id)
-        self._validate_assignment_limit(case_id_to_owner_id)
+            self._add_related_case(case_id_to_owner_id, child_case_id, parent_case_id, case_owner_updates)
+        self._validate_assignment_limit(case_owner_updates)
 
-        return case_id_to_owner_id
-
-    def _validate_assignment_limit(self, case_id_to_owner_id):
-        if len(case_id_to_owner_id) > self.ASYNC_CASES_LIMIT:
+    def _validate_assignment_limit(self, case_owner_updates):
+        if CaseOwnerUpdate.total_cases_count(case_owner_updates) > self.ASYNC_CASES_LIMIT:
             raise ValidationError(
                 _("Case reassignment limit exceeded. Please select fewer cases to update or"
                   " consider deselecting 'include related cases'."
@@ -559,11 +567,13 @@ class CasesReassignmentView(BaseDomainView):
     def _get_parent_index(self, doc):
         return next((index for index in doc[INDICES_PATH] if index[IDENTIFIER] == 'parent'), None)
 
-    def _add_related_case(self, case_id_to_owner_id, case_id, related_case_id):
+    def _add_related_case(self, case_id_to_owner_id, case_id, related_case_id, case_owner_updates):
         if related_case_id not in case_id_to_owner_id:
-            case_id_to_owner_id[related_case_id] = case_id_to_owner_id[case_id]
+            case_owner_update = next(case_owner_update for case_owner_update in case_owner_updates
+                                     if case_owner_update.case_id == case_id)
+            case_owner_update.related_case_ids.append(related_case_id)
 
-    def _process_as_async(self, case_id_to_owner_id):
+    def _process_as_async(self, case_owner_updates):
         task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
         task_existence_helper = CeleryTaskExistenceHelper(task_key)
 
@@ -572,7 +582,11 @@ class CasesReassignmentView(BaseDomainView):
                 _('Case reassignment is currently in progress. Please try again later.')
             )
 
-        geo_cases_reassignment_update_owners.apply_async((self.domain, case_id_to_owner_id, task_key))
+        geo_cases_reassignment_update_owners.delay(
+            self.domain,
+            CaseOwnerUpdate.to_dict(case_owner_updates),
+            task_key,
+        )
         task_existence_helper.mark_active()
         return JsonResponse(
             {
