@@ -708,7 +708,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
 
     @flag_enabled('GEOSPATIAL')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.MAX_REASSIGNMENT_REQUEST_CASES', 1)
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.REQUEST_CASES_LIMIT', 1)
     def test_cases_reassignment_cases_limit_error(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
