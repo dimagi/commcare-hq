@@ -146,7 +146,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             if translation_element.exists():
                 return translation_element
 
-        raise Exception(_("Form has no translation element present to be used as a template."))
+        raise XFormException(_("Form has no translation element present to be used as a template."))
 
     def _create_translation_element(self, template, lang):
         translation_element = copy.deepcopy(template.xml)
