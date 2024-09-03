@@ -1550,48 +1550,63 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
     template_name = "domain/renew_plan.html"
 
     @property
+    def current_edition(self):
+        return self.current_subscription.plan_version.plan.edition
+
+    @property
     def lead_text(self):
         return format_html(
             _("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"),
-            plan=_(self.current_subscription.plan_version.plan.edition)
+            plan=_(self.current_edition)
         )
 
     @property
     def plan_is_self_renewable(self):
-        return self.subscription.plan_version.plan.edition in SoftwarePlanEdition.SELF_RENEWABLE_EDITIONS
+        return self.current_edition in SoftwarePlanEdition.SELF_RENEWABLE_EDITIONS
+
+    @property
+    @memoized
+    def monthly_plan_version(self):
+        return DefaultProductPlan.get_default_plan_version(
+            edition=self.current_edition, is_annual_plan=False)
 
     @property
     def renewal_choices(self):
-        edition = self.subscription.plan_version.plan.edition
         if not self.plan_is_self_renewable:
             return {}
 
-        monthly_plan = DefaultProductPlan.get_default_plan_version(
-            edition=edition, is_annual_plan=False)
+        monthly_plan = self.monthly_plan_version
         annual_plan = DefaultProductPlan.get_default_plan_version(
-            edition=edition, is_annual_plan=True)
+            edition=self.current_edition, is_annual_plan=True)
         return {'monthly_plan': monthly_plan.user_facing_description,
                 'annual_plan': annual_plan.user_facing_description}
+
+    @property
+    def downgrade_messages(self):
+        downgrades = get_change_status(self.subscription.plan_version, self.monthly_plan_version)[1]
+        downgrade_handler = DomainDowngradeStatusHandler(
+            self.domain_object, self.monthly_plan_version, downgrades,
+        )
+        return downgrade_handler.get_response()
 
     @property
     def page_context(self):
         context = super(SubscriptionRenewalView, self).page_context
 
-        current_edition = self.subscription.plan_version.plan.edition
-
-        if current_edition in [
+        if self.current_edition in [
             SoftwarePlanEdition.COMMUNITY,
             SoftwarePlanEdition.PAUSED,
         ]:
             raise Http404()
 
         context.update({
-            'current_edition': current_edition,
+            'current_edition': self.current_edition,
             'plan': self.subscription.plan_version.user_facing_description,
             'is_annual_plan': self.subscription.plan_version.plan.is_annual_plan,
             'is_self_renewable_plan': self.plan_is_self_renewable,
             'renewal_choices': self.renewal_choices,
-            'tile_css': 'tile-{}'.format(current_edition.lower()),
+            'downgrade_messages': self.downgrade_messages,
+            'tile_css': 'tile-{}'.format(self.current_edition.lower()),
             'is_renewal_page': True,
         })
         return context
