@@ -15,7 +15,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
@@ -536,8 +536,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
             )
         ]
-        loc_flag_enabled = toggles.LOCATION_FIELD_USER_PROVISIONING.enabled(domain, toggles.NAMESPACE_DOMAIN)
-        if should_show_location and loc_flag_enabled:
+        if should_show_location:
             fields.append(
                 crispy.Fieldset(
                     gettext("Location Settings"),
