@@ -16,7 +16,12 @@ hqDefine("locations/js/widgets", [
         _.each($source.select2('data'), function (result) {
             const fullLengthName = result.text || result.name;
             const truncatedName = truncateLocationName(fullLengthName, $select);
-            var $option = new Option(truncatedName, result.id);
+            let $option;
+            if (toggles.toggleEnabled('LOCATION_FIELD_USER_PROVISIONING')) {
+                $option = new Option(truncatedName, result.id);
+            } else {
+                $option = new Option(fullLengthName, result.id);
+            }
             $option.setAttribute('title', result.title);
             $select.append($option);
         });
@@ -116,7 +121,11 @@ hqDefine("locations/js/widgets", [
             templateSelection: function (result) {
                 const fullLengthName = result.text || result.name;
                 const truncatedName = truncateLocationName(fullLengthName, $select);
-                return truncatedName;
+                if (toggles.toggleEnabled('LOCATION_FIELD_USER_PROVISIONING')) {
+                    return truncatedName;
+                } else {
+                    return fullLengthName;
+                }
             },
         });
 
