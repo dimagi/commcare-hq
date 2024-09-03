@@ -356,7 +356,11 @@
   values:
     - ['org.commcare.dalvik.reminders', 'CommCare Reminders']
     - ['callout.commcare.org.sendussd', 'CommCare USSD']
-    - ['org.commcare.dalvik.abha', 'CommCare ABHA']
+    - ['com.dimagi.biometric', 'Biometrics Capture']
+    - ['org.rdtoolkit', 'CommCare Toolkit']
+    - ['richard.chard.lu.android.areamapper', 'Area Calculator for CommCare']
+    - ['org.commcare.respiratory', 'Breath Counter']
+    - ['com.simprints.id', 'Simprints ID']
   default: []  # multiSelect default takes a list
-  since: '2.53'
+  since: '2.54'
   force: true
