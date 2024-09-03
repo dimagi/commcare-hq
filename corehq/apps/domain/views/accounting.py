@@ -963,13 +963,10 @@ PlanOption = namedtuple(
 )
 
 
-class SelectPlanView(DomainAccountingSettings):
-    template_name = 'domain/select_plan.html'
-    urlname = 'domain_select_plan'
+class PlanViewBase(DomainAccountingSettings):
     page_title = gettext_lazy("Change Plan")
-    step_title = gettext_lazy("Select Plan")
-    edition = None
     lead_text = gettext_lazy("Please select a plan below that fits your organization's needs.")
+    edition = None
 
     @property
     @memoized
@@ -1060,7 +1057,7 @@ class SelectPlanView(DomainAccountingSettings):
 
     @property
     def main_context(self):
-        context = super(SelectPlanView, self).main_context
+        context = super().main_context
         context.update({
             'steps': self.steps,
             'step_title': self.step_title,
@@ -1104,7 +1101,24 @@ class SelectPlanView(DomainAccountingSettings):
         }
 
 
-class SelectedEnterprisePlanView(SelectPlanView):
+class SelectPlanView(PlanViewBase):
+    template_name = 'domain/select_plan.html'
+    urlname = 'domain_select_plan'
+    step_title = gettext_lazy("Select Plan")
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.can_change_subscription:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def can_change_subscription(self):
+        subscription = self.current_subscription
+        is_annual_plan = subscription.plan_version.plan.is_annual_plan
+        return not is_annual_plan
+
+
+class SelectedEnterprisePlanView(PlanViewBase):
     template_name = 'domain/selected_enterprise_plan.html'
     urlname = 'enterprise_request_quote'
     step_title = gettext_lazy("Contact Dimagi")
@@ -1146,7 +1160,7 @@ class SelectedEnterprisePlanView(SelectPlanView):
         return self.get(request, *args, **kwargs)
 
 
-class SelectedAnnualPlanView(SelectPlanView):
+class SelectedAnnualPlanView(PlanViewBase):
     template_name = 'domain/selected_annual_plan.html'
     urlname = 'annual_plan_request_quote'
     step_title = gettext_lazy("Contact Dimagi")
@@ -1208,7 +1222,7 @@ class SelectedAnnualPlanView(SelectPlanView):
         return self.get(request, *args, **kwargs)
 
 
-class ConfirmSelectedPlanView(SelectPlanView):
+class ConfirmSelectedPlanView(PlanViewBase):
     template_name = 'domain/confirm_plan.html'
     urlname = 'confirm_selected_plan'
 
@@ -1529,7 +1543,7 @@ class SubscriptionMixin(object):
         return subscription
 
 
-class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
+class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
     page_title = gettext_lazy("Renew Plan")
     step_title = gettext_lazy("Renew Plan")
@@ -1583,7 +1597,7 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         return context
 
 
-class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
+class ConfirmSubscriptionRenewalView(PlanViewBase, DomainAccountingSettings,
                                      AsyncHandlerMixin, SubscriptionMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'

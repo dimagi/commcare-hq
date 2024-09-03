@@ -55,10 +55,23 @@
       </p>
       <p data-bind="visible: sample, text: sample">
       </p>
-      <p data-bind="visible: rows.length">
-        <span>{% trans "Row(s):" %}</span>
-        <span data-bind="text: rows.join(', ')"></span>
-      </p>
+      <div data-bind="visible: rows.length">
+        <button type="button"
+                class="btn btn-outline-primary btn-sm"
+                data-bs-toggle="collapse"
+                data-bind="attr: {
+                  'data-bs-target': '#rowDetailsCollapse-' + $index(),
+                  'aria-controls': 'rowDetailsCollapse-' + $index()
+                }"
+                aria-expanded="false">
+          {% trans "Toggle Affected Row(s)" %}
+        </button>
+        <div class="collapse"
+             data-bind="attr: { id: 'rowDetailsCollapse-' + $index() }">
+          <div class="card card-body mt-3"
+               data-bind="text: rows.join(', ')"></div>
+        </div>
+      </div>
     </li>
     <!--/ko-->
     <!--/ko-->

@@ -137,8 +137,26 @@ def retry_process_repeat_record(repeat_record_id, domain):
     _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
+@task(queue=settings.CELERY_REPEAT_RECORD_DATASOURCE_QUEUE)
+def process_datasource_repeat_record(repeat_record_id, domain):
+    """
+    NOTE: Keep separate from retry_process_datasource_repeat_record for monitoring purposes
+    Domain is present here for domain tagging in datadog
+    """
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_DATASOURCE_QUEUE)
+def retry_process_datasource_repeat_record(repeat_record_id, domain):
+    """
+    NOTE: Keep separate from process_datasource_repeat_record for monitoring purposes
+    Domain is present here for domain tagging in datadog
+    """
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
+
+
 def _process_repeat_record(repeat_record):
-    request_duration = None
+    request_duration = action = None
     with TimingContext('process_repeat_record') as timer:
         if repeat_record.state == State.Cancelled:
             return
@@ -163,13 +181,13 @@ def _process_repeat_record(repeat_record):
                 # clogging the queue
                 repeat_record.postpone_by(MAX_RETRY_WAIT)
                 action = 'paused'
-            elif rate_limit_repeater(repeat_record.domain):
+            elif rate_limit_repeater(repeat_record.domain, repeat_record.repeater.repeater_id):
                 # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
                 # with the intent of avoiding clumping and spreading load
                 repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
                 action = 'rate_limited'
             elif repeat_record.is_queued():
-                report_repeater_attempt(repeat_record.domain)
+                report_repeater_attempt(repeat_record.repeater.repeater_id)
                 with timer('fire_timing') as fire_timer:
                     repeat_record.fire(timing_context=fire_timer)
                 # round up to the nearest millisecond, meaning always at least 1ms
@@ -182,18 +200,19 @@ def _process_repeat_record(repeat_record):
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return
 
-    processing_time = timer.duration - request_duration if request_duration else timer.duration
-    metrics_histogram(
-        'commcare.repeaters.repeat_record_processing.timing',
-        processing_time * 1000,
-        buckets=(100, 500, 1000, 5000),
-        bucket_tag='duration',
-        bucket_unit='ms',
-        tags={
-            'domain': repeat_record.domain,
-            'action': action,
-        },
-    )
+    if action:
+        processing_time = timer.duration - request_duration if request_duration else timer.duration
+        metrics_histogram(
+            'commcare.repeaters.repeat_record_processing.timing',
+            processing_time * 1000,
+            buckets=(100, 500, 1000, 5000),
+            bucket_tag='duration',
+            bucket_unit='ms',
+            tags={
+                'domain': repeat_record.domain,
+                'action': action,
+            },
+        )
 
 
 metrics_gauge_task(

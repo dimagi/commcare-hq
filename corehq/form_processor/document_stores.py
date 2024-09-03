@@ -60,10 +60,20 @@ class CaseDocumentStore(DocumentStore):
         self.domain = domain
         self.case_type = case_type
 
-    def get_document(self, doc_id):
+    def get_document(self, doc_id, *, external_id=None):
         try:
-            return CommCareCase.objects.get_case(doc_id, self.domain).to_json()
-        except CaseNotFound as e:
+            if external_id is None:
+                return CommCareCase.objects.get_case(doc_id, self.domain).to_json()
+            else:
+                case = CommCareCase.objects.get_case_by_external_id(
+                    self.domain,
+                    external_id,
+                    raise_multiple=True
+                )
+                if case:
+                    return case.to_json()
+                raise CaseNotFound(f"external_id: '{external_id}'")
+        except (CaseNotFound, CommCareCase.MultipleObjectsReturned) as e:
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self):
@@ -112,9 +122,9 @@ class DocStoreLoadTracker(object):
         self.store = store
         self.track_load = track_load
 
-    def get_document(self, doc_id):
+    def get_document(self, doc_id, *args, **kwargs):
         self.track_load()
-        return self.store.get_document(doc_id)
+        return self.store.get_document(doc_id, *args, **kwargs)
 
     def iter_documents(self, ids):
         for doc in self.store.iter_documents(ids):

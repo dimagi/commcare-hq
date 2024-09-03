@@ -19,6 +19,9 @@ import urllib3
 
 import attr
 import gevent
+
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import (
     get_kafka_client,
@@ -78,9 +81,7 @@ def check_all_rabbitmq():
         return ServiceStatus(True, 'RabbitMQ OK')
 
     else:
-        return ServiceStatus(False, '; '.join(['{}:{}'.format(rabbit[0], rabbit[1])
-                                        for rabbit in unwell_rabbits])
-                      )
+        return ServiceStatus(False, "; ".join(["{}:{}".format(rabbit[0], rabbit[1]) for rabbit in unwell_rabbits]))
 
 
 def check_rabbitmq(broker_url):
@@ -123,7 +124,12 @@ def check_kafka():
 
 @change_log_level('urllib3.connectionpool', logging.WARNING)
 def check_elasticsearch():
-    cluster_health = check_es_cluster_health()
+    try:
+        cluster_health = check_es_cluster_health()
+    except Exception:
+        notify_exception(None, message="Error while checking elasticsearch cluster health")
+        return ServiceStatus(False, "Something went wrong checking cluster health")
+
     if cluster_health == 'red':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
@@ -176,8 +182,9 @@ def check_celery():
                     bad_queues.append(
                         f"{queue} has been blocked for {blockage_duration} (max allowed is {threshold})"
                     )
-                elif (heartbeat_time_to_start is not None and
-                      heartbeat_time_to_start > max(threshold, datetime.timedelta(minutes=5))):
+                elif heartbeat_time_to_start is not None and heartbeat_time_to_start > max(
+                    threshold, datetime.timedelta(minutes=5)
+                ):
                     bad_queues.append(
                         f"{queue} is delayed for {heartbeat_time_to_start} (max allowed is {threshold})"
                     )
@@ -194,7 +201,7 @@ def check_postgres():
     for db in settings.DATABASES:
         db_conn = connections[db]
         try:
-            c = db_conn.cursor()
+            db_conn.cursor()
             c_status = 'OK'
         except OperationalError:
             c_status = 'FAIL'

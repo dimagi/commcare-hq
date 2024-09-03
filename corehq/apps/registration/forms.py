@@ -513,7 +513,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
                 self.fields['program'].choices = choices
 
-        self.excluded_emails = excluded_emails or []
+        self.excluded_emails = [x.lower() for x in excluded_emails] if excluded_emails else []
 
         if self.can_edit_tableau_config:
             self._initialize_tableau_fields(data, domain)
@@ -589,7 +589,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
-        if email in self.excluded_emails:
+        if email.lower() in self.excluded_emails:
             raise forms.ValidationError(_("A user with this email address is already in "
                                           "this project or has a pending invitation."))
         return email
