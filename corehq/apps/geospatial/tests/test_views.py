@@ -760,6 +760,27 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         )
 
     @flag_enabled('GEOSPATIAL')
+    def test_cases_reassignment_cases_invalid_owner_ids(self, *args):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: 'invalid-owner-id',
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+            }
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            "Following Owner ids in request are invalid: {}".format(['invalid-owner-id'])
+        )
+
+    @flag_enabled('GEOSPATIAL')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
     @patch('corehq.apps.geospatial.views.CasesReassignmentView._process_as_async')
     def test_cases_reassignment_async_invocation(self, mocked_process_as_async):
