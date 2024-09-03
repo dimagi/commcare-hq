@@ -9,5 +9,3 @@ def geo_cases_reassignment_update_owners(domain, case_id_to_owner_id, task_key):
     finally:
         task_existence_helper = CeleryTaskExistenceHelper(task_key)
         task_existence_helper.mark_inactive()
-
-

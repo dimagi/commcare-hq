@@ -1,17 +1,18 @@
+from dataclasses import asdict, dataclass, field
+
 import jsonschema
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.const import ONE_DAY
 from couchforms.geopoint import GeoPoint
-from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
+from corehq.const import ONE_DAY
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 
 @quickcache(['domain'], timeout=24 * 60 * 60)
@@ -171,15 +172,41 @@ def geojson_to_es_geoshape(geojson):
     return es_geoshape
 
 
-def update_cases_owner(domain, case_id_to_owner_id, chunk_size=100):
-    for case_ids in chunked(case_id_to_owner_id.keys(), chunk_size):
+@dataclass
+class CaseOwnerUpdate:
+    case_id: str
+    owner_id: str
+    related_case_ids: list = field(default_factory=list)
+
+    @classmethod
+    def from_case_to_owner_id_dict(cls, case_to_owner_id):
+        result = []
+        for case_id, owner_id in case_to_owner_id.items():
+            result.append(cls(case_id=case_id, owner_id=owner_id))
+        return result
+
+    @classmethod
+    def total_cases_count(cls, case_owner_updates):
+        count = len(case_owner_updates)
+        for case_owner_update in case_owner_updates:
+            count += len(case_owner_update.related_case_ids)
+        return count
+
+    @classmethod
+    def to_dict(cls, case_owner_updates):
+        return [asdict(obj) for obj in case_owner_updates]
+
+
+def update_cases_owner(domain, case_owner_updates_dict):
+    for case_owner_update in case_owner_updates_dict:
         case_blocks = []
-        for case_id in case_ids:
+        cases_to_updates = [case_owner_update['case_id']] + case_owner_update['related_case_ids']
+        for case_id in cases_to_updates:
             case_blocks.append(
                 CaseBlock(
                     create=False,
                     case_id=case_id,
-                    owner_id=case_id_to_owner_id[case_id]
+                    owner_id=case_owner_update['owner_id']
                 ).as_text()
             )
         submit_case_blocks(
