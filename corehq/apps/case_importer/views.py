@@ -32,6 +32,7 @@ from corehq.apps.case_importer.extension_points import (
 )
 from corehq.apps.case_importer.suggested_fields import (
     get_suggested_case_fields,
+    get_non_discoverable_system_properties,
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import (
@@ -372,6 +373,7 @@ def excel_fields(request, domain):
         'columns': columns,
         'excel_fields': excel_fields,
         'case_field_specs': case_field_specs,
+        'system_fields': get_non_discoverable_system_properties(),
         'domain': domain,
         'mirroring_enabled': mirroring_enabled,
         'is_bulk_import': request.POST.get('is_bulk_import', 'False') == 'True',
