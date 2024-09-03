@@ -73,11 +73,11 @@
             {% if request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
                 <i class="fa-regular fa-trash-can"></i>
-                {% trans "Bulk Delete Users" %}
+                {% trans "Bulk Delete Mobile Workers" %}
               </a>
               <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
                 <i class="fa fa-search"></i>
-                {% trans "Bulk Lookup of Users" %}
+                {% trans "Bulk Lookup of Mobile Workers" %}
               </a>
             {% endif %}
           {% endif %}
