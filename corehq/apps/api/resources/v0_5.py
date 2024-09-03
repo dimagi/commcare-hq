@@ -1380,7 +1380,7 @@ def get_datasource_data(request, config_id, domain):
     return JsonResponse(data)
 
 
-class CommCareAnalyticsAccessResource(v0_1.UserResource):
+class CommCareAnalyticsUserResource(v0_1.UserResource):
 
     roles = fields.ListField()
     permissions = fields.DictField()
