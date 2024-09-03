@@ -78,6 +78,7 @@ API_LIST = (
         fixtures.v0_1.LookupTableResource,
         fixtures.v0_1.LookupTableItemResource,
         v0_5.NavigationEventAuditResource,
+        v0_5.CommCareAnalyticsAccessResource,
     )),
     ((0, 6), (
         locations.v0_6.LocationResource,
@@ -132,7 +133,6 @@ def api_url_patterns():
 
     yield path('case/custom/<slug:api_id>/', generic_inbound_api, name="generic_inbound_api")
     yield url(r'v0.5/ucr/', v0_5.get_ucr_data, name="api_get_ucr_data")
-    yield url(r'v0.5/cca-roles/', v0_5.get_cca_user_roles, name="api_commcare_analytics_user_roles")
 
 
 urlpatterns = list(api_url_patterns())

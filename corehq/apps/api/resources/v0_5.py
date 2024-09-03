@@ -26,7 +26,6 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
 
 import pytz
 from memoized import memoized_property
@@ -58,6 +57,7 @@ from corehq.apps.api.resources.auth import (
     LoginAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
+    LoginAndDomainAuthentication,
 )
 from corehq.apps.api.resources.messaging_event.utils import get_request_params
 from corehq.apps.api.resources.meta import (
@@ -1380,17 +1380,38 @@ def get_datasource_data(request, config_id, domain):
     return JsonResponse(data)
 
 
-@require_GET
-@api_auth()
-@requires_privilege_with_fallback(privileges.API_ACCESS)
-@api_throttle
-def get_cca_user_roles(request, domain):
-    if not toggles.SUPERSET_ANALYTICS.enabled(domain):
-        return HttpResponseForbidden(
-            _("This domain requires the superset-analytics flag to access this endpoint.")
-        )
+class CommCareAnalyticsAccessResource(v0_1.UserResource):
 
-    try:
-        return JsonResponse(get_commcare_analytics_access_for_user_domain(request.couch_user, domain))
-    except BadRequest as e:
-        return JsonResponse({'error': str(e)}, status=400)
+    roles = fields.ListField()
+    permissions = fields.DictField()
+
+    class Meta(v0_1.UserResource.Meta):
+        authentication = LoginAndDomainAuthentication()
+        object_class = CouchUser
+        resource_name = 'analytics-roles'
+
+    def dehydrate_role(self, bundle):
+        cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
+        return cca_access['roles']
+
+    def dehydrate_permissions(self, bundle):
+        cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
+        return cca_access['permissions']
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        if not toggles.SUPERSET_ANALYTICS.enabled(domain):
+            raise ImmediateHttpResponse(
+                HttpForbidden(gettext_noop(
+                    "This domain requires the superset-analytics flag to access this endpoint."
+                ))
+            )
+
+        username = bundle.request.GET.get('username')
+        if not username:
+            return []
+
+        user = CouchUser.get_by_username(username)
+        if not (user and user.is_member_of(domain) and user.is_active):
+            user = None
+        return [user] if user else []
