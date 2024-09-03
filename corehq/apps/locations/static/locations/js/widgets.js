@@ -15,9 +15,9 @@ hqDefine("locations/js/widgets", [
         $select.find("option").remove();
         _.each($source.select2('data'), function (result) {
             const fullLengthName = result.text || result.name;
-            const truncatedName = truncateLocationName(fullLengthName, $select);
             let $option;
             if (toggles.toggleEnabled('LOCATION_FIELD_USER_PROVISIONING')) {
+                const truncatedName = truncateLocationName(fullLengthName, $select);
                 $option = new Option(truncatedName, result.id);
             } else {
                 $option = new Option(fullLengthName, result.id);
