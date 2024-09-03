@@ -2,12 +2,15 @@ from uuid import uuid4
 
 from django.test import TestCase
 
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.utils import (
+    CeleryTaskExistenceHelper,
     create_case_with_gps_property,
     get_geo_case_property,
     get_geo_user_property,
@@ -18,6 +21,7 @@ from corehq.apps.geospatial.utils import (
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case
+from corehq.tests.locks import real_redis_client
 
 
 class TestGetGeoProperty(TestCase):
@@ -162,3 +166,31 @@ class TestUpdateCasesOwner(TestCase):
         assert self.case_2.owner_id == self.user_b.user_id
         assert self.case_3.owner_id == self.user_a.user_id
         assert self.case_4.owner_id == self.user_a.user_id
+
+
+class TestCeleryTaskExistenceHelper(TestCase):
+    TASK_KEY = 'test-key'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        with real_redis_client():
+            cls.redis_client = get_redis_client()
+            cls.celery_task_existence_helper = CeleryTaskExistenceHelper(cls.TASK_KEY)
+
+    def tearDown(self):
+        self.redis_client.clear()
+        super().tearDown()
+
+    def test_mark_active(self):
+        self.celery_task_existence_helper.mark_active()
+        self.assertTrue(self.redis_client.has_key(self.TASK_KEY))
+
+    def test_get_active(self):
+        self.redis_client.set(self.TASK_KEY, 'ACTIVE')
+        self.assertTrue(self.celery_task_existence_helper.is_active())
+
+    def test_mark_inactive(self):
+        self.redis_client.set(self.TASK_KEY, 'ACTIVE')
+        self.celery_task_existence_helper.mark_inactive()
+        self.assertFalse(self.redis_client.has_key(self.TASK_KEY))
