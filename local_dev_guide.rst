@@ -10,7 +10,7 @@ Following these steps will allow a developer to replicate full end-to-end functi
 Prerequisites
 -------------
 
-- You have followed the `CommCare HQ "Getting Started" guide <https://raw.githubusercontent.com/dimagi/commcare-hq/master/DEV_SETUP.md>`_ to set up and run a local instance of CommCare HQ. 
+- You have followed the `CommCare HQ "Getting Started" guide <https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md>`_ to set up and run a local instance of CommCare HQ. 
 - You have followed the `CommCare Android "Getting Started" guide <https://github.com/dimagi/commcare-android/blob/master/README.md>`_ to set up and succesfully build CommCare Android
 - You have an Android Device (or emulator) with a deployed version of CommCare Android from your local development environment
 - Your Android Device and CommCareHQ Server are on the same local network
