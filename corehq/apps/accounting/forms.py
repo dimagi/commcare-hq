@@ -1929,7 +1929,7 @@ class ProductRateForm(forms.ModelForm):
         return self.save(commit=False)
 
 
-class EnterprisePlanContactForm(forms.Form):
+class PlanContactForm(forms.Form):
     name = forms.CharField(
         label=gettext_noop("Name")
     )
@@ -1944,87 +1944,17 @@ class EnterprisePlanContactForm(forms.Form):
     )
 
     def __init__(self, domain, web_user, data=None, *args, **kwargs):
-        self.domain = domain
-        self.web_user = web_user
-        super(EnterprisePlanContactForm, self).__init__(data, *args, **kwargs)
         from corehq.apps.domain.views.accounting import SelectPlanView
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.form_class = "form-horizontal"
-        self.helper.layout = crispy.Layout(
-            'name',
-            'company_name',
-            'message',
-            hqcrispy.FormActions(
-                hqcrispy.LinkButton(
-                    _("Select different plan"),
-                    reverse(SelectPlanView.urlname, args=[self.domain]),
-                    css_class="btn btn-default"
-                ),
-                StrictButton(
-                    _("Request Quote"),
-                    type="submit",
-                    css_class="btn-primary",
-                ),
-            )
-        )
+        back_button_text = kwargs.pop('back_button_text', 'Select different plan')
+        back_button_url = kwargs.pop('back_button_url', SelectPlanView.urlname)
+        super().__init__(data, *args, **kwargs)
 
-    def send_message(self):
-        subject = "[Enterprise Plan Request] %s" % self.domain
-        context = {
-            'name': self.cleaned_data['name'],
-            'company': self.cleaned_data['company_name'],
-            'message': self.cleaned_data['message'],
-            'domain': self.domain,
-            'email': self.web_user.email
-        }
-        html_content = render_to_string('accounting/email/sales_request.html', context)
-        text_content = """
-        Email: %(email)s
-        Name: %(name)s
-        Company: %(company)s
-        Domain: %(domain)s
-        Message:
-        %(message)s
-        """ % context
-        send_html_email_async.delay(subject, settings.BILLING_EMAIL,
-                                    html_content, text_content,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
-
-
-class AnnualPlanContactForm(forms.Form):
-    name = forms.CharField(
-        label=gettext_noop("Name")
-    )
-    company_name = forms.CharField(
-        required=False,
-        label=gettext_noop("Company / Organization")
-    )
-    message = forms.CharField(
-        required=False,
-        label=gettext_noop("Message"),
-        widget=forms.Textarea(attrs={"class": "vertical-resize"})
-    )
-
-    def __init__(self, domain, web_user, on_annual_plan, data=None, *args, **kwargs):
         self.domain = domain
         self.web_user = web_user
-        super(AnnualPlanContactForm, self).__init__(data, *args, **kwargs)
-        from corehq.apps.domain.views.accounting import (
-            DomainSubscriptionView,
-            SelectPlanView,
-        )
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = "form-horizontal"
-        if on_annual_plan:
-            back_button_text = "Back to my Subscription"
-            urlname = DomainSubscriptionView.urlname
-        else:
-            back_button_text = "Select different plan"
-            urlname = SelectPlanView.urlname
         self.helper.layout = crispy.Layout(
             'name',
             'company_name',
@@ -2032,19 +1962,19 @@ class AnnualPlanContactForm(forms.Form):
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
                     _(back_button_text),
-                    reverse(urlname, args=[self.domain]),
+                    reverse(back_button_url, args=[self.domain]),
                     css_class="btn btn-default"
                 ),
                 StrictButton(
-                    _("Submit"),
+                    _("Submit Request"),
                     type="submit",
                     css_class="btn-primary",
                 ),
             )
         )
 
-    def send_message(self):
-        subject = "[Annual Plan Request] %s" % self.domain
+    def send_message(self, subject_tag):
+        subject = f"{subject_tag} {self.domain}"
         context = {
             'name': self.cleaned_data['name'],
             'company': self.cleaned_data['company_name'],
@@ -2064,6 +1994,28 @@ class AnnualPlanContactForm(forms.Form):
         send_html_email_async.delay(subject, settings.BILLING_EMAIL,
                                     html_content, text_content,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
+
+
+class EnterprisePlanContactForm(PlanContactForm):
+
+    def send_message(self):
+        subject_tag = "[Enterprise Plan Request]"
+        super().send_message(subject_tag)
+
+
+class AnnualPlanContactForm(PlanContactForm):
+
+    def __init__(self, domain, web_user, on_annual_plan, data=None, *args, **kwargs):
+        from corehq.apps.domain.views.accounting import DomainSubscriptionView
+        if on_annual_plan:
+            kwargs['back_button_text'] = "Back to my Subscription"
+            kwargs['back_button_url'] = DomainSubscriptionView.urlname
+
+        super().__init__(domain, web_user, data, *args, **kwargs)
+
+    def send_message(self):
+        subject_tag = "[Annual Plan Request]"
+        super().send_message(subject_tag)
 
 
 class TriggerInvoiceForm(forms.Form):
