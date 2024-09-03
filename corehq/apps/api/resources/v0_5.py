@@ -57,6 +57,7 @@ from corehq.apps.api.resources.auth import (
     LoginAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
+    LoginAndDomainAuthentication,
 )
 from corehq.apps.api.resources.messaging_event.utils import get_request_params
 from corehq.apps.api.resources.meta import (
@@ -131,6 +132,7 @@ from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
+from corehq.apps.users.role_utils import get_commcare_analytics_access_for_user_domain
 
 from ..exceptions import UpdateUserException
 from ..user_updates import update
@@ -1376,3 +1378,40 @@ def get_datasource_data(request, config_id, domain):
     query = cursor_based_query_for_datasource(request_params, datasource_adapter)
     data = response_for_cursor_based_pagination(request, query, request_params, datasource_adapter)
     return JsonResponse(data)
+
+
+class CommCareAnalyticsUserResource(v0_1.UserResource):
+
+    roles = fields.ListField()
+    permissions = fields.DictField()
+
+    class Meta(v0_1.UserResource.Meta):
+        authentication = LoginAndDomainAuthentication()
+        object_class = CouchUser
+        resource_name = 'analytics-roles'
+
+    def dehydrate_role(self, bundle):
+        cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
+        return cca_access['roles']
+
+    def dehydrate_permissions(self, bundle):
+        cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
+        return cca_access['permissions']
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        if not toggles.SUPERSET_ANALYTICS.enabled(domain):
+            raise ImmediateHttpResponse(
+                HttpForbidden(gettext_noop(
+                    "This domain requires the superset-analytics flag to access this endpoint."
+                ))
+            )
+
+        username = bundle.request.GET.get('username')
+        if not username:
+            return []
+
+        user = CouchUser.get_by_username(username)
+        if not (user and user.is_member_of(domain) and user.is_active):
+            user = None
+        return [user] if user else []
