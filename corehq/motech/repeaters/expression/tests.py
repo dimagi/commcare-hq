@@ -2,7 +2,7 @@ import dataclasses
 import json
 import uuid
 from datetime import datetime, timedelta
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.test import TestCase
 
@@ -12,17 +12,19 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.utils import REPEATER_RESPONSE_XMLNS
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.models import UCRExpression
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CaseTransaction, CommCareCase
+from corehq.form_processor.models.cases import FormSubmissionDetail
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.expression.repeaters import (
     CaseExpressionRepeater,
     ArcGISFormExpressionRepeater,
-    FormExpressionRepeater,
+    FormExpressionRepeater, MAX_REPEATER_CHAIN_LENGTH,
 )
 from corehq.motech.repeaters.models import RepeatRecord
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, generate_cases
 
 
 @dataclasses.dataclass
@@ -253,6 +255,41 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
         # case should be eligible to forward by a different repeater (one with a different id)
         self.repeater.id = "a different repeater"
         self.assertTrue(self.repeater.allowed_to_forward(case))
+
+    @generate_cases([
+        ([{"is_repeater": False, "this_repeater": False}], True),
+        ([{"is_repeater": True, "this_repeater": True}], False),
+        ([{"is_repeater": True, "this_repeater": False}], True),
+        # 1 below max chain length
+        ([{"is_repeater": True, "this_repeater": False}] * (MAX_REPEATER_CHAIN_LENGTH - 1), True),
+        # at max chain length
+        ([{"is_repeater": True, "this_repeater": False}] * MAX_REPEATER_CHAIN_LENGTH, False),
+        # transaction from this repeater
+        ([
+             {"is_repeater": True, "this_repeater": False},  # noqa
+             {"is_repeater": True, "this_repeater": False},
+             {"is_repeater": True, "this_repeater": True},
+        ], False),
+        # non-repeater transaction
+        ([
+             {"is_repeater": True, "this_repeater": False},  # noqa
+             {"is_repeater": True, "this_repeater": False},
+             {"is_repeater": False, "this_repeater": False},
+        ], True),
+    ])
+    def test_allowed_to_forward(self, transaction_details, can_forward):
+        case = self.factory.create_case(case_type='forward-me')
+        transactions = []
+        for transaction in transaction_details:
+            xmlns = REPEATER_RESPONSE_XMLNS if transaction["is_repeater"] else "another_xmlns"
+            device_id = self.repeater.device_id if transaction["this_repeater"] else "another_device_id"
+            detail = FormSubmissionDetail(xmlns=xmlns, device_id=device_id).to_json()
+            transactions.append(CaseTransaction(details=detail))
+        with patch(
+            'corehq.motech.repeaters.expression.repeaters.CaseTransaction.objects.get_last_n_recent_form_transaction',  # noqa
+            return_value=transactions
+        ):
+            self.assertEqual(self.repeater.allowed_to_forward(case), can_forward)
 
 
 class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
