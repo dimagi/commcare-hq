@@ -435,8 +435,19 @@ class ElasticManageAdapter(BaseAdapter):
             "conflicts": "proceed"
         }
 
-        # Should be removed after ES 5-6 migration
-        if copy_doc_ids:
+    # Should be removed after ES 5-6 migration
+        if copy_doc_ids and source == const.HQ_USERS_INDEX_NAME:
+            # Remove password from form index
+            reindex_body["script"] = {
+                "lang": "painless",
+                "source": """
+                ctx._source.remove('password');
+                if (!ctx._source.containsKey('doc_id')) {
+                    ctx._source['doc_id'] = ctx._id;
+                }
+                """
+            }
+        elif copy_doc_ids:
             reindex_body["script"] = {
                 "lang": "painless",
                 "source": """

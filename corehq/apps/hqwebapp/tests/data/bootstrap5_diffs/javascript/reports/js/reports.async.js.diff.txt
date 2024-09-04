@@ -33,7 +33,7 @@
                      }
                      self.hqLoading = $(self.loaderClass);
                      self.reportContent.html(data.report);
-@@ -174,7 +174,7 @@
+@@ -171,7 +171,7 @@
  
                      if (!initialLoad || !self.standardReport.needsFilters) {
                          self.standardReport.filterSubmitButton
@@ -42,7 +42,7 @@
                          setTimeout(function () {
                              // Bootstrap clears all btn styles except btn on reset
                              // This gets around it by waiting 10ms.
-@@ -186,7 +186,7 @@
+@@ -183,7 +183,7 @@
                          }, 10);
                      } else {
                          self.standardReport.filterSubmitButton
@@ -51,7 +51,7 @@
                              .addClass('btn-primary')
                              .removeClass('disabled')
                              .prop('disabled', false);
-@@ -205,10 +205,10 @@
+@@ -202,10 +202,10 @@
                          self.loadingIssueModal.find('.report-error-status').html('<strong>' + data.status + '</strong> ' +
                              ((humanReadable) ? humanReadable : ""));
                          if (self.issueAttempts > 0) {
@@ -64,7 +64,7 @@
                      } else {
                          self.hqLoading = $(self.loaderClass);
                          self.hqLoading.find('h4').text(gettext("Loading Stopped"));
-@@ -216,7 +216,7 @@
+@@ -213,7 +213,7 @@
                      }
                  },
                  beforeSend: function () {
@@ -73,7 +73,7 @@
                      $('.loading-backdrop').fadeIn();
                      if (self.hqLoading) {
                          self.hqLoading.attr('style', 'position: absolute; top: 30px; left: 40%;');
-@@ -228,7 +228,7 @@
+@@ -225,7 +225,7 @@
          };
  
          $(document).on('click', '.try-again', function () {

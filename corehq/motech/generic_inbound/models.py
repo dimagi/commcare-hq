@@ -31,10 +31,13 @@ class ConfigurableAPI(models.Model):
     updated_on = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    # UCR Expression to filter incoming requests before they are processed
     filter_expression = models.ForeignKey(
         UCRExpression, on_delete=models.PROTECT, related_name="api_filter", null=True, blank=True)
+    # UCR Expression to transform the incoming data to be processed
     transform_expression = models.ForeignKey(
         UCRExpression, on_delete=models.PROTECT, related_name="api_expression")
+    # type of data backend like JSON, HL7 etc
     backend = models.CharField(max_length=100, default=ApiBackendOptions.json)
 
     objects = AuditingManager()

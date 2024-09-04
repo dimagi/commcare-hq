@@ -2,10 +2,12 @@
 hqDefine("locations/js/widgets", [
     'jquery',
     'underscore',
+    'hqwebapp/js/toggles',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
-    _
+    _,
+    toggles
 ) {
     // Update the options available to one select2 to be
     // the selected values from another (multiselect) select2
@@ -13,14 +15,34 @@ hqDefine("locations/js/widgets", [
         $select.find("option").remove();
         _.each($source.select2('data'), function (result) {
             const fullLengthName = result.text || result.name;
-            const truncatedName = truncateLocationName(fullLengthName, $select);
-            $select.append(new Option(truncatedName, result.id));
+            let $option;
+            if (toggles.toggleEnabled('LOCATION_FIELD_USER_PROVISIONING')) {
+                const truncatedName = truncateLocationName(fullLengthName, $select);
+                $option = new Option(truncatedName, result.id);
+            } else {
+                $option = new Option(fullLengthName, result.id);
+            }
+            $option.setAttribute('title', result.title);
+            $select.append($option);
         });
     }
 
     function truncateLocationName(name, select) {
         const nameWidthPixels = getSelectTextWidth(name, select);
-        const containerWidthPixels = select.parent().width();
+        const basicInfoTabActive = $('#basic-info').hasClass('active');
+        let containerWidthPixels = select.parent().width();
+
+        // Select is hidden on locations tab. Calculate width from visible select.
+        if (basicInfoTabActive) {
+            const visibleSelect = $('#basic-info').find('.controls > .select')[0];
+            if (!visibleSelect) {
+                return name;
+            }
+            containerWidthPixels = $(visibleSelect).parent().width();
+        // Default to select2 setting for overflow
+        } else if (containerWidthPixels < 0) {
+            return name;
+        }
         let truncatedName;
         if (nameWidthPixels > containerWidthPixels) {
             // Conservative calc of the number of chars that will fit the container
@@ -76,6 +98,17 @@ hqDefine("locations/js/widgets", [
                 },
                 processResults: function (data, params) {
                     var more = (params.page || 1) * 10 < data.total;
+                    if (toggles.toggleEnabled('LOCATION_FIELD_USER_PROVISIONING')) {
+                        let selectedLocations = Array.from($select[0].selectedOptions);
+                        if (selectedLocations.length > 0) {
+                            let locIds = selectedLocations.map(option => option.value);
+                            data.results.forEach(result => {
+                                if (locIds.includes(result.id)) {
+                                    result.disabled = true;
+                                }
+                            });
+                        }
+                    }
                     return {
                         results: data.results,
                         pagination: { more: more },
@@ -87,8 +120,12 @@ hqDefine("locations/js/widgets", [
             },
             templateSelection: function (result) {
                 const fullLengthName = result.text || result.name;
-                const truncatedName = truncateLocationName(fullLengthName, $select);
-                return truncatedName;
+                if (toggles.toggleEnabled('LOCATION_FIELD_USER_PROVISIONING')) {
+                    const truncatedName = truncateLocationName(fullLengthName, $select);
+                    return truncatedName;
+                } else {
+                    return fullLengthName;
+                }
             },
         });
 
@@ -98,7 +135,9 @@ hqDefine("locations/js/widgets", [
                 initial = [initial];
             }
             _.each(initial, function (result) {
-                $select.append(new Option(result.text, result.id));
+                var $option = new Option(result.text, result.id);
+                $option.setAttribute('title', result.title);
+                $select.append($option);
             });
             $select.val(_.pluck(initial, 'id')).trigger('change');
         }
@@ -125,7 +164,9 @@ hqDefine("locations/js/widgets", [
             // This custom event is fired in autocomplete_select_widget.html
             if ($source.hasClass("select2-hidden-accessible")) {
                 updateSelect2($source, $select);
-                $select.append(new Option(value.text, value.id));
+                var $option = new Option(value.text, value.id);
+                $option.setAttribute('title', value.title);
+                $select.append($option);
                 $select.val(value.id).trigger("change");
             } else {
                 $source.on('select-ready', function () {
