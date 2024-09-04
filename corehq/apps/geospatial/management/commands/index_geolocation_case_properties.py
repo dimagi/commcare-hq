@@ -1,10 +1,13 @@
 from django.core.management.base import BaseCommand
-from corehq.apps.es import CaseSearchES, filters, queries
+from corehq.apps.es import CaseSearchES, case_search_adapter, filters, queries
 from corehq.apps.es.case_search import (
     CASE_PROPERTIES_PATH,
     PROPERTY_GEOPOINT_VALUE,
     PROPERTY_KEY,
 )
+from corehq.apps.es.client import manager
+from corehq.form_processor.models import CommCareCase
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
@@ -21,6 +24,13 @@ class Command(BaseCommand):
         case_type = options.get('case_type')
         query_limit = options.get('query_limit')
         chunk_size = options.get('chunk_size')
+
+
+def _index_case_ids(domain, case_ids, chunk_size):
+    for case_id_chunk in chunked(with_progress_bar(case_ids), chunk_size):
+        case_chunk = CommCareCase.objects.get_cases(list(case_id_chunk), domain)
+        case_search_adapter.bulk_index(case_chunk)
+    manager.index_refresh(case_search_adapter.index_name)
 
 
 def _case_query(domain, geo_case_property, case_type=None, size=None):
