@@ -1,4 +1,9 @@
+import math
+
 from django.core.management.base import BaseCommand
+
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.es import CaseSearchES, case_search_adapter, filters, queries
 from corehq.apps.es.case_search import (
     CASE_PROPERTIES_PATH,
@@ -6,8 +11,12 @@ from corehq.apps.es.case_search import (
     PROPERTY_KEY,
 )
 from corehq.apps.es.client import manager
+from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.form_processor.models import CommCareCase
 from corehq.util.log import with_progress_bar
+
+DEFAULT_QUERY_LIMIT = 10_000
+DEFAULT_CHUNK_SIZE = 100
 
 
 class Command(BaseCommand):
@@ -24,6 +33,21 @@ class Command(BaseCommand):
         case_type = options.get('case_type')
         query_limit = options.get('query_limit')
         chunk_size = options.get('chunk_size')
+        self.index_case_docs(domain, query_limit, chunk_size, case_type)
+
+
+def index_case_docs(domain, query_limit=DEFAULT_QUERY_LIMIT, chunk_size=DEFAULT_CHUNK_SIZE, case_type=None):
+    geo_case_property = get_geo_case_property(domain)
+    query = _case_query(domain, geo_case_property, case_type)
+    count = query.count()
+    print(f'{count} case(s) to process')
+    batch_count = math.ceil(count / query_limit)
+    print(f"Cases will be processed in {batch_count} batches")
+    for i in range(0, batch_count):
+        print(f'Processing {i+1}/{batch_count}')
+        query = _case_query(domain, geo_case_property, case_type, size=query_limit)
+        case_ids = query.get_ids()
+        _index_case_ids(domain, case_ids, chunk_size)
 
 
 def _index_case_ids(domain, case_ids, chunk_size):
