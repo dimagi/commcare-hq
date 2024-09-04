@@ -94,7 +94,6 @@ hqDefine("cloudcare/js/formplayer/users/models", [
         );
         userInstance.displayOptions = _.defaults(savedDisplayOptions, {
             singleAppMode: options.singleAppMode,
-            landingPageAppMode: options.landingPageAppMode,
             phoneMode: options.phoneMode,
             oneQuestionPerScreen: options.oneQuestionPerScreen,
             language: options.language,
