@@ -470,8 +470,9 @@ def timelimit(limit):
 
     @wraps(func)
     def time_limit(*args, **kw):
-        from corehq.tests.noseplugins.timing import add_time_limit
-        add_time_limit(limit.total_seconds())
+        # TODO restore when timing nose plugin is adapted to pytest
+        #from corehq.tests.noseplugins.timing import add_time_limit
+        #add_time_limit(limit.total_seconds())
         start = datetime.utcnow()
         rval = func(*args, **kw)
         elapsed = datetime.utcnow() - start
