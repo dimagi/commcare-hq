@@ -4,15 +4,15 @@ import jsonschema
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.const import ONE_DAY
 from couchforms.geopoint import GeoPoint
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
+from corehq.const import ONE_DAY
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 
 @quickcache(['domain'], timeout=24 * 60 * 60)
@@ -212,7 +212,7 @@ def update_cases_owner(domain, case_owner_updates_dict):
         submit_case_blocks(
             case_blocks=case_blocks,
             domain=domain,
-            device_id='corehq.apps.geospatial.utils.update_cases_owners'
+            device_id=__name__ + '.update_cases_owners'
         )
 
 
