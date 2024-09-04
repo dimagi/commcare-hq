@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     'underscore',
     'sentry_browser',
     'hqwebapp/js/initial_page_data',
+    'cloudcare/js/utils',
     'cloudcare/js/formplayer/menus/collections',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/form_entry/errors',
@@ -21,6 +22,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     _,
     Sentry,
     initialPageData,
+    cloudcareUtils,
     Collections,
     constants,
     errors,
@@ -137,7 +139,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
-                            if (!(response.session_id)) {
+                            if (!(response.session_id) && !cloudcareUtils.smallScreenIsEnabled()) {
                                 FormplayerFrontend.trigger('configureDebugger');
                             }
                         }

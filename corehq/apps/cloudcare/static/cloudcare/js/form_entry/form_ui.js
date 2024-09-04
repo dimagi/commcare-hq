@@ -10,6 +10,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/entries',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/form_entry/utils',
     'jquery-tiny-pubsub/dist/ba-tiny-pubsub',       // $.pubsub
 ], function (
@@ -23,6 +24,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     cloudcareUtils,
     constants,
     entries,
+    UsersModels,
     formEntryUtils
 ) {
     var groupNum = 0;
@@ -462,6 +464,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
         self.isAnchoredSubmitStyle = toggles.toggleEnabled('WEB_APPS_ANCHORED_SUBMIT');
+        self.isAppPreview = UsersModels.getCurrentUser().isAppPreview;
+        self.smallScreenIsEnabled = cloudcareUtils.smallScreenIsEnabled();
 
         self.currentIndex = ko.observable("0");
         self.atLastIndex = ko.observable(false);

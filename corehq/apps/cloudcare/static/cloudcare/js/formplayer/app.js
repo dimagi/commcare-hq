@@ -407,6 +407,15 @@ hqDefine("cloudcare/js/formplayer/app", [
                 $('.last').removeClass('last');
             }
         );
+
+        self.smallScreenListener = CloudcareUtils.smallScreenListener(smallScreenEnabled => {
+            if (smallScreenEnabled) {
+                $('#cloudcare-debugger').html("");
+            } else {
+                FormplayerFrontend.trigger('configureDebugger');
+            }
+        });
+        self.smallScreenListener.listen();
     });
 
     FormplayerFrontend.on('configureDebugger', function () {
