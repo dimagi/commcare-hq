@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
+from corehq.apps.locations.models import SQLLocation
 
 from dimagi.utils.couch.bulk import get_docs
 
@@ -35,6 +36,7 @@ def update(user, field, value, user_change_logger=None):
         'phone_numbers': _update_phone_numbers,
         'user_data': _update_user_data,
         'role': _update_user_role,
+        'location': _update_location,
     }.get(field)
 
     if not update_fn:
@@ -165,3 +167,53 @@ def _log_phone_number_change(new_phone_numbers, old_phone_numbers, user_change_l
 
     if change_messages:
         user_change_logger.add_change_message({'phone_numbers': change_messages})
+
+
+def _update_location(user, location_object, user_change_logger):
+    primary_location_id = location_object.get('primary_location')
+    location_ids = location_object.get('locations')
+
+    if primary_location_id is None and location_ids is None:
+        return
+
+    user_current_primary_location_id = user.location_id
+
+    if not primary_location_id and not location_ids:
+        # we will have bundle.obj.save() later, so when change locations, commit=False
+        user.unset_location(commit=False)
+        user.reset_locations([], commit=False)
+        if user_change_logger:
+            user_change_logger.add_changes({'location_id': primary_location_id})
+            user_change_logger.add_info(UserChangeMessage.primary_location_removed())
+            user_change_logger.add_changes({'assigned_location_ids': location_ids})
+            user_change_logger.add_info(UserChangeMessage.assigned_locations_info([]))
+    elif not primary_location_id or not location_ids:
+        raise UpdateUserException(_('Both primary_location and locations must be provided together.'))
+    else:
+        if primary_location_id not in location_ids:
+            raise UpdateUserException(_('Primary location must be included in the list of locations.'))
+
+        # Verify all location ids has a SQLLocation.
+        for loc_id in location_ids:
+            try:
+                SQLLocation.active_objects.get(location_id=loc_id, domain=user.domain)
+            except SQLLocation.DoesNotExist:
+                raise UpdateUserException(f"Could not find location id '{loc_id}'.")
+
+        if primary_location_id != user_current_primary_location_id:
+            primary_location = SQLLocation.active_objects.get(location_id=primary_location_id)
+            user.set_location(primary_location, commit=False)
+            if user_change_logger:
+                user_change_logger.add_changes({'location_id': primary_location_id})
+                user_change_logger.add_info(
+                    UserChangeMessage.primary_location_info(primary_location)
+                )
+
+        # Update location_ids
+        user.reset_locations(location_ids, commit=False)
+        if user_change_logger:
+            user_change_logger.add_changes({'assigned_location_ids': location_ids})
+            locations = SQLLocation.objects.filter(location_id__in=location_ids)
+            user_change_logger.add_info(
+                UserChangeMessage.assigned_locations_info(locations)
+            )
