@@ -6,7 +6,6 @@ from jsonobject.exceptions import BadValueError
 from casexml.apps.case.mock import CaseBlock
 from corehq.const import ONE_DAY
 from couchforms.geopoint import GeoPoint
-from dimagi.utils.chunked import chunked
 
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.hqcase.case_helper import CaseHelper
@@ -198,15 +197,16 @@ class CaseOwnerUpdate:
         return [asdict(obj) for obj in case_owner_updates]
 
 
-def update_cases_owner(domain, case_id_to_owner_id, chunk_size=100):
-    for case_ids in chunked(case_id_to_owner_id.keys(), chunk_size):
+def update_cases_owner(domain, case_owner_updates_dict):
+    for case_owner_update in case_owner_updates_dict:
         case_blocks = []
-        for case_id in case_ids:
+        cases_to_updates = [case_owner_update['case_id']] + case_owner_update['related_case_ids']
+        for case_id in cases_to_updates:
             case_blocks.append(
                 CaseBlock(
                     create=False,
                     case_id=case_id,
-                    owner_id=case_id_to_owner_id[case_id]
+                    owner_id=case_owner_update['owner_id']
                 ).as_text()
             )
         submit_case_blocks(
