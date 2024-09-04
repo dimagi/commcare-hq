@@ -1119,7 +1119,10 @@ class SelectPlanView(PlanViewBase):
 
 
 class ContactFormViewBase(PlanViewBase):
+    template_name = 'domain/selected_plan_contact.html'
     step_title = gettext_lazy("Contact Dimagi")
+    lead_text = None
+    contact_form = None
 
     @property
     def steps(self):
@@ -1142,11 +1145,22 @@ class ContactFormViewBase(PlanViewBase):
             return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
+    @property
+    def page_context(self):
+        return {
+            'lead_text': self.lead_text,
+            'contact_form': self.contact_form,
+        }
+
 
 class SelectedEnterprisePlanView(ContactFormViewBase):
-    template_name = 'domain/selected_enterprise_plan.html'
     urlname = 'enterprise_request_quote'
     edition = SoftwarePlanEdition.ENTERPRISE
+
+    @property
+    def lead_text(self):
+        return format_html("Dimagi handles Enterprise plans on a case-by-case basis.<br/>"
+                           "Please fill out your information below to request a quote.")
 
     @property
     @memoized
@@ -1155,16 +1169,30 @@ class SelectedEnterprisePlanView(ContactFormViewBase):
             return EnterprisePlanContactForm(self.domain, self.request.couch_user, data=self.request.POST)
         return EnterprisePlanContactForm(self.domain, self.request.couch_user)
 
-    @property
-    def page_context(self):
-        return {
-            'enterprise_contact_form': self.contact_form,
-        }
-
 
 class SelectedAnnualPlanView(ContactFormViewBase):
-    template_name = 'domain/selected_annual_plan.html'
     urlname = 'annual_plan_request_quote'
+
+    @property
+    def lead_text(self):
+        if self.edition == SoftwarePlanEdition.ENTERPRISE:
+            lead_text = format_html(
+                "Dimagi handles Enterprise plans on a case-by-case basis.<br/>"
+                "Please submit the following form if you would like to sign up for or have questions "
+                "regarding an Enterprise plan. Our sales team will be in touch shortly."
+            )
+        elif self.on_annual_plan:
+            lead_text = (
+                f"Please submit the following form if you would like to sign up for or have questions "
+                f"regarding your annual {self.edition} Plan. Our sales team will be in touch shortly."
+            )
+        else:
+            lead_text = format_html(
+                "Please submit the following form to request your project space be set up for an "
+                "<strong>annual {edition} Plan</strong>. Our sales team will reach out shortly.",
+                edition=self.edition
+            )
+        return lead_text
 
     @property
     def on_annual_plan(self):
@@ -1193,12 +1221,11 @@ class SelectedAnnualPlanView(ContactFormViewBase):
 
     @property
     def page_context(self):
-        return {
-            'annual_plan_contact_form': self.contact_form,
+        context = super().page_context
+        context.update({
             'on_annual_plan': self.on_annual_plan,
-            'edition': self.edition,
-            'selected_enterprise_plan': self.edition == SoftwarePlanEdition.ENTERPRISE
-        }
+        })
+        return context
 
 
 class ConfirmSelectedPlanView(PlanViewBase):
