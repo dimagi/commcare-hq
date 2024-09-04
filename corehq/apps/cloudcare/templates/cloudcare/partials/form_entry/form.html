@@ -47,7 +47,7 @@
               visible: showSubmitButton,
               css: { 'sticky-submit': isAnchoredSubmitStyle },
               style: {
-                'bottom':isAnchoredSubmitStyle && {{ request.couch_user.can_edit_data|yesno:'true,false' }} {% if environment != "web-apps" %} && false {% endif %} ? '30px' : '0' {# data preview bar #}
+                'bottom':isAnchoredSubmitStyle && !isAppPreview && !smallScreenIsEnabled && {{ request.couch_user.can_edit_data|yesno:'true,false' }}? '30px' : '0' {# data preview bar #}
               }"
       >
         <div class="col-12 text-center submit">

@@ -396,6 +396,11 @@ hqDefine("cloudcare/js/formplayer/app", [
                 $('.last').removeClass('last');
             }
         );
+
+        self.smallScreenListener = CloudcareUtils.smallScreenListener(smallScreenEnabled => {
+            $.publish('smallScreenIsEnabled', smallScreenEnabled);
+        });
+        self.smallScreenListener.listen();
     });
 
     FormplayerFrontend.on('configureDebugger', function () {
@@ -424,6 +429,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 tabs: [
                     TabIDs.EVAL_XPATH,
                 ],
+                smallScreenIsEnabled: CloudcareUtils.smallScreenIsEnabled(),
             });
             ko.cleanNode($debug[0]);
             $debug.koApplyBindings(cloudCareDebugger);

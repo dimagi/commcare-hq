@@ -82,6 +82,11 @@ hqDefine('cloudcare/js/debugger/debugger', [
         self.registeredTabIds = self.options.tabs;
         self.tabs = DebuggerTabs;
 
+        self.smallScreenIsEnabled = ko.observable(options.smallScreenIsEnabled);
+        $.subscribe('smallScreenIsEnabled', function (e, enabled) {
+            self.smallScreenIsEnabled(enabled);
+        });
+
         self.evalXPath = new EvaluateXPath(options);
         self.isMinimized = ko.observable(true);
 
