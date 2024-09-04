@@ -103,6 +103,12 @@ def fuzzy_date(node, context):
     property_name = _property_name_to_string(node.args[0], node)
     value = unwrap_value(node.args[1], context)
 
+    if not validate_date(value):
+        raise XPathFunctionException(
+            _(f"'{value}' is not a valid date. Expected 'YYYY-MM-DD"),
+            serialize(node)
+        )
+
     return case_property_query(property_name, date_permutations(value), boost_first=True)
 
 
