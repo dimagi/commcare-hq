@@ -1,3 +1,5 @@
+from dataclasses import asdict, dataclass, field
+
 import jsonschema
 from jsonobject.exceptions import BadValueError
 
@@ -169,6 +171,31 @@ def geojson_to_es_geoshape(geojson):
     es_geoshape = geojson['geometry'].copy()
     es_geoshape['type'] = es_geoshape['type'].lower()
     return es_geoshape
+
+
+@dataclass
+class CaseOwnerUpdate:
+    case_id: str
+    owner_id: str
+    related_case_ids: list = field(default_factory=list)
+
+    @classmethod
+    def from_case_to_owner_id_dict(cls, case_to_owner_id):
+        result = []
+        for case_id, owner_id in case_to_owner_id.items():
+            result.append(cls(case_id=case_id, owner_id=owner_id))
+        return result
+
+    @classmethod
+    def total_cases_count(cls, case_owner_updates):
+        count = len(case_owner_updates)
+        for case_owner_update in case_owner_updates:
+            count += len(case_owner_update.related_case_ids)
+        return count
+
+    @classmethod
+    def to_dict(cls, case_owner_updates):
+        return [asdict(obj) for obj in case_owner_updates]
 
 
 def update_cases_owner(domain, case_id_to_owner_id, chunk_size=100):
