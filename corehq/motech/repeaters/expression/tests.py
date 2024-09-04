@@ -1,17 +1,20 @@
+import dataclasses
 import json
-from datetime import datetime, timedelta
 import uuid
+from datetime import datetime, timedelta
+from unittest.mock import Mock
 
 from django.test import TestCase
 
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.mock import CaseFactory
-
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.models import UCRExpression
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.expression.repeaters import (
     CaseExpressionRepeater,
@@ -21,7 +24,16 @@ from corehq.motech.repeaters.expression.repeaters import (
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.util.test_utils import flag_enabled
 
-from casexml.apps.case.mock import CaseBlock
+
+@dataclasses.dataclass
+class MockResponse:
+    status_code: int
+    text: str = ""
+    headers: dict = dataclasses.field(default_factory=dict)
+    reason: str = "success"
+
+    def json(self):
+        return json.loads(self.text)
 
 
 class BaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
@@ -176,6 +188,71 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
             self.repeater.get_url(repeat_record),
             expected_url
         )
+
+    def test_process_response_filter(self):
+        self.factory.create_case(case_type='forward-me')
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.repeater.case_action_filter_expression = {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "jsonpath",
+                "jsonpath": "response.status_code",
+            },
+            "operator": "eq",
+            "property_value": 201,
+        }
+        self.repeater._perform_case_update = Mock()
+        response = MockResponse(200)
+        self.assertFalse(self.repeater._process_response_as_case_update(response, repeat_record))
+        self.repeater._perform_case_update.assert_not_called()
+
+        response = MockResponse(201)
+        self.assertTrue(self.repeater._process_response_as_case_update(response, repeat_record))
+        self.repeater._perform_case_update.assert_called()
+
+    def test_process_response(self):
+        self.factory.create_case(case_type='forward-me')
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.repeater.case_action_filter_expression = {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "jsonpath",
+                "jsonpath": "response.status_code",
+            },
+            "operator": "eq",
+            "property_value": 200,
+        }
+        self.repeater.case_action_expression = {
+            'type': 'dict',
+            'properties': {
+                'create': False,
+                'case_id': {
+                    'type': 'jsonpath',
+                    'jsonpath': 'payload.id',
+                },
+                'properties': {
+                    'type': 'dict',
+                    'properties': {
+                        'type': 'dict',
+                        'prop_from_response': {
+                            'type': 'jsonpath',
+                            'jsonpath': 'response.body.aValue',
+                        }
+                    }
+                }
+            }
+        }
+        response = MockResponse(200, '{"aValue": "aResponseValue"}')
+        self.repeater.handle_response(response, repeat_record)
+        case = CommCareCase.objects.get_case(repeat_record.payload_id, self.domain)
+        self.assertEqual(case.get_case_property('prop_from_response'), 'aResponseValue')
+
+        # case shouldn't be eligible to forward again because it was just updated by the repeater
+        self.assertFalse(self.repeater.allowed_to_forward(case))
+
+        # case should be eligible to forward by a different repeater (one with a different id)
+        self.repeater.id = "a different repeater"
+        self.assertTrue(self.repeater.allowed_to_forward(case))
 
 
 class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):

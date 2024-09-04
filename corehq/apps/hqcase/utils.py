@@ -26,13 +26,15 @@ CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
+REPEATER_RESPONSE_XMLNS = 'http://commcarehq.org/data_forwarding/response'
 
 SYSTEM_FORM_XMLNS_MAP = {
     SYSTEM_FORM_XMLNS: gettext_lazy('System Form'),
     EDIT_FORM_XMLNS: gettext_lazy('Data Cleaning Form'),
     AUTO_UPDATE_XMLNS: gettext_lazy('Automatic Case Update Rule'),
     DEDUPE_XMLNS: gettext_lazy('Deduplication Rule'),
-    XMLNS_DHIS2: gettext_lazy('DHIS2 Integration')
+    XMLNS_DHIS2: gettext_lazy('DHIS2 Integration'),
+    REPEATER_RESPONSE_XMLNS: gettext_lazy('Data Forwarding Response'),
 }
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
