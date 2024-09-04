@@ -108,7 +108,7 @@ def fuzzy_date(node, context):
 
 def date_permutations(date_str):
     [year, month, day] = date_str.split('-')
-    decade_flipped = year[:2] + year[3] + year[2]
+    reverse_decade = year[:2] + year[3] + year[2]
     reverse_month = month[::-1]
     reverse_day = day[::-1]
     permutations = [
@@ -120,14 +120,14 @@ def date_permutations(date_str):
         f"{year}-{reverse_day}-{month}",
         f"{year}-{reverse_month}-{reverse_day}",
         f"{year}-{reverse_day}-{reverse_month}",
-        f"{decade_flipped}-{month}-{day}",
-        f"{decade_flipped}-{day}-{month}",
-        f"{decade_flipped}-{reverse_month}-{day}",
-        f"{decade_flipped}-{day}-{reverse_month}",
-        f"{decade_flipped}-{month}-{reverse_day}",
-        f"{decade_flipped}-{reverse_day}-{month}",
-        f"{decade_flipped}-{reverse_month}-{reverse_day}",
-        f"{decade_flipped}-{reverse_day}-{reverse_month}"
+        f"{reverse_decade}-{month}-{day}",
+        f"{reverse_decade}-{day}-{month}",
+        f"{reverse_decade}-{reverse_month}-{day}",
+        f"{reverse_decade}-{day}-{reverse_month}",
+        f"{reverse_decade}-{month}-{reverse_day}",
+        f"{reverse_decade}-{reverse_day}-{month}",
+        f"{reverse_decade}-{reverse_month}-{reverse_day}",
+        f"{reverse_decade}-{reverse_day}-{reverse_month}"
     ]
     valid_permutations = [p for p in permutations if validate_date(p)]
     return valid_permutations
