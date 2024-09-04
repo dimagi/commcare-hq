@@ -2,6 +2,10 @@ import os
 
 import pytest
 
+pytest_plugins = [
+    'corehq.tests.pytest_plugins.patches',
+]
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_load_initial_conftests():
