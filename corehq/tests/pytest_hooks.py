@@ -13,6 +13,7 @@ if ModuleWatchdog.is_installed():
 
 pytest_plugins = [
     'unmagic',
+    'corehq.tests.pytest_plugins.dividedwerun',
     'corehq.tests.pytest_plugins.patches',
     'corehq.tests.pytest_plugins.redislocks',
     'corehq.tests.pytest_plugins.reusedb',
