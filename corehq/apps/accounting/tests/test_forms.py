@@ -1,13 +1,16 @@
 import datetime
 import random
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.forms import (
     AdjustBalanceForm,
+    PlanContactForm,
     SubscriptionForm,
     TriggerInvoiceForm,
 )
@@ -404,3 +407,36 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
             domain=self.domain.name, record_date=self.statement_end
         )
         self.assertEqual(user_history.num_users, num_users)
+
+
+class TestPlanContactForm(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.domain = generator.arbitrary_domain()
+        self.web_user = generator.arbitrary_user(self.domain.name, is_webuser=True)
+
+    def tearDown(self):
+        self.domain.delete()
+        super().tearDown()
+
+    @patch('corehq.apps.accounting.forms.send_html_email_async')
+    def test_send_message(self, mock_send):
+        data = {
+            'name': 'Nelson Muntz',
+            'company_name': 'Springfield Elementary',
+            'message': 'Haw haw.'
+        }
+        form = PlanContactForm(self.domain.name, self.web_user, data=data)
+        form.full_clean()
+
+        subject_tag = '[Testy McTestFace]'
+        form.send_message(subject_tag)
+        mock_send.delay.assert_called_once()
+
+        args = mock_send.delay.call_args[0]
+        subject = args[0]
+        text_content = args[3]
+
+        expected_subject = f'{subject_tag} {self.domain.name}'
+        self.assertEqual(subject, expected_subject)
+        self.assertTrue(all(value in text_content for value in data.values()))
