@@ -103,7 +103,7 @@ def fuzzy_date(node, context):
     property_name = _property_name_to_string(node.args[0], node)
     value = unwrap_value(node.args[1], context)
 
-    return case_property_query(property_name, date_permutations(value))
+    return case_property_query(property_name, date_permutations(value), boost_first=True)
 
 
 def date_permutations(date_str):

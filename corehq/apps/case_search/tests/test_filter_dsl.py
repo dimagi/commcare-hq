@@ -218,7 +218,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                 "2042-03-12",
                 "2042-03-21",
                 "2042-12-30"
-            ])
+            ], boost_first=True)
         )
 
     def _test_xpath_query(self, query_string, expected_filter):
