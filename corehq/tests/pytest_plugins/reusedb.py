@@ -17,10 +17,11 @@ import os
 import sys
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from pytest_django import fixtures as django_fixtures
+from pytest_django.plugin import DjangoDbBlocker, blocking_manager_key
 from unmagic import get_request, use
 
 from django.conf import settings
@@ -80,6 +81,11 @@ def pytest_configure(config):
     db_opt = config.getoption("--db")
     assert db_opt in ["both", "only", "skip"], db_opt
     config.should_run_database_tests = db_opt
+
+    if settings.configured:
+        # This blocker will be activated by django-pytest's
+        # pytest_configure hook, which uses trylast=True.
+        config.stash[blocking_manager_key] = HqDbBlocker(config, _ispytest=True)
 
 
 @pytest.hookimpl(wrapper=True)
@@ -365,6 +371,74 @@ def bootstrap_migrated_db_state():
     from corehq.apps.smsbillables.tests.utils import bootstrap_smsbillables
     bootstrap_accounting()
     bootstrap_smsbillables()
+
+
+class HqDbBlocker(DjangoDbBlocker):
+
+    def __init__(self, config, **kw):
+        super().__init__(**kw)
+        self._callbacks = []
+        self.block_couch, self.unblock_couch = _setup_couch_blocker()
+        self.original_db_enabled = settings.DB_ENABLED
+
+        # HACK get the real ensure_connection
+        old = config.stash.get(blocking_manager_key, None)
+        if old and old._real_ensure_connection:
+            self._real_ensure_connection = old._real_ensure_connection
+
+    def _block(self):
+        settings.DB_ENABLED = False
+        self.block_couch()
+
+    def _unblock(self):
+        settings.DB_ENABLED = self.original_db_enabled
+        self.unblock_couch()
+
+    def block(self):
+        """Disable database access"""
+        self._callbacks.append(self._unblock)
+        self._block()
+        return super().block()
+
+    def unblock(self):
+        """Enable database access"""
+        self._callbacks.append(self._block)
+        self._unblock()
+        return super().unblock()
+
+    def restore(self):
+        self._callbacks.pop()()
+        super().restore()
+
+
+def _setup_couch_blocker():
+    from couchdbkit.ext.django import loading
+
+    class CouchSpec(object):
+        dbname = None
+        view = Mock(return_value=[])
+
+    def mock_couch(app):
+        dbname = dbs.get(app, main_db_url).rsplit("/", 1)[1]
+        return Mock(name=dbname, dbname=dbname, spec_set=CouchSpec)
+
+    # register our dbs with the extension document classes
+    main_db_url = settings.COUCH_DATABASE
+    dbs = dict(settings.COUCHDB_DATABASES)
+    patches = []
+    for app, value in loading.couchdbkit_handler.app_schema.items():
+        for cls in value.values():
+            patches.append(patch.object(cls, "_db", mock_couch(app)))
+
+    def block():
+        for pch in patches:
+            pch.start()
+
+    def unblock():
+        for pch in patches:
+            pch.stop()
+
+    return block, unblock
 
 
 _db_context = DeferredDatabaseContext()
