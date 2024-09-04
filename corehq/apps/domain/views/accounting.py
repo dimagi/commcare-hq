@@ -1122,8 +1122,9 @@ class SelectPlanView(PlanViewBase):
 class ContactFormViewBase(PlanViewBase):
     template_name = 'domain/selected_plan_contact.html'
     step_title = gettext_lazy("Contact Dimagi")
-    lead_text = None
     contact_form = None
+    lead_text = _("Please submit the following form and a member of our sales team will be "
+                 "in touch shortly about your plan.")
 
     @property
     def steps(self):
@@ -1159,11 +1160,6 @@ class SelectedEnterprisePlanView(ContactFormViewBase):
     edition = SoftwarePlanEdition.ENTERPRISE
 
     @property
-    def lead_text(self):
-        return format_html("Dimagi handles Enterprise plans on a case-by-case basis.<br/>"
-                           "Please fill out your information below to request a quote.")
-
-    @property
     @memoized
     def contact_form(self):
         if self.request.method == 'POST' and self.is_not_redirect:
@@ -1173,27 +1169,6 @@ class SelectedEnterprisePlanView(ContactFormViewBase):
 
 class SelectedAnnualPlanView(ContactFormViewBase):
     urlname = 'annual_plan_request_quote'
-
-    @property
-    def lead_text(self):
-        if self.edition == SoftwarePlanEdition.ENTERPRISE:
-            lead_text = format_html(
-                "Dimagi handles Enterprise plans on a case-by-case basis.<br/>"
-                "Please submit the following form if you would like to sign up for or have questions "
-                "regarding an Enterprise plan. Our sales team will be in touch shortly."
-            )
-        elif self.on_annual_plan:
-            lead_text = (
-                f"Please submit the following form if you would like to sign up for or have questions "
-                f"regarding your annual {self.edition} Plan. Our sales team will be in touch shortly."
-            )
-        else:
-            lead_text = format_html(
-                "Please submit the following form to request your project space be set up for an "
-                "<strong>annual {edition} Plan</strong>. Our sales team will reach out shortly.",
-                edition=self.edition
-            )
-        return lead_text
 
     @property
     def on_annual_plan(self):
@@ -1231,14 +1206,6 @@ class SelectedAnnualPlanView(ContactFormViewBase):
 
 class SelectedCustomPlanView(ContactFormViewBase):
     urlname = 'custom_plan_request_quote'
-
-    @property
-    def lead_text(self):
-        return format_html(
-            "Dimagi handles custom plans on a case-by-case basis.<br/>"
-            "Please submit the following form if you would like to sign up for or have questions regarding "
-            "a custom plan. Our sales team will be in touch shortly."
-        )
 
     @property
     def edition(self):
