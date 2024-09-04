@@ -43,6 +43,7 @@ from corehq.apps.accounting.exceptions import (
 )
 from corehq.apps.accounting.forms import (
     AnnualPlanContactForm,
+    CustomPlanContactForm,
     EnterprisePlanContactForm,
 )
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
@@ -1226,6 +1227,31 @@ class SelectedAnnualPlanView(ContactFormViewBase):
             'on_annual_plan': self.on_annual_plan,
         })
         return context
+
+
+class SelectedCustomPlanView(ContactFormViewBase):
+    urlname = 'custom_plan_request_quote'
+
+    @property
+    def lead_text(self):
+        return format_html(
+            "Dimagi handles custom plans on a case-by-case basis.<br/>"
+            "Please submit the following form if you would like to sign up for or have questions regarding "
+            "a custom plan. Our sales team will be in touch shortly."
+        )
+
+    @property
+    def edition(self):
+        if not self.current_subscription:
+            raise Http404()
+        return self.current_subscription.plan_version.plan.edition
+
+    @property
+    @memoized
+    def contact_form(self):
+        if self.request.method == 'POST' and self.is_not_redirect:
+            return CustomPlanContactForm(self.domain, self.request.couch_user, data=self.request.POST)
+        return CustomPlanContactForm(self.domain, self.request.couch_user)
 
 
 class ConfirmSelectedPlanView(PlanViewBase):

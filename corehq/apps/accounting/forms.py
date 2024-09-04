@@ -2018,6 +2018,19 @@ class AnnualPlanContactForm(PlanContactForm):
         super().send_message(subject_tag)
 
 
+class CustomPlanContactForm(PlanContactForm):
+
+    def __init__(self, domain, web_user, data=None, *args, **kwargs):
+        from corehq.apps.domain.views.accounting import DomainSubscriptionView
+        kwargs['back_button_text'] = "Back to my Subscription"
+        kwargs['back_button_url'] = DomainSubscriptionView.urlname
+        super().__init__(domain, web_user, data, *args, **kwargs)
+
+    def send_message(self):
+        subject_tag = "[Custom Plan Request]"
+        super().send_message(subject_tag)
+
+
 class TriggerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
