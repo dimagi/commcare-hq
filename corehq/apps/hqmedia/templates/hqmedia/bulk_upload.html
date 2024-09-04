@@ -2,6 +2,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% requirejs_main "hqmedia/js/uploader_base" %}
+
 {% block stylesheets %}{{ block.super }}
   <style type="text/css">
     .hqm-select-files-container {

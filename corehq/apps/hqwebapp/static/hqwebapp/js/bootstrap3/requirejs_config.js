@@ -1,3 +1,4 @@
+// TODO: copy YUI config from Vellum (eventually also into the B5 version)
 "use strict";
 requirejs.config({
     baseUrl: '/static/',
@@ -64,6 +65,24 @@ requirejs.config({
         "d3/d3.min": {
             "exports": "d3",
         },
+
+        "hqmedia/MediaUploader/hqmedia.upload_controller": {
+            deps: ['hqmedia/MediaUploader/yui-uploader', 'jquery', 'underscore'],
+            exports: 'HQMediaUploaderTypes',
+        },
+        "hqmedia/MediaUploader/yui-base": {
+            exports: 'YUI'
+        },
+        /*'yui-loader': {
+            deps: ['yui-base'],
+            exports: 'YUI'
+        },*/
+        "hqmedia/MediaUploader/yui-uploader": {
+            //deps: ['yui-base', 'yui-loader', 'css!yui-combo'],
+            deps: ['hqmedia/MediaUploader/yui-base'],
+            exports: 'YUI'
+        },
+
         "hqwebapp/js/bootstrap3/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
         "hqwebapp/js/lib/modernizr": {
             exports: 'Modernizr',
