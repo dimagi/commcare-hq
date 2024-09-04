@@ -148,6 +148,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
         $('#webforms').html("");
         $('.menu-scrollable-container').removeClass("d-none");
+        $('#content-container').removeClass('remove-padding-on-mobile');
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
         $('.atwho-container').remove();
@@ -313,7 +314,9 @@ hqDefine("cloudcare/js/formplayer/app", [
         };
         var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
+
         $('.menu-scrollable-container').addClass("d-none");
+        $('#content-container').addClass('remove-padding-on-mobile');
     });
 
     FormplayerFrontend.on("start", function (model, options) {

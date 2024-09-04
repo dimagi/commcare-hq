@@ -38,6 +38,12 @@ body {
 #content-container {
   background: transparent;
   margin-top: 20px;
+  @include media-breakpoint-down(sm) {
+    &.remove-padding-on-mobile {
+      padding: 0;
+      margin-top: 0;
+    }
+  }
 }
 
 @media print {
