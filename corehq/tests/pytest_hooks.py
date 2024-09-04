@@ -14,6 +14,7 @@ fence.install({"corehq", "custom", "dimagi", "testapps"})
 
 pytest_plugins = [
     'unmagic.fence',
+    'corehq.tests.pytest_plugins.dividedwerun',
     'corehq.tests.pytest_plugins.patches',
     'corehq.tests.pytest_plugins.redislocks',
     'corehq.tests.pytest_plugins.reusedb',
