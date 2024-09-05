@@ -314,6 +314,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             sessionStorage.removeItem('validationInProgress');
             sessionStorage.removeItem('answerQuestionInProgress');
             sessionStorage.removeItem('formplayerQueryInProgress');
+            sessionStorage.removeItem('collapsedIx');
         };
 
         this.onSubmit = function () {

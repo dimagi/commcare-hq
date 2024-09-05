@@ -709,6 +709,8 @@ motech
  0012_alter_connectionsettings_auth_type
  0013_alter_connectionsettings_auth_type
  0014_alter_connectionsettings_password
+ 0015_requestlog_duration
+ 0016_connectionsettings_include_client_id_and_more
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -801,6 +803,7 @@ products
 project_limits
  0001_initial
  0002_ratelimitedtwofactorlog
+ 0003_pillowlaggaugedefinition
 registration
  0001_initial
  0002_alter_request_ip
@@ -830,6 +833,7 @@ repeaters
  0010_rm_couch_artifacts
  0011_remove_obsolete_entities
  0012_formexpressionrepeater_arcgisformexpressionrepeater
+ 0013_alter_repeatrecord_state_and_more
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -850,6 +854,7 @@ reports
  0017_alter_tableauuser_tableau_user_id
  0018_alter_tableauuser_role
  0019_tableauvisualization_location_safe
+ 0020_tableauserver_get_reports_using_role
 saved_reports
  0001_initial
  0002_scheduledreportlog

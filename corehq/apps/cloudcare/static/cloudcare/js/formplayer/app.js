@@ -96,6 +96,17 @@ hqDefine("cloudcare/js/formplayer/app", [
         return true;
     };
 
+    FormplayerFrontend.showRestoreAs = function (user) {
+        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                UsersViews.RestoreAsBanner({model: user, smallScreen: false}));
+            const mobileRegion = FormplayerFrontend.regions.getRegion('mobileRestoreAsBanner');
+            if (mobileRegion.$el.length) {      // This region doesn't exist in app preview
+                mobileRegion.show(UsersViews.RestoreAsBanner({model: user, smallScreen: true}));
+            }
+        });
+    };
+
     /**
      * This function maps a jr:// media path to its HTML path IE
      * jr://images/icon/mother.png -> https://commcarehq.org/hq/multimedia/file/CommCareImage/[app_id]/mother.png
@@ -143,6 +154,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         $('#cloudcare-debugger').html("");
         $('.atwho-container').remove();
         bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
+        sessionStorage.removeItem('collapsedIx');
     });
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {
@@ -261,7 +273,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                     });
                 }
 
-                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
+                if (user.isAppPreview) {
                     Kissmetrics.track.event("[app-preview] User submitted a form");
                     GGAnalytics.track.event("App Preview", "User submitted a form");
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
@@ -289,7 +301,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                     FormplayerUtils.navigate('/apps', { trigger: true });
                 }
             } else {
-                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
+                if (user.isAppPreview) {
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: false });
                 }
                 CloudcareUtils.showError(resp.output, $("#cloudcare-notifications"));
@@ -324,13 +336,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 var apps = appCollection.toJSON();
                 if (Backbone.history) {
                     Backbone.history.start();
-                    hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
-                        FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                            UsersViews.RestoreAsBanner({
-                                model: user,
-                            })
-                        );
-                    });
+                    FormplayerFrontend.showRestoreAs(user);
                     if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
                         appId = apps[0]['_id'];
                     }
@@ -728,6 +734,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         urlObject.clearExceptApp();
         FormplayerFrontend.regions.getRegion('sidebar').empty();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
+        FormplayerFrontend.regions.getRegion('persistentMenu').empty();
         if (currentUser.displayOptions.singleAppMode) {
             appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
             FormplayerFrontend.trigger("app:singleApp", appId);

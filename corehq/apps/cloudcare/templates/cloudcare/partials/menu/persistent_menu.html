@@ -1,0 +1,50 @@
+{% load i18n %}
+
+<script type="text/template" id="persistent-menu-template">
+  <a type="button"
+     href="#"
+     tabindex="1"
+     data-bs-toggle="offcanvas"
+     data-bs-target="#persistent-menu-container"
+     aria-expanded="false"
+     aria-controls="persistent-menu-container"
+     class="position-fixed top-50 start-0 rounded-end persistent-menu-toggle">
+    <i class="fa fa-chevron-right"></i>
+  </a>
+  <div id="persistent-menu-container" class="offcanvas offcanvas-start" tabindex="-1" aria-labelledby="persistent-menu-label">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title position-relative" id="persistent-menu-label">
+        <% if (imageUri) { %>
+          <i class="fcc persistent-menu-image" aria-hidden="true"
+             style="background-image: url('<%- imageUri %>');"></i>
+        <% } else { %>
+          <i class="fcc fcc-flower persistent-menu-image" aria-hidden="true"></i>
+        <% } %>
+        <a id="app-main" class="align-middle stretched-link text-reset" href="#"
+           data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
+          <%- appName %>
+        </a>
+      </h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <div id="persistent-menu-content" class="persistent-menu"></div>
+    </div>
+  </div>
+</script>
+
+<script type="text/template" id="persistent-menu-item">
+  <div class="position-relative persistent-menu-item rounded">
+    <% if (imageUri) { %>
+      <i class="fcc persistent-menu-image" aria-hidden="true"
+         style="background-image: url('<%- imageUri %>');"></i>
+    <% } else { %>
+      <i class="fa <%- iconClass %> persistent-menu-image" aria-hidden="true"></i>
+    <% } %>
+    <a class="align-middle stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#"
+       data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
+      <%- displayText %>
+    </a>
+  </div>
+  <ul></ul>
+</script>

@@ -386,7 +386,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
         assert validation_result == self.validator.error_message_location_access.format(
             self.locations['Suffolk'].site_code)
 
-    @flag_enabled('LOCATION_HAS_USERS')
+    @flag_enabled('USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION')
     def test_location_not_has_users(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Middlesex'].location_id])
         self.locations['Cambridge'].location_type.has_users = False

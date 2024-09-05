@@ -156,6 +156,7 @@ class TableauServer(models.Model):
     validate_hostname = models.CharField(max_length=128, default='', blank=True)
     target_site = models.CharField(max_length=64, default='Default')
     allowed_tableau_groups = ArrayField(models.CharField(max_length=255), null=True, blank=True, default=list)
+    get_reports_using_role = models.BooleanField(default=False)
 
     def __str__(self):
         return '{domain} {server} {server_type} {site}'.format(domain=self.domain,

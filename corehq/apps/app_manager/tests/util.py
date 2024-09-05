@@ -6,6 +6,8 @@ from unittest import mock
 from lxml import etree
 from nose.tools import nottest
 
+from dimagi.utils.couch.database import iter_bulk_delete
+
 import commcare_translations
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import app_doc_types
@@ -14,6 +16,10 @@ from corehq.apps.builds.models import (
     CommCareBuild,
     CommCareBuildConfig,
 )
+from corehq.apps.hqmedia.models import CommCareMultimedia
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.models import BlobMeta
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.tests.util.xml import (
     assert_html_equal,
     assert_xml_equal,
@@ -168,6 +174,20 @@ def delete_all_apps():
         )
         for row in res:
             Application.get_db().delete_doc(row['doc'])
+
+
+@unit_testing_only
+def delete_all_multimedia():
+    # Clean up multimedia, which is shared across domains keyed on
+    # file content hash. Blob metadata is automatically cleaned up
+    # on SQL transaction rollback, which breaks CommCareMultimedia
+    # functionality in other tests.
+    metas = []
+    for dbname in get_db_aliases_for_partitioned_query():
+        metas.extend(BlobMeta.objects.using(dbname).filter(type_code=CODES.multimedia))
+    couch_ids = [m.parent_id for m in metas]
+    iter_bulk_delete(CommCareMultimedia.get_db(), couch_ids)
+    get_blob_db().bulk_delete(metas)
 
 
 def get_simple_form(xmlns=None):
