@@ -940,7 +940,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     FileEntry.prototype.constructor = EntrySingleAnswer;
     FileEntry.prototype.onPreProcess = function (newValue) {
         var self = this;
-        if (newValue === "" && self.question.filename()) {
+        if (newValue === "" && self.question.filename) {
             self.question.hasAnswered = true;
             self.fileNameDisplay(self.question.filename());
         } else if (newValue !== constants.NO_ANSWER && newValue !== "") {
