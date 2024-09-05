@@ -1,8 +1,12 @@
 import os
 
 import pytest
+from unmagic import fence
+
+fence.install({"corehq", "custom", "dimagi", "testapps"})
 
 pytest_plugins = [
+    'unmagic.fence',
     'corehq.tests.pytest_plugins.patches',
     'corehq.tests.pytest_plugins.redislocks',
 ]
