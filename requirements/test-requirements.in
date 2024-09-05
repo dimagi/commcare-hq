@@ -11,5 +11,6 @@ freezegun
 radon>=5.0  # v5 no longer depends on flake8-polyfill
 pytest @ git+https://github.com/pytest-dev/pytest.git@85760bff2776989b365167c7aeb35c86308ab76b
 pytest-django
+pytest-unmagic @ git+https://github.com/dimagi/pytest-unmagic.git
 coverage
 uWSGI
