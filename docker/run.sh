@@ -179,9 +179,9 @@ function _run_tests {
             py_test_args+=("--attr=sharded")
             ;;
         python-elasticsearch-v5)
-            export ELASTICSEARCH_HOST='elasticsearch5'
-            export ELASTICSEARCH_PORT=9205
-            export ELASTICSEARCH_MAJOR_VERSION=5
+            export ELASTICSEARCH_HOST='elasticsearch6'
+            export ELASTICSEARCH_PORT=9200
+            export ELASTICSEARCH_MAJOR_VERSION=6
             py_test_args+=("--attr=es_test")
             ;;
     esac
