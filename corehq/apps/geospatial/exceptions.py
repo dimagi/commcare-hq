@@ -14,3 +14,7 @@ class InvalidCoordinate(GeoSpatialException):
 
 class InvalidDistributionParam(GeoSpatialException):
     pass
+
+
+class CaseReassignmentValidationError(Exception):
+    pass
