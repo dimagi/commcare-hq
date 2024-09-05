@@ -12347,7 +12347,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html
-msgid "Row(s):"
+msgid "Toggle Affected Row(s)"
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html
@@ -15794,10 +15794,8 @@ msgid "Call Center Application"
 msgstr "Aplicación de Centro de Llamadas"
 
 #: corehq/apps/domain/forms.py
-#, fuzzy
-#| msgid "Call Center Application"
 msgid "Enable Call Center Application"
-msgstr "Aplicación de Centro de Llamadas"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid ""
@@ -15916,10 +15914,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-#, fuzzy
-#| msgid "Maintenance Alerts"
 msgid "Orphan Case Alerts"
-msgstr "Alertas de Mantenimiento"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Show Orphan Case Alerts on Mobile Worker Edit Page"
@@ -22089,6 +22085,11 @@ msgstr ""
 
 #: corehq/apps/export/views/new.py
 msgid "Create Case Data Export"
+msgstr ""
+
+#: corehq/apps/export/views/new.py
+#, python-brace-format
+msgid "Case type '{case_type}' does not exist for this project."
 msgstr ""
 
 #: corehq/apps/export/views/new.py
@@ -39797,16 +39798,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-#, fuzzy
-#| msgid "Deleting Group..."
 msgid "Deleting Expression..."
-msgstr "Eliminando Grupo..."
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-#, fuzzy
-#| msgid "Delete Version"
 msgid "Delete Expression"
-msgstr "Eliminar Versión"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html
 #: corehq/tabs/tabclasses.py
@@ -41382,12 +41379,16 @@ msgid "Bulk Clear Data"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Bulk Delete Users"
-msgstr ""
+#, fuzzy
+#| msgid "Delete Mobile Worker"
+msgid "Bulk Delete Mobile Workers"
+msgstr "Eliminar Usuario Móvil"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Bulk Lookup of Users"
-msgstr ""
+#, fuzzy
+#| msgid "Bulk Upload Mobile Workers"
+msgid "Bulk Lookup of Mobile Workers"
+msgstr "Carga General de Usuarios Móviles"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Create New Mobile Worker"
@@ -43032,6 +43033,18 @@ msgid ""
 msgstr ""
 "Esta configuración le permite que los usuarios dividan preguntas de "
 "selección múltiple en varias columnas en casos de exportación."
+
+#: corehq/feature_previews.py
+#, fuzzy
+#| msgid "User Location"
+msgid "Use location name"
+msgstr "Ubicación de Usuario"
+
+#: corehq/feature_previews.py
+msgid ""
+"This setting changes the location dropdown to display location name instead "
+"of the full location path."
+msgstr ""
 
 #: corehq/feature_previews.py
 msgid "Call Center"
@@ -45412,10 +45425,8 @@ msgid "Pass credentials in Basic Auth header when requesting a token"
 msgstr ""
 
 #: corehq/motech/forms.py
-#, fuzzy
-#| msgid "Include in Download"
 msgid "Include client ID"
-msgstr "Incluir en Descarga"
+msgstr ""
 
 #: corehq/motech/forms.py
 msgid "Send the client ID in the body of the token request"
@@ -45423,7 +45434,7 @@ msgstr ""
 
 #: corehq/motech/forms.py
 msgid "Scope"
-msgstr ""
+msgstr "Alcance"
 
 #: corehq/motech/forms.py
 msgid "Space-separated list of scopes e.g. \"read write\""
@@ -45873,10 +45884,8 @@ msgstr "Cancelado"
 
 #: corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/views/repeat_record_display.py
-#, fuzzy
-#| msgid "Invalid Date"
 msgid "Invalid Payload"
-msgstr "Fecha Inválida"
+msgstr ""
 
 #: corehq/motech/repeaters/const.py
 msgid "Is enabled"
@@ -45915,6 +45924,11 @@ msgstr ""
 #: corehq/motech/repeaters/expression/views.py
 #: corehq/motech/repeaters/views/repeaters.py
 msgid "Edit Case Repeater"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/views.py
+#: corehq/motech/repeaters/views/repeaters.py
+msgid "Edit Form Repeater"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/views.py
@@ -46232,10 +46246,6 @@ msgstr ""
 msgid "Forwarder Successfully Updated"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py
-msgid "Edit Form Repeater"
-msgstr ""
-
 #: corehq/motech/requests.py
 msgid "Project space: {}"
 msgstr ""
@@ -46357,10 +46367,8 @@ msgid "Used By"
 msgstr "Utilizado Por"
 
 #: corehq/motech/views.py
-#, fuzzy
-#| msgid "Please enter digits only."
 msgid "Please enter client secret again."
-msgstr "Por favor ingrese solo dígitos."
+msgstr ""
 
 #: corehq/motech/views.py
 msgid "Please enter API password again."
