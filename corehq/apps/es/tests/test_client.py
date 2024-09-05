@@ -269,21 +269,14 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         a transient setting once its set without restarting the cluster, so we
         explicitly set the default value (`all`) instead.
         """
-        self.adapter.cluster_routing(enabled=True)  # default value
+        try:
+            self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
+        except TransportError:
+            # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
+            pass
         if verify:
             settings = self.adapter._es.cluster.get_settings(flat_settings=True)
-            self.assertEqual(settings["transient"]["cluster.routing.allocation.enable"], "all")
-        #
-        # The code below is better. Use it instead when able Elastic v5+
-        #
-        #try:
-        #    self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
-        #except TransportError:
-        #    # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
-        #    pass
-        #if verify:
-        #    settings = self.adapter._es.cluster.get_settings(flat_settings=True)
-        #    self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
+            self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
 
     def test_get_node_info(self):
         info = self.adapter._es.nodes.info()
@@ -697,7 +690,10 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             self.adapter.index_close(test_adapter.index_name)
             with self.assertRaises(TransportError) as test:
                 test_adapter.index(TestDoc("2", "test"))
-            self.assertEqual(test.exception.status_code, 403)
+            if test_adapter.elastic_major_version <= 5:
+                self.assertEqual(test.exception.status_code, 403)
+            else:
+                self.assertEqual(test.exception.status_code, 400)
             self.assertEqual(test.exception.error, "index_closed_exception")
 
     def test_index_put_alias(self):
@@ -825,7 +821,11 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         }
         self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
-        del mapping["_meta"]
+        # To remove meta in Elastic 6.x, we have to pass an empty _meta field
+        # but in Elastic 5.x, we have to remove it entirely from the object
+        mapping["_meta"] = {}
+        if manager.elastic_major_version < 6:
+            del mapping["_meta"]
         self.adapter.index_put_mapping(self.index, type_, mapping)
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
 
