@@ -19,6 +19,7 @@ from corehq.util.es.elasticsearch import (
     ElasticsearchException,
     NotFoundError,
     TransportError,
+    RequestError,
     bulk,
 )
 from corehq.toggles import ES_QUERY_PREFERENCE
@@ -125,6 +126,46 @@ class ElasticManageAdapter(BaseAdapter):
             self._validate_single_index(index)
         return self._es.cluster.health(index)
 
+    def cluster_allocation_explain(self):
+        """
+        Returns cluster allocation for the first failed shard with their node allocation decisions.
+        It can be extended to return allocation of a specific shard or index if provided.
+        """
+        try:
+            return self._parse_cluster_allocation_info(self._es.cluster.allocation_explain())
+        except RequestError as err:
+            # RequestError is raised if there are no un-assigned shards
+            reason = err.info['error']['reason']
+            if 'unable to find any unassigned shards to explain' in reason:
+                return {'unassigned_shard': None}
+            raise err
+
+    def _parse_cluster_allocation_info(self, allocation_info):
+        "Parses the result of cluster allocation explain API"
+
+        shard_info = {
+            'index': allocation_info['index'],
+            'shard': allocation_info['shard'],
+            'primary': allocation_info['primary'],
+            'rejection_explanation': []
+        }
+
+        for decider in allocation_info['node_allocation_decisions']:
+            node_info = {
+                'node_id': decider['node_id'],
+                'node_name': decider['node_name'],
+                'rejection_reasons': []
+            }
+            for decision in decider['deciders']:
+                if decision['decision'] == 'NO':
+                    node_info['rejection_reasons'].append({
+                        'explanation': decision['explanation']
+                    })
+            shard_info["rejection_explanation"].append(node_info)
+        return {
+            "unassigned_shard": shard_info
+        }
+
     def cluster_routing(self, *, enabled):
         """Enable or disable cluster routing.
 
@@ -133,9 +174,50 @@ class ElasticManageAdapter(BaseAdapter):
         value = "all" if enabled else "none"
         self._cluster_put_settings({"cluster.routing.allocation.enable": value})
 
+    def cluster_get_settings(self, is_flat=True):
+        """Returns both transient and persistent cluster settings."""
+        return self._es.cluster.get_settings(flat_settings=is_flat)
+
     def _cluster_put_settings(self, settings, transient=True, is_flat=True):
         set_type = "transient" if transient else "persistent"
         self._es.cluster.put_settings({set_type: settings}, flat_settings=is_flat)
+
+    def _parse_watermark_to_percentage(self, total_space, watermark_value):
+        """
+        Calculate the watermark percentage based on the given total space and watermark value.
+
+        Args:
+            total_space (float):
+                The total available disk space (in bytes).
+            watermark_value (str):
+                The watermark value, which can be an absolute value (e.g., "10GB") or a percentage (e.g., "90%").
+
+        Returns:
+            float: The watermark value as a percentage.
+        """
+        if watermark_value.endswith('%'):
+            # Watermark is provided as a percentage
+            return float(watermark_value[:-1])
+        else:
+            # Watermark is provided as an absolute value
+            try:
+                num, unit = float(watermark_value[:-2]), watermark_value[-2:].lower()
+                if unit == 'kb':
+                    watermark_bytes = num * 1024
+                elif unit == 'mb':
+                    watermark_bytes = num * 1024 * 1024
+                elif unit == 'gb':
+                    watermark_bytes = num * 1024 * 1024 * 1024
+                elif unit == 'tb':
+                    watermark_bytes = num * 1024 * 1024 * 1024 * 1024
+                else:
+                    raise ValueError("Invalid unit. Must be 'KB', 'MB', or 'GB'.")
+                return ((total_space - watermark_bytes) / total_space) * 100
+            except (ValueError, IndexError):
+                raise ValueError(
+                    """Invalid watermark value format.
+                    Must be a percentage or an absolute value (e.g., '10GB')."""
+                )
 
     def get_node_info(self, node_id, metric):
         """Return a specific metric from the node info for an Elasticsearch node.
@@ -145,6 +227,24 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: deserialized JSON (``dict``, ``list``, ``str``, etc)
         """
         return self._es.nodes.info(node_id, metric)["nodes"][node_id][metric]
+
+    def get_node_fs_stats(self):
+        """Returns Filesystem related stats for all nodes in the cluster."""
+        cluster_node_stats = []
+        for node_id, node_stats in self._es.nodes.stats()['nodes'].items():
+            total_disk_size = node_stats['fs']['total']['total_in_bytes']
+            free_disk_space = node_stats['fs']['total']['available_in_bytes']
+            used_disk_size = total_disk_size - free_disk_space
+            disk_usage_percentage = used_disk_size / total_disk_size * 100
+            cluster_node_stats.append({
+                "node_id": node_id,
+                "node_name": node_stats["name"],
+                "roles": list(node_stats["roles"]),  # possible values - data/ingest/master
+                "total_disk_size": total_disk_size,
+                "free_disk_space": free_disk_space,
+                "disk_usage_percentage": disk_usage_percentage
+            })
+        return cluster_node_stats
 
     def get_task(self, task_id):
         """Return the details for an active task

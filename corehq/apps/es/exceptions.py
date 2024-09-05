@@ -31,3 +31,11 @@ class IndexAlreadySwappedException(Exception):
 
 class IndexNotSubindexException(Exception):
     pass
+
+
+class LowSpaceInClusterException(Exception):
+    pass
+
+
+class FailedIndexCreationException(Exception):
+    pass

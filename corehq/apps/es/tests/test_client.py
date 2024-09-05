@@ -250,11 +250,11 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             settings["transient"]["cluster.routing.allocation.enable"],
             "all",
         )
-        self._clear_cluster_routing()
+        self._clear_cluster_settings()
 
     def test_cluster_routing_disable(self):
         # ensure it's something different first
-        self._clear_cluster_routing(verify=True)
+        self._clear_cluster_settings(verify=True)
         # now set it and test
         self.adapter.cluster_routing(enabled=False)
         settings = self.adapter._es.cluster.get_settings(flat_settings=True)
@@ -262,28 +262,113 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             settings["transient"]["cluster.routing.allocation.enable"],
             "none",
         )
-        self._clear_cluster_routing()
+        self._clear_cluster_settings()
 
-    def _clear_cluster_routing(self, verify=False):
-        """Attempt to "clear" the cluster setting. In v2.4 you can't clear
-        a transient setting once its set without restarting the cluster, so we
-        explicitly set the default value (`all`) instead.
+    def _clear_cluster_settings(self, verify=False):
+        """Attempt to "clear" the cluster setting.
         """
-        self.adapter.cluster_routing(enabled=True)  # default value
+        try:
+            settings_obj = {
+                "cluster.routing.allocation.enable": None,
+                "cluster.routing.allocation.disk.watermark.low": None,
+                "cluster.routing.allocation.disk.watermark.high": None,
+            }
+            self.adapter._cluster_put_settings(settings_obj)
+        except TransportError:
+            # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
+            pass
         if verify:
             settings = self.adapter._es.cluster.get_settings(flat_settings=True)
-            self.assertEqual(settings["transient"]["cluster.routing.allocation.enable"], "all")
-        #
-        # The code below is better. Use it instead when able Elastic v5+
-        #
-        #try:
-        #    self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
-        #except TransportError:
-        #    # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
-        #    pass
-        #if verify:
-        #    settings = self.adapter._es.cluster.get_settings(flat_settings=True)
-        #    self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
+            for key in settings_obj:
+                self.assertIsNone(settings["transient"].get(key))
+
+    def test_cluster_get_settings_with_no_settings(self):
+        self._clear_cluster_settings()
+        settings = self.adapter.cluster_get_settings()
+        self.assertIn("transient", settings)
+        self.assertIn("persistent", settings)
+        self.assertEqual(settings['transient'], {})
+        self.assertEqual(settings['persistent'], {})
+
+    def test_cluster_get_settings_with_existing_settings(self):
+        settings_obj = {
+            "cluster.routing.allocation.enable": "all",
+            "cluster.routing.allocation.disk.watermark.low": "1gb"
+        }
+        self.adapter._cluster_put_settings(settings_obj)
+        settings = self.adapter.cluster_get_settings()
+        self.assertEqual(settings['transient'], settings_obj)
+        self._clear_cluster_settings(verify=True)
+
+    def test_cluster_get_settings_with_unflattened_settings(self):
+        settings_obj = {
+            "cluster.routing.allocation.enable": "all",
+            "cluster.routing.allocation.disk.watermark.low": "1gb"
+        }
+        self.adapter._cluster_put_settings(settings_obj)
+        settings = self.adapter.cluster_get_settings(is_flat=False)
+        expected_settings = {
+            "cluster": {
+                "routing": {
+                    "allocation": {
+                        "enable": "all",
+                        "disk": {
+                            "watermark": {
+                                "low": "1gb"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.assertEqual(settings['transient'], expected_settings)
+        self._clear_cluster_settings(verify=True)
+
+    def test_cluster_allocation_explain_on_normal_cluster(self):
+        allocation = self.adapter.cluster_allocation_explain()
+        self.assertEqual(allocation, {'unassigned_shard': None})
+
+    def test_cluster_allocation_explain_on_unassigned_shards(self):
+        test_index_name = 'test_index_for_cluster_allocation'
+        self.adapter.index_create(test_index_name)
+        self.addCleanup(self.adapter.index_delete, test_index_name)
+
+        # This will create unassigned shards because tests and local setup
+        # will always have 1 host and multiple replicas are
+        # not assigned on same host.
+        self.adapter.index_set_replicas(test_index_name, 4)
+        info = self.adapter.cluster_allocation_explain()['unassigned_shard']
+        self.assertEqual(info['index'], test_index_name)
+        self.assertEqual(info['primary'], False)
+        # can be any shard from the index, so checking if it is a number
+        assert isinstance(info['shard'], int), f"Expected a number, but got {type(info['shard'])}"
+
+        self.assertTrue(len(info['rejection_explanation']) != 0)
+
+    def test__parse_watermark_to_percentage_from_absolute_values(self):
+        total_space = 100 * 1024 * 1024 * 1024  # 100 GB
+        disk_percent = manager._parse_watermark_to_percentage(total_space, "10gb")
+        self.assertEqual(int(disk_percent), 90)
+
+    def test__parse_watermark_to_percentage_from_percentage(self):
+        total_space = 100 * 1024 * 1024 * 1024  # 100 GB
+        disk_percent = manager._parse_watermark_to_percentage(total_space, "90%")
+        self.assertEqual(int(disk_percent), 90)
+
+    def test__parse_watermark_to_percentage_raises_for_invalid_values(self):
+        total_space = 100 * 1024 * 1024 * 1024  # 100 GB
+        with self.assertRaises(ValueError):
+            manager._parse_watermark_to_percentage(total_space, "90Terrabytes")
+
+    def test_get_node_fs_stats(self):
+        stats = self.adapter.get_node_fs_stats()
+        self.assertTrue(len(stats) > 0)
+        expected_keys = set([
+            'node_id', 'node_name', 'roles', 'total_disk_size', 'free_disk_space', 'disk_usage_percentage'
+        ])
+        for stat in stats:
+            keys = set(stat.keys())
+            self.assertEqual(keys, expected_keys)
 
     def test_get_node_info(self):
         info = self.adapter._es.nodes.info()

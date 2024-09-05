@@ -3,15 +3,21 @@ import sys
 from datetime import datetime
 from difflib import unified_diff
 from tempfile import NamedTemporaryFile
+from time import sleep
 
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import CommandError, OutputWrapper
 from django.core.management.color import color_style
 from django.db.migrations import RunPython
 
+from corehq.apps.es.client import manager
+from corehq.apps.es.exceptions import FailedIndexCreationException, LowSpaceInClusterException
 from corehq.apps.es.index.settings import render_index_tuning_settings
 
 log = logging.getLogger(__name__)
+
+DEFAULT_DISK_USAGE_WATERMARK = "85%"
 
 
 class BaseElasticOperation(RunPython):
@@ -45,7 +51,10 @@ class CreateIndex(BaseElasticOperation):
 
     serialization_expand_args = ["mapping", "analysis"]
 
-    def __init__(self, name, type_, mapping, analysis, settings_key, comment=None, es_versions=[]):
+    def __init__(
+            self, name, type_, mapping, analysis, settings_key,
+            comment=None, es_versions=[], creation_checks=False
+    ):
         """CreateIndex operation.
 
         :param name: the name of the index to be created.
@@ -58,6 +67,9 @@ class CreateIndex(BaseElasticOperation):
             ``mapping._meta.comment`` property.
         :param es_versions: Optional (default []) list of supported ES versions.
             If specified, the mappings will only be applied on those ES versions.
+        :param creation_checks: Optional (default False) set to ``True`` checks regarding
+            index creation should be performed which involves if primary shards are allocated
+            and if the space available is sufficient i.e below watermark settings
         """
         super().__init__(self.run, self.reverse_run)
         self.name = name
@@ -67,6 +79,7 @@ class CreateIndex(BaseElasticOperation):
         self.settings_key = settings_key
         self.comment = comment
         self.es_versions = es_versions
+        self.creation_checks = creation_checks
 
     def deconstruct(self):
         kwargs = {}
@@ -86,8 +99,14 @@ class CreateIndex(BaseElasticOperation):
             # and mapping is created for a differnt es version
             return
 
-        from corehq.apps.es.client import manager
+        if self.creation_checks:
+            self._validate_disk_under_watermark()
+
         log.info("Creating Elasticsearch index: %s" % self.name)
+
+        manager.cluster_routing(enabled=True)
+        log.info("Enabled cluster routing")
+
         manager.index_create(self.name, self.render_index_metadata(
             self.type,
             self.mapping,
@@ -95,7 +114,73 @@ class CreateIndex(BaseElasticOperation):
             self.settings_key,
             self.comment,
         ))
+        if self.creation_checks:
+            self._wait_for_primary_shards_to_be_assigned()
+
         manager.index_configure_for_standard_ops(self.name)
+
+        log.info("Disabling cluster routing after index creation")
+        manager.cluster_routing(enabled=False)
+
+    def _validate_disk_under_watermark(self):
+        """
+        Validate disk usage in each data node is under watermarks before creating index
+        Raises LowSpaceInClusterException and fails if no data node has available disk space
+        """
+        settings = manager.cluster_get_settings()['transient']
+        low_watermark = settings.get("cluster.routing.allocation.disk.watermark.low", DEFAULT_DISK_USAGE_WATERMARK)
+
+        fs_info = manager.get_node_fs_stats()
+        has_one_node_with_available_space = False
+
+        def is_data_node(stats):
+            return 'data' in stats['roles']
+
+        def within_low_watermark(stats, low_watermark_percentage):
+            return stats['disk_usage_percentage'] < low_watermark_percentage
+
+        for info in fs_info:
+            total_disk_size = info['total_disk_size']
+            low_watermark_percentage = manager._parse_watermark_to_percentage(total_disk_size, low_watermark)
+
+            if is_data_node(info) and within_low_watermark(info, low_watermark_percentage):
+                has_one_node_with_available_space = True
+            elif not within_low_watermark(info, low_watermark_percentage):
+                log.warning(
+                    f"{info['node_name']} exceeds low disk watermark of {low_watermark_percentage}%. "
+                    f"Available disk space: {100-info['disk_usage_percentage']}%.\n"
+                )
+
+        if not has_one_node_with_available_space:
+            raise LowSpaceInClusterException("""All data nodes are above low watermark capacity.
+                            Index creation failed due to insufficient disk space.""")
+
+    def _wait_for_primary_shards_to_be_assigned(self):
+        # A small arbitary delay before we can check for
+        # primary shard allocation status
+        sleep_time = 0 if settings.UNIT_TESTING else 3
+        sleep(sleep_time)
+        cluster_health = manager.cluster_health()
+        if cluster_health['status'] == 'green' or cluster_health['status'] == 'yellow':
+            # Primary shards are allocated, cluster is functional
+            return
+        if cluster_health['status'] == 'red':
+            self._explain_shard_allocation_failure()
+            manager.index_delete(self.name)
+            raise FailedIndexCreationException(f"Failed to create {self.name} failed. Deleted {self.name}")
+
+    def _explain_shard_allocation_failure():
+        """
+        If cluster health gets to red state after index creation,
+        this method explains why primary shards were not allocated
+        """
+        unassigned_shard = manager.cluster_allocation_explain()
+        if unassigned_shard:
+            log.error(
+                f"""Unable to assign Shard {unassigned_shard['shard']} of Index
+                {unassigned_shard['index']} {unassigned_shard['rejection_explanation']}
+                """
+            )
 
     def reverse_run(self, *args, **kw):
         if self.es_versions and self._should_skip_operation(self.es_versions):
