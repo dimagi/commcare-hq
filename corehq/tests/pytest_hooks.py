@@ -4,6 +4,13 @@ from pathlib import Path
 import pytest
 from unmagic import fence
 
+from ddtrace.internal.module import ModuleWatchdog
+if ModuleWatchdog.is_installed():
+    # Remove ddtrace cruft from tracebacks. ModuleWatchdog is installed
+    # unconditionally when ddtrace is imported, which happens early
+    # in pytest startup because of ddtrace's pytest11 entry point(s).
+    ModuleWatchdog.uninstall()
+
 pytest_plugins = [
     'unmagic',
     'corehq.tests.pytest_plugins.patches',
