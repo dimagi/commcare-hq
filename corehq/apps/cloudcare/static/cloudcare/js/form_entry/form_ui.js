@@ -691,12 +691,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     element.serverError(null);
                 }
 
+                console.log("in session.reconcile.")
+                console.log(element)
                 if (allChildren) {
+                    console.log(allChildren)
                     for (let i = 0; i < allChildren.length; i++) {
                         if (allChildren[i].control >= constants.CONTROL_IMAGE_CHOOSE) {
+                            console.log(element.answer())
                             allChildren[i].filename = element.answer();
                         }
                     }
+                    console.log(allChildren)
                 }
                 response.children = allChildren;
                 self.fromJS(response);

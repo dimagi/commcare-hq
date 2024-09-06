@@ -940,7 +940,14 @@ hqDefine("cloudcare/js/form_entry/entries", [
     FileEntry.prototype.constructor = EntrySingleAnswer;
     FileEntry.prototype.onPreProcess = function (newValue) {
         var self = this;
-        if (newValue === "" && self.question.filename()) {
+        console.log("in onPreProcess")
+        console.log(newValue)
+        console.log(self.question.filename)
+        if (self.question.filename) {
+            console.log(self.question.filename())
+        }
+        console.log(self.answer())
+        if (newValue === "" && self.question.filename) {
             self.question.hasAnswered = true;
             self.fileNameDisplay(self.question.filename());
         } else if (newValue !== constants.NO_ANSWER && newValue !== "") {
@@ -953,6 +960,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
             self.fileNameDisplay(fixedNewValue);
             self.answer(fixedNewValue);
         } else {
+            console.log("definitely calling onClear here")
             self.onClear();
         }
     };
