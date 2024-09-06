@@ -176,42 +176,60 @@ def _update_location(user, location_object, user_change_logger):
     if primary_location_id is None and location_ids is None:
         return
 
-    user_current_primary_location_id = user.location_id
+    user_current_primary_location_id = user.get_location_id(user.domain)
+    user_current_locations = user.get_location_ids(user.domain)
 
     if not primary_location_id and not location_ids:
-        # we will have bundle.obj.save() later, so when change locations, commit=False
-        user.unset_location(commit=False)
-        user.reset_locations([], commit=False)
-        if user_change_logger:
-            user_change_logger.add_changes({'location_id': primary_location_id})
-            user_change_logger.add_info(UserChangeMessage.primary_location_removed())
-            user_change_logger.add_changes({'assigned_location_ids': location_ids})
-            user_change_logger.add_info(UserChangeMessage.assigned_locations_info([]))
-    elif not primary_location_id or not location_ids:
-        raise UpdateUserException(_('Both primary_location and locations must be provided together.'))
+        _remove_all_locations(user, user_change_logger)
     else:
-        if primary_location_id not in location_ids:
-            raise UpdateUserException(_('Primary location must be included in the list of locations.'))
+        if _validate_locations(primary_location_id, location_ids):
+            locations = _verify_location_ids(location_ids, user.domain)
+            if primary_location_id != user_current_primary_location_id:
+                _update_primary_location(user, primary_location_id, user_change_logger)
+            if set(user_current_locations) != set(location_ids):
+                _update_assigned_locations(user, locations, location_ids, user_change_logger)
 
-        # Verify all location ids has a SQLLocation.
-        locations = SQLLocation.active_objects.filter(location_id__in=location_ids, domain=user.domain)
-        real_ids = locations.location_ids()
 
-        if missing_ids := set(location_ids) - set(real_ids):
-            raise UpdateUserException(f"Could not find location ids: {', '.join(missing_ids)}.")
-        if primary_location_id != user_current_primary_location_id:
-            primary_location = SQLLocation.active_objects.get(location_id=primary_location_id)
-            user.set_location(primary_location, commit=False)
-            if user_change_logger:
-                user_change_logger.add_changes({'location_id': primary_location_id})
-                user_change_logger.add_info(
-                    UserChangeMessage.primary_location_info(primary_location)
-                )
+def _validate_locations(primary_location_id, location_ids):
+    if not primary_location_id and not location_ids:
+        return False
+    if not primary_location_id or not location_ids:
+        raise UpdateUserException(_('Both primary_location and locations must be provided together.'))
+    if primary_location_id not in location_ids:
+        raise UpdateUserException(_('Primary location must be included in the list of locations.'))
+    return True
 
-        # Update location_ids
-        user.reset_locations(location_ids, commit=False)
-        if user_change_logger:
-            user_change_logger.add_changes({'assigned_location_ids': location_ids})
-            user_change_logger.add_info(
-                UserChangeMessage.assigned_locations_info(locations)
-            )
+
+def _remove_all_locations(user, user_change_logger):
+    user.unset_location(commit=False)
+    user.reset_locations([], commit=False)
+    if user_change_logger:
+        user_change_logger.add_changes({'location_id': None})
+        user_change_logger.add_info(UserChangeMessage.primary_location_removed())
+        user_change_logger.add_changes({'assigned_location_ids': []})
+        user_change_logger.add_info(UserChangeMessage.assigned_locations_info([]))
+
+
+def _update_primary_location(user, primary_location_id, user_change_logger):
+    primary_location = SQLLocation.active_objects.get(location_id=primary_location_id)
+    user.set_location(primary_location, commit=False)
+    if user_change_logger:
+        user_change_logger.add_changes({'location_id': primary_location_id})
+        user_change_logger.add_info(UserChangeMessage.primary_location_info(primary_location))
+
+
+def _verify_location_ids(location_ids, domain):
+    locations = SQLLocation.active_objects.filter(location_id__in=location_ids, domain=domain)
+    real_ids = locations.location_ids()
+
+    if missing_ids := set(location_ids) - set(real_ids):
+        raise UpdateUserException(f"Could not find location ids: {', '.join(missing_ids)}.")
+
+    return locations
+
+
+def _update_assigned_locations(user, locations, location_ids, user_change_logger):
+    user.reset_locations(location_ids, commit=False)
+    if user_change_logger:
+        user_change_logger.add_changes({'assigned_location_ids': location_ids})
+        user_change_logger.add_info(UserChangeMessage.assigned_locations_info(locations))
