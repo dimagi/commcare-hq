@@ -4,15 +4,12 @@
 
 {% block form_content %}
   <p class="lead text-center">
-    {% blocktrans %}
-      Dimagi handles Enterprise plans on a case-by-case basis. <br />
-      Please fill out your information below to request a quote.
-    {% endblocktrans %}
+    {{ lead_text }}
   </p>
 
   <div class="panel panel-modern-gray panel-form-only">
     <div class="panel-body">
-      {% crispy enterprise_contact_form %}
+      {% crispy contact_form %}
     </div>
   </div>
 {% endblock %}
