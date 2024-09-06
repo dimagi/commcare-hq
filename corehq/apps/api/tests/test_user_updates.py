@@ -208,7 +208,7 @@ class TestUpdateUserMethods(TestCase):
         with self.assertRaises(UpdateUserException) as e:
             update(self.user, 'location',
                    {'primary_location': 'fake_loc', 'locations': [self.loc1.location_id, 'fake_loc']})
-        self.assertEqual(str(e.exception), "Could not find location id 'fake_loc'.")
+        self.assertEqual(str(e.exception), "Could not find location ids: fake_loc.")
 
     def test_update_locations_raises_if_primary_location_not_provided(self):
         with self.assertRaises(UpdateUserException) as e:
