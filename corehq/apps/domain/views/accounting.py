@@ -1118,9 +1118,10 @@ class SelectPlanView(PlanViewBase):
 class ContactFormViewBase(PlanViewBase):
     template_name = 'domain/selected_plan_contact.html'
     step_title = gettext_lazy("Contact Dimagi")
-    contact_form = None
     lead_text = gettext_lazy("Please submit the following form and a member of our sales team will be "
-                 "in touch shortly about your plan.")
+                             "in touch shortly about your plan.")
+    back_button = ('text', 'url')
+    request_type = None
 
     @property
     def steps(self):
@@ -1135,6 +1136,14 @@ class ContactFormViewBase(PlanViewBase):
     @memoized
     def is_not_redirect(self):
         return 'plan_edition' not in self.request.POST
+
+    @property
+    @memoized
+    def contact_form(self):
+        if self.request.method == 'POST' and self.is_not_redirect:
+            return PlanContactForm(self.domain, self.request.couch_user,
+                                   back_button=self.back_button, data=self.request.POST)
+        return PlanContactForm(self.domain, self.request.couch_user, back_button=self.back_button)
 
     def post(self, request, *args, **kwargs):
         if self.is_not_redirect and self.contact_form.is_valid():
@@ -1159,14 +1168,6 @@ class SelectedEnterprisePlanView(ContactFormViewBase):
     @property
     def back_button(self):
         return (_("Select different plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
-
-    @property
-    @memoized
-    def contact_form(self):
-        if self.request.method == 'POST' and self.is_not_redirect:
-            return PlanContactForm(self.domain, self.request.couch_user,
-                                   back_button=self.back_button, data=self.request.POST)
-        return PlanContactForm(self.domain, self.request.couch_user, back_button=self.back_button)
 
 
 class SelectedAnnualPlanView(ContactFormViewBase):
@@ -1196,14 +1197,6 @@ class SelectedAnnualPlanView(ContactFormViewBase):
             return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return (_("Select different plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
 
-    @property
-    @memoized
-    def contact_form(self):
-        if self.request.method == 'POST' and self.is_not_redirect:
-            return PlanContactForm(self.domain, self.request.couch_user,
-                                   back_button=self.back_button, data=self.request.POST)
-        return PlanContactForm(self.domain, self.request.couch_user, back_button=self.back_button)
-
 
 class SelectedCustomPlanView(ContactFormViewBase):
     urlname = 'custom_plan_request_quote'
@@ -1218,14 +1211,6 @@ class SelectedCustomPlanView(ContactFormViewBase):
     @property
     def back_button(self):
         return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-
-    @property
-    @memoized
-    def contact_form(self):
-        if self.request.method == 'POST' and self.is_not_redirect:
-            return PlanContactForm(self.domain, self.request.couch_user,
-                                   back_button=self.back_button, data=self.request.POST)
-        return PlanContactForm(self.domain, self.request.couch_user, back_button=self.back_button)
 
 
 class ConfirmSelectedPlanView(PlanViewBase):
