@@ -394,8 +394,17 @@ class TestUpdateUserMethodsLogChanges(TestCase):
                user_change_logger=self.user_change_logger)
         self.assertIn(LOCATION_FIELD, self.user_change_logger.change_messages.keys())
 
-    def test_update_location_does_not_log_no_change(self):
+    def test_update_location_without_include_location_fields_does_not_log_no_change(self):
         update(self.user, 'location',
                {'primary_location': None, 'locations': None},
+               user_change_logger=self.user_change_logger)
+        self.assertNotIn(LOCATION_FIELD, self.user_change_logger.change_messages.keys())
+
+    def test_update_location_with_current_locations_does_not_log_no_change(self):
+        self.user.set_location(self.loc2)
+        self.user.set_location(self.loc1)
+        update(self.user, 'location',
+               {'primary_location': self.loc1.location_id,
+                'locations': [self.loc1.location_id, self.loc2.location_id]},
                user_change_logger=self.user_change_logger)
         self.assertNotIn(LOCATION_FIELD, self.user_change_logger.change_messages.keys())
