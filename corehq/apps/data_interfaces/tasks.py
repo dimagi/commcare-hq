@@ -20,6 +20,7 @@ from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import XFormInstance
 from corehq.apps.case_importer.do_import import SubmitCaseBlockHandler, RowAndCase
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
@@ -212,8 +213,8 @@ def task_generate_ids_and_operate_on_payloads(
     payload_id: Optional[str],
     repeater_id: Optional[str],
     domain: str,
-    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    state=None,
+    action: Literal['resend', 'cancel', 'requeue'],
+    state: Literal[None, State.Pending, State.Cancelled] = None,
 ) -> dict:
     repeat_record_ids = RepeatRecord.objects.get_repeat_record_ids(
         domain, repeater_id=repeater_id, state=state, payload_id=payload_id,

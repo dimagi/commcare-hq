@@ -1,5 +1,6 @@
 import json
 import re
+from typing import Literal
 
 from django.db.models import Q
 from django.http import (
@@ -400,7 +401,7 @@ def _get_state_from_request(request):
 def _schedule_task_with_flag(
     request: HttpRequest,
     domain: str,
-    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    action: Literal['resend', 'cancel', 'requeue']
 ):
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
     payload_id = request.POST.get('payload_id', None)
@@ -416,7 +417,7 @@ def _schedule_task_with_flag(
 def _schedule_task_without_flag(
     request: HttpRequest,
     domain: str,
-    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    action: Literal['resend', 'cancel', 'requeue']
 ):
     record_ids = _get_record_ids_from_request(request)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
