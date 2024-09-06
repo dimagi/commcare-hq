@@ -43,5 +43,5 @@
 </div>
 
 {% if downgrade_messages %}
-  {% include 'accounting/partials/downgrade_messages.html' %}
+  {% include 'accounting/partials/downgrade_messages.html' with messages=downgrade_messages only %}
 {% endif %}

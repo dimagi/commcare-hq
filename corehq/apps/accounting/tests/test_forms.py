@@ -413,11 +413,8 @@ class TestPlanContactForm(TestCase):
     def setUp(self):
         super().setUp()
         self.domain = generator.arbitrary_domain()
+        self.addCleanup(self.domain.delete)
         self.web_user = generator.arbitrary_user(self.domain.name, is_webuser=True)
-
-    def tearDown(self):
-        self.domain.delete()
-        super().tearDown()
 
     @patch('corehq.apps.accounting.forms.send_html_email_async')
     def test_send_message(self, mock_send):
@@ -427,16 +424,15 @@ class TestPlanContactForm(TestCase):
             'message': 'Haw haw.'
         }
         form = PlanContactForm(self.domain.name, self.web_user, data=data)
+        form.request_type = 'Testy McTestFace'
         form.full_clean()
-
-        subject_tag = '[Testy McTestFace]'
-        form.send_message(subject_tag)
+        form.send_message()
         mock_send.delay.assert_called_once()
 
         args = mock_send.delay.call_args[0]
         subject = args[0]
         text_content = args[3]
 
-        expected_subject = f'{subject_tag} {self.domain.name}'
+        expected_subject = f'[{form.request_type}] {self.domain.name}'
         self.assertEqual(subject, expected_subject)
         self.assertTrue(all(value in text_content for value in data.values()))

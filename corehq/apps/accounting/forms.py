@@ -1969,8 +1969,8 @@ class PlanContactForm(forms.Form):
             )
         )
 
-    def send_message(self, subject_tag):
-        subject = f"{subject_tag} {self.domain}"
+    def send_message(self):
+        subject = f"[{self.request_type}] {self.domain}"
         context = {
             'name': self.cleaned_data['name'],
             'company': self.cleaned_data['company_name'],
@@ -1993,24 +1993,15 @@ class PlanContactForm(forms.Form):
 
 
 class EnterprisePlanContactForm(PlanContactForm):
-
-    def send_message(self):
-        subject_tag = "[Enterprise Plan Request]"
-        super().send_message(subject_tag)
+    request_type = "Enterprise Plan Request"
 
 
 class AnnualPlanContactForm(PlanContactForm):
-
-    def send_message(self):
-        subject_tag = "[Annual Plan Request]"
-        super().send_message(subject_tag)
+    request_type = "Annual Plan Request"
 
 
 class CustomPlanContactForm(PlanContactForm):
-
-    def send_message(self):
-        subject_tag = "[Custom Plan Request]"
-        super().send_message(subject_tag)
+    request_type = "Custom Plan Request"
 
 
 class TriggerInvoiceForm(forms.Form):

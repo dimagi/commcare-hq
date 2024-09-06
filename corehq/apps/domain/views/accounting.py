@@ -1123,7 +1123,7 @@ class ContactFormViewBase(PlanViewBase):
     template_name = 'domain/selected_plan_contact.html'
     step_title = gettext_lazy("Contact Dimagi")
     contact_form = None
-    lead_text = _("Please submit the following form and a member of our sales team will be "
+    lead_text = gettext_lazy("Please submit the following form and a member of our sales team will be "
                  "in touch shortly about your plan.")
 
     @property
@@ -1265,7 +1265,6 @@ class ConfirmSelectedPlanView(PlanViewBase):
     def selected_plan_version(self):
         return DefaultProductPlan.get_default_plan_version(self.edition)
 
-    @property
     def downgrade_messages(self):
         subscription = Subscription.get_active_subscription_by_domain(self.domain)
         downgrades = get_change_status(
@@ -1320,7 +1319,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
     @property
     def page_context(self):
         return {
-            'downgrade_messages': self.downgrade_messages,
+            'downgrade_messages': self.downgrade_messages(),
             'is_upgrade': self.is_upgrade,
             'is_same_edition': self.is_same_edition,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
@@ -1588,7 +1587,6 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
         return {'monthly_plan': monthly_plan.user_facing_description,
                 'annual_plan': annual_plan.user_facing_description}
 
-    @property
     def downgrade_messages(self):
         downgrades = get_change_status(self.subscription.plan_version, self.monthly_plan_version)[1]
         downgrade_handler = DomainDowngradeStatusHandler(
@@ -1612,7 +1610,7 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
             'is_annual_plan': self.subscription.plan_version.plan.is_annual_plan,
             'is_self_renewable_plan': self.plan_is_self_renewable,
             'renewal_choices': self.renewal_choices,
-            'downgrade_messages': self.downgrade_messages,
+            'downgrade_messages': self.downgrade_messages(),
             'tile_css': 'tile-{}'.format(self.current_edition.lower()),
             'is_renewal_page': True,
         })

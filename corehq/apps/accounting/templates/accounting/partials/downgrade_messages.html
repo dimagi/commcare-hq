@@ -4,7 +4,7 @@
 <h4 class="text-center">
   {% trans 'Note: Selecting this plan will result in the following changes to your project.' %}
 </h4>
-{% for message in downgrade_messages %}
+{% for message in messages %}
   <div class="alert alert-warning alert-downgrade">
     {{ message.message }}
     <ul>
