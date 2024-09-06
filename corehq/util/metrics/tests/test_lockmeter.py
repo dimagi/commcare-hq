@@ -1,9 +1,14 @@
+import threading
 from unittest import TestCase
+from unittest.mock import call, patch
+from uuid import uuid1
 
 import attr
-from unittest.mock import call, patch
+from django_redis import get_redis_connection
+from redis.lock import Lock
 
 from corehq.util.metrics.tests.utils import capture_metrics
+
 from ..lockmeter import MeteredLock
 
 
@@ -154,6 +159,19 @@ class TestMeteredLock(TestCase):
             tracer.reset_mock()
             lock.__del__()
         self.assertListEqual(tracer.mock_calls, [])
+
+    def test_local(self):
+        redis = get_redis_connection()
+        name = uuid1().hex
+        with Lock(redis, name, timeout=5) as redis_lock:
+            lock = MeteredLock(redis_lock, name)
+            self.assertEqual(type(lock.local), threading.local)
+
+    def test_no_local(self):
+        fake = FakeLock()
+        lock = MeteredLock(fake, "test")
+        with self.assertRaises(AttributeError):
+            lock.local
 
 
 @attr.s
