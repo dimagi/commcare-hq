@@ -1000,14 +1000,6 @@ class PlanViewBase(DomainAccountingSettings):
                   "workflows, and advanced security needs. Also for M&E teams "
                   "integrating data with 3rd party analytics."),
             ),
-            PlanOption(
-                SoftwarePlanEdition.ENTERPRISE,
-                _("Contact Us"),
-                _("Contact Us"),
-                _("For organizations that need a sustainable path to scale "
-                  "mobile data collection and service delivery across multiple "
-                  "teams, programs, or countries."),
-            )
         ]
 
     @property
@@ -1084,7 +1076,6 @@ class PlanViewBase(DomainAccountingSettings):
                     SoftwarePlanEdition.STANDARD,
                     SoftwarePlanEdition.PRO,
                     SoftwarePlanEdition.ADVANCED,
-                    SoftwarePlanEdition.ENTERPRISE,
                 ]
             ],
             'plan_options': [p._asdict() for p in self.plan_options],
@@ -1348,8 +1339,6 @@ class ConfirmSelectedPlanView(PlanViewBase):
     def post(self, request, *args, **kwargs):
         if not self.can_domain_unpause:
             return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
-        if self.edition == SoftwarePlanEdition.ENTERPRISE:
-            return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
 
 
