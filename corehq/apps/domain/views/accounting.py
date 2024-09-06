@@ -1160,11 +1160,16 @@ class SelectedEnterprisePlanView(ContactFormViewBase):
     edition = SoftwarePlanEdition.ENTERPRISE
 
     @property
+    def back_button(self):
+        return (_("Select different plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
+
+    @property
     @memoized
     def contact_form(self):
         if self.request.method == 'POST' and self.is_not_redirect:
-            return EnterprisePlanContactForm(self.domain, self.request.couch_user, data=self.request.POST)
-        return EnterprisePlanContactForm(self.domain, self.request.couch_user)
+            return EnterprisePlanContactForm(self.domain, self.request.couch_user,
+                                             back_button=self.back_button, data=self.request.POST)
+        return EnterprisePlanContactForm(self.domain, self.request.couch_user, back_button=self.back_button)
 
 
 class SelectedAnnualPlanView(ContactFormViewBase):
@@ -1188,20 +1193,18 @@ class SelectedAnnualPlanView(ContactFormViewBase):
         return edition
 
     @property
+    def back_button(self):
+        if self.on_annual_plan:
+            return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+        return (_("Select different plan"), reverse(SelectPlanView.urlname, args=[self.domain]))
+
+    @property
     @memoized
     def contact_form(self):
         if self.request.method == 'POST' and self.is_not_redirect:
-            return AnnualPlanContactForm(self.domain, self.request.couch_user, self.on_annual_plan,
-                                         data=self.request.POST)
-        return AnnualPlanContactForm(self.domain, self.request.couch_user, self.on_annual_plan)
-
-    @property
-    def page_context(self):
-        context = super().page_context
-        context.update({
-            'on_annual_plan': self.on_annual_plan,
-        })
-        return context
+            return AnnualPlanContactForm(self.domain, self.request.couch_user,
+                                         back_button=self.back_button, data=self.request.POST)
+        return AnnualPlanContactForm(self.domain, self.request.couch_user, back_button=self.back_button)
 
 
 class SelectedCustomPlanView(ContactFormViewBase):
@@ -1214,11 +1217,16 @@ class SelectedCustomPlanView(ContactFormViewBase):
         return self.current_subscription.plan_version.plan.edition
 
     @property
+    def back_button(self):
+        return (_("Back to my Subscription"), reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+
+    @property
     @memoized
     def contact_form(self):
         if self.request.method == 'POST' and self.is_not_redirect:
-            return CustomPlanContactForm(self.domain, self.request.couch_user, data=self.request.POST)
-        return CustomPlanContactForm(self.domain, self.request.couch_user)
+            return CustomPlanContactForm(self.domain, self.request.couch_user,
+                                         back_button=self.back_button, data=self.request.POST)
+        return CustomPlanContactForm(self.domain, self.request.couch_user, back_button=self.back_button)
 
 
 class ConfirmSelectedPlanView(PlanViewBase):

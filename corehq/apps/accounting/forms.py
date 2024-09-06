@@ -1943,10 +1943,7 @@ class PlanContactForm(forms.Form):
         widget=forms.Textarea(attrs={"class": "vertical-resize"})
     )
 
-    def __init__(self, domain, web_user, data=None, *args, **kwargs):
-        from corehq.apps.domain.views.accounting import SelectPlanView
-        back_button_text = kwargs.pop('back_button_text', 'Select different plan')
-        back_button_url = kwargs.pop('back_button_url', SelectPlanView.urlname)
+    def __init__(self, domain, web_user, back_button=('Back', None), data=None, *args, **kwargs):
         super().__init__(data, *args, **kwargs)
 
         self.domain = domain
@@ -1961,8 +1958,7 @@ class PlanContactForm(forms.Form):
             'message',
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
-                    _(back_button_text),
-                    reverse(back_button_url, args=[self.domain]),
+                    *back_button,
                     css_class="btn btn-default"
                 ),
                 StrictButton(
@@ -2005,26 +2001,12 @@ class EnterprisePlanContactForm(PlanContactForm):
 
 class AnnualPlanContactForm(PlanContactForm):
 
-    def __init__(self, domain, web_user, on_annual_plan, data=None, *args, **kwargs):
-        from corehq.apps.domain.views.accounting import DomainSubscriptionView
-        if on_annual_plan:
-            kwargs['back_button_text'] = "Back to my Subscription"
-            kwargs['back_button_url'] = DomainSubscriptionView.urlname
-
-        super().__init__(domain, web_user, data, *args, **kwargs)
-
     def send_message(self):
         subject_tag = "[Annual Plan Request]"
         super().send_message(subject_tag)
 
 
 class CustomPlanContactForm(PlanContactForm):
-
-    def __init__(self, domain, web_user, data=None, *args, **kwargs):
-        from corehq.apps.domain.views.accounting import DomainSubscriptionView
-        kwargs['back_button_text'] = "Back to my Subscription"
-        kwargs['back_button_url'] = DomainSubscriptionView.urlname
-        super().__init__(domain, web_user, data, *args, **kwargs)
 
     def send_message(self):
         subject_tag = "[Custom Plan Request]"
