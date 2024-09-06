@@ -1969,8 +1969,8 @@ class PlanContactForm(forms.Form):
             )
         )
 
-    def send_message(self):
-        subject = f"[{self.request_type}] {self.domain}"
+    def send_message(self, request_type):
+        subject = f"[{request_type}] {self.domain}"
         context = {
             'name': self.cleaned_data['name'],
             'company': self.cleaned_data['company_name'],
@@ -1990,18 +1990,6 @@ class PlanContactForm(forms.Form):
         send_html_email_async.delay(subject, settings.BILLING_EMAIL,
                                     html_content, text_content,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
-
-
-class EnterprisePlanContactForm(PlanContactForm):
-    request_type = "Enterprise Plan Request"
-
-
-class AnnualPlanContactForm(PlanContactForm):
-    request_type = "Annual Plan Request"
-
-
-class CustomPlanContactForm(PlanContactForm):
-    request_type = "Custom Plan Request"
 
 
 class TriggerInvoiceForm(forms.Form):
