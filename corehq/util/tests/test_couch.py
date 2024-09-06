@@ -86,6 +86,7 @@ class GetDocMockTestCase(SimpleTestCase):
 
 
 class TestLoggingDB(object):
+    __test__ = False
 
     def __init__(self):
         self.docs_saved = []

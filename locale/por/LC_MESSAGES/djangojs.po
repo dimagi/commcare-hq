@@ -3493,10 +3493,8 @@ msgid "Assigned User ID"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-#, fuzzy
-#| msgid "Username"
 msgid "Assigned Username"
-msgstr "Nome de usuário"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Assigned User Primary Location"
@@ -3973,9 +3971,15 @@ msgid "Choose a primary location"
 msgstr ""
 
 #: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
+#: corehq/apps/prototype/static/prototype/js/webpack/knockout_pagination.js
 msgid ""
 "Could not load data. Please try again later or report an issue if this "
 "problem persists."
+msgstr ""
+
+#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
+#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
+msgid "yes"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js

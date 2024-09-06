@@ -3627,22 +3627,16 @@ msgid "No user selected (unassign mode)"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-#, fuzzy
-#| msgid "User ID"
 msgid "Assigned User ID"
-msgstr "ID del Usuario"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-#, fuzzy
-#| msgid "Username"
 msgid "Assigned Username"
-msgstr "Nombre de Usuario"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-#, fuzzy
-#| msgid "Choose a primary location"
 msgid "Assigned User Primary Location"
-msgstr "Elegir una ubicación principal"
+msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
@@ -4123,10 +4117,18 @@ msgid "Choose a primary location"
 msgstr "Elegir una ubicación principal"
 
 #: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
+#: corehq/apps/prototype/static/prototype/js/webpack/knockout_pagination.js
 msgid ""
 "Could not load data. Please try again later or report an issue if this "
 "problem persists."
 msgstr ""
+
+#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
+#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
+#, fuzzy
+#| msgid "Yes"
+msgid "yes"
+msgstr "Sí"
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
