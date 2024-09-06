@@ -17,16 +17,16 @@
              if (action === 'resend') {
                  $btn = $('#resend-all-button');
                  $btn.disableButton();
-@@ -166,7 +166,7 @@
+@@ -167,7 +167,7 @@
                  // leaving as is to preserve behavior
-                 if (isActionPossibleForCheckedItems(action)) {
+                 if (isActionPossibleForCheckedItems(action, checkedRecords)) {
                      hideAllWarnings();
 -                    $popUp.modal('show');
 +                    $popUp.modal('show');  /* todo B5: plugin:modal */
                  } else {
                      showWarning('not-allowed');
                  }
-@@ -251,7 +251,7 @@
+@@ -240,7 +240,7 @@
                      } else {
                          btn.text(gettext('Failed'));
                          btn.addClass('btn-danger');
