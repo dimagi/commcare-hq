@@ -691,12 +691,20 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     element.serverError(null);
                 }
 
-                if (allChildren) {
-                    for (let i = 0; i < allChildren.length; i++) {
-                        if (allChildren[i].control >= constants.CONTROL_IMAGE_CHOOSE) {
-                            allChildren[i].filename = element.answer();
+                console.log("in session.reconcile.")
+                console.log(element)
+                var findChildAndSetFilename = function (children) {
+                    for (const [_, child] of Object.entries(children)) {
+                        if (child.children && child.children.length > 0) {
+                            findChildAndSetFilename(child.children)
+                        } else if (child.control >= constants.CONTROL_IMAGE_CHOOSE) {
+                            child.filename = element.answer();
                         }
                     }
+                }
+                if (allChildren && allChildren.length > 0) {
+                    console.log(allChildren)
+                    findChildAndSetFilename(allChildren)
                 }
                 response.children = allChildren;
                 self.fromJS(response);
