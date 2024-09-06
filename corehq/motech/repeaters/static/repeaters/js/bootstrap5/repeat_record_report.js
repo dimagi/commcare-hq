@@ -160,11 +160,12 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
 
         function performAction(action) {
             const bulkSelection = bulkSelectionChecked();
-            if (bulkSelection || areRecordsChecked()) {
+            const checkedRecords = getCheckedRecords();
+            if (bulkSelection || checkedRecords.length > 0) {
                 if (bulkSelection) { setFlag(bulkSelection); }
                 // only applies to checked items, not bulk selections
                 // leaving as is to preserve behavior
-                if (isActionPossibleForCheckedItems(action)) {
+                if (isActionPossibleForCheckedItems(action, checkedRecords)) {
                     hideAllWarnings();
                     $popUp.modal('show');  /* todo B5: plugin:modal */
                 } else {
@@ -185,26 +186,17 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
             }
         }
 
-        function areRecordsChecked() {
-            const items = document.getElementsByName('xform_ids');
-            for (const item of items) {
-                if (item.checked) {
-                    return true;
-                }
-            }
-            return false;
+        function getCheckedRecords() {
+            return $.find('input[type=checkbox][name=xform_ids]:checked');
         }
 
-        function isActionPossibleForCheckedItems(action) {
-            const items = document.getElementsByName('xform_ids');
+        function isActionPossibleForCheckedItems(action, items) {
             for (const item of items) {
-                if (item.checked) {
-                    const id = item.getAttribute('data-id');
-                    const query = `[data-record-id="${id}"][class="btn btn-default ${action}-record-payload"]`;
-                    const button = document.querySelector(query);
-                    if (!button) {
-                        return false;
-                    }
+                const id = item.getAttribute('data-id');
+                const query = `[data-record-id="${id}"][class="btn btn-default ${action}-record-payload"]`;
+                const button = document.querySelector(query);
+                if (!button) {
+                    return false;
                 }
             }
 
@@ -229,13 +221,10 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         }
 
         function getRecordIds() {
-            const recordEls = document.getElementsByName('xform_ids');
-            let recordIds = '';
-            for (const record of recordEls) {
-                if (record.type === 'checkbox' && record.checked) {
-                    recordIds += record.getAttribute('data-id') + ' ';
-                }
-            }
+            const recordEls = getCheckedRecords();
+            const recordIds = recordEls.map(
+                record => record.getAttribute('data-id')
+            ).join(' ');
             return {record_id: recordIds};
         }
 
