@@ -194,9 +194,9 @@ def _update_location(user, location_object, user_change_logger):
             raise UpdateUserException(_('Primary location must be included in the list of locations.'))
 
         # Verify all location ids has a SQLLocation.
-        real_ids = (SQLLocation.active_objects
-                    .filter(location_id__in=location_ids, domain=user.domain)
-                    .location_ids())
+        locations = SQLLocation.active_objects.filter(location_id__in=location_ids, domain=user.domain)
+        real_ids = locations.location_ids()
+
         if missing_ids := set(location_ids) - set(real_ids):
             raise UpdateUserException(f"Could not find location ids: {', '.join(missing_ids)}.")
         if primary_location_id != user_current_primary_location_id:
@@ -212,7 +212,6 @@ def _update_location(user, location_object, user_change_logger):
         user.reset_locations(location_ids, commit=False)
         if user_change_logger:
             user_change_logger.add_changes({'assigned_location_ids': location_ids})
-            locations = SQLLocation.objects.filter(location_id__in=location_ids)
             user_change_logger.add_info(
                 UserChangeMessage.assigned_locations_info(locations)
             )
