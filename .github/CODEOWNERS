@@ -23,8 +23,7 @@
 /corehq/sql_db/ @snopoke @calellowitz
 /corehq/sql_proxy_accessors/ @snopoke
 /corehq/sql_proxy_standby_accessors/ @snopoke
-/corehq/tests/nose.py @millerdev
-/corehq/tests/noseplugins/ @millerdev
+/corehq/tests/ @millerdev
 /corehq/util/couch.py @esoergel
 /corehq/util/couch_helpers.py @millerdev
 /corehq/util/datadog/lockmeter.py @millerdev
