@@ -2,7 +2,8 @@ import os
 from warnings import filterwarnings
 
 import settingshelper as helper
-from settings import *  # noqa: F403
+assert helper.is_testing(), 'test mode is required before importing settings'
+from settings import *  # noqa: E402, F403
 
 # Commenting out temporarily for tests
 # if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
@@ -53,7 +54,6 @@ ES_SETTINGS = {
 # it can be reverted whenever that's figured out.
 # https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
 INSTALLED_APPS = (
-    'django_nose',
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
 ) + tuple(INSTALLED_APPS)  # noqa: F405
