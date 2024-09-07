@@ -268,7 +268,9 @@ class CaseSearchQueryBuilder:
             if not criteria.is_empty:
                 xpaths = criteria.value if criteria.has_multiple_terms else [criteria.value]
                 for xpath in xpaths:
-                    search_es = search_es.filter(self._build_filter_from_xpath(xpath))
+                    xpath_filter = self._build_filter_from_xpath(xpath)
+                    search_es = search_es.add_query(xpath_filter, queries.MUST)
+                    # search_es = search_es.filter(xpath_filter)
                 return search_es
         elif criteria.key == 'case_id':
             return search_es.filter(case_es.case_ids(criteria.value))
