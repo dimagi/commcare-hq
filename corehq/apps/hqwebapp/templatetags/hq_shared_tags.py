@@ -754,7 +754,7 @@ except (ImportError, SyntaxError):
 
 
 @register.filter
-def webpack_bundles(entry_name, request):
+def webpack_bundles(entry_name):
     from get_webpack_manifest import get_webpack_manifest
 
     from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
@@ -771,18 +771,26 @@ def webpack_bundles(entry_name, request):
         webpack_folder = 'webpack_b3'
 
     if manifest is None:
-        request.webpack_errors = [f"No webpack manifest found! {entry_name} "
-                                  f"did not load correctly. Did you run `yarn dev` or `yarn build`?"]
-        return []
+        raise TemplateSyntaxError(
+            f"No webpack manifest found!\n"
+            f"'{entry_name}' will not load correctly.\n\n"
+            f"Did you run `yarn dev` or `yarn build`?\n\n\n"
+        )
 
     bundles = manifest.get(entry_name, [])
     if not bundles:
-        request.webpack_errors = [f"No webpack manifest entry found for {entry_name}. Page may have "
-                                  f"javascript errors! Did you try restarting `yarn dev`?"]
+        webpack_error = (
+            f"No webpack manifest entry found for '{entry_name}'.\n\n"
+            f"Is this a newly added entry point?\n"
+            f"Did you try restarting `yarn dev`?\n\n\n"
+        )
         if bootstrap_version == BOOTSTRAP_3:
-            request.webpack_errors.append("Additionally, did you remember to use `webpack_main_b3` "
-                                          "on this Bootstrap 3 page?")
-        bundles = [f"{entry_name}.js"]
+            webpack_error = (
+                f"{webpack_error}"
+                f"Additionally, did you remember to use `webpack_main_b3` "
+                f"on this Bootstrap 3 page?\n\n\n\n"
+            )
+        raise TemplateSyntaxError(webpack_error)
     return [
         f"{webpack_folder}/{bundle}" for bundle in bundles
     ]
