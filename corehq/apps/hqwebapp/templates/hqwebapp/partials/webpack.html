@@ -5,7 +5,14 @@
     window.USE_WEBPACK = {{ webpack_main|BOOL }};
     console.log("Loaded webpack main module: {{ webpack_main }}");
   </script>
-  {% for bundle_path in webpack_main|webpack_bundles %}
+  {% for bundle_path in webpack_main|webpack_bundles:request %}
     <script src="{% static bundle_path %}"></script>
   {% endfor %}
+  {% if request.webpack_errors %}
+    <script>
+      {% for webpack_error in request.webpack_errors %}
+        console.error("{{ webpack_error }}");
+      {% endfor %}
+    </script>
+  {% endif %}
 {% endif %}
