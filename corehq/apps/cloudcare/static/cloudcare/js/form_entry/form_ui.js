@@ -691,14 +691,16 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     element.serverError(null);
                 }
 
+                const inputControl = [constants.CONTROL_IMAGE_CHOOSE, constants.CONTROL_LABEL,
+                    constants.CONTROL_AUDIO_CAPTURE, constants.CONTROL_VIDEO_CAPTURE];
+
                 let findChildAndSetFilename = function (children) {
-                    for (var i = 0; i < children.length; i++) {
-                        var child = children[i];
+                    for (let child of children) {
                         if (child.children && child.children.length > 0) {
                             findChildAndSetFilename(child.children);
-                        } else if (child.control >= constants.CONTROL_IMAGE_CHOOSE) {
+                        } else if (inputControl.includes(child.control)) {
                             child.filename = element.answer();
-                            break;
+                            return;
                         }
                     }
                 };
