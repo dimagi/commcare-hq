@@ -33,7 +33,7 @@ class Command(BaseCommand):
         case_type = options.get('case_type')
         query_limit = options.get('query_limit')
         chunk_size = options.get('chunk_size')
-        self.index_case_docs(domain, query_limit, chunk_size, case_type)
+        index_case_docs(domain, query_limit, chunk_size, case_type)
 
 
 def index_case_docs(domain, query_limit=DEFAULT_QUERY_LIMIT, chunk_size=DEFAULT_CHUNK_SIZE, case_type=None):
