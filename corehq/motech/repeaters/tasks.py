@@ -7,8 +7,6 @@ from django.conf import settings
 from celery import chord
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
-from django_redis import get_redis_connection
-from redis.lock import Lock
 
 from dimagi.utils.couch import get_redis_lock
 
@@ -28,7 +26,6 @@ from corehq.util.metrics import (
     metrics_histogram_timer,
 )
 from corehq.util.metrics.const import MPM_MAX
-from corehq.util.metrics.lockmeter import MeteredLock
 from corehq.util.timer import TimingContext
 
 from .const import (
@@ -317,11 +314,9 @@ def iter_ready_repeater_ids_once():
 
 
 def get_repeater_lock(repeater_id):
-    redis = get_redis_connection()
     name = f'process_repeater_{repeater_id}'
     three_hours = 3 * 60 * 60
-    lock = Lock(redis, name, timeout=three_hours)
-    return MeteredLock(lock, name)
+    return get_redis_lock(key=name, name=name, timeout=three_hours)
 
 
 def get_repeater_ids_by_domain():
