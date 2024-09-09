@@ -57,7 +57,6 @@ from corehq.apps.api.resources.auth import (
     LoginAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
-    LoginAndDomainAuthentication,
 )
 from corehq.apps.api.resources.messaging_event.utils import get_request_params
 from corehq.apps.api.resources.meta import (
@@ -1380,15 +1379,16 @@ def get_datasource_data(request, config_id, domain):
     return JsonResponse(data)
 
 
-class CommCareAnalyticsUserResource(v0_1.UserResource):
+class CommCareAnalyticsUserRolesResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
 
     roles = fields.ListField()
     permissions = fields.DictField()
 
-    class Meta(v0_1.UserResource.Meta):
-        authentication = LoginAndDomainAuthentication()
+    class Meta(CustomResourceMeta):
         object_class = CouchUser
         resource_name = 'analytics-roles'
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
     def dehydrate_role(self, bundle):
         cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
