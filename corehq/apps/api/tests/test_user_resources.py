@@ -19,6 +19,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.model_log import UserModelAction
@@ -70,6 +71,11 @@ class TestCommCareUserResource(APIResourceTest):
             definition=cls.definition,
         )
         cls.profile.save()
+        cls.loc_type = LocationType.objects.create(domain=cls.domain.name, name='loc_type')
+        cls.loc1 = SQLLocation.objects.create(
+            location_id='loc1', location_type=cls.loc_type, domain=cls.domain.name)
+        cls.loc2 = SQLLocation.objects.create(
+            location_id='loc2', location_type=cls.loc_type, domain=cls.domain.name)
 
     @classmethod
     def tearDownClass(cls):
@@ -81,6 +87,8 @@ class TestCommCareUserResource(APIResourceTest):
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
                                             created_by=None, created_via=None)
         self.addCleanup(commcare_user.delete, self.domain.name, deleted_by=None)
+        commcare_user.set_location(self.loc1)
+        commcare_user.set_location(self.loc2)
         backend_id = commcare_user.get_id
         update_analytics_indexes()
 
@@ -100,8 +108,13 @@ class TestCommCareUserResource(APIResourceTest):
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
-            'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: '', 'imaginary': ''},
-            'username': 'fake_user'
+            'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: '', 'imaginary': '',
+                          'commcare_location_id': self.loc2.location_id,
+                          'commcare_primary_case_sharing_id': self.loc2.location_id,
+                          'commcare_location_ids': f'{self.loc1.location_id} {self.loc2.location_id}'},
+            'username': 'fake_user',
+            'primary_location': self.loc2.location_id,
+            'locations': [self.loc1.location_id, self.loc2.location_id]
         })
 
     @flaky
@@ -109,6 +122,8 @@ class TestCommCareUserResource(APIResourceTest):
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
                                             created_by=None, created_via=None)
         self.addCleanup(commcare_user.delete, self.domain.name, deleted_by=None)
+        commcare_user.set_location(self.loc1)
+        commcare_user.set_location(self.loc2)
         backend_id = commcare_user._id
 
         response = self._assert_auth_get_resource(self.single_endpoint(backend_id))
@@ -126,8 +141,15 @@ class TestCommCareUserResource(APIResourceTest):
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
-            'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: '', 'imaginary': ''},
+            'user_data': {'commcare_project': 'qwerty',
+                          PROFILE_SLUG: '',
+                          'imaginary': '',
+                          'commcare_location_id': self.loc2.location_id,
+                          'commcare_primary_case_sharing_id': self.loc2.location_id,
+                          'commcare_location_ids': f'{self.loc1.location_id} {self.loc2.location_id}'},
             'username': 'fake_user',
+            'primary_location': self.loc2.location_id,
+            'locations': [self.loc1.location_id, self.loc2.location_id]
         })
 
     def test_create(self):
@@ -153,7 +175,10 @@ class TestCommCareUserResource(APIResourceTest):
             ],
             "user_data": {
                 "chw_id": "13/43/DFA"
-            }
+            },
+            'locations': [self.loc1.location_id, self.loc2.location_id],
+            'primary_location': self.loc1.location_id
+
         }
         response = self._assert_auth_post_resource(self.list_endpoint,
                                                    json.dumps(user_json),
@@ -171,6 +196,9 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.get_group_ids()[0], group._id)
         self.assertEqual(user_back.get_user_data(self.domain.name)["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
+        self.assertEqual(user_back.get_location_ids(self.domain.name),
+                         [self.loc1.location_id, self.loc2.location_id])
+        self.assertEqual(user_back.get_location_id(self.domain.name), self.loc1.location_id)
 
     @flag_enabled('COMMCARE_CONNECT')
     def test_create_connect_user_no_password(self):
@@ -266,7 +294,9 @@ class TestCommCareUserResource(APIResourceTest):
                 PROFILE_SLUG: self.profile.id,
                 "chw_id": "13/43/DFA"
             },
-            "password": "qwerty1234"
+            "password": "qwerty1234",
+            'locations': [self.loc1.location_id, self.loc2.location_id],
+            'primary_location': self.loc1.location_id
         }
 
         backend_id = user._id
@@ -288,6 +318,9 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_data.profile_id, self.profile.id)
         self.assertEqual(user_data["imaginary"], "yes")
         self.assertEqual(modified.default_phone_number, "50253311399")
+        self.assertEqual(modified.get_location_ids(self.domain.name),
+                         [self.loc1.location_id, self.loc2.location_id])
+        self.assertEqual(modified.get_location_id(self.domain.name), self.loc1.location_id)
 
         # test user history audit
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
@@ -300,6 +333,8 @@ class TestCommCareUserResource(APIResourceTest):
                 'last_name': 'last',
                 'first_name': 'test',
                 'user_data': {'chw_id': '13/43/DFA'},
+                'location_id': 'loc1',
+                'assigned_location_ids': ['loc1', 'loc2']
             }
         )
         self.assertTrue("50253311398" in

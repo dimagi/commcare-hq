@@ -231,6 +231,8 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
+    primary_location = fields.CharField()
+    locations = fields.ListField()
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -321,10 +323,22 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
 
+    def dehydrate_primary_location(self, bundle):
+        return bundle.obj.get_location_id(bundle.obj.domain)
+
+    def dehydrate_locations(self, bundle):
+        return bundle.obj.get_location_ids(bundle.obj.domain)
+
     @classmethod
     def _update(cls, bundle, user_change_logger=None):
         errors = []
-        for key, value in bundle.data.items():
+
+        location_object = {'primary_location': bundle.data.pop('primary_location', None),
+                           'locations': bundle.data.pop('locations', None)}
+
+        items_to_update = list(bundle.data.items()) + [('location', location_object)]
+
+        for key, value in items_to_update:
             try:
                 update(bundle.obj, key, value, user_change_logger)
             except UpdateUserException as e:
