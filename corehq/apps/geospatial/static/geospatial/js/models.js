@@ -1008,6 +1008,7 @@ hqDefine('geospatial/js/models', [
             utils.downloadCsv(casesToExport, headers, cols, 'Case Assignment Export');
         };
 
+        self.assignmentAjaxInProgress = ko.observable(false);
         self.acceptAssignments = function () {
             let caseIdToOwnerId = {};
             for (const caseItem of self.mapModel.caseMapItems()) {
@@ -1021,6 +1022,7 @@ hqDefine('geospatial/js/models', [
                 'include_related_cases': self.includeRelatedCases(),
             };
 
+            self.assignmentAjaxInProgress(true);
             $.ajax({
                 type: 'post',
                 url: reassignCasesUrl,
@@ -1040,6 +1042,9 @@ hqDefine('geospatial/js/models', [
                     } else {
                         alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger', false, true);
                     }
+                },
+                complete: function () {
+                    self.assignmentAjaxInProgress(false);
                 },
             });
         };
