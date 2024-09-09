@@ -11829,7 +11829,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html
-msgid "Row(s):"
+msgid "Toggle Affected Row(s)"
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html
@@ -15238,10 +15238,8 @@ msgid "Call Center Application"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-#, fuzzy
-#| msgid "Delete Application"
 msgid "Enable Call Center Application"
-msgstr "Apagar aplicação"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid ""
@@ -21415,6 +21413,11 @@ msgstr ""
 
 #: corehq/apps/export/views/new.py
 msgid "Create Case Data Export"
+msgstr ""
+
+#: corehq/apps/export/views/new.py
+#, python-brace-format
+msgid "Case type '{case_type}' does not exist for this project."
 msgstr ""
 
 #: corehq/apps/export/views/new.py
@@ -38692,10 +38695,8 @@ msgid "Deleting Expression..."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-#, fuzzy
-#| msgid "Delete Application"
 msgid "Delete Expression"
-msgstr "Apagar aplicação"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html
 #: corehq/tabs/tabclasses.py
@@ -40228,12 +40229,16 @@ msgid "Bulk Clear Data"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Bulk Delete Users"
-msgstr ""
+#, fuzzy
+#| msgid "Delete Mobile Worker"
+msgid "Bulk Delete Mobile Workers"
+msgstr "Apagar Trabalhador Móvel"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Bulk Lookup of Users"
-msgstr ""
+#, fuzzy
+#| msgid "Go back to Mobile Workers"
+msgid "Bulk Lookup of Mobile Workers"
+msgstr "Voltar para Trabalhadores Móveis"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Create New Mobile Worker"
@@ -41837,6 +41842,16 @@ msgstr ""
 msgid ""
 "This setting allows users to split multi-select questions into multiple "
 "columns in case exports."
+msgstr ""
+
+#: corehq/feature_previews.py
+msgid "Use location name"
+msgstr ""
+
+#: corehq/feature_previews.py
+msgid ""
+"This setting changes the location dropdown to display location name instead "
+"of the full location path."
 msgstr ""
 
 #: corehq/feature_previews.py
@@ -44205,10 +44220,8 @@ msgid "Pass credentials in Basic Auth header when requesting a token"
 msgstr ""
 
 #: corehq/motech/forms.py
-#, fuzzy
-#| msgid "Include in Download"
 msgid "Include client ID"
-msgstr "Incluir no Descarregamento"
+msgstr ""
 
 #: corehq/motech/forms.py
 msgid "Send the client ID in the body of the token request"
@@ -44709,6 +44722,11 @@ msgid "Edit Case Repeater"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/views.py
+#: corehq/motech/repeaters/views/repeaters.py
+msgid "Edit Form Repeater"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/views.py
 msgid "Edit ArcGIS Form Repeater"
 msgstr ""
 
@@ -45014,10 +45032,6 @@ msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
 msgid "Forwarder Successfully Updated"
-msgstr ""
-
-#: corehq/motech/repeaters/views/repeaters.py
-msgid "Edit Form Repeater"
 msgstr ""
 
 #: corehq/motech/requests.py
