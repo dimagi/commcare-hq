@@ -9,7 +9,7 @@
 
 {% block js %}{{ block.super }}
     {% compress js %}
-        <script src="{% static 'geospatial/js/geospatial_map.js' %}"></script>
+        <script src="{% static 'geospatial/js/case_management.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
@@ -21,4 +21,5 @@
     {% registerurl 'get_users_with_gps' domain %}
     {% registerurl 'edit_commcare_user' domain '---' %}
     {% registerurl 'location_search' domain %}
+    {% registerurl 'reassign_cases' domain %}
 {% endblock %}
