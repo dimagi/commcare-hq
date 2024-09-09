@@ -829,10 +829,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         if not self.has_custom_logo:
             return None
 
-        return (
-            self.fetch_attachment(LOGO_ATTACHMENT),
-            self.blobs[LOGO_ATTACHMENT].content_type
-        )
+        return self.fetch_attachment(LOGO_ATTACHMENT)
 
     def get_odata_feed_limit(self):
         return self.odata_feed_limit or settings.DEFAULT_ODATA_FEED_LIMIT
