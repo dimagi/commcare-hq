@@ -868,5 +868,5 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             response.content.decode("utf-8"),
             ("Case reassignment limit exceeded. Please select fewer cases to update"
              " or consider deselecting 'include related cases'."
-             " Reach out to support for if you still need assistance.")
+             " Reach out to support if you still need assistance.")
         )

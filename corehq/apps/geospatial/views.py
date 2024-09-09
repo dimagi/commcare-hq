@@ -524,7 +524,7 @@ class CasesReassignmentView(BaseDomainView):
             raise CaseReassignmentValidationError(
                 _("Case reassignment limit exceeded. Please select fewer cases to update or"
                   " consider deselecting 'include related cases'."
-                  " Reach out to support for if you still need assistance.")
+                  " Reach out to support if you still need assistance.")
             )
 
     def get_child_cases(self, domain, case_ids):

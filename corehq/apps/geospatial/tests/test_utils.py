@@ -180,9 +180,9 @@ class TestUpdateCasesOwner(TestCase):
         update_cases_owner(self.domain, CaseOwnerUpdate.to_dict(case_owner_updates))
 
         self._refresh_cases()
-        assert self.case_1.owner_id == self.user_b.user_id
-        assert self.case_2.owner_id == self.user_a.user_id
-        assert self.related_case_2.owner_id == self.user_a.user_id
+        self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
+        self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
 
 
 class TestCeleryTaskExistenceHelper(TestCase):
