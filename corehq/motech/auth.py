@@ -1,4 +1,5 @@
 import re
+from corehq import toggles
 from typing import TYPE_CHECKING, Optional
 from urllib.parse import urljoin
 
@@ -6,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 import attr
 import requests
+import time
 from oauthlib.oauth2 import LegacyApplicationClient, BackendApplicationClient
 from requests import Session
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
@@ -219,7 +221,17 @@ class OAuth2ClientGrantManager(AuthManager):
             # Used by OAuth2Session
             self.last_token = token
 
-        if not self.last_token or self.last_token.get('refresh_token') is None:
+        request_fresh_token = not self.last_token or self.last_token.get('refresh_token') is None
+
+        if toggles.SUPERSET_ANALYTICS.enabled(domain_name):
+            if (
+                self.last_token
+                and self.last_token.get('expires_at')
+                and self.last_token.get('expires_at') > (time.time() + 10)  # 10 seconds buffer for delays
+            ):
+                request_fresh_token = False
+
+        if request_fresh_token:
             client = BackendApplicationClient(client_id=self.client_id, scope=self.scope)
             session = OAuth2Session(client=client)
             if self.pass_credentials_in_header:
