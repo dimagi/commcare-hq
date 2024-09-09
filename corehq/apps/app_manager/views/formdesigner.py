@@ -205,7 +205,7 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
     kw = {}
     if "pretty" in request.GET:
         kw["indent"] = 2
-    return HttpResponse(json.dumps(data, **kw))
+    return HttpResponse(json.dumps(data, **kw), content_type='application/json')
 
 
 @require_GET

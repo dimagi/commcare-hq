@@ -1111,7 +1111,7 @@ class CRUDPaginatedViewMixin(object):
         Return this in the post method of your view class.
         """
         response = getattr(self, '%s_response' % self.action)
-        return HttpResponse(json.dumps(response, cls=LazyEncoder))
+        return HttpResponse(json.dumps(response, cls=LazyEncoder), content_type='application/json')
 
     @property
     def create_response(self):

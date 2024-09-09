@@ -114,7 +114,7 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
     def email_response(self):
         return HttpResponse(json.dumps({
             'report': '',
-        }))
+        }), content_type='application/json')
 
 
 class UniqueSOPSumDataSource(SqlData):

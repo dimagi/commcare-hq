@@ -71,7 +71,7 @@ class FetchProgramListView(ProgramListView):
         return HttpResponse(json.dumps({
             'success': True,
             'data_list': self.program_data,
-        }), 'text/json')
+        }), content_type='application/json')
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -190,4 +190,4 @@ class FetchProductForProgramListView(EditProgramView):
             'success': True,
             'current_page': self.page,
             'data_list': list(self.get_product_data()),
-        }), 'text/json')
+        }), content_type='application/json')

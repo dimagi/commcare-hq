@@ -30,7 +30,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 @login_and_domain_required
 def commcare_profile(request, domain, app_id):
     app = get_app(domain, app_id)
-    return HttpResponse(json.dumps(app.profile))
+    return HttpResponse(json.dumps(app.profile), content_type='application/json')
 
 
 @no_conflict_require_POST

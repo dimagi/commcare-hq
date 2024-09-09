@@ -662,7 +662,7 @@ class GenericReportView(object):
             filters=rendered_filters,
             slug=self.slug,
             url_root=self.url_root
-        )))
+        )), content_type='application/json')
 
     @property
     @request_cache()

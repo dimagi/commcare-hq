@@ -124,7 +124,7 @@ class DownloadBase(object):
             'download_id': self.download_id,
             'download_url': reverse('ajax_job_poll', kwargs={'download_id': self.download_id}),
             'message': self.message
-        }))
+        }), content_type='application/json')
 
     def __str__(self):
         return "content-type: %s, disposition: %s" % (self.content_type, self.content_disposition)

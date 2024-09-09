@@ -211,7 +211,7 @@ class FetchProductListView(ProductListView):
             'success': True,
             'current_page': int(self.page),
             'data_list': self.product_data,
-        }), 'text/json')
+        }), content_type='application/json')
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
