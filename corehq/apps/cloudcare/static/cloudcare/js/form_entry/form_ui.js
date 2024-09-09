@@ -691,7 +691,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     element.serverError(null);
                 }
 
-                var findChildAndSetFilename = function (children) {
+                let findChildAndSetFilename = function (children) {
                     for (var i = 0; i < children.length; i++) {
                         var child = children[i];
                         if (child.children && child.children.length > 0) {
