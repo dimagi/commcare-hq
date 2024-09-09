@@ -692,16 +692,18 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 }
 
                 var findChildAndSetFilename = function (children) {
-                    for (const [_, child] of Object.entries(children)) {
+                    for (var i = 0; i < children.length; i++) {
+                        var child = children[i];
                         if (child.children && child.children.length > 0) {
-                            findChildAndSetFilename(child.children)
+                            findChildAndSetFilename(child.children);
                         } else if (child.control >= constants.CONTROL_IMAGE_CHOOSE) {
                             child.filename = element.answer();
+                            break;
                         }
                     }
-                }
+                };
                 if (allChildren && allChildren.length > 0) {
-                    findChildAndSetFilename(allChildren)
+                    findChildAndSetFilename(allChildren);
                 }
 
                 response.children = allChildren;
