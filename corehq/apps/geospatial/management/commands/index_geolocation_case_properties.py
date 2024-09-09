@@ -38,14 +38,14 @@ class Command(BaseCommand):
 
 def index_case_docs(domain, query_limit=DEFAULT_QUERY_LIMIT, chunk_size=DEFAULT_CHUNK_SIZE, case_type=None):
     geo_case_property = get_geo_case_property(domain)
-    query = _case_query(domain, geo_case_property, case_type)
+    query = _es_case_query(domain, geo_case_property, case_type)
     count = query.count()
     print(f'{count} case(s) to process')
     batch_count = math.ceil(count / query_limit)
     print(f"Cases will be processed in {batch_count} batches")
-    for i in range(0, batch_count):
+    for i in range(batch_count):
         print(f'Processing {i+1}/{batch_count}')
-        query = _case_query(domain, geo_case_property, case_type, size=query_limit)
+        query = _es_case_query(domain, geo_case_property, case_type, size=query_limit)
         case_ids = query.get_ids()
         _index_case_ids(domain, case_ids, chunk_size)
 
@@ -57,7 +57,7 @@ def _index_case_ids(domain, case_ids, chunk_size):
     manager.index_refresh(case_search_adapter.index_name)
 
 
-def _case_query(domain, geo_case_property, case_type=None, size=None):
+def _es_case_query(domain, geo_case_property, case_type=None, size=None):
     query = (
         CaseSearchES()
         .domain(domain)

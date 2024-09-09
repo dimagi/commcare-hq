@@ -6,7 +6,7 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.management.commands.index_geolocation_case_properties import (
-    _case_query,
+    _es_case_query,
     index_case_docs,
 )
 from corehq.apps.geospatial.models import GeoConfig
@@ -48,19 +48,14 @@ class TestGetFormCases(TestCase):
             case_location_property_name=cls.gps_prop_name
         )
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.geo_config.delete()
-        super().tearDownClass()
-
     def test_has_cases_to_index(self):
-        query = _case_query(self.domain, self.gps_prop_name, self.primary_case_type)
+        query = _es_case_query(self.domain, self.gps_prop_name, self.primary_case_type)
         case_count = query.count()
         self.assertEqual(case_count, 2)
 
     def test_cases_correctly_indexed(self):
         index_case_docs(self.domain, case_type=self.secondary_case_type)
-        query = _case_query(self.domain, self.gps_prop_name, self.secondary_case_type)
+        query = _es_case_query(self.domain, self.gps_prop_name, self.secondary_case_type)
         case_count = query.count()
         self.assertEqual(case_count, 0)
         doc = (
