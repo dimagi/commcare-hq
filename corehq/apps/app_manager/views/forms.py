@@ -588,8 +588,7 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     source = form.source
-    response = HttpResponse(source)
-    response['Content-Type'] = "application/xml"
+    response = HttpResponse(source, content_type='application/xml')
     filename = form.default_name()
     for lc in [lang] + app.langs:
         if lc in form.name:

@@ -65,7 +65,7 @@ def requires_privilege_plaintext_response(slug,
     """
     A version of the requires_privilege decorator which returns an
     HttpResponse object with HTTP Status Code of 412 by default and
-    content_type of tex/plain if the privilege is not found.
+    content_type of text/plain if the privilege is not found.
     """
     def decorate(fn):
         @wraps(fn)
