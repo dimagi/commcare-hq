@@ -38,7 +38,11 @@ class TestGetFormCases(TestCase):
             case_type=cls.secondary_case_type,
             update={cls.gps_prop_name: '5.5 6.6'},
         )
-        case_search_adapter.bulk_index([case1, case2, case3], refresh=True)
+        case4 = factory.create_case(
+            case_name='no_props',
+            case_type=cls.primary_case_type,
+        )
+        case_search_adapter.bulk_index([case1, case2, case3, case4], refresh=True)
         cls.geo_config = GeoConfig.objects.create(
             domain=cls.domain,
             case_location_property_name=cls.gps_prop_name
