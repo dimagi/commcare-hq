@@ -27,7 +27,7 @@ def sms_in(request, backend_id=None):
                 t = Tropo()
                 t.call(to = numberToDial, network = "SMS")
                 t.say(msg)
-                return HttpResponse(t.RenderJson())
+                return HttpResponse(t.RenderJson(), content_type='application/json')
         # Handle incoming SMS
         phone_number = None
         text = None
@@ -41,7 +41,7 @@ def sms_in(request, backend_id=None):
         incoming_sms(phone_number, text, SQLTropoBackend.get_api_id(), backend_id=backend_id)
         t = Tropo()
         t.hangup()
-        return HttpResponse(t.RenderJson())
+        return HttpResponse(t.RenderJson(), content_type='application/json')
     else:
         return HttpResponseBadRequest("Bad Request")
 
@@ -76,7 +76,7 @@ def ivr_in(request):
 
         t = Tropo()
         t.reject()
-        return HttpResponse(t.RenderJson())
+        return HttpResponse(t.RenderJson(), content_type='application/json')
     else:
         return HttpResponseBadRequest("Bad Request")
 
