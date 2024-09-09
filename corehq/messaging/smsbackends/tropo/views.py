@@ -1,13 +1,14 @@
 import json
-from corehq.apps.sms.api import incoming as incoming_sms
+from datetime import datetime
+
 from django.http import HttpResponse, HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
+
 from corehq.apps.ivr.models import Call
+from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.models import INCOMING, PhoneNumber
+from corehq.apps.sms.util import strip_plus
 from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
-from datetime import datetime
-from corehq.apps.sms.util import strip_plus
 
 
 def sms_in(request, backend_id=None):
@@ -25,7 +26,7 @@ def sms_in(request, backend_id=None):
                 numberToDial = params["numberToDial"]
                 msg = params["msg"]
                 t = Tropo()
-                t.call(to = numberToDial, network = "SMS")
+                t.call(to=numberToDial, network="SMS")
                 t.say(msg)
                 return HttpResponse(t.RenderJson(), content_type='application/json')
         # Handle incoming SMS
