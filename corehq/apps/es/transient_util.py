@@ -88,7 +88,6 @@ def populate_doc_adapter_map():
         from pillowtop.tests.utils import TEST_ES_TYPE, TEST_ES_MAPPING, TEST_ES_INDEX
         add_dynamic_adapter("PillowTop", TEST_ES_INDEX, TEST_ES_TYPE, TEST_ES_MAPPING)
 
-        import corehq.tests.pytest_compat  # noqa: F401 - to be removed after switch to pytest
         from corehq.apps.es.tests.utils import TEST_ES_INFO, TEST_ES_MAPPING
         add_dynamic_adapter("UtilES", TEST_ES_INFO.alias, TEST_ES_INFO.type,
                         TEST_ES_MAPPING)
