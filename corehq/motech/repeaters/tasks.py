@@ -263,7 +263,12 @@ def iter_ready_repeater_ids_forever():
                 continue
 
             lock = get_repeater_lock(repeater_id)
-            lock_token = uuid.uuid1().hex  # The same way Lock does it
+            # Generate a lock token using `uuid1()` the same way that
+            # `redis.lock.Lock` does. The `Lock` class uses the token to
+            # determine ownership, so that one process can acquire a
+            # lock and a different process can release it. This lock
+            # will be released by the `update_repeater()` task.
+            lock_token = uuid.uuid1().hex
             if lock.acquire(blocking=False, token=lock_token):
                 yielded = True
                 yield domain, repeater_id, lock_token
