@@ -1399,6 +1399,12 @@ def is_response(duck):
 
 
 def domain_can_forward(domain):
+    """
+    Returns whether ``domain`` has data forwarding or Zapier integration
+    privileges.
+
+    Used for determining whether to register a repeat record.
+    """
     return domain and (
         domain_has_privilege(domain, ZAPIER_INTEGRATION)
         or domain_has_privilege(domain, DATA_FORWARDING)
@@ -1407,6 +1413,12 @@ def domain_can_forward(domain):
 
 @quickcache(['domain'], timeout=60)
 def domain_can_forward_now(domain):
+    """
+    Returns ``True`` if ``domain`` has the requisite privileges and data
+    forwarding is not paused.
+
+    Used for determining whether to send a repeat record now.
+    """
     return (
         domain_can_forward(domain)
         and not toggles.PAUSE_DATA_FORWARDING.enabled(domain)
