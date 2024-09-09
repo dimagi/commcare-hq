@@ -1390,7 +1390,7 @@ class CommCareAnalyticsUserRolesResource(CouchResourceMixin, HqBaseResource, Dom
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
 
-    def dehydrate_role(self, bundle):
+    def dehydrate_roles(self, bundle):
         cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
         return cca_access['roles']
 
