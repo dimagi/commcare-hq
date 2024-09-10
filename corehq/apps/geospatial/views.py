@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.http import (
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
@@ -585,8 +586,9 @@ class CasesReassignmentView(BaseDomainView):
         task_existence_helper = CeleryTaskTracker(task_key)
 
         if task_existence_helper.is_active():
-            return HttpResponseBadRequest(
-                _('Case reassignment is currently in progress. Please try again later.')
+            return HttpResponse(
+                _('Case reassignment is currently in progress. Please try again later.'),
+                status=409,
             )
 
         geo_cases_reassignment_update_owners.delay(

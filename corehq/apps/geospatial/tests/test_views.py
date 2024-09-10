@@ -840,7 +840,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             }
         )
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 409)
         self.assertEqual(
             response.content.decode("utf-8"),
             "Case reassignment is currently in progress. Please try again later."
