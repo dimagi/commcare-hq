@@ -125,9 +125,13 @@
 </div>
 
 <div id="case-buttons">
-    <div id="review-assignments" class="pull-left">
+    <div id="assignments-results" class="pull-left">
         <button class="btn btn-default" data-toggle="modal" data-target="#review-assignment-results" data-bind="click: loadCaseData, enable: canOpenModal">
             {% trans 'Review Results' %}
+        </button>
+        <button id="accept-assignment-results" class="btn btn-default"  data-bind="click: acceptAssignments, enable: canOpenModal && !assignmentAjaxInProgress">
+            {% trans 'Accept Results' %}
+            <i class="spinner fa-spin fa fa-refresh" data-bind="visible: assignmentAjaxInProgress"></i>
         </button>
         {% include 'geospatial/partials/review_assignment_modal.html' %}
     </div>
