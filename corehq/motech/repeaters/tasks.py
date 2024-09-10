@@ -289,28 +289,18 @@ def iter_ready_repeater_ids_once():
         ...
 
     """
-
-    def iter_domain_repeaters(dom):
-        try:
-            rep_id = repeater_ids_by_domain[dom].pop(0)
-        except IndexError:
-            return
-        else:
-            yield rep_id
-
     repeater_ids_by_domain = get_repeater_ids_by_domain()
     while True:
         if not repeater_ids_by_domain:
             return
         for domain in list(repeater_ids_by_domain.keys()):
             try:
-                repeater_id = next(iter_domain_repeaters(domain))
-            except StopIteration:
+                repeater_id = repeater_ids_by_domain[domain].pop()
+            except IndexError:
                 # We've exhausted the repeaters for this domain
                 del repeater_ids_by_domain[domain]
                 continue
-            else:
-                yield domain, repeater_id
+            yield domain, repeater_id
 
 
 def get_repeater_lock(repeater_id):
