@@ -184,6 +184,19 @@ The following functions are supported:
 .. _Fuzzy Query: https://www.elastic.co/guide/en/elasticsearch/reference/8.11/query-dsl-fuzzy-query.html
 .. _Levenshtein distance: https://en.wikipedia.org/wiki/Levenshtein_distance
 
+``fuzzy-date``
+---------------
+* **Behavior**: Determines if a given date is a fuzzy match for a given case property.
+* **Return**: True if that particular date or any of the generated permutations matches the case property.
+  Otherwise False.
+* **Arguments**:  Two arguments: the case property and the date to check.
+* **Usage**: ``fuzzy-date(dob, "2012-12-03")``
+
+.. note::
+   ``fuzzy-date`` generates a list of dates that might be the result of a typo in the date like switching
+   day and month field or reversing the digits in either day, month or the decade part of the year. Only
+   combinations of these that are valid dates will be check against.
+
 ``phonetic-match``
 ------------------
 * **Behavior**: Match cases if a given value "sounds like" (using `Soundex`_) the value of a given
