@@ -690,10 +690,10 @@ class RepeaterFailureTest(BaseRepeaterTest):
         with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
             mock_simple_post.return_value.status_code = 503  # Fail and retry
             rr = self.repeater.register(case)
-        with self.assertRaises(Exception):
-            with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
-                rr.fire()
+        with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
+            state_or_none = rr.fire()
 
+        self.assertEqual(state_or_none, State.InvalidPayload)
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.InvalidPayload)
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
@@ -1348,7 +1348,7 @@ class TestRaceCondition(TestCase):
         self.assertIsNone(repeater_a.next_attempt_at)
         self.assertFalse(repeater_b.is_paused)
 
-        repeater_a.set_next_attempt()
+        repeater_a.set_backoff()
         repeater_b.pause()
 
         repeater_c = Repeater.objects.get(id=self.repeater.repeater_id)
