@@ -1262,6 +1262,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         super().setUp()
         self.config = get_sample_data_source()
         self.config.save()
+        self.addCleanup(self.config.delete)
         self.adapter = get_indicator_adapter(self.config)
         self.adapter.build_table()
         self.addCleanup(self.adapter.drop_table)
