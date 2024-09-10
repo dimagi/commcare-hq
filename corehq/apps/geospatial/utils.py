@@ -216,16 +216,16 @@ def update_cases_owner(domain, case_owner_updates_dict):
         )
 
 
-class CeleryTaskExistenceHelper(object):
+class CeleryTaskTracker(object):
     """
-    Simple Helper class using redis to check whether a given celery task exists and is not processed yet.
+    Simple Helper class using redis to track if a celery task was requested and is not completed yet.
     """
 
     def __init__(self, task_key):
         self.task_key = task_key
         self._client = get_redis_client()
 
-    def mark_active(self, timeout=ONE_DAY):
+    def mark_requested(self, timeout=ONE_DAY):
         # Timeout here is just a fail safe mechanism in case task is not processed by Celery
         # due to unexpected circumstances
         self._client.set(self.task_key, 'ACTIVE', timeout=timeout)
@@ -233,5 +233,5 @@ class CeleryTaskExistenceHelper(object):
     def is_active(self):
         return self._client.has_key(self.task_key)
 
-    def mark_inactive(self):
+    def mark_completed(self):
         return self._client.delete(self.task_key)

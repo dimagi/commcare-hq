@@ -45,7 +45,7 @@ from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError
 from .models import GeoConfig, GeoPolygon
 from .utils import (
     CaseOwnerUpdate,
-    CeleryTaskExistenceHelper,
+    CeleryTaskTracker,
     create_case_with_gps_property,
     get_geo_case_property,
     get_geo_user_property,
@@ -529,8 +529,8 @@ class CasesReassignmentView(BaseDomainView):
 
     def get_child_cases(self, domain, case_ids):
         """
-        For a given list of case_ids, finds their child case_ids
-        and returns a dict with key as the given case_id and value as the list of child case_id.
+        For a given list of case_ids, finds their child case ids
+        and returns a dict with key as the given case_id and value as the list of child case ids.
         """
         case_docs = (
             CaseSearchES()
@@ -548,7 +548,7 @@ class CasesReassignmentView(BaseDomainView):
 
     def get_parent_cases(self, domain, case_ids):
         """
-        For a given list of case_ids, finds their parent case _id
+        For a given list of case_ids, finds their parent case_id
         and returns a dict with the key as the given case_id and value as their parent case_id.
         """
         case_docs = (
@@ -582,7 +582,7 @@ class CasesReassignmentView(BaseDomainView):
 
     def _process_as_async(self, case_owner_updates):
         task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
-        task_existence_helper = CeleryTaskExistenceHelper(task_key)
+        task_existence_helper = CeleryTaskTracker(task_key)
 
         if task_existence_helper.is_active():
             return HttpResponseBadRequest(
@@ -594,7 +594,7 @@ class CasesReassignmentView(BaseDomainView):
             CaseOwnerUpdate.to_dict(case_owner_updates),
             task_key,
         )
-        task_existence_helper.mark_active()
+        task_existence_helper.mark_requested()
         return JsonResponse(
             {
                 'success': True,

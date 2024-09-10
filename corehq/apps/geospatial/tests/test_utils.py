@@ -11,7 +11,7 @@ from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.utils import (
     CaseOwnerUpdate,
-    CeleryTaskExistenceHelper,
+    CeleryTaskTracker,
     create_case_with_gps_property,
     get_geo_case_property,
     get_geo_user_property,
@@ -193,14 +193,14 @@ class TestCeleryTaskExistenceHelper(TestCase):
         super().setUpClass()
         with real_redis_client():
             cls.redis_client = get_redis_client()
-            cls.celery_task_existence_helper = CeleryTaskExistenceHelper(cls.TASK_KEY)
+            cls.celery_task_existence_helper = CeleryTaskTracker(cls.TASK_KEY)
 
     def tearDown(self):
         self.redis_client.clear()
         super().tearDown()
 
     def test_mark_active(self):
-        self.celery_task_existence_helper.mark_active()
+        self.celery_task_existence_helper.mark_requested()
         self.assertTrue(self.redis_client.has_key(self.TASK_KEY))
 
     def test_get_active(self):
@@ -209,5 +209,5 @@ class TestCeleryTaskExistenceHelper(TestCase):
 
     def test_mark_inactive(self):
         self.redis_client.set(self.TASK_KEY, 'ACTIVE')
-        self.celery_task_existence_helper.mark_inactive()
+        self.celery_task_existence_helper.mark_completed()
         self.assertFalse(self.redis_client.has_key(self.TASK_KEY))
