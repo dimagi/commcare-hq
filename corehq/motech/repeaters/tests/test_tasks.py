@@ -326,17 +326,17 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
             repeater_ids = [(r[0], r[1]) for r in repeaters]
             self.assertEqual(repeater_ids, [
                 # First loop
-                ('domain1', 'repeater_id1'),
-                ('domain2', 'repeater_id4'),
+                ('domain1', 'repeater_id3'),
+                ('domain2', 'repeater_id5'),
                 ('domain3', 'repeater_id6'),
                 ('domain1', 'repeater_id2'),
-                ('domain2', 'repeater_id5'),
-                ('domain1', 'repeater_id3'),
+                ('domain2', 'repeater_id4'),
+                ('domain1', 'repeater_id1'),
 
                 # Second loop
-                ('domain1', 'repeater_id1'),
-                ('domain2', 'repeater_id4'),
                 ('domain1', 'repeater_id2'),
+                ('domain2', 'repeater_id4'),
+                ('domain1', 'repeater_id1'),
             ])
 
     def test_rate_limit(self):
@@ -355,13 +355,13 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
             self.assertEqual(len(repeaters), 7)
             repeater_ids = [(r[0], r[1]) for r in repeaters]
             self.assertEqual(repeater_ids, [
-                ('domain1', 'repeater_id1'),
+                ('domain1', 'repeater_id3'),
+                ('domain2', 'repeater_id5'),
                 ('domain3', 'repeater_id6'),
                 ('domain1', 'repeater_id2'),
-                ('domain2', 'repeater_id5'),
-                ('domain1', 'repeater_id3'),
                 ('domain1', 'repeater_id1'),
                 ('domain1', 'repeater_id2'),
+                ('domain1', 'repeater_id1'),
             ])
 
     def test_disabled_domains_excluded(self):
@@ -382,9 +382,9 @@ class TestIterReadyRepeaterIDsForever(SimpleTestCase):
             self.assertEqual(len(repeaters), 4)
             repeater_ids = [(r[0], r[1]) for r in repeaters]
             self.assertEqual(repeater_ids, [
-                ('domain2', 'repeater_id4'),
-                ('domain3', 'repeater_id6'),
                 ('domain2', 'repeater_id5'),
+                ('domain3', 'repeater_id6'),
+                ('domain2', 'repeater_id4'),
                 ('domain2', 'repeater_id4'),
             ])
 
@@ -407,16 +407,16 @@ def test_iter_ready_repeater_ids_once():
         pairs = list(iter_ready_repeater_ids_once())
         assert_equal(pairs, [
             # First round of domains
-            ('domain1', 'repeater_id1'),
-            ('domain2', 'repeater_id4'),
+            ('domain1', 'repeater_id3'),
+            ('domain2', 'repeater_id5'),
             ('domain3', 'repeater_id6'),
 
             # Second round
             ('domain1', 'repeater_id2'),
-            ('domain2', 'repeater_id5'),
+            ('domain2', 'repeater_id4'),
 
             # Third round
-            ('domain1', 'repeater_id3'),
+            ('domain1', 'repeater_id1'),
         ])
 
 
