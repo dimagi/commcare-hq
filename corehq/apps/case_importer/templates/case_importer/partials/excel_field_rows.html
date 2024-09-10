@@ -18,7 +18,7 @@
   </td>
 
   <td class="text-center">
-    <i class="fa fa-arrow-right"></i>
+    <!-- ko if: hasValue --><i class="fa fa-arrow-right"></i><!--/ko-->
   </td>
 
   <td class="col-md-3">
@@ -58,17 +58,27 @@
         </p>
     </div>
     <!--ko if: caseFieldSuggestions().length-->
-      <p class="help-block text-warning">
+      <p class="help-block text-info">
         <i class="fa fa-question-circle"></i>
         {% blocktrans with '<!--ko foreach: caseFieldSuggestions--><!--ko if: $index() !== 0-->, <!--/ko--><strong data-bind="text: $data"></strong><!--/ko-->' as suggestion %}
           Did you mean "{{ suggestion }}" instead?
         {% endblocktrans %}
       </p>
     <!--/ko-->
+    <!--ko if: isSystemProperty-->
+      <p class="help-block text-warning">
+        <i class="fa fa-question-circle"></i>
+        {% blocktrans %}
+          Importing a system property may have unexpected results such as
+          adding a duplicate field to case exports. Consider using a
+          different property name.
+        {% endblocktrans %}
+      </p>
+    <!--/ko-->
   </td>
 
   <td>
-    <input type="checkbox" class="form-check-input mt-2" class="new_property" data-bind="checked: createNewChecked"/>
+    <input type="checkbox" class="form-check-input mt-2" class="new_property" data-bind="checked: isCustom"/>
   </td>
 
   {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
