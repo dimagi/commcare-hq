@@ -20,6 +20,7 @@ hqDefine('geospatial/js/models', [
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
     const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
+    const reassignCasesUrl = initialPageData.reverse('reassign_cases');
     const unexpectedErrorMessage = "Oops! Something went wrong! Please report an issue if the problem persists.";
 
     var MissingGPSModel = function () {
@@ -1057,6 +1058,47 @@ hqDefine('geospatial/js/models', [
                 return caseItem.getJson();
             });
             utils.downloadCsv(casesToExport, headers, cols, 'Case Assignment Export');
+        };
+
+        self.assignmentAjaxInProgress = ko.observable(false);
+        self.acceptAssignments = function () {
+            let caseIdToOwnerId = {};
+            for (const caseItem of self.mapModel.caseMapItems()) {
+                const caseData = self.mapModel.caseGroupsIndex[caseItem.itemId];
+                if (caseData.assignedUserId) {
+                    caseIdToOwnerId[caseData.item.itemId] = caseData.assignedUserId;
+                }
+            }
+            let requestData = {
+                'case_id_to_owner_id': caseIdToOwnerId,
+                'include_related_cases': self.includeRelatedCases(),
+            };
+
+            self.assignmentAjaxInProgress(true);
+            $.ajax({
+                type: 'post',
+                url: reassignCasesUrl,
+                dataType: 'json',
+                data: JSON.stringify(requestData),
+                contentType: "application/json; charset=utf-8",
+                success: function (response) {
+                    if (!response.success) {
+                        return alertUser.alert_user(response.message, 'danger');
+                    }
+                    alertUser.alert_user(response.message, 'success', false, true);
+                },
+                error: function (response) {
+                    const responseText = response.responseText;
+                    if (responseText) {
+                        alertUser.alert_user(responseText, 'danger');
+                    } else {
+                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger', false, true);
+                    }
+                },
+                complete: function () {
+                    self.assignmentAjaxInProgress(false);
+                },
+            });
         };
 
         return self;
