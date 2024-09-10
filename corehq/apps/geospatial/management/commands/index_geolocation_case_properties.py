@@ -41,7 +41,9 @@ def index_case_docs(domain, query_limit=DEFAULT_QUERY_LIMIT, chunk_size=DEFAULT_
     query = _es_case_query(domain, geo_case_property, case_type)
     count = query.count()
     print(f'{count} case(s) to process')
-    batch_count = math.ceil(count / query_limit)
+    batch_count = 1
+    if query_limit:
+        batch_count = math.ceil(count / query_limit)
     print(f"Cases will be processed in {batch_count} batches")
     for i in range(batch_count):
         print(f'Processing {i+1}/{batch_count}')
