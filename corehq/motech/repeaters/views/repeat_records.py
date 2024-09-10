@@ -1,5 +1,6 @@
 import json
 import re
+from typing import Literal
 
 from django.db.models import Q
 from django.http import (
@@ -7,7 +8,6 @@ from django.http import (
     HttpRequest,
     HttpResponse,
     JsonResponse,
-    QueryDict,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -42,6 +42,7 @@ from corehq.motech.models import RequestLog
 
 from ..const import State, RECORD_CANCELLED_STATE
 from ..models import RepeatRecord
+from ..exceptions import BulkActionMissingParameters
 from .repeat_record_display import RepeatRecordDisplay
 
 
@@ -244,23 +245,18 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         where = Q(domain=self.domain)
         if self.repeater_id:
             where &= Q(repeater_id=self.repeater_id)
+        if self.payload_id:
+            where &= Q(payload_id=self.payload_id)
         total = RepeatRecord.objects.filter(where).count()
         total_pending = RepeatRecord.objects.filter(where, state=State.Pending).count()  # include State.Fail?
         total_cancelled = RepeatRecord.objects.filter(where, state=State.Cancelled).count()
-
-        form_query_string = self.request.GET.urlencode()
-        form_query_string_cancelled = _change_record_state(
-            self.request.GET, 'CANCELLED').urlencode()
-        form_query_string_pending = _change_record_state(
-            self.request.GET, 'PENDING').urlencode()
 
         context.update(
             total=total,
             total_pending=total_pending,
             total_cancelled=total_cancelled,
-            form_query_string=form_query_string,
-            form_query_string_pending=form_query_string_pending,
-            form_query_string_cancelled=form_query_string_cancelled,
+            payload_id=self.payload_id,
+            repeater_id=self.repeater_id,
         )
         return context
 
@@ -335,7 +331,10 @@ class RepeatRecordView(View):
     def post(self, request, domain):
         # Retriggers a repeat record
         if _get_flag(request):
-            _schedule_task_with_flag(request, domain, 'resend')
+            try:
+                _schedule_task_with_flag(request, domain, 'resend')
+            except BulkActionMissingParameters:
+                return _missing_parameters_response()
         else:
             _schedule_task_without_flag(request, domain, 'resend')
         return JsonResponse({'success': True})
@@ -345,8 +344,11 @@ class RepeatRecordView(View):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
-    if _get_flag(request) == 'cancel_all':
-        _schedule_task_with_flag(request, domain, 'cancel')
+    if _get_flag(request) == 'select_pending':
+        try:
+            _schedule_task_with_flag(request, domain, 'cancel')
+        except BulkActionMissingParameters:
+            return _missing_parameters_response()
     else:
         _schedule_task_without_flag(request, domain, 'cancel')
 
@@ -357,12 +359,25 @@ def cancel_repeat_record(request, domain):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
-    if _get_flag(request) == 'requeue_all':
-        _schedule_task_with_flag(request, domain, 'requeue')
+    if _get_flag(request) == 'select_cancelled':
+        try:
+            _schedule_task_with_flag(request, domain, 'requeue')
+        except BulkActionMissingParameters:
+            return _missing_parameters_response()
     else:
         _schedule_task_without_flag(request, domain, 'requeue')
 
     return HttpResponse('OK')
+
+
+def _missing_parameters_response():
+    return JsonResponse(
+        {
+            "failure_reason": _(
+                "Please filter to a specific repeater or payload before attempting a bulk action."
+            )
+        }
+    )
 
 
 def _get_record_ids_from_request(request):
@@ -374,33 +389,35 @@ def _get_flag(request: HttpRequest) -> str:
     return request.POST.get('flag') or ''
 
 
-def _change_record_state(query_dict: QueryDict, state: str) -> QueryDict:
-    if not state:
-        return query_dict
-    if 'record_state' in query_dict:
-        query_dict = query_dict.copy()  # Don't cause side effects. Also,
-        # request.GET is immutable and will raise AttributeError.
-        query_dict['record_state'] = state
-    return query_dict
+def _get_state_from_request(request):
+    flag = _get_flag(request)
+    return {
+        'select_all': None,
+        'select_pending': State.Pending,
+        'select_cancelled': State.Cancelled,
+    }[flag]
 
 
 def _schedule_task_with_flag(
     request: HttpRequest,
     domain: str,
-    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    action: Literal['resend', 'cancel', 'requeue']
 ):
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    payload_id = request.POST.get('payload_id') or None
-    repeater_id = request.POST.get('repeater') or None
+    payload_id = request.POST.get('payload_id', None)
+    repeater_id = request.POST.get('repeater_id', None)
+    if not any([repeater_id, payload_id]):
+        raise BulkActionMissingParameters
+    state = _get_state_from_request(request)
     task = task_generate_ids_and_operate_on_payloads.delay(
-        payload_id, repeater_id, domain, action)
+        payload_id, repeater_id, domain, action, state=state)
     task_ref.set_task(task)
 
 
 def _schedule_task_without_flag(
     request: HttpRequest,
     domain: str,
-    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    action: Literal['resend', 'cancel', 'requeue']
 ):
     record_ids = _get_record_ids_from_request(request)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
