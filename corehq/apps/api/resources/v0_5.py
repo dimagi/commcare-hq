@@ -1385,7 +1385,6 @@ class CommCareAnalyticsUserRolesResource(CouchResourceMixin, HqBaseResource, Dom
     permissions = fields.DictField()
 
     class Meta(CustomResourceMeta):
-        object_class = CouchUser
         resource_name = 'analytics-roles'
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -1407,11 +1406,8 @@ class CommCareAnalyticsUserRolesResource(CouchResourceMixin, HqBaseResource, Dom
                 ))
             )
 
-        username = bundle.request.GET.get('username')
-        if not username:
-            return []
+        user = CouchUser.get_by_username(bundle.request.user.username)
 
-        user = CouchUser.get_by_username(username)
         if not (user and user.is_member_of(domain) and user.is_active):
             user = None
         return [user] if user else []
