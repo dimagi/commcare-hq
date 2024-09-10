@@ -453,7 +453,7 @@ def get_users_with_gps(request, domain):
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
     REQUEST_CASES_LIMIT = 100
-    ASYNC_CASES_UPDATE_THRESHOLD = 1000
+    ASYNC_CASES_UPDATE_THRESHOLD = 500
     ASYNC_CASES_LIMIT = 5000
 
     def post(self, request, domain, *args, **kwargs):
