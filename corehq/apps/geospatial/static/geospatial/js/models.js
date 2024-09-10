@@ -1013,7 +1013,7 @@ hqDefine('geospatial/js/models', [
             let caseIdToOwnerId = {};
             for (const caseItem of self.mapModel.caseMapItems()) {
                 const caseData = self.mapModel.caseGroupsIndex[caseItem.itemId];
-                if ('assignedUserId' in caseData && caseData.assignedUserId) {
+                if (caseData.assignedUserId) {
                     caseIdToOwnerId[caseData.item.itemId] = caseData.assignedUserId;
                 }
             }
