@@ -47,6 +47,7 @@ class TestGetFormCases(TestCase):
             domain=cls.domain,
             case_location_property_name=cls.gps_prop_name
         )
+        cls.addClassCleanup(cls.geo_config.delete)
 
     def test_has_cases_to_index(self):
         query = _es_case_query(self.domain, self.gps_prop_name, self.primary_case_type)
