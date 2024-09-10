@@ -3,9 +3,9 @@ from collections import defaultdict
 
 from django.contrib import messages
 from django.http import (
-    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -30,7 +30,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 @login_and_domain_required
 def commcare_profile(request, domain, app_id):
     app = get_app(domain, app_id)
-    return HttpResponse(json.dumps(app.profile), content_type='application/json')
+    return JsonResponse(app.profile, safe=False)
 
 
 @no_conflict_require_POST

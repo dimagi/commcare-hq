@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import stat
@@ -9,7 +8,7 @@ from wsgiref.util import FileWrapper
 from django.conf import settings
 from django.core import cache
 from django.core.cache import DEFAULT_CACHE_ALIAS
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.urls import reverse
 
 from django_transfer import TransferHttpResponse
@@ -125,11 +124,11 @@ class DownloadBase(object):
         return response
 
     def get_start_response(self):
-        return HttpResponse(json.dumps({
+        return JsonResponse({
             'download_id': self.download_id,
             'download_url': reverse('ajax_job_poll', kwargs={'download_id': self.download_id}),
             'message': self.message
-        }), content_type='application/json')
+        })
 
     def __str__(self):
         return "content-type: %s, disposition: %s" % (self.content_type, self.content_disposition)

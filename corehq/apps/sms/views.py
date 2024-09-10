@@ -14,6 +14,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.shortcuts import render
 from django.urls import reverse
@@ -765,7 +766,7 @@ def chat_contact_list(request, domain):
         'iTotalDisplayRecords': filtered_records,
     }
 
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return JsonResponse(result)
 
 
 def get_contact_name_for_chat(contact, domain_obj):
@@ -963,7 +964,7 @@ class ChatMessageHistory(View, DomainViewMixin):
             except Exception:
                 notify_exception(request, "Error updating last read message for %s" % last_sms.pk)
 
-        return HttpResponse(json.dumps(data), content_type='application/json')
+        return JsonResponse(data, safe=False)
 
 
 class ChatLastReadMessage(View, DomainViewMixin):
@@ -989,9 +990,9 @@ class ChatLastReadMessage(View, DomainViewMixin):
 
             if lrm:
                 lrm_timestamp = json_format_datetime(lrm.message_timestamp)
-        return HttpResponse(json.dumps({
+        return JsonResponse({
             'message_timestamp': lrm_timestamp,
-        }), content_type='application/json')
+        })
 
 
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):

@@ -857,7 +857,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
-    return HttpResponse(json.dumps(resp), content_type='application/json')
+    return JsonResponse(resp)
 
 
 def _new_advanced_module(request, domain, app, name, lang):

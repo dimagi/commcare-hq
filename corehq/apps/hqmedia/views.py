@@ -948,7 +948,7 @@ class MultimediaUploadStatusView(View):
             response = fake_status.get_response()
         else:
             response = status.get_response()
-        return HttpResponse(json.dumps(response), content_type='application/json')
+        return JsonResponse(response)
 
 
 class ViewMultimediaFile(View):

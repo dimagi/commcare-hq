@@ -1,7 +1,6 @@
-import json
 from functools import wraps
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 
 from django_prbac.decorators import requires_privilege
 from django_prbac.exceptions import PermissionDenied
@@ -114,8 +113,7 @@ def requires_privilege_json_response(slug, http_status_code=None,
             except PermissionDenied:
                 error_message = "You have lost access to this feature."
                 response = get_response(error_message, http_status_code)
-                return HttpResponse(json.dumps(response),
-                                    content_type="application/json", status=401)
+                return JsonResponse(response, status=401)
         return wrapped
     return decorate
 

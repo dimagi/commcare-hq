@@ -470,7 +470,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     app.save(resp)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     if ajax:
-        return HttpResponse(json.dumps(resp), content_type='application/json')
+        return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
 

@@ -947,7 +947,7 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("custom_suite"):
         app.set_custom_suite(hq_settings['custom_suite'])
 
-    return HttpResponse(json.dumps(resp), content_type='application/json')
+    return JsonResponse(resp)
 
 
 @no_conflict_require_POST
@@ -959,7 +959,7 @@ def edit_add_ons(request, domain, app_id):
         if slug in current:
             app.add_ons[slug] = value == 'on'
     app.save()
-    return HttpResponse(json.dumps({'success': True}), content_type='application/json')
+    return JsonResponse({'success': True})
 
 
 @no_conflict_require_POST
@@ -1003,7 +1003,7 @@ def rearrange(request, domain, app_id, key):
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     app.save(resp)
     if ajax:
-        return HttpResponse(json.dumps(resp), content_type='application/json')
+        return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
 
