@@ -79,8 +79,7 @@ hqDefine('case_importer/js/excel_fields', [
                     row.isCustom(false);
                     row.selectedCaseField(field);
                 } else {
-                    var spec = _(caseFieldSpecs).findWhere({field});
-                    row.isCustom(_.isEmpty(spec) && !systemFields.contains(field));
+                    row.isCustom(!systemFields.contains(field));
                     row.selectedCaseField(null);
                 }
             };
