@@ -453,8 +453,9 @@ def get_users_with_gps(request, domain):
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
     REQUEST_CASES_LIMIT = 100
-    ASYNC_CASES_UPDATE_THRESHOLD = 500
-    ASYNC_CASES_LIMIT = 5000
+    # Below values denotes the number of cases to be reassigned including the related cases
+    ASYNC_CASES_UPDATE_THRESHOLD = 500  # threshold for asynchronous operation
+    TOTAL_CASES_LIMIT = 5000    # maximum number of cases that can be reassigned
 
     def post(self, request, domain, *args, **kwargs):
         try:
@@ -525,7 +526,7 @@ class CasesReassignmentView(BaseDomainView):
         return case_id_to_owner_id
 
     def _validate_assignment_limit(self, case_owner_updates):
-        if CaseOwnerUpdate.total_cases_count(case_owner_updates) > self.ASYNC_CASES_LIMIT:
+        if CaseOwnerUpdate.total_cases_count(case_owner_updates) > self.TOTAL_CASES_LIMIT:
             raise CaseReassignmentValidationError(
                 _("Case reassignment limit exceeded. Please select fewer cases to update or"
                   " consider deselecting 'include related cases'."
@@ -587,9 +588,9 @@ class CasesReassignmentView(BaseDomainView):
 
     def _process_as_async(self, case_owner_updates):
         task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
-        task_existence_helper = CeleryTaskTracker(task_key)
+        celery_task_tracker = CeleryTaskTracker(task_key)
 
-        if task_existence_helper.is_active():
+        if celery_task_tracker.is_active():
             return HttpResponse(
                 _('Case reassignment is currently in progress. Please try again later.'),
                 status=409,
@@ -600,7 +601,7 @@ class CasesReassignmentView(BaseDomainView):
             CaseOwnerUpdate.to_dict(case_owner_updates),
             task_key,
         )
-        task_existence_helper.mark_requested()
+        celery_task_tracker.mark_requested()
         return JsonResponse(
             {
                 'success': True,

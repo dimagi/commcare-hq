@@ -7,5 +7,5 @@ def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict, task_k
     try:
         update_cases_owner(domain, case_owner_updates_dict)
     finally:
-        task_existence_helper = CeleryTaskTracker(task_key)
-        task_existence_helper.mark_completed()
+        celery_task_tracker = CeleryTaskTracker(task_key)
+        celery_task_tracker.mark_completed()
