@@ -72,6 +72,7 @@ from corehq.sql_db.util import (
 )
 from corehq import toggles
 from corehq.util.log import with_progress_bar
+from corehq.util.metrics.load_counters import dedupe_load_counter
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.locations.models import SQLLocation
@@ -1161,6 +1162,8 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     def _handle_case_duplicate(self, case, rule):
         if is_copied_case(case):
             return CaseRuleActionResult()
+
+        dedupe_load_counter('unknown', case.domain)
 
         if not case_matching_rule_criteria_exists_in_es(case, rule):
             ALLOWED_ES_DELAY = timedelta(hours=1)
