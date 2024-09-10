@@ -117,20 +117,6 @@ def use_timepicker(view_func):
     return set_request_flag(view_func, 'use_timepicker')
 
 
-def use_maps(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the maps (with sync utils) library at the base
-    template level.
-
-    Example:
-
-    @use_maps
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_maps')
-
-
 def use_ko_validation(view_func):
     """Use this decorator to use knockout validation in knockout forms
 
