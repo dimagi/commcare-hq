@@ -138,14 +138,6 @@
       {% endcompress %}
     {% endif %}
 
-
-    {% if request.use_maps %}
-      {% compress css %}
-        <link rel="stylesheet" href="{% static 'leaflet/dist/leaflet.css' %}" />
-        <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
-      {% endcompress %}
-    {% endif %}
-
     <script>
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>
@@ -410,21 +402,6 @@
     {% if request.use_timepicker and not use_js_bundler and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if not use_js_bundler %}
-      {% if request.use_maps %}
-        {% compress js %}
-          <script src="{% static 'jquery-color/dist/jquery.color.js' %}"></script>
-          <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-        {% endcompress %}
-      {% endif %}
-    {% endif %}
-
-    {% if request.use_maps and not use_js_bundler %}
-      {% compress js %}
-        <script src="{% static 'reports/js/bootstrap3/maps_utils.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
