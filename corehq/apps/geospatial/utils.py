@@ -1,13 +1,18 @@
+from dataclasses import asdict, dataclass, field
+
 import jsonschema
 from jsonobject.exceptions import BadValueError
 
+from casexml.apps.case.mock import CaseBlock
 from couchforms.geopoint import GeoPoint
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
+from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.hqcase.case_helper import CaseHelper
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
+from corehq.const import ONE_DAY
 from corehq.util.quickcache import quickcache
-
-from .models import GeoConfig
 
 
 @quickcache(['domain'], timeout=24 * 60 * 60)
@@ -165,3 +170,68 @@ def geojson_to_es_geoshape(geojson):
     es_geoshape = geojson['geometry'].copy()
     es_geoshape['type'] = es_geoshape['type'].lower()
     return es_geoshape
+
+
+@dataclass
+class CaseOwnerUpdate:
+    case_id: str
+    owner_id: str
+    related_case_ids: list = field(default_factory=list)
+
+    @classmethod
+    def from_case_to_owner_id_dict(cls, case_to_owner_id):
+        result = []
+        for case_id, owner_id in case_to_owner_id.items():
+            result.append(cls(case_id=case_id, owner_id=owner_id))
+        return result
+
+    @classmethod
+    def total_cases_count(cls, case_owner_updates):
+        count = len(case_owner_updates)
+        for case_owner_update in case_owner_updates:
+            count += len(case_owner_update.related_case_ids)
+        return count
+
+    @classmethod
+    def to_dict(cls, case_owner_updates):
+        return [asdict(obj) for obj in case_owner_updates]
+
+
+def update_cases_owner(domain, case_owner_updates_dict):
+    for case_owner_update in case_owner_updates_dict:
+        case_blocks = []
+        cases_to_updates = [case_owner_update['case_id']] + case_owner_update['related_case_ids']
+        for case_id in cases_to_updates:
+            case_blocks.append(
+                CaseBlock(
+                    create=False,
+                    case_id=case_id,
+                    owner_id=case_owner_update['owner_id']
+                ).as_text()
+            )
+        submit_case_blocks(
+            case_blocks=case_blocks,
+            domain=domain,
+            device_id=__name__ + '.update_cases_owners'
+        )
+
+
+class CeleryTaskTracker(object):
+    """
+    Simple Helper class using redis to track if a celery task was requested and is not completed yet.
+    """
+
+    def __init__(self, task_key):
+        self.task_key = task_key
+        self._client = get_redis_client()
+
+    def mark_requested(self, timeout=ONE_DAY):
+        # Timeout here is just a fail safe mechanism in case task is not processed by Celery
+        # due to unexpected circumstances
+        self._client.set(self.task_key, 'ACTIVE', timeout=timeout)
+
+    def is_active(self):
+        return self._client.has_key(self.task_key)
+
+    def mark_completed(self):
+        return self._client.delete(self.task_key)
