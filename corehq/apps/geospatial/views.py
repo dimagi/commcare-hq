@@ -22,11 +22,17 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.web import json_request, json_response
 
 from corehq import toggles
+from corehq.apps.case_search.const import (
+    IDENTIFIER,
+    INDICES_PATH,
+    REFERENCED_ID,
+)
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, UserES
 from corehq.apps.es.users import missing_or_empty_user_data_property
+from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError
 from corehq.apps.geospatial.filters import GPSDataFilter
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
@@ -42,7 +48,6 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
 
 from .const import GPS_POINT_CASE_PROPERTY, POLYGON_COLLECTION_GEOJSON_SCHEMA
-from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError
 from .models import GeoConfig, GeoPolygon
 from .utils import (
     CaseOwnerUpdate,
@@ -55,7 +60,6 @@ from .utils import (
     set_user_gps_property,
     update_cases_owner,
 )
-from corehq.apps.case_search.const import INDICES_PATH, REFERENCED_ID, IDENTIFIER
 
 
 def geospatial_default(request, *args, **kwargs):
