@@ -116,7 +116,7 @@ class IteratorJSONReader(object):
         # try boolean
         try:
             field, nothing = field.split('?')
-            assert(nothing.strip() == '')
+            assert nothing.strip() == ''
         except Exception:
             pass
         else:
@@ -245,14 +245,25 @@ class WorkbookJSONReader(object):
         self.worksheets_by_title = {}
         self.worksheets = []
 
-        for worksheet in self.wb.worksheets:
-            try:
-                ws = WorksheetJSONReader(worksheet, title=worksheet.title)
-            except IndexError:
-                raise JSONReaderError('This Excel file has unrecognised formatting. Please try downloading '
-                                      'the lookup table first, and then add data to it.')
-            self.worksheets_by_title[worksheet.title] = ws
-            self.worksheets.append(ws)
+        try:
+            for worksheet in self.wb.worksheets:
+                try:
+                    ws = WorksheetJSONReader(worksheet, title=worksheet.title)
+                except IndexError:
+                    raise JSONReaderError('This Excel file has unrecognised formatting. Please try downloading '
+                                        'the lookup table first, and then add data to it.')
+                self.worksheets_by_title[worksheet.title] = ws
+                self.worksheets.append(ws)
+        finally:
+            is_file_like = hasattr(file_or_filename, 'read')
+            if not is_file_like:
+                # This is safe because all sheets have been read by
+                # now. The underlying file is still open because sheets
+                # hold a reference to it, and ZipFile will not close it
+                # until all open file references have been closed.
+                # Additionally, openpyxl will not close the file if some
+                # rows are not consumed (possibly a bug in openpyxl).
+                self.wb._archive.close()
 
     def get_worksheet(self, title=None, index=None):
         if title is not None and index is not None:

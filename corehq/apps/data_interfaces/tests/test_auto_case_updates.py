@@ -279,7 +279,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='-5',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_THAN,
         )
 
         rule2 = _create_empty_rule(self.domain)
@@ -287,7 +287,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='0',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_THAN,
         )
 
         rule3 = _create_empty_rule(self.domain)
@@ -295,7 +295,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='5',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_THAN,
         )
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
@@ -324,7 +324,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='-5',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_AFTER,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL,
         )
 
         rule2 = _create_empty_rule(self.domain)
@@ -332,7 +332,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='0',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_AFTER,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL,
         )
 
         rule3 = _create_empty_rule(self.domain)
@@ -340,7 +340,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='5',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_AFTER,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL,
         )
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:

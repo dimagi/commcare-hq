@@ -3,8 +3,7 @@ import warnings
 from functools import wraps
 from unittest import TestCase
 
-from nose.tools import nottest
-
+from corehq.tests.tools import nottest
 from corehq.util.test_utils import unit_testing_only
 
 
