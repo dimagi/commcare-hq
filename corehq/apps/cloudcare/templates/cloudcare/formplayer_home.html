@@ -107,19 +107,24 @@
       <div class="container case-tile-container">
         <div id="persistent-case-tile" class="print-container"></div>
       </div>
-      <div class="d-lg-flex">
-        <div id="sidebar-region" class="noprint-sub-container"></div>
-        <div id="content-container" class="container">
-          <div id="menu-region" class="print-container"></div>
-          <section id="webforms" data-bind="
-                    template: {
-                        name: 'form-fullform-ko-template',
-                        afterRender: afterRender
-                    }">
-          </section>
+      <div class="d-lg-flex gx-0 gap-2">
+        <!-- TODO display-none-if-empty -->
+        <div id="persistent-menu-region" class="display-none-if-empty"></div>
+        <div class="flex-grow-1">
+          <div class="d-lg-flex gx-0 gap-2 justify-content-center">
+            <div id="sidebar-region" class="noprint-sub-container"></div>
+            <div id="content-container" class="container px-0 mx-0">
+              <div id="menu-region" class="print-container"></div>
+              <section id="webforms" data-bind="
+                template: {
+                name: 'form-fullform-ko-template',
+                afterRender: afterRender
+                }">
+              </section>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="persistent-menu-region"></div>
     </div>
     <div role="region" id="sr-notification-region" class="sr-only" aria-live="assertive" aria-relevant="all"></div>
     <small id="version-info"></small>

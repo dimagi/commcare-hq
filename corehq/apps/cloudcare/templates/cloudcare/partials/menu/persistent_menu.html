@@ -4,14 +4,14 @@
   <a type="button"
      href="#"
      tabindex="1"
-     data-bs-toggle="offcanvas"
+     data-bs-toggle="collapse"
      data-bs-target="#persistent-menu-container"
-     aria-expanded="false"
+     aria-expanded="true"
      aria-controls="persistent-menu-container"
      class="position-fixed top-50 start-0 rounded-end persistent-menu-toggle">
     <i class="fa fa-chevron-right"></i>
   </a>
-  <div id="persistent-menu-container" class="offcanvas offcanvas-start" tabindex="-1" aria-labelledby="persistent-menu-label">
+  <div id="persistent-menu-container" class="collapse show bg-white shadow-sm p-1" tabindex="-1" aria-labelledby="persistent-menu-label">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title position-relative" id="persistent-menu-label">
         <% if (imageUri) { %>
