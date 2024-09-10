@@ -189,7 +189,7 @@ class ODataAuthentication(LoginAndDomainAuthentication):
 class DomainAdminAuthentication(LoginAndDomainAuthentication):
 
     def is_authenticated(self, request, **kwargs):
-        permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)
+        permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)  # noqa: E731
         wrappers = [
             require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
             wrap_4xx_errors_for_apis,
