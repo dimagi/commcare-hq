@@ -1,6 +1,7 @@
 from unittest.mock import patch
 from uuid import uuid4
 
+from django.http import JsonResponse
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -25,7 +26,6 @@ from corehq.util.test_utils import flag_enabled
 
 
 class BaseGeospatialViewClass(TestCase):
-
     domain = 'test-domain'
 
     @classmethod
@@ -572,7 +572,7 @@ def _sample_geojson_data(name='test-2'):
     return data
 
 
-@es_test(requires=[case_search_adapter])
+@es_test(requires=[case_search_adapter, user_adapter])
 class TestCasesReassignmentView(BaseGeospatialViewClass):
     urlname = CasesReassignmentView.urlname
 
@@ -580,6 +580,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         super().setUp()
         self.user_a = CommCareUser.create(self.domain, 'User_A', '1234', None, None)
         self.user_b = CommCareUser.create(self.domain, 'User_B', '1234', None, None)
+        user_adapter.bulk_index([self.user_a, self.user_b], refresh=True)
 
         self.case_1 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_a.user_id)
         self.related_case_1 = create_case(
@@ -686,7 +687,29 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
 
     @flag_enabled('GEOSPATIAL')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.MAX_REASSIGNMENT_REQUEST_CASES', 1)
+    def test_cases_reassignment_with_related_case_in_request(self):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+            self.related_case_1.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+                'include_related_cases': True,
+            }
+        )
+
+        self._refresh_cases()
+        self._assert_for_request_cases_success(response)
+        self.assertEqual(self.related_case_1.owner_id, self.user_a.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.REQUEST_CASES_LIMIT', 1)
     def test_cases_reassignment_cases_limit_error(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -714,3 +737,136 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content.decode("utf-8"), "POST Body must be a valid json")
+
+    @flag_enabled('GEOSPATIAL')
+    def test_cases_reassignment_cases_invalid_case_ids(self, *args):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            'invalid-case-id': self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+            }
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            "Following Case ids in request are invalid: {}".format(['invalid-case-id'])
+        )
+
+    @flag_enabled('GEOSPATIAL')
+    def test_cases_reassignment_cases_invalid_owner_ids(self, *args):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: 'invalid-owner-id',
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+            }
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            "Following Owner ids in request are invalid: {}".format(['invalid-owner-id'])
+        )
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView._process_as_async')
+    def test_cases_reassignment_async_invocation(self, mocked_process_as_async):
+        mocked_process_as_async.return_value = JsonResponse({})
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+        }
+
+        self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+                'include_related_cases': True,
+            }
+        )
+        mocked_process_as_async.assert_called_once()
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.geospatial.views.CeleryTaskTracker.is_active', return_value=False)
+    def test_cases_reassignment_async(self, *args):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+            self.related_case_1.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+            }
+        )
+        self._refresh_cases()
+        self._assert_for_request_cases_success(response)
+        self.assertEqual(self.related_case_1.owner_id, self.user_a.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.geospatial.views.CeleryTaskTracker.is_active', return_value=True)
+    def test_cases_reassignment_async_task_invoked_and_not_completed(self, *args):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+            self.related_case_1.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+            }
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            "Case reassignment is currently in progress. Please try again later."
+        )
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.TOTAL_CASES_LIMIT', 3)
+    def test_cases_reassignment_max_limit_error(self):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+                'include_related_cases': True,
+            }
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            ("Case reassignment limit exceeded. Please select fewer cases to update"
+             " or consider deselecting 'include related cases'."
+             " Reach out to support if you still need assistance.")
+        )

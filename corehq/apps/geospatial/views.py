@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.http import (
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
@@ -21,14 +22,21 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.web import json_request, json_response
 
 from corehq import toggles
+from corehq.apps.case_search.const import (
+    IDENTIFIER,
+    INDICES_PATH,
+    REFERENCED_ID,
+)
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, UserES
 from corehq.apps.es.users import missing_or_empty_user_data_property
+from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError
 from corehq.apps.geospatial.filters import GPSDataFilter
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
+from corehq.apps.geospatial.tasks import geo_cases_reassignment_update_owners
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.locations.models import SQLLocation
@@ -42,6 +50,8 @@ from corehq.util.timezones.utils import get_timezone
 from .const import GPS_POINT_CASE_PROPERTY, POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoConfig, GeoPolygon
 from .utils import (
+    CaseOwnerUpdate,
+    CeleryTaskTracker,
     create_case_with_gps_property,
     get_geo_case_property,
     get_geo_user_property,
@@ -50,7 +60,6 @@ from .utils import (
     set_user_gps_property,
     update_cases_owner,
 )
-from corehq.apps.case_search.const import INDICES_PATH, REFERENCED_ID, IDENTIFIER
 
 
 def geospatial_default(request, *args, **kwargs):
@@ -443,7 +452,10 @@ def get_users_with_gps(request, domain):
 @method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
-    MAX_REASSIGNMENT_REQUEST_CASES = 100
+    REQUEST_CASES_LIMIT = 100
+    # Below values denotes the number of cases to be reassigned including the related cases
+    ASYNC_CASES_UPDATE_THRESHOLD = 500  # threshold for asynchronous operation
+    TOTAL_CASES_LIMIT = 5000    # maximum number of cases that can be reassigned
 
     def post(self, request, domain, *args, **kwargs):
         try:
@@ -455,41 +467,77 @@ class CasesReassignmentView(BaseDomainView):
 
         case_id_to_owner_id = request_data.get('case_id_to_owner_id', {})
         include_related_cases = request_data.get('include_related_cases')
-        if len(case_id_to_owner_id) > self.MAX_REASSIGNMENT_REQUEST_CASES:
-            return HttpResponseBadRequest(
+
+        try:
+            self._validate_request_cases_limit(case_id_to_owner_id)
+            self._validate_request_case_ids(list(case_id_to_owner_id.keys()))
+            self._validate_request_owner_ids(set(case_id_to_owner_id.values()))
+
+            case_owner_updates = CaseOwnerUpdate.from_case_to_owner_id_dict(case_id_to_owner_id)
+            if include_related_cases:
+                self._include_related_cases(case_id_to_owner_id, case_owner_updates)
+        except CaseReassignmentValidationError as error:
+            return HttpResponseBadRequest(error)
+
+        if CaseOwnerUpdate.total_cases_count(case_owner_updates) <= self.ASYNC_CASES_UPDATE_THRESHOLD:
+            update_cases_owner(domain, CaseOwnerUpdate.to_dict(case_owner_updates))
+            return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
+        else:
+            return self._process_as_async(case_owner_updates)
+
+    def _validate_request_cases_limit(self, case_id_to_owner_id):
+        if len(case_id_to_owner_id) > self.REQUEST_CASES_LIMIT:
+            raise CaseReassignmentValidationError(
                 _("Maximum number of cases that can be reassigned is {limit}").format(
-                    limit=self.MAX_REASSIGNMENT_REQUEST_CASES
+                    limit=self.REQUEST_CASES_LIMIT
                 )
             )
 
-        if include_related_cases:
-            request_cases_id = list(case_id_to_owner_id.keys())
-            parent_to_child_cases_id = self.get_child_cases(domain, request_cases_id)
-            for parent_case_id, child_cases_ids in parent_to_child_cases_id.items():
-                for child_case_id in child_cases_ids:
-                    self._add_related_case(case_id_to_owner_id, parent_case_id, child_case_id)
+    def _validate_request_case_ids(self, case_ids):
+        existing_case_ids = CaseSearchES().domain(self.domain).case_ids(case_ids).get_ids()
+        invalid_case_ids = list(set(case_ids) - set(existing_case_ids))
+        if invalid_case_ids:
+            raise CaseReassignmentValidationError(
+                _("Following Case ids in request are invalid: {}").format(invalid_case_ids)
+            )
 
-            child_to_parent_case_id = self.get_parent_cases(domain, request_cases_id)
-            for child_case_id, parent_case_id in child_to_parent_case_id.items():
-                self._add_related_case(case_id_to_owner_id, child_case_id, parent_case_id)
+    def _validate_request_owner_ids(self, owner_ids):
+        existing_user_ids = UserES().domain(self.domain).user_ids(owner_ids).get_ids()
+        invalid_owner_ids = list(owner_ids - set(existing_user_ids))
+        if invalid_owner_ids:
+            raise CaseReassignmentValidationError(
+                _("Following Owner ids in request are invalid: {}").format(invalid_owner_ids)
+            )
 
-        update_cases_owner(domain, case_id_to_owner_id)
+    def _include_related_cases(self, case_id_to_owner_id, case_owner_updates):
+        request_cases_id = list(case_id_to_owner_id.keys())
 
-        return JsonResponse({'status': 'success'})
+        parent_to_child_cases_id = self.get_child_cases(self.domain, request_cases_id)
+        for parent_case_id, child_cases_ids in parent_to_child_cases_id.items():
+            for child_case_id in child_cases_ids:
+                self._add_related_case(case_id_to_owner_id, parent_case_id, child_case_id, case_owner_updates)
+        self._validate_assignment_limit(case_owner_updates)
 
-    def _add_related_case(self, case_id_to_owner_id, case_id, related_case_id):
-        if related_case_id not in case_id_to_owner_id:
-            case_id_to_owner_id[related_case_id] = case_id_to_owner_id[case_id]
+        child_to_parent_case_id = self.get_parent_cases(self.domain, request_cases_id)
+        for child_case_id, parent_case_id in child_to_parent_case_id.items():
+            self._add_related_case(case_id_to_owner_id, child_case_id, parent_case_id, case_owner_updates)
+        self._validate_assignment_limit(case_owner_updates)
 
-    def _format_as_list(self, data):
-        if isinstance(data, dict):
-            data = [data]
-        return data
+        return case_id_to_owner_id
 
-    def _get_parent_index(self, doc):
-        return next((index for index in doc[INDICES_PATH] if index[IDENTIFIER] == 'parent'), None)
+    def _validate_assignment_limit(self, case_owner_updates):
+        if CaseOwnerUpdate.total_cases_count(case_owner_updates) > self.TOTAL_CASES_LIMIT:
+            raise CaseReassignmentValidationError(
+                _("Case reassignment limit exceeded. Please select fewer cases to update or"
+                  " consider deselecting 'include related cases'."
+                  " Reach out to support if you still need assistance.")
+            )
 
     def get_child_cases(self, domain, case_ids):
+        """
+        For a given list of case_ids, finds their child case ids
+        and returns a dict with key as the given case_id and value as the list of child case ids.
+        """
         case_docs = (
             CaseSearchES()
             .domain(domain)
@@ -505,6 +553,10 @@ class CasesReassignmentView(BaseDomainView):
         return parent_to_child_cases_id
 
     def get_parent_cases(self, domain, case_ids):
+        """
+        For a given list of case_ids, finds their parent case_id
+        and returns a dict with the key as the given case_id and value as their parent case_id.
+        """
         case_docs = (
             CaseSearchES()
             .domain(domain)
@@ -519,3 +571,40 @@ class CasesReassignmentView(BaseDomainView):
                 if parent_index:
                     child_to_parent_case_id[doc['doc_id']] = parent_index[REFERENCED_ID]
         return child_to_parent_case_id
+
+    def _format_as_list(self, data):
+        if isinstance(data, dict):
+            data = [data]
+        return data
+
+    def _get_parent_index(self, doc):
+        return next((index for index in doc[INDICES_PATH] if index[IDENTIFIER] == 'parent'), None)
+
+    def _add_related_case(self, case_id_to_owner_id, case_id, related_case_id, case_owner_updates):
+        if related_case_id not in case_id_to_owner_id:
+            case_owner_update = next(case_owner_update for case_owner_update in case_owner_updates
+                                     if case_owner_update.case_id == case_id)
+            case_owner_update.related_case_ids.append(related_case_id)
+
+    def _process_as_async(self, case_owner_updates):
+        task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
+        celery_task_tracker = CeleryTaskTracker(task_key)
+
+        if celery_task_tracker.is_active():
+            return HttpResponse(
+                _('Case reassignment is currently in progress. Please try again later.'),
+                status=409,
+            )
+
+        geo_cases_reassignment_update_owners.delay(
+            self.domain,
+            CaseOwnerUpdate.to_dict(case_owner_updates),
+            task_key,
+        )
+        celery_task_tracker.mark_requested()
+        return JsonResponse(
+            {
+                'success': True,
+                'message': _('Case reassignment request has been accepted and will be completed in some time')
+            }
+        )

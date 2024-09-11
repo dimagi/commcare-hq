@@ -1008,6 +1008,7 @@ hqDefine('geospatial/js/models', [
             utils.downloadCsv(casesToExport, headers, cols, 'Case Assignment Export');
         };
 
+        self.assignmentAjaxInProgress = ko.observable(false);
         self.acceptAssignments = function () {
             let caseIdToOwnerId = {};
             for (const caseItem of self.mapModel.caseMapItems()) {
@@ -1021,22 +1022,29 @@ hqDefine('geospatial/js/models', [
                 'include_related_cases': self.includeRelatedCases(),
             };
 
+            self.assignmentAjaxInProgress(true);
             $.ajax({
                 type: 'post',
                 url: reassignCasesUrl,
                 dataType: 'json',
                 data: JSON.stringify(requestData),
                 contentType: "application/json; charset=utf-8",
-                success: function () {
-                    alertUser.alert_user(gettext("Cases were assigned successfully."), 'success', false, true);
+                success: function (response) {
+                    if (!response.success) {
+                        return alertUser.alert_user(response.message, 'danger');
+                    }
+                    alertUser.alert_user(response.message, 'success', false, true);
                 },
                 error: function (response) {
                     const responseText = response.responseText;
                     if (responseText) {
                         alertUser.alert_user(responseText, 'danger');
                     } else {
-                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger', false, true);
                     }
+                },
+                complete: function () {
+                    self.assignmentAjaxInProgress(false);
                 },
             });
         };
