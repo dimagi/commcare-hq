@@ -23,6 +23,9 @@ from corehq.motech.repeaters.models import is_response, is_success_response
 from corehq.toggles import ARCGIS_INTEGRATION, EXPRESSION_REPEATER
 from dimagi.utils.logging import notify_exception
 
+# max number of repeater updates in a chain before we stop forwarding
+MAX_REPEATER_CHAIN_LENGTH = 5
+
 logger = logging.getLogger(__name__)
 
 
@@ -145,23 +148,24 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
 
     def allowed_to_forward(self, payload):
         allowed = super().allowed_to_forward(payload)
-        if allowed:
-            transactions = CaseTransaction.objects.get_last_n_recent_form_transaction(payload.case_id, 2)
-            # last 2 transactions were from repeater updates. This suggests a cycle.
-            possible_cycle = {t.xmlns for t in transactions} == {REPEATER_RESPONSE_XMLNS}
-            if possible_cycle:
-                logger.warning(
-                    f"Possible data forwarding loop detected for case {payload.case_id}. "
-                    f"Transactions: {[t.id for t in transactions]}"
-                )
+        if not allowed:
+            return False
+
+        transactions = CaseTransaction.objects.get_last_n_recent_form_transaction(
+            payload.case_id, MAX_REPEATER_CHAIN_LENGTH
+        )
+        for transaction in transactions:
+            if transaction.xmlns != REPEATER_RESPONSE_XMLNS:
+                # non-repeater update found, allow forwarding
+                return True
+
+            if transaction.device_id == self.device_id:
+                # all transactions to this point have been repeater updates
+                # and the last one was from this repeater, it's a cycle, don't forward
                 return False
-            last_transaction = transactions[0] if transactions else None
-            return last_transaction and not (
-                # last update was from this repeater, ignore
-                last_transaction.xmlns == REPEATER_RESPONSE_XMLNS
-                and last_transaction.device_id == self.device_id
-            )
-        return False
+
+        # Allow forwarding as long as we haven't hit the max chain length
+        return len(transactions) < MAX_REPEATER_CHAIN_LENGTH
 
 
 class FormExpressionRepeater(BaseExpressionRepeater):
