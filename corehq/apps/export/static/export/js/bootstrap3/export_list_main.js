@@ -1,4 +1,4 @@
-hqDefine("export/js/export_list_main", [
+hqDefine("export/js/bootstrap3/export_list_main", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'analytix/js/kissmetrix',
