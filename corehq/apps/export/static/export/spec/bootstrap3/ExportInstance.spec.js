@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-hqDefine("export/spec/ExportInstance.spec", [
+hqDefine("export/spec/bootstrap3/ExportInstance.spec", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
