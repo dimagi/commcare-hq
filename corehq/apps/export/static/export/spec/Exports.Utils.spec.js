@@ -2,7 +2,7 @@
 hqDefine("export/spec/Exports.Utils.spec", [
     'underscore',
     'export/js/const',
-    'export/js/models',
+    'export/js/bootstrap3/models',
     'export/js/utils',
 ], function (
     _,

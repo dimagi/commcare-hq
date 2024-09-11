@@ -2,7 +2,7 @@ hqDefine('export/js/bootstrap5/customize_export_new', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'export/js/models',
+    'export/js/bootstrap5/models',
     'hqwebapp/js/toggles',
     'export/js/const',
 ], function (
