@@ -28,7 +28,6 @@ class EnterprisePermissions(models.Model):
     )
 
     @classmethod
-    @quickcache(['domain'], timeout=7 * 24 * 60 * 60)
     def get_by_domain(cls, domain):
         """
         Get or create the configuration associated with the given domain's account.
@@ -81,14 +80,12 @@ class EnterprisePermissions(models.Model):
         self.is_source_domain.clear(self.__class__, self.source_domain)
         for domain in self.account.get_domains():
             self.get_domains.clear(self.__class__, domain)
-            self.get_by_domain.clear(self.__class__, domain)
             self.get_source_domain.clear(self.__class__, domain)
 
         super().save(*args, **kwargs)
         self.is_source_domain.clear(self.__class__, self.source_domain)
         for domain in self.account.get_domains():
             self.get_domains.clear(self.__class__, domain)
-            self.get_by_domain.clear(self.__class__, domain)
             self.get_source_domain.clear(self.__class__, domain)
 
 
