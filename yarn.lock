@@ -3658,11 +3658,6 @@ jest-worker@^27.4.5:
     merge-stream "^2.0.0"
     supports-color "^8.0.0"
 
-jquery-color@2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/jquery-color/-/jquery-color-2.2.0.tgz#2596bb782b69d9368b7840e6b3fe1e70fdd821c3"
-  integrity sha512-4VoxsLMw860EQGNT/TmP3Lbr7/1OCQlBPS4ILj7bxRApJrPQfpqzdIOTY8Ll9nGY7UHtWqDuzR7cUcS1lcWjVw==
-
 jquery-form@4.2.2:
   version "4.2.2"
   resolved "https://registry.yarnpkg.com/jquery-form/-/jquery-form-4.2.2.tgz#9f96fb141ec9cbe0cdaf58b4d3f1dcbb009cdd52"
