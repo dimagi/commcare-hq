@@ -1,12 +1,9 @@
 import json
-from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-import corehq
-
-WEBPACK_BUILD_DIR = Path(corehq.__file__).resolve().parent.parent / "webpack" / "_build"
+from corehq.apps.hqwebapp.utils.webpack import WEBPACK_BUILD_DIR
 
 
 class Command(BaseCommand):
