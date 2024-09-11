@@ -4,7 +4,7 @@
  *
  */
 
-hqDefine('export/js/models', [
+hqDefine('export/js/bootstrap3/models', [
     'jquery',
     'knockout',
     'underscore',
