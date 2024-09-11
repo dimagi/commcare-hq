@@ -53,8 +53,23 @@ class EnterprisePermissions(models.Model):
             return []
         return list(set(config.domains) - {config.source_domain})
 
+    @classmethod
+    @quickcache(['source_domain'], timeout=7 * 24 * 60 * 60)
+    def is_source_domain(cls, source_domain):
+        """
+        Returns true if given domain is the source domain for an enabled configuration.
+        """
+        try:
+            cls.objects.get(is_enabled=True, source_domain=source_domain)
+        except cls.DoesNotExist:
+            return False
+        return True
+
     def save(self, *args, **kwargs):
+        self.is_source_domain.clear(self.__class__, self.source_domain)
+
         super().save(*args, **kwargs)
+        self.is_source_domain.clear(self.__class__, self.source_domain)
         for domain in self.account.get_domains():
             self.get_domains.clear(self.__class__, domain)
             self.get_by_domain.clear(self.__class__, domain)
