@@ -719,7 +719,7 @@ hqDefine('geospatial/js/models', [
 
         self.exportSelectedPolygonGeoJson = function (data, event) {
             if (self.activeSavedPolygon()) {
-                const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(self.activeSavedPolygon().geoJson));
+                const convertedData = 'application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(self.activeSavedPolygon().geoJson));
                 $(event.target).attr('href', 'data:' + convertedData);
                 $(event.target).attr('download',self.activeSavedPolygon().text + '.geojson');
                 return true;
