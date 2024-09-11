@@ -1,4 +1,4 @@
-hqDefine('export/js/incremental_export', [
+hqDefine('export/js/bootstrap3/incremental_export', [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap3/crud_paginated_list_init",
