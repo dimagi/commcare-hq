@@ -11,7 +11,7 @@
  *          bulk export, which is a page-level action (you can select exports across panels to bulk export).
  *          It also controls filter editing (for daily saved / dashboard feeds).
  */
-hqDefine("export/js/export_list", [
+hqDefine("export/js/bootstrap3/export_list", [
     'jquery',
     'knockout',
     'underscore',

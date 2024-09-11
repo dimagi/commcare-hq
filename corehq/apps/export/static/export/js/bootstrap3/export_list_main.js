@@ -4,7 +4,7 @@ hqDefine("export/js/bootstrap3/export_list_main", [
     'analytix/js/kissmetrix',
     'hqwebapp/js/bootstrap3/main',
     'export/js/create_export',
-    'export/js/export_list',
+    'export/js/bootstrap3/export_list',
     'hqwebapp/js/select_2_ajax_widget',  // for case owner & user filters in DashboardFeedFilterForm
 ], function (
     $,
