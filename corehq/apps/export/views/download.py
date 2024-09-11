@@ -528,7 +528,7 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
 class DownloadNewDatasourceExportView(BaseProjectDataView):
     urlname = "data_export_page"
     page_title = gettext_noop("Export Data Source Data")
-    template_name = 'export/datasource_export_view.html'
+    template_name = 'export/bootstrap3/datasource_export_view.html'
 
     def dispatch(self, *args, **kwargs):
         if not EXPORT_DATA_SOURCE_DATA.enabled(self.domain):
