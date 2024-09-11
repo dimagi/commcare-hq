@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-hqDefine("export/spec/Exports.Utils.spec", [
+hqDefine("export/spec/bootstrap3/Exports.Utils.spec", [
     'underscore',
     'export/js/const',
     'export/js/bootstrap3/models',
