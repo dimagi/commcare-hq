@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 
 from django.conf import settings
 from django.core.paginator import Paginator
@@ -47,7 +48,9 @@ from .utils import (
     get_lat_lon_from_dict,
     set_case_gps_property,
     set_user_gps_property,
+    update_cases_owner,
 )
+from corehq.apps.case_search.const import INDICES_PATH, REFERENCED_ID, IDENTIFIER
 
 
 def geospatial_default(request, *args, **kwargs):
@@ -435,3 +438,84 @@ def get_users_with_gps(request, domain):
     ]
 
     return json_response({'user_data': user_data})
+
+
+@method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
+class CasesReassignmentView(BaseDomainView):
+    urlname = "reassign_cases"
+    MAX_REASSIGNMENT_REQUEST_CASES = 100
+
+    def post(self, request, domain, *args, **kwargs):
+        try:
+            request_data = json.loads(request.body)
+        except json.decoder.JSONDecodeError:
+            return HttpResponseBadRequest(
+                _('POST Body must be a valid json')
+            )
+
+        case_id_to_owner_id = request_data.get('case_id_to_owner_id', {})
+        include_related_cases = request_data.get('include_related_cases')
+        if len(case_id_to_owner_id) > self.MAX_REASSIGNMENT_REQUEST_CASES:
+            return HttpResponseBadRequest(
+                _("Maximum number of cases that can be reassigned is {limit}").format(
+                    limit=self.MAX_REASSIGNMENT_REQUEST_CASES
+                )
+            )
+
+        if include_related_cases:
+            request_cases_id = list(case_id_to_owner_id.keys())
+            parent_to_child_cases_id = self.get_child_cases(domain, request_cases_id)
+            for parent_case_id, child_cases_ids in parent_to_child_cases_id.items():
+                for child_case_id in child_cases_ids:
+                    self._add_related_case(case_id_to_owner_id, parent_case_id, child_case_id)
+
+            child_to_parent_case_id = self.get_parent_cases(domain, request_cases_id)
+            for child_case_id, parent_case_id in child_to_parent_case_id.items():
+                self._add_related_case(case_id_to_owner_id, child_case_id, parent_case_id)
+
+        update_cases_owner(domain, case_id_to_owner_id)
+
+        return JsonResponse({'status': 'success'})
+
+    def _add_related_case(self, case_id_to_owner_id, case_id, related_case_id):
+        if related_case_id not in case_id_to_owner_id:
+            case_id_to_owner_id[related_case_id] = case_id_to_owner_id[case_id]
+
+    def _format_as_list(self, data):
+        if isinstance(data, dict):
+            data = [data]
+        return data
+
+    def _get_parent_index(self, doc):
+        return next((index for index in doc[INDICES_PATH] if index[IDENTIFIER] == 'parent'), None)
+
+    def get_child_cases(self, domain, case_ids):
+        case_docs = (
+            CaseSearchES()
+            .domain(domain)
+            .get_child_cases(case_ids, 'parent')
+            .values('doc_id', f'{INDICES_PATH}.{REFERENCED_ID}', f'{INDICES_PATH}.{IDENTIFIER}')
+        )
+        parent_to_child_cases_id = defaultdict(list)
+        for doc in case_docs:
+            doc[INDICES_PATH] = self._format_as_list(doc[INDICES_PATH])
+            parent_index = self._get_parent_index(doc)
+            if parent_index:
+                parent_to_child_cases_id[parent_index[REFERENCED_ID]].append(doc['doc_id'])
+        return parent_to_child_cases_id
+
+    def get_parent_cases(self, domain, case_ids):
+        case_docs = (
+            CaseSearchES()
+            .domain(domain)
+            .case_ids(case_ids)
+            .values('doc_id', f'{INDICES_PATH}.{REFERENCED_ID}', f'{INDICES_PATH}.{IDENTIFIER}')
+        )
+        child_to_parent_case_id = defaultdict(str)
+        for doc in case_docs:
+            if doc.get(INDICES_PATH):
+                doc[INDICES_PATH] = self._format_as_list(doc[INDICES_PATH])
+                parent_index = self._get_parent_index(doc)
+                if parent_index:
+                    child_to_parent_case_id[doc['doc_id']] = parent_index[REFERENCED_ID]
+        return child_to_parent_case_id

@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from uuid import uuid4
 
 from django.test import Client, TestCase
@@ -10,6 +11,7 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.models import GeoConfig, GeoPolygon
 from corehq.apps.geospatial.views import (
+    CasesReassignmentView,
     GeoPolygonDetailView,
     GeoPolygonListView,
     GeospatialConfigPage,
@@ -17,7 +19,7 @@ from corehq.apps.geospatial.views import (
 )
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import flag_enabled
 
@@ -126,7 +128,7 @@ class GeoConfigViewTestClass(TestCase):
 
     def test_feature_flag_not_enabled(self):
         result = self._make_post({})
-        self.assertTrue(result.status_code == 404)
+        self.assertEqual(result.status_code, 404)
 
     @flag_enabled('GEOSPATIAL')
     def test_new_config_create(self):
@@ -141,7 +143,7 @@ class GeoConfigViewTestClass(TestCase):
         )
         config = GeoConfig.objects.get(domain=self.domain)
 
-        self.assertTrue(config.location_data_source == GeoConfig.CUSTOM_USER_PROPERTY)
+        self.assertEqual(config.location_data_source, GeoConfig.CUSTOM_USER_PROPERTY)
         self.assertEqual(config.user_location_property_name, 'some_user_field')
         self.assertEqual(config.case_location_property_name, self.gps_case_prop_name)
         self.assertEqual(config.selected_grouping_method, GeoConfig.MIN_MAX_GROUPING)
@@ -440,7 +442,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
 
     def test_feature_flag_not_enabled(self):
         response = self._make_post_request({'geo_json': _sample_geojson_data()})
-        self.assertTrue(response.status_code == 404)
+        self.assertEqual(response.status_code, 404)
 
     @flag_enabled('GEOSPATIAL')
     def test_save_polygon(self):
@@ -449,7 +451,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         self.assertEqual(response.status_code, 200)
         saved_polygons = GeoPolygon.objects.filter(domain=self.domain)
         self.assertEqual(len(saved_polygons), 1)
-        self.assertTrue(saved_polygons[0].name == geo_json_data["name"])
+        self.assertEqual(saved_polygons[0].name, geo_json_data["name"])
         geo_json_data.pop("name")
         for feature in geo_json_data["features"]:
             del feature['id']
@@ -523,7 +525,7 @@ class TestGeoPolygonDetailView(BaseGeospatialViewClass):
     def test_feature_flag_not_enabled(self):
         geo_polygon = self._create_sample_polygon()
         response = self.client.get(self._endpoint(geo_polygon.id))
-        self.assertTrue(response.status_code == 404)
+        self.assertEqual(response.status_code, 404)
 
     @flag_enabled('GEOSPATIAL')
     def test_get_polygon(self):
@@ -568,3 +570,147 @@ def _sample_geojson_data(name='test-2'):
         "name": name,
     }
     return data
+
+
+@es_test(requires=[case_search_adapter])
+class TestCasesReassignmentView(BaseGeospatialViewClass):
+    urlname = CasesReassignmentView.urlname
+
+    def setUp(self):
+        super().setUp()
+        self.user_a = CommCareUser.create(self.domain, 'User_A', '1234', None, None)
+        self.user_b = CommCareUser.create(self.domain, 'User_B', '1234', None, None)
+
+        self.case_1 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_a.user_id)
+        self.related_case_1 = create_case(
+            self.domain,
+            case_id=uuid4().hex,
+            save=True,
+            owner_id=self.user_a.user_id
+        )
+        self._create_parent_index(self.related_case_1, self.case_1.case_id)
+
+        self.case_2 = create_case(
+            self.domain,
+            case_id=uuid4().hex,
+            save=True,
+            owner_id=self.user_b.user_id
+        )
+        self.related_case_2 = create_case(
+            self.domain,
+            case_id=uuid4().hex,
+            save=True,
+            owner_id=self.user_b.user_id
+        )
+        self._create_parent_index(self.related_case_2, self.case_2.case_id)
+
+        self.cases = [self.case_1, self.related_case_1, self.case_2, self.related_case_2]
+        case_search_adapter.bulk_index(self.cases, refresh=True)
+
+        self.client.login(username=self.username, password=self.password)
+
+    def tearDown(self):
+        self.user_a.delete(self.domain, None, None)
+        self.user_b.delete(self.domain, None, None)
+        CommCareCase.objects.hard_delete_cases(self.domain, [case.case_id for case in self.cases])
+        super().tearDown()
+
+    def _create_parent_index(self, case, parent_case_id):
+        index = CommCareCaseIndex(
+            case=case,
+            identifier='parent',
+            referenced_id=parent_case_id,
+            referenced_type='parent',
+            relationship_id=CommCareCaseIndex.CHILD
+        )
+        case.track_create(index)
+        case.save(with_tracked_models=True)
+
+    def _refresh_cases(self):
+        for case in self.cases:
+            case.refresh_from_db()
+
+    def _assert_for_request_cases_success(self, response):
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
+        self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
+
+    @flag_enabled('GEOSPATIAL')
+    def test_not_logged_in(self):
+        response = Client().post(self.endpoint)
+        self.assertRedirects(response, f"{self.login_url}?next={self.endpoint}")
+
+    def test_feature_flag_not_enabled(self):
+        response = self.client.post(self.endpoint)
+        self.assertEqual(response.status_code, 404)
+
+    @flag_enabled('GEOSPATIAL')
+    def test_cases_reassignment(self):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+            }
+        )
+
+        self._refresh_cases()
+        self._assert_for_request_cases_success(response)
+        self.assertEqual(self.related_case_1.owner_id, self.user_a.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
+
+    @flag_enabled('GEOSPATIAL')
+    def test_cases_reassignment_with_related_cases(self):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+                'include_related_cases': True,
+            }
+        )
+
+        self._refresh_cases()
+        self._assert_for_request_cases_success(response)
+        self.assertEqual(self.related_case_1.owner_id, self.user_b.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.MAX_REASSIGNMENT_REQUEST_CASES', 1)
+    def test_cases_reassignment_cases_limit_error(self, *args):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+            }
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content.decode("utf-8"), "Maximum number of cases that can be reassigned is 1")
+
+    @flag_enabled('GEOSPATIAL')
+    def test_cases_reassignment_cases_json_error(self, *args):
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data='hello'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content.decode("utf-8"), "POST Body must be a valid json")
