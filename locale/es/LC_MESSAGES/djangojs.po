@@ -2328,6 +2328,26 @@ msgid "Help Itext ID"
 msgstr "Ayuda de Identificación Itext"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Add New Item Button Text"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#, fuzzy
+#| msgid "Help Itext ID"
+msgid "Add New Itext ID"
+msgstr "Ayuda de Identificación Itext"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Add Another Item Button Text"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#, fuzzy
+#| msgid "Hint Itext ID"
+msgid "Add Another Itext ID"
+msgstr "Sugerencia de Identificación Itext"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Other Content"
 msgstr "Agregar Otro Contenido"
 
@@ -2836,6 +2856,12 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Not a valid choice"
 msgstr "Opción no válida"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+#, fuzzy
+#| msgid "Data file deleted."
+msgid "No file selected."
+msgstr "Archivo de datos borrado."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Invalid file type chosen. Please select a valid multimedia file."
@@ -4125,10 +4151,8 @@ msgstr ""
 
 #: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
 #: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
-#, fuzzy
-#| msgid "Yes"
 msgid "yes"
-msgstr "Sí"
+msgstr "sí"
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
