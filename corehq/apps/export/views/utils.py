@@ -300,19 +300,19 @@ class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
 
 class DailySavedExportPaywall(BaseProjectDataView):
     urlname = 'daily_saved_paywall'
-    template_name = 'export/paywall.html'
+    template_name = 'export/bootstrap3/paywall.html'
 
 
 class DashboardFeedPaywall(BaseProjectDataView):
     urlname = 'dashboard_feeds_paywall'
-    template_name = 'export/paywall.html'
+    template_name = 'export/bootstrap3/paywall.html'
 
 
 @location_safe
 @method_decorator(login_and_domain_required, name='dispatch')
 class DataFileDownloadList(BaseProjectDataView):
     urlname = 'download_data_files'
-    template_name = 'export/download_data_files.html'
+    template_name = 'export/bootstrap3/download_data_files.html'
     page_title = gettext_lazy("Secure File Transfer")
 
     def dispatch(self, request, *args, **kwargs):
