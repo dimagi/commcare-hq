@@ -1,7 +1,9 @@
 from datetime import datetime
+from unittest.mock import patch
+
+import pytest
 from django.test import TestCase
 from faker import Faker
-from unittest.mock import patch
 from testil import assert_raises
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -31,6 +33,7 @@ from corehq.apps.users.models_role import UserRole
 from corehq.apps.custom_data_fields.models import (CustomDataFieldsDefinition,
     CustomDataFieldsProfile)
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.tests.tools import nottest
 from corehq.util.test_utils import flag_enabled
 
 factory = Faker()
@@ -147,61 +150,60 @@ TEST_CASES = [
 ]
 
 
-def test_validators():
-    def _test_spec(validator, specs, errors):
-        for i, spec in enumerate(specs):
-            if i in errors:
-                with assert_raises(UserUploadError, msg=errors[i]):
-                    validator(spec)
-            else:
-                validator(spec)
-
-    for specs, validator, errors in TEST_CASES:
-        yield _test_spec, validator, specs, errors
-
-
-def test_duplicates():
-    specs = [
-        {'name': 1},
-        {'name': 2},
-        {'name': 3},
-        {'name': 2},
-        {'name': 3},
-        {},
-    ]
-    duplicates = (2, 3)
-    yield from _test_duplicates(specs, duplicates)
-
-
-def test_duplicates_with_check():
-    specs = [
-        {'name': 1},
-        {'name': 2},
-        {'name': 2},
-        {'name': 3},
-        {'name': 3},
-        {},
-    ]
-    duplicates = (3,)
-
-    def check(item):
-        return item != 2
-
-    yield from _test_duplicates(specs, duplicates, check)
-
-
-def _test_duplicates(specs, duplicates, check=None):
-    validator = DuplicateValidator('domain', 'name', specs, check_function=check)
-
-    def _test(spec):
-        if spec.get('name') in duplicates:
-            with assert_raises(UserUploadError, msg=validator.error_message):
+@pytest.mark.parametrize("specs, validator, errors", TEST_CASES)
+def test_validators(specs, validator, errors):
+    for i, spec in enumerate(specs):
+        if i in errors:
+            with assert_raises(UserUploadError, msg=errors[i]):
                 validator(spec)
         else:
             validator(spec)
 
+
+@nottest
+def _test_duplicates(specs, duplicates, check=None):
+    validator = DuplicateValidator('domain', 'name', specs, check_function=check)
     for spec in specs:
-        yield _test, spec
+        yield validator, spec, duplicates
+
+
+@pytest.mark.parametrize("validator, spec, duplicates", list(_test_duplicates(
+    [
+        {'name': 1},
+        {'name': 2},
+        {'name': 3},
+        {'name': 2},
+        {'name': 3},
+        {},
+    ],
+    (2, 3),
+)))
+def test_duplicates(validator, spec, duplicates):
+    if spec.get('name') in duplicates:
+        with assert_raises(UserUploadError, msg=validator.error_message):
+            validator(spec)
+    else:
+        validator(spec)
+
+
+@pytest.mark.parametrize("validator, spec, duplicates", list(_test_duplicates(
+    [
+        {'name': 1},
+        {'name': 2},
+        {'name': 2},
+        {'name': 3},
+        {'name': 3},
+        {},
+    ],
+    (3,),
+    check=(lambda item: item != 2)
+)))
+def test_duplicates_with_check(validator, spec, duplicates):
+    if spec.get('name') in duplicates:
+        with assert_raises(UserUploadError, msg=validator.error_message):
+            validator(spec)
+    else:
+        validator(spec)
 
 
 def test_existing_users():
@@ -386,7 +388,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
         assert validation_result == self.validator.error_message_location_access.format(
             self.locations['Suffolk'].site_code)
 
-    @flag_enabled('LOCATION_HAS_USERS')
+    @flag_enabled('USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION')
     def test_location_not_has_users(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Middlesex'].location_id])
         self.locations['Cambridge'].location_type.has_users = False

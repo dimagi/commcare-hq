@@ -134,6 +134,15 @@ SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
     )
 )
 
+USE_LOCATION_DISPLAY_NAME = FeaturePreview(
+    slug='use_location_display_name',
+    label=_('Use location name'),
+    description=_(
+        "This setting changes the location dropdown to display location name instead of "
+        "the full location path."
+    )
+)
+
 
 def enable_callcenter(domain_name, checked):
     from corehq.apps.domain.models import Domain

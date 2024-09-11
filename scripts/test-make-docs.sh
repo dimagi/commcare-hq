@@ -24,6 +24,11 @@ WHITELIST_PATTERNS=(
     '^\s*$'  # ignore lines containing only whitespace
     'logger is being changed to' # ignore error when FIX_LOGGER_ERROR_OBFUSCATION is true
     'yacc table file version is out of date' # warning whenever building docs on a freshly created virtual environment
+    'get_webpack_manifest.py'  # ignore webpack manifest warning
+    'No webpack manifest found' # ignore webpack manifest warnings
+    'Did you run `yarn dev` or `yarn build`?' # ignore webpack manifest warning
+    'warnings.warn\("\\x1b\[33;20m"  # yellow color' # ignore webpack manifest warning
+    "\[0m" # another webpack build artifact
     # Only whitelist docs build warnings/errors when absolutely necessary
 )
 

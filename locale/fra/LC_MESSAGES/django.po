@@ -58,7 +58,9 @@ msgstr "Type de Compte"
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/geospatial/filters.py corehq/apps/linked_domain/filters.py
+#: corehq/apps/geospatial/filters.py
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/linked_domain/filters.py
 #: corehq/apps/reports/filters/commtrack.py
 #: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -1040,6 +1042,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/add_gateway.html
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 #: corehq/motech/dhis2/templates/dhis2/dhis2_entity_config.html
 #: corehq/motech/openmrs/templates/openmrs/partials/openmrs_importer_template.html
 msgid "Remove"
@@ -1152,6 +1155,7 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
 #: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
@@ -3349,10 +3353,8 @@ msgid "Web Users"
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py
-#, fuzzy
-#| msgid "Edit Mobile Worker"
 msgid "Form-Submitting Mobile Workers"
-msgstr "Modifier l'utilisateur mobile"
+msgstr ""
 
 #: corehq/apps/accounting/user_text.py corehq/apps/reports/forms.py
 #: corehq/messaging/scheduling/forms.py corehq/motech/const.py
@@ -4831,6 +4833,7 @@ msgstr ""
 #: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
 #: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
 #: corehq/motech/templates/motech/connection_settings.html
 #: corehq/tabs/tabclasses.py
@@ -5412,6 +5415,7 @@ msgstr "Non"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
 #: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
@@ -6083,6 +6087,7 @@ msgid "Releases"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+#: corehq/apps/domain/forms.py
 msgid "Release Mode"
 msgstr ""
 
@@ -10105,6 +10110,7 @@ msgstr "Sélectionnez l'image icône "
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
 #: corehq/motech/repeaters/views/repeat_records.py
@@ -12258,7 +12264,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html
-msgid "Row(s):"
+msgid "Toggle Affected Row(s)"
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html
@@ -13824,7 +13830,11 @@ msgid "FHIR Resource Property Path"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-msgid "group's properties will be moved to"
+msgid ""
+"\n"
+"            <b data-bind=\"text: name()\"></b> group's properties will be "
+"moved to <b>No Group</b>\n"
+"            "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -13862,11 +13872,11 @@ msgstr "Ajouter une propriété de dossier"
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
 "\n"
-"                  A case property with this name already exists.\n"
-"                  If you don’t see it on the page, please click ‘Show "
+"                        A case property with this name already exists.\n"
+"                        If you don’t see it on the page, please click ‘Show "
 "Deprecated’ button to reveal deprecated\n"
-"                  properties.\n"
-"                "
+"                        properties.\n"
+"                      "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -14306,6 +14316,7 @@ msgstr "Transférer"
 
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/views.py corehq/apps/geospatial/reports.py
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/reports/v2/reports/explore_case_data.py
@@ -15678,6 +15689,10 @@ msgid "Delete Logo"
 msgstr "Supprimer le logo"
 
 #: corehq/apps/domain/forms.py
+msgid "Delete Logo after Submitting this Form"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Delete your custom logo and use the standard one."
 msgstr "Supprimer votre logo personnalisé et utiliser un logo standard."
 
@@ -15695,6 +15710,10 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 msgid "Call Center Application"
 msgstr "Application de centre d'appel"
+
+#: corehq/apps/domain/forms.py
+msgid "Enable Call Center Application"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid ""
@@ -15814,6 +15833,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Orphan Case Alerts"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Show Orphan Case Alerts on Mobile Worker Edit Page"
 msgstr ""
 
@@ -15832,16 +15855,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Default timezone"
+msgstr "Fuseau horaire par défaut"
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr "Modifier les informations de base"
 
 #: corehq/apps/domain/forms.py
 msgid "Update Basic Info"
 msgstr "Mettre à jour les infos de base"
-
-#: corehq/apps/domain/forms.py
-msgid "Default timezone"
-msgstr "Fuseau horaire par défaut"
 
 #: corehq/apps/domain/forms.py
 msgid "Logo exceeds {} MB size limit"
@@ -19216,6 +19239,18 @@ msgid "Mobile User"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
+#, python-brace-format
+msgid "Domain {name} has too many users. Maximum allowed is: {amount}"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+#, python-brace-format
+msgid ""
+"{name} contains too many rows. Maximum allowed is: {amount}. Please narrow "
+"the date range to fetch a smaller amount of data"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Unnamed"
 msgstr ""
 
@@ -19458,6 +19493,10 @@ msgstr ""
 
 #: corehq/apps/enterprise/mixins.py corehq/apps/sso/views/enterprise_admin.py
 msgid "Please check form for errors."
+msgstr ""
+
+#: corehq/apps/enterprise/tasks.py
+msgid "Enterprise Dashboard Error: {}"
 msgstr ""
 
 #: corehq/apps/enterprise/tasks.py
@@ -21760,6 +21799,7 @@ msgid "Export Form Data"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
 msgid "Export"
@@ -21969,6 +22009,11 @@ msgstr ""
 
 #: corehq/apps/export/views/new.py
 msgid "Create Case Data Export"
+msgstr ""
+
+#: corehq/apps/export/views/new.py
+#, python-brace-format
+msgid "Case type '{case_type}' does not exist for this project."
 msgstr ""
 
 #: corehq/apps/export/views/new.py
@@ -22856,6 +22901,10 @@ msgid "link"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
+msgid "name"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/geospatial/reports.py
 msgid "Case Grouping"
 msgstr ""
 
@@ -22929,6 +22978,70 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/delete_saved_area_modal.html
 msgid "You are about to delete this saved area"
 msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid "Review Assignment Results"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid ""
+"\n"
+"                        All potential cases for each mobile worker will be "
+"pre-selected and de-selecting a case will\n"
+"                        remove it from final assignments once the \"Assign\" "
+"button is clicked.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid "Assignment Status"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
+#: corehq/apps/reports_core/filters.py
+#: corehq/apps/userreports/reports/filters/choice_providers.py
+#: corehq/apps/userreports/tests/test_choice_provider.py
+#: corehq/apps/users/forms.py
+msgid "Show All"
+msgstr "Afficher tous"
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid "Assigned Only"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid "Unassigned Only"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid "Select mobile worker for case assignment"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid "Potential Mobile Worker"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid "Mobile Worker Primary Location"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid "Include related cases"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid "Assign Cases"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+msgid "Unassign Cases"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/registration/forms.py
+msgid "Finish"
+msgstr "Fin"
 
 #: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
 msgid "Filter by Saved Area"
@@ -23169,6 +23282,10 @@ msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Layers"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Review Results"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
@@ -27545,14 +27662,6 @@ msgstr "Synchronisation complète du tableau des sites (recommandé)."
 msgid "Sync the hierarchicial location fixture (legacy format)."
 msgstr "Synchronisez le \"fixture\" de site hiérarchique (format hérité)."
 
-#: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
-#: corehq/apps/reports_core/filters.py
-#: corehq/apps/userreports/reports/filters/choice_providers.py
-#: corehq/apps/userreports/tests/test_choice_provider.py
-#: corehq/apps/users/forms.py
-msgid "Show All"
-msgstr "Afficher tous"
-
 #: corehq/apps/locations/forms.py corehq/apps/users/forms.py
 msgid "Only Active"
 msgstr ""
@@ -28791,10 +28900,6 @@ msgstr "Créer votre compte"
 #: corehq/apps/registration/forms.py
 msgid "Name Your First Project"
 msgstr "Nommer votre premier projet"
-
-#: corehq/apps/registration/forms.py
-msgid "Finish"
-msgstr "Fin"
 
 #: corehq/apps/registration/forms.py corehq/apps/users/forms.py
 #, python-format
@@ -31207,6 +31312,17 @@ msgid "Target Site"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
+msgid "Get Tableau reports using role name"
+msgstr ""
+
+#: corehq/apps/reports/forms.py
+msgid ""
+"If checked, CommCareHQ will request embedded reports from Tableau Server "
+"using the user's role name instead of the user's username (e.g. \"HQ/Field "
+"Implementer\" instead of \"HQ/Leandra@dimagi.com\")"
+msgstr ""
+
+#: corehq/apps/reports/forms.py
 msgid "Allowed Tableau Groups"
 msgstr ""
 
@@ -31215,10 +31331,8 @@ msgid "View URL"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
-#, fuzzy
-#| msgid "Visible to all users"
 msgid "Visible to location-restricted users"
-msgstr "Visible à tous les utilisateurs"
+msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid ""
@@ -33862,10 +33976,8 @@ msgid "Could not update Tableau Server Settings"
 msgstr ""
 
 #: corehq/apps/reports/views.py
-#, fuzzy
-#| msgid "Visible to all users"
 msgid "Visible to Location-Restricted Users"
-msgstr "Visible à tous les utilisateurs"
+msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Tableau Visualization"
@@ -38893,16 +39005,14 @@ msgid "Recursive expression reference: {name}"
 msgstr ""
 
 #: corehq/apps/userreports/specs.py
-#, fuzzy, python-brace-format
-#| msgid "Named filters (optional)"
+#, python-brace-format
 msgid "Named filter not found: {name}"
-msgstr "Filtres nommés (facultatif)"
+msgstr ""
 
 #: corehq/apps/userreports/specs.py
-#, fuzzy, python-brace-format
-#| msgid "Named expressions (optional)"
+#, python-brace-format
 msgid "Named expression not found: {name}"
-msgstr "Expressions nommées (optionnel) "
+msgstr ""
 
 #: corehq/apps/userreports/sql/adapter.py
 msgid ""
@@ -39634,6 +39744,30 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 msgid "Update Expression"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid ""
+"\n"
+"                    Delete expression <strong data-bind=\"text: name\"></"
+"strong>?\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid ""
+"\n"
+"                    Yes, delete the <strong data-bind=\"text: name\"></"
+"strong> expression.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid "Deleting Expression..."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid "Delete Expression"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html
@@ -41209,12 +41343,16 @@ msgid "Bulk Clear Data"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Bulk Delete Users"
-msgstr ""
+#, fuzzy
+#| msgid "Delete Mobile Worker"
+msgid "Bulk Delete Mobile Workers"
+msgstr "Supprimer un utilisateur mobile"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Bulk Lookup of Users"
-msgstr ""
+#, fuzzy
+#| msgid "Bulk Upload Mobile Workers"
+msgid "Bulk Lookup of Mobile Workers"
+msgstr "Téléversement en bloc des utilisateurs mobiles"
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Create New Mobile Worker"
@@ -42864,6 +43002,18 @@ msgid ""
 msgstr ""
 "Ce paramètre permet aux utilisateurs de séparer les questions à choix "
 "multiples dans plusieurs colonnes dans l'exportation de dossiers."
+
+#: corehq/feature_previews.py
+#, fuzzy
+#| msgid "User Location"
+msgid "Use location name"
+msgstr "Site de l'Utilisateur"
+
+#: corehq/feature_previews.py
+msgid ""
+"This setting changes the location dropdown to display location name instead "
+"of the full location path."
+msgstr ""
 
 #: corehq/feature_previews.py
 msgid "Call Center"
@@ -45241,6 +45391,22 @@ msgid "Pass credentials in Basic Auth header when requesting a token"
 msgstr ""
 
 #: corehq/motech/forms.py
+msgid "Include client ID"
+msgstr ""
+
+#: corehq/motech/forms.py
+msgid "Send the client ID in the body of the token request"
+msgstr ""
+
+#: corehq/motech/forms.py
+msgid "Scope"
+msgstr "Scope"
+
+#: corehq/motech/forms.py
+msgid "Space-separated list of scopes e.g. \"read write\""
+msgstr ""
+
+#: corehq/motech/forms.py
 msgid "Do not use in a production environment"
 msgstr ""
 
@@ -45683,6 +45849,11 @@ msgid "Cancelled"
 msgstr "Annulé"
 
 #: corehq/motech/repeaters/const.py
+#: corehq/motech/repeaters/views/repeat_record_display.py
+msgid "Invalid Payload"
+msgstr ""
+
+#: corehq/motech/repeaters/const.py
 msgid "Is enabled"
 msgstr ""
 
@@ -45709,16 +45880,12 @@ msgid "Configurable Case Repeater"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/repeaters.py
-#, fuzzy
-#| msgid "Configurable Reports"
 msgid "Configurable Form Repeater"
-msgstr "Rapports configurables"
+msgstr ""
 
 #: corehq/motech/repeaters/expression/repeaters.py
-#, fuzzy
-#| msgid "Configurable Reports"
 msgid "Configurable ArcGIS Form Repeater"
-msgstr "Rapports configurables"
+msgstr ""
 
 #: corehq/motech/repeaters/expression/views.py
 #: corehq/motech/repeaters/views/repeaters.py
@@ -45726,10 +45893,13 @@ msgid "Edit Case Repeater"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/views.py
-#, fuzzy
-#| msgid "Edit Form Feed"
+#: corehq/motech/repeaters/views/repeaters.py
+msgid "Edit Form Repeater"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/views.py
 msgid "Edit ArcGIS Form Repeater"
-msgstr "Editer le fil des formulaires"
+msgstr ""
 
 #: corehq/motech/repeaters/forms.py
 msgid "Start Forwarding"
@@ -46041,10 +46211,6 @@ msgstr ""
 msgid "Forwarder Successfully Updated"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py
-msgid "Edit Form Repeater"
-msgstr ""
-
 #: corehq/motech/requests.py
 msgid "Project space: {}"
 msgstr ""
@@ -46125,6 +46291,14 @@ msgstr ""
 msgid "Response body"
 msgstr "Organe de réponse"
 
+#: corehq/motech/templates/motech/log_detail.html
+msgid "Request duration (ms)"
+msgstr ""
+
+#: corehq/motech/templates/motech/logs.html
+msgid "Duration (ms)"
+msgstr ""
+
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
 msgstr ""
@@ -46156,6 +46330,10 @@ msgstr ""
 #: corehq/motech/views.py
 msgid "Used By"
 msgstr "Utilisé par"
+
+#: corehq/motech/views.py
+msgid "Please enter client secret again."
+msgstr ""
 
 #: corehq/motech/views.py
 msgid "Please enter API password again."
@@ -47600,12 +47778,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "Mobile Users"
-#~ msgstr "Utilisateurs Mobile"
-
-#~ msgid "Audit Viewer"
-#~ msgstr "Audit Viewer"
-
-#~ msgid "Audited Model Changes"
-#~ msgstr "Vérifié modifications de modèle"

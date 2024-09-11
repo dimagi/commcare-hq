@@ -90,22 +90,18 @@ class ElasticManageAdapter(BaseAdapter):
         """
         self._validate_single_index(index)
         try:
-            if self._es.indices.get(index, feature="_aliases",
-                                    expand_wildcards="none"):
+            if self._es.indices.get(index, expand_wildcards="none"):
                 return True
         except NotFoundError:
             pass
         return False
 
-    def get_indices(self, full_info=False):
+    def get_indices(self):
         """Return the cluster index information of active indices.
 
-        :param full_info: ``bool`` whether to return the full index info
-                          (default ``False``)
         :returns: ``dict``
         """
-        feature = "" if full_info else "_aliases,_settings"
-        return self._es.indices.get("_all", feature=feature)
+        return self._es.indices.get("_all")
 
     def get_aliases(self):
         """Return the cluster aliases information.
@@ -439,8 +435,19 @@ class ElasticManageAdapter(BaseAdapter):
             "conflicts": "proceed"
         }
 
-        # Should be removed after ES 5-6 migration
-        if copy_doc_ids:
+    # Should be removed after ES 5-6 migration
+        if copy_doc_ids and source == const.HQ_USERS_INDEX_NAME:
+            # Remove password from form index
+            reindex_body["script"] = {
+                "lang": "painless",
+                "source": """
+                ctx._source.remove('password');
+                if (!ctx._source.containsKey('doc_id')) {
+                    ctx._source['doc_id'] = ctx._id;
+                }
+                """
+            }
+        elif copy_doc_ids:
             reindex_body["script"] = {
                 "lang": "painless",
                 "source": """
@@ -752,7 +759,7 @@ class ElasticDocumentAdapter(BaseAdapter):
                 # resulting in this method fetching a maximum `size * 2`
                 # documents.
                 # see: https://stackoverflow.com/a/63911571
-                result = self._es.scroll(scroll_id, scroll=scroll)
+                result = self._es.scroll(scroll_id=scroll_id, scroll=scroll)
                 scroll_id = result.get("_scroll_id")
                 yield result
                 if scroll_id is None or not result["hits"]["hits"]:

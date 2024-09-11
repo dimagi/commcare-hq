@@ -1,30 +1,39 @@
 from contextlib import contextmanager
 from unittest.mock import patch
+
+import pytest
 from testil import assert_raises, eq
 
 from corehq.util.test_utils import timelimit
 from .. import retry as mod
 
 
-def test_retry_on():
+class Error(Exception):
+    pass
+
+
+class OtherError(Exception):
+    pass
+
+
+@pytest.mark.parametrize("n, error", [
+    (0, Error),
+    (1, Error),
+    (2, Error),
+    (3, Error),
+    (4, Error),
+    (5, Error),
+    (1, OtherError),
+])
+@timelimit
+def test_retry_on(n, error):
     retry = mod.retry_on(Error, OtherError)
 
-    @timelimit
-    def test(n, error=Error):
-        func, calls = make_retry_function(retry, n, error)
-        with mock_retry_sleep() as sleeps:
-            eq(func(n), n * 2)
-        eq(sleeps, ([0.1] + [2 ** i for i in range(n - 1)]) if n else [])
-        eq(len(calls), n + 1)
-
-    yield test, 0
-    yield test, 1
-    yield test, 2
-    yield test, 3
-    yield test, 4
-    yield test, 5
-
-    yield test, 1, OtherError
+    func, calls = make_retry_function(retry, n, error)
+    with mock_retry_sleep() as sleeps:
+        eq(func(n), n * 2)
+    eq(sleeps, ([0.1] + [2 ** i for i in range(n - 1)]) if n else [])
+    eq(len(calls), n + 1)
 
 
 @timelimit
@@ -58,14 +67,6 @@ def test_retry_with_delays():
         func(1)
     eq(sleeps, [1, 2, 4, 8, 16])
     eq(len(calls), 6)
-
-
-class Error(Exception):
-    pass
-
-
-class OtherError(Exception):
-    pass
 
 
 def make_retry_function(decorator, n_errors, error):

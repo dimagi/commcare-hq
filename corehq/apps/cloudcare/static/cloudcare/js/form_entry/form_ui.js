@@ -690,6 +690,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 if (element.serverError) {
                     element.serverError(null);
                 }
+
+                if (allChildren) {
+                    for (let i = 0; i < allChildren.length; i++) {
+                        if (allChildren[i].control >= constants.CONTROL_IMAGE_CHOOSE) {
+                            allChildren[i].filename = element.answer();
+                        }
+                    }
+                }
                 response.children = allChildren;
                 self.fromJS(response);
             }
@@ -732,7 +740,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         });
 
         // Header and captions
-        self.showHeader = oneQuestionPerScreen || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
+        self.showHeader = oneQuestionPerScreen || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown) || self.showDelete;
 
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);

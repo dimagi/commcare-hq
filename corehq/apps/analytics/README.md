@@ -106,7 +106,7 @@ Their script is included in [signup](https://github.com/dimagi/commcare-hq/blob/
 
 ### Google Tag Manager (GTM)
 
-Its script is available in the [gtm.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/gtm.js) which loads the GTM tracking script and sends the desired user properties to GTM.
+Its script is available in the [gtx.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/gtx.js) which loads the GTM tracking script and sends the desired user properties to GTM.
 Any tracking of events should be configured at the GTM console end in tandem with the desired analytics tooling. The goal is to track specific features in HQ and also disable them when there is no need via the GTM console itself.
 Any `id` attribute added to html element for tracking through console should be prefixed with `gtm-` to indicate that this element is likely being tracked in GTM.
 This should potentially avoid accidental removal of id attribute from these elements. (Similar approach may be followed for any tooling in case of tracking of elements through console.)

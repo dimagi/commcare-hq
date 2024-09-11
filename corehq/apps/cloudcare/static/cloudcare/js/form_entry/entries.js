@@ -931,18 +931,27 @@ hqDefine("cloudcare/js/form_entry/entries", [
         // Tracks whether file entry has already been cleared, preventing an additional failing request to Formplayer
         self.cleared = false;
         self.buildBroadcastTopics(options);
+        self.uploadFile = function () {
+            document.getElementById(self.entryId).click();
+        };
+        self.fileNameDisplay = ko.observable(gettext("No file selected."));
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
     FileEntry.prototype.onPreProcess = function (newValue) {
         var self = this;
-        if (newValue !== constants.NO_ANSWER && newValue !== "") {
+        if (newValue === "" && self.question.filename()) {
+            self.question.hasAnswered = true;
+            self.fileNameDisplay(self.question.filename());
+        } else if (newValue !== constants.NO_ANSWER && newValue !== "") {
             // Input has changed and validation will be checked
             if (newValue !== self.answer()) {
                 self.question.formplayerMediaRequest = $.Deferred();
                 self.cleared = false;
             }
-            self.answer(newValue.replace(constants.FILE_PREFIX, ""));
+            var fixedNewValue = newValue.replace(constants.FILE_PREFIX, "");
+            self.fileNameDisplay(fixedNewValue);
+            self.answer(fixedNewValue);
         } else {
             self.onClear();
         }
@@ -950,7 +959,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     FileEntry.prototype.onAnswerChange = function (newValue) {
         var self = this;
         // file has already been validated and assigned a unique id. another request should not be sent to formplayer
-        if (self.question.formplayerMediaRequest.state() === "resolved") {
+        if (newValue === constants.NO_ANSWER || self.question.formplayerMediaRequest.state() === "resolved") {
             return;
         }
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
@@ -1004,6 +1013,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         self.question.error(null);
         self.question.onClear();
         self.broadcastMessages(self.question, constants.NO_ANSWER);
+        self.fileNameDisplay(gettext("No file selected."));
     };
 
     /**

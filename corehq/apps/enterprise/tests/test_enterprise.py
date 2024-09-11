@@ -7,7 +7,10 @@ from corehq.apps.export.models.new import FormExportInstance
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import ODataExportFetcher
-from corehq.apps.enterprise.enterprise import EnterpriseODataReport, EnterpriseFormReport
+from corehq.apps.enterprise.enterprise import (
+    EnterpriseODataReport,
+    EnterpriseFormReport,
+)
 
 
 @override_settings(BASE_ADDRESS='localhost:8000')

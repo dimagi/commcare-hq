@@ -41,7 +41,7 @@
     <% } else { %>
       <i class="fa <%- iconClass %> persistent-menu-image" aria-hidden="true"></i>
     <% } %>
-    <a class="align-middle stretched-link text-reset" href="#"
+    <a class="align-middle stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#"
        data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
       <%- displayText %>
     </a>
