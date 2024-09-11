@@ -694,7 +694,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 const inputControl = [constants.CONTROL_IMAGE_CHOOSE, constants.CONTROL_LABEL,
                     constants.CONTROL_AUDIO_CAPTURE, constants.CONTROL_VIDEO_CAPTURE];
 
-                var isBroadcast = false
+                var isBroadcast = false;
                 if (element.style.raw) {
                     isBroadcast = element.style.raw().includes('broadcast');
                 }
