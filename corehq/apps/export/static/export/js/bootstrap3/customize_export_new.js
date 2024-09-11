@@ -1,4 +1,4 @@
-hqDefine('export/js/customize_export_new', [
+hqDefine('export/js/bootstrap3/customize_export_new', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
