@@ -955,7 +955,7 @@ class ChatMessageHistory(View, DomainViewMixin):
 
     def get(self, request, *args, **kwargs):
         if not self.contact:
-            return HttpResponse('[]')
+            return JsonResponse([], safe=False)
 
         data, last_sms = self.get_response_data(request.couch_user.get_id)
         if last_sms:
