@@ -137,7 +137,7 @@ class CustomDataEditor(object):
         return list(self.model.get_fields(required_only=self.required_only))
 
     def init_form(self, post_dict=None):
-        fields = OrderedDict()
+        form_fields = OrderedDict()
 
         from corehq.apps.users.views.mobile import UserFieldsView
         has_profile_privilege_and_is_user_fields_view = (
@@ -167,7 +167,7 @@ class CustomDataEditor(object):
                 }
                 if not self.ko_model:
                     attrs.update({'class': 'hqwebapp-select2'})
-                fields[PROFILE_SLUG] = forms.IntegerField(
+                form_fields[PROFILE_SLUG] = forms.IntegerField(
                     label=_('Profile'),
                     required=False,
                     widget=Select(choices=[
@@ -177,11 +177,11 @@ class CustomDataEditor(object):
                     validators=[validate_profile_slug],
                 )
         for field in self.fields:
-            fields[field.slug] = self._make_field(field)
+            form_fields[field.slug] = self._make_field(field)
 
         if self.ko_model:
             field_names = []
-            for field_name, field in fields.items():
+            for field_name, field in form_fields.items():
                 data_binds = [
                     f"value: {self.ko_model}.{field_name}.value",
                     f"disable: {self.ko_model}.{field_name}.disable",
@@ -195,56 +195,56 @@ class CustomDataEditor(object):
                     data_bind=", ".join(data_binds)
                 ))
         else:
-            field_names = list(fields)
+            field_names = list(form_fields)
 
-        CustomDataForm = type('CustomDataForm', (forms.Form,), fields.copy())
+        CustomDataForm = type('CustomDataForm', (forms.Form,), form_fields.copy())
         if self.ko_model:
             CustomDataForm.helper = HQModalFormHelper()
         else:
             CustomDataForm.helper = HQFormHelper()
         CustomDataForm.helper.form_tag = False
 
-        additional_fields = []
+        form_fieldsets = []
         if field_names:
-            additional_fields.append(Fieldset(
+            form_fieldsets.append(Fieldset(
                 _("Additional Information"),
                 *field_names,
                 css_class="custom-data-fieldset"
             ))
         if post_dict is None:
-            additional_fields.append(self.uncategorized_form)
+            form_fieldsets.append(self.uncategorized_form)
         CustomDataForm.helper.layout = Layout(
-            *additional_fields
+            *form_fieldsets
         )
 
         CustomDataForm._has_uncategorized = bool(self.uncategorized_form) and post_dict is None
 
         if post_dict:
-            fields = post_dict.copy()   # make mutable
+            form_data = post_dict.copy()   # make mutable
         elif self.existing_custom_data is not None:
-            fields = add_prefix(self.existing_custom_data, self.prefix)
+            form_data = add_prefix(self.existing_custom_data, self.prefix)
         else:
-            fields = None
+            form_data = None
 
         # Add profile fields so that form validation passes
-        if fields and has_profile_privilege_and_is_user_fields_view:
+        if form_data and has_profile_privilege_and_is_user_fields_view:
 
             # When a field is disabled via knockout, it is not included in POST so this
             # adds it back
             if (post_dict and (with_prefix(PROFILE_SLUG, self.prefix)) not in post_dict
                     and not can_edit_original_profile):
-                fields.update({with_prefix(PROFILE_SLUG, self.prefix): original_profile_id})
+                form_data.update({with_prefix(PROFILE_SLUG, self.prefix): original_profile_id})
             try:
                 profile_fields = CustomDataFieldsProfile.objects.get(
-                    id=int(fields.get(with_prefix(PROFILE_SLUG, self.prefix))),
+                    id=int(form_data.get(with_prefix(PROFILE_SLUG, self.prefix))),
                     definition__field_type=self.field_view.field_type,
                     definition__domain=self.domain,
                 ).fields
             except (ValueError, TypeError, CustomDataFieldsProfile.DoesNotExist):
                 profile_fields = {}
-            fields.update(add_prefix(profile_fields, self.prefix))
+            form_data.update(add_prefix(profile_fields, self.prefix))
 
-        self.form = CustomDataForm(fields, prefix=self.prefix)
+        self.form = CustomDataForm(form_data, prefix=self.prefix)
         return self.form
 
     @property
