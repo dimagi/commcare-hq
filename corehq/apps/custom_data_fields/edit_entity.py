@@ -197,7 +197,7 @@ class CustomDataEditor(object):
         else:
             field_names = list(fields)
 
-        CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
+        CustomDataForm = type('CustomDataForm', (forms.Form,), fields.copy())
         if self.ko_model:
             CustomDataForm.helper = HQModalFormHelper()
         else:
