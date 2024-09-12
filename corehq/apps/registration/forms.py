@@ -18,6 +18,7 @@ from crispy_forms.helper import FormHelper
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.custom_data_fields.edit_entity import add_prefix
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -490,13 +491,14 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
-                 *, domain, **kwargs):
+                 custom_data=None, *, domain, **kwargs):
         self.request = kwargs.get('request')
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
         self.can_edit_tableau_config = can_edit_tableau_config
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = [('', _("Select a role"))] + role_choices
         if domain_obj:
+            prefixed_fields = []
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
                 self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
                 from corehq.apps.users.views.mobile import UserFieldsView
@@ -507,6 +509,8 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                     self.fields['profile'].choices = [('', '')] + [
                         (profile.id, profile.name) for profile in self.valid_profiles
                     ]
+                prefixed_fields = add_prefix(custom_data.form.fields, custom_data.prefix)
+                self.fields.update(prefixed_fields)
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
                 programs = Program.by_domain(domain_obj.name)
@@ -536,6 +540,8 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
             )
         ]
+        custom_data_fieldset = custom_data.make_fieldsets(prefixed_fields, data is not None)
+        fields.extend(custom_data_fieldset)
         if should_show_location:
             fields.append(
                 crispy.Fieldset(

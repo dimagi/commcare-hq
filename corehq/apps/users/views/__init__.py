@@ -11,6 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
@@ -31,6 +32,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, ngettext, gettext_lazy, gettext_noop
 
@@ -1144,7 +1146,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 is_add_user=is_add_user,
                 should_show_location=self.request.project.uses_locations,
                 can_edit_tableau_config=can_edit_tableau_config,
-                request=self.request
+                request=self.request,
+                custom_data=self.custom_data
             )
         return AdminInvitesUserForm(
             initial=initial,
@@ -1153,8 +1156,24 @@ class InviteWebUserView(BaseManageWebUserView):
             is_add_user=is_add_user,
             should_show_location=self.request.project.uses_locations,
             can_edit_tableau_config=can_edit_tableau_config,
-            request=self.request
+            request=self.request,
+            custom_data=self.custom_data
         )
+
+    @cached_property
+    def custom_data(self):
+        from corehq.apps.users.views.mobile import UserFieldsView
+        post_dict = None
+        if self.request.method == 'POST':
+            post_dict = self.request.POST
+        custom_data = CustomDataEditor(
+            field_view=UserFieldsView,
+            domain=self.domain,
+            post_dict=post_dict,
+            ko_model="custom_fields",
+            request_user=self.request.couch_user
+        )
+        return custom_data
 
     @property
     @memoized
