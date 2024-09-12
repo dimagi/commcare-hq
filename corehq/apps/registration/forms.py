@@ -18,6 +18,7 @@ from crispy_forms.helper import FormHelper
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.custom_data_fields.edit_entity import add_prefix
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
@@ -509,6 +510,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                     self.fields['profile'].choices = [('', '')] + [
                         (profile.id, profile.name) for profile in self.valid_profiles
                     ]
+
+                if PROFILE_SLUG in custom_data.form.fields:
+                    custom_data.form.fields[PROFILE_SLUG].widget.choices.insert(0, ('', ''))
                 prefixed_fields = add_prefix(custom_data.form.fields, custom_data.prefix)
                 self.fields.update(prefixed_fields)
             if domain_obj.commtrack_enabled:
