@@ -1,13 +1,20 @@
 import json
 from pathlib import Path
 
+from django.conf import settings
+from memoized import memoized
+
 import corehq
 
 WEBPACK_BUILD_DIR = Path(corehq.__file__).resolve().parent.parent / "webpack" / "_build"
 
 
-def get_webpack_manifest(filename=None):
+def cache_unless_debug(func):
+    return func if settings.DEBUG else memoized(func)
 
+
+@cache_unless_debug
+def get_webpack_manifest(filename=None):
     if not filename:
         path = WEBPACK_BUILD_DIR / "manifest.json"
     else:

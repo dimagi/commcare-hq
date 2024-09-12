@@ -744,15 +744,6 @@ class WebpackMainNode(RequireJSMainNode):
         return "<WebpackMain Node: %r>" % (self.value,)
 
 
-try:
-    from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest
-    WEBPACK_MANIFEST = get_webpack_manifest()
-    WEBPACK_MANIFEST_B3 = get_webpack_manifest('manifest_b3.json')
-except (ImportError, SyntaxError):
-    WEBPACK_MANIFEST = {}
-    WEBPACK_MANIFEST_B3 = {}
-
-
 @register.filter
 def webpack_bundles(entry_name):
     from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest
@@ -760,13 +751,10 @@ def webpack_bundles(entry_name):
     bootstrap_version = get_bootstrap_version()
 
     if bootstrap_version == BOOTSTRAP_5:
-        # always fetch the webpack manifest file again if in DEBUG mode
-        manifest = get_webpack_manifest() if settings.DEBUG else WEBPACK_MANIFEST
+        manifest = get_webpack_manifest()
         webpack_folder = 'webpack'
     else:
-        # always fetch the webpack manifest file again if in DEBUG mode
-        manifest = (get_webpack_manifest('manifest_b3.json')
-                    if settings.DEBUG else WEBPACK_MANIFEST_B3)
+        manifest = get_webpack_manifest('manifest_b3.json')
         webpack_folder = 'webpack_b3'
 
     if manifest is None:
