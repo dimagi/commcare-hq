@@ -33,6 +33,12 @@ def get_geo_user_property(domain):
     return config.user_location_property_name
 
 
+def get_celery_task_tracker(domain, base_key):
+    task_key = f'{base_key}_{domain}'
+    message_key = f'{base_key}_message_{domain}'
+    return CeleryTaskTracker(task_key, message_key)
+
+
 def _format_coordinates(lat, lon):
     return f"{lat} {lon} 0.0 0.0"
 
