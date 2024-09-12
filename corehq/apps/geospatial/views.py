@@ -47,7 +47,11 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
 
-from .const import GPS_POINT_CASE_PROPERTY, POLYGON_COLLECTION_GEOJSON_SCHEMA
+from .const import (
+    GPS_POINT_CASE_PROPERTY,
+    POLYGON_COLLECTION_GEOJSON_SCHEMA,
+    INDEX_ES_TASK_HELPER_BASE_KEY,
+)
 from .models import GeoConfig, GeoPolygon
 from .utils import (
     CaseOwnerUpdate,
@@ -59,11 +63,22 @@ from .utils import (
     set_case_gps_property,
     set_user_gps_property,
     update_cases_owner,
+    get_celery_task_tracker,
 )
 
 
 def geospatial_default(request, *args, **kwargs):
     return HttpResponseRedirect(CaseManagementMap.get_url(*args, **kwargs))
+
+
+class BaseGeospatialView(BaseDomainView):
+
+    @property
+    def main_context(self):
+        context = super().main_context
+        celery_task_tracker = get_celery_task_tracker(self.domain, base_key=INDEX_ES_TASK_HELPER_BASE_KEY)
+        context['es_indexing_message'] = celery_task_tracker.get_message()
+        return context
 
 
 class CaseDisbursementAlgorithm(BaseDomainView):
@@ -151,7 +166,7 @@ class GeoPolygonDetailView(BaseDomainView):
         })
 
 
-class BaseConfigView(BaseDomainView):
+class BaseConfigView(BaseGeospatialView):
     section_name = _("Data")
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
@@ -229,7 +244,7 @@ class GeospatialConfigPage(BaseConfigView):
         return context
 
 
-class GPSCaptureView(BaseDomainView):
+class GPSCaptureView(BaseGeospatialView):
     urlname = 'gps_capture'
     template_name = 'gps_capture_view.html'
 

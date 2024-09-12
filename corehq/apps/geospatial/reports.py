@@ -25,6 +25,7 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.util.quickcache import quickcache
 
 from .dispatchers import CaseManagementMapDispatcher
+from corehq.apps.geospatial.const import INDEX_ES_TASK_HELPER_BASE_KEY
 from .es import (
     BUCKET_CASES_AGG,
     CASE_PROPERTIES_AGG,
@@ -38,6 +39,7 @@ from .utils import (
     geojson_to_es_geoshape,
     get_geo_case_property,
     validate_geometry,
+    get_celery_task_tracker,
 )
 
 
@@ -59,12 +61,14 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
     def template_context(self):
         # Whatever is specified here can be accessed through initial_page_data
         context = super(BaseCaseMapReport, self).template_context
+        celery_task_tracker = get_celery_task_tracker(self.domain, base_key=INDEX_ES_TASK_HELPER_BASE_KEY)
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'saved_polygons': [
                 {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
                 for p in GeoPolygon.objects.filter(domain=self.domain).all()
             ],
+            'es_indexing_message': celery_task_tracker.get_message()
         })
         return context
 
