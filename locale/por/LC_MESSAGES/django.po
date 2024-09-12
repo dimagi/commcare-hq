@@ -539,20 +539,10 @@ msgid "Message"
 msgstr "Mensagem"
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/domain/templates/domain/confirm_plan.html
-msgid "Select different plan"
-msgstr "Selecionar plano diferente"
-
-#: corehq/apps/accounting/forms.py
-msgid "Request Quote"
-msgstr "Requisitar cotação"
-
-#: corehq/apps/accounting/forms.py corehq/apps/commtrack/forms.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/form_list_form.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/form_list_form.html
-#: corehq/apps/translations/forms.py
-msgid "Submit"
-msgstr "Submeter"
+#, fuzzy
+#| msgid "Submit History"
+msgid "Submit Request"
+msgstr "Enviar Histórico"
 
 #: corehq/apps/accounting/forms.py
 #, python-format
@@ -2802,12 +2792,6 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
-msgid ""
-"Note: Selecting this plan will result in the following changes to your "
-"project."
-msgstr ""
-
 #: corehq/apps/accounting/templates/accounting/partials/credits_tab.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
 #: corehq/tabs/tabclasses.py
@@ -2827,6 +2811,12 @@ msgstr "Taxa de Feição"
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap5/case_data.html
 msgid "Balance"
 msgstr "Saldo"
+
+#: corehq/apps/accounting/templates/accounting/partials/downgrade_messages.html
+msgid ""
+"Note: Selecting this plan will result in the following changes to your "
+"project."
+msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/invoice_table.html
 msgid "Go to All Invoices page for this Project Space"
@@ -3116,7 +3106,7 @@ msgstr ""
 msgid "Enterprise"
 msgstr "Enterprise"
 
-#: corehq/apps/accounting/user_text.py corehq/apps/domain/views/accounting.py
+#: corehq/apps/accounting/user_text.py
 msgid ""
 "For organizations that need a sustainable path to scale mobile data "
 "collection and service delivery across multiple teams, programs, or "
@@ -12710,6 +12700,13 @@ msgid "Phone Settings"
 msgstr ""
 
 #: corehq/apps/commtrack/forms.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/form_list_form.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/form_list_form.html
+#: corehq/apps/translations/forms.py
+msgid "Submit"
+msgstr "Submeter"
+
+#: corehq/apps/commtrack/forms.py
 #, python-brace-format
 msgid ""
 "This is configured by <a href='{url}'>bulk importing your organization "
@@ -14721,7 +14718,15 @@ msgid "greater than"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "greater than or equal"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "less than"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "less than or equal"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
@@ -16474,6 +16479,11 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/confirm_plan.html
 #: corehq/apps/domain/views/accounting.py
+msgid "Select different plan"
+msgstr "Selecionar plano diferente"
+
+#: corehq/apps/domain/templates/domain/confirm_plan.html
+#: corehq/apps/domain/views/accounting.py
 msgid "Confirm Pause"
 msgstr ""
 
@@ -16634,6 +16644,7 @@ msgid "Got questions about your plan?"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/current_subscription.html
+#: corehq/apps/domain/templates/domain/renew_plan.html
 #: corehq/apps/domain/templates/domain/select_plan.html
 msgid "Talk to Sales"
 msgstr ""
@@ -17411,45 +17422,6 @@ msgstr ""
 msgid "Dismiss"
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/selected_annual_plan.html
-msgid ""
-"\n"
-"        Dimagi handles Enterprise plans on a case-by-case basis. <br />\n"
-"        Please submit the following form if you would like to sign up for "
-"or\n"
-"        have questions regarding an Enterprise plan. Our sales team will be "
-"in touch shortly.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/selected_annual_plan.html
-#, python-format
-msgid ""
-"\n"
-"        Please submit the following form if you would like to sign up for or "
-"have questions regarding your\n"
-"        annual %(e)s Plan. Our sales team will be in touch shortly.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/selected_annual_plan.html
-#, python-format
-msgid ""
-"\n"
-"        Please submit the following form to request your project space be "
-"set up for an <strong>annual %(e)s Plan</strong>.<br/>\n"
-"        Our sales team will reach out shortly.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/selected_enterprise_plan.html
-msgid ""
-"\n"
-"      Dimagi handles Enterprise plans on a case-by-case basis. <br />\n"
-"      Please fill out your information below to request a quote.\n"
-"    "
-msgstr ""
-
 #: corehq/apps/domain/templates/domain/stripe_cards.html
 msgid "Saved Credit Cards"
 msgstr ""
@@ -18107,16 +18079,18 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
-msgid "Contact Us"
-msgstr ""
-
-#: corehq/apps/domain/views/accounting.py
 #, python-format
 msgid "1. Select a Plan%(edition_name)s"
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
 msgid "Contact Dimagi"
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+msgid ""
+"Please submit the following form and a member of our sales team will be in "
+"touch shortly about your plan."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
@@ -18128,10 +18102,10 @@ msgid "Your request was sent to Dimagi. We will follow up shortly."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
-msgid ""
-"Your request was sent to Dimagi. We will try our best to follow up in a "
-"timely manner."
-msgstr ""
+#, fuzzy
+#| msgid "Subscription"
+msgid "Back to my Subscription"
+msgstr "Subscrição"
 
 #: corehq/apps/domain/views/accounting.py
 msgid "Confirm Subscription"
@@ -23554,6 +23528,10 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "DHIS2 Integration"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Data Forwarding Response"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -40229,16 +40207,12 @@ msgid "Bulk Clear Data"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid "Delete Mobile Worker"
 msgid "Bulk Delete Mobile Workers"
-msgstr "Apagar Trabalhador Móvel"
+msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid "Go back to Mobile Workers"
 msgid "Bulk Lookup of Mobile Workers"
-msgstr "Voltar para Trabalhadores Móveis"
+msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Create New Mobile Worker"
@@ -44699,9 +44673,38 @@ msgid "Can be disabled"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/forms.py
+msgid "Response case action filter expression"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/forms.py
+msgid "Response case action expression"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/forms.py
 msgid ""
 "Items to add to the end of the URL. Please see the documentation for more "
 "information."
+msgstr ""
+
+#: corehq/motech/repeaters/expression/forms.py
+msgid ""
+"Use this to determine if the response should create or update a case. If "
+"left blank, no action will be taken. For more info see <a target=\"_blank\" "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146602964/"
+"Configurable+Repeaters\">these docs</a>"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/forms.py
+msgid ""
+"Use this to create a Case API payload which will be used to create or update "
+"a case. For more info see <a target=\"_blank\" href=\"https://dimagi."
+"atlassian.net/wiki/spaces/GS/pages/2146602964/Configurable+Repeaters\">these "
+"docs</a>"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/forms.py
+#, python-brace-format
+msgid "This field is required when '{other}' is provided"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/repeaters.py
@@ -46594,3 +46597,6 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#~ msgid "Request Quote"
+#~ msgstr "Requisitar cotação"

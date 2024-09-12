@@ -45,14 +45,6 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
                 FormplayerFrontend.regions.getRegion('main').show(singleAppView);
             });
         },
-        landingPageApp: function (appId) {
-            $.when(AppsAPI.getAppEntities()).done(function () {
-                var landingPageAppView = views.LandingPageAppView({
-                    appId: appId,
-                });
-                FormplayerFrontend.regions.getRegion('main').show(landingPageAppView);
-            });
-        },
         listSettings: function () {
             var currentUser = UsersModels.getCurrentUser(),
                 slugs = settingsViews.slugs,
