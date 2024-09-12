@@ -131,6 +131,36 @@ class CustomDataEditor(object):
         else:
             return forms.CharField(label=safe_label, required=field.is_required)
 
+    def make_fieldsets(self, form_fields, is_post):
+        if self.ko_model:
+            field_names = []
+            for field_name, field in form_fields.items():
+                data_binds = [
+                    f"value: {self.ko_model}.{field_name}.value",
+                    f"disable: {self.ko_model}.{field_name}.disable",
+                ]
+                if hasattr(field, 'choices') or field_name == PROFILE_SLUG:
+                    data_binds.append("select2: " + json.dumps([
+                        {"id": id, "text": text} for id, text in field.widget.choices
+                    ]))
+                field_names.append(Field(
+                    field_name,
+                    data_bind=", ".join(data_binds)
+                ))
+        else:
+            field_names = list(form_fields)
+
+        form_fieldsets = []
+        if field_names:
+            form_fieldsets.append(Fieldset(
+                _("Additional Information"),
+                *field_names,
+                css_class="custom-data-fieldset"
+            ))
+        if not is_post:
+            form_fieldsets.append(self.uncategorized_form)
+        return form_fieldsets
+
     @property
     @memoized
     def fields(self):
@@ -179,24 +209,6 @@ class CustomDataEditor(object):
         for field in self.fields:
             form_fields[field.slug] = self._make_field(field)
 
-        if self.ko_model:
-            field_names = []
-            for field_name, field in form_fields.items():
-                data_binds = [
-                    f"value: {self.ko_model}.{field_name}.value",
-                    f"disable: {self.ko_model}.{field_name}.disable",
-                ]
-                if hasattr(field, 'choices') or field_name == PROFILE_SLUG:
-                    data_binds.append("select2: " + json.dumps([
-                        {"id": id, "text": text} for id, text in field.widget.choices
-                    ]))
-                field_names.append(Field(
-                    field_name,
-                    data_bind=", ".join(data_binds)
-                ))
-        else:
-            field_names = list(form_fields)
-
         CustomDataForm = type('CustomDataForm', (forms.Form,), form_fields.copy())
         if self.ko_model:
             CustomDataForm.helper = HQModalFormHelper()
@@ -204,15 +216,8 @@ class CustomDataEditor(object):
             CustomDataForm.helper = HQFormHelper()
         CustomDataForm.helper.form_tag = False
 
-        form_fieldsets = []
-        if field_names:
-            form_fieldsets.append(Fieldset(
-                _("Additional Information"),
-                *field_names,
-                css_class="custom-data-fieldset"
-            ))
-        if post_dict is None:
-            form_fieldsets.append(self.uncategorized_form)
+        form_fieldsets = self.make_fieldsets(form_fields, post_dict is not None)
+
         CustomDataForm.helper.layout = Layout(
             *form_fieldsets
         )
