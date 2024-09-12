@@ -221,8 +221,9 @@ class CeleryTaskTracker(object):
     Simple Helper class using redis to track if a celery task was requested and is not completed yet.
     """
 
-    def __init__(self, task_key):
+    def __init__(self, task_key, message_key=None):
         self.task_key = task_key
+        self.message_key = message_key
         self._client = get_redis_client()
 
     def mark_requested(self, timeout=ONE_DAY):
@@ -234,4 +235,14 @@ class CeleryTaskTracker(object):
         return self._client.has_key(self.task_key)
 
     def mark_completed(self):
+        self.clear_message()
         return self._client.delete(self.task_key)
+
+    def get_message(self):
+        return self._client.get(self.message_key)
+
+    def set_message(self, message, timeout=ONE_DAY * 3):
+        return self._client.set(self.message_key, message, timeout=timeout)
+
+    def clear_message(self):
+        return self._client.delete(self.message_key)
