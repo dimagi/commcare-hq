@@ -88,7 +88,8 @@ class SsoBackend(ModelBackend):
             web_user.save()
             log_user_change(by_domain=None, for_domain=None,
                             by_domain_required_for_log=False, for_domain_required_for_log=False,
-                            couch_user=web_user, fields_changed={'is_active': self.user.is_active},
+                            couch_user=web_user, changed_by_user=web_user,
+                            fields_changed={'is_active': self.user.is_active},
                             changed_via=USER_CHANGE_VIA_REACTIVATION,
                             change_messages="sso user log-in will reactivate the user")
             request.sso_new_user_messages['success'].append(

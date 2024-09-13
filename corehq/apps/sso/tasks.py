@@ -21,7 +21,7 @@ from corehq.apps.sso.utils.entra import MSGraphIssue
 from corehq.apps.sso.utils.user_helpers import convert_emails_to_lowercase
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.models import HQApiKey
-from corehq.apps.users.util import log_user_change
+from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
 from django.contrib.auth.models import User
 from corehq.const import USER_CHANGE_VIA_SSO_DEACTIVATION
 from corehq.sql_db.util import paginate_query
@@ -169,6 +169,7 @@ def auto_deactivate_removed_sso_users():
                             by_domain_required_for_log=False, for_domain_required_for_log=False,
                             couch_user=user, fields_changed={'is_active': user.is_active},
                             changed_via=USER_CHANGE_VIA_SSO_DEACTIVATION,
+                            changed_by_user=SYSTEM_USER_ID,
                             change_messages="sso user log-in will reactivate the user")
 
 
