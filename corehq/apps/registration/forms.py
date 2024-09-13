@@ -15,8 +15,6 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.custom_data_fields.edit_entity import add_prefix
@@ -500,21 +498,10 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         self.fields['role'].choices = [('', _("Select a role"))] + role_choices
         if domain_obj:
             prefixed_fields = []
-            if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
-                self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
-                from corehq.apps.users.views.mobile import UserFieldsView
-                self.valid_profiles = UserFieldsView.get_user_accessible_profiles(
-                    self.domain, self.request.couch_user
-                )
-                if len(self.valid_profiles) > 0:
-                    self.fields['profile'].choices = [('', '')] + [
-                        (profile.id, profile.name) for profile in self.valid_profiles
-                    ]
-
-                if PROFILE_SLUG in custom_data.form.fields:
-                    custom_data.form.fields[PROFILE_SLUG].widget.choices.insert(0, ('', ''))
-                prefixed_fields = add_prefix(custom_data.form.fields, custom_data.prefix)
-                self.fields.update(prefixed_fields)
+            if PROFILE_SLUG in custom_data.form.fields:
+                custom_data.form.fields[PROFILE_SLUG].widget.choices.insert(0, ('', ''))
+            prefixed_fields = add_prefix(custom_data.form.fields, custom_data.prefix)
+            self.fields.update(prefixed_fields)
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
                 programs = Program.by_domain(domain_obj.name)
