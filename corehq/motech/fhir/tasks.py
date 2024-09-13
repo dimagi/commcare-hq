@@ -1,3 +1,6 @@
+import dateutil
+from datetime import datetime
+
 from collections import namedtuple
 from typing import Generator, List
 from uuid import uuid4
@@ -12,8 +15,9 @@ from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.motech.const import (
     IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
@@ -489,5 +493,137 @@ def convert_utc_timestamp_to_date_and_time(utc_timestamp):
      time = local_datetime.strftime('%H:%M')
 
      return date, time
+
+
+def sync_all_appointments_domain(domain):
+    access_token = request_epic_access_token()
+    # get all patient case ids for domain
+    patient_case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(domain, 'patient')
+    # get all patient cases
+    patient_cases = CommCareCase.objects.get_cases(patient_case_ids)
+
+    # get extension (appointment) cases ids, for all patients
+    appointment_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(domain, patient_case_ids, False, 'appointment')
+    # get appointment cases in commcare
+    appointment_cases = CommCareCase.objects.get_cases(appointment_case_ids)
+
+    # get fhir ids for appointments currently in commcare
+    appointment_fhir_ids = [appointment_case.get_case_property('fhir_id') for appointment_case in appointment_cases]
+
+    for patient in patient_cases:
+        patient_helper = CaseHelper(case=patient, domain=domain)
+        patient_fhir_id = patient.get_case_property('patient_fhir_id')
+        if not patient_fhir_id:
+            given = patient.get_case_property('given_name')
+            family = patient.get_case_property('family_name')
+            birthdate = patient.get_case_property('birthdate')
+            patient_fhir_id = get_patient_fhir_id(given, family, birthdate, access_token)
+
+            if patient_fhir_id is not None:
+                patient_helper.update({'properties': {
+                    'patient_fhir_id': patient_fhir_id,
+                }})
+
+        epic_appointments_to_add = []
+        epic_appointments_to_update = []
+        # Get all appointments for patient from epic
+        epic_appointment_records = get_epic_appointments_for_patient(patient_fhir_id, access_token)
+        for appointment in epic_appointment_records:
+            appointment_resource = appointment.get('resource')
+            appointment_id = appointment_resource.get('id')
+            if appointment_id and appointment_id not in appointment_fhir_ids:
+                epic_appointments_to_add.append(appointment)
+            elif appointment_id:
+                epic_appointments_to_update.append(appointment)
+
+        # Add new appointments to commcare  
+        for appointment in epic_appointments_to_add:
+            appointment_create_helper = CaseHelper(domain=domain)
+            appointment_resource = appointment.get('resource')
+            if appointment_resource is not None:
+                appointment_description = appointment_resource.get('description') or 'NO DESCRIPTION LISTED'
+                appointment_fhir_timestamp = appointment_resource.get('start')
+                appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(appointment_fhir_timestamp)
+                appointment_fhir_id = appointment_resource.get('id')
+                reason = None
+                practitioner = None
+                for p in appointment_resource.get('participant'):
+                    actor = p.get('actor')
+                    if actor and 'Practitioner' in actor.get('reference'):
+                        practitioner = actor.get('display')
+                        break
+                reason_code = appointment_resource.get('reasonCode')
+                if reason_code and reason_code[0] is not None:
+                    reason = reason_code[0].get('text')
+            host_case_id = patient.get_case_property('case_id')
+            appointment_case_data = {
+                'case_name': appointment_fhir_timestamp + appointment_description,
+                'case_type': 'appointment',
+                'indices': {
+                    'patient': {
+                        'case_id': host_case_id,
+                        'case_type': 'patient',
+                        'relationship': 'extension',
+                    }
+                },
+                'properties': {
+                    'appointment_description': appointment_description,
+                    'appointment_fhir_timestamp': appointment_fhir_timestamp,
+                    'appointment_date': appointment_date,
+                    'appointment_time': appointment_time,
+                    'patient_fhir_id': patient_fhir_id,
+                    'fhir_id': appointment_fhir_id
+                }
+            }
+            appointment_create_helper.create_case(appointment_case_data)
+
+        # Update existing appointments in commcare if properties have changed in epic
+        for appointment in epic_appointments_to_update:
+            epic_properties_map = {} # 'appointment_fhir_timestamp', 'appointment_description', 'reason', 'practitioner'
+            appointment_resource = appointment.get('resource')
+            if appointment_resource is not None:
+                appointment_description = appointment_resource.get('description') or 'NO DESCRIPTION LISTED'
+                appointment_fhir_timestamp = appointment_resource.get('start')
+                appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(appointment_fhir_timestamp)
+                appointment_fhir_id = appointment_resource.get('id')
+                reason = None
+                practitioner = None
+                for p in appointment_resource.get('participant'):
+                    actor = p.get('actor')
+                    if actor and 'Practitioner' in actor.get('reference'):
+                        practitioner = actor.get('display')
+                        break
+                reason_code = appointment_resource.get('reasonCode')
+                if reason_code and reason_code[0] is not None:
+                    reason = reason_code[0].get('text')
+                epic_properties_map.update({
+                    'appointment_description': appointment_description,
+                    'appointment_fhir_timestamp': appointment_fhir_timestamp,
+                    'practitioner': practitioner,
+                    'reason': reason
+                    })
+            appointment_case = None
+            for case in appointment_cases: 
+                if case.get_case_property('fhir_id') == appointment_fhir_id:
+                    appointment_case = case
+                    break
+            appointment_update_helper = CaseHelper(case=appointment_case, domain=domain)
+            case_properties_to_update = {}
+            changes = False
+            # check for changes and add to case_properties_to_update
+            for k, v in epic_properties_map.items():
+                current_value = appointment_case.get_case_property(k)
+                if current_value != v:
+                    changes = True
+                    case_properties_to_update.update({k: v})
+                    if k == 'appointment_fhir_timestamp':
+                        appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(v)
+                        case_properties_to_update.update({
+                            'appointment_date': appointment_date,
+                            'appointment_time': appointment_time,
+                        })
+            
+            if changes:
+                appointment_update_helper.update({ 'properties': case_properties_to_update })
 class ServiceRequestNotActive(Exception):
     pass
