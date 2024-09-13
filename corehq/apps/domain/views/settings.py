@@ -275,7 +275,7 @@ def logo(request, domain):
     if logo is None:
         raise Http404()
 
-    return HttpResponse(logo[0], content_type=logo[1])
+    return HttpResponse(logo, content_type='image/png')
 
 
 class EditPrivacySecurityView(BaseAdminProjectSettingsView):
