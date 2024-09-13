@@ -625,5 +625,13 @@ def sync_all_appointments_domain(domain):
             
             if changes:
                 appointment_update_helper.update({ 'properties': case_properties_to_update })
+
+
+@periodic_task(run_every=crontab(hour="*", minute=1), queue=settings.CELERY_PERIODIC_QUEUE)
+def sync_all_epic_appointments():
+    for domain in toggles.MGH_EPIC_STUDY.get_enabled_domains():
+        sync_all_appointments_domain(domain)
+
+
 class ServiceRequestNotActive(Exception):
     pass
