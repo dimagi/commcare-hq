@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -18,6 +18,7 @@ from corehq.apps.geospatial.utils import (
     set_case_gps_property,
     set_user_gps_property,
     update_cases_owner,
+    get_celery_task_tracker,
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
@@ -187,13 +188,14 @@ class TestUpdateCasesOwner(TestCase):
 
 class TestCeleryTaskTracker(TestCase):
     TASK_KEY = 'test-key'
+    MESSAGE_KEY = 'message-key'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         with real_redis_client():
             cls.redis_client = get_redis_client()
-            cls.celery_task_tracker = CeleryTaskTracker(cls.TASK_KEY)
+            cls.celery_task_tracker = CeleryTaskTracker(cls.TASK_KEY, cls.MESSAGE_KEY)
 
     def tearDown(self):
         self.redis_client.clear()
@@ -211,3 +213,35 @@ class TestCeleryTaskTracker(TestCase):
         self.redis_client.set(self.TASK_KEY, 'ACTIVE')
         self.celery_task_tracker.mark_completed()
         self.assertFalse(self.redis_client.has_key(self.TASK_KEY))
+
+    def test_set_message(self):
+        self.assertTrue(self.celery_task_tracker.set_message('foobar'))
+        self.assertTrue(self.redis_client.has_key(self.MESSAGE_KEY))
+        self.assertEqual(self.redis_client.get(self.MESSAGE_KEY), 'foobar')
+
+    def test_get_message(self):
+        self.assertEqual(self.celery_task_tracker.get_message(), None)
+        self.celery_task_tracker.set_message('foobar')
+        self.assertEqual(self.celery_task_tracker.get_message(), 'foobar')
+
+    def test_clear_message(self):
+        self.assertFalse(self.celery_task_tracker.clear_message())
+        self.celery_task_tracker.set_message('foobar')
+        self.assertTrue(self.celery_task_tracker.clear_message())
+        self.assertFalse(self.redis_client.has_key(self.MESSAGE_KEY))
+
+
+class TestGetCeleryTaskTracker(SimpleTestCase):
+    domain = 'foobar'
+    base_key = 'test_me'
+
+    def test_get_celery_task_tracker(self):
+        celery_task_tracker = get_celery_task_tracker(self.domain, self.base_key)
+        self.assertEqual(
+            celery_task_tracker.task_key,
+            'test_me_foobar'
+        )
+        self.assertEqual(
+            celery_task_tracker.message_key,
+            'test_me_message_foobar'
+        )
