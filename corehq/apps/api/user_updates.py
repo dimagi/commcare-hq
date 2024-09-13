@@ -220,6 +220,7 @@ def _update_primary_location(user, primary_location_id, user_change_logger):
 
 def _verify_location_ids(location_ids, domain):
     locations = SQLLocation.active_objects.filter(location_id__in=location_ids, domain=domain)
+    _ = list(locations)  # forces evaluation and populates locations._result_cache which can be used later
     real_ids = locations.location_ids()
 
     if missing_ids := set(location_ids) - set(real_ids):
