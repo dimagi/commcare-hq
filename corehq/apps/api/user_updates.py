@@ -176,17 +176,17 @@ def _update_location(user, location_object, user_change_logger):
     if primary_location_id is None and location_ids is None:
         return
 
-    user_current_primary_location_id = user.get_location_id(user.domain)
-    user_current_locations = user.get_location_ids(user.domain)
+    current_primary_location_id = user.get_location_id(user.domain)
+    current_locations = user.get_location_ids(user.domain)
 
     if not primary_location_id and not location_ids:
         _remove_all_locations(user, user_change_logger)
     else:
         if _validate_locations(primary_location_id, location_ids):
             locations = _verify_location_ids(location_ids, user.domain)
-            if primary_location_id != user_current_primary_location_id:
+            if primary_location_id != current_primary_location_id:
                 _update_primary_location(user, primary_location_id, user_change_logger)
-            if set(user_current_locations) != set(location_ids):
+            if set(current_locations) != set(location_ids):
                 _update_assigned_locations(user, locations, location_ids, user_change_logger)
 
 
