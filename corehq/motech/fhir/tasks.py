@@ -431,13 +431,31 @@ def request_epic_access_token():
         return response.raise_for_status()
 
 
-def get_epic_appointments_for_patient(mrn):
-    appointments = []
-    access_token = request_epic_access_token()
+def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
+    url = f"https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Patient?birthdate={birthdate}&family={family_name}&given={given_name}&_format=json"
     headers={
         'authorization': 'Bearer %s' % access_token,
         }
-    url = f"https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Appointment?&patient={mrn}&service-category=appointment&_format=json"
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        response_json = response.json()
+        fhir_id = None
+        entry = response_json.get('entry')[0]
+        if entry: 
+            resource = entry.get('resource')
+            if resource:
+                fhir_id = resource.get('id')
+        return fhir_id
+    elif response.status_code >= 400:
+        response.raise_for_status()
+
+# TODO add time param 12 weeks from study start date
+def get_epic_appointments_for_patient(fhir_id, access_token):
+    appointments = []
+    headers={
+        'authorization': 'Bearer %s' % access_token,
+        }
+    url = f"https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Appointment?&patient={fhir_id}&service-category=appointment&_format=json"
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         json_response = response.json()
