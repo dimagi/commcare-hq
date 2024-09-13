@@ -496,7 +496,10 @@ def convert_utc_timestamp_to_date_and_time(utc_timestamp):
 
 
 def sync_all_appointments_domain(domain):
-    access_token = request_epic_access_token()
+    try:
+        access_token = request_epic_access_token()
+    except Exception:
+        return None
     # get all patient case ids for domain
     patient_case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(domain, 'patient')
     # get all patient cases
