@@ -492,7 +492,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
                  custom_data=None, *, domain, **kwargs):
         self.custom_data = custom_data
-        if data:
+        if data and self.custom_data:
             data = data.copy()
             custom_data_post_dict = self.custom_data.form.data
             data.update({k: v for k, v in custom_data_post_dict.items() if k not in data})
@@ -502,11 +502,12 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = [('', _("Select a role"))] + role_choices
         if domain_obj:
-            prefixed_fields = []
-            if PROFILE_SLUG in self.custom_data.form.fields:
-                self.custom_data.form.fields[PROFILE_SLUG].widget.choices.insert(0, ('', ''))
-            prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
-            self.fields.update(prefixed_fields)
+            if self.custom_data:
+                prefixed_fields = []
+                if PROFILE_SLUG in self.custom_data.form.fields:
+                    self.custom_data.form.fields[PROFILE_SLUG].widget.choices.insert(0, ('', ''))
+                prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
+                self.fields.update(prefixed_fields)
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
                 programs = Program.by_domain(domain_obj.name)
@@ -536,8 +537,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
             )
         ]
-        custom_data_fieldset = self.custom_data.make_fieldsets(prefixed_fields, data is not None)
-        fields.extend(custom_data_fieldset)
+        if self.custom_data:
+            custom_data_fieldset = self.custom_data.make_fieldsets(prefixed_fields, data is not None)
+            fields.extend(custom_data_fieldset)
         if should_show_location:
             fields.append(
                 crispy.Fieldset(
@@ -614,13 +616,14 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             if isinstance(cleaned_data[field], str):
                 cleaned_data[field] = cleaned_data[field].strip()
 
-        prefixed_profile_key = with_prefix(PROFILE_SLUG, self.custom_data.prefix)
-        prefixed_field_names = add_prefix(self.custom_data.form.fields, self.custom_data.prefix).keys()
-        custom_user_data = {key: cleaned_data.pop(key) for key in prefixed_field_names if key in cleaned_data}
+        if self.custom_data:
+            prefixed_profile_key = with_prefix(PROFILE_SLUG, self.custom_data.prefix)
+            prefixed_field_names = add_prefix(self.custom_data.form.fields, self.custom_data.prefix).keys()
+            custom_user_data = {key: cleaned_data.pop(key) for key in prefixed_field_names if key in cleaned_data}
 
-        if prefixed_profile_key in custom_user_data:
-            cleaned_data['profile'] = custom_user_data.pop(prefixed_profile_key)
-        cleaned_data['custom_user_data'] = get_prefixed(custom_user_data, self.custom_data.prefix)
+            if prefixed_profile_key in custom_user_data:
+                cleaned_data['profile'] = custom_user_data.pop(prefixed_profile_key)
+            cleaned_data['custom_user_data'] = get_prefixed(custom_user_data, self.custom_data.prefix)
 
         return cleaned_data
 
