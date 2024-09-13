@@ -1220,6 +1220,7 @@ class InviteWebUserView(BaseManageWebUserView):
                                          program_id=data.get("program", None),
                                          assigned_location_ids=data.get("assigned_locations", None),
                                          profile=profile,
+                                         custom_user_data=data.get("custom_user_data"),
                                          tableau_role=data.get("tableau_role", None),
                                          tableau_group_ids=data.get("tableau_group_ids", None)
                                          )
