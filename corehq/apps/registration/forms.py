@@ -22,6 +22,7 @@ from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.programs.models import Program
+from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
 from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
 
@@ -491,7 +492,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
                  custom_data=None, *, domain, **kwargs):
-        self.custom_data = custom_data
+        self.custom_data = custom_data if WEB_USER_INVITE_ADDITIONAL_FIELDS.enabled(domain) else None
         if data and self.custom_data:
             data = data.copy()
             custom_data_post_dict = self.custom_data.form.data

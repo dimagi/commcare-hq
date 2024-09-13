@@ -17,7 +17,7 @@ from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
-from corehq.toggles import TABLEAU_USER_SYNCING
+from corehq.toggles import TABLEAU_USER_SYNCING, WEB_USER_INVITE_ADDITIONAL_FIELDS
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -1184,13 +1184,14 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def page_context(self):
-        field_view_context = self.custom_data.field_view.get_field_page_context(
-            self.domain, self.request.couch_user, self.custom_data, None
-        )
-        return {
-            'registration_form': self.invite_web_user_form,
-            **field_view_context
-        }
+        ctx = {'registration_form': self.invite_web_user_form}
+        if WEB_USER_INVITE_ADDITIONAL_FIELDS.enabled(self.domain):
+            field_view_context = self.custom_data.field_view.get_field_page_context(
+                self.domain, self.request.couch_user, self.custom_data, None
+            )
+            ctx.update(field_view_context)
+
+        return ctx
 
     def _assert_user_has_permission_to_access_locations(self, assigned_location_ids):
         if not set(assigned_location_ids).issubset(set(SQLLocation.objects.accessible_to_user(
