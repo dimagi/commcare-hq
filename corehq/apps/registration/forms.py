@@ -17,7 +17,7 @@ from crispy_forms.helper import FormHelper
 
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
-from corehq.apps.custom_data_fields.edit_entity import add_prefix
+from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed, with_prefix
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -491,9 +491,10 @@ class AdminInvitesUserForm(SelectUserLocationForm):
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
                  custom_data=None, *, domain, **kwargs):
+        self.custom_data = custom_data
         if data:
             data = data.copy()
-            custom_data_post_dict = custom_data.form.data
+            custom_data_post_dict = self.custom_data.form.data
             data.update({k: v for k, v in custom_data_post_dict.items() if k not in data})
         self.request = kwargs.get('request')
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
@@ -502,9 +503,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         self.fields['role'].choices = [('', _("Select a role"))] + role_choices
         if domain_obj:
             prefixed_fields = []
-            if PROFILE_SLUG in custom_data.form.fields:
-                custom_data.form.fields[PROFILE_SLUG].widget.choices.insert(0, ('', ''))
-            prefixed_fields = add_prefix(custom_data.form.fields, custom_data.prefix)
+            if PROFILE_SLUG in self.custom_data.form.fields:
+                self.custom_data.form.fields[PROFILE_SLUG].widget.choices.insert(0, ('', ''))
+            prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
             self.fields.update(prefixed_fields)
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
@@ -535,7 +536,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
             )
         ]
-        custom_data_fieldset = custom_data.make_fieldsets(prefixed_fields, data is not None)
+        custom_data_fieldset = self.custom_data.make_fieldsets(prefixed_fields, data is not None)
         fields.extend(custom_data_fieldset)
         if should_show_location:
             fields.append(
@@ -612,6 +613,15 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         for field in cleaned_data:
             if isinstance(cleaned_data[field], str):
                 cleaned_data[field] = cleaned_data[field].strip()
+
+        prefixed_profile_key = with_prefix(PROFILE_SLUG, self.custom_data.prefix)
+        prefixed_field_names = add_prefix(self.custom_data.form.fields, self.custom_data.prefix).keys()
+        custom_user_data = {key: cleaned_data.pop(key) for key in prefixed_field_names if key in cleaned_data}
+
+        if prefixed_profile_key in custom_user_data:
+            cleaned_data['profile'] = custom_user_data.pop(prefixed_profile_key)
+        cleaned_data['custom_user_data'] = get_prefixed(custom_user_data, self.custom_data.prefix)
+
         return cleaned_data
 
     def _initialize_tableau_fields(self, data, domain):
