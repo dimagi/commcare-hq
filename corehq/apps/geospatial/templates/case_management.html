@@ -126,7 +126,7 @@
 
 <div id="case-buttons">
     <div id="assignments-results" class="pull-left">
-        <button class="btn btn-default" data-toggle="modal" data-target="#review-assignment-results" data-bind="click: loadCaseData, enable: canOpenModal">
+        <button id="review-assignment-results" class="btn btn-default" data-toggle="modal" data-target="#review-assignment-results" data-bind="click: loadCaseData, enable: canOpenModal">
             {% trans 'Review Results' %}
         </button>
         <button id="accept-assignment-results" class="btn btn-default"  data-bind="click: acceptAssignments, enable: canOpenModal && !assignmentAjaxInProgress">
