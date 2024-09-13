@@ -399,7 +399,6 @@ HQ_APPS = (
     'custom.champ',
     'custom.covid',
     'custom.inddex',
-    'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
     'custom.hmhb',
@@ -1968,7 +1967,7 @@ DOMAIN_MODULE_MAP = {
     'india-nutrition-project': 'custom.nutrition_project',
 
     'champ-cameroon': 'custom.champ',
-    'onse-iss': 'custom.onse',
+    'onse-iss': 'custom.onse',  # Required by self-hosted ONSE-ISS project
 
     # vectorlink domains
     'abtmali': 'custom.abt',

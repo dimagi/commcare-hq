@@ -126,7 +126,6 @@ def REPORTS(project):
             commtrack.SimplifiedInventoryReport,
             commtrack.InventoryReport,
             commtrack.CurrentStockStatusReport,
-            commtrack.StockStatusMapReport,
         )
         reports.insert(0, (gettext_lazy("CommCare Supply"), supply_reports))
 
