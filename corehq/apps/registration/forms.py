@@ -491,6 +491,10 @@ class AdminInvitesUserForm(SelectUserLocationForm):
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
                  custom_data=None, *, domain, **kwargs):
+        if data:
+            data = data.copy()
+            custom_data_post_dict = custom_data.form.data
+            data.update({k: v for k, v in custom_data_post_dict.items() if k not in data})
         self.request = kwargs.get('request')
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
         self.can_edit_tableau_config = can_edit_tableau_config
