@@ -2,12 +2,14 @@ hqDefine('users/js/invite_web_user',[
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'users/js/custom_data_fields',
     'hqwebapp/js/bootstrap3/validators.ko',
     'locations/js/widgets',
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
+    customDataFields
 ) {
     'use strict';
 
@@ -68,6 +70,16 @@ hqDefine('users/js/invite_web_user',[
                 && self.emailDelayed.isValid()
                 && !self.emailDelayed.isValidating();
         });
+
+        var $customDataFieldsForm = $(".custom-data-fieldset");
+        if ($customDataFieldsForm.length) {
+            self.custom_fields = customDataFields.customDataFieldsEditor({
+                profiles: initialPageData.get('custom_fields_profiles'),
+                profile_slug: initialPageData.get('custom_fields_profile_slug'),
+                slugs: initialPageData.get('custom_fields_slugs'),
+                can_edit_original_profile: true,
+            });
+        }
 
         return self;
     };

@@ -33,6 +33,11 @@ def with_prefix(string, prefix):
     return "{}-{}".format(prefix, string)
 
 
+def without_prefix(string, prefix):
+    prefix_len = len(prefix) + 1
+    return string[prefix_len:] if string.startswith(prefix) else string
+
+
 def add_prefix(field_dict, prefix):
     """
     Prefix all keys in the dict.
@@ -136,8 +141,8 @@ class CustomDataEditor(object):
             field_names = []
             for field_name, field in form_fields.items():
                 data_binds = [
-                    f"value: {self.ko_model}.{field_name}.value",
-                    f"disable: {self.ko_model}.{field_name}.disable",
+                    f"value: {self.ko_model}.{without_prefix(field_name,self.prefix)}.value",
+                    f"disable: {self.ko_model}.{without_prefix(field_name, self.prefix)}.disable",
                 ]
                 if hasattr(field, 'choices') or field_name == PROFILE_SLUG:
                     data_binds.append("select2: " + json.dumps([

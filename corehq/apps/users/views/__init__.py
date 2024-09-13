@@ -1184,8 +1184,12 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def page_context(self):
+        field_view_context = self.custom_data.field_view.get_field_page_context(
+            self.domain, self.request.couch_user, self.custom_data, None
+        )
         return {
             'registration_form': self.invite_web_user_form,
+            **field_view_context
         }
 
     def _assert_user_has_permission_to_access_locations(self, assigned_location_ids):
