@@ -1,5 +1,4 @@
 import json
-import warnings
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
@@ -745,38 +744,40 @@ class WebpackMainNode(RequireJSMainNode):
         return "<WebpackMain Node: %r>" % (self.value,)
 
 
-try:
-    from get_webpack_manifest import get_webpack_manifest
-    webpack_manifest = get_webpack_manifest()
-    webpack_manifest_b3 = get_webpack_manifest('webpack/_build/manifest_b3.json')
-except (ImportError, SyntaxError):
-    webpack_manifest = {}
-    webpack_manifest_b3 = {}
-
-
 @register.filter
 def webpack_bundles(entry_name):
+    from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
     from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
     bootstrap_version = get_bootstrap_version()
-    if bootstrap_version == BOOTSTRAP_5:
-        bundles = webpack_manifest.get(entry_name, [])
-        webpack_folder = 'webpack'
-    else:
-        bundles = webpack_manifest_b3.get(entry_name, [])
-        webpack_folder = 'webpack_b3'
+
+    try:
+        if bootstrap_version == BOOTSTRAP_5:
+            manifest = get_webpack_manifest()
+            webpack_folder = 'webpack'
+        else:
+            manifest = get_webpack_manifest('manifest_b3.json')
+            webpack_folder = 'webpack_b3'
+    except WebpackManifestNotFoundError:
+        raise TemplateSyntaxError(
+            f"No webpack manifest found!\n"
+            f"'{entry_name}' will not load correctly.\n\n"
+            f"Did you run `yarn dev` or `yarn build`?\n\n\n"
+        )
+
+    bundles = manifest.get(entry_name, [])
     if not bundles:
-        if not settings.UNIT_TESTING and settings.DEBUG:
-            warnings.warn(f"\x1b[33;20m"  # yellow color
-                          f"\n\n\nNo webpack manifest entry found for '{entry_name}'"
-                          f"\nPage may have javascript errors!"
-                          f"\nDid you try restarting `yarn dev` and `runserver`?\n\n"
-                          f"\x1b[0m")
-        if bootstrap_version == BOOTSTRAP_3 and not settings.UNIT_TESTING and settings.DEBUG:
-            warnings.warn("\x1b[33;20m"  # yellow color
-                          "Additionally, did you remember to use `webpack_main_b3` "
-                          "for this Bootstrap 3 module?\n\n"
-                          "\x1b[0m")
-        bundles = [f"{entry_name}.js"]
+        webpack_error = (
+            f"No webpack manifest entry found for '{entry_name}'.\n\n"
+            f"Is this a newly added entry point?\n"
+            f"Did you try restarting `yarn dev`?\n\n\n"
+        )
+        if bootstrap_version == BOOTSTRAP_3:
+            webpack_error = (
+                f"{webpack_error}"
+                f"Additionally, did you remember to use `webpack_main_b3` "
+                f"on this Bootstrap 3 page?\n\n\n\n"
+            )
+        raise TemplateSyntaxError(webpack_error)
     return [
         f"{webpack_folder}/{bundle}" for bundle in bundles
     ]
