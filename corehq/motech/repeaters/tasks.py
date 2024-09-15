@@ -113,6 +113,9 @@ def check_repeaters_in_partition(partition):
                 if datetime.utcnow() > twentythree_hours_later:
                     break
 
+                if toggles.PAUSE_DATA_FORWARDING.enabled(record.domain):
+                    continue
+
                 metrics_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now(is_retry=True)
     finally:

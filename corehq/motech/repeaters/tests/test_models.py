@@ -57,37 +57,42 @@ class RepeaterTestCase(TestCase):
             connection_settings=self.conn,
         )
         self.repeater.save()
+        self.paused_repeater = FormRepeater(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            is_paused=True,
+        )
+        self.paused_repeater.save()
 
 
-class TestSoftDeleteRepeaters(RepeaterTestCase):
+class TestSoftDeleteRepeaters(TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.all_repeaters = [self.repeater]
+        url = 'https://www.example.com/api/'
+        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        self.repeaters = []
         for i in range(5):
             r = FormRepeater(
                 domain=DOMAIN,
                 connection_settings=self.conn,
             )
             r.save()
-            self.all_repeaters.append(r)
+            self.repeaters.append(r)
 
     def test_soft_deletion(self):
-        self.assertEqual(FormRepeater.objects.all().count(), 6)
-        self.all_repeaters[1].is_deleted = True
-        self.all_repeaters[1].save()
-        self.all_repeaters[0].is_deleted = True
-        self.all_repeaters[0].save()
+        self.assertEqual(FormRepeater.objects.all().count(), 5)
+        self.repeaters[0].is_deleted = True
+        self.repeaters[0].save()
         self.assertEqual(FormRepeater.objects.all().count(), 4)
         self.assertEqual(
             set(FormRepeater.objects.all().values_list('id', flat=True)),
-            set([r.id for r in self.all_repeaters if not r.is_deleted])
+            set([r.id for r in self.repeaters if not r.is_deleted])
         )
 
-    def test_repeatrs_retired_from_sql(self):
-        self.all_repeaters[0].retire()
-        self.all_repeaters[4].retire()
-        repeater_count = Repeater.objects.all().count()
-        self.assertEqual(repeater_count, 4)
+    def test_repeaters_retired_from_sql(self):
+        self.assertEqual(Repeater.objects.all().count(), 5)
+        self.repeaters[0].retire()
+        self.assertEqual(Repeater.objects.all().count(), 4)
 
 
 class TestRepeaterName(RepeaterTestCase):
@@ -595,6 +600,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.new_record(next_check=now - timedelta(minutes=15))
         self.new_record(next_check=now - timedelta(minutes=5))
         self.new_record(next_check=None, state=State.Success)
+        self.new_record(next_check=now - timedelta(hours=2), is_paused=True)
         overdue = RepeatRecord.objects.count_overdue()
         self.assertEqual(overdue, 3)
 
@@ -627,6 +633,14 @@ class TestRepeatRecordManager(RepeaterTestCase):
         ids = {r.id for r in iter_partition(start, 0, 1)}
         self.assertEqual(ids, all_ids)
 
+    def test_paused_repeaters_are_skipped(self):
+        iter_partition = type(self).iter_partition
+        all_ids = self.make_records(3, is_paused=False)
+        self.make_records(2, is_paused=True)
+        start = datetime.utcnow()
+        ids = {r.id for r in iter_partition(start, 0, 1)}
+        self.assertEqual(ids, all_ids)
+
     def test_get_domains_with_records(self):
         self.new_record(domain='a')
         self.new_record(domain='b')
@@ -645,22 +659,24 @@ class TestRepeatRecordManager(RepeaterTestCase):
             {'alex', 'alice'},
         )
 
-    def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
+    def new_record(self, next_check=before_now, state=State.Pending, domain="test", is_paused=False):
+        repeater_id = self.paused_repeater.repeater_id if is_paused else self.repeater.repeater_id
         return RepeatRecord.objects.create(
             domain=domain,
-            repeater_id=self.repeater.repeater_id,
+            repeater_id=repeater_id,
             payload_id="c0ffee",
             registered_at=self.before_now,
             next_check=next_check,
             state=state,
         )
 
-    def make_records(self, n, state=State.Pending):
+    def make_records(self, n, state=State.Pending, is_paused=False):
+        repeater = self.paused_repeater if is_paused else self.repeater
         now = timezone.now() - timedelta(seconds=10)
         is_pending = state in [State.Pending, State.Fail]
         records = RepeatRecord.objects.bulk_create(RepeatRecord(
             domain="test",
-            repeater=self.repeater,
+            repeater=repeater,
             payload_id="c0ffee",
             registered_at=now,
             next_check=(now if is_pending else None),

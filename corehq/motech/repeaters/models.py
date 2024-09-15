@@ -392,10 +392,15 @@ class Repeater(RepeaterSuperProxy):
         )
         repeat_record.save()
 
+        if self.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain):
+            # no need to go any further if the repeater or domain is paused
+            return repeat_record
+
         if fire_synchronously:
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
             repeat_record.__dict__["repeater"] = self
+
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
@@ -926,7 +931,8 @@ class RepeatRecordManager(models.Manager):
     def count_overdue(self, threshold=timedelta(minutes=10)):
         return self.filter(
             next_check__isnull=False,
-            next_check__lt=datetime.utcnow() - threshold
+            next_check__lt=datetime.utcnow() - threshold,
+            repeater__is_paused=False,
         ).count()
 
     def iterate(self, domain, repeater_id=None, state=None, chunk_size=1000):
@@ -953,12 +959,14 @@ class RepeatRecordManager(models.Manager):
                 .prefetch_related('attempt_set'))
 
     def iter_partition(self, start, partition, total_partitions):
-        from django.db.models import F
+        from django.db.models import Exists, F, OuterRef
+        # look for is_paused=True since that subset is small
+        is_repeater_paused = Repeater.objects.filter(id=OuterRef("repeater_id"), is_paused=True)
         query = self.annotate(partition_id=F("id") % total_partitions).filter(
             partition_id=partition,
             next_check__isnull=False,
             next_check__lt=start,
-        ).order_by("next_check", "id")
+        ).filter(~Exists(is_repeater_paused)).order_by("next_check", "id")
         offset = {}
         while True:
             result = list(query.filter(**offset)[:1000])
