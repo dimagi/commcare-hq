@@ -5,7 +5,9 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.test import TestCase
+from django.test.utils import override_settings
 
+from corehq.apps.cleanup.models import DeletedSQLDoc
 from corehq.blobs import NotFound as BlobNotFound, get_blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
@@ -354,6 +356,41 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual(1, len(forms))
         self.assertEqual(form_ids[0], forms[0].form_id)
 
+    @override_settings(UNIT_TESTING=False)
+    def test_delete_creates_tombstone_by_default(self):
+        form = create_form_for_test(DOMAIN, deleted_on=datetime.now())
+        form.delete()
+        self.assertEqual(DeletedSQLDoc.objects.all().count(), 1)
+
+    @override_settings(UNIT_TESTING=False)
+    def test_delete_raises_error_if_leave_tombstone_is_false(self):
+        form = create_form_for_test(DOMAIN)
+        with self.assertRaises(ValueError):
+            form.delete(leave_tombstone=False)
+
+    @override_settings(UNIT_TESTING=False)
+    def test_bulk_delete_creates_tombstone_if_leave_tombstone_is_true(self):
+        forms = [create_form_for_test(DOMAIN, deleted_on=datetime.now()) for i in range(3)]
+        form_ids = [form.form_id for form in forms]
+        XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids, leave_tombstone=True)
+        self.assertEqual(DeletedSQLDoc.objects.all().count(), 3)
+
+    @override_settings(UNIT_TESTING=False)
+    def test_bulk_delete_skips_duplicate_tombstone(self):
+        form = create_form_for_test(DOMAIN, deleted_on=datetime.now(), form_id='1')
+        XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id], leave_tombstone=True)
+        self.assertIsNotNone(DeletedSQLDoc.objects.get(doc_id=form.form_id))
+
+        forms = [create_form_for_test(DOMAIN, deleted_on=datetime.now(), form_id='{}'.format(i)) for i in range(3)]
+        form_ids = [form.form_id for form in forms]
+        XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids, leave_tombstone=True)
+        self.assertEqual(DeletedSQLDoc.objects.filter(doc_id__in=form_ids).count(), 3)
+
+    @override_settings(UNIT_TESTING=False)
+    def test_bulk_delete_raises_error_if_leave_tombstone_is_not_specified(self):
+        with self.assertRaises(NotImplementedError):
+            XFormInstance.objects.hard_delete_forms(DOMAIN, [])
+
     def assert_form_xml_attachment(self, form):
         attachments = XFormInstance.objects.get_attachments(form.form_id)
         self.assertEqual([a.name for a in attachments], ["form.xml"])
@@ -415,7 +452,16 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
 
         counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
 
-        self.assertEqual(counts, {'form_processor.XFormInstance': 5})
+        self.assertEqual(counts['form_processor.XFormInstance'], expected_count)
+
+    def test_returns_tombstone_count(self):
+        expected_count = 5
+        for _ in range(expected_count):
+            create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+
+        self.assertEqual(counts['tombstone'], expected_count)
 
     def test_nothing_is_deleted_if_dry_run_is_true(self):
         form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
@@ -427,6 +473,30 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
         XFormInstance.objects.get_form(form.form_id)
         # still returns accurate count
         self.assertEqual(counts, {'form_processor.XFormInstance': 1})
+
+    def test_tombstone_is_created_on_deletion(self):
+        form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+        delete_doc = DeletedSQLDoc.objects.filter(doc_id=form.form_id)
+
+        self.assertIsNotNone(delete_doc)
+
+    def test_tombstone_count_matches_deleted_form_count(self):
+        expected_count = 5
+        for _ in range(expected_count):
+            create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+
+        self.assertEqual(DeletedSQLDoc.objects.all().count(), counts['form_processor.XFormInstance'])
+
+    def test_tombstone_is_not_created_if_deleted_on_is_null(self):
+        create_form_for_test(self.domain, deleted_on=None)
+
+        XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+
+        self.assertEqual(DeletedSQLDoc.objects.count(), 0)
 
     def setUp(self):
         self.domain = 'test_hard_delete_forms_before_cutoff'
