@@ -746,18 +746,18 @@ class WebpackMainNode(RequireJSMainNode):
 
 @register.filter
 def webpack_bundles(entry_name):
-    from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest
+    from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
     from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
     bootstrap_version = get_bootstrap_version()
 
-    if bootstrap_version == BOOTSTRAP_5:
-        manifest = get_webpack_manifest()
-        webpack_folder = 'webpack'
-    else:
-        manifest = get_webpack_manifest('manifest_b3.json')
-        webpack_folder = 'webpack_b3'
-
-    if manifest is None:
+    try:
+        if bootstrap_version == BOOTSTRAP_5:
+            manifest = get_webpack_manifest()
+            webpack_folder = 'webpack'
+        else:
+            manifest = get_webpack_manifest('manifest_b3.json')
+            webpack_folder = 'webpack_b3'
+    except WebpackManifestNotFoundError:
         raise TemplateSyntaxError(
             f"No webpack manifest found!\n"
             f"'{entry_name}' will not load correctly.\n\n"

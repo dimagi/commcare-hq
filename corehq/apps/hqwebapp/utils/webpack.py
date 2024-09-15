@@ -13,6 +13,10 @@ def cache_unless_debug(func):
     return func if settings.DEBUG else memoized(func)
 
 
+class WebpackManifestNotFoundError(Exception):
+    pass
+
+
 @cache_unless_debug
 def get_webpack_manifest(filename=None):
     if not filename:
@@ -20,7 +24,7 @@ def get_webpack_manifest(filename=None):
     else:
         path = WEBPACK_BUILD_DIR / filename
     if not path.is_file():
-        return None
+        raise WebpackManifestNotFoundError
 
     with open(path, 'r', encoding='utf-8') as f:
         manifest = json.load(f)
