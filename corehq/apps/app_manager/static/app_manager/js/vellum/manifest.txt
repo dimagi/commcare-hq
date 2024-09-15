@@ -571,7 +571,6 @@
 │  └─ uc.micro@^1.0.5
 ├─ mdn-data@2.0.14
 ├─ mdurl@1.0.1
-├─ MediaUploader@0.0.0
 ├─ micromatch@4.0.4
 │  ├─ braces@^3.0.1
 │  ├─ picomatch@^2.2.3
@@ -1006,4 +1005,4 @@
 │  ├─ buffer-crc32@~0.2.3
 │  └─ fd-slicer@~1.1.0
 └─ yocto-queue@0.1.0
-Done in 0.27s.
+Done in 0.10s.
