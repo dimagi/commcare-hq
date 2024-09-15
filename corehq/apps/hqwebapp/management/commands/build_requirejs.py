@@ -1,3 +1,29 @@
+'''
+   69059965 function calls (68285183 primitive calls) in 146.297 seconds
+   Ordered by: cumulative time
+   List reduced from 451 to 100 due to restriction <100>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000  146.177  146.177 /Users/jennyschweers/Documents/commcare-hq/corehq/apps/hqwebapp/management/commands/build_requirejs.py:46(handle)
+       68    0.002    0.000  120.844    1.777 /Users/jennyschweers/.pyenv/versions/3.9.18/lib/python3.9/subprocess.py:341(call)
+      949    0.001    0.000  120.593    0.127 /Users/jennyschweers/.pyenv/versions/3.9.18/lib/python3.9/subprocess.py:1184(wait)
+      949    0.013    0.000  120.592    0.127 /Users/jennyschweers/.pyenv/versions/3.9.18/lib/python3.9/subprocess.py:1901(_wait)
+      881    0.001    0.000  120.578    0.137 /Users/jennyschweers/.pyenv/versions/3.9.18/lib/python3.9/subprocess.py:1888(_try_wait)
+      881  120.576    0.137  120.576    0.137 {built-in method posix.waitpid}
+        2    0.005    0.002  105.742   52.871 /Users/jennyschweers/Documents/commcare-hq/corehq/apps/hqwebapp/management/commands/build_requirejs.py:211(_minify)
+
+    EXPERIMENTS
+
+    1) unused=false (via https://stackoverflow.com/questions/15447727/how-to-speed-up-the-minification-process-of-uglifyjs-2)
+       69060011 function calls (68285229 primitive calls) in 133.497 seconds
+       so, whatever
+
+    2) Use unminified versions of libraries (via https://github.com/mishoo/UglifyJS/issues/917)
+
+    2.5) Is vellum significant? ...no, that's not in RequireJS
+
+    3) Minify prior to bundling (via https://adamhooper.medium.com/make-uglifyjs-way-faster-by-using-it-sooner-c2c39a9ad27e)
+'''
 import json
 import logging
 import os
@@ -9,6 +35,8 @@ from shutil import copyfile
 from subprocess import call
 
 from django.conf import settings
+from dimagi.utils import profile
+from datetime import datetime
 
 import yaml
 from django.core.management import CommandError
@@ -42,6 +70,7 @@ class Command(ResourceStaticCommand):
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
 
+    #@profile
     def handle(self, **options):
         logger.setLevel('DEBUG')
 
@@ -218,10 +247,14 @@ class Command(ResourceStaticCommand):
         for module in modules:
             rel_path = Path(module['name'] + ".js")
             path = self._staticfiles_path(rel_path)
+            start = datetime.utcnow()
             ret = call([
                 "node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "--mangle", "--output", path,
+                #"node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "unused=false", "--mangle", "--output", path,
                 "--source-map", f"url={rel_path.name}.map"
             ])
+            end = datetime.utcnow()
+            logger.info(f"{(end - start).seconds} seconds to minify {path}")
             if ret:
                 raise CommandError(f"Failed to minify {rel_path}")
 
