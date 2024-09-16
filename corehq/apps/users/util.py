@@ -398,7 +398,7 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
         changed_by_repr=changed_by_repr,
         user_id=couch_user.get_id,
         changed_by=changed_by_id,
-        changes=_get_changed_details(couch_user, action, fields_changed),
+        changes=_get_changed_details(couch_user, action, fields_changed, for_domain),
         changed_via=changed_via,
         change_messages=change_messages,
         action=action.value,
@@ -406,11 +406,12 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     )
 
 
-def _get_changed_details(couch_user, action, fields_changed):
+def _get_changed_details(couch_user, action, fields_changed, for_domain):
     from corehq.apps.users.model_log import UserModelAction
 
     if action in [UserModelAction.CREATE, UserModelAction.DELETE]:
         changed_details = couch_user.to_json()
+        changed_details['user_data'] = couch_user.get_user_data(for_domain).raw if for_domain else {}
     else:
         changed_details = fields_changed.copy()
 

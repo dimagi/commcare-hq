@@ -18,12 +18,11 @@ from crispy_forms.helper import FormHelper
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.programs.models import Program
-from corehq.apps.users.forms import BaseLocationForm, BaseTableauUserForm
+from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
 
 
@@ -370,13 +369,13 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         label="",
         help_text=mark_safe(_(
             """I have read and agree to Dimagi's
-                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                <a href="https://dimagi.com/terms-privacy/"
                     target="_blank">Privacy Policy</a>,
-                <a href="http://www.dimagi.com/terms/latest/tos/"
+                <a href="https://dimagi.com/terms-of-service/"
                     target="_blank">Terms of Service</a>,
-                <a href="http://www.dimagi.com/terms/latest/ba/"
+                <a href="https://dimagi.com/terms-ba/"
                     target="_blank">Business Agreement</a>, and
-                <a href="http://www.dimagi.com/terms/latest/aup/"
+                <a href="https://dimagi.com/terms-aup/"
                     target="_blank">Acceptable Use Policy</a>.
                """))
     )
@@ -484,7 +483,7 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
         return ""
 
 
-class AdminInvitesUserForm(BaseLocationForm):
+class AdminInvitesUserForm(SelectUserLocationForm):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
@@ -492,28 +491,29 @@ class AdminInvitesUserForm(BaseLocationForm):
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
                  *, domain, **kwargs):
+        self.request = kwargs.get('request')
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
         self.can_edit_tableau_config = can_edit_tableau_config
         domain_obj = Domain.get_by_name(domain)
-        self.fields['role'].choices = role_choices
+        self.fields['role'].choices = [('', _("Select a role"))] + role_choices
         if domain_obj:
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
                 self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
                 from corehq.apps.users.views.mobile import UserFieldsView
-                definition = CustomDataFieldsDefinition.get(domain_obj.name, UserFieldsView.field_type)
-                if definition:
-                    profiles = definition.get_profiles()
-                    if len(profiles) > 0:
-                        self.fields['profile'].choices = [('', '')] + [
-                            (profile.id, profile.name) for profile in profiles
-                        ]
+                self.valid_profiles = UserFieldsView.get_user_accessible_profiles(
+                    self.domain, self.request.couch_user
+                )
+                if len(self.valid_profiles) > 0:
+                    self.fields['profile'].choices = [('', '')] + [
+                        (profile.id, profile.name) for profile in self.valid_profiles
+                    ]
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
                 programs = Program.by_domain(domain_obj.name)
                 choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
                 self.fields['program'].choices = choices
 
-        self.excluded_emails = excluded_emails or []
+        self.excluded_emails = [x.lower() for x in excluded_emails] if excluded_emails else []
 
         if self.can_edit_tableau_config:
             self._initialize_tableau_fields(data, domain)
@@ -579,9 +579,17 @@ class AdminInvitesUserForm(BaseLocationForm):
             ),
         )
 
+    def clean_profile(self):
+        profile_id = self.cleaned_data['profile']
+        if profile_id and profile_id not in {str(p.id) for p in self.valid_profiles}:
+            raise forms.ValidationError(
+                _('Invalid profile selected. Please select a valid profile.'),
+            )
+        return profile_id
+
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
-        if email in self.excluded_emails:
+        if email.lower() in self.excluded_emails:
             raise forms.ValidationError(_("A user with this email address is already in "
                                           "this project or has a pending invitation."))
         return email

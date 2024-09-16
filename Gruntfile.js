@@ -1,5 +1,5 @@
-/* globals process */
-
+/* globals module, process, require */
+'use strict';
 module.exports = function (grunt) {
     var headless = require('mocha-headless-chrome'),
         _ = require('lodash'),
@@ -28,16 +28,15 @@ module.exports = function (grunt) {
      */
     var apps = [
         'app_manager',
-        'export/ko',
+        'export/ko/bootstrap3',
+        'export/ko/bootstrap5',
         'notifications/bootstrap3',
         'notifications/bootstrap5',
         'reports_core/choiceListUtils',
         'locations',
         'userreports',
-        'cloudcare/bootstrap3',
-        'cloudcare/bootstrap5',
-        'cloudcare/form_entry/bootstrap3',
-        'cloudcare/form_entry/bootstrap5',
+        'cloudcare',
+        'cloudcare/form_entry',
         'hqwebapp/bootstrap3',
         'hqwebapp/bootstrap5',
         'case_importer',

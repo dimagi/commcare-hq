@@ -130,8 +130,8 @@ def openmrs_test_fire(request, domain, repeater_id, record_id):
     record = RepeatRecord.objects.get(domain=domain, id=record_id)
     assert record.repeater_id == repeater.id
 
-    attempt = repeater.fire_for_record(record)
-    return JsonResponse(attempt.to_json())
+    repeater.fire_for_record(record)
+    return JsonResponse({'status': 'OK'}, status=200)
 
 
 @login_and_domain_required

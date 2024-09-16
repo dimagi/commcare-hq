@@ -16,6 +16,7 @@ from dimagi.utils.logging import notify_exception
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.es import cases as case_es
 from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
@@ -269,6 +270,8 @@ class CaseSearchQueryBuilder:
                 for xpath in xpaths:
                     search_es = search_es.filter(self._build_filter_from_xpath(xpath))
                 return search_es
+        elif criteria.key == 'case_id':
+            return search_es.filter(case_es.case_ids(criteria.value))
         elif criteria.key == 'owner_id':
             if not criteria.is_empty:
                 return search_es.filter(case_search.owner(criteria.value))
@@ -327,8 +330,7 @@ class CaseSearchQueryBuilder:
         elif criteria.is_index_query:
             return reverse_index_case_query(value, criteria.index_query_identifier)
         else:
-            return case_property_query(criteria.key, value, fuzzy=fuzzy,
-                                       fuzzy_prefix_length=self.config.fuzzy_prefix_length)
+            return case_property_query(criteria.key, value, fuzzy=fuzzy)
 
     def _remove_ignored_patterns(self, case_property, value):
         for to_remove in self._patterns_to_remove[case_property]:

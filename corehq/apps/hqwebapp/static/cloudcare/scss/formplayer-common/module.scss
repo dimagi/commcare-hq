@@ -5,9 +5,7 @@
     vertical-align: middle;
     transition: background 1s;
   }
-  .module-column-name {
-    position: relative;
-  }
+
   tr:hover {
     .module-column {
       background-color: $cc-bg;
@@ -127,6 +125,7 @@ button.clickable-icon {
 .module-table .module-case-list-column-checkbox {
   cursor: default;
   width: 35px;
+  border: 0;
   vertical-align: middle;
 }
 
@@ -177,15 +176,8 @@ button.clickable-icon {
   }
 }
 
-.module-banner {
-  background-color: $cc-light-warm-accent-hi;
-  color: black;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  border: none;
-  margin-top: -1px;
-  text-align: center;
-  font-size: 14px;
+.restore-as-banner {
+  font-size: 11px;
 }
 
 .module-table-case-detail tbody tr:nth-child(odd) {

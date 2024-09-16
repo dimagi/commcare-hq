@@ -428,8 +428,8 @@ def prelogin_url(urlname):
     Fetches the correct dimagi.com url for a "prelogin" view.
     """
     urlname_to_url = {
-        'go_to_pricing': 'https://dimagi.com/commcare/pricing/',
-        'public_pricing': 'https://dimagi.com/commcare/pricing/',
+        'go_to_pricing': 'https://dimagi.com/commcare-pricing/',
+        'public_pricing': 'https://dimagi.com/commcare-pricing/',
 
     }
     return urlname_to_url.get(urlname, 'https://dimagi.com/commcare/')
@@ -642,6 +642,35 @@ def analytics_ab_test(parser, token):
     return _create_page_data(parser, token, 'analytics_ab_test')
 
 
+def _bundler_main(parser, token, flag, node_class):
+    bits = token.contents.split(None, 1)
+    if len(bits) == 1:
+        tag_name = bits[0]
+        value = None
+    else:
+        tag_name, value = bits
+
+    # Treat requirejs_main_b5 identically to requirejs_main
+    # Some templates check for {% if requirejs_main %}
+    tag_name = tag_name.rstrip("_b5")
+
+    # likewise with webpack_main_b3, treat identically to webpack_main
+    tag_name = tag_name.rstrip("_b3")
+
+    if getattr(parser, flag, False):
+        raise TemplateSyntaxError(
+            "multiple '%s' tags not allowed (%s)" % tuple(bits))
+    setattr(parser, flag, True)
+
+    if value and (len(value) < 2 or value[0] not in '"\'' or value[0] != value[-1]):
+        raise TemplateSyntaxError("bad '%s' argument: %s" % tuple(bits))
+
+    # use a block to allow extension template to set <bundler>_main for base
+    return loader_tags.BlockNode("__" + tag_name, NodeList([
+        node_class(tag_name, value and value[1:-1])
+    ]))
+
+
 @register.tag
 def requirejs_main_b5(parser, token):
     """
@@ -665,29 +694,31 @@ def requirejs_main(parser, token):
     will have a value of `None` unless an extending template has a
     `{% requirejs_main "..." %}` with a value.
     """
-    bits = token.contents.split(None, 1)
-    if len(bits) == 1:
-        tag_name = bits[0]
-        value = None
-    else:
-        tag_name, value = bits
+    return _bundler_main(parser, token, "__saw_requirejs_main", RequireJSMainNode)
 
-    # Treat requirejs_main_b5 identically to requirejs_main
-    # Some templates check for {% if requirejs_main %}
-    tag_name = tag_name.rstrip("_b5")
 
-    if getattr(parser, "__saw_requirejs_main", False):
-        raise TemplateSyntaxError(
-            "multiple '%s' tags not allowed (%s)" % tuple(bits))
-    parser.__saw_requirejs_main = True
+@register.tag
+def webpack_main(parser, token):
+    """
+    Indicate that a page should be using Webpack, by naming the
+    JavaScript module to be used as the page's main entry point.
 
-    if value and (len(value) < 2 or value[0] not in '"\'' or value[0] != value[-1]):
-        raise TemplateSyntaxError("bad '%s' argument: %s" % tuple(bits))
+    The base template need not specify a value in its `{% webpack_main %}`
+    tag, allowing it to be extended by templates that may or may not
+    use requirejs. In this case the `webpack_main` template variable
+    will have a value of `None` unless an extending template has a
+    `{% webpack_main "..." %}` with a value.
+    """
+    return _bundler_main(parser, token, "__saw_webpack_main", WebpackMainNode)
 
-    # use a block to allow extension template to set requirejs_main for base
-    return loader_tags.BlockNode("__" + tag_name, NodeList([
-        RequireJSMainNode(tag_name, value and value[1:-1])
-    ]))
+
+@register.tag
+def webpack_main_b3(parser, token):
+    """
+    Alias for webpack_main. Use this to mark entry points that should be part of the
+    bootstrap 3 bundle of webpack.
+    """
+    return webpack_main(parser, token)
 
 
 class RequireJSMainNode(template.Node):
@@ -700,10 +731,56 @@ class RequireJSMainNode(template.Node):
         return "<RequireJSMain Node: %r>" % (self.value,)
 
     def render(self, context):
-        if self.name not in context:
+        if self.name not in context and self.value:
             # set name in block parent context
+            context.dicts[-2]['use_js_bundler'] = True
             context.dicts[-2][self.name] = self.value
         return ''
+
+
+class WebpackMainNode(RequireJSMainNode):
+
+    def __repr__(self):
+        return "<WebpackMain Node: %r>" % (self.value,)
+
+
+@register.filter
+def webpack_bundles(entry_name):
+    from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
+    bootstrap_version = get_bootstrap_version()
+
+    try:
+        if bootstrap_version == BOOTSTRAP_5:
+            manifest = get_webpack_manifest()
+            webpack_folder = 'webpack'
+        else:
+            manifest = get_webpack_manifest('manifest_b3.json')
+            webpack_folder = 'webpack_b3'
+    except WebpackManifestNotFoundError:
+        raise TemplateSyntaxError(
+            f"No webpack manifest found!\n"
+            f"'{entry_name}' will not load correctly.\n\n"
+            f"Did you run `yarn dev` or `yarn build`?\n\n\n"
+        )
+
+    bundles = manifest.get(entry_name, [])
+    if not bundles:
+        webpack_error = (
+            f"No webpack manifest entry found for '{entry_name}'.\n\n"
+            f"Is this a newly added entry point?\n"
+            f"Did you try restarting `yarn dev`?\n\n\n"
+        )
+        if bootstrap_version == BOOTSTRAP_3:
+            webpack_error = (
+                f"{webpack_error}"
+                f"Additionally, did you remember to use `webpack_main_b3` "
+                f"on this Bootstrap 3 page?\n\n\n\n"
+            )
+        raise TemplateSyntaxError(webpack_error)
+    return [
+        f"{webpack_folder}/{bundle}" for bundle in bundles
+    ]
 
 
 @register.inclusion_tag('hqwebapp/basic_errors.html')

@@ -415,107 +415,6 @@
       "compare_all_files": true
     }
   ],
-  "apps/cloudcare/templates/cloudcare": [
-    {
-      "directories": [
-        "bootstrap3",
-        "bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "partials/bootstrap3",
-        "partials/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare/partials",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "partials/case_list/bootstrap3",
-        "partials/case_list/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare/partials/case_list",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "partials/form_entry/bootstrap3",
-        "partials/form_entry/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare/partials/form_entry",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "partials/grid_view/bootstrap3",
-        "partials/grid_view/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare/partials/grid_view",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "partials/menu/bootstrap3",
-        "partials/menu/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare/partials/menu",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "partials/query/bootstrap3",
-        "partials/query/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare/partials/query",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "partials/sessions/bootstrap3",
-        "partials/sessions/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare/partials/sessions",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "partials/users/bootstrap3",
-        "partials/users/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare/partials/users",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "spec/bootstrap3",
-        "spec/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare/spec",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "spec/form_entry/bootstrap3",
-        "spec/form_entry/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "cloudcare/spec/form_entry",
-      "compare_all_files": true
-    }
-  ],
   "apps/notifications/static/notifications/spec": [
     {
       "directories": [
@@ -763,6 +662,66 @@
       ],
       "file_type": "javascript",
       "label": "javascript/repeaters/js",
+      "compare_all_files": true
+    }
+  ],
+  "apps/export/templates/export": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "export",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "dialogs/bootstrap3",
+        "dialogs/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "export/dialogs",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "export/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "spec/ko/bootstrap3",
+        "spec/ko/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "export/spec/ko",
+      "compare_all_files": true
+    }
+  ],
+  "apps/export/static/export/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/export/js",
+      "compare_all_files": true
+    }
+  ],
+  "apps/export/static/export/spec": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/export/spec",
       "compare_all_files": true
     }
   ]

@@ -32,6 +32,8 @@ from memoized import memoized
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.web import json_response
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -50,13 +52,13 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
-    PROFILE_SLUG,
 )
 from corehq.apps.domain.auth import get_connectid_userinfo
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
     login_or_basic_ex,
+    api_auth,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
@@ -71,7 +73,7 @@ from corehq.apps.events.tasks import create_attendee_for_user
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_multiselect
+from corehq.apps.hqwebapp.decorators import use_multiselect, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
@@ -86,6 +88,7 @@ from corehq.apps.registration.forms import (
 )
 from corehq.apps.sms.api import send_sms
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
+from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
     send_account_confirmation_sms_if_necessary,
@@ -200,11 +203,13 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def main_context(self):
         context = super(EditCommCareUserView, self).main_context
-        profiles = [profile.to_json() for profile in self.form_user_update.custom_data.model.get_profiles()]
+
+        original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
+        field_view_context = self.form_user_update.custom_data.field_view.get_field_page_context(
+            self.domain, self.couch_user, self.form_user_update.custom_data, original_profile_id
+        )
+        context.update(field_view_context)
         context.update({
-            'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
-            'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
-            'custom_fields_profile_slug': PROFILE_SLUG,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
@@ -711,6 +716,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
             ko_model="custom_fields",
+            request_user=self.couch_user,
         )
 
     @property
@@ -723,13 +729,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     def page_context(self):
         bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
 
-        profiles = [profile.to_json() for profile in self.custom_data.model.get_profiles()]
-        return {
+        context = {
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
-            'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
-            'custom_fields_profiles': profiles,
-            'custom_fields_profile_slug': PROFILE_SLUG,
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
@@ -742,6 +744,13 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'show_deactivate_after_date': self.new_mobile_worker_form.show_deactivate_after_date,
             'two_stage_user_confirmation': self.two_stage_user_confirmation,
         }
+
+        field_view_context = self.custom_data.field_view.get_field_page_context(
+            self.domain, self.couch_user, self.custom_data
+        )
+        context.update(field_view_context)
+
+        return context
 
     @property
     @memoized
@@ -1029,6 +1038,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             field_view=UserFieldsView,
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
+            request_user=self.request.couch_user,
         )
 
     @property
@@ -1673,3 +1683,26 @@ def link_connectid_user(request, domain):
         return HttpResponse(status=201)
     else:
         return HttpResponse()
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth()
+def bulk_user_upload_api(request, domain):
+    try:
+        if len(request.FILES) > 1:
+            raise UserUploadError(_("only one file can be uploaded at a time"))
+
+        file = request.FILES.get('bulk_upload_file')
+        if file is None:
+            raise UserUploadError(_('no file uploaded'))
+        workbook = get_workbook(file)
+        user_specs, group_specs = BaseUploadUser.process_workbook(workbook, domain, is_web_upload=False)
+        BaseUploadUser.upload_users(request, user_specs, group_specs, domain, is_web_upload=False)
+        return json_response({'success': True})
+    except (WorkbookJSONError, WorksheetNotFound, UserUploadError) as e:
+        return json_response({'success': False, 'message': _(str(e))}, status_code=400)
+    except Exception as e:
+        notify_exception(None, message=str(e))
+        return json_response({'success': False, 'message': str(e)}, status_code=500)

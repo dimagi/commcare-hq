@@ -23,8 +23,8 @@ from django.views.generic import View
 from django.views.generic.base import TemplateView
 
 import requests
-import sentry_sdk
 from langcodes import get_name
+from sentry_sdk import Scope
 from text_unidecode import unidecode
 from xml2json.lib import xml2json
 
@@ -74,7 +74,7 @@ from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_bootstrap5,
-    use_daterangepicker,
+    use_tempusdominus,
     waf_allow,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
@@ -100,7 +100,8 @@ class FormplayerMain(View):
     urlname = 'formplayer_main'
 
     @xframe_options_sameorigin
-    @use_daterangepicker
+    @use_bootstrap5
+    @use_tempusdominus
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -126,8 +127,17 @@ class FormplayerMain(View):
         if not hasattr(request, 'couch_user'):
             raise Http404()
 
-        def set_cookie(response):  # set_coookie is a noop by default
+        def set_cookie(response):  # set_cookie is a noop by default
             return response
+
+        def _get_login_as_user_query():
+            return login_as_user_query(
+                domain,
+                request.couch_user,
+                search_string='',
+                limit=1,
+                offset=0
+            ).run()
 
         cookie_name = urllib.parse.quote(
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
@@ -136,21 +146,19 @@ class FormplayerMain(View):
             username = urllib.parse.unquote(username)
             username = get_complete_username(username, domain)
             user = CouchUser.get_by_username(username)
-            if user:
+            if user and request.couch_user.has_permission(domain, "login_as_all_users"):
                 return user, set_cookie
+            elif user and request.couch_user.has_permission(domain, "limited_login_as"):
+                login_as_users = _get_login_as_user_query()
+                if user._id == login_as_users.hits[0]['_id']:
+                    return user, set_cookie
             else:
                 def set_cookie(response):  # overwrite the default noop set_cookie
                     response.delete_cookie(cookie_name)
                     return response
 
         elif request.couch_user.has_permission(domain, 'limited_login_as'):
-            login_as_users = login_as_user_query(
-                domain,
-                request.couch_user,
-                search_string='',
-                limit=1,
-                offset=0
-            ).run()
+            login_as_users = _get_login_as_user_query()
             if login_as_users.total == 1:
                 def set_cookie(response):
                     response.set_cookie(cookie_name, urllib.parse.quote(user.raw_username))
@@ -214,7 +222,7 @@ class FormplayerMain(View):
         }
 
         return set_cookie(
-            render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
+            render(request, "cloudcare/formplayer_home.html", context)
         )
 
 
@@ -231,17 +239,18 @@ class FormplayerMainPreview(FormplayerMain):
         return get_current_app_doc(domain, app_id)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(use_tempusdominus, name='dispatch')
 class PreviewAppView(TemplateView):
-    template_name = 'cloudcare/bootstrap3/preview_app.html'
+    template_name = 'cloudcare/preview_app.html'
     urlname = 'preview_app'
 
-    @use_daterangepicker
     @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'cloudcare/bootstrap3/block_preview_app.html', context)
+            return render(request, 'cloudcare/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
@@ -357,7 +366,7 @@ class ReadableQuestions(View):
         readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
 
         rendered_readable_form = render_to_string(
-            'reports/form/partials/bootstrap3/readable_form.html',
+            'reports/form/partials/bootstrap5/readable_form.html',
             {'questions': readable_form}
         )
 
@@ -417,8 +426,8 @@ def report_formplayer_error(request, domain):
     data = json.loads(request.body)
     error_type = data.get('type')
 
-    with sentry_sdk.configure_scope() as scope:
-        scope.set_tag("cloudcare_error_type", error_type)
+    scope = Scope.get_current_scope()
+    scope.set_tag("cloudcare_error_type", error_type)
 
     if error_type == 'webformsession_request_failure':
         metrics_counter('commcare.formplayer.webformsession_request_failure', tags={
@@ -562,6 +571,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class BlockWebAppsView(BaseDomainView):
 
     urlname = 'block_web_apps'

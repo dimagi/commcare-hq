@@ -14,6 +14,10 @@ COMMCARE_PROJECT = "commcare_project"
 # This stores the id of the user's CustomDataFieldsProfile, if any
 PROFILE_SLUG = "commcare_profile"
 
+COMMCARE_LOCATION_ID = "commcare_location_id"
+COMMCARE_LOCATION_IDS = "commcare_location_ids"
+COMMCARE_PRIMARY_CASE_SHARING_ID = "commcare_primary_case_sharing_id"
+
 # Any new fields should use the system prefix defined by SYSTEM_PREFIX.
 # SYSTEM_FIELDS is a list of fields predating SYSTEM_PREFIX that are exempt from that convention.
 SYSTEM_FIELDS = ("commtrack-supply-point", 'name', 'type', 'owner_id', 'external_id', 'hq_user_id',

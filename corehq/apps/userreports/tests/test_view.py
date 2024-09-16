@@ -618,6 +618,53 @@ class TestSubscribeToDataSource(TestCase):
         self.assertEqual(repeater.connection_settings_id, conn_settings.id)
         self.assertEqual(repeater.data_source_id, data_source_id)
 
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_subscribe_create_only_one_repeater_instance(self):
+        data_source_id = "data_source_id"
+        client_id = "client_id"
+
+        post_data = {
+            'webhook_url': 'https://hostname.com/webhook',
+            'client_id': client_id,
+            'client_secret': 'client_secret',
+            'token_url': 'https://hostname.com/token',
+            'refresh_url': 'https://hostname.com/refresh',
+        }
+        response = self._post_request(
+            domain=self.domain,
+            data_source_id=data_source_id,
+            data=post_data,
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(response.status_code, 201)
+
+        conn_settings = ConnectionSettings.objects.get(client_id=client_id)
+        repeater_count = DataSourceRepeater.objects.filter(
+            domain=self.domain,
+            connection_settings_id=conn_settings.id,
+            options={"data_source_id": data_source_id},
+        ).count()
+        self.assertEqual(repeater_count, 1)
+
+        response = self._post_request(
+            domain=self.domain,
+            data_source_id=data_source_id,
+            data=post_data,
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(response.status_code, 201)
+
+        repeater_count = DataSourceRepeater.objects.filter(
+            domain=self.domain,
+            connection_settings_id=conn_settings.id,
+            options={"data_source_id": data_source_id},
+        ).count()
+        self.assertEqual(repeater_count, 1)
+
+        conn_settings_count = ConnectionSettings.objects.filter(client_id=client_id).count()
+        self.assertEqual(conn_settings_count, 1)
+
     @flag_enabled('API_THROTTLE_WHITELIST')
     def test_subscribe_unsuccessful_without_ff(self):
         data_source_id = "data_source_id"
@@ -669,3 +716,145 @@ class TestSubscribeToDataSource(TestCase):
             request.content.decode("utf-8"),
             "Missing parameters: client_id, token_url",
         )
+
+
+class TestUnsubscribeFromDataSource(TestCase):
+
+    DOMAIN = "test-domain"
+    CLIENT_ID = "client_id"
+    USERNAME = "username"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = Domain.get_or_create_with_name(cls.DOMAIN, is_active=True)
+
+        cls.api_user_role = UserRole.create(
+            cls.DOMAIN, 'api-user', permissions=HqPermissions(access_api=True, view_reports=True)
+        )
+        cls.user = WebUser.create(cls.DOMAIN, cls.USERNAME, "password", None, None,
+                                  role_id=cls.api_user_role.get_id)
+        cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
+        cls.domain_api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user),
+                                                               name='domain-scoped',
+                                                               domain=cls.DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(deleted_by_domain=cls.DOMAIN, deleted_by=None)
+        cls.project.delete()
+        super().tearDownClass()
+
+    def _construct_api_auth_header(self, api_key):
+        return f'ApiKey {self.USERNAME}:{api_key.key}'
+
+    def _post_request(self, domain, data_source_id, data=None, **extras):
+        path = reverse("unsubscribe_from_configurable_data_source", args=(domain, data_source_id,))
+        return self.client.post(path, data=data, **extras)
+
+    def _subscribe_to_datasource(self, datasource_id):
+        conn_settings, __ = ConnectionSettings.objects.update_or_create(
+            client_id=self.CLIENT_ID,
+            defaults={
+                'domain': self.DOMAIN,
+                'name': "testy",
+                'auth_type': "oauth2_client",
+                'client_secret': 'client_secret',
+                'url': "",
+                'token_url': 'token_url',
+            }
+        )
+        DataSourceRepeater.objects.create(
+            name=f"{datasource_id} name",
+            domain=self.DOMAIN,
+            data_source_id=datasource_id,
+            connection_settings_id=conn_settings.id,
+        )
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_basic_unsubscribe_successful(self):
+        data_source_id = "data_source_id"
+        self._subscribe_to_datasource(data_source_id)
+
+        conn_settings = ConnectionSettings.objects.get(client_id=self.CLIENT_ID)
+        connection_settings_id = conn_settings.id
+
+        repeaters = DataSourceRepeater.objects.filter(connection_settings_id=connection_settings_id)
+        self.assertEqual(repeaters.count(), 1)
+
+        response = self._post_request(
+            domain=self.DOMAIN,
+            data={"client_id": self.CLIENT_ID},
+            data_source_id=data_source_id,
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(response.status_code, 200)
+
+        repeaters = DataSourceRepeater.objects.filter(connection_settings_id=connection_settings_id)
+        self.assertEqual(repeaters.count(), 0)
+        self.assertEqual(ConnectionSettings.objects.filter(id=connection_settings_id).count(), 0)
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_unsubscribe_when_multiple_repeaters(self):
+        data_source_id_1 = "data_source_id1"
+        data_source_id_2 = "data_source_id2"
+        self._subscribe_to_datasource(data_source_id_1)
+        self._subscribe_to_datasource(data_source_id_2)
+
+        conn_settings = ConnectionSettings.objects.get(client_id=self.CLIENT_ID)
+        connection_settings_id = conn_settings.id
+
+        repeaters = DataSourceRepeater.objects.filter(connection_settings_id=connection_settings_id)
+        self.assertEqual(repeaters.count(), 2)
+
+        response = self._post_request(
+            domain=self.DOMAIN,
+            data={"client_id": self.CLIENT_ID},
+            data_source_id=data_source_id_1,
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(response.status_code, 200)
+
+        repeaters = DataSourceRepeater.objects.filter(connection_settings_id=connection_settings_id)
+        self.assertEqual(repeaters.count(), 1)
+        self.assertEqual(ConnectionSettings.objects.filter(id=connection_settings_id).count(), 1)
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_missing_client_id(self):
+        response = self._post_request(
+            domain=self.DOMAIN,
+            data={},
+            data_source_id='datasource_id',
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.content.decode("utf-8"), "The client_id parameter is required")
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_invalid_client_id(self):
+        response = self._post_request(
+            domain=self.DOMAIN,
+            data={'client_id': 'client_id'},
+            data_source_id='datasource_id',
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.content.decode("utf-8"), "Invalid client_id")
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_invalid_data_source_id(self):
+        self._subscribe_to_datasource('datasource_id')
+
+        response = self._post_request(
+            domain=self.DOMAIN,
+            data={'client_id': 'client_id'},
+            data_source_id='invalid_datasource_id',
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.content.decode("utf-8"), "Invalid data source ID")

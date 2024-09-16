@@ -21,7 +21,7 @@
          self.$formElement = $(`#${formId}`);
          self.$submitBtn = self.$formElement.find("button[type='submit']");
  
-@@ -56,9 +59,9 @@
+@@ -62,9 +65,9 @@
  
              if (!self.isRequestReportSubmitting && self.isReportSent) {
                  self.isReportSent = false;
@@ -33,7 +33,7 @@
                  self.cancelBtnEnabled(false);
                  self.$formElement.ajaxSubmit({
                      type: "POST",
-@@ -77,10 +80,10 @@
+@@ -83,10 +86,10 @@
          };
  
          self.resetForm = function () {
@@ -43,10 +43,10 @@
              self.cancelBtnEnabled(true);
 -            self.$submitBtn.button('reset');
 +            self.$submitBtn.changeButtonState('reset');
-             self.hasEmailInputError(false);
+             resetErrors();
          };
  
-@@ -107,12 +110,12 @@
+@@ -117,12 +120,12 @@
          function hqwebappRequestReportSucccess() {
              self.isRequestReportSubmitting = false;
              self.isReportSent = true;

@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     'underscore',
     'backbone',
     'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'cloudcare/js/markdown',
@@ -21,6 +22,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     _,
     Backbone,
     DOMPurify,
+    bootstrap,
     initialPageData,
     toggles,
     markdown,
@@ -148,20 +150,43 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (!appPreview) {
-                let isFormEntry = !menuResponse.queryKey;
-                if (isFormEntry) {
-                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
-                }
-                if (menuResponse.type === constants.ENTITIES) {
-                    menusUtils.showMenuDropdown();
-                }
+                menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }
+
+        if (!appPreview && menuResponse.persistentMenu) {
+            FormplayerFrontend.regions.getRegion('persistentMenu').show(
+                views.PersistentMenuView({
+                    collection: _toMenuCommands(menuResponse.persistentMenu, [], menuResponse.selections),
+                }).render());
+        } else {
+            FormplayerFrontend.regions.getRegion('persistentMenu').empty();
+        }
+
         if (menuResponse.appVersion) {
             FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
         }
+    };
+
+    var _toMenuCommands = function (menuCommands, priorSelections, activeSelection) {
+        return new Backbone.Collection(_.map(menuCommands, function (menuCommand) {
+            const command = _.pick(menuCommand, [
+                'index',
+                'displayText',
+                'navigationState',
+                'imageUri',
+                'commands',
+            ]);
+            // Store an array of the commands needed to navigate to each nested menu item
+            command.selections = priorSelections.concat([command.index]);
+            if (JSON.stringify(command.selections) === JSON.stringify(activeSelection)) {
+                command.isActiveSelection = true;
+            }
+            command.commands = _toMenuCommands(command.commands, command.selections, activeSelection);
+            return new Backbone.Model(command);
+        }));
     };
 
     var showSplitScreenQuery = function (menuResponse, menuListView) {
@@ -255,8 +280,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(contentView.render().el);
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
-        $('#case-detail-modal').modal('show');
-
+        bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).show();
     };
 
     var getDetailList = function (detailObject) {

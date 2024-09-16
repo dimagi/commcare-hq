@@ -26,6 +26,7 @@ from couchforms.openrosa_response import (
     get_simple_response_xml,
 )
 
+from corehq.apps.app_manager.exceptions import CannotRestoreException
 from corehq.apps.domain.models import Domain
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
@@ -595,6 +596,10 @@ class RestoreConfig(object):
             )
             response = HttpResponse(response, content_type="text/xml; charset=utf-8",
                                     status=412)  # precondition failed
+        except CannotRestoreException as e:
+            response = get_simple_response_xml(str(e), ResponseNature.OTA_RESTORE_ERROR)
+            response = HttpResponse(response, content_type="text/xml; charset=utf-8", status=400)
+
         if not is_async:
             self._record_timing(response.status_code)
         return response

@@ -1,6 +1,8 @@
 from datetime import date
 
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.users.tests.util import patch_user_data_db_layer
+from corehq.tests.util.context import add_context
 from custom.champ.tests.utils import TestDataSourceExpressions
 from custom.champ.utils import POST_TEST_XMLNS, ACCOMPAGNEMENT_XMLNS, SUIVI_MEDICAL_XMLNS
 
@@ -10,6 +12,10 @@ CHAMP_CAMEROON_DATA_SOURCE = 'champ_cameroon.json'
 class TestEnhancedPeerMobilization(TestDataSourceExpressions):
 
     data_source_name = CHAMP_CAMEROON_DATA_SOURCE
+
+    def setUp(self):
+        super().setUp()
+        add_context(patch_user_data_db_layer(), self)
 
     def test_champ_cametoon_properties_for_post_test_xmlns(self):
         form = {
@@ -55,6 +61,7 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         }
 
         user = {
+            'doc_type': 'CommCareUser',
             'id': 'user_id',
             'domain': 'champ_cameroon',
             'location_id': 'test_location_id'
@@ -177,6 +184,7 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         }
 
         user = {
+            'doc_type': 'CommCareUser',
             'id': 'user_id',
             'domain': 'champ_cameroon',
             'location_id': 'test_location_id'
@@ -301,6 +309,7 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         }
 
         user = {
+            'doc_type': 'CommCareUser',
             'id': 'user_id',
             'domain': 'champ_cameroon',
             'location_id': 'test_location_id'

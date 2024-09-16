@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy, gettext_noop
 from memoized import memoized
 
 from corehq import toggles
+from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import filters
@@ -20,6 +21,7 @@ from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
 from corehq.apps.users.util import cached_user_id_to_user_display
 from corehq.const import USER_DATETIME_FORMAT
+from corehq.util.global_request import get_request_domain
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -138,11 +140,13 @@ class EmwfUtils(object):
 
     def location_tuple(self, location):
         location_id = location.location_id
-        text = location.get_path_display()
+        use_location_display_name = USE_LOCATION_DISPLAY_NAME.enabled(get_request_domain())
+        text = location.display_name if use_location_display_name else location.get_path_display()
+        tooltip = location.get_path_display() if use_location_display_name else location.display_name
         if self.namespace_locations:
             location_id = f'l__{location_id}'
             text = f'{text} [location]'
-        return (location_id, text)
+        return (location_id, text, None, tooltip)
 
     @property
     @memoized
@@ -202,7 +206,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         'When searching by location, put your location name in quotes to show only exact matches. '
         'To more easily find a location, you may specify multiple levels by separating with a "/". '
         'For example, "Massachusetts/Suffolk/Boston". '
-        '<a href="https://confluence.dimagi.com/display/commcarepublic/Search+for+Locations"'
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/'
+        'commcarepublic/pages/2215051298/Organization+Data+Management"'
         'target="_blank">Learn more</a>.'
     ))
 
@@ -214,7 +219,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     options_url = 'emwf_options_all_users'
     filter_help_inline = mark_safe(gettext_lazy(  # nosec: no user input
         '<i class="fa fa-info-circle"></i> See '
-        '<a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management#Search-for-Locations"'  # noqa: E501
         ' target="_blank"> Filter Definitions</a>.'))
 
     @property
@@ -279,8 +284,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def selected(self):
         selected_ids = self.request.GET.getlist(self.slug)
         if not selected_ids:
-            return [{'id': url_id, 'text': text}
-                    for url_id, text in self.get_default_selections()]
+            return [{'id': selection_tuple[0], 'text': selection_tuple[1]}
+                    for selection_tuple in self.get_default_selections()]
 
         selected = (self.selected_static_options(selected_ids)
                     + self._selected_user_entries(selected_ids)

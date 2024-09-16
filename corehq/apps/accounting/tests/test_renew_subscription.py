@@ -1,5 +1,7 @@
 import datetime
 
+from dateutil.relativedelta import relativedelta
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -63,6 +65,20 @@ class TestRenewSubscriptions(BaseAccountingTest):
         )
 
         self.assertEqual(self.renewed_subscription.plan_version, new_plan)
+
+    def test_annual_plan_renewal_length(self):
+        """
+        A "pay annually" plan should be renewed for a period of exactly 1 year
+        """
+        new_plan = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD, is_annual_plan=True)
+
+        self.renewed_subscription = self.subscription.renew_subscription(
+            new_version=new_plan
+        )
+
+        renewed_length = relativedelta(self.renewed_subscription.date_end, self.subscription.date_end)
+        self.assertEqual(renewed_length.years, 1)
+        self.assertEqual(renewed_length.days, 0)
 
     def test_next_subscription_filter(self):
         """

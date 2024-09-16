@@ -182,15 +182,6 @@ class Migration(migrations.Migration):
             bases=('sms.sqlsmsbackend',),
         ),
         migrations.CreateModel(
-            name='SQLUnicelBackend',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-            },
-            bases=('sms.sqlsmsbackend',),
-        ),
-        migrations.CreateModel(
             name='SQLYoBackend',
             fields=[
             ],

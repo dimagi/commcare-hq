@@ -52,6 +52,7 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    UCRDataLoadReport,
 )
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
@@ -1837,7 +1838,7 @@ class EnterpriseSettingsTab(UITab):
         if self.couch_user.is_superuser:
             from corehq.apps.enterprise.models import EnterprisePermissions
             if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
+                    or EnterprisePermissions.is_source_domain(self.domain):
                 enterprise_views.append({
                     'title': _("Enterprise Permissions"),
                     'url': reverse("enterprise_permissions", args=[self.domain]),
@@ -2601,7 +2602,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport, UCRDataLoadReport]
         ]))
         return sections
 

@@ -68,8 +68,9 @@ import json
 import traceback
 import uuid
 from collections import defaultdict
+from contextlib import nullcontext
 from datetime import datetime, timedelta
-from typing import Any
+from http import HTTPStatus
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.db import models, router
@@ -120,6 +121,7 @@ from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 from .const import (
+    ENDPOINT_TIMER,
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
@@ -350,30 +352,28 @@ class Repeater(RepeaterSuperProxy):
     def repeat_records_ready(self):
         return self.repeat_records.filter(state__in=(State.Pending, State.Fail))
 
-    @property
-    def is_ready(self):
-        if self.is_paused:
-            return False
-        if not (self.next_attempt_at is None
-                or self.next_attempt_at < timezone.now()):
-            return False
-        return self.repeat_records_ready.exists()
-
     def set_next_attempt(self):
         now = datetime.utcnow()
         interval = _get_retry_interval(self.last_attempt_at, now)
         self.last_attempt_at = now
         self.next_attempt_at = now + interval
-        self.save()
+        # Save using QuerySet.update() to avoid a possible race condition
+        # with self.pause(), etc. and to skip the unnecessary functionality
+        # in RepeaterSuperProxy.save().
+        Repeater.objects.filter(id=self.repeater_id).update(
+            last_attempt_at=now,
+            next_attempt_at=now + interval,
+        )
 
     def reset_next_attempt(self):
         if self.last_attempt_at or self.next_attempt_at:
             self.last_attempt_at = None
             self.next_attempt_at = None
-            self.save()
-
-    def get_attempt_info(self, repeat_record):
-        return None
+            # Avoid a possible race condition with self.pause(), etc.
+            Repeater.objects.filter(id=self.repeater_id).update(
+                last_attempt_at=None,
+                next_attempt_at=None,
+            )
 
     @property
     def verify(self):
@@ -390,11 +390,6 @@ class Repeater(RepeaterSuperProxy):
             next_check=now,
             payload_id=payload.get_id
         )
-        metrics_counter('commcare.repeaters.new_record', tags={
-            'domain': self.domain,
-            'doc_type': self.repeater_type,
-            'mode': 'sync' if fire_synchronously else 'async'
-        })
         repeat_record.save()
 
         if fire_synchronously:
@@ -406,40 +401,43 @@ class Repeater(RepeaterSuperProxy):
 
     def allowed_to_forward(self, payload):
         """
-        Return True/False depending on whether the payload meets forawrding criteria or not
+        Return True/False depending on whether the payload meets forwarding criteria or not
         """
         return True
 
     def pause(self):
         self.is_paused = True
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_paused=True)
 
     def resume(self):
         self.is_paused = False
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_paused=False)
 
     def retire(self):
         self.is_deleted = True
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_deleted=True)
 
-    def fire_for_record(self, repeat_record):
+    def _time_request(self, repeat_record, payload, timing_context):
+        with timing_context(ENDPOINT_TIMER) if timing_context else nullcontext():
+            return self.send_request(repeat_record, payload)
+
+    def fire_for_record(self, repeat_record, timing_context=None):
         payload = self.get_payload(repeat_record)
         try:
-            response = self.send_request(repeat_record, payload)
+            response = self._time_request(repeat_record, payload, timing_context)
         except (Timeout, ConnectionError) as error:
-            log_repeater_timeout_in_datadog(self.domain)
-            return self.handle_response(RequestConnectionError(error), repeat_record)
+            self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
-            return self.handle_response(err, repeat_record)
+            self.handle_response(err, repeat_record)
         except (PossibleSSRFAttempt, CannotResolveHost):
-            return self.handle_response(Exception("Invalid URL"), repeat_record)
+            self.handle_response(Exception("Invalid URL"), repeat_record)
         except Exception:
             # This shouldn't ever happen in normal operation and would mean code broke
             # we want to notify ourselves of the error detail and tell the user something vague
             notify_exception(None, "Unexpected error sending repeat record request")
-            return self.handle_response(Exception("Internal Server Error"), repeat_record)
+            self.handle_response(Exception("Internal Server Error"), repeat_record)
         else:
-            return self.handle_response(response, repeat_record)
+            self.handle_response(response, repeat_record)
 
     @memoized
     def get_payload(self, repeat_record):
@@ -459,17 +457,36 @@ class Repeater(RepeaterSuperProxy):
 
     def handle_response(self, result, repeat_record):
         """
-        route the result to the success, failure, or exception handlers
+        route the result to the success, failure, timeout, or exception handlers
 
         result may be either a response object or an exception
         """
-        if isinstance(result, Exception):
-            attempt = repeat_record.handle_exception(result)
-        elif is_response(result) and 200 <= result.status_code < 300 or result is True:
-            attempt = repeat_record.handle_success(result)
+        _4XX_retry_codes = (
+            HTTPStatus.REQUEST_TIMEOUT,
+            HTTPStatus.CONFLICT,
+            HTTPStatus.PRECONDITION_FAILED,
+            HTTPStatus.LOCKED,
+            HTTPStatus.FAILED_DEPENDENCY,
+            HTTPStatus.TOO_EARLY,
+            HTTPStatus.UPGRADE_REQUIRED,
+            HTTPStatus.PRECONDITION_REQUIRED,
+            HTTPStatus.TOO_MANY_REQUESTS,
+        )
+
+        if isinstance(result, RequestConnectionError):
+            repeat_record.handle_timeout(result)
+        elif isinstance(result, Exception):
+            repeat_record.handle_exception(result)
+        elif is_success_response(result):
+            repeat_record.handle_success(result)
+        elif not is_response(result) or (
+            500 <= result.status_code < 600
+            or result.status_code in _4XX_retry_codes
+        ):
+            repeat_record.handle_failure(result)
         else:
-            attempt = repeat_record.handle_failure(result)
-        return attempt
+            message = format_response(result)
+            repeat_record.handle_payload_error(message)
 
     def get_headers(self, repeat_record):
         # to be overridden
@@ -998,7 +1015,7 @@ class RepeatRecord(models.Model):
         # preserves the value of `self.failure_reason`.
         if self.succeeded:
             self.state = State.Pending
-        elif self.state == State.Cancelled:
+        elif self.state in (State.Cancelled, State.InvalidPayload):
             self.state = State.Fail
         self.next_check = datetime.utcnow()
         self.max_possible_tries = self.num_attempts + MAX_BACKOFF_ATTEMPTS
@@ -1018,7 +1035,6 @@ class RepeatRecord(models.Model):
         # although the Couch RepeatRecord did the same.
         code = getattr(response, "status_code", None)
         state = State.Empty if code == 204 else State.Success
-        self.repeater.reset_next_attempt()
         self.attempt_set.create(state=state, message=format_response(response) or '')
         self.state = state
         self.next_check = None
@@ -1030,7 +1046,6 @@ class RepeatRecord(models.Model):
         service is assumed to be in a good state, so do not back off, so
         that this repeat record does not hold up the rest.
         """
-        self.repeater.reset_next_attempt()
         self._add_failure_attempt(message, MAX_ATTEMPTS, retry)
 
     def add_server_failure_attempt(self, message):
@@ -1044,7 +1059,6 @@ class RepeatRecord(models.Model):
            days and will hold up all other payloads.
 
         """
-        self.repeater.set_next_attempt()
         self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
 
     def _add_failure_attempt(self, message, max_attempts, retry=True):
@@ -1058,13 +1072,13 @@ class RepeatRecord(models.Model):
         self.next_check = (attempt.created_at + wait) if state == State.Fail else None
         self.save()
 
-    def add_payload_exception_attempt(self, message, tb_str):
+    def add_payload_error_attempt(self, message, traceback_str):
         self.attempt_set.create(
-            state=State.Cancelled,
+            state=State.InvalidPayload,
             message=message,
-            traceback=tb_str,
+            traceback=traceback_str,
         )
-        self.state = State.Cancelled
+        self.state = State.InvalidPayload
         self.next_check = None
         self.save()
 
@@ -1094,10 +1108,6 @@ class RepeatRecord(models.Model):
             return max(a.created_at for a in self.attempts)
         except ValueError:
             return None
-
-    @property
-    def next_attempt_at(self):
-        return self.repeater.next_attempt_at
 
     @property
     def url(self):
@@ -1145,26 +1155,20 @@ class RepeatRecord(models.Model):
     def repeater_type(self):
         return self.repeater.repeater_type
 
-    def fire(self, force_send=False):
+    def fire(self, force_send=False, timing_context=None):
         if force_send or not self.succeeded:
             try:
-                attempt = self.repeater.fire_for_record(self)
+                self.repeater.fire_for_record(self, timing_context=timing_context)
             except Exception as e:
-                log_repeater_error_in_datadog(self.domain, status_code=None,
-                                              repeater_type=self.repeater_type)
-                attempt = self.handle_payload_exception(e)
+                self.handle_payload_error(str(e), traceback_str=traceback.format_exc())
                 raise
-            finally:
-                # pycharm warns attempt might not be defined.
-                # that'll only happen if fire_for_record raise a non-Exception exception (e.g. SIGINT)
-                # or handle_payload_exception raises an exception. I'm okay with that. -DMR
-                self.add_attempt(attempt)
-                self.save()
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
             process_repeat_record,
+            process_datasource_repeat_record,
             retry_process_repeat_record,
+            retry_process_datasource_repeat_record,
         )
 
         if self.next_check is None or self.next_check > datetime.utcnow():
@@ -1184,8 +1188,12 @@ class RepeatRecord(models.Model):
             # data from overwriting the work of another.
             return
 
-        # separated for improved datadog reporting
-        task = retry_process_repeat_record if is_retry else process_repeat_record
+        if self.repeater_type in ['DataSourceRepeater']:
+            # separated for improved datadog reporting
+            task = retry_process_datasource_repeat_record if is_retry else process_datasource_repeat_record
+        else:
+            # separated for improved datadog reporting
+            task = retry_process_repeat_record if is_retry else process_repeat_record
         if fire_synchronously:
             task(self.id, self.domain)
         else:
@@ -1205,16 +1213,20 @@ class RepeatRecord(models.Model):
         self.add_success_attempt(response)
 
     def handle_failure(self, response):
+        log_repeater_error_in_datadog(self.domain, response.status_code, self.repeater_type)
         self.add_server_failure_attempt(format_response(response))
 
     def handle_exception(self, exception):
+        log_repeater_error_in_datadog(self.domain, None, self.repeater_type)
         self.add_client_failure_attempt(str(exception))
 
-    def handle_payload_exception(self, exception):
-        self.add_client_failure_attempt(str(exception), retry=False)
+    def handle_timeout(self, exception):
+        log_repeater_timeout_in_datadog(self.domain)
+        self.add_server_failure_attempt(str(exception))
 
-    def add_attempt(self, attempt):
-        assert attempt is None, "SQL attempts are added/saved on create"
+    def handle_payload_error(self, message, traceback_str=''):
+        log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
+        self.add_payload_error_attempt(message, traceback_str)
 
     def cancel(self):
         self.state = State.Cancelled
@@ -1277,96 +1289,8 @@ def _get_retry_interval(last_checked, now):
     return interval
 
 
-def attempt_forward_now(repeater: Repeater):  # unused
-    from corehq.motech.repeaters.tasks import process_repeater
-
-    if not domain_can_forward(repeater.domain):
-        return
-    if not repeater.is_ready:  # only place that uses Repeater.is_ready
-        return
-    process_repeater.delay(repeater.id.hex)
-
-
-def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:
-    try:
-        return repeater.get_payload(repeat_record)
-    except Exception as err:
-        log_repeater_error_in_datadog(
-            repeater.domain,
-            status_code=None,
-            repeater_type=repeater.__class__.__name__
-        )
-        repeat_record.add_payload_exception_attempt(
-            message=str(err),
-            tb_str=traceback.format_exc()
-        )
-        raise
-
-
-def send_request(
-    repeater: Repeater,
-    repeat_record: RepeatRecord,
-    payload: Any,
-) -> bool:
-    """
-    Calls ``repeater.send_request()`` and handles the result.
-
-    Returns True on success or cancelled, which means the caller should
-    not retry. False means a retry should be attempted later.
-    """
-
-    def is_success(resp):
-        return (
-            is_response(resp)
-            and 200 <= resp.status_code < 300
-            # `response` is `True` if the payload did not need to be
-            # sent. (This can happen, for example, with DHIS2 if the
-            # form that triggered the forwarder doesn't contain data
-            # for a DHIS2 Event.)
-            or resp is True
-        )
-
-    def allow_retries(response):
-        # respect the `retry` field of RepeaterResponse
-        return getattr(response, 'retry', True)
-
-    def later_might_be_better(resp):
-        return is_response(resp) and resp.status_code in (
-            502,  # Bad Gateway
-            503,  # Service Unavailable
-            504,  # Gateway Timeout
-        )
-
-    try:
-        response = repeater.send_request(repeat_record, payload)
-    except (Timeout, ConnectionError) as err:
-        log_repeater_timeout_in_datadog(repeat_record.domain)
-        message = str(RequestConnectionError(err))
-        repeat_record.add_server_failure_attempt(message)
-    except Exception as err:
-        repeat_record.add_client_failure_attempt(str(err))
-    else:
-        if is_success(response):
-            if is_response(response):
-                # Log success in Datadog if the payload was sent.
-                log_repeater_success_in_datadog(
-                    repeater.domain,
-                    response.status_code,
-                    repeater_type=repeater.__class__.__name__
-                )
-            repeat_record.add_success_attempt(response)
-        else:
-            message = format_response(response)
-            if later_might_be_better(response):
-                repeat_record.add_server_failure_attempt(message)
-            else:
-                retry = allow_retries(response)
-                repeat_record.add_client_failure_attempt(message, retry)
-    return repeat_record.state in (State.Success, State.Cancelled, State.Empty)  # Don't retry
-
-
 def has_failed(record):
-    return record.state in (State.Fail, State.Cancelled)
+    return record.state in (State.Fail, State.Cancelled, State.InvalidPayload)
 
 
 def format_response(response):
@@ -1376,6 +1300,18 @@ def format_response(response):
     if response_text:
         return f'{response.status_code}: {response.reason}\n{response_text}'
     return f'{response.status_code}: {response.reason}'
+
+
+def is_success_response(response):
+    return (
+        is_response(response)
+        and 200 <= response.status_code < 300
+        # `response` is `True` if the payload did not need to be sent.
+        # (This can happen, for example, if a form submission is
+        # transformed into a payload, but the form didn't contain any
+        # relevant data and so the payload is empty.)
+        or response is True
+    )
 
 
 def is_response(duck):

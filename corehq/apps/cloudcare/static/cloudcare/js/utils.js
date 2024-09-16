@@ -5,19 +5,20 @@ hqDefine('cloudcare/js/utils', [
     'backbone.marionette',
     'moment',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/tempus_dominus',
     "hqwebapp/js/toggles",
     "cloudcare/js/formplayer/constants",
     "cloudcare/js/formplayer/layout/views/progress_bar",
     'nprogress/nprogress',
     'sentry_browser',
     "cloudcare/js/formplayer/users/models",
-    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',  // for $.datetimepicker
 ], function (
     $,
     _,
     Marionette,
     moment,
     initialPageData,
+    hqTempusDominus,
     toggles,
     constants,
     ProgressBar,
@@ -108,17 +109,7 @@ hqDefine('cloudcare/js/utils', [
         // HTML errors may already have an alert dialog
         $alertDialog = $container.hasClass("alert") ? $container : $container.find('.alert');
         try {
-            if (window.USE_BOOTSTRAP5) {
-                $alertDialog.append($("<button />").addClass("btn-close").attr("data-bs-dismiss", "alert").attr("aria-label", gettext("Close")));
-            } else {
-                $alertDialog
-                    .prepend(
-                        $("<a />")
-                            .addClass("close")
-                            .attr("data-dismiss", "alert")
-                            .html("&times;")
-                    );
-            }
+            $alertDialog.append($("<button />").addClass("btn-close").attr("data-bs-dismiss", "alert").attr("aria-label", gettext("Close")));
         } catch (e) {
             // escaping a DOM-related error from running mocha tests using grunt
             // in the command line. This passes just fine in the browser but
@@ -147,7 +138,9 @@ hqDefine('cloudcare/js/utils', [
                 breadcrumb: "#breadcrumb-region",
                 persistentCaseTile: "#persistent-case-tile",
                 restoreAsBanner: '#restore-as-region',
+                mobileRestoreAsBanner: '#mobile-restore-as-region',
                 sidebar: '#sidebar-region',
+                persistentMenu: "#persistent-menu-region",
             },
         });
 
@@ -319,34 +312,6 @@ hqDefine('cloudcare/js/utils', [
         }
     };
 
-    var dateTimePickerTooltips = {     // use default text, but enable translations
-        today: gettext('Go to today'),
-        clear: gettext('Clear selection'),
-        close: gettext('Close the picker'),
-        selectMonth: gettext('Select Month'),
-        prevMonth: gettext('Previous Month'),
-        nextMonth: gettext('Next Month'),
-        selectYear: gettext('Select Year'),
-        prevYear: gettext('Previous Year'),
-        nextYear: gettext('Next Year'),
-        selectDecade: gettext('Select Decade'),
-        prevDecade: gettext('Previous Decade'),
-        nextDecade: gettext('Next Decade'),
-        prevCentury: gettext('Previous Century'),
-        nextCentury: gettext('Next Century'),
-        pickHour: gettext('Pick Hour'),
-        incrementHour: gettext('Increment Hour'),
-        decrementHour: gettext('Decrement Hour'),
-        pickMinute: gettext('Pick Minute'),
-        incrementMinute: gettext('Increment Minute'),
-        decrementMinute: gettext('Decrement Minute'),
-        pickSecond: gettext('Pick Second'),
-        incrementSecond: gettext('Increment Second'),
-        decrementSecond: gettext('Decrement Second'),
-        togglePeriod: gettext('Toggle Period'),
-        selectTime: gettext('Select Time'),
-    };
-
     /**
      *  Convert two-digit year to four-digit year.
      *  Differs from JavaScript's two-year parsing to better match CommCare,
@@ -372,8 +337,17 @@ hqDefine('cloudcare/js/utils', [
         return inputDate;
     };
 
-    var dateFormat = 'MM/DD/YYYY';
-    var dateFormats = ['MM/DD/YYYY', 'YYYY-MM-DD', 'M/D/YYYY', 'M/D/YY', 'M-D-YYYY', 'M-D-YY', moment.defaultFormat];
+    var dateFormat = 'M/D/YYYY';
+    var dateFormats = ['MM/DD/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',  'YYYY-MM-DD', 'M/D/YYYY', 'M/D/YY', 'M-D-YYYY', 'M-D-YY', moment.defaultFormat];
+
+    // Annoyingly, moment and tempus dominus use different formats.
+    // Moment: https://momentjs.com/docs/#/parsing/string-format/
+    // TD: https://getdatepicker.com/6/plugins/customDateFormat.html
+    // TD does have a plugin to integrate with moment, but since other usages of TD in HQ
+    // don't need it, instead of enabling that, hack around this.
+    const _momentFormatToTempusFormat = function (momentFormat) {
+        return momentFormat.replaceAll("D", "d").replaceAll("Y", "y");
+    };
 
     /** Coerce an input date string to a moment object */
     var parseInputDate = function (dateString) {
@@ -389,26 +363,28 @@ hqDefine('cloudcare/js/utils', [
             return;
         }
 
-        $el.datetimepicker({
-            date: selectedDate,
-            useCurrent: false,
-            showClear: true,
-            showClose: true,
-            showTodayButton: true,
-            debug: true,
-            format: dateFormat,
-            extraFormats: dateFormats,
-            useStrict: true,
-            icons: {
-                today: 'glyphicon glyphicon-calendar',
+        let options = {
+            display: {
+                buttons: {
+                    clear: true,
+                    close: true,
+                    today: true,
+                },
             },
-            tooltips: dateTimePickerTooltips,
-            parseInputDate: parseInputDate,
-        });
+            localization: {
+                format: _momentFormatToTempusFormat(dateFormat),
+            },
+            useCurrent: false,
+        };
+        if (selectedDate) {
+            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(selectedDate);
+        }
+        let picker = hqTempusDominus.createDatePicker($el.get(0), options);
 
-        $el.on("focusout", $el.data("DateTimePicker").hide);
         $el.attr("placeholder", dateFormat);
-        $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
+        $el.attr("pattern", "[0-9\\-\\/]+");
+
+        return picker;
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {
@@ -417,18 +393,23 @@ hqDefine('cloudcare/js/utils', [
         }
 
         let date = moment(selectedTime, timeFormat);
-        $el.datetimepicker({
-            date: date.isValid() ? date : null,
-            format: timeFormat,
-            useStrict: true,
-            useCurrent: false,
-            showClear: true,
-            showClose: true,
-            debug: true,
-            tooltips: dateTimePickerTooltips,
-        });
-
-        $el.on("focusout", $el.data("DateTimePicker").hide);
+        let options = {
+            display: {
+                buttons: {
+                    clear: true,
+                    close: true,
+                },
+            },
+            localization: {
+                format: timeFormat,
+                hourCycle: timeFormat.indexOf('T') === -1 ? 'h23' : 'h12',
+            },
+            useCurrent: true,
+        };
+        if (date.isValid()) {
+            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date);
+        }
+        return hqTempusDominus.createTimePicker($el.get(0), options);
     };
 
     var smallScreenIsEnabled = function () {

@@ -197,11 +197,9 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         }
         data_source_1.save()
         del ExpressionFactory.spec_map["missing_expression"]
-        ds_1_domain = data_source_1.domain
         table_manager = ConfigurableReportTableManager([DynamicDataSourceProvider()])
         table_manager.bootstrap()
-        self.assertEqual(0, len(table_manager.table_adapters_by_domain))
-        self.assertEqual(0, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(dict(table_manager.table_adapters_by_domain), {})
 
     def _copy_data_source(self, data_source):
         data_source_json = data_source.to_json()

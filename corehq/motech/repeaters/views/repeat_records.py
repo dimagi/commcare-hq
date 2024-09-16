@@ -194,7 +194,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             checkbox,
             display.state,
             display.remote_service,
-            display.next_attempt_at,
+            display.next_check,
             self._make_view_attempts_button(record.id),
             self._make_view_payload_button(record.id),
             self._make_resend_payload_button(record.id),

@@ -1,0 +1,54 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<script id="grid-template" type="text/template">
+  <div class="page-header page-header-apps">
+    <h1 class="page-title">{% trans "Applications" %}</h1>
+  </div>
+
+  <div class="row">
+    <div class="d-none" id="put-apps-here"></div>
+
+    <% if (shouldShowIncompleteForms) { %>
+    <div class="grid-item col-sm-6 col-md-4 col-xl-3 formplayer-request">
+      <div class="js-incomplete-sessions-item appicon appicon-incomplete" role="link" tabindex="0" aria-labelledby="grid-template-incomplete-forms-heading">
+        <i class="ff ff-incomplete-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
+        <i class="ff ff-incomplete-fg appicon-icon appicon-icon-fg" aria-hidden="true"></i>
+        <div class="appicon-title">
+          <h3 id="grid-template-incomplete-forms-heading">{% trans "Incomplete Forms" %}</h3>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+    {% if not request|toggle_enabled:"HIDE_SYNC_BUTTON" %}
+    <div class="grid-item col-sm-6 col-md-4 col-xl-3 formplayer-request">
+      <div class="js-sync-item appicon appicon-sync" role="link" tabindex="0" aria-labelledby="grid-template-sync-heading">
+        <i class="ff ff-sync appicon-icon" aria-hidden="true"></i>
+        <div class="appicon-title">
+          <h3 id="grid-template-sync-heading">{% trans "Sync" %}</h3>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if request|can_use_restore_as %}
+      <div class="grid-item col-sm-6 col-md-4 col-xl-3 formplayer-request">
+        <div class="js-restore-as-item appicon appicon-restore-as" role="link" tabindex="0" aria-labelledby="grid-template-login-as-heading">
+          <i class="fa fa-user appicon-icon" aria-hidden="true"></i>
+          <div class="appicon-title">
+            <h3 id="grid-template-login-as-heading">{% trans "Log in as" %}</h3>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    <div class="grid-item col-sm-6 col-md-4 col-xl-3 formplayer-request">
+      <div class="js-settings appicon appicon-settings" role="link" tabindex="0" aria-labelledby="grid-template-settings-heading">
+        <i class="fa-solid fa-gear appicon-icon" aria-hidden="true"></i>
+        <div class="appicon-title">
+          <h3 id="grid-template-settings-heading">{% trans "Settings" %}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+</script>

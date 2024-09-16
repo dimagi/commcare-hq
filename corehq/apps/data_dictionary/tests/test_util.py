@@ -1,34 +1,32 @@
 import uuid
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.translation import gettext
 
 from casexml.apps.case.mock import CaseBlock
 
-from corehq.util.workbook_reading.datamodels import Cell
-
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType, CasePropertyGroup
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
-    generate_data_dictionary,
-    get_values_hints_dict,
-    get_column_headings,
-    map_row_values_to_column_names,
-    is_case_type_deprecated,
-    get_data_dict_deprecated_case_types,
-    is_case_type_or_prop_name_valid,
     delete_case_property,
-    get_used_props_by_case_type,
-    get_case_property_description_dict,
-    get_case_property_label_dict,
+    generate_data_dictionary,
     get_case_property_deprecated_dict,
+    get_case_property_description_dict,
+    get_case_property_group_name_for_properties,
+    get_case_property_label_dict,
+    get_column_headings,
+    get_data_dict_deprecated_case_types,
+    get_used_props_by_case_type,
+    get_values_hints_dict,
+    is_case_type_deprecated,
+    is_case_type_or_prop_name_valid,
+    map_row_values_to_column_names,
+    update_url_query_params,
 )
 from corehq.apps.es.case_search import case_search_adapter
-from corehq.apps.es.tests.utils import (
-    case_search_es_setup,
-    es_test,
-)
+from corehq.apps.es.tests.utils import case_search_es_setup, es_test
+from corehq.util.workbook_reading.datamodels import Cell
 
 
 @patch('corehq.apps.data_dictionary.util._get_properties_by_case_type')
@@ -153,10 +151,20 @@ class MiscUtilTest(TestCase):
             domain=cls.domain,
             is_deprecated=True
         )
+        cls.case_type_group = CasePropertyGroup.objects.create(
+            case_type=cls.case_type_obj,
+            name='TestGroup'
+        )
+        cls.case_type_deprecated_group = CasePropertyGroup.objects.create(
+            case_type=cls.case_type_obj,
+            name='DeprecatedTestGroup',
+            deprecated=True,
+        )
         CaseProperty.objects.create(
             name='case_prop_1',
             case_type=cls.case_type_obj,
             description='foo',
+            group=cls.case_type_group,
         )
         CaseProperty.objects.create(
             name='case_prop_2',
@@ -314,6 +322,30 @@ class MiscUtilTest(TestCase):
         }
         self.assertEqual(dep_dict, expected_response)
 
+    def test_get_case_property_group_name_for_properties(self):
+        # Deprecated case prop
+        CaseProperty.objects.create(
+            name='deprecated_case_prop',
+            case_type=self.case_type_obj,
+            label='Deprecated Case Prop',
+            deprecated=True,
+            group=self.case_type_group,
+        )
+        # Deprecated group's case prop
+        CaseProperty.objects.create(
+            name='deprecated_group_case_prop_1',
+            case_type=self.case_type_obj,
+            label='Deprecated group prop',
+            group=self.case_type_deprecated_group,
+        )
+
+        case_group_name_for_property = get_case_property_group_name_for_properties(self.domain,
+                                                                                   self.case_type_name)
+        self.assertEqual(
+            case_group_name_for_property,
+            {'case_prop_1': 'TestGroup'}
+        )
+
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 class UsedPropsByCaseTypeTest(TestCase):
@@ -367,3 +399,25 @@ class UsedPropsByCaseTypeTest(TestCase):
         self.assertEqual({'prop', 'other-prop'}, props)
         props = set(used_props_by_case_type['other-case-type']) - metadata_props
         self.assertEqual({'prop', 'foobar'}, props)
+
+    def test_get_used_props_by_case_type_with_case_type_param(self):
+        used_props_by_case_type = get_used_props_by_case_type(self.domain, 'case-type')
+        self.assertEqual(len(used_props_by_case_type), 1)
+        props = set(used_props_by_case_type['case-type'])
+        self.assertTrue(props.issuperset({'prop', 'other-prop'}))
+
+
+class TestUpdateUrlQueryParams(SimpleTestCase):
+    url = "http://example.com"
+
+    def test_add_params(self):
+        result = update_url_query_params(self.url, {"fruit": "orange", "biscuits": "oreo"})
+        self.assertEqual(result, f"{self.url}?fruit=orange&biscuits=oreo")
+
+    def test_update_params(self):
+        result = update_url_query_params(f"{self.url}?fruit=apple", {"fruit": "orange", "biscuits": "oreo"})
+        self.assertEqual(result, f"{self.url}?fruit=orange&biscuits=oreo")
+
+    def test_no_params(self):
+        result = update_url_query_params(self.url, {})
+        self.assertEqual(result, self.url)

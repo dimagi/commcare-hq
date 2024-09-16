@@ -1,8 +1,12 @@
 from datetime import datetime
-from faker import Faker
 from unittest.mock import patch
+
+import pytest
+from django.test import TestCase
+from faker import Faker
 from testil import assert_raises
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase, restrict_user_by_location
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.importer import SiteCodeToLocationCache
@@ -20,9 +24,17 @@ from corehq.apps.user_importer.validation import (
     UsernameValidator,
     BooleanColumnValidator,
     ConfirmationSmsValidator,
-    LocationAccessValidator)
+    LocationValidator,
+    _get_invitation_or_editable_user,
+)
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, WebUser, Invitation
+from corehq.apps.users.models import CommCareUser, HqPermissions, Invitation, WebUser
+from corehq.apps.users.models_role import UserRole
+from corehq.apps.custom_data_fields.models import (CustomDataFieldsDefinition,
+    CustomDataFieldsProfile)
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.tests.tools import nottest
+from corehq.util.test_utils import flag_enabled
 
 factory = Faker()
 Faker.seed(1571040848)
@@ -118,15 +130,6 @@ TEST_CASES = [
     ),
     (
         [
-            {'user_profile': 'p1'},
-            {'user_profile': 'r1'},
-            {},
-        ],
-        ProfileValidator('domain', {'p1', 'p2'}),
-        {1: ProfileValidator.error_message.format('r1')}
-    ),
-    (
-        [
             {'group': ['g1', 'g2']},
             {'group': ['g1', 'g3']},
             {},
@@ -147,61 +150,60 @@ TEST_CASES = [
 ]
 
 
-def test_validators():
-    def _test_spec(validator, specs, errors):
-        for i, spec in enumerate(specs):
-            if i in errors:
-                with assert_raises(UserUploadError, msg=errors[i]):
-                    validator(spec)
-            else:
-                validator(spec)
-
-    for specs, validator, errors in TEST_CASES:
-        yield _test_spec, validator, specs, errors
-
-
-def test_duplicates():
-    specs = [
-        {'name': 1},
-        {'name': 2},
-        {'name': 3},
-        {'name': 2},
-        {'name': 3},
-        {},
-    ]
-    duplicates = (2, 3)
-    yield from _test_duplicates(specs, duplicates)
-
-
-def test_duplicates_with_check():
-    specs = [
-        {'name': 1},
-        {'name': 2},
-        {'name': 2},
-        {'name': 3},
-        {'name': 3},
-        {},
-    ]
-    duplicates = (3,)
-
-    def check(item):
-        return item != 2
-
-    yield from _test_duplicates(specs, duplicates, check)
-
-
-def _test_duplicates(specs, duplicates, check=None):
-    validator = DuplicateValidator('domain', 'name', specs, check_function=check)
-
-    def _test(spec):
-        if spec.get('name') in duplicates:
-            with assert_raises(UserUploadError, msg=validator.error_message):
+@pytest.mark.parametrize("specs, validator, errors", TEST_CASES)
+def test_validators(specs, validator, errors):
+    for i, spec in enumerate(specs):
+        if i in errors:
+            with assert_raises(UserUploadError, msg=errors[i]):
                 validator(spec)
         else:
             validator(spec)
 
+
+@nottest
+def _test_duplicates(specs, duplicates, check=None):
+    validator = DuplicateValidator('domain', 'name', specs, check_function=check)
     for spec in specs:
-        yield _test, spec
+        yield validator, spec, duplicates
+
+
+@pytest.mark.parametrize("validator, spec, duplicates", list(_test_duplicates(
+    [
+        {'name': 1},
+        {'name': 2},
+        {'name': 3},
+        {'name': 2},
+        {'name': 3},
+        {},
+    ],
+    (2, 3),
+)))
+def test_duplicates(validator, spec, duplicates):
+    if spec.get('name') in duplicates:
+        with assert_raises(UserUploadError, msg=validator.error_message):
+            validator(spec)
+    else:
+        validator(spec)
+
+
+@pytest.mark.parametrize("validator, spec, duplicates", list(_test_duplicates(
+    [
+        {'name': 1},
+        {'name': 2},
+        {'name': 2},
+        {'name': 3},
+        {'name': 3},
+        {},
+    ],
+    (3,),
+    check=(lambda item: item != 2)
+)))
+def test_duplicates_with_check(validator, spec, duplicates):
+    if spec.get('name') in duplicates:
+        with assert_raises(UserUploadError, msg=validator.error_message):
+            validator(spec)
+    else:
+        validator(spec)
 
 
 def test_existing_users():
@@ -300,7 +302,7 @@ def test_validating_sms_confirmation_entry():
         "is_active and is_account_confirmed must be either empty or set to False."
 
 
-class TestLocationAccessValidator(LocationHierarchyTestCase):
+class TestLocationValidator(LocationHierarchyTestCase):
 
     domain = 'test-domain'
     location_type_names = ['state', 'county', 'city']
@@ -319,15 +321,15 @@ class TestLocationAccessValidator(LocationHierarchyTestCase):
     @classmethod
     def setUpClass(cls):
         delete_all_users()
-        super(TestLocationAccessValidator, cls).setUpClass()
+        super(TestLocationValidator, cls).setUpClass()
         cls.upload_user = WebUser.create(cls.domain, 'username', 'password', None, None)
         cls.upload_user.set_location(cls.domain, cls.locations['Middlesex'])
         restrict_user_by_location(cls.domain, cls.upload_user)
         cls.editable_user = WebUser.create(cls.domain, 'editable-user', 'password', None, None)
-        cls.validator = LocationAccessValidator(cls.domain, cls.upload_user,
-                                                SiteCodeToLocationCache(cls.domain), True)
+        cls.validator = LocationValidator(cls.domain, cls.upload_user,
+                                          SiteCodeToLocationCache(cls.domain), True)
 
-    def testSuccess(self):
+    def test_success(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
         user_spec = {'username': self.editable_user.username,
                      'location_code': [self.locations['Middlesex'].site_code,
@@ -335,17 +337,16 @@ class TestLocationAccessValidator(LocationHierarchyTestCase):
         validation_result = self.validator.validate_spec(user_spec)
         assert validation_result is None
 
-    def testCantEditWebUser(self):
+    def test_cant_edit_web_user(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Suffolk'].location_id])
         user_spec = {'username': self.editable_user.username,
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == ("Based on your locations do not have permission to edit this user or user "
-                                     "invitation")
+        assert validation_result == self.validator.error_message_user_access
 
-    def testCantEditCommCareUser(self):
-        self.cc_user_validator = LocationAccessValidator(self.domain, self.upload_user,
+    def test_cant_edit_commcare_user(self):
+        self.cc_user_validator = LocationValidator(self.domain, self.upload_user,
                                                 SiteCodeToLocationCache(self.domain), False)
         self.editable_cc_user = CommCareUser.create(self.domain, 'cc-username', 'password', None, None)
         self.editable_cc_user.reset_locations([self.locations['Suffolk'].location_id])
@@ -353,10 +354,9 @@ class TestLocationAccessValidator(LocationHierarchyTestCase):
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.cc_user_validator.validate_spec(user_spec)
-        assert validation_result == ("Based on your locations do not have permission to edit this user or user "
-                                     "invitation")
+        assert validation_result == self.validator.error_message_user_access
 
-    def testCantEditInvitation(self):
+    def test_cant_edit_invitation(self):
         self.invitation = Invitation.objects.create(
             domain=self.domain,
             email='invite-user@dimagi.com',
@@ -368,28 +368,194 @@ class TestLocationAccessValidator(LocationHierarchyTestCase):
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == ("Based on your locations do not have permission to edit this user or user "
-                                     "invitation")
+        assert validation_result == self.validator.error_message_user_access
 
-    def testCantAddLocation(self):
+    def test_cant_add_location(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
         user_spec = {'username': self.editable_user.username,
                      'location_code': [self.locations['Suffolk'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == ("You do not have permission to assign or remove these locations: "
-                                     "suffolk")
+        assert validation_result == self.validator.error_message_location_access.format(
+            self.locations['Suffolk'].site_code)
 
-    def testCantRemoveLocation(self):
+    def test_cant_remove_location(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Suffolk'].location_id,
                                                          self.locations['Cambridge'].location_id])
         user_spec = {'username': self.editable_user.username,
                      'location_code': [self.locations['Cambridge'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == ("You do not have permission to assign or remove these locations: "
-                                     "suffolk")
+        assert validation_result == self.validator.error_message_location_access.format(
+            self.locations['Suffolk'].site_code)
+
+    @flag_enabled('USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION')
+    def test_location_not_has_users(self):
+        self.editable_user.reset_locations(self.domain, [self.locations['Middlesex'].location_id])
+        self.locations['Cambridge'].location_type.has_users = False
+        self.locations['Cambridge'].location_type.save()
+        user_spec = {'username': self.editable_user.username,
+                     'location_code': [self.locations['Cambridge'].site_code,
+                                       self.locations['Middlesex'].site_code]}
+        validation_result = self.validator.validate_spec(user_spec)
+        assert validation_result == self.validator.error_message_location_not_has_users.format(
+            self.locations['Cambridge'].site_code)
 
     @classmethod
     def tearDownClass(cls):
         super(LocationHierarchyTestCase, cls).tearDownClass()
         delete_all_users()
+
+
+@flag_enabled('RESTRICT_USER_PROFILE_ASSIGNMENT')
+class TestProfileValidator(TestCase):
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_users()
+        super(TestProfileValidator, cls).setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.upload_user = WebUser.create(cls.domain, 'username', 'password', None, None)
+        cls.editable_user = WebUser.create(cls.domain, 'editable-user', 'password', None, None)
+        cls.editable_user2 = WebUser.create(cls.domain, 'editable-user2', 'password', None, None)
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain, field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.profile1 = CustomDataFieldsProfile(
+            name='p1',
+            fields={},
+            definition=cls.definition,
+        )
+        cls.profile1.save()
+        cls.profile2 = CustomDataFieldsProfile(
+            name='p2',
+            fields={},
+            definition=cls.definition,
+        )
+        cls.profile2.save()
+        all_user_profiles_by_name = {'p1': cls.profile1, 'p2': cls.profile2}
+        cls.editable_user.get_user_data(cls.domain).profile_id = cls.profile1.id
+        cls.editable_user.save()
+        cls.web_user_import_validator = ProfileValidator(cls.domain, cls.upload_user,
+                                                True, all_user_profiles_by_name)
+        cls.invitation = Invitation.objects.create(
+            domain=cls.domain,
+            email='invite-user@dimagi.com',
+            invited_by='a@dimagi.com',
+            invited_on=datetime.utcnow(),
+            profile=cls.profile1
+        )
+        cls.invitation2 = Invitation.objects.create(
+            domain=cls.domain,
+            email='invite-user2@dimagi.com',
+            invited_by='a@dimagi.com',
+            invited_on=datetime.utcnow(),
+            profile=None
+        )
+        cls.edit_all_profiles_role = UserRole.create(
+            domain=cls.domain_obj.name,
+            name='Edit All Profiles',
+            permissions=HqPermissions(edit_user_profile=True)
+        )
+        cls.edit_p1_profiles_role = UserRole.create(
+            domain=cls.domain_obj.name,
+            name='Edit Profile p1',
+            permissions=HqPermissions(edit_user_profile=False, edit_user_profile_list=[str(cls.profile1.id)])
+        )
+        cls.edit_p2_profiles_role = UserRole.create(
+            domain=cls.domain_obj.name,
+            name='Edit Profile p1',
+            permissions=HqPermissions(edit_user_profile=False, edit_user_profile_list=[str(cls.profile2.id)])
+        )
+        cls.edit_p1_and_p2_profiles_role = UserRole.create(
+            domain=cls.domain_obj.name,
+            name='Edit Profile p1 and p2',
+            permissions=HqPermissions(edit_user_profile=False, edit_user_profile_list=[str(cls.profile1.id),
+                                                                                       str(cls.profile2.id)])
+        )
+
+    def test_edit_all_profiles_no_issues(self):
+        self.upload_user.set_role(self.domain, self.edit_all_profiles_role.get_qualified_id())
+        for username in [self.editable_user.username, self.invitation.email]:
+            user_spec = {'username': username, 'user_profile': 'p2'}
+            validation_result = self.web_user_import_validator.validate_spec(user_spec)
+            assert validation_result is None
+        for username in [self.editable_user2.username, self.invitation2.email]:
+            user_spec = {'username': username, 'user_profile': 'p2'}
+            validation_result = self.web_user_import_validator.validate_spec(user_spec)
+            assert validation_result is None
+
+    def test_change_profile_no_issue(self):
+        self.upload_user.set_role(self.domain, self.edit_p1_and_p2_profiles_role.get_qualified_id())
+        for username in [self.editable_user.username, self.invitation.email]:
+            user_spec = {'username': username, 'user_profile': 'p2'}
+            validation_result = self.web_user_import_validator.validate_spec(user_spec)
+            assert validation_result is None
+
+    def test_invalid_profile_name(self):
+        self.upload_user.set_role(self.domain, self.edit_all_profiles_role.get_qualified_id())
+        for username in [self.editable_user2.username, self.invitation2.email]:
+            user_spec = {'username': username, 'user_profile': 'r1'}
+            validation_result = self.web_user_import_validator.validate_spec(user_spec)
+        assert validation_result == ProfileValidator.error_message_nonexisting_profile.format('r1')
+
+    def test_cant_assign_profile_without_the_permission(self):
+        self.upload_user.set_role(self.domain, self.edit_p1_profiles_role.get_qualified_id())
+        for username in [self.editable_user.username, self.invitation.email]:
+            user_spec = {'username': username, 'user_profile': 'p2'}
+            validation_result = self.web_user_import_validator.validate_spec(user_spec)
+            assert validation_result == ProfileValidator.error_message_new_user_profile_access.format('p2')
+
+    def test_removing_and_assigning_profile(self):
+        self.upload_user.set_role(self.domain, self.edit_p1_profiles_role.get_qualified_id())
+        user_spec = {'username': self.editable_user.username, 'user_profile': ''}
+        validation_result = self.web_user_import_validator.validate_spec(user_spec)
+        assert validation_result is None
+        user_spec = {'username': self.editable_user2.username, 'user_profile': 'p1'}
+        validation_result = self.web_user_import_validator.validate_spec(user_spec)
+        assert validation_result is None
+
+    def test_no_error_when_unaccessible_profile_didnt_change(self):
+        self.upload_user.set_role(self.domain, self.edit_p2_profiles_role.get_qualified_id())
+        user_spec = {'username': self.editable_user.username, 'user_profile': 'p1'}
+        validation_result = self.web_user_import_validator.validate_spec(user_spec)
+        assert validation_result is None
+
+    def test_cant_edit_profile_no_access(self):
+        self.upload_user.set_role(self.domain, self.edit_p2_profiles_role.get_qualified_id())
+        user_spec = {'username': self.editable_user.username, 'user_profile': 'p2'}
+        validation_result = self.web_user_import_validator.validate_spec(user_spec)
+        assert validation_result == ProfileValidator.error_message_original_user_profile_access
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestProfileValidator, cls).tearDownClass()
+        delete_all_users()
+
+
+class TestUtil(TestCase):
+    domain = "test-domain"
+
+    def test_get_invitation_or_editable_user(self):
+        create_domain(self.domain)
+        editable_user = WebUser.create(self.domain, 'editable-user', 'password', None, None)
+        invitation = Invitation.objects.create(
+            domain=self.domain,
+            email='invite-user@dimagi.com',
+            invited_by='a@dimagi.com',
+            invited_on=datetime.utcnow(),
+        )
+        spec = {'username': editable_user.username}
+        self.assertEqual(editable_user.userID,
+                         _get_invitation_or_editable_user(spec, True, self.domain).editable_user.userID)
+        self.assertEqual(editable_user.userID,
+                         _get_invitation_or_editable_user(spec, False, self.domain).editable_user.userID)
+        spec = {'user_id': editable_user.userID}
+        self.assertEqual(editable_user.userID,
+                         _get_invitation_or_editable_user(spec, False, self.domain).editable_user.userID)
+
+        spec = {'username': invitation.email}
+        self.assertEqual(invitation, _get_invitation_or_editable_user(spec, True, self.domain).invitation)
+
+        spec = {}
+        self.assertEqual(None, _get_invitation_or_editable_user(spec, True, self.domain).editable_user)
+        self.assertEqual(None, _get_invitation_or_editable_user(spec, False, self.domain).editable_user)

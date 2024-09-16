@@ -5,6 +5,8 @@ from unittest.mock import MagicMock, patch
 
 import attr
 
+from corehq.tests.tools import nottest
+
 log = logging.getLogger(__name__)
 _LOCK = Lock()
 
@@ -69,6 +71,7 @@ def real_redis_client():
 _mock_redis_client = True
 
 
+@nottest
 @attr.s
 class TestRedisClient:
     lock = attr.ib()

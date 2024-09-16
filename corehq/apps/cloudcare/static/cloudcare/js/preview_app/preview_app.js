@@ -13,7 +13,9 @@ hqDefine('cloudcare/js/preview_app/preview_app', [
             $(this).attr('target', '_parent');
         });
 
-        FormplayerFrontend.start(options);
+        FormplayerFrontend.getXSRF(options).then(() =>
+            FormplayerFrontend.start(options)
+        );
 
         if (localStorage.getItem("preview-tablet")) {
             FormplayerFrontend.trigger('view:tablet');

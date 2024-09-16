@@ -238,8 +238,14 @@ hqDefine("cloudcare/js/form_entry/utils", [
     module.getBroadcastContainer = (question) => {
         return getRoot(question, function (container) {
             // Return first containing repeat group, or form if there are no ancestor repeats
-            var parent = container.parent.parent;
-            return parent && parent.type && parent.type() === formEntryConst.REPEAT_TYPE;
+            if (container) {
+                const pType = ko.utils.unwrapObservable(container.type);
+                const repeatable = ko.utils.unwrapObservable(container.repeatable);
+                return container && pType && pType === formEntryConst.GROUP_TYPE
+                    && repeatable && repeatable === 'true';
+            }
+            return false;
+
         });
     };
 

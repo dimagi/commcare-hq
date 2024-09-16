@@ -11,10 +11,10 @@
  
  {% block pagination_header %}
    <h2>{% trans "Tableau Visualizations" %}</h2>
-@@ -13,9 +13,9 @@
-     <td data-bind="text: title"></td>
+@@ -14,9 +14,9 @@
      <td data-bind="text: server"></td>
      <td data-bind="text: view_url"></td>
+     <td data-bind="text: location_safe ? '{% trans 'Yes' %}' : '{% trans 'No' %}'"></td>
 -    <td class="col-md-1"> <!-- actions -->
 +    <td class="col-lg-1"> <!-- actions -->
        <button type="button"
@@ -23,7 +23,7 @@
                data-bind="attr: {'data-target': '#update-tableau-visualization-' + id}"
                class="btn btn-primary btn-block">
            {% trans "Update" %}
-@@ -24,10 +24,10 @@
+@@ -25,10 +25,10 @@
               data-bind="attr: {id: 'update-tableau-visualization-' + id}">
              <div class="modal-dialog">
                  <div class="modal-content">
@@ -37,7 +37,7 @@
                                  aria-hidden="true">&times;</button>
                          <h3>
                            {% trans "Update Tableau Visualization" %} <strong data-bind="text: name"></strong>:
-@@ -40,32 +40,32 @@
+@@ -41,32 +41,32 @@
              </div>
          </div>
      </td>
@@ -79,7 +79,7 @@
                  <i class="fa fa-remove"></i> {% trans "Delete" %}
                </button>
              </div>
-@@ -86,7 +86,7 @@
+@@ -88,7 +88,7 @@
  {% block pagination_footer %}
    <div class="spacer"></div>
    <div class="row">

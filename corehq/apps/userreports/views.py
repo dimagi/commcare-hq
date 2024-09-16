@@ -1360,9 +1360,9 @@ def _number_of_records_to_be_iterated_for_rebuild(config):
             count_of_records = CaseSearchES().domain(config.domain).count()
     elif config.referenced_doc_type == 'XFormInstance':
         if case_types_or_xmlns:
-            count_of_records = FormES().domain().xmlns(case_types_or_xmlns)
+            count_of_records = FormES().domain(config.domain).xmlns(case_types_or_xmlns).count()
         else:
-            count_of_records = FormES().domain().count()
+            count_of_records = FormES().domain(config.domain).count()
 
     return count_of_records
 
@@ -1642,13 +1642,61 @@ def subscribe_to_data_source_changes(request, domain, config_id):
         ds=config_id,
         server=client_hostname,
     )
-    DataSourceRepeater.objects.create(
-        name=repeater_name,
+
+    datasource_query = DataSourceRepeater.objects.filter(
         domain=domain,
-        data_source_id=config_id,
         connection_settings_id=conn_settings.id,
+        options={"data_source_id": config_id},
     )
+    if not datasource_query.exists():
+        DataSourceRepeater.objects.create(
+            name=repeater_name,
+            domain=domain,
+            data_source_id=config_id,
+            connection_settings_id=conn_settings.id,
+        )
     return HttpResponse(status=201)
+
+
+@csrf_exempt
+@require_POST
+@api_auth()
+@require_permission(HqPermissions.view_reports)
+@toggles.SUPERSET_ANALYTICS.required_decorator()
+@api_throttle
+def unsubscribe_from_data_source(request, domain, config_id):
+    if 'client_id' not in request.POST:
+        return HttpResponse(
+            status=422,
+            content="The client_id parameter is required",
+        )
+    client_id = request.POST['client_id']
+
+    try:
+        conn_settings = ConnectionSettings.objects.get(client_id=client_id)
+    except ConnectionSettings.DoesNotExist:
+        return HttpResponse(
+            status=422,
+            content="Invalid client_id"
+        )
+
+    repeater = DataSourceRepeater.objects.filter(
+        domain=domain,
+        connection_settings_id=conn_settings.id,
+        options={"data_source_id": config_id},
+    )
+    if not repeater.exists():
+        return HttpResponse(
+            status=422,
+            content="Invalid data source ID"
+        )
+    repeater.delete()
+    conn_settings.clear_caches()
+
+    if not conn_settings.used_by:
+        conn_settings.delete()
+
+    return HttpResponse(status=200)
 
 
 def _get_report_filter(domain, report_id, filter_id):
@@ -1851,6 +1899,16 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             "template": "base-ucr-statement-template",
         }
 
+    def get_deleted_item_data(self, item_id):
+        deleted_expression = self.base_query.get(id=item_id)
+        deleted_expression.delete()
+        return {
+            'itemData': {
+                'name': deleted_expression.name,
+            },
+            'template': 'deleted-ucr-statement-template',
+        }
+
 
 @method_decorator(toggles.UCR_EXPRESSION_REGISTRY.required_decorator(), name='dispatch')
 class UCRExpressionEditView(BaseProjectDataView):
@@ -1898,7 +1956,7 @@ class UCRExpressionEditView(BaseProjectDataView):
         if form.is_valid():
             form.save()
             try:
-                self.expression.wrapped_definition(EvaluationContext({}))
+                self.expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
             except BadSpecError as e:
                 return JsonResponse({"warning": _("Problem with expression: {}").format(e)})
             return JsonResponse({})

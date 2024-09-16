@@ -1216,6 +1216,15 @@ class CaseTransactionManager(RequireDBManager):
             .first()
         )
 
+    def get_last_n_recent_form_transaction(self, case_id, limit):
+        return (
+            self.partitioned_query(case_id)
+            .filter(case_id=case_id, revoked=False)
+            .annotate(type_filter=F('type').bitand(self.model.TYPE_FORM))
+            .filter(type_filter=self.model.TYPE_FORM)
+            .order_by("-server_date")[:limit]
+        )
+
     def get_transactions_by_type(self, case_id, transaction_type):
         return list(self.plproxy_raw(
             'SELECT * from get_case_transactions_by_type(%s, %s)',
@@ -1386,6 +1395,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def xmlns(self):
         return self.details.get('xmlns', None) if self.details else None
 
+    @property
+    def device_id(self):
+        return self.details.get('device_id', None) if self.details else None
+
     @classmethod
     @memoized
     def case_rebuild_types(cls):
@@ -1476,7 +1489,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
                 server_date=xform.received_on,
                 type=transaction_type,
                 revoked=not xform.is_normal,
-                details=FormSubmissionDetail(xmlns=xform.xmlns).to_json()
+                details=FormSubmissionDetail(xmlns=xform.xmlns, device_id=xform.device_id).to_json()
             )
 
     @classmethod
@@ -1544,6 +1557,7 @@ class CaseTransactionDetail(JsonObject):
 class FormSubmissionDetail(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_FORM
     xmlns = StringProperty()
+    device_id = StringProperty()
 
 
 class RebuildWithReason(CaseTransactionDetail):

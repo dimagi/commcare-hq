@@ -57,7 +57,7 @@ def get_idp_cert_expiration_email_context(idp):
         "subject": subject,
         "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
         "to": idp.owner.enterprise_admin_emails,
-        "bcc": [settings.ACCOUNTS_EMAIL],
+        "bcc": [],
         "html": body_html,
         "plaintext": body_txt,
     }

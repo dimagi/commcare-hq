@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,124 +1,229 @@
+@@ -1,124 +1,230 @@
 -@import "@{b3-import-variables}";
 -
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
@@ -237,6 +237,7 @@
 +// Grays from default stylesheet — needed for reference
 +$gray-100: #f8f9fa;
 +$gray-200: #e9ecef;
++$gray-400: #ced4da;
 +$gray-600: #6c757d;
 +$gray-800: #343a40;
 +
@@ -271,7 +272,7 @@
 +$body-color: $dark;
 +$link-color: $blue-600;
 +$link-hover-color:$blue-900;
-+$border-color: $gray-200;
++$border-color: $gray-400;
 +
 +// New gradient for salmon
 +

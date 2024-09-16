@@ -1,18 +1,16 @@
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 from uuid import uuid4
-
-from dateutil.parser import isoparse
 
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from dateutil.parser import isoparse
 from freezegun import freeze_time
-
 from nose.tools import assert_in, assert_raises
 
 from corehq.motech.models import ConnectionSettings
@@ -21,9 +19,9 @@ from corehq.util.test_utils import _create_case
 from ..const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
-    MIN_RETRY_WAIT,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
+    RECORD_INVALIDPAYLOAD_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
     State,
@@ -35,6 +33,7 @@ from ..models import (
     format_response,
     get_all_repeater_types,
     is_response,
+    is_success_response,
 )
 
 DOMAIN = 'test-domain'
@@ -280,9 +279,6 @@ class AttemptsTests(RepeaterTestCase):
 
     def setUp(self):
         super().setUp()
-        self.just_now = timezone.now()
-        self.repeater.next_attempt_at = self.just_now
-        self.repeater.save()
         self.repeat_record = self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id='eggs',
@@ -292,7 +288,6 @@ class AttemptsTests(RepeaterTestCase):
     def test_add_success_attempt_true(self):
         self.repeat_record.add_success_attempt(response=True)
         self.assertEqual(self.repeat_record.state, RECORD_SUCCESS_STATE)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_SUCCESS_STATE)
@@ -305,7 +300,6 @@ class AttemptsTests(RepeaterTestCase):
         resp.text = '<h1>Hello World</h1>'
         self.repeat_record.add_success_attempt(response=resp)
         self.assertEqual(self.repeat_record.state, RECORD_SUCCESS_STATE)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_SUCCESS_STATE)
@@ -316,9 +310,6 @@ class AttemptsTests(RepeaterTestCase):
         message = '504: Gateway Timeout'
         self.repeat_record.add_server_failure_attempt(message=message)
         self.assertEqual(self.repeat_record.state, RECORD_FAILURE_STATE)
-        self.assertGreater(self.repeater.last_attempt_at, self.just_now)
-        self.assertEqual(self.repeater.next_attempt_at,
-                         self.repeater.last_attempt_at + MIN_RETRY_WAIT)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_FAILURE_STATE)
@@ -330,10 +321,6 @@ class AttemptsTests(RepeaterTestCase):
         while self.repeat_record.state != RECORD_CANCELLED_STATE:
             self.repeat_record.add_server_failure_attempt(message=message)
 
-        self.assertGreater(self.repeater.last_attempt_at, self.just_now)
-        # Interval is MIN_RETRY_WAIT because attempts were very close together
-        self.assertEqual(self.repeater.next_attempt_at,
-                         self.repeater.last_attempt_at + MIN_RETRY_WAIT)
         self.assertEqual(self.repeat_record.num_attempts,
                          MAX_BACKOFF_ATTEMPTS + 1)
         attempts = list(self.repeat_record.attempts)
@@ -347,8 +334,6 @@ class AttemptsTests(RepeaterTestCase):
         message = '409: Conflict'
         self.repeat_record.add_client_failure_attempt(message=message)
         self.assertEqual(self.repeat_record.state, RECORD_FAILURE_STATE)
-        self.assertIsNone(self.repeater.last_attempt_at)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_FAILURE_STATE)
@@ -359,8 +344,6 @@ class AttemptsTests(RepeaterTestCase):
         message = '409: Conflict'
         while self.repeat_record.state != RECORD_CANCELLED_STATE:
             self.repeat_record.add_client_failure_attempt(message=message)
-        self.assertIsNone(self.repeater.last_attempt_at)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts,
                          MAX_ATTEMPTS + 1)
         attempts = list(self.repeat_record.attempts)
@@ -374,25 +357,22 @@ class AttemptsTests(RepeaterTestCase):
         message = '422: Unprocessable Entity'
         while self.repeat_record.state != RECORD_CANCELLED_STATE:
             self.repeat_record.add_client_failure_attempt(message=message, retry=False)
-        self.assertIsNone(self.repeater.last_attempt_at)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state, RECORD_CANCELLED_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
-    def test_add_payload_exception_attempt(self):
+    def test_add_payload_error_attempt(self):
         message = 'ValueError: Schema validation failed'
         tb_str = 'Traceback ...'
-        self.repeat_record.add_payload_exception_attempt(message=message,
-                                                         tb_str=tb_str)
-        self.assertEqual(self.repeat_record.state, RECORD_CANCELLED_STATE)
+        self.repeat_record.add_payload_error_attempt(message=message,
+                                                     traceback_str=tb_str)
+        self.assertEqual(self.repeat_record.state, RECORD_INVALIDPAYLOAD_STATE)
         # Note: Our payload issues do not affect how we deal with their
         #       server issues:
-        self.assertEqual(self.repeater.next_attempt_at, self.just_now)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
-                         RECORD_CANCELLED_STATE)
+                         RECORD_INVALIDPAYLOAD_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, tb_str)
 
@@ -835,3 +815,20 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
         with patch.object(RepeatRecord, "num_attempts", 2), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertFalse(repeat_record.exceeded_max_retries)
+
+
+class TestIsSuccessResponse(SimpleTestCase):
+
+    def test_true_response(self):
+        self.assertTrue(is_success_response(True))
+
+    def test_status_201_response(self):
+        response = Mock(status_code=201)
+        self.assertTrue(is_success_response(response))
+
+    def test_status_404_response(self):
+        response = Mock(status_code=404)
+        self.assertFalse(is_success_response(response))
+
+    def test_none_response(self):
+        self.assertFalse(is_success_response(None))

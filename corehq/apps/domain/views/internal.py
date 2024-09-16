@@ -18,6 +18,7 @@ from memoized import memoized
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
+from corehq.motech.rate_limiter import repeater_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -97,7 +98,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     def internal_settings_form(self):
         can_edit_eula = toggles.CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
-            return DomainInternalForm(self.request.domain, can_edit_eula, self.request.POST)
+            return DomainInternalForm(self.request.domain, can_edit_eula,
+                                      self.request.POST, user=self.request.user)
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
@@ -150,7 +152,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         initial['active_ucr_expressions'] = AllowedUCRExpressionSettings.get_allowed_ucr_expressions(
             domain_name=self.domain_object.name
         )
-        return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial)
+        return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial, user=self.request.user)
 
     @property
     def page_context(self):
@@ -302,6 +304,7 @@ class ProjectLimitsView(BaseAdminProjectSettingsView):
             ('Submission Rate Limits', submission_rate_limiter),
             ('Case Rate Limits', domain_case_rate_limiter),
             ('Restore Rate Limits', restore_rate_limiter),
+            ('Repeater Rate Limits', repeater_rate_limiter),
         ], self.domain)
 
 

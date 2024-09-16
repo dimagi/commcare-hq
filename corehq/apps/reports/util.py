@@ -518,17 +518,21 @@ def add_tableau_user(domain, username):
     these details to the Tableau instance.
     '''
     try:
-        session = TableauAPISession.create_session_for_domain(domain)
-    except TableauConnectedApp.DoesNotExist as e:
-        _notify_tableau_exception(e, domain)
-        return
-    user, created, matching_tableau_users_from_other_domains_exist = _add_tableau_user_local(session, username)
-    if created and not matching_tableau_users_from_other_domains_exist:
         try:
-            _add_tableau_user_remote(session, user)
-        except TableauAPIError as e:
-            if e.code != 409017:  # This is the "user already added to site" code.
-                raise
+            session = TableauAPISession.create_session_for_domain(domain)
+        except TableauConnectedApp.DoesNotExist as e:
+            _notify_tableau_exception(e, domain)
+            return
+        user, created, matching_tableau_users_from_other_domains_exist = _add_tableau_user_local(session, username)
+        if created and not matching_tableau_users_from_other_domains_exist:
+            try:
+                _add_tableau_user_remote(session, user)
+            except TableauAPIError as e:
+                if e.code != 409017:  # This is the "user already added to site" code.
+                    raise
+    except TableauAPIError as e:
+        # Don't block main thread
+        _notify_tableau_exception(e, domain)
 
 
 def _add_tableau_user_local(session, username, role=DEFAULT_TABLEAU_ROLE):
@@ -589,31 +593,38 @@ def _delete_user_remote(session, deleted_user_id):
 
 
 @atomic
-def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTuple] = None, session=None):
+def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTuple] = None, session=None,
+                        blocking_exception=True):
     '''
     Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
     of TableauGroupTuples.
     '''
-    groups = groups or []
-    session = session or TableauAPISession.create_session_for_domain(domain)
-    user = TableauUser.objects.filter(
-        server=session.tableau_connected_app.server
-    ).get(username=username)
-    if role:
-        for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
-            local_tableau_user.role = role
-            local_tableau_user.save()
+    try:
+        groups = groups or []
+        session = session or TableauAPISession.create_session_for_domain(domain)
+        user = TableauUser.objects.filter(
+            server=session.tableau_connected_app.server
+        ).get(username=username)
+        if role:
+            for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
+                local_tableau_user.role = role
+                local_tableau_user.save()
 
-    # Group management
-    allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(domain)
-    existing_groups = _group_json_to_tuples(session.get_groups_for_user_id(user.tableau_user_id))
-    edited_groups_list = list(filter(lambda group: group.name in allowed_groups_for_domain, groups))
-    other_groups = [group for group in existing_groups if group.name not in allowed_groups_for_domain]
-    # The list of groups for the user should be a combination of those edited by the web admin and the existing
-    # groups the user belongs to that are not editable on that domain.
-    new_groups = edited_groups_list + other_groups
+        # Group management
+        allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(domain)
+        existing_groups = _group_json_to_tuples(session.get_groups_for_user_id(user.tableau_user_id))
+        edited_groups_list = list(filter(lambda group: group.name in allowed_groups_for_domain, groups))
+        other_groups = [group for group in existing_groups if group.name not in allowed_groups_for_domain]
+        # The list of groups for the user should be a combination of those edited by the web admin and the existing
+        # groups the user belongs to that are not editable on that domain.
+        new_groups = edited_groups_list + other_groups
 
-    _update_user_remote(session, user, groups=new_groups)
+        _update_user_remote(session, user, groups=new_groups)
+    except TableauAPIError as e:
+        if blocking_exception:
+            raise
+        else:
+            _notify_tableau_exception(e, domain)
 
 
 def _update_user_remote(session, user, groups=[]):

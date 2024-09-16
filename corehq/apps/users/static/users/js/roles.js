@@ -99,6 +99,18 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
+                data.profilePermissions = {
+                    all: data.permissions.edit_user_profile,
+                    specific: ko.utils.arrayMap(root.profileOptions, function (profile) {
+                        var slug = String(profile.id);
+                        return {
+                            slug: slug,
+                            name: profile.name,
+                            value: data.permissions.edit_user_profile_list.indexOf(slug) !== -1,
+                        };
+                    }),
+                };
+
                 data.tableauPermissions = {
                     all: data.permissions.view_tableau,
                     specific: ko.utils.arrayMap(root.tableauOptions, function (viz) {
@@ -178,6 +190,7 @@ hqDefine('users/js/roles',[
                     return root.allowEdit && (!self.upstream_id() || root.unlockLinkedRoles());
                 });
                 self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
+                self.profilePermissions.filteredSpecific = filterSpecific(self.profilePermissions);
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.accessWebAppsPermission.filteredSpecific = filterSpecific(self.accessWebAppsPermission);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
@@ -613,6 +626,10 @@ hqDefine('users/js/roles',[
 
                 data.permissions.view_reports = data.reportPermissions.all;
                 data.permissions.view_report_list = unwrapItemList(data.reportPermissions.specific, 'path');
+
+                data.permissions.edit_user_profile = data.profilePermissions.all;
+                data.permissions.edit_user_profile_list = unwrapItemList(data.profilePermissions.specific);
+
                 data.permissions.view_tableau = data.tableauPermissions.all;
                 data.permissions.view_tableau_list = unwrapItemList(data.tableauPermissions.specific);
 
@@ -640,6 +657,7 @@ hqDefine('users/js/roles',[
         self.ExportOwnershipEnabled = o.ExportOwnershipEnabled;
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
+        self.profileOptions = o.profileOptions;
         self.tableauOptions = o.tableauOptions;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;

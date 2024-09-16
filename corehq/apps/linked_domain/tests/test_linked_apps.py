@@ -47,6 +47,7 @@ from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
 )
 from corehq.apps.userreports.tests.utils import (
+    cleanup_ucr,
     get_sample_data_source,
     get_sample_report_config,
 )
@@ -159,6 +160,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         # link report on master app to linked domain
         link_info = create_linked_ucr(self.domain_link, master_report.get_id)
+        self.addCleanup(cleanup_ucr, link_info.datasource)
 
         updated_app = update_linked_app(self.linked_app, self.master1, 'a-user-id')
 
@@ -169,6 +171,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         master_data_source = get_sample_data_source()
         master_data_source.domain = self.domain
         master_data_source.save()
+        self.addCleanup(cleanup_ucr, master_data_source)
 
         master_report = get_sample_report_config()
         master_report.config_id = master_data_source.get_id
@@ -199,6 +202,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
             "datasource": master_data_source,
         }
         link_info = create_linked_ucr(self.domain_link, master_report.get_id)
+        self.addCleanup(cleanup_ucr, link_info.datasource)
         updated_app = update_linked_app(self.linked_app, self.master1, 'a-user-id')
 
         # report config added with the linked report id updated in report config

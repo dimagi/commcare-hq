@@ -221,10 +221,8 @@ def test_flag_inline_styles():
 def test_flag_crispy_forms_in_template():
     line = """    {% crispy form %}\n"""
     flags = flag_crispy_forms_in_template(line)
-    eq(flags, [["check crispy",
-                "This template uses crispy forms. "
-                "Please ensure the form looks good after migration, and refer to "
-                "the updated Style Guide for current best practices, especially with checkbox fields."]])
+    eq(flags[0][0], "check crispy")
+    eq(flags[0][1].startswith("This template uses crispy forms."), True)
 
 
 def test_flag_changed_javascript_plugins_bootstrap5():
@@ -262,7 +260,7 @@ def test_flag_extended_changed_javascript_plugins_bootstrap5():
 def test_file_contains_reference_to_path():
     filedata = """
     {# Our Libraries #}
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'foobarapp/js/bugz.js' %}"></script>
         <script src="{% static 'foobarapp/js/privileges.js' %}"></script>
@@ -276,7 +274,7 @@ def test_file_contains_reference_to_path():
 def test_file_does_not_contain_reference_to_path():
     filedata = """
     {# Our Libraries #}
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'foobarapp/js/bugz_two.js' %}"></script>
         <script src="{% static 'foobarapp/js/privileges.js' %}"></script>
@@ -311,7 +309,7 @@ def test_javascript_file_does_not_contain_reference_to_path():
 def test_replace_path_references():
     filedata = """
     {# Our Libraries #}
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'foobarapp/js/bugz.js' %}"></script>
         <script src="{% static 'foobarapp/js/privileges.js' %}"></script>
@@ -323,7 +321,7 @@ def test_replace_path_references():
     result = replace_path_references(filedata, "foobarapp/js/bugz.js", "foobarapp/js/bootstrap3/bugz.js")
     expected_result = """
     {# Our Libraries #}
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'foobarapp/js/bootstrap3/bugz.js' %}"></script>
         <script src="{% static 'foobarapp/js/privileges.js' %}"></script>
@@ -419,20 +417,19 @@ def test_update_gruntfile():
         'case_importer',
     ];
     """
-    mocha_paths = ["cloudcare/spec/mocha.html", "cloudcare/spec/form_entry/mocha.html"]
+    mocha_paths = ["notifications/spec/mocha.html"]
     result = update_gruntfile(filedata, mocha_paths)
     expected_result = """
     var apps = [
         'app_manager',
         'export/ko',
-        'notifications',
+        'notifications/bootstrap3',
+        'notifications/bootstrap5',
         'reports_core/choiceListUtils',
         'locations',
         'userreports',
-        'cloudcare/bootstrap3',
-        'cloudcare/bootstrap5',
-        'cloudcare/form_entry/bootstrap3',
-        'cloudcare/form_entry/bootstrap5',
+        'cloudcare',
+        'cloudcare/form_entry',
         'hqwebapp',
         'case_importer',
     ];

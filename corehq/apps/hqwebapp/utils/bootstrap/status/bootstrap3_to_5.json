@@ -73,6 +73,9 @@
   "user_importer": {
     "is_complete": true
   },
+  "cloudcare": {
+    "is_complete": true
+  },
   "dropbox": {
     "is_complete": true
   },
@@ -93,6 +96,9 @@
   },
   "notifications": {
     "in_progress": true
+  },
+  "reminders": {
+    "is_complete": true
   },
   "reports": {
     "in_progress": true
@@ -122,5 +128,11 @@
   },
   "dashboard": {
     "is_complete": true
+  },
+  "motech.dhis2": {
+    "is_complete": true
+  },
+  "export": {
+    "in_progress": true
   }
 }

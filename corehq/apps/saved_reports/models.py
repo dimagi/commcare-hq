@@ -48,6 +48,7 @@ from corehq.apps.reports.daterange import (
 )
 from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
+    DomainReportDispatcher,
     ProjectReportDispatcher,
     ReleaseManagementReportDispatcher,
 )
@@ -203,7 +204,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             CustomProjectReportDispatcher,
             EnterpriseReportDispatcher,
             ReleaseManagementReportDispatcher,
-            CaseManagementMapDispatcher
+            CaseManagementMapDispatcher,
+            DomainReportDispatcher,
         ]
 
         for dispatcher in dispatchers:

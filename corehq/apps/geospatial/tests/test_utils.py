@@ -2,21 +2,27 @@ from uuid import uuid4
 
 from django.test import TestCase
 
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.form_processor.models import CommCareCase
-from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import create_case
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.utils import (
+    CaseOwnerUpdate,
+    CeleryTaskTracker,
+    create_case_with_gps_property,
     get_geo_case_property,
     get_geo_user_property,
     set_case_gps_property,
     set_user_gps_property,
-    create_case_with_gps_property,
+    update_cases_owner,
 )
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
+from corehq.form_processor.tests.utils import create_case
+from corehq.tests.locks import real_redis_client
 
 
 class TestGetGeoProperty(TestCase):
@@ -116,3 +122,92 @@ class TestSetGPSProperty(TestCase):
         set_user_gps_property(self.DOMAIN, submit_data)
         user = CommCareUser.get_by_user_id(self.user.user_id, self.DOMAIN)
         self.assertEqual(user.get_user_data(self.DOMAIN)[GPS_POINT_CASE_PROPERTY], '1.23 4.56 0.0 0.0')
+
+
+class TestUpdateCasesOwner(TestCase):
+    domain = 'test-domain'
+
+    def setUp(self):
+        super().setUp()
+        self.user_a = CommCareUser.create(self.domain, 'User_A', '1234', None, None)
+        self.case_1 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_a.user_id)
+
+        self.user_b = CommCareUser.create(self.domain, 'User_B', '1234', None, None)
+        self.case_2 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_b.user_id)
+        self.related_case_2 = create_case(
+            self.domain,
+            case_id=uuid4().hex,
+            save=True,
+            owner_id=self.user_b.user_id
+        )
+        self._create_parent_index(self.related_case_2, self.case_2.case_id)
+
+        self.cases = [self.case_1, self.case_2, self.related_case_2]
+
+    def tearDown(self):
+        self.user_a.delete(self.domain, None)
+        self.user_b.delete(self.domain, None)
+        CommCareCase.objects.hard_delete_cases(
+            self.domain,
+            [case.case_id for case in self.cases]
+        )
+        super().tearDown()
+
+    def _create_parent_index(self, case, parent_case_id):
+        index = CommCareCaseIndex(
+            case=case,
+            identifier='parent',
+            referenced_id=parent_case_id,
+            referenced_type='parent',
+            relationship_id=CommCareCaseIndex.CHILD
+        )
+        case.track_create(index)
+        case.save(with_tracked_models=True)
+
+    def _refresh_cases(self):
+        for case in self.cases:
+            case.refresh_from_db()
+
+    def test_update_cases_owner(self):
+        case_owner_updates = [
+            CaseOwnerUpdate(case_id=self.case_1.case_id, owner_id=self.user_b.user_id),
+            CaseOwnerUpdate(
+                case_id=self.case_2.case_id,
+                owner_id=self.user_a.user_id,
+                related_case_ids=[self.related_case_2.case_id]),
+        ]
+
+        update_cases_owner(self.domain, CaseOwnerUpdate.to_dict(case_owner_updates))
+
+        self._refresh_cases()
+        self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
+        self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
+
+
+class TestCeleryTaskTracker(TestCase):
+    TASK_KEY = 'test-key'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        with real_redis_client():
+            cls.redis_client = get_redis_client()
+            cls.celery_task_tracker = CeleryTaskTracker(cls.TASK_KEY)
+
+    def tearDown(self):
+        self.redis_client.clear()
+        super().tearDown()
+
+    def test_mark_active(self):
+        self.celery_task_tracker.mark_requested()
+        self.assertTrue(self.redis_client.has_key(self.TASK_KEY))
+
+    def test_get_active(self):
+        self.redis_client.set(self.TASK_KEY, 'ACTIVE')
+        self.assertTrue(self.celery_task_tracker.is_active())
+
+    def test_mark_inactive(self):
+        self.redis_client.set(self.TASK_KEY, 'ACTIVE')
+        self.celery_task_tracker.mark_completed()
+        self.assertFalse(self.redis_client.has_key(self.TASK_KEY))

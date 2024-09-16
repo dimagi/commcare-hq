@@ -68,9 +68,10 @@ class CasePropertyGroup(models.Model):
 
     def unique_error_message(self, model_class, unique_check):
         if unique_check == ('case_type', 'name'):
-            return gettext_lazy('Group "{}" already exists for case type "{}"'.format(
-                self.name, self.case_type.name
-            ))
+            return gettext_lazy('Group "{group}" already exists for case type "{case_type}"').format(
+                group=self.name,
+                case_type=self.case_type.name
+            )
         else:
             return super().unique_error_message(model_class, unique_check)
 

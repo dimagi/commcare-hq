@@ -1,11 +1,13 @@
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
+from django.forms.widgets import Select
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django import forms
-from corehq.apps.geospatial.models import GeoConfig
+from corehq.apps.geospatial.models import GeoConfig, validate_travel_mode
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq import toggles
 
 
@@ -37,6 +39,9 @@ class GeospatialConfigForm(forms.ModelForm):
             "plaintext_api_token",
             "min_cases_per_user",
             "max_cases_per_user",
+            "max_case_distance",
+            "max_case_travel_time",
+            "travel_mode",
         ]
 
     user_location_property_name = forms.CharField(
@@ -75,6 +80,25 @@ class GeospatialConfigForm(forms.ModelForm):
         required=False,
         min_value=1,
     )
+    max_case_distance = forms.IntegerField(
+        label=_("Max distance (km) to case"),
+        help_text=_("The maximum distance (in kilometers) from the user to the case. Leave blank to skip."),
+        required=False,
+        min_value=1,
+    )
+    max_case_travel_time = forms.IntegerField(
+        label=_("Max travel time (minutes) to case"),
+        help_text=_("The maximum travel time (in minutes) from the user to the case. Leave blank to skip."),
+        required=False,
+        min_value=0,
+    )
+    travel_mode = forms.CharField(
+        label=_("Select travel mode"),
+        help_text=_("The travel mode of the users. "
+                    "Consider this when specifying the max travel time to each case."),
+        widget=Select(choices=GeoConfig.VALID_TRAVEL_MODES),
+        validators=[validate_travel_mode]
+    )
     selected_disbursement_algorithm = forms.ChoiceField(
         label=_("Disbursement algorithm"),
         # TODO: Uncomment once linked documentation becomes public (geospatial feature is GA'ed)
@@ -85,7 +109,20 @@ class GeospatialConfigForm(forms.ModelForm):
         # ),
         choices=DISBURSEMENT_ALGORITHM_OPTIONS,
         required=True,
-        help_text=_("The algorithm which will be used to disburse cases between users"),
+        help_text=format_html_lazy('''
+            <span data-bind="visible: selectedAlgorithm() == '{}'">
+                {}
+            </span>
+            <span data-bind="visible: selectedAlgorithm() == '{}'">
+                {}
+            </span>''',
+            GeoConfig.RADIAL_ALGORITHM,
+            _('Uses the straight-line distance between users and cases to determine '
+              ' allocation of cases. Ideal for when map road coverage is poor.'),
+            GeoConfig.ROAD_NETWORK_ALGORITHM,
+            _('Takes distance along roads between users and cases into account to determine '
+              'allocation of cases. Ideal for when map road coverage is good.'),
+        )
     )
     min_cases_per_user = forms.IntegerField(
         label=_("Minimum cases assigned per user"),
@@ -148,6 +185,24 @@ class GeospatialConfigForm(forms.ModelForm):
                     crispy.Field(
                         'max_cases_per_user',
                         data_bind='value: maxCasesPerUser',
+                    ),
+                    crispy.Field(
+                        'max_case_distance',
+                        data_bind='value: maxCaseDistance',
+                    ),
+                    crispy.Div(
+                        crispy.Field(
+                            'travel_mode',
+                            data_bind='value: travelMode',
+                        ),
+                        data_bind='visible: captureApiToken',
+                    ),
+                    crispy.Div(
+                        crispy.Field(
+                            'max_case_travel_time',
+                            data_bind='value: maxTravelTime',
+                        ),
+                        data_bind='visible: captureApiToken',
                     ),
                     crispy.Div(
                         crispy.Field('plaintext_api_token', data_bind="value: plaintext_api_token"),

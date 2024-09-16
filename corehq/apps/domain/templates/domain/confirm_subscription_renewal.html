@@ -10,7 +10,7 @@
 {% block form_content %}
   <p class="lead text-center">
     {% blocktrans with next_plan.name as p_name%}
-      You are renewing your plan to the <strong>{{ p_name }}</strong>.
+      You are renewing your plan to <strong>{{ p_name }}</strong>.
     {% endblocktrans %}
     {% if next_plan.name == plan.name %}
       {% trans "— which matches your current feature usage." %}

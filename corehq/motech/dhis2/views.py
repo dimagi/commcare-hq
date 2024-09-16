@@ -15,6 +15,7 @@ from django.views.generic.edit import BaseCreateView, BaseUpdateView
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -36,6 +37,7 @@ from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from .tasks import send_dataset
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
@@ -113,6 +115,7 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapJsonCreateView(BaseProjectSettingsView):
@@ -131,6 +134,7 @@ class DataSetMapJsonCreateView(BaseProjectSettingsView):
         return JsonResponse({'success': _('DataSet map updated successfully.')})
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapJsonEditView(BaseProjectSettingsView):
@@ -198,6 +202,7 @@ class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
     model = SQLDataSetMap
     form_class = DataSetMapForm
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator())
     def dispatch(self, request, *args, **kwargs):
@@ -230,6 +235,7 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
     empty_notification = _('This DataSet Map has no DataValue Maps')
     loading_message = _('Loading DataValue Maps')
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator())
     def dispatch(self, request, *args, **kwargs):
@@ -339,6 +345,8 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
             ),
         }
 
+    create_item_form_class = "form row"
+
     def get_create_form(self, is_blank=False):
         if self.request.method == 'POST' and not is_blank:
             return DataValueMapCreateForm(self.object, self.request.POST)
@@ -365,6 +373,7 @@ def send_dataset_now(request, domain, pk):
     return JsonResponse(result, status=result['status_code'] or 500)
 
 
+@use_bootstrap5
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_dhis2_repeater(request, domain, repeater_id):
@@ -385,7 +394,7 @@ def config_dhis2_repeater(request, domain, repeater_id):
             errors = [err for errlist in form.errors.values() for err in errlist]
             return JsonResponse({'errors': errors}, status=400)
     else:
-        form_configs = json.dumps(repeater.dhis2_config['form_configs'])
+        form_configs = json.dumps(repeater.dhis2_config.get('form_configs', []))
     return render(request, 'dhis2/dhis2_events_config.html', {
         'domain': domain,
         'repeater_id': repeater_id,
@@ -393,6 +402,7 @@ def config_dhis2_repeater(request, domain, repeater_id):
     })
 
 
+@use_bootstrap5
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_dhis2_entity_repeater(request, domain, repeater_id):

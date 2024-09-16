@@ -8,6 +8,7 @@ import pytz
 
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
@@ -1200,7 +1201,7 @@ class TestCaseESAccessors(TestCase):
 
         self._send_case_to_es(opened_on=opened_on)
         self._send_case_to_es(opened_on=opened_on_not_active_range)
-        self._send_case_to_es(opened_on=opened_on, case_type='commcare-user')
+        self._send_case_to_es(opened_on=opened_on, case_type=USERCASE_TYPE)
 
         results = get_total_case_counts_by_owner(self.domain, datespan)
         self.assertEqual(results[self.owner_id], 2)
@@ -1270,7 +1271,7 @@ class TestCaseESAccessors(TestCase):
         opened_on = datetime(2013, 7, 15)
 
         self._send_case_to_es(opened_on=opened_on)
-        self._send_case_to_es(opened_on=opened_on, case_type='commcare-user')
+        self._send_case_to_es(opened_on=opened_on, case_type=USERCASE_TYPE)
 
         results = get_case_counts_opened_by_user(self.domain, datespan)
         self.assertEqual(results[self.user_id], 1)

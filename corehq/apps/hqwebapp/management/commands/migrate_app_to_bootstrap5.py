@@ -113,7 +113,8 @@ class Command(BaseCommand):
             if not confirm:
                 return
 
-        if not is_app_in_progress(app_name) and not is_app_migration_complete:
+        self.no_split = options.get('no_split')
+        if not is_app_in_progress(app_name) and not is_app_migration_complete and not self.no_split:
             self.stdout.write(self.style.WARNING(
                 f"\n\n'{app_name}' is not marked as 'in progress'.\n"
             ))
@@ -129,7 +130,6 @@ class Command(BaseCommand):
                     show_apply_commit=not has_changes
                 )
 
-        self.no_split = options.get('no_split')
         self.skip_all = options.get('skip_all')
         if self.skip_all and self.no_split:
             self.stderr.write(

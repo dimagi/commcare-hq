@@ -38,6 +38,7 @@ def slow_function_view(request):
 class TestReportDispatcher(ReportDispatcher):
     map_name = "REPORTS"
     prefix = "test"
+    __test__ = False
 
     @classmethod
     def get_reports(cls, domain):
@@ -50,6 +51,7 @@ class TestReportDispatcher(ReportDispatcher):
 class TestNoDomainReportDispatcher(ReportDispatcher):
     map_name = "REPORTS"
     prefix = "test_no_domain"
+    __test__ = False
 
     @classmethod
     def get_reports(cls, domain):
@@ -61,6 +63,7 @@ class TestNoDomainReportDispatcher(ReportDispatcher):
 class TestCustomReportDispatcher(TestNoDomainReportDispatcher):
     map_name = "REPORTS"
     prefix = "test_custom"
+    __test__ = False
 
     def dispatch(self, request, *args, **kwargs):
         return CustomReport(request).view_response
@@ -173,22 +176,18 @@ class TestLogLongRequestMiddlewareReports(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = Domain(name="long_request", is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
         cls.domain.save()
 
         cls.username = 'fingile'
         cls.password = '*******'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain.name, deleted_by=None)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
 
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain.name, deleted_by=None)
-        cls.domain.delete()
-        super().tearDownClass()
 
     def test_slow_domain_report(self, notify_exception):
         res = self.client.get('/domain1/slow_report/')

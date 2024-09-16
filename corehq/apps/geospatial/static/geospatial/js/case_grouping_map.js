@@ -68,17 +68,18 @@ hqDefine("geospatial/js/case_grouping_map",[
                 exportableCases = self.casesToExport();
             }
 
-            const casesToExport = _.map(exportableCases, function (caseItem) {
-                return caseItem.toJson();
-            });
-
-            let csvStr = "";
-            let groupNameByID = _.object(_.map(caseGroupsInstance.generatedGroups, function(group) {
+            const groupNameByID = _.object(_.map(caseGroupsInstance.generatedGroups, function(group) {
                 return [group.groupId, group.name]
             }));
 
+            const casesToExport = _.map(exportableCases, function (caseItem) {
+                let caseJson = caseItem.toJson();
+                caseJson.groupName = groupNameByID[caseJson.groupId];
+                return caseJson;
+            });
+
             // Write headers first
-            let headers = [
+            const headers = [
                 gettext('Group ID'),
                 gettext('Group Name'),
                 gettext('Group Center Coordinates'),
@@ -87,29 +88,17 @@ hqDefine("geospatial/js/case_grouping_map",[
                 gettext('Case Coordinates'),
                 gettext('Case ID'),
             ]
-            csvStr = (headers).join(",");
-            csvStr += "\n";
+            const cols = [
+                'groupId',
+                'groupName',
+                'groupCenterCoordinates',
+                'caseName',
+                'owner_name',
+                'coordinates',
+                'caseId'
+            ]
 
-            _.forEach(casesToExport, function (caseToExport) {
-                csvStr += [
-                    caseToExport.groupId,
-                    groupNameByID[caseToExport.groupId],
-                    caseToExport.groupCenterCoordinates,
-                    caseToExport.caseName,
-                    caseToExport.owner_name,
-                    caseToExport.coordinates,
-                    caseToExport.caseId,
-                ].join(",");
-                csvStr += "\n";
-            });
-
-            // Download CSV file
-            const hiddenElement = document.createElement('a');
-            hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvStr);
-            hiddenElement.target = '_blank';
-            hiddenElement.download = `Grouped Cases (${utils.getTodayDate()}).csv`;
-            hiddenElement.click();
-            hiddenElement.remove();
+            utils.downloadCsv(casesToExport, headers, cols, 'Group Export');
         };
 
         self.addGroupDataToCases = function(caseGroups, groupsData, assignDefaultGroup) {
@@ -496,11 +485,10 @@ hqDefine("geospatial/js/case_grouping_map",[
             // reset the warning banner
             self.groupsLocked(!self.groupsLocked());
             if (self.groupsLocked()) {
-                mapModel.mapInstance.scrollZoom.disable();
                 setCaseGroups();
             } else {
-                mapModel.mapInstance.scrollZoom.enable();
                 clearCaseGroups();
+                mapModel.fitMapBounds(mapModel.caseMapItems());
             }
         };
         return self;
@@ -544,9 +532,11 @@ hqDefine("geospatial/js/case_grouping_map",[
             });
             mapModel.mapInstance.on('draw.delete', function (e) {
                 polygonFilterInstance.removePolygonsFromFilterList(e.features);
+                polygonFilterInstance.btnSaveDisabled(!mapModel.mapHasPolygons());
             });
             mapModel.mapInstance.on('draw.create', function (e) {
                 polygonFilterInstance.addPolygonsToFilterList(e.features);
+                polygonFilterInstance.btnSaveDisabled(!mapModel.mapHasPolygons());
             });
         }
 

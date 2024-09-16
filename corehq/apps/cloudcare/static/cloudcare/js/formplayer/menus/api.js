@@ -40,6 +40,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 lastRecordedLocation = FormplayerFrontend.getChannel().request('lastRecordedLocation'),
                 timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 tzFromBrowser = Intl.DateTimeFormat().resolvedOptions().timeZone,
+                windowWidth = String(window.innerWidth),
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
@@ -47,16 +48,22 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 menus;
 
             $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
+                const app = appCollection.find(function (app) {
+                    const currPrimaryAppId = app.get('copy_of');
+                    // Prevents breaking if a web apps session spans pre and post deploy. Can remove post deploy.
+                    if (app.id && app.id === params.appId) {
+                        return app;
+                    }
+                    if (currPrimaryAppId && currPrimaryAppId === params.appId) {
+                        return app;
+                    }
+                    if (currPrimaryAppId && (currPrimaryAppId === params.copyOf)) {
+                        return app;
+                    }
+                });
                 if (!params.preview) {
                     // Make sure the user has access to the app
-                    if (!appCollection.find(function (app) {
-                        if (app.id && app.id === params.appId) {
-                            return true;
-                        }
-                        if (app.get('copy_of') && app.get('copy_of') === params.copyOf) {
-                            return true;
-                        }
-                    })) {
+                    if (!app) {
                         FormplayerFrontend.trigger(
                             'showError',
                             gettext('The application could not be found')
@@ -64,6 +71,13 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                         FormplayerFrontend.trigger('navigateHome');
                         defer.reject();
                         return;
+                    }
+                }
+                let appId = params.appId;
+                if (!params.preview) {
+                    const copyOf = app.get('copy_of');
+                    if (copyOf && copyOf === params.appId) {
+                        appId = app.id;
                     }
                 }
                 FormplayerFrontend.permitIntervalSync = true;
@@ -98,7 +112,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                             }
                         } else {
                             if (response.smartLinkRedirect) {
-                                if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
+                                if (user.isAppPreview) {
                                     FormplayerFrontend.trigger('showSuccess', gettext("You have selected a case in a different domain. App Preview does not support this feature.", 5000));
                                     FormplayerFrontend.trigger('navigateHome');
                                     return;
@@ -163,10 +177,10 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     "username": user.username,
                     "restoreAs": user.restoreAs,
                     "domain": user.domain,
-                    "app_id": params.appId,
+                    "app_id": appId,
                     "endpoint_id": params.endpointId,
                     "endpoint_args": params.endpointArgs,
-                    "locale": displayOptions.language,
+                    "locale": params.changeLang || displayOptions.language,
                     "selections": params.selections,
                     "offset": params.page * casesPerPage,
                     "search_text": params.search,
@@ -184,6 +198,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     "isShortDetail": params.isShortDetail,
                     "isRefreshCaseSearch": params.isRefreshCaseSearch,
                     "requestInitiatedByTag": params.requestInitiatedByTag,
+                    "windowWidth": windowWidth,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;

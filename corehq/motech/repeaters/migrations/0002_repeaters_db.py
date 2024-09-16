@@ -161,7 +161,14 @@ class Migration(migrations.Migration):
 
     operations = [
         # Cannot be applied until the repeaters database has been initialized
-        # and migrated. The migration should be applied with:
+        # and migrated.
+        #
+        # After creating the new "repeaters" database and adding it to
+        # DATABASES and LOCAL_CUSTOM_DB_ROUTING, a "repeaters_fdw_user"
+        # must also be created on the postgres cluster.
+        # See https://github.com/dimagi/commcare-cloud/pull/5989
+        #
+        # Then the migration should be applied with:
         #
         #   ./manage.py migrate --database=repeaters  # initialize repeaters db
         #   ./manage.py migrate                       # create repeaters FDW

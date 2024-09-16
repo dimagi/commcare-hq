@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
+from corehq import privileges
 from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
-from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
@@ -23,7 +23,7 @@ from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     delete_case_search_cases,
 )
-from corehq.util.test_utils import create_and_save_a_case, flag_enabled
+from corehq.util.test_utils import create_and_save_a_case, privilege_enabled
 
 
 @es_test(requires=[case_search_adapter])
@@ -98,7 +98,7 @@ class CaseSearchPillowTest(TestCase):
     def _get_kafka_seq(self):
         return get_topic_offset(topics.CASE_SQL)
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @privilege_enabled(privileges.DATA_DICTIONARY)
     def test_geopoint_property(self):
         CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
         self._make_data_dictionary(gps_properties=['coords', 'short_coords', 'other_coords'])
