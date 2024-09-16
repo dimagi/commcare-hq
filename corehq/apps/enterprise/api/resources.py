@@ -1,12 +1,12 @@
 from datetime import datetime
 from urllib.parse import urljoin
 
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFound
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from dateutil import tz
-from tastypie import fields
+from tastypie import fields, http
 from tastypie.exceptions import ImmediateHttpResponse
 
 from corehq.apps.accounting.models import BillingAccount
@@ -18,14 +18,12 @@ from corehq.apps.api.odata.utils import FieldMetadata
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
+from corehq.apps.api.resources.meta import get_hq_throttle
 from corehq.apps.enterprise.enterprise import (
     EnterpriseReport,
-    EnterpriseDomainReport,
-    EnterpriseFormReport,
-    EnterpriseMobileWorkerReport,
-    EnterpriseODataReport,
-    EnterpriseWebUserReport,
 )
+
+from corehq.apps.enterprise.tasks import generate_enterprise_report, ReportTaskProgress
 
 
 class EnterpriseODataAuthentication(ODataAuthentication):
@@ -51,6 +49,7 @@ class ODataResource(HqBaseResource):
         include_resource_uri = False
         collection_name = 'value'
         authentication = ODataAuthentication()
+        throttle = get_hq_throttle()
         limit = 2000
         max_limit = 10000
 
@@ -67,6 +66,13 @@ class ODataResource(HqBaseResource):
 
         del result['meta']
         return result
+
+    def get_object_list(self, request):
+        '''Intended to be overwritten in subclasses with query logic'''
+        raise NotImplementedError()
+
+    def obj_get_list(self, bundle, **kwargs):
+        return self.get_object_list(bundle.request)
 
     def determine_format(self, request):
         # Currently a hack to force JSON. XML is supported by OData, but "Control Information" fields
@@ -138,12 +144,65 @@ class ODataResource(HqBaseResource):
         return time.isoformat()
 
 
-class ODataEnterpriseResource(ODataResource):
+class ODataEnterpriseReportResource(ODataResource):
+    REPORT_SLUG = None  # Override with correct slug
+    # If this delay is too quick, clients like PowerBI
+    # will hit their maximum number of retries before the report is ever generated.
+    # If the delay is too long, then even reports that would generate in well under the retry
+    # window will be subject to this delay (PowerBI will subject them to it twice,
+    # as the data preview and actual request perform separate queries
+    RETRY_IN_PROGRESS_DELAY = 60
+    RETRY_CONFLICT_DELAY = 120
+
     class Meta(ODataResource.Meta):
         authentication = EnterpriseODataAuthentication()
 
+    def get_object_list(self, request):
+        query_id = request.GET.get('query_id', None)
+        progress = ReportTaskProgress(
+            self.REPORT_SLUG, request.couch_user.username, query_id=query_id)
+        status = progress.get_status()
+        if status == ReportTaskProgress.STATUS_COMPLETE:
+            # ensure this is for the same parameters
+            if not progress.is_managing_task(self.get_report_task(request)):
+                raise ImmediateHttpResponse(
+                    response=http.HttpTooManyRequests(headers={'Retry-After': self.RETRY_CONFLICT_DELAY}))
 
-class DomainResource(ODataEnterpriseResource):
+            try:
+                data = progress.get_data()
+                progress.clear_status()  # Clear this request so that this user can issue new requests
+            except KeyError:
+                raise ImmediateHttpResponse(HttpResponseNotFound())
+
+            # Because we are using a cacheable report, we need some way to tell tastypie to use
+            # the generated report for future page requests.
+            # By adding the report's query id to the request, the tastypie paginator will be able to
+            # use it when generating 'next page' links
+            # HACK: This is not ideal, as we are creeating a side effect within a 'get' method,
+            # but it doesn't seem that Tastypie provides an alternate means of modifying links
+            self._add_query_id_to_request(request, progress.get_query_id())
+            return data
+        elif status == ReportTaskProgress.STATUS_NEW:
+            progress.start_task(self.get_report_task(request))
+
+        # PowerBI respects delays with only two response codes:
+        # 429 (TooManyRequests) and 503 (ServiceUnavailable). Although 503 is likely more semantically
+        # correct here, 5XX errors are treated differently by our monitoring, and
+        # PowerBI will only retry 503 requests 3 times, whereas 429s permit 6 retries
+        raise ImmediateHttpResponse(
+            response=http.HttpTooManyRequests(headers={'Retry-After': self.RETRY_IN_PROGRESS_DELAY}))
+
+    def get_report_task(self, request):
+        raise NotImplementedError()
+
+    def _add_query_id_to_request(self, request, query_id):
+        if 'report' not in request.GET:
+            new_params = request.GET.copy()
+            new_params['query_id'] = query_id
+            request.GET = new_params
+
+
+class DomainResource(ODataEnterpriseReportResource):
     domain = fields.CharField()
     created_on = fields.DateTimeField()
     num_apps = fields.IntegerField()
@@ -152,13 +211,15 @@ class DomainResource(ODataEnterpriseResource):
     num_sms_last_30_days = fields.IntegerField()
     last_form_submission = fields.DateTimeField()
 
-    def get_object_list(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseDomainReport(account, request.couch_user)
-        return report.rows
+    REPORT_SLUG = EnterpriseReport.DOMAINS
 
-    def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
+    def get_report_task(self, request):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+        )
 
     def dehydrate(self, bundle):
         bundle.data['domain'] = bundle.obj[6]
@@ -175,7 +236,7 @@ class DomainResource(ODataEnterpriseResource):
         return ('domain',)
 
 
-class WebUserResource(ODataEnterpriseResource):
+class WebUserResource(ODataEnterpriseReportResource):
     email = fields.CharField()
     name = fields.CharField()
     role = fields.CharField()
@@ -184,13 +245,15 @@ class WebUserResource(ODataEnterpriseResource):
     status = fields.CharField()
     domain = fields.CharField()
 
-    def get_object_list(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseWebUserReport(account, request.couch_user)
-        return report.rows
+    REPORT_SLUG = EnterpriseReport.WEB_USERS
 
-    def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
+    def get_report_task(self, request):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+        )
 
     def dehydrate(self, bundle):
         bundle.data['email'] = bundle.obj[0]
@@ -211,7 +274,7 @@ class WebUserResource(ODataEnterpriseResource):
         return ('email',)
 
 
-class MobileUserResource(ODataEnterpriseResource):
+class MobileUserResource(ODataEnterpriseReportResource):
     username = fields.CharField()
     name = fields.CharField()
     email = fields.CharField()
@@ -223,13 +286,15 @@ class MobileUserResource(ODataEnterpriseResource):
     user_id = fields.CharField()
     domain = fields.CharField()
 
-    def get_object_list(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseMobileWorkerReport(account, request.couch_user)
-        return report.rows
+    REPORT_SLUG = EnterpriseReport.MOBILE_USERS
 
-    def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
+    def get_report_task(self, request):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+        )
 
     def dehydrate(self, bundle):
         bundle.data['username'] = bundle.obj[0]
@@ -249,7 +314,7 @@ class MobileUserResource(ODataEnterpriseResource):
         return ('user_id',)
 
 
-class ODataFeedResource(ODataEnterpriseResource):
+class ODataFeedResource(ODataEnterpriseReportResource):
     '''
     A Resource for listing all Domain-level OData feeds which belong to the Enterprise.
     Currently includes summary rows as well as individual reports
@@ -261,13 +326,15 @@ class ODataFeedResource(ODataEnterpriseResource):
     report_name = fields.CharField(null=True)
     report_rows = fields.IntegerField(null=True)
 
-    def get_object_list(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseODataReport(account, request.couch_user)
-        return report.rows
+    REPORT_SLUG = EnterpriseReport.ODATA_FEEDS
 
-    def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
+    def get_report_task(self, request):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+        )
 
     def dehydrate(self, bundle):
         bundle.data['num_feeds_used'] = bundle.obj[0]
@@ -282,7 +349,11 @@ class ODataFeedResource(ODataEnterpriseResource):
         return ('report_name',)  # very odd report that makes coming up with an actual key challenging
 
 
-class FormSubmissionResource(ODataEnterpriseResource):
+class FormSubmissionResource(ODataEnterpriseReportResource):
+    class Meta(ODataEnterpriseReportResource.Meta):
+        limit = 10000
+        max_limit = 20000
+
     form_id = fields.CharField()
     form_name = fields.CharField()
     submitted = fields.DateTimeField()
@@ -290,16 +361,20 @@ class FormSubmissionResource(ODataEnterpriseResource):
     mobile_user = fields.CharField()
     domain = fields.CharField()
 
-    def get_object_list(self, request):
+    REPORT_SLUG = EnterpriseReport.FORM_SUBMISSIONS
+
+    def get_report_task(self, request):
         enddate = datetime.strptime(request.GET['enddate'], '%Y-%m-%d') if 'enddate' in request.GET else None
         startdate = datetime.strptime(request.GET['startdate'], '%Y-%m-%d') if 'startdate' in request.GET else None
         account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseFormReport(
-            account, request.couch_user, start_date=startdate, end_date=enddate, include_form_id=True)
-        return report.rows
-
-    def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+            start_date=startdate,
+            end_date=enddate,
+            include_form_id=True,
+        )
 
     def dehydrate(self, bundle):
         bundle.data['form_id'] = bundle.obj[0]

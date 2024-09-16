@@ -6,6 +6,7 @@ from unittest import mock
 from corehq.apps.case_importer.suggested_fields import (
     FieldSpec,
     get_suggested_case_fields,
+    get_non_discoverable_system_properties,
 )
 from corehq.util.test_utils import DocTestMixin
 
@@ -68,3 +69,26 @@ class SuggestedFieldTest(SimpleTestCase, DocTestMixin):
                 FieldSpec(field='weight', show_in_menu=True),
             ]
         )
+
+
+class TestSystemProperties(SimpleTestCase):
+
+    def test_get_non_discoverable_system_properties(self):
+        self.assertEqual(get_non_discoverable_system_properties(), [
+            'number',
+            'caseid',
+            'case_type',
+            'closed',
+            'closed_by_user_id',
+            'closed_by_username',
+            'closed_date',
+            'last_modified_by_user_id',
+            'last_modified_by_user_username',
+            'last_modified_date',
+            'opened_by_user_id',
+            'opened_by_username',
+            'opened_date',
+            'server_last_modified_date',
+            'state',
+            'case_link',
+        ])

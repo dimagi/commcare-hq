@@ -692,7 +692,11 @@ def _get_user(domain, doc_id):
         # 'is_account_confirmed',
         # 'user_location_id',
     )
-    user = CommCareUser.get_by_user_id(doc_id, domain)
+    try:
+        user = CommCareUser.get_by_user_id(doc_id, domain)
+    except CouchUser.AccountTypeError:
+        # user is a WebUser not a CommCareUser
+        return None
     if not user:
         return None
 
@@ -729,6 +733,86 @@ def _device_to_dict(
         'app_meta',
     )
     return {k: v for k, v in device.to_json().items() if k in whitelist}
+
+
+class RelatedCaseExpressionSpec(JsonObject):
+    """
+    Similar to ``RelatedDocExpressionSpec``, this can be used to look up
+    a property in a related case. Related cases can be identified either
+    by their case ID or by ``external_id``. This example looks up the
+    full name of a patient identified by their external ID:
+
+    .. code:: json
+
+       {
+           "type": "related_case",
+           "external_id_expression": {
+               "type": "property_name",
+               "property_name": "patient_external_id"
+           },
+           "value_expression": {
+               "type": "property_name",
+               "property_name": "full_name"
+           }
+       }
+    """
+    type = TypeProperty('related_case')
+    case_id_expression = DictProperty()
+    external_id_expression = DictProperty()
+    value_expression = DictProperty(required=True)
+
+    def configure(
+        self,
+        *,
+        value_expression,
+        case_id_expression=None,
+        external_id_expression=None,
+    ):
+        if bool(case_id_expression) == bool(external_id_expression):
+            # Both case_id_expression and external_id_expression are
+            # present or both are missing
+            raise BadSpecError(
+                'RelatedCaseExpression must have either case_id_expression '
+                'or external_id_expression'
+            )
+        self._case_id_expression = case_id_expression
+        self._external_id_expression = external_id_expression
+        self._value_expression = value_expression
+
+    def __call__(self, item, evaluation_context=None):
+        if self._case_id_expression:
+            case_id = self._case_id_expression(item, evaluation_context)
+            external_id = None
+        else:
+            case_id = None
+            external_id = self._external_id_expression(item, evaluation_context)
+        if case_id or external_id:
+            return self.get_value(case_id, external_id, evaluation_context)
+
+    def get_value(self, case_id, external_id, evaluation_context):
+        case = self._get_document(case_id, external_id, evaluation_context)
+        # Use a new evaluation context since this is a new document
+        return self._value_expression(case, EvaluationContext(case, 0))
+
+    @staticmethod
+    @ucr_context_cache(vary_on=('case_id', 'external_id',))
+    def _get_document(case_id, external_id, evaluation_context):
+        domain = evaluation_context.root_doc['domain']
+        assert domain
+
+        # Call get_document_store_for_doc_type() so that load counter tracks load.
+        case_document_store = get_document_store_for_doc_type(
+            domain,
+            'CommCareCase',
+            load_source='related_case_expression'
+        )
+        try:
+            doc = case_document_store.get_document(case_id, external_id=external_id)
+        except DocumentNotFoundError:
+            return None
+        if domain != doc.get('domain'):
+            return None
+        return doc
 
 
 class NestedExpressionSpec(JsonObject):

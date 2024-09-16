@@ -19,6 +19,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration, RegistryDataSourceConfiguration,
 )
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 
 
@@ -34,6 +35,13 @@ def get_sample_data_source():
 
 def get_sample_registry_data_source(**kwargs):
     return _get_sample_doc('sample_registry_data_source.json', RegistryDataSourceConfiguration, **kwargs)
+
+
+def cleanup_ucr(data_source):
+    try:
+        get_indicator_adapter(data_source).drop_table()
+    finally:
+        data_source.delete()
 
 
 def get_data_source_with_related_doc_type():

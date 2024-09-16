@@ -481,9 +481,9 @@ class IsMemberOfMixin(DocumentSchema):
 
         if allow_enterprise:
             from corehq.apps.enterprise.models import EnterprisePermissions
-            config = EnterprisePermissions.get_by_domain(domain)
-            if config.is_enabled and domain in config.domains:
-                return self.is_member_of(config.source_domain, allow_enterprise=False)
+            source_domain = EnterprisePermissions.get_source_domain(domain)
+            if source_domain:
+                return self.is_member_of(source_domain, allow_enterprise=False)
 
         return False
 
@@ -520,9 +520,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 if domain in self.domains:
                     raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
                 from corehq.apps.enterprise.models import EnterprisePermissions
-                config = EnterprisePermissions.get_by_domain(domain)
-                if allow_enterprise and config.is_enabled and domain in config.domains:
-                    return self.get_domain_membership(config.source_domain, allow_enterprise=False)
+                source_domain = EnterprisePermissions.get_source_domain(domain)
+                if allow_enterprise and source_domain:
+                    return self.get_domain_membership(source_domain, allow_enterprise=False)
         except self.Inconsistent as e:
             logging.warning(e)
             self.domains = [d.domain for d in self.domain_memberships]
@@ -2440,6 +2440,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         super().add_domain_membership(domain, timezone, **kwargs)
 
     def delete_domain_membership(self, domain, create_record=False):
+        self._leaving_domains = getattr(self, '_leaving_domains', []) + [domain]
+
         if TABLEAU_USER_SYNCING.enabled(domain):
             from corehq.apps.reports.util import delete_tableau_user
             delete_tableau_user(domain, self.username)
@@ -2518,8 +2520,10 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         super().save(fire_signals=fire_signals, **params)
         if fire_signals and not self.to_be_deleted():
             from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
-            for domain in self.get_domains():
+            # We need to sync to all domains, even those the user is leaving
+            for domain in self.get_domains() + getattr(self, '_leaving_domains', []):
                 sync_web_user_usercases_if_applicable(self, domain)
+        self._leaving_domains = []
 
     def add_to_assigned_locations(self, domain, location):
         membership = self.get_domain_membership(domain)

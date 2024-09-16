@@ -121,14 +121,6 @@ hqDefine('cloudcare/js/debugger/debugger', [
                 $('.debugger-content').outerHeight(contentHeight);
             }
         };
-
-        // Called afterRender, ensures that the debugger takes the whole screen
-        self.adjustWidth = function () {
-            var $debug = $('#instance-xml-home'),
-                $body = $('body');
-
-            $debug.width($body.width());
-        };
     };
 
     // By default do nothing when updating the debugger

@@ -29,8 +29,8 @@
     <property key="support-email-address" value="{{ support_email }}" force="true"/>
     {% endif %}
 
-    <property key="cc_persistent_menu" value="{{ app.persistent_menu|yesno:"yes,no" }}" force="true"/>
-    <property key="cc_breadcrumbs_enabled" value="{{ app.show_breadcrumbs|yesno:"yes,no" }}" force="true"/>
+    <property key="cc-persistent-menu" value="{{ app.persistent_menu|yesno:"yes,no" }}" force="true"/>
+    <property key="cc-breadcrumbs-enabled" value="{{ app.show_breadcrumbs|yesno:"yes,no" }}" force="true"/>
 
     <!-- Properties configured on CommCare HQ 1.0 -->
     {% for key, value in app_profile.properties.items %}{% if value != None %}

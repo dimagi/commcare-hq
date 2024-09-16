@@ -31,13 +31,13 @@ hqDefine("cloudcare/js/formplayer/main", [
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),
             $trialBanner = $('#cta-trial-banner');
-        var hideMenu = function () {
+        var hideMainMenu = function () {
             $menuToggle.data('minimized', 'yes');
             $navbar.addClass("d-none");
             $trialBanner.addClass("d-none");
             $menuToggle.text(gettext('Show Full Menu'));
         };
-        var showMenu = function () {
+        var showMainMenu = function () {
             $menuToggle.data('minimized', 'no');
             $navbar.removeClass("d-none");
             $trialBanner.removeClass("d-none");
@@ -48,15 +48,15 @@ hqDefine("cloudcare/js/formplayer/main", [
         // Show the top HQ nav for new users, so they know how to get back to HQ,
         // but hide it for more mature users so it's out of the way
         if (initialPageData.get("domain_is_on_trial")) {
-            showMenu();
+            showMainMenu();
         } else {
-            hideMenu();
+            hideMainMenu();
         }
         $menuToggle.click(function (e) {
             if ($menuToggle.data('minimized') === 'yes') {
-                showMenu();
+                showMainMenu();
             } else {
-                hideMenu();
+                hideMainMenu();
             }
             e.preventDefault();
         });

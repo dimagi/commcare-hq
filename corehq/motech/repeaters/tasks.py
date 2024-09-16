@@ -19,7 +19,6 @@ from corehq.util.metrics import (
     metrics_histogram_timer,
 )
 from corehq.util.metrics.const import MPM_MAX
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
 from .const import (
@@ -33,7 +32,11 @@ from .const import (
 )
 from .models import RepeatRecord, domain_can_forward
 
-from ..rate_limiter import report_repeater_usage, rate_limit_repeater
+from ..rate_limiter import (
+    rate_limit_repeater,
+    report_repeater_attempt,
+    report_repeater_usage,
+)
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -43,8 +46,6 @@ _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(hours=5),
     timedelta(hours=10),
 )
-MOTECH_DEV = '@'.join(('nhooper', 'dimagi.com'))
-_soft_assert = soft_assert(to=MOTECH_DEV)
 logging = get_task_logger(__name__)
 
 DELETE_CHUNK_SIZE = 5000
@@ -108,20 +109,12 @@ def check_repeaters_in_partition(partition):
         ):
             for record in RepeatRecord.objects.iter_partition(
                     start, partition, CHECK_REPEATERS_PARTITION_COUNT):
-                if not _soft_assert(
-                    datetime.utcnow() < twentythree_hours_later,
-                    "I've been iterating repeat records for 23 hours. I quit!"
-                ):
+
+                if datetime.utcnow() > twentythree_hours_later:
                     break
 
                 metrics_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now(is_retry=True)
-            else:
-                iterating_time = datetime.utcnow() - start
-                _soft_assert(
-                    iterating_time < timedelta(hours=6),
-                    f"It took {iterating_time} to iterate repeat records."
-                )
     finally:
         check_repeater_lock.release()
 
@@ -144,8 +137,26 @@ def retry_process_repeat_record(repeat_record_id, domain):
     _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
+@task(queue=settings.CELERY_REPEAT_RECORD_DATASOURCE_QUEUE)
+def process_datasource_repeat_record(repeat_record_id, domain):
+    """
+    NOTE: Keep separate from retry_process_datasource_repeat_record for monitoring purposes
+    Domain is present here for domain tagging in datadog
+    """
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_DATASOURCE_QUEUE)
+def retry_process_datasource_repeat_record(repeat_record_id, domain):
+    """
+    NOTE: Keep separate from process_datasource_repeat_record for monitoring purposes
+    Domain is present here for domain tagging in datadog
+    """
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
+
+
 def _process_repeat_record(repeat_record):
-    request_duration = None
+    request_duration = action = None
     with TimingContext('process_repeat_record') as timer:
         if repeat_record.state == State.Cancelled:
             return
@@ -170,12 +181,13 @@ def _process_repeat_record(repeat_record):
                 # clogging the queue
                 repeat_record.postpone_by(MAX_RETRY_WAIT)
                 action = 'paused'
-            elif rate_limit_repeater(repeat_record.domain):
+            elif rate_limit_repeater(repeat_record.domain, repeat_record.repeater.repeater_id):
                 # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
                 # with the intent of avoiding clumping and spreading load
                 repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
                 action = 'rate_limited'
             elif repeat_record.is_queued():
+                report_repeater_attempt(repeat_record.repeater.repeater_id)
                 with timer('fire_timing') as fire_timer:
                     repeat_record.fire(timing_context=fire_timer)
                 # round up to the nearest millisecond, meaning always at least 1ms
@@ -188,18 +200,19 @@ def _process_repeat_record(repeat_record):
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return
 
-    processing_time = timer.duration - request_duration if request_duration else timer.duration
-    metrics_histogram(
-        'commcare.repeaters.repeat_record_processing.timing',
-        processing_time * 1000,
-        buckets=(100, 500, 1000, 5000),
-        bucket_tag='duration',
-        bucket_unit='ms',
-        tags={
-            'domain': repeat_record.domain,
-            'action': action,
-        },
-    )
+    if action:
+        processing_time = timer.duration - request_duration if request_duration else timer.duration
+        metrics_histogram(
+            'commcare.repeaters.repeat_record_processing.timing',
+            processing_time * 1000,
+            buckets=(100, 500, 1000, 5000),
+            bucket_tag='duration',
+            bucket_unit='ms',
+            tags={
+                'domain': repeat_record.domain,
+                'action': action,
+            },
+        )
 
 
 metrics_gauge_task(

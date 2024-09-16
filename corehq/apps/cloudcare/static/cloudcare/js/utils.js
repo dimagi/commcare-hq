@@ -138,7 +138,9 @@ hqDefine('cloudcare/js/utils', [
                 breadcrumb: "#breadcrumb-region",
                 persistentCaseTile: "#persistent-case-tile",
                 restoreAsBanner: '#restore-as-region',
+                mobileRestoreAsBanner: '#mobile-restore-as-region',
                 sidebar: '#sidebar-region',
+                persistentMenu: "#persistent-menu-region",
             },
         });
 

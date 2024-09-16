@@ -1899,6 +1899,16 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             "template": "base-ucr-statement-template",
         }
 
+    def get_deleted_item_data(self, item_id):
+        deleted_expression = self.base_query.get(id=item_id)
+        deleted_expression.delete()
+        return {
+            'itemData': {
+                'name': deleted_expression.name,
+            },
+            'template': 'deleted-ucr-statement-template',
+        }
+
 
 @method_decorator(toggles.UCR_EXPRESSION_REGISTRY.required_decorator(), name='dispatch')
 class UCRExpressionEditView(BaseProjectDataView):

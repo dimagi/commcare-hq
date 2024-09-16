@@ -265,12 +265,13 @@ def send_domain_ucr_data_info_to_admins():
     from corehq.apps.reports.filters.select import UCRRebuildStatusFilter
     from corehq.apps.hqadmin.reports import UCRRebuildRestrictionTable, UCRDataLoadReport
 
+    if not settings.SOLUTIONS_AES_EMAIL:
+        return
+
     table = UCRRebuildRestrictionTable(
         restriction_ff_status=UCRRestrictionFFStatus.ShouldEnable.name,
     )
     subject = "Weekly report: projects for ucr restriction FF"
-    recipient = "solutions-tech-app-engineers@dimagi.com"
-
     endpoint = reverse(AdminReportDispatcher.name(), args=(UCRDataLoadReport.slug,))
 
     filter_name = UCRRebuildStatusFilter.slug
@@ -283,5 +284,5 @@ def send_domain_ucr_data_info_to_admins():
     """
 
     send_mail_async.delay(
-        subject, message, [recipient]
+        subject, message, [settings.SOLUTIONS_AES_EMAIL]
     )
