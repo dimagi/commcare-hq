@@ -555,8 +555,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
                         tableau_role=None, tableau_group_ids=None, custom_user_data=None):
         if assigned_location_ids is None:
             assigned_location_ids = []
-        if custom_user_data is None:
-            custom_user_data = {}
         domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
