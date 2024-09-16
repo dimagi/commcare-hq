@@ -65,7 +65,7 @@ class EnterprisePermissions(models.Model):
         return list(set(config.domains) - {config.source_domain})
 
     @classmethod
-    @quickcache(['source_domain'], timeout=7 * 24 * 60 * 60)
+    @quickcache(['domain'], timeout=7 * 24 * 60 * 60)
     def is_source_domain(cls, domain):
         """
         Returns true if given domain is the source domain for an enabled configuration.
