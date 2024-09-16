@@ -584,13 +584,12 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             ),
         )
 
-    def clean_profile(self):
-        profile_id = self.cleaned_data['profile']
-        if profile_id and profile_id not in {str(p.id) for p in self.valid_profiles}:
+    def _validate_profile(self, profile_id):
+        valid_profile_ids = {choice[0] for choice in self.custom_data.form.fields[PROFILE_SLUG].widget.choices}
+        if profile_id not in valid_profile_ids:
             raise forms.ValidationError(
                 _('Invalid profile selected. Please select a valid profile.'),
             )
-        return profile_id
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
@@ -623,7 +622,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             custom_user_data = {key: cleaned_data.pop(key) for key in prefixed_field_names if key in cleaned_data}
 
             if prefixed_profile_key in custom_user_data:
-                cleaned_data['profile'] = custom_user_data.pop(prefixed_profile_key)
+                profile_id = custom_user_data.pop(prefixed_profile_key)
+                self._validate_profile(profile_id)
+                cleaned_data['profile'] = profile_id
             cleaned_data['custom_user_data'] = get_prefixed(custom_user_data, self.custom_data.prefix)
 
         return cleaned_data
