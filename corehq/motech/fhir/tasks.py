@@ -577,7 +577,9 @@ def sync_all_appointments_domain(domain):
                     'appointment_date': appointment_date,
                     'appointment_time': appointment_time,
                     'patient_fhir_id': patient_fhir_id,
-                    'fhir_id': appointment_fhir_id
+                    'fhir_id': appointment_fhir_id,
+                    'reason': reason,
+                    'practitioner': practitioner
                 }
             }
             appointment_create_helper.create_case(appointment_case_data)
