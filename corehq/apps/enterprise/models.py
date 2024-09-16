@@ -66,12 +66,12 @@ class EnterprisePermissions(models.Model):
 
     @classmethod
     @quickcache(['source_domain'], timeout=7 * 24 * 60 * 60)
-    def is_source_domain(cls, source_domain):
+    def is_source_domain(cls, domain):
         """
         Returns true if given domain is the source domain for an enabled configuration.
         """
         try:
-            cls.objects.get(is_enabled=True, source_domain=source_domain)
+            cls.objects.get(is_enabled=True, source_domain=domain)
         except cls.DoesNotExist:
             return False
         return True
