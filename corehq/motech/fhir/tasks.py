@@ -1,4 +1,4 @@
-import dateutil
+import dateutil, requests, jwt, time, uuid
 from datetime import datetime
 
 from collections import namedtuple
@@ -397,7 +397,7 @@ def create_parent_indices(
         device_id=f'FHIRImportConfig-{importer.pk}',
     )
 
-import requests, jwt, time, uuid
+
 def generate_epic_jwt():
     key = settings.EPIC_PRIVATE_KEY
     # token will expire in 4 mins
@@ -406,14 +406,14 @@ def generate_epic_jwt():
     header = {
         "alg": "RS256",
         "typ": "JWT",
-        }
+    }
     payload = {
         "iss": settings.EPIC_CLIENT_ID,
         "sub": settings.EPIC_CLIENT_ID,
         "aud": "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
         "jti": jti,
         "exp": exp
-        }
+    }
     token = jwt.encode(payload, key, algorithm="RS256", headers=header)
     return token
 
@@ -421,12 +421,12 @@ def generate_epic_jwt():
 def request_epic_access_token():
     headers = {
         "Content_Type": "application/x-www-form-urlencoded",
-        }
+    }
     data = {
         "grant_type": "client_credentials",
         "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
         "client_assertion": generate_epic_jwt()
-        }
+    }
     url = "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token"
     response = requests.post(url, data=data, headers=headers)
     if response.status_code == 200:
@@ -437,9 +437,9 @@ def request_epic_access_token():
 
 def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
     url = f"https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Patient?birthdate={birthdate}&family={family_name}&given={given_name}&_format=json"
-    headers={
+    headers = {
         'authorization': 'Bearer %s' % access_token,
-        }
+    }
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         response_json = response.json()
@@ -453,12 +453,13 @@ def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
     elif response.status_code >= 400:
         response.raise_for_status()
 
+
 # TODO add time param 12 weeks from study start date
 def get_epic_appointments_for_patient(fhir_id, access_token):
     appointments = []
-    headers={
+    headers = {
         'authorization': 'Bearer %s' % access_token,
-        }
+    }
     url = f"https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Appointment?&patient={fhir_id}&service-category=appointment&_format=json"
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -476,6 +477,7 @@ def convert_date_and_time_to_utc_timestamp(date, time):
     utc_zone = dateutil.tz.gettz('UTC')
     # Hardcoded for MGH study
     local_zone = dateutil.tz.gettz('America/New_York')
+    local_datetime = datetime.fromisoformat(date_time)
     local_datetime = local_datetime.replace(tzinfo=local_zone)
     utc_datetime = local_datetime.astimezone(utc_zone)
     utc_iso_format = utc_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -484,15 +486,15 @@ def convert_date_and_time_to_utc_timestamp(date, time):
 
 
 def convert_utc_timestamp_to_date_and_time(utc_timestamp):
-     utc_zone = dateutil.tz.gettz('UTC')
-     local_zone = dateutil.tz.gettz('America/New_York')
-     utc_datetime = datetime.fromisoformat(utc_timestamp.replace('Z', ''))
-     utc_datetime = utc_datetime.replace(tzinfo=utc_zone)
-     local_datetime = utc_datetime.astimezone(local_zone)
-     date = local_datetime.strftime('%Y-%m-%d')
-     time = local_datetime.strftime('%H:%M')
+    utc_zone = dateutil.tz.gettz('UTC')
+    local_zone = dateutil.tz.gettz('America/New_York')
+    utc_datetime = datetime.fromisoformat(utc_timestamp.replace('Z', ''))
+    utc_datetime = utc_datetime.replace(tzinfo=utc_zone)
+    local_datetime = utc_datetime.astimezone(local_zone)
+    date = local_datetime.strftime('%Y-%m-%d')
+    time = local_datetime.strftime('%H:%M')
 
-     return date, time
+    return date, time
 
 
 def sync_all_appointments_domain(domain):
@@ -539,7 +541,7 @@ def sync_all_appointments_domain(domain):
             elif appointment_id:
                 epic_appointments_to_update.append(appointment)
 
-        # Add new appointments to commcare  
+        # Add new appointments to commcare
         for appointment in epic_appointments_to_add:
             appointment_create_helper = CaseHelper(domain=domain)
             appointment_resource = appointment.get('resource')
@@ -582,7 +584,7 @@ def sync_all_appointments_domain(domain):
 
         # Update existing appointments in commcare if properties have changed in epic
         for appointment in epic_appointments_to_update:
-            epic_properties_map = {} # 'appointment_fhir_timestamp', 'appointment_description', 'reason', 'practitioner'
+            epic_properties_map = {}  # 'appointment_fhir_timestamp', 'appointment_description', 'reason', 'practitioner'
             appointment_resource = appointment.get('resource')
             if appointment_resource is not None:
                 appointment_description = appointment_resource.get('description') or 'NO DESCRIPTION LISTED'
@@ -604,9 +606,9 @@ def sync_all_appointments_domain(domain):
                     'appointment_fhir_timestamp': appointment_fhir_timestamp,
                     'practitioner': practitioner,
                     'reason': reason
-                    })
+                })
             appointment_case = None
-            for case in appointment_cases: 
+            for case in appointment_cases:
                 if case.get_case_property('fhir_id') == appointment_fhir_id:
                     appointment_case = case
                     break
@@ -625,9 +627,9 @@ def sync_all_appointments_domain(domain):
                             'appointment_date': appointment_date,
                             'appointment_time': appointment_time,
                         })
-            
+
             if changes:
-                appointment_update_helper.update({ 'properties': case_properties_to_update })
+                appointment_update_helper.update({'properties': case_properties_to_update})
 
 
 @periodic_task(run_every=crontab(hour="*", minute=1), queue=settings.CELERY_PERIODIC_QUEUE)
