@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
-from django.http.response import Http404, HttpResponse
+from django.http.response import Http404
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
@@ -212,7 +212,7 @@ class ToggleEditView(BasePageView):
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
             data['service_type'], data['by_service'] = _get_service_type(toggle)
-        return HttpResponse(json.dumps(data), content_type="application/json")
+        return JsonResponse(data)
 
     def _save_randomness(self, toggle, randomness):
         if 0 <= randomness <= 1:
@@ -387,7 +387,7 @@ def set_toggle(request, toggle_slug):
     namespace = request.POST['namespace']
     _set_toggle(request.user.username, static_toggle, item, namespace, enabled)
 
-    return HttpResponse(json.dumps({'success': True}), content_type="application/json")
+    return JsonResponse({'success': True})
 
 
 @require_superuser_or_contractor
