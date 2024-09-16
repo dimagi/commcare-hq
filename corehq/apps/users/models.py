@@ -2517,6 +2517,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                 yield user_doc['email']
 
     def save(self, fire_signals=True, **params):
+        if self.username == 'jcheng_test@dimagi.org':
+            notify_exception(None, "jcheng_test@dimagi.org is saved")
         super().save(fire_signals=fire_signals, **params)
         if fire_signals and not self.to_be_deleted():
             from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
