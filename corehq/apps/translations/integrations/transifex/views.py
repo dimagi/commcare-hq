@@ -71,7 +71,7 @@ class BaseTranslationsView(BaseDomainView):
 class ConvertTranslations(BaseTranslationsView):
     page_title = _('Convert Translations')
     urlname = 'convert_translations'
-    template_name = 'convert_translations.html'
+    template_name = 'translations/convert_translations.html'
 
     @property
     @memoized
@@ -211,7 +211,7 @@ class ConvertTranslations(BaseTranslationsView):
 class PullResource(BaseTranslationsView):
     page_title = _('Pull Resource')
     urlname = 'pull_resource'
-    template_name = 'pull_resource.html'
+    template_name = 'translations/pull_resource.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(PullResource, self).dispatch(request, *args, **kwargs)
@@ -311,7 +311,7 @@ class PullResource(BaseTranslationsView):
 class BlacklistTranslations(BaseTranslationsView):
     page_title = _('Blacklist Translations')
     urlname = 'blacklist_translations'
-    template_name = 'blacklist_translations.html'
+    template_name = 'translations/blacklist_translations.html'
 
     def section_url(self):
         return self.page_url
@@ -341,7 +341,7 @@ class BlacklistTranslations(BaseTranslationsView):
 class AppTranslations(BaseTranslationsView):
     page_title = gettext_lazy('App Translations')
     urlname = 'app_translations'
-    template_name = 'app_translations.html'
+    template_name = 'translations/app_translations.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(AppTranslations, self).dispatch(request, *args, **kwargs)
@@ -528,7 +528,7 @@ class DeleteTranslations(AppTranslations):
 class DownloadTranslations(BaseTranslationsView):
     page_title = gettext_lazy('Download Translations')
     urlname = 'download_translations'
-    template_name = 'download_translations.html'
+    template_name = 'translations/download_translations.html'
 
     @property
     def page_context(self):
@@ -572,7 +572,7 @@ class DownloadTranslations(BaseTranslationsView):
 class MigrateTransifexProject(BaseTranslationsView):
     page_title = gettext_lazy('Migrate Project')
     urlname = 'migrate_transifex_project'
-    template_name = 'migrate_project.html'
+    template_name = 'translations/migrate_project.html'
 
     def section_url(self):
         return reverse(MigrateTransifexProject.urlname, args=self.args, kwargs=self.kwargs)
