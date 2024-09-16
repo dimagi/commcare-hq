@@ -2530,7 +2530,7 @@ RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
 
 WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
     'web_user_invite_additional_fields',
-    'Enable additional fields in web user invite form for enhanced user details',
+    'USH: Enable additional fields in web user invite form for enhanced user details',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
