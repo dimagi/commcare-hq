@@ -1023,6 +1023,9 @@ LOAD_BALANCED_APPS = {}
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+EPIC_PRIVATE_KEY = None
+EPIC_CLIENT_ID = None
+
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
 
