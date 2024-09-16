@@ -61,7 +61,7 @@ Dependency Management
 ---------------------
 
 Tests are one of the few areas of HQ’s JavaScript that do not use
-RequireJS. Instead, dependencies are included in the relevant HTML
+a bundler. Instead, dependencies are included in the relevant HTML
 template as script tags.
 
 Running tests from the command line
