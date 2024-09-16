@@ -203,7 +203,7 @@ Webpack supports multiple module formats, with ES Modules (ESM) being the prefer
 That being said, a lot of legacy code on HQ is written in a modified AMD format.
 If you are adding a lot of new code to such a module, it is recommended that you
 `migrate this module to ESM format
-<<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/amd-to-esm.rst>`__.
+<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/amd-to-esm.rst>`__.
 However, not every modified AMD module is ready to be migrated to ESM immediately,
 so it's worth familiarizing yourself with working in that format.
 
