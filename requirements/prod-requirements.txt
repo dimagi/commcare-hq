@@ -359,7 +359,7 @@ kombu==5.2.4
     # via celery
 looseversion==1.0.3
     # via -r base-requirements.in
-lxml==4.9.1
+lxml==5.3.0
     # via
     #   -r base-requirements.in
     #   eulxml
