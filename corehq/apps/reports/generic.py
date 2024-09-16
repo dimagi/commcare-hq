@@ -1,6 +1,5 @@
 import datetime
 import io
-import json
 import re
 from itertools import chain
 
@@ -659,11 +658,11 @@ class GenericReportView(object):
         rendered_filters = render_to_string(
             self.template_filters, self.context, request=self.request
         )
-        return HttpResponse(json.dumps(dict(
+        return JsonResponse(dict(
             filters=rendered_filters,
             slug=self.slug,
             url_root=self.url_root
-        )))
+        ))
 
     @property
     @request_cache()
