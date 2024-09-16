@@ -508,12 +508,15 @@ def sync_all_appointments_domain(domain):
     patient_cases = CommCareCase.objects.get_cases(patient_case_ids)
 
     # get extension (appointment) cases ids, for all patients
-    appointment_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(domain, patient_case_ids, False, 'appointment')
+    appointment_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+        domain, patient_case_ids, False, 'appointment')
     # get appointment cases in commcare
     appointment_cases = CommCareCase.objects.get_cases(appointment_case_ids)
 
     # get fhir ids for appointments currently in commcare
-    appointment_fhir_ids = [appointment_case.get_case_property('fhir_id') for appointment_case in appointment_cases]
+    appointment_fhir_ids = [
+        appointment_case.get_case_property('fhir_id') for appointment_case in appointment_cases
+    ]
 
     for patient in patient_cases:
         patient_helper = CaseHelper(case=patient, domain=domain)
@@ -548,7 +551,8 @@ def sync_all_appointments_domain(domain):
             if appointment_resource is not None:
                 appointment_description = appointment_resource.get('description') or 'NO DESCRIPTION LISTED'
                 appointment_fhir_timestamp = appointment_resource.get('start')
-                appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(appointment_fhir_timestamp)
+                appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(
+                    appointment_fhir_timestamp)
                 appointment_fhir_id = appointment_resource.get('id')
                 reason = None
                 practitioner = None
@@ -586,12 +590,13 @@ def sync_all_appointments_domain(domain):
 
         # Update existing appointments in commcare if properties have changed in epic
         for appointment in epic_appointments_to_update:
-            epic_properties_map = {}  # 'appointment_fhir_timestamp', 'appointment_description', 'reason', 'practitioner'
+            epic_properties_map = {}
             appointment_resource = appointment.get('resource')
             if appointment_resource is not None:
                 appointment_description = appointment_resource.get('description') or 'NO DESCRIPTION LISTED'
                 appointment_fhir_timestamp = appointment_resource.get('start')
-                appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(appointment_fhir_timestamp)
+                appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(
+                    appointment_fhir_timestamp)
                 appointment_fhir_id = appointment_resource.get('id')
                 reason = None
                 practitioner = None
