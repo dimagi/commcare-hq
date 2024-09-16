@@ -44,6 +44,7 @@ def index_es_docs_with_location_props(domain):
             _('This domain contains too many cases and so they will not be made available '
               'for use by this feature. Please reach out to support.')
         )
+        celery_task_tracker.mark_as_error()
         return
 
     celery_task_tracker.mark_requested()

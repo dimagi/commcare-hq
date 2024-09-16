@@ -237,8 +237,14 @@ class CeleryTaskTracker(object):
         # due to unexpected circumstances
         self._client.set(self.task_key, 'ACTIVE', timeout=timeout)
 
+    def mark_as_error(self, timeout=ONE_DAY * 3):
+        return self._client.set(self.task_key, 'ERROR', timeout=timeout)
+
     def is_active(self):
-        return self._client.has_key(self.task_key)
+        return self._client.get(self.task_key) == 'ACTIVE'
+
+    def is_error(self):
+        return self._client.get(self.task_key) == 'ERROR'
 
     def mark_completed(self):
         self.clear_message()
@@ -247,7 +253,7 @@ class CeleryTaskTracker(object):
     def get_message(self):
         return self._client.get(self.message_key)
 
-    def set_message(self, message, timeout=ONE_DAY * 3):
+    def set_message(self, message, is_error=False, timeout=ONE_DAY * 3):
         return self._client.set(self.message_key, message, timeout=timeout)
 
     def clear_message(self):

@@ -1,7 +1,7 @@
 {% load i18n %}
 
 {% if es_indexing_message %}
-  <div class="alert alert-info">
+  <div class="alert {% if is_error_es_index_message %} alert-danger {% else %} alert-info {% endif %}">
     <p>
       {{ es_indexing_message }}
     </p>

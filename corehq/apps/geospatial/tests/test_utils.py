@@ -203,7 +203,7 @@ class TestCeleryTaskTracker(TestCase):
 
     def test_mark_active(self):
         self.celery_task_tracker.mark_requested()
-        self.assertTrue(self.redis_client.has_key(self.TASK_KEY))
+        self.assertTrue(self.redis_client.get(self.TASK_KEY), 'ACTIVE')
 
     def test_get_active(self):
         self.redis_client.set(self.TASK_KEY, 'ACTIVE')
@@ -213,6 +213,14 @@ class TestCeleryTaskTracker(TestCase):
         self.redis_client.set(self.TASK_KEY, 'ACTIVE')
         self.celery_task_tracker.mark_completed()
         self.assertFalse(self.redis_client.has_key(self.TASK_KEY))
+
+    def test_mark_error(self):
+        self.celery_task_tracker.mark_as_error()
+        self.assertEqual(self.redis_client.get(self.TASK_KEY), 'ERROR')
+
+    def test_get_error(self):
+        self.redis_client.set(self.TASK_KEY, 'ERROR')
+        self.assertTrue(self.celery_task_tracker.is_error())
 
     def test_set_message(self):
         self.assertTrue(self.celery_task_tracker.set_message('foobar'))

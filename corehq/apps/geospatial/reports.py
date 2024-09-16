@@ -68,7 +68,8 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
                 {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
                 for p in GeoPolygon.objects.filter(domain=self.domain).all()
             ],
-            'es_indexing_message': celery_task_tracker.get_message()
+            'es_indexing_message': celery_task_tracker.get_message(),
+            'is_error_es_index_message': celery_task_tracker.is_error(),
         })
         return context
 
