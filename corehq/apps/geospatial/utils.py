@@ -33,10 +33,9 @@ def get_geo_user_property(domain):
     return config.user_location_property_name
 
 
-def get_celery_task_tracker(domain, base_key):
-    task_key = f'{base_key}_{domain}'
-    message_key = f'{base_key}_message_{domain}'
-    return CeleryTaskTracker(task_key, message_key)
+def get_celery_task_tracker(domain, task_slug):
+    task_key = f'{task_slug}_{domain}'
+    return CeleryTaskTracker(task_key)
 
 
 def _format_coordinates(lat, lon):
@@ -227,9 +226,9 @@ class CeleryTaskTracker(object):
     Simple Helper class using redis to track if a celery task was requested and is not completed yet.
     """
 
-    def __init__(self, task_key, message_key=None):
+    def __init__(self, task_key):
         self.task_key = task_key
-        self.message_key = message_key
+        self.message_key = f'{task_key}_message'
         self._client = get_redis_client()
 
     def mark_requested(self, timeout=ONE_DAY):

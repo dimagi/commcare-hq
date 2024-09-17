@@ -61,7 +61,7 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
     def template_context(self):
         # Whatever is specified here can be accessed through initial_page_data
         context = super(BaseCaseMapReport, self).template_context
-        celery_task_tracker = get_celery_task_tracker(self.domain, base_key=INDEX_ES_TASK_HELPER_BASE_KEY)
+        celery_task_tracker = get_celery_task_tracker(self.domain, task_slug=INDEX_ES_TASK_HELPER_BASE_KEY)
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'saved_polygons': [
