@@ -34,18 +34,19 @@ class TestIndexESDocsWithLocationProps(TestCase):
             case_location_property_name=self.gps_prop_name,
         )
         self.addCleanup(geo_config.delete)
+        self.addCleanup(self.celery_task_helper.mark_completed)
+        self.addCleanup(self.celery_task_helper.clear_progress)
 
     @patch('corehq.apps.geospatial.tasks.MAX_GEOSPATIAL_INDEX_DOC_LIMIT', 1)
     def test_max_doc_limit_reached(self):
         index_es_docs_with_location_props.apply(args=[self.domain])
-        self.assertEqual(self.celery_task_helper.get_status(), 'ERROR')
+        self.assertEqual(self.celery_task_helper.get_status(), {'status': 'ERROR', 'progress': 0})
 
     def test_index_docs(self):
         index_es_docs_with_location_props.apply(args=[self.domain])
         doc_count = _es_case_query(self.domain, self.gps_prop_name).count()
         self.assertEqual(doc_count, 0)
-        self.assertEqual(self.celery_task_helper.get_status(), None)
-        self.assertEqual(self.celery_task_helper.get_progress(), 1.0)
+        self.assertEqual(self.celery_task_helper.get_status(), {'status': None, 'progress': 100})
 
 
 def _create_case(factory, gps_prop_name, name):
