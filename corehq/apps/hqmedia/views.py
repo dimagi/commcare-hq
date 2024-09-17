@@ -16,6 +16,7 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseRedirect,
     JsonResponse,
 )
 from django.http.response import HttpResponseServerError
@@ -289,38 +290,42 @@ class BulkUploadMultimediaView(BaseMultimediaTemplateView):
         return context
 
 
-class BulkUploadMultimediaPollView(BaseMultimediaUploaderView):
+class BulkUploadMultimediaPollView(BaseMultimediaTemplateView):
     urlname = "hqmedia_bulk_upload_poll"
 
-    def get(self, request, domain, download_id):
+    # TODO: Make this view look nice
+    # Pull content from the old hqmedia/uploader/details_multi.html
+    # and maybe hqmedia/uploader/status_multi.html
+    def get(self, request, domain, app_id, processing_id):
         try:
-            context = get_download_context(download_id)
+            context = get_download_context(processing_id)
         except TaskFailedError:
             return HttpResponseServerError()
-
-        # TODO: Make the status view look nice
-        # Pull content from the old hqmedia/uploader/details_multi.html
-        # and maybe hqmedia/uploader/status_multi.html
-
+        status = BulkMultimediaStatusCache.get(processing_id)
+        context.update(status.get_response())
         return render(request, 'hqmedia/partials/bulk_upload_status.html', context)
 
 
-class BulkUploadMultimediaStatusView(BaseMultimediaUploaderView):
+class BulkUploadMultimediaStatusView(BaseMultimediaTemplateView):
     urlname = "hqmedia_bulk_upload_status"
     page_title = gettext_noop('Bulk Upload Multimedia Status')
+    template_name = "hqmedia/bulk_upload_status.html"
 
     def get(self, request, *args, **kwargs):
-        context = {
+        context = self.get_context_data(**kwargs)
+        context.update({
             'domain': self.domain,
-            'download_id': kwargs['download_id'],
-            'poll_url': reverse(BulkUploadMultimediaPollView.urlname, args=[self.domain, kwargs['download_id']]),
+            'download_id': kwargs['processing_id'],   # soil templates and js use "download_id"
+            'poll_url': reverse(BulkUploadMultimediaPollView.urlname,
+                                args=[self.domain, self.app.get_id, kwargs['processing_id']]),
             'title': _("Bulk Upload Multimedia Status"),
             'progress_text': _("Importing your multimedia. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
             'next_url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
             'next_url_text': _("Return to multimedia reference checker"),
-        }
-        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
+
+        })
+        return render(self.request, self.template_name, context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -666,18 +671,12 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             response = self.process_upload()
         except BadMediaFileException as e:
             return HttpResponseBadRequest(str(e))
-        return HttpResponse(json.dumps(response))
-        '''
-        # TODO: Make upload work. Current upload logic is in ProcessBulkUploadView
-        task_ref = None
-        # return HttpResponseServerError()
         return HttpResponseRedirect(
             reverse(
                 BulkUploadMultimediaStatusView.urlname,
-                args=[self.domain, task_ref.download_id]
+                args=[self.domain, self.app.id, response['processing_id']],
             )
         )
-        '''
 
     @classmethod
     def valid_mime_types(cls):
