@@ -505,8 +505,6 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         if domain_obj:
             if self.custom_data:
                 prefixed_fields = []
-                if PROFILE_SLUG in self.custom_data.form.fields:
-                    self.custom_data.form.fields[PROFILE_SLUG].widget.choices.insert(0, ('', ''))
                 prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
                 self.fields.update(prefixed_fields)
             if domain_obj.commtrack_enabled:
