@@ -1,5 +1,3 @@
-from django.utils.translation import gettext as _
-
 from corehq.util.decorators import serial_task
 
 from corehq.apps.celery import task
@@ -40,10 +38,6 @@ def index_es_docs_with_location_props(domain):
     query = _es_case_query(domain, geo_case_prop)
     doc_count = query.count()
     if doc_count > MAX_GEOSPATIAL_INDEX_DOC_LIMIT:
-        celery_task_tracker.set_message(
-            _('This domain contains too many cases and so they will not be made available '
-              'for use by this feature. Please reach out to support.')
-        )
         celery_task_tracker.mark_as_error()
         return
 
@@ -51,10 +45,6 @@ def index_es_docs_with_location_props(domain):
     batch_count = get_batch_count(doc_count, DEFAULT_QUERY_LIMIT)
     try:
         for i in range(batch_count):
-            progress = (i / batch_count) * 100
-            celery_task_tracker.set_message(
-                _(f'Cases are being made ready for use by this feature. Please be patient. ({progress}%)')
-            )
             process_batch(
                 domain,
                 geo_case_prop,
@@ -62,5 +52,6 @@ def index_es_docs_with_location_props(domain):
                 query_limit=DEFAULT_QUERY_LIMIT,
                 chunk_size=DEFAULT_CHUNK_SIZE,
             )
+            celery_task_tracker.update_progress(current=i + 1, total=batch_count)
     finally:
         celery_task_tracker.mark_completed()

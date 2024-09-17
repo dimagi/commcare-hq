@@ -1,9 +1,21 @@
 {% load i18n %}
 
-{% if es_indexing_message %}
-  <div class="alert {% if is_error_es_index_message %} alert-danger {% else %} alert-info {% endif %}">
-    <p>
-      {{ es_indexing_message }}
-    </p>
-  </div>
+{% if task_status.status == 'ERROR' %}
+<div class="alert alert-danger">
+  <p>
+    {% blocktrans %}
+      This domain contains too many cases and so they will not be made available
+      for use by this feature. Please reach out to support.
+    {% endblocktrans %}
+  </p>
+</div>
+{% elif task_status.status == 'ACTIVE' %}
+<div class="alert alert-info">
+  <p>
+    {% blocktrans %}
+      Cases are being made ready for use by this feature. Please be patient.
+    {% endblocktrans %}
+    ({{ task_status.progress}}%)
+  </p>
+</div>
 {% endif %}
