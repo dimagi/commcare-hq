@@ -1,4 +1,8 @@
-import dateutil, requests, jwt, time, uuid
+import dateutil
+import requests
+import jwt
+import time
+import uuid
 from datetime import datetime
 
 from collections import namedtuple
@@ -453,7 +457,7 @@ def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
         response_json = response.json()
         fhir_id = None
         entry = response_json.get('entry')[0]
-        if entry: 
+        if entry:
             resource = entry.get('resource')
             if resource:
                 fhir_id = resource.get('id')
