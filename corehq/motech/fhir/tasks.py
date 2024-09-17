@@ -553,6 +553,8 @@ def sync_all_appointments_domain(domain):
                 patient_helper.update({'properties': {
                     'patient_fhir_id': patient_fhir_id,
                 }})
+            else:
+                continue
 
         epic_appointments_to_add = []
         epic_appointments_to_update = []
