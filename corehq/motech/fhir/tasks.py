@@ -647,14 +647,18 @@ def sync_all_appointments_domain(domain):
             for k, v in epic_properties_map.items():
                 current_value = appointment_case.get_case_property(k)
                 if current_value != v:
+                    if k == 'appointment_fhir_timestamp':
+                        # these are quivalent to the minute
+                        if v[0:16] == current_value[0:16]:
+                            continue
+                        else:
+                            appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(v)
+                            case_properties_to_update.update({
+                                'appointment_date': appointment_date,
+                                'appointment_time': appointment_time,
+                            })
                     changes = True
                     case_properties_to_update.update({k: v})
-                    if k == 'appointment_fhir_timestamp':
-                        appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(v)
-                        case_properties_to_update.update({
-                            'appointment_date': appointment_date,
-                            'appointment_time': appointment_time,
-                        })
 
             if changes:
                 appointment_update_helper.update({'properties': case_properties_to_update})
