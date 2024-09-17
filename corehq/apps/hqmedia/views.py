@@ -114,25 +114,29 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
     @property
     def page_context(self, **kwargs):
         context = super(BaseMultimediaTemplateView, self).page_context
-        views = [MultimediaReferencesView, BulkUploadMultimediaView]
+
+        def _section(view, icon):
+            return {
+                'title': view.page_title,
+                'url': reverse(view.urlname, args=[self.domain, self.app.id]),
+                'is_active': view.urlname == self.urlname,
+                'icon': f'fa {icon}'
+            }
+
+        sections = [
+            _section(MultimediaReferencesView, 'fa-check-square'),
+            _section(BulkUploadMultimediaView, 'fa-cloud-upload-alt'),
+        ]
         if toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(self.request):
-            views.append(ManageMultimediaPathsView)
+            sections.append(_section(ManageMultimediaPathsView, 'fa-route'))
             if len(self.app.langs) > 1:
-                views.append(MultimediaAudioTranslatorFileView)
-                views.append(MultimediaTranslationsCoverageView)
-        views = sorted(views, key=lambda v: v.page_title)
+                sections.append(_section(MultimediaAudioTranslatorFileView, 'fa-volume-up'))
+                sections.append(_section(MultimediaTranslationsCoverageView, 'fa-globe'))
+
         context.update({
             "domain": self.domain,
             "app": self.app,
-            "navigation_sections": (
-                (_("Multimedia"), [
-                    {
-                        'title': view.page_title,
-                        'url': reverse(view.urlname, args=[self.domain, self.app.id]),
-                        'is_active': view.urlname == self.urlname,
-                    } for view in views
-                ]),
-            ),
+            "navigation_sections": ((_("Multimedia"), sections),),
         })
         return context
 
