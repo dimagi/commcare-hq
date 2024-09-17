@@ -16,8 +16,10 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseRedirect,
     JsonResponse,
 )
+from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -35,7 +37,8 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from soil import DownloadBase
-from soil.util import expose_cached_download
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -59,7 +62,6 @@ from corehq.apps.hqmedia.cache import (
 )
 from corehq.apps.hqmedia.controller import (
     MultimediaAudioUploadController,
-    MultimediaBulkUploadController,
     MultimediaImageUploadController,
     MultimediaVideoUploadController,
 )
@@ -250,7 +252,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         return (reference_index, references)
 
 
-class BulkUploadMultimediaView(BaseMultimediaUploaderView):
+class BulkUploadMultimediaView(BaseMultimediaTemplateView):
     urlname = "hqmedia_bulk_upload"
     template_name = "hqmedia/bulk_upload.html"
     page_title = gettext_noop("Bulk Upload Multimedia")
@@ -263,9 +265,70 @@ class BulkUploadMultimediaView(BaseMultimediaUploaderView):
         }]
 
     @property
-    def upload_controllers(self):
-        return [MultimediaBulkUploadController("hqmedia_bulk", reverse(ProcessBulkUploadView.urlname,
-                                                                       args=[self.domain, self.app_id]))]
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'bulk_upload': {
+                "help_site": {
+                    "address": "https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946840/Multimedia+Manager#Option-3:-Multimedia-Manager---Bulk-Media-Upload",  # noqa: E501
+                    "name": _("CommCare Help Site"),
+                },
+                "download_url": reverse(DownloadMultimediaZip.urlname, args=[self.domain, self.app.get_id]),
+                "adjective": _("multimedia"),
+                "plural_noun": _("multimedia files"),
+            },
+            'multimedia_state': self.app.check_media_state(),
+        })
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        # TODO: Does this behave if there's an error?
+        # TODO: Make upload work. Current upload logic is in ProcessBulkUploadView
+        task_ref = None
+        return HttpResponseRedirect(
+            reverse(
+                BulkUploadMultimediaStatusView.urlname,
+                args=[self.domain, task_ref.download_id]
+            )
+        )
+
+
+class BulkUploadMultimediaPollView(BaseMultimediaUploaderView):
+    urlname = "hqmedia_bulk_upload_poll"
+
+    def get(self, request, domain, download_id):
+        try:
+            context = get_download_context(download_id)
+        except TaskFailedError:
+            return HttpResponseServerError()
+
+        # TODO: Make the status view look nice
+
+        return render(request, 'hqmedia/partials/bulk_upload_status.html', context)
+
+
+class BulkUploadMultimediaStatusView(BaseMultimediaUploaderView):
+    urlname = "hqmedia_bulk_upload_status"
+    page_title = gettext_noop('Bulk Upload Multimedia Status')
+
+    def get(self, request, *args, **kwargs):
+        context = {
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse(BulkUploadMultimediaPollView.urlname, args=[self.domain, kwargs['download_id']]),
+            'title': _("Bulk Upload Multimedia Status"),
+            'progress_text': _("Importing your multimedia. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
+            'next_url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
+            'next_url_text': _("Return to multimedia reference checker"),
+        }
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 @method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
