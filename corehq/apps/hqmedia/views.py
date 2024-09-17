@@ -293,9 +293,6 @@ class BulkUploadMultimediaView(BaseMultimediaTemplateView):
 class BulkUploadMultimediaPollView(BaseMultimediaTemplateView):
     urlname = "hqmedia_bulk_upload_poll"
 
-    # TODO: Make this view look nice
-    # Pull content from the old hqmedia/uploader/details_multi.html
-    # and maybe hqmedia/uploader/status_multi.html
     def get(self, request, domain, app_id, processing_id):
         try:
             context = get_download_context(processing_id)
