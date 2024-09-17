@@ -45,15 +45,15 @@
         <li>
           <p>
             <img src="{{ image.url }}?thumb=50" style="width: 50px; height: 50px;" alt="{{ image.path }}" />
+            {% if image.updated %}
+              <span class="label label-success">{% trans 'Updated' %}</span>
+            {% endif %}
             <a href="{{ image.url }}"
                target="_blank"
-               class="btn btn-primary match-info"
                data-content="<img src='{{ image.url }}?thumb=220' width='220' alt='{{ image.path }}' />">
-              <i class="{{ image.icon_class }}"></i> {% trans 'View Full Image' %}
+              {% trans 'View Full Image' %}
+              <i class="fa fa-external-link"></i>
             </a>
-            {% if image.updated %}
-              <span class="label label-info">{% trans 'Updated' %}</span>
-            {% endif %}
           </p>
           <p><code>{{ image.path }}</code></p>
         </li>
@@ -67,15 +67,14 @@
       {% for audio in matched_files.CommCareAudio %}
         <li>
           <p>
-            <!-- TODO: match-info is tied to a popover, add that to js -->
+            {% if audio.updated %}
+              <span class="label label-success">{% trans 'Updated' %}</span>
+            {% endif %}
             <a href="<%- audio.url %>"
                   target="_blank"
-                  class="btn btn-primary match-info"
                   data-content="{% trans 'Playing audio directly on this page is currently not supported.' %}">
-              <i class="<%- audio.icon_class %>"></i> {% trans 'Listen to Audio' %}</a>
-            {% if audio.updated %}
-              <span class="label label-info">{% trans 'Updated' %}</span>
-            {% endif %}
+              {% trans 'Listen to Audio' %}</a>
+              <i class="fa fa-external-link"></i>
           </p>
           <p><code>{{ audio.path }}</code></p>
         </li>
@@ -89,14 +88,14 @@
       {% for video in matched_files.CommCareVideo %}
         <li>
           <p>
+            {% if video.updated %}
+              <span class="label label-success">{% trans 'Updated' %}</span>
+            {% endif %}
             <a href="<%- video.url %>"
                   target="_blank"
-                  class="btn btn-primary match-info"
                   data-content="{% trans 'Watching video directly on this page is not supported. Opens a new tab.' %}">
-              <i class="<%- video.icon_class %>"></i> {% trans 'Watch Video' %}</a>
-            {% if video.updated %}
-              <span class="label label-info">{% trans 'Updated' %}</span>
-            {% endif %}
+              {% trans 'Watch Video' %}</a>
+              <i class="fa fa-external-link"></i>
           </p>
           <p><code>{{ video.path }}</code></p>
         </li>
