@@ -537,7 +537,8 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             )
         ]
         if self.custom_data:
-            custom_data_fieldset = self.custom_data.make_fieldsets(prefixed_fields, data is not None)
+            custom_data_fieldset = self.custom_data.make_fieldsets(prefixed_fields, data is not None,
+                                                                   field_name_includes_prefix=True)
             fields.extend(custom_data_fieldset)
         if should_show_location:
             fields.append(

@@ -136,13 +136,15 @@ class CustomDataEditor(object):
         else:
             return forms.CharField(label=safe_label, required=field.is_required)
 
-    def make_fieldsets(self, form_fields, is_post):
+    def make_fieldsets(self, form_fields, is_post, field_name_includes_prefix=False):
         if self.ko_model:
             field_names = []
             for field_name, field in form_fields.items():
+                data_bind_field_name = (
+                    without_prefix(field_name, self.prefix) if field_name_includes_prefix else field_name)
                 data_binds = [
-                    f"value: {self.ko_model}.{without_prefix(field_name,self.prefix)}.value",
-                    f"disable: {self.ko_model}.{without_prefix(field_name, self.prefix)}.disable",
+                    f"value: {self.ko_model}.{data_bind_field_name}.value",
+                    f"disable: {self.ko_model}.{data_bind_field_name}.disable",
                 ]
                 if hasattr(field, 'choices') or without_prefix(field_name, self.prefix) == PROFILE_SLUG:
                     data_binds.append("select2: " + json.dumps([
