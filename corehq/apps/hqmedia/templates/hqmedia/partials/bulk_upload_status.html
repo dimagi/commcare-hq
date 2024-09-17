@@ -1,0 +1,15 @@
+{% extends "hqwebapp/partials/download_status.html" %}
+{# TODO: Is this file needed? #}
+{% load i18n %}
+{% block results %}
+  <div class="alert alert-success">
+    {# TODO: add message #}
+  </div>
+  {% if result.has_errors %}
+    <div class="alert alert-danger">
+      {% for e in result.errors %}
+        <p>{{ e }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock results %}
