@@ -590,7 +590,7 @@ def sync_all_appointments_domain(domain):
                     reason = reason_code[0].get('text')
             host_case_id = patient.get_case_property('case_id')
             appointment_case_data = {
-                'case_name': appointment_fhir_timestamp + appointment_description,
+                'case_name': f'[{appointment_fhir_timestamp}]: {appointment_description}',
                 'case_type': 'appointment',
                 'indices': {
                     'patient': {
