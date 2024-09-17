@@ -15,7 +15,7 @@ from corehq.apps.hqmedia.models import (
 
 class BaseMultimediaStatusCache(object):
     upload_type = None
-    cache_expiry = 60 * 60 # defaults to one hour
+    cache_expiry = 60 * 60  # defaults to one hour
 
     def __init__(self, processing_id):
         self.processing_id = processing_id
@@ -82,6 +82,7 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
         response.update({
             'unmatched_files': self.unmatched_files,
             'matched_files': self.matched_files,
+            'matched_count': len(self.matched_files),
             'total_files': self.total_files,
             'processed_files': self.processed_files,
             'skipped_files': self.skipped_files,
