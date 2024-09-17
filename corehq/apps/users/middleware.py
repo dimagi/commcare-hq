@@ -1,3 +1,4 @@
+from django.contrib.auth import logout
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq.apps.users.models import CouchUser, InvalidUser
@@ -15,6 +16,9 @@ class UsersMiddleware(MiddlewareMixin):
         if 'org' in view_kwargs:
             request.org = view_kwargs['org']
         if request.user and request.user.is_authenticated:
+            if request.user.is_active:
+                logout(request)
+                return self.get_response(request)
             user_id = username_to_user_id(request.user.username)
             couch_user = CouchUser.get_by_user_id(user_id)
             if not couch_user:
