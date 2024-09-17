@@ -5,11 +5,19 @@ Front-end dependencies are managed using ``yarn`` and are defined in ``package.j
 root of the ``commcare-hq`` repository.
 
 Most JavaScript on HQ is included on a page via a JavaScript bundle.
-These bundles are created by a JavaScript bundler. The bundler is given a
-list of "entry points" (or pages), builds a dependency graph of modules to determine what
-code is needed for a page, and combines related code into bundles.
+These bundles are created by Webpack. Webpack is given a list of "entry points"
+(or pages) and builds a dependency graph of modules to determine what
+code is needed for a page, combining related code into bundles.
 These bundles are split along ``vendor`` (npm modules),
 ``common`` (all of hq), and application (like ``hqwebapp`` or ``domain``).
+
+For legacy code, RequireJS creates bundles around Django applications.
+These bundles are created during deploy with the ``build_requirejs`` management
+command, and are typically not created during development. Here
+are the production bundles split along Bootstrap versions for RequireJS:
+
+- `Bootstrap 3 <https://www.commcarehq.org/static/build.b3.txt>`__
+- `Bootstrap 5 <https://www.commcarehq.org/static/build.b5.txt>`__
 
 By bundling code, we can make fewer round-trip requests to fetch all of a page's JavaScript.
 Additionally, the bundler minifies each bundle to reduce its overall size. You can learn
@@ -104,8 +112,9 @@ Then in your HTML page:
    {% webpack_main 'prototype/js/combined_example' %}
 
 The exception to the above is if your page inherits from a legacy page that
-doesn't use a JavaScript bundler. This is rare, but one example would be adding a
-new page to app manager that inherits from ``managed_app.html``.
+doesn't use a JavaScript bundler, like reports and app manager. This is rare,
+but one example would be adding a new page to app manager that inherits
+from ``managed_app.html``.
 
 
 Why is old code formatted differently?
@@ -120,7 +129,7 @@ once these entry points `are migrated to Webpack
 
 However, be careful when migrating modified AMD modules that aren't entry points, as some of these modules,
 like ``hqwebapp/js/initial_page_data``, are still being referenced by pages not using a JavaScript bundler.
-These pages still require this modified AMD approach until they transition to using a bundler.
+These pages still require this modified AMD approach until they transition to using Webpack.
 
 We will cover what common modified AMD modules look like in this section, but you can read more
 about this choice of module format in the `Historical Background on Module Patterns
@@ -167,12 +176,11 @@ instead relying on globals like ``ko`` (for Knockout.js) in the example below.
    });
 
 
-How do I know whether or not I’m working with Webpack or RequireJS?
--------------------------------------------------------------------
+How do I know whether I’m working with Webpack or RequireJS?
+------------------------------------------------------------
 
 You are likely working with either Webpack or RequireJS, as most of HQ has been migrated to use a bundler.
-However, several major areas have **not** been migrated: app manager,
-reports, and web apps.
+However, two major areas have **not** been migrated: app manager and reports.
 
 The easiest way to determine if a page is using either Webpack or RequireJS is to
 open the JavaScript console on that page and type ``window.USE_WEBPACK``, which will return
@@ -198,7 +206,8 @@ ESM can quickly be identified by scanning the file for ``import`` statements lik
 How do I add a new internal module or external dependency to an existing page?
 ------------------------------------------------------------------------------
 
-Webpack supports multiple module formats, with ES Modules (ESM) being the preferred format. New modules should be written in the ESM format.
+Webpack supports multiple module formats, with ES Modules (ESM) being the preferred format.
+New modules should be written in the ESM format.
 
 That being said, a lot of legacy code on HQ is written in a modified AMD format.
 If you are adding a lot of new code to such a module, it is recommended that you
@@ -238,7 +247,7 @@ Modified AMD (previously "RequireJS")
     RequireJS is being replaced by Webpack. You should NOT create NEW modules with this style.
 
 To use your new module/dependency, add it your module’s ``hqDefine`` list of dependencies.
-If the new dependency will be directly referenced in the body of the odule, also add a
+If the new dependency will be directly referenced in the body of the module, also add a
 parameter to the ``hqDefine`` callback:
 
 ::

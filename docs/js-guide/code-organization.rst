@@ -25,6 +25,3 @@ which we structure as follows:
 
 To develop with javascript locally, make sure you run ``yarn dev`` and
 restart ``yarn dev`` whenever you add a new Webpack Entry Point.
-
-Please review the next section for a more detailed discussion of Static Files
-and the use of JavaScript bundlers, like Webpack.

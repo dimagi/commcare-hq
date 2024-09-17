@@ -20,9 +20,6 @@ to using Webpack as part of the `JS Bundler Migration
 Image files generally stay as-is. The only "dynamic" images
 come from file attachments in our database.
 
-As of this writing, we don't compile our JavaScript from a higher level scripting
-language, although Webpack offers ways to do this easily.
-
 Due to their static natures, the primary objective when working with static files is
 to make as few requests as possible to them during page load. We aim to combine
 static files into one larger, minified file whenever possible.
@@ -34,7 +31,8 @@ Why use a javascript bundler?
 -----------------------------
 
 We use a bundler for our javascript files to reduce the amount of separate
-javascript ``script`` tags needed for any page load. A bundler, like Webpack, not only combines the necessary javascript, it minifies the javascript to reduce
+network requests tags needed for any page load. A bundler, like Webpack,
+not only combines the necessary javascript, it minifies the javascript to reduce
 its overall size. Additionally, Webpack employs code splitting to split commonly referenced
 "chunks" of code into separate collective bundles:
 
@@ -83,7 +81,8 @@ Developing on No-Bundle pages
 
 There are still some very old sections of the codebase that are not under the jurisdiction of a JavaScript bundler.
 These pages can be developed without needing ``yarn dev`` to run in the background. However, you should pay special
-attention to your ``localsettings`` setup for Django Compressor, which is explained in the Compression
+attention to your ``localsettings`` setup for Django Compressor, which is explained in the `Compression
+<#compression>`__
 section below.
 
 Developing with RequireJS page

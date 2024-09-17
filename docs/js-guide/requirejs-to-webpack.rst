@@ -5,29 +5,11 @@ RequireJS `reached its end of life <https://github.com/requirejs/requirejs/issue
 in September of 2020. Since then, it has been increasingly difficult to work with as more modern libraries
 no longer provide AMD modules (the preferred module format of RequireJS), and use modern JavaScript
 syntax that is no longer compatible with RequireJS's build process. We decided to use Webpack as our
-replacement for RequireJS in September of 2024. We expect the migration to be brief and straightforward
-with the following challenges to highlight:
-
-1. The use of ``stripe`` will need to be updated to use the module from ``npm``, and we will need update
-    our front-end to use Stripe's credit card widgets library.
-2. Shimmed dependencies in requirejs that do no yet have an analogous ``exports-loader`` statement in
-    ``webpack.common.js`` will need a statement added and usage tested. This should be straightforward, but
-    there might be a couple challenging shims in this process.
-3. Tests will also need to be moved to using Webpack instead of RequireJS. The difference with webpack is that
-    the ``commcarehq`` or ``commcarehq_b3`` common module is always imported in the entry point. In RequireJS
-    this main module was included in ``hqwebapp/partials/requirejs.html``. However, Webpack can't reliably build
-    bundles with this global bundle separated from the entry point. This shouldn't cause issues for tests, but it might.
+replacement for RequireJS in September of 2024. We expect the migration to be brief and straightforward.
 
 
 Overview of the Process
 -----------------------
-
-Migrations should happen in pull-request "chunks", meaning that pull requests should contain migrations for
-all (or most) entry points within a single application or a set of closely related applications. Additionally,
-commits should be made separately for each entry point migration.
-
-If new ``exports-loader`` statements are added, it is recommended to test the changes on staging to ensure
-the functionality is maintained between production and staging.
 
 The following steps outline the migration process on a per entry point basis.
 
@@ -42,61 +24,21 @@ that it knows what bundle of javascript dependencies and page-specific code is n
 See `the Static Files Overview <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/static-files.rst>`__
 for a more detailed explanation.
 
-Step 1: Identify the Entry Point and Details
---------------------------------------------
+.. note::
 
-First, identify the entry point you would like to migrate. Additionally, we need to determine if the entry
-point is split along the Bootstrap 3 or Bootstrap 5 RequireJS build.
-
-Bootstrap 5 Entry Points
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-As an example, let's migrate ``case_importer/js/main``.
-
-We should find a ``requirejs_main_b5`` template tag referencing this entry point inside a template.
-
-The following template tag is present in ``case_importer/excel_config.html``:
-
-::
-
-    {% requirejs_main_b5 "case_importer/js/main" %}
-
-Since the ``requirejs_main_b5`` template tag is being used, we know this entry point is part of the Bootstrap 5
-build. We also do not need to be concerned that this file might be undergoing a Bootstrap 5 migration.
-
-We can now proceed to Step 2.
-
-Bootstrap 3 Entry Points
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-As an example, let's migrate ``domain/js/my_project_settings``.
-
-We should find a ``requirejs_main`` template tag referencing this entry point inside a template.
-
-The following template tag is preset in ``domain/admin/my_project_settings.html``:
-
-::
-
-    {% requirejs_main "domain/js/my_project_settings" %}
-
-Since the ``requirejs_main`` template tag is being used, we know this entry point has not been migrated
-from Bootstrap 3 to 5. Since we are currently undergoing a migration from Bootstrap 3 to 5, it is important
-to establish that this page is not actively undergoing a migration.
-
-Please see the `Bootstrap Migration Status List
-<https://docs.google.com/spreadsheets/d/1tkSXR643Da-fp6a-uYPa5dYs5if4W2LqtvUJs3IfUKs/edit?gid=0#gid=0>`__
-to see if the application housing that entry point is undergoing a migration. If unsure, please
-raise a question to ``#gtd-dev``.
-
-If you are able to determine that this entry point is NOT actively undergoing a Bootstrap 3 to 5 migration,
-then please proceed to Step 2.
+    If new ``exports-loader`` statements are added, it is recommended to test the changes on staging to ensure
+    the functionality is maintained between production and staging.
 
 
-Step 2: Update the Template Tag and Add Global ``commcarehq`` Dependency
+Step 1: Update the Template Tag and Add Global ``commcarehq`` Dependency
 ------------------------------------------------------------------------
+
+First, find either the ``requirejs_main`` tag (Bootstrap 3 pages) or the ``requirejs_main_b5`` tag
+(Bootstrap 5 pages) that references the entry point you want to migrate.
 
 The migration of an entry point from RequireJS to Webpack will involve updating the template tag
 used to define the entry point and then adding the ``commcarehq`` global dependency to the list of dependencies.
+Two examples are below.
 
 Bootstrap 5 Entry Points
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,7 +99,7 @@ Then, in the file itself, we add the ``commcarehq_b3`` dependency to the list of
         ...
 
 
-Step 3: Verify Webpack Build
+Step 2: Verify Webpack Build
 ----------------------------
 
 The next step is to ensure that the Webpack build succeeds with the newly-added
@@ -181,15 +123,10 @@ please see the troubleshooting guide below. If there is no help there, please re
 the lead developers in charge of this migration for assistance. Please add troubleshooting
 guidance afterward.
 
-Once the build succeeds, please commit all tho changes for that entry point, with
-a commit message that might look like the following
-
-::
-
-    migrated case_importer/js/main to webpack
+Once the build succeeds, please commit all the changes for that entry point.
 
 
-Step 4: Verify Page Loads Without JavaScript Errors
+Step 3: Verify Page Loads Without JavaScript Errors
 ---------------------------------------------------
 
 The final step is to ensure that the page with the Entry Point loads without
@@ -206,9 +143,3 @@ existing patterns of ``exports-loader`` statements for dependencies that were sh
 in ``requirejs_config`` similarly to the dependency you are having issues with now.
 
 Please add any additional guidance here as the migration continues.
-
-
-Troubleshooting Guide
----------------------
-
-TBD -- Please add any additional guidance here as the migration continues.

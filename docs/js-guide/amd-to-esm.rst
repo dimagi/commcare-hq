@@ -10,14 +10,15 @@ See the `Historical Background on Module Patterns
 <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/module-history.rst>`__
 for a more detailed discussion of module types. As a quick refresher, here are some definitions:
 
-AMD (Asynchronous Module Definition)
-    The legacy module type used for older JavaScript modules on HQ.
-    This was the only module type compatible with RequireJS, our first JavaScript bundler.
-    It is still needed as a format for modules required by No-Bundler pages.
+Modified AMD (Asynchronous Module Definition)
+    The legacy module type used for older JavaScript modules on HQ, identified by having an ``hqDefine``
+    statement near the top of the file. AMD was the only module type compatible with RequireJS,
+    our first JavaScript bundler. It is still needed as a format for modules required by No-Bundler pages.
 
 ESM (ES Modules)
     The newest module type with updated powerful import and export syntax. This is the module
     format that you will see referenced by documentation in modern javascript frameworks.
+    This is quickly identified by the ``import`` statements at the top used for including dependencies.
 
 The different types of modules you will encounter are:
 
@@ -28,7 +29,7 @@ Entry Point Modules
     page-specific code is needed to render that page / entry point.
 
 Dependency Modules
-    These are modules that are never referenced in a bundler template tag and are only
+    These are modules that are never referenced by ``webpack_main`` and are only
     in the list of dependencies for other modules. Often these modules are used as utility modules
     or a way to organize JavaScript for a page that is very front-end heavy.
 
@@ -79,9 +80,13 @@ Instead, please first
 Dependency Modules
 ~~~~~~~~~~~~~~~~~~
 
-If this module is a dependency of any modules that are ``requirejs_main`` entry points, then this module is not
-eligible for migration. If a module's syntax is updated when it's still required by RequireJS modules, then
-it will result in a RequireJS build failure on deploy.
+If this module is a dependency of any modules that are ``requirejs_main`` entry points,
+then this module is not eligible for migration. If a module's syntax is updated when it's still
+required by RequireJS modules, then it will result in a RequireJS build failure on deploy.
+
+You can check the status of a dependency module's RequireJS usage by looking at the
+`Bootstrap 3 <https://www.commcarehq.org/static/build.b3.txt>`__ and
+`Bootstrap 5 <https://www.commcarehq.org/static/build.b5.txt>`__ module list.
 
 If this module is referenced by any ``hqImport`` calls (for instance ``hqImport('hqwebapp/js/my_module')``),
 then this module is NOT yet eligible, and must continue using the older AMD-style syntax until
@@ -97,13 +102,24 @@ If the AMD-style module looks a bit different than the syntax above--for instanc
 `migrated to use a JS Bundler <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.rst>`__.
 
 
-Step 2: Update Surrounding Module Structure
--------------------------------------------
+Step 2: Update the Module Syntax
+--------------------------------
 
-ESM no longer needs to define the module name within the module itself. Instead, Webpack (our bundler) is configured
-to know how to reference this module by its filename and relative path within an application.
+Key Points
+~~~~~~~~~~
 
-You can start this by changing:
+-   ESM no longer needs to define the module name within the module itself. Instead, Webpack (our bundler) is configured
+    to know how to reference this module by its filename and relative path within an application.
+-   By default, you can use the same dependency names with the ``import`` syntax. If the ``import`` statement results
+    in a Webpack Build error, look at ``webpack.common.js`` because it might require an alias. If you still have
+    a problem, check ``requirejs_config.js``, because there might have been an alias defined there that hasn't
+    been added to ``webpack.common.js``.
+
+
+Example Structural Change
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is a rough example of what the changes will look like:
 
 ::
 
@@ -129,36 +145,6 @@ to
 
 ::
 
-    [
-        'jquery',
-        'knockout',
-        'underscore',
-        'hqwebapp/js/initial_page_data',
-        'hqwebapp/js/assert_properties',
-        'hqwebapp/js/bootstrap5/knockout_bindings.ko',
-        'commcarehq',
-    ] (
-        $,
-        ko,
-        _,
-        initialPageData,
-        assertProperties
-    )
-    // additionally, the indentation for the module-specific code can be updated
-    ...
-
-Step 3: Update Dependency Imports
----------------------------------
-
-Common ``yarn`` dependencies can now be referenced by their NPM name (or the alias defined in
-``webpack/webpack.common.js``.
-
-The same can be done with named internal dependencies, or referenced internal dependencies.
-
-The final module dependency structure will look something like:
-
-::
-
     import "commcarehq";  // Note: moved to top
 
     // named yarn/npm dependencies
@@ -170,7 +156,7 @@ The final module dependency structure will look something like:
     import initialPageData from "hqwebapp/js/initial_page_data";
     import assertProperties from "hqwebapp/js/assert_properties";
 
-    // referenced internal dependencies:
+    // unnamed internal dependencies:
     import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
 
     // module specific code...
@@ -179,7 +165,9 @@ The final module dependency structure will look something like:
 Note that ``import "commcarehq";`` has been moved to the top of the file. The ordering is
 for consistency purposes, but it's important that either ``import "commcarehq";`` or
 ``import "commcarehq_b3";`` (for Bootstrap 3 / ``webpack_main_b3``) is present in the list
-of imports for Webpack Entry Point modules.
+of imports for Webpack Entry Point modules. If this import is not present in an entry point,
+then site-wide navigation, notifications, modals, and other global widgets will not
+work on that page.
 
 Remember, an Entry Point is any module that is included directly on a page using the
 ``webpack_main`` or ``webpack_main_b3`` template tags.
