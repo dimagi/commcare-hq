@@ -293,7 +293,6 @@ class BulkUploadMultimediaView(BaseMultimediaTemplateView):
 class BulkUploadMultimediaPollView(BaseMultimediaTemplateView):
     urlname = "hqmedia_bulk_upload_poll"
 
-    # TODO: Stop polling eventually, because the page flickers as the images reload
     def get(self, request, domain, app_id, processing_id):
         try:
             context = get_download_context(processing_id)
