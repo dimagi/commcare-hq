@@ -16,6 +16,7 @@ pytest_plugins = [
     'unmagic.fence',
     'corehq.tests.pytest_plugins.patches',
     'corehq.tests.pytest_plugins.redislocks',
+    'corehq.tests.pytest_plugins.reusedb',
 ]
 
 
