@@ -15,10 +15,10 @@
   {% initial_page_data 'export_instance' export_instance %}
   {% initial_page_data 'geo_properties' geo_properties %}
 
-  <div id="customize-export" style="display: none;" data-bind="visible: true">  {# todo B5: inline style #}
+  <div id="customize-export" class="d-none" data-bind="css: { 'd-none': false }">
     {# content for multi-select help popover #}
     {% if export_instance.type == 'case' %}
-      <div id="popover_content_wrapper" style="display: none">  {# todo B5: inline style #}
+      <div id="popover_content_wrapper" class="d-none">
         {% blocktrans %}
           These options allow you to configure how CommCare exports data from multi-select questions.
           If you do not want to split the options into multiple columns select the 'plain' option.
@@ -40,16 +40,15 @@
           method="post">
       {% csrf_token %}
       <fieldset>
-        <div class="form-group">  {# todo B5: css:form-group #}
-          <label for="export-type"
-                 class="col-md-3 col-lg-2 form-label">
+        <div class="mb-3">  {# Updated from form-group to mb-3 #}
+          <label for="export-type" class="form-label">
             {% if export_instance.type == 'case' %}
               {% trans "Case Type" %}
             {% else %}
               {% trans "Form" %}
             {% endif %}
           </label>
-          <div class="col-md-9 col-lg-8 col-xl-6">
+
             <p class="form-control-static">
               {% if export_instance.type == 'case' %}
                 {{ export_instance.case_type }}
@@ -57,68 +56,58 @@
                 {{ export_instance.formname }}
               {% endif %}
             </p>
-          </div>
-        </div>
-        <div class="form-group">  {# todo B5: css:form-group #}
-          <label for="export-name"
-                 class="col-md-3 col-lg-2 form-label">
-            {{ terminology.name_label }}
-          </label>
-          <div class="col-md-9 col-lg-8 col-xl-6">
-            <input type="text"
-                   class="form-control"
-                   id="export-name"
-                   data-bind="value: name" />
-          </div>
-        </div>
-        <div class="form-group">  {# todo B5: css:form-group #}
-          <label for="export-description"
-                 class="col-md-3 col-lg-2 form-label">
-            {% trans "Description" %}
-          </label>
-          <div class="col-md-9 col-lg-8 col-xl-6">
-            <textarea data-bind="value: description"
-                      id="export-description"
-                      class="form-control vertical-resize"
-                      rows="3">
-            </textarea>
-          </div>
-        </div>
-        <div class="form-group"  {# todo B5: css:form-group #}
-             data-bind="css: {
-                          'has-error': hasDisallowedHtmlFormat  {# todo B5: css:has-error #}
-                        },
-                        visible: formatOptions.length > 1">
-          <label for="format-select"
-                 class="col-md-3 col-lg-2 form-label">
-            {% trans "Default file type" %}
-          </label>
-          <div class="col-md-9 col-lg-8 col-xl-6">
-            <select class="form-control"
-                    id="format-select"
-                    data-bind="options: getFormatOptionValues(),
-                               optionsText: getFormatOptionText,
-                               value: export_format">
-            </select>
-            <div class="help-block"
-                 data-bind="visible: hasDisallowedHtmlFormat">
-              {% url "domain_subscription_view" domain as software_plan_url %}
-              {% blocktrans %}
-                Excel Dashboard Integration is only available on the Standard Plan or higher.
-                Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
-              {% endblocktrans %}
-            </div>
-          </div>
 
         </div>
-        <div class="form-group">  {# todo B5: css:form-group #}
+        <div class="mb-3">  {# Updated from form-group to mb-3 #}
+          <label for="export-name" class="form-label">
+            {{ terminology.name_label }}
+          </label>
+          <input type="text"
+                 class="form-control"
+                 id="export-name"
+                 data-bind="value: name" />
+        </div>
+        <div class="mb-3">  {# Updated from form-group to mb-3 #}
+          <label for="export-description" class="form-label">
+            {% trans "Description" %}
+          </label>
+          <textarea data-bind="value: description"
+                    id="export-description"
+                    class="form-control vertical-resize"
+                    rows="3">
+          </textarea>
+        </div>
+        <div class="mb-3"  {# Updated from form-group to mb-3 #}
+             data-bind="css: {
+                            'has-error': hasDisallowedHtmlFormat {# todo B5: css:has-error #}
+                          },
+                          visible: formatOptions.length > 1">
+          <label for="format-select" class="form-label">
+            {% trans "Default file type" %}
+          </label>
+          <select class="form-control"
+                  id="format-select"
+                  data-bind="options: getFormatOptionValues(),
+                             optionsText: getFormatOptionText,
+                             value: export_format">
+          </select>
+          <div class="help-block"
+               data-bind="visible: hasDisallowedHtmlFormat">
+            {% url "domain_subscription_view" domain as software_plan_url %}
+            {% blocktrans %}
+              Excel Dashboard Integration is only available on the Standard Plan or higher.
+              Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
+            {% endblocktrans %}
+          </div>
+        </div>
+        <div class="mb-3">  {# Updated from form-group to mb-3 #}
           <div class="offset-md-4 offset-lg-3 offset-xl-2 col-md-6">
             {% if not export_instance.is_odata_config %}
-              <div class="checkbox">  {# todo B5: css:checkbox #}
-                <label>
-                  <input type="checkbox"  {# todo B5: css:checkbox #}
-                         id="transform-dates-checkbox"
-                         data-bind="checked: transform_dates" />
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input"
+                       id="transform-dates-checkbox"
+                       data-bind="checked: transform_dates" />
+                <label class="form-check-label" for="transform-dates-checkbox">
                   <strong>{% trans "Automatically convert dates and multimedia links for Excel" %}</strong><br/>
                   {% blocktrans %}
                     Leaving this checked will ensure dates appear in excel format.
@@ -129,11 +118,11 @@
               </div>
 
               {% if export_instance.type == 'form' and export_instance.export_format != 'html' %}
-              <div class="checkbox">  {# todo B5: css:checkbox #}
-                <label>
-                  <input type="checkbox"  {# todo B5: css:checkbox #}
-                         id="format-data-in-excel-checkbox"
-                         data-bind="checked: format_data_in_excel" />
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input"
+                       id="format-data-in-excel-checkbox"
+                       data-bind="checked: format_data_in_excel" />
+                <label class="form-check-label" for="format-data-in-excel-checkbox">
                   <strong>{% trans "Automatically format cells for Excel 2007+" %}</strong><br/>
                   {% blocktrans %}
                     If this setting is not selected, your export will be in Excel’s general format.
@@ -144,12 +133,12 @@
               </div>
               {% endif %}
 
-              <div class="checkbox">  {# todo B5: css:checkbox #}
-                <label>
-                  <input type="checkbox"  {# todo B5: css:checkbox #}
-                         id="daily-saved-export-checkbox"
-                         data-bind="checked: is_daily_saved_export,
-                                    attr: { disabled: hasHtmlFormat() || !{{ has_daily_saved_export_access|JSON }}}"/>
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input"
+                       id="daily-saved-export-checkbox"
+                       data-bind="checked: is_daily_saved_export,
+                                  attr: { disabled: hasHtmlFormat() || !{{ has_daily_saved_export_access|JSON }}}"/>
+                <label class="form-check-label" for="daily-saved-export-checkbox">
                   {% trans "Create a Daily Saved Export" %}
                 </label>
                 {% if not has_daily_saved_export_access %}
@@ -162,12 +151,12 @@
                 {% endif %}
               </div>
             {% endif %}
-            <div class="checkbox">  {# todo B5: css:checkbox #}
-              <label>
-                <input type="checkbox"  {# todo B5: css:checkbox #}
-                       id="det-config-checkbox"
-                       data-bind="checked: show_det_config_download,
-                                  attr: { disabled: !{{ has_api_access|JSON }} || {{ is_all_case_types_export|JSON }}}" />
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input"
+                     id="det-config-checkbox"
+                     data-bind="checked: show_det_config_download,
+                                attr: { disabled: !{{ has_api_access|JSON }} || {{ is_all_case_types_export|JSON }}}" />
+              <label class="form-check-label" for="det-config-checkbox">
                 {% trans "Generate a Data Export Tool config file" %}
               </label>
               {% trans "Download a Data Export Tool configuration file for this export" as det_help %}
@@ -186,21 +175,21 @@
                 ></span>
             </div>
             {% if export_instance.type == 'form' %}
-              <div class="checkbox"  {# todo B5: css:checkbox #}
+              <div class="form-check"
                    {% if not request|toggle_enabled:'SUPPORT' %}data-bind="visible: initiallyIncludeErrors"{% endif %}>
-                <label>
-                  <input type="checkbox"  {# todo B5: css:checkbox #}
-                         id="include-errors-checkbox"
-                         data-bind="checked: include_errors" />
+                <input type="checkbox" class="form-check-input"
+                       id="include-errors-checkbox"
+                       data-bind="checked: include_errors" />
+                <label class="form-check-label" for="include-errors-checkbox">
                   {% trans "Include duplicates and other unprocessed forms" %}
                 </label>
               </div>
 
-              <div id="split-multiselects-checkbox-div" class="checkbox">  {# todo B5: css:checkbox #}
-                <label>
-                  <input type="checkbox"  {# todo B5: css:checkbox #}
-                         id="split-multiselects-checkbox"
-                         data-bind="checked: split_multiselects" />
+              <div id="split-multiselects-checkbox-div" class="form-check">
+                <input type="checkbox" class="form-check-input"
+                       id="split-multiselects-checkbox"
+                       data-bind="checked: split_multiselects" />
+                <label class="form-check-label" for="split-multiselects-checkbox">
                   {% trans "Expand Checkbox Questions" %}
                 </label>
               </div>
@@ -208,37 +197,34 @@
           </div>
         </div>
         {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
-          <div class="form-group"  {# todo B5: css:form-group #}
+          <div class="mb-3"
                data-bind="css: { 'has-warning': hasOtherOwner && sharing() != initialSharing }">
-            <label for="sharing-select"
-                   class="col-md-3 col-lg-2 form-label">
+            <label for="sharing-select" class="form-label">
               {% trans "Sharing" %}
               <span data-bind="makeHqHelp: {description: getSharingHelpText}"></span>
             </label>
-            <div class="col-md-9 col-lg-8 col-xl-6">
-              <select class="form-control" id="sharing-select"
-                      data-bind="options: getSharingOptionValues(),
-                                 optionsText: getSharingOptionText,
-                                 value: sharing">
-              </select>
-              <div class="help-block"
-                   data-bind="visible: hasOtherOwner && sharing() != initialSharing">
-                <div data-bind="visible: sharing() == 'private'">
-                  {% blocktrans %}
-                    This export was created by <strong>{{ owner_name }}</strong>.
-                    If you change the sharing settings for this export you will lose the ability
-                    to view and edit the export.
-                    Only <strong>{{ owner_name }}</strong> will have access to it.
-                  {% endblocktrans %}
-                </div>
-                <div data-bind="visible: sharing() == 'export_only'">
-                  {% blocktrans %}
-                    This export was created by <strong>{{ owner_name }}</strong>.
-                    If you change the sharing settings for this export you will lose the ability
-                    to edit the export.
-                    Only <strong>{{ owner_name }}</strong> will be able to edit it.
-                  {% endblocktrans %}
-                </div>
+            <select class="form-control" id="sharing-select"
+                    data-bind="options: getSharingOptionValues(),
+                               optionsText: getSharingOptionText,
+                               value: sharing">
+            </select>
+            <div class="help-block"
+                 data-bind="visible: hasOtherOwner && sharing() != initialSharing">
+              <div data-bind="visible: sharing() == 'private'">
+                {% blocktrans %}
+                  This export was created by <strong>{{ owner_name }}</strong>.
+                  If you change the sharing settings for this export you will lose the ability
+                  to view and edit the export.
+                  Only <strong>{{ owner_name }}</strong> will have access to it.
+                {% endblocktrans %}
+              </div>
+              <div data-bind="visible: sharing() == 'export_only'">
+                {% blocktrans %}
+                  This export was created by <strong>{{ owner_name }}</strong>.
+                  If you change the sharing settings for this export you will lose the ability
+                  to edit the export.
+                  Only <strong>{{ owner_name }}</strong> will be able to edit it.
+                {% endblocktrans %}
               </div>
             </div>
           </div>
@@ -268,16 +254,14 @@
           <legend>
             {% trans "Privacy Settings" %}
           </legend>
-          <div class="form-group">  {# todo B5: css:form-group #}
-            <label for="is_safe"
-                   class="col-md-3 col-lg-2 form-label"></label>
-            <div class="col-md-9 col-lg-8 col-xl-6 deid-column">
+          <div class="mb-3">
+            <div class="offset-md-4 offset-lg-3 offset-xl-2 col-md-6">
               <div data-bind="visible: isDeidColumnVisible()">
-                <div class="checkbox">  {# todo B5: css:checkbox #}
-                  <label>
-                    <input type="checkbox"  {# todo B5: css:checkbox #}
-                           id="is_deidentified"
-                           data-bind="checked: is_deidentified" />
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input"
+                         id="is_deidentified"
+                         data-bind="checked: is_deidentified" />
+                  <label class="form-check-label" for="is_deidentified">
                     {% trans "Publish as De-Identified" %}
                   </label>
                 </div>
@@ -331,7 +315,7 @@
           {% endif %}
 
           {% if export_instance.is_odata_config %}
-            <div style="display: d-inline-block"  {# todo B5: inline style #}
+            <div class="d-inline-block"
                  data-bind="if: hasDuplicateColumnLabels">
               <div class="alert alert-danger">
                 {% blocktrans %}
