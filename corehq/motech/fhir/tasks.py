@@ -535,11 +535,10 @@ def sync_all_appointments_domain(domain):
     # get appointment cases in commcare
     appointment_cases = CommCareCase.objects.get_cases(appointment_case_ids)
 
-    # get fhir ids for appointments currently in commcare
-    appointment_fhir_ids = [
-        appointment_case.get_case_property('fhir_id') for appointment_case in appointment_cases
-    ]
-
+    # map fhir ids to appointments currently in commcare
+    appointment_map = {
+        appointment_case.get_case_property('fhir_id'): appointment_case for appointment_case in appointment_cases
+    }
     for patient in patient_cases:
         patient_helper = CaseHelper(case=patient, domain=domain)
         patient_fhir_id = patient.get_case_property('patient_fhir_id')
@@ -563,7 +562,7 @@ def sync_all_appointments_domain(domain):
         for appointment in epic_appointment_records:
             appointment_resource = appointment.get('resource')
             appointment_id = appointment_resource.get('id')
-            if appointment_id and appointment_id not in appointment_fhir_ids:
+            if appointment_id and appointment_id not in appointment_map.keys():
                 epic_appointments_to_add.append(appointment)
             elif appointment_id:
                 epic_appointments_to_update.append(appointment)
@@ -638,11 +637,7 @@ def sync_all_appointments_domain(domain):
                     'practitioner': practitioner,
                     'reason': reason
                 })
-            appointment_case = None
-            for case in appointment_cases:
-                if case.get_case_property('fhir_id') == appointment_fhir_id:
-                    appointment_case = case
-                    break
+            appointment_case = appointment_map.get(appointment_fhir_id)
             appointment_update_helper = CaseHelper(case=appointment_case, domain=domain)
             case_properties_to_update = {}
             changes = False
