@@ -306,6 +306,8 @@ class BulkUploadMultimediaPollView(BaseMultimediaUploaderView):
             return HttpResponseServerError()
 
         # TODO: Make the status view look nice
+        # Pull content from the old hqmedia/uploader/details_multi.html
+        # and maybe hqmedia/uploader/status_multi.html
 
         return render(request, 'hqmedia/partials/bulk_upload_status.html', context)
 

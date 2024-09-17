@@ -3,15 +3,15 @@ from django.urls import reverse
 from django.utils.translation import gettext_noop
 
 
-class BaseMultimediaUploadController(object):
+class BaseMultimediaFileUploadController(object):
     """
         Media type is the user-facing term for the type of media that the uploader is uploading
     """
     media_type = None
-    uploader_type = None
-    is_multi_file = False
+    uploader_type = "file"
 
     errors_template = "hqmedia/uploader/errors.html"
+    queue_template = "hqmedia/uploader/queue_single.html"
 
     def __init__(self, slug, destination):
         self.slug = slug
@@ -47,7 +47,6 @@ class BaseMultimediaUploadController(object):
             'fileFilters': self.supported_files,
             'uploadURL': self.destination,
             'processingURL': self.processing_url,
-            'isMultiFileUpload': self.is_multi_file,
             'uploadParams': self.upload_params,
             'licensingParams': self.licensing_params,
         }
@@ -68,30 +67,6 @@ class BaseMultimediaUploadController(object):
             'media_type': self.media_type,
             'options': options,
         }
-
-
-class MultimediaBulkUploadController(BaseMultimediaUploadController):
-    is_multi_file = True
-    uploader_type = "bulk"
-    media_type = gettext_noop("zip")
-
-    queue_template = "hqmedia/uploader/queue_multi.html"
-    status_template = "hqmedia/uploader/status_multi.html"
-    details_template = "hqmedia/uploader/details_multi.html"
-
-    @property
-    def supported_files(self):
-        return [
-            {
-                'description': 'Zip',
-                'extensions': '*.zip',
-            },
-        ]
-
-
-class BaseMultimediaFileUploadController(BaseMultimediaUploadController):
-    uploader_type = "file"
-    queue_template = "hqmedia/uploader/queue_single.html"
 
 
 class MultimediaImageUploadController(BaseMultimediaFileUploadController):
