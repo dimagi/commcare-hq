@@ -188,14 +188,14 @@ class TestUpdateCasesOwner(TestCase):
 
 class TestCeleryTaskTracker(TestCase):
     TASK_KEY = 'test-key'
-    MESSAGE_KEY = 'message-key'
+    PROGRESS_KEY = 'test-key_progress'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         with real_redis_client():
             cls.redis_client = get_redis_client()
-            cls.celery_task_tracker = CeleryTaskTracker(cls.TASK_KEY, cls.MESSAGE_KEY)
+            cls.celery_task_tracker = CeleryTaskTracker(cls.TASK_KEY)
 
     def tearDown(self):
         self.redis_client.clear()
@@ -218,25 +218,29 @@ class TestCeleryTaskTracker(TestCase):
         self.celery_task_tracker.mark_as_error()
         self.assertEqual(self.redis_client.get(self.TASK_KEY), 'ERROR')
 
-    def test_get_error(self):
+    def test_get_status(self):
         self.redis_client.set(self.TASK_KEY, 'ERROR')
-        self.assertTrue(self.celery_task_tracker.is_error())
+        self.assertEqual(self.celery_task_tracker.get_status(), {'status': 'ERROR', 'progress': 0})
 
-    def test_set_message(self):
-        self.assertTrue(self.celery_task_tracker.set_message('foobar'))
-        self.assertTrue(self.redis_client.has_key(self.MESSAGE_KEY))
-        self.assertEqual(self.redis_client.get(self.MESSAGE_KEY), 'foobar')
+    def test_set_progress(self):
+        self.assertTrue(self.celery_task_tracker.update_progress(current=1, total=5))
+        self.assertTrue(self.redis_client.has_key(self.PROGRESS_KEY))
+        self.assertEqual(self.redis_client.get(self.PROGRESS_KEY), 20)
 
-    def test_get_message(self):
-        self.assertEqual(self.celery_task_tracker.get_message(), None)
-        self.celery_task_tracker.set_message('foobar')
-        self.assertEqual(self.celery_task_tracker.get_message(), 'foobar')
+    def test_get_progress(self):
+        self.assertEqual(self.celery_task_tracker.get_progress(), 0)
+        self.celery_task_tracker.update_progress(current=1, total=4)
+        self.assertEqual(self.celery_task_tracker.get_progress(), 25)
 
-    def test_clear_message(self):
-        self.assertFalse(self.celery_task_tracker.clear_message())
-        self.celery_task_tracker.set_message('foobar')
-        self.assertTrue(self.celery_task_tracker.clear_message())
-        self.assertFalse(self.redis_client.has_key(self.MESSAGE_KEY))
+    def test_clear_progress(self):
+        self.assertFalse(self.celery_task_tracker.clear_progress())
+        self.celery_task_tracker.update_progress(current=1, total=2)
+        self.assertTrue(self.celery_task_tracker.clear_progress())
+        self.assertFalse(self.redis_client.has_key(self.PROGRESS_KEY))
+
+    def test_invalid_progress(self):
+        self.celery_task_tracker.update_progress(current=3, total=0)
+        self.assertEqual(self.celery_task_tracker.get_progress(), 0)
 
 
 class TestGetCeleryTaskTracker(SimpleTestCase):
@@ -250,6 +254,6 @@ class TestGetCeleryTaskTracker(SimpleTestCase):
             'test_me_foobar'
         )
         self.assertEqual(
-            celery_task_tracker.message_key,
-            'test_me_message_foobar'
+            celery_task_tracker.progress_key,
+            'test_me_foobar_progress'
         )

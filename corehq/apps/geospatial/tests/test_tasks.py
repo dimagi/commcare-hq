@@ -38,18 +38,14 @@ class TestIndexESDocsWithLocationProps(TestCase):
     @patch('corehq.apps.geospatial.tasks.MAX_GEOSPATIAL_INDEX_DOC_LIMIT', 1)
     def test_max_doc_limit_reached(self):
         index_es_docs_with_location_props.apply(args=[self.domain])
-        self.assertEqual(
-            self.celery_task_helper.get_message(),
-            'This domain contains too many cases and so they will not be made available for '
-            'use by this feature. Please reach out to support.'
-        )
-        self.assertFalse(self.celery_task_helper.is_active())
+        self.assertEqual(self.celery_task_helper.get_status(), 'ERROR')
 
     def test_index_docs(self):
         index_es_docs_with_location_props.apply(args=[self.domain])
         doc_count = _es_case_query(self.domain, self.gps_prop_name).count()
         self.assertEqual(doc_count, 0)
-        self.assertFalse(self.celery_task_helper.is_active())
+        self.assertEqual(self.celery_task_helper.get_status(), None)
+        self.assertEqual(self.celery_task_helper.get_progress(), 1.0)
 
 
 def _create_case(factory, gps_prop_name, name):
