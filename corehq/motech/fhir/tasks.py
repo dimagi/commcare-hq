@@ -3,6 +3,7 @@ from datetime import datetime
 
 from collections import namedtuple
 from typing import Generator, List
+from urllib.parse import urlencode
 from uuid import uuid4
 
 from django.conf import settings
@@ -436,7 +437,14 @@ def request_epic_access_token():
 
 
 def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
-    url = f"https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Patient?birthdate={birthdate}&family={family_name}&given={given_name}&_format=json"
+    base_url = "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Patient"
+    params = {
+        'birthdate': birthdate,
+        'family_name': family_name,
+        'given_name': given_name,
+        '_format': 'json'
+    }
+    url = f'{base_url}?{urlencode(params)}'
     headers = {
         'authorization': 'Bearer %s' % access_token,
     }
@@ -460,7 +468,13 @@ def get_epic_appointments_for_patient(fhir_id, access_token):
     headers = {
         'authorization': 'Bearer %s' % access_token,
     }
-    url = f"https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Appointment?&patient={fhir_id}&service-category=appointment&_format=json"
+    base_url = "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Appointment"
+    params = {
+        'patient': fhir_id,
+        'service-category': 'appointment',
+        '_format': 'json'
+    }
+    url = f'{base_url}?{urlencode(params)}'
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         json_response = response.json()
