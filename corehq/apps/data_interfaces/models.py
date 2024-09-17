@@ -1163,7 +1163,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         if is_copied_case(case):
             return CaseRuleActionResult()
 
-        dedupe_load_counter('unknown', case.domain)
+        dedupe_load_counter('unknown', case.domain)()
 
         if not case_matching_rule_criteria_exists_in_es(case, rule):
             ALLOWED_ES_DELAY = timedelta(hours=1)

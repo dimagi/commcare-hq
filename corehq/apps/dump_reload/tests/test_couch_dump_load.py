@@ -141,6 +141,10 @@ class CouchDumpLoadTest(TestCase):
             image_data = f.read()
 
         image = CommCareImage.get_by_data(image_data)
+        assert not image.blobs, (
+            f"Expected empty blobs, got {image.blobs!r}. Failure indicates"
+            "incomplete cleanup by a test that ran before this one."
+        )
         image.attach_data(image_data, original_filename='logo.png')
         image.add_domain(self.domain_name)
         self.assertEqual(image_data, image.get_display_file(False))
