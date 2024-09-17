@@ -130,9 +130,8 @@ Step 3: Verify Page Loads Without JavaScript Errors
 ---------------------------------------------------
 
 The final step is to ensure that the page with the Entry Point loads without
-JavaScript errors. It is recommended to do this on staging if any additional
-complex local setup is required. Most of the time, entry points should load
-without errors if the build succeeds.
+JavaScript errors. Most of the time, entry points should load without errors if
+the build succeeds.
 
 If there are JavaScript errors, the mostly likely issue is due to ``undefined`` errors
 when referencing a module/dependency. The most likely cause of this is a missing
