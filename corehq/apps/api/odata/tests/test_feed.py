@@ -79,7 +79,7 @@ class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
             {
-                '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/cases/config_id/$metadata#feed',
+                '@odata.context': 'http://localhost:8000/a/test_domain/api/odata/v1/cases/config_id/$metadata#feed',
                 'value': []
             }
         )
@@ -98,7 +98,7 @@ class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
             'api_dispatch_detail',
             kwargs={
                 'domain': domain_name,
-                'api_name': 'v0.5',
+                'api_name': 'v1',
                 'resource_name': ODataCaseResource._meta.resource_name,
                 'pk': config_id + '/feed',
             }
@@ -164,7 +164,7 @@ class TestODataFormFeed(TestCase, FormOdataTestMixin):
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
             {
-                '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/forms/config_id/$metadata#feed',
+                '@odata.context': 'http://localhost:8000/a/test_domain/api/odata/v1/forms/config_id/$metadata#feed',
                 'value': []
             }
         )
@@ -183,7 +183,7 @@ class TestODataFormFeed(TestCase, FormOdataTestMixin):
             'api_dispatch_detail',
             kwargs={
                 'domain': domain_name,
-                'api_name': 'v0.5',
+                'api_name': 'v1',
                 'resource_name': ODataFormResource._meta.resource_name,
                 'pk': config_id + '/feed',
             }
