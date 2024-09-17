@@ -1,0 +1,7 @@
+{% extends "hqwebapp/partials/bootstrap3/bulk_upload.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block download_file %}
+  {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
+{% endblock download_file %}
