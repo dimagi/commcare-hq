@@ -13,7 +13,6 @@ import traceback
 import uuid
 from collections import namedtuple
 from contextlib import ExitStack, closing, contextmanager
-from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO, open
 from textwrap import indent, wrap
@@ -29,6 +28,7 @@ from django.http import HttpRequest
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
+from corehq.tests.util.timelimit import timelimit  # noqa: F401
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
 
@@ -432,88 +432,6 @@ class generate_cases:
             # In the case of a decorated test method, DecoratedMethodMeta
             # will delete this and assign tests to the owning test class.
             return Test
-
-
-def timelimit(limit):
-    """Create a decorator that asserts a run time limit
-
-    An assertion error is raised if the decorated function returns
-    without raising an error and the elapsed run time is longer than
-    the allowed time limit.
-
-    This decorator can be used to extend the time limit imposed by
-    --max-test-time when `corehq.tests.noseplugins.timing.TimingPlugin`
-    is enabled.
-
-    Usage:
-
-        @timelimit
-        def lt_one_second():
-            ...
-
-        @timelimit(0.5)
-        def lt_half_second():
-            ...
-
-    See also: `patch_max_test_time` for overriding time limits for an
-    entire test group (module, test class, etc.)
-
-    :param limit: number of seconds or a callable to decorate. If
-    callable, the time limit defaults to one second.
-    """
-    if callable(limit):
-        return timelimit((limit, timedelta(seconds=1)))
-    if not isinstance(limit, tuple):
-        limit = timedelta(seconds=limit)
-        return lambda func: timelimit((func, limit))
-    func, limit = limit
-
-    @wraps(func)
-    def time_limit(*args, **kw):
-        # TODO restore when timing nose plugin is adapted to pytest
-        #from corehq.tests.noseplugins.timing import add_time_limit
-        #add_time_limit(limit.total_seconds())
-        start = datetime.utcnow()
-        rval = func(*args, **kw)
-        elapsed = datetime.utcnow() - start
-        assert elapsed < limit, f"{func.__name__} took too long: {elapsed}"
-        return rval
-    return time_limit
-
-
-def patch_max_test_time(limit):
-    """Temporarily override test time limit (--max-test-time)
-
-    Note: this is only useful when spanning multiple test events because
-    the limit must be present at the _end_ of a test event to take
-    effect. Therefore it will do nothing if used within the context of a
-    single test (use `timelimit` for that). It also does not affect the
-    time limit on the final teardown fixture (in which the patch is
-    removed).
-
-    :param limit: New time limit (seconds).
-
-    Usage at module level:
-
-        TIME_LIMIT = patch_max_test_time(9)
-
-        def setup_module():
-            TIME_LIMIT.start()
-
-        def teardown_module():
-            TIME_LIMIT.stop()
-
-    Usage as class decorator:
-
-        @patch_max_test_time(9)
-        class TestSomething(TestCase):
-            ...
-    """
-    from corehq.tests.noseplugins.timing import patch_max_test_time
-    return patch_max_test_time(limit)
-
-
-patch_max_test_time.__test__ = False
 
 
 def patch_foreign_value_caches():
