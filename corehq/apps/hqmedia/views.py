@@ -16,7 +16,6 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
-    HttpResponseRedirect,
     JsonResponse,
 )
 from django.http.response import HttpResponseServerError
@@ -276,6 +275,7 @@ class BulkUploadMultimediaView(BaseMultimediaTemplateView):
                 "download_url": reverse(DownloadMultimediaZip.urlname, args=[self.domain, self.app.get_id]),
                 "adjective": _("multimedia"),
                 "plural_noun": _("multimedia files"),
+                "action": reverse(ProcessBulkUploadView.urlname, args=[self.domain, self.app.get_id]),
             },
             'multimedia_state': self.app.check_media_state(),
         })
@@ -283,17 +283,6 @@ class BulkUploadMultimediaView(BaseMultimediaTemplateView):
             'bulk_upload_form': get_bulk_upload_form(context),
         })
         return context
-
-    def post(self, request, *args, **kwargs):
-        # TODO: Does this behave if there's an error?
-        # TODO: Make upload work. Current upload logic is in ProcessBulkUploadView
-        task_ref = None
-        return HttpResponseRedirect(
-            reverse(
-                BulkUploadMultimediaStatusView.urlname,
-                args=[self.domain, task_ref.download_id]
-            )
-        )
 
 
 class BulkUploadMultimediaPollView(BaseMultimediaUploaderView):
@@ -550,6 +539,7 @@ class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
 
 
 class BaseProcessUploadedView(BaseMultimediaView):
+    upload_filename = 'Filedata'
 
     @property
     def username(self):
@@ -574,7 +564,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
     @property
     @memoized
     def uploaded_file(self):
-        return self.request.FILES.get('Filedata')
+        return self.request.FILES.get(self.upload_filename)
 
     @property
     @memoized
@@ -617,6 +607,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
 
 class ProcessBulkUploadView(BaseProcessUploadedView):
     urlname = "hqmedia_uploader_bulk"
+    upload_filename = "bulk_upload_file"
 
     @property
     @memoized
@@ -629,6 +620,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             raise BadMediaFileException(msg % e)
 
     def validate_file(self, replace_diff_ext=False):
+        # TODO: test these errors
         if self.mime_type not in self.valid_mime_types():
             raise BadMediaFileException(_("Uploaded file is not a ZIP file."))
         if not self.uploaded_zip:
@@ -662,6 +654,26 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
                                       attribution_notes=self.attribution_notes)
 
         return status.get_response()
+
+    def post(self, request, *args, **kwargs):
+        self.errors = []
+        try:
+            self.validate_file()
+            response = self.process_upload()
+        except BadMediaFileException as e:
+            return HttpResponseBadRequest(str(e))
+        return HttpResponse(json.dumps(response))
+        '''
+        # TODO: Make upload work. Current upload logic is in ProcessBulkUploadView
+        task_ref = None
+        # return HttpResponseServerError()
+        return HttpResponseRedirect(
+            reverse(
+                BulkUploadMultimediaStatusView.urlname,
+                args=[self.domain, task_ref.download_id]
+            )
+        )
+        '''
 
     @classmethod
     def valid_mime_types(cls):
