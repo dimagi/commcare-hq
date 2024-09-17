@@ -1,20 +1,26 @@
 {% extends "hqwebapp/partials/download_status.html" %}
-{# TODO: Is this file needed? #}
 {% load i18n %}
+
 {% block results %}
-  <div class="alert alert-success">
-    {# TODO: add message #}
-    <ul>
-      <li>MATCHED: {{ matched_files }}</li>
-      <li>UNMATCHED: {{ unmatched_files }}</li>
-      <li>TOTAL: {{ total_files }}</li>
-    </ul>
-  </div>
-  {% if result.has_errors %}
+  {% if errors %}
     <div class="alert alert-danger">
-      {% for e in result.errors %}
+      {% for e in errors %}
         <p>{{ e }}</p>
       {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if matched_files %}
+    <div class="alert alert-success">
+      {% blocktrans count matched_count=matched_count %}
+        One match found.
+      {% plural %}
+        {{ matched_count }} matches found.
+      {% endblocktrans %}
+    </div>
+  {% else %}
+    <div class="alert alert-danger">
+      {% trans 'No Matches Found' %}
     </div>
   {% endif %}
 {% endblock results %}
