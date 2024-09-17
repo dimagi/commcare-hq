@@ -626,7 +626,6 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             raise BadMediaFileException(msg % e)
 
     def validate_file(self, replace_diff_ext=False):
-        # TODO: test these errors
         if self.mime_type not in self.valid_mime_types():
             raise BadMediaFileException(_("Uploaded file is not a ZIP file."))
         if not self.uploaded_zip:
@@ -667,7 +666,10 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             self.validate_file()
             response = self.process_upload()
         except BadMediaFileException as e:
-            return HttpResponseBadRequest(str(e))
+            messages.error(request, str(e))
+            return HttpResponseRedirect(
+                reverse(BulkUploadMultimediaView.urlname, args=[self.domain, self.app.id])
+            )
         return HttpResponseRedirect(
             reverse(
                 BulkUploadMultimediaStatusView.urlname,
