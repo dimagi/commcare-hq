@@ -78,9 +78,9 @@ admin.site.register(HQApiKey, HQApiKeyAdmin)
 
 
 class UserHistoryAdmin(admin.ModelAdmin):
-    list_display = ['changed_at', 'by_domain', 'for_domain', 'user_type', 'user_id', 'changed_by', 'action',
-                    'changes', 'change_messages', 'changed_via', 'user_upload_record_id']
-    list_filter = ['by_domain', 'for_domain']
+    list_display = ['changed_at', 'by_domain', 'for_domain', 'user_type', 'user_repr', 'user_id', 'changed_by',
+                    'action', 'changes', 'change_messages', 'changed_via', 'user_upload_record_id']
+    list_filter = ['by_domain', 'for_domain', 'user_repr']
     sortable_by = []
 
     def has_add_permission(self, request):
