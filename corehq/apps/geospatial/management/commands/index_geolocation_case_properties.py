@@ -41,15 +41,23 @@ def index_case_docs(domain, query_limit=DEFAULT_QUERY_LIMIT, chunk_size=DEFAULT_
     query = _es_case_query(domain, geo_case_property, case_type)
     count = query.count()
     print(f'{count} case(s) to process')
-    batch_count = 1
-    if query_limit:
-        batch_count = math.ceil(count / query_limit)
+    batch_count = get_batch_count(count, query_limit)
     print(f"Cases will be processed in {batch_count} batches")
     for i in range(batch_count):
         print(f'Processing {i+1}/{batch_count}')
-        query = _es_case_query(domain, geo_case_property, case_type, size=query_limit)
-        case_ids = query.get_ids()
-        _index_case_ids(domain, case_ids, chunk_size)
+        process_batch(domain, geo_case_property, case_type, query_limit, chunk_size)
+
+
+def get_batch_count(doc_count, query_limit):
+    if not query_limit:
+        return 1
+    return math.ceil(doc_count / query_limit)
+
+
+def process_batch(domain, geo_case_property, case_type, query_limit, chunk_size):
+    query = _es_case_query(domain, geo_case_property, case_type, size=query_limit)
+    case_ids = query.get_ids()
+    _index_case_ids(domain, case_ids, chunk_size)
 
 
 def _index_case_ids(domain, case_ids, chunk_size):
