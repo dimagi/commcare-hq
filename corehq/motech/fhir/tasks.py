@@ -403,6 +403,13 @@ def create_parent_indices(
     )
 
 
+def handle_response(response):
+    if response.status_code == 200:
+        return response.json()
+    elif response.status_code >= 400:
+        response.raise_for_status()
+
+
 def generate_epic_jwt():
     key = settings.EPIC_PRIVATE_KEY
     # token will expire in 4 mins
@@ -434,10 +441,9 @@ def request_epic_access_token():
     }
     url = "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token"
     response = requests.post(url, data=data, headers=headers)
-    if response.status_code == 200:
-        return response.json().get('access_token')
-    elif response.status_code >= 400:
-        return response.raise_for_status()
+    response_json = handle_response(response)
+
+    return response_json.get('access_token')
 
 
 def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
@@ -453,21 +459,18 @@ def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
         'authorization': f'Bearer {access_token}',
     }
     response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        response_json = response.json()
-        fhir_id = None
-        entry_list = response_json.get('entry')
-        if entry_list and len(entry_list) > 0:
-            entry = entry_list[0]
-        else:
-            entry = None
-        if entry:
-            resource = entry.get('resource')
-            if resource:
-                fhir_id = resource.get('id')
-        return fhir_id
-    elif response.status_code >= 400:
-        response.raise_for_status()
+    response_json = handle_response(response)
+    fhir_id = None
+    entry_list = response_json.get('entry')
+    if entry_list and len(entry_list) > 0:
+        entry = entry_list[0]
+    else:
+        entry = None
+    if entry:
+        resource = entry.get('resource')
+        if resource:
+            fhir_id = resource.get('id')
+    return fhir_id
 
 
 # TODO add time param 12 weeks from study start date
@@ -484,13 +487,12 @@ def get_epic_appointments_for_patient(fhir_id, access_token):
     }
     url = f'{base_url}?{urlencode(params)}'
     response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        json_response = response.json()
-        entries = json_response['entry']
-        for entry in entries:
-            appointments.append(entry)
-    elif response.status_code >= 400:
-        response.raise_for_status()
+    response_json = handle_response(response)
+
+    entries = response_json['entry']
+    for entry in entries:
+        appointments.append(entry)
+
     return appointments
 
 
