@@ -169,8 +169,7 @@ def auto_deactivate_removed_sso_users():
                             by_domain_required_for_log=False, for_domain_required_for_log=False,
                             couch_user=user, fields_changed={'is_active': user.is_active},
                             changed_via=USER_CHANGE_VIA_SSO_DEACTIVATION,
-                            changed_by_user=SYSTEM_USER_ID,
-                            change_messages="The user is removed from the idp so deactivated")
+                            changed_by_user=SYSTEM_USER_ID)
 
 
 def send_deactivation_skipped_email(idp, failure_code, error=None, error_description=None):
