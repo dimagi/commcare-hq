@@ -450,7 +450,7 @@ def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
     }
     url = f'{base_url}?{urlencode(params)}'
     headers = {
-        'authorization': 'Bearer %s' % access_token,
+        'authorization': f'Bearer {access_token}',
     }
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -470,7 +470,7 @@ def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
 def get_epic_appointments_for_patient(fhir_id, access_token):
     appointments = []
     headers = {
-        'authorization': 'Bearer %s' % access_token,
+        'authorization': f'Bearer {access_token}',
     }
     base_url = "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Appointment"
     params = {
