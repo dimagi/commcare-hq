@@ -456,7 +456,11 @@ def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
     if response.status_code == 200:
         response_json = response.json()
         fhir_id = None
-        entry = response_json.get('entry')[0]
+        entry_list = response_json.get('entry')
+        if entry_list and len(entry_list) > 0:
+            entry = entry_list[0]
+        else:
+            entry = None
         if entry:
             resource = entry.get('resource')
             if resource:
