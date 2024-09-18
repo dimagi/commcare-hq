@@ -14,6 +14,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     check_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
     check_bootstrap3_references_in_javascript,
+    flag_file_inputs,
     flag_inline_styles,
     make_template_dependency_renames,
     add_todo_comments_for_flags,
@@ -208,6 +209,14 @@ def test_check_bootstrap3_references_in_javascript():
     line = """    "hqwebapp/js/bootstrap3/foo",\n"""
     issues = check_bootstrap3_references_in_javascript(line)
     eq(issues, ['This javascript file references a bootstrap 3 file.'])
+
+
+def test_flag_file_inputs():
+    line = """<input type="file" id="xform_file_input" name="xform" />"""
+    flags = flag_file_inputs(line)
+    eq(len(flags), 1)
+    eq(flags[0][0], "css-file-inputs")
+    eq(flags[0][1].startswith('Please add the form-control class'), True)
 
 
 def test_flag_inline_styles():

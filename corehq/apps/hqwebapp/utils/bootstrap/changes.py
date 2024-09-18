@@ -233,6 +233,17 @@ def check_bootstrap3_references_in_javascript(line):
     return issues
 
 
+def flag_file_inputs(line):
+    flags = []
+    regex = r"\btype\s*=\s*.file"
+    if re.search(regex, line):
+        flags.append([
+            "css-file-inputs",
+            _get_change_guide("css-file-inputs")
+        ])
+    return flags
+
+
 def flag_inline_styles(line):
     flags = []
     regex = r"\bstyle\s*=\s*"
