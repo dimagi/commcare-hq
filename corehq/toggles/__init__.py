@@ -1398,7 +1398,7 @@ def _commtrackify(domain_name, toggle_is_enabled):
 COMMTRACK = StaticToggle(
     'commtrack',
     "CommCare Supply",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     description=(
         '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
