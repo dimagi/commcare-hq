@@ -104,7 +104,7 @@
     To support this approach, we have tooling that facilitates "splitting" and "unsplitting" files:
     copying files, moving them, and updating references to them. This tooling also performs the simpler migration
     updates, such as renaming CSS classes. For updates that it cannot handle automatically, it adds a TODO comment
-    to the relevant code and writes out a changelog.
+    to the relevant code.
   </p>
   <p>
     Once the entire platform is fully migrated to Bootstrap 5, any remaining Bootstrap 3 code can be removed:
@@ -120,10 +120,6 @@
     If you haven't done so, you will need to install Dart Sass to compile
     <code>scss</code> files. The recommended method is with homebrew <code>brew install sass/sass/sass</code>,
     as described in <code>DEV_SETUP.md</code>.
-  </p>
-  <p>
-    Next, you will need to specify <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code> in <code>localsettings.py</code>. This
-    will be where the migration management command will leave longer notes for each migrated file.
   </p>
 
   <h2 id="announce-migration" class="pt-3">
@@ -281,10 +277,6 @@
     attention and could not automatically be updated.  These comments reference helper documents in the
     <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide"
     target="_blank">changes_guide</a> directory.
-  </p>
-  <p>
-    In addition, a changelog for each file will be saved to a markdown file in
-    <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code> (ouside of repository).
   </p>
   <div class="alert alert-primary">
     <p>

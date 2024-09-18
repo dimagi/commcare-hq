@@ -1,7 +1,5 @@
 import time
-from pathlib import Path
 
-from django.conf import settings
 from django.core.management import BaseCommand
 
 from corehq.apps.hqwebapp.utils.bootstrap import BOOTSTRAP_3, BOOTSTRAP_5
@@ -88,14 +86,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, app_name, **options):
-        if not settings.BOOTSTRAP_MIGRATION_LOGS_DIR:
-            self.stderr.write("\nPlease make sure BOOTSTRAP_MIGRATION_LOGS_DIR is "
-                              "set in your localsettings.py before continuing...\n\n")
-            self.stdout.write(self.style.MIGRATE_LABEL(
-                "TIP: path should be outside of this repository\n\n"
-            ))
-            return
-
         selected_filename = options.get('filename')
 
         is_app_migration_complete = is_app_completed(app_name)
@@ -329,7 +319,6 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(
                     self.format_header(f"Finalizing changes for {short_path}...")
                 ))
-                self.record_file_changes(file_path, app_name, file_changelog, is_template)
                 if self.no_split:
                     self.migrate_file_in_place(app_name, file_path, new_lines, is_template)
                     if is_template:
@@ -403,31 +392,6 @@ class Command(BaseCommand):
         changelog.append("\n\n")
         self.stdout.write("\n\n\nAnswering 'y' below will automatically make this change "
                           "in the Bootstrap 5 version of this file.\n\n")
-
-    def record_file_changes(self, template_path, app_name, changelog, is_template):
-        if is_split_path(template_path):
-            parent_dir = template_path.parent.parent
-        else:
-            parent_dir = template_path.parent
-        short_path = get_short_path(app_name, parent_dir, is_template)
-        readme_directory = Path(settings.BOOTSTRAP_MIGRATION_LOGS_DIR) / short_path
-        readme_directory.mkdir(parents=True, exist_ok=True)
-        extension = '.html' if is_template else '.js'
-        readme_filename = template_path.name.replace(extension, '.md')
-        readme_path = readme_directory / readme_filename
-        with open(readme_path, 'w') as readme_file:
-            readme_file.writelines(changelog)
-        self.show_information_about_readme(readme_path)
-
-    def show_information_about_readme(self, readme_path):
-        if self.no_split:
-            self.stdout.write("\nThe changelog summarizing the "
-                              "migration changes can be found here:\n")
-        else:
-            self.stdout.write("\nThe changelog for all changes to the Bootstrap 5 "
-                              "version of this file can be found here:\n")
-        self.stdout.write(f"\n{readme_path}\n\n")
-        self.stdout.write("** Please make a note of this for reviewing later.\n\n\n")
 
     def migrate_file_in_place(self, app_name, file_path, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)

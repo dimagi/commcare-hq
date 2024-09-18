@@ -933,8 +933,6 @@ LESS_B3_PATHS = {
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
 
-BOOTSTRAP_MIGRATION_LOGS_DIR = None
-
 USER_AGENTS_CACHE = 'default'
 
 # Invoicing
