@@ -14,14 +14,16 @@ patch_query = patch.object(
 
 
 @patch_query
-def test_minimal_valid_form():
+@patch("corehq.apps.users.models.WebUser.get_by_username", return_value=None)
+def test_minimal_valid_form(mock_web_user):
     form = create_form()
 
     assert form.is_valid(), form.errors
 
 
 @patch_query
-def test_form_is_invalid_when_invite_existing_email_with_case_mismatch():
+@patch("corehq.apps.users.models.WebUser.get_by_username", return_value=None)
+def test_form_is_invalid_when_invite_existing_email_with_case_mismatch(mock_web_user):
     form = create_form(
         {"email": "test@TEST.com"},
         excluded_emails=["TEST@test.com"],
