@@ -281,7 +281,7 @@ def test_flag_selects_without_form_control_bootstrap5():
     line = """    <select\n"""
     flags = flag_selects_without_form_control(line)
     eq(flags[0][0], "css-select-form-control")
-    eq(flags[0][1].startswith("Please replace form-control with form-select."), True)
+    eq(flags[0][1].startswith("Please replace `form-control` with `form-select`."), True)
 
 
 def test_file_contains_reference_to_path():
