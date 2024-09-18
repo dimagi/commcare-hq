@@ -13,6 +13,22 @@
   padding-bottom: 6px;
 }
 
+.collapsing#persistent-menu-container {
+  @include media-breakpoint-up(sm) {
+    transition: none !important;
+  }
+}
+
+#persistent-menu-container {
+  padding: 1.5rem 1.5rem 2.5rem 2.5rem;
+  font-size: 14px;
+}
+
+#persistent-menu-container .btn-close {
+  right: 15px;
+  top: 15px;
+}
+
 .persistent-menu-toggle {
   color: white;
   background-color: $cc-brand-mid;
@@ -22,7 +38,7 @@
   }
 }
 
-$persistent-menu-image-size: 2rem;
+$persistent-menu-image-size: 3rem;
 
 .persistent-menu-image {
   height: $persistent-menu-image-size;
@@ -50,8 +66,4 @@ $persistent-menu-image-size: 2rem;
   .persistent-menu-item:hover {
     background-color: darken($cc-bg, 5);
   }
-}
-
-.persistent-menu-max-width {
-    max-width: 400px;
 }

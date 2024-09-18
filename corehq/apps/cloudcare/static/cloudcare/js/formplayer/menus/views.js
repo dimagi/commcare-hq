@@ -1546,8 +1546,38 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         events: {
             'click #app-main': 'onClickAppMain',
         },
+        handleSmallScreenChange: function (smallScreenEnabled) {
+            const offcanvas = 'offcanvas';
+            const collapse = 'collapse';
+            const containerDesktopClasses = collapse + ' show position-relative';
+            const containerMobileClasses = offcanvas + ' offcanvas-start';
+            if (smallScreenEnabled) {
+                $('#persistent-menu-container').removeClass(containerDesktopClasses);
+                $('#persistent-menu-container').addClass(containerMobileClasses);
+                $('#persistent-menu-arrow-toggle').attr('aria-expanded', false);
+                $('#close-button').removeAttr('data-bs-toggle');
+                $('#close-button').attr('data-bs-dismiss', offcanvas);
+                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', offcanvas);
+            } else {
+                $('#persistent-menu-container').removeClass(containerMobileClasses);
+                $('#persistent-menu-container').addClass(containerDesktopClasses);
+                $('#persistent-menu-arrow-toggle').attr('aria-expanded', true);
+                $('#close-button').removeAttr('data-bs-dismiss');
+                $('#close-button').attr('data-bs-toggle', collapse);
+                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', collapse);
+            }
+        },
+        initialize: function (options) {
+            self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                this.handleSmallScreenChange(smallScreenEnabled);
+            });
+            self.smallScreenListener.listen();
+        },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
+        },
+        onDomRefresh: function () {
+            this.handleSmallScreenChange(cloudcareUtils.smallScreenIsEnabled());
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
@@ -1561,15 +1591,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         onClickAppMain: function () {
             FormplayerFrontend.trigger("persistentMenuSelect");
-        },
-        onBeforeDetach: function () {
-            // Be sure to hide offcanvas element so scroll works properly
-            const openedCanvas = bootstrap.Offcanvas.getInstance(
-                document.getElementById('persistent-menu-container')
-            );
-            if (openedCanvas) {
-                openedCanvas.hide();
-            }
         },
     });
 
