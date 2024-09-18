@@ -23,7 +23,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.programs.models import Program
 from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 
 
 class RegisterWebUserForm(forms.Form):
@@ -592,6 +592,10 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         if email.lower() in self.excluded_emails:
             raise forms.ValidationError(_("A user with this email address is already in "
                                           "this project or has a pending invitation."))
+        web_user = WebUser.get_by_username(email)
+        if web_user and not web_user.is_active:
+            raise forms.ValidationError(_("A user with this email address is deactivated. "
+                                          "Please reactivate this user first."))
         return email
 
     def clean(self):
