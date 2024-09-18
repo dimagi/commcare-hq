@@ -9,7 +9,6 @@ from django.utils.translation import gettext_lazy
 from django.views.generic import View
 
 from memoized import memoized
-from corehq.apps.hqwebapp.decorators import use_bootstrap5
 
 from dimagi.utils.web import get_url_base, json_response
 from soil import DownloadBase
@@ -39,6 +38,7 @@ from corehq.apps.export.models import (
 )
 from corehq.apps.export.models.new import DataFile, DatePeriod, CaseExportInstance
 from corehq.apps.export.tasks import generate_schema_for_all_builds, process_populate_export_tables
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.util import datespan_from_beginning
