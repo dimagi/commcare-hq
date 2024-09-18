@@ -314,7 +314,7 @@ class DashboardFeedPaywall(BaseProjectDataView):
 @method_decorator(use_bootstrap5, name='dispatch')
 class DataFileDownloadList(BaseProjectDataView):
     urlname = 'download_data_files'
-    template_name = 'export/bootstrap5/download_data_files.html'
+    template_name = 'export/download_data_files.html'
     page_title = gettext_lazy("Secure File Transfer")
 
     def dispatch(self, request, *args, **kwargs):
