@@ -52,3 +52,15 @@ class WorkbookJSONReaderTest(SimpleTestCase, TestFileMixin):
         formula_filepath = self.get_path('formula_sheet', 'xlsx')
         with self.assertRaises(WorkbookJSONError):
             get_single_worksheet(formula_filepath, title='NotASheet')
+
+    def test_get_workbook_with_file_path_closes_file(self):
+        filepath = self.get_path('formula_sheet', 'xlsx')
+        assert isinstance(filepath, str), filepath
+        workbook = WorkbookJSONReader(filepath)
+
+        # assert workbook zip file has been closed
+        self.assertIsNone(workbook.wb._archive.fp)  # hack: deep reach
+
+        # should be able to get rows that were unconsumed before file closure
+        results = list(workbook.get_worksheet())
+        self.assertEqual(results, [{'name': 'ben', 'formula': 2}])

@@ -1506,10 +1506,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
                 imageUri = this.model.get('imageUri'),
-                  icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder', ENTITY_SELECT: 'fa-list-ul'};
+                icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder', ENTITY_SELECT: 'fa-list-ul'};
             return {
                 imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 iconClass: icons[this.model.get('navigationState')] || 'fa-arrow-up-right-from-square',
+                isActive: this.model.get('isActiveSelection'),
             };
         },
         onRender: function () {

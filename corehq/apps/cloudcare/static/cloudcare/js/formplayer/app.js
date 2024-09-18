@@ -90,8 +90,10 @@ hqDefine("cloudcare/js/formplayer/app", [
         hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
             FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                 UsersViews.RestoreAsBanner({model: user, smallScreen: false}));
-            FormplayerFrontend.regions.getRegion('mobileRestoreAsBanner').show(
-                UsersViews.RestoreAsBanner({model: user, smallScreen: true}));
+            const mobileRegion = FormplayerFrontend.regions.getRegion('mobileRestoreAsBanner');
+            if (mobileRegion.$el.length) {      // This region doesn't exist in app preview
+                mobileRegion.show(UsersViews.RestoreAsBanner({model: user, smallScreen: true}));
+            }
         });
     };
 
@@ -325,7 +327,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 if (Backbone.history) {
                     Backbone.history.start();
                     FormplayerFrontend.showRestoreAs(user);
-                    if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+                    if (user.displayOptions.singleAppMode) {
                         appId = apps[0]['_id'];
                     }
 
@@ -333,9 +335,6 @@ hqDefine("cloudcare/js/formplayer/app", [
                         if (user.displayOptions.singleAppMode) {
                             FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
                             FormplayerFrontend.trigger("app:singleApp", appId);
-                        } else if (user.displayOptions.landingPageAppMode) {
-                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                            FormplayerFrontend.trigger("app:landingPageApp", appId);
                         } else {
                             FormplayerFrontend.trigger("apps:list", apps);
                         }
