@@ -91,7 +91,7 @@ def test_flag_changed_css_classes_bootstrap5():
         line, get_spec('bootstrap_3_to_5')
     )
     eq(flags, [[
-        'css:dl-horizontal',
+        'css-dl-horizontal',
         '`dl-horizontal` has been dropped.\nInstead, use `.row` on `<dl>` and use grid column classes '
         '(or mixins) on its `<dt>` and `<dd>` children.\n\nAn EXAMPLE for how to apply this change is '
         'provided below.\nPlease see docs for further details.\n\nPreviously:\n```\n<dl class='
@@ -221,7 +221,7 @@ def test_flag_inline_styles():
 def test_flag_crispy_forms_in_template():
     line = """    {% crispy form %}\n"""
     flags = flag_crispy_forms_in_template(line)
-    eq(flags[0][0], "check crispy")
+    eq(flags[0][0], "crispy")
     eq(flags[0][1].startswith("This template uses crispy forms."), True)
 
 
@@ -230,7 +230,7 @@ def test_flag_changed_javascript_plugins_bootstrap5():
     flags = flag_changed_javascript_plugins(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(flags, [["plugin:modal",
+    eq(flags, [["js-modal",
                 "The `modal` plugin has been restructured since the removal of jQuery.\n\nThere is now a new way "
                 "of triggering modal events and interacting with modals in javascript.\nFor instance, if we "
                 "wanted to hide a modal with id `#bugReport` before, we would now do the\nfollowing..."
@@ -247,7 +247,7 @@ def test_flag_extended_changed_javascript_plugins_bootstrap5():
     flags = flag_changed_javascript_plugins(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(flags, [['plugin:popover',
+    eq(flags, [['js-popover',
                 'The `popover` plugin has been restructured since the removal of jQuery.\n'
                 '\nThere is now a new way of triggering popover events and interacting '
                 'with popovers in javascript.\n\nPlease feel free to update this help text'
@@ -356,14 +356,14 @@ def test_add_todo_comments_for_flags_template():
         line, get_spec('bootstrap_3_to_5')
     )
     line = add_todo_comments_for_flags(flags, line, is_template=True)
-    eq(line, """          <div class="form-inline nav"  {# todo B5: css:form-inline, css:nav #}\n""")
+    eq(line, """          <div class="form-inline nav"  {# todo B5: css-form-inline, css-nav #}\n""")
 
 
 def test_add_todo_comments_for_flags_template_replace():
-    line = """          {% crispy form %}  {# todo B5: css:form-inline, css:nav #}\n"""
+    line = """          {% crispy form %}  {# todo B5: css-form-inline, css-nav #}\n"""
     flags = flag_crispy_forms_in_template(line)
     line = add_todo_comments_for_flags(flags, line, is_template=True)
-    eq(line, """          {% crispy form %}  {# todo B5: check crispy #}\n""")
+    eq(line, """          {% crispy form %}  {# todo B5: crispy #}\n""")
 
 
 def test_add_todo_comments_for_flags_template_noop():
@@ -381,16 +381,16 @@ def test_add_todo_comments_for_flags_javascript():
         line, get_spec('bootstrap_3_to_5')
     )
     line = add_todo_comments_for_flags(flags, line, is_template=False)
-    eq(line, """            $modal.modal({  /* todo B5: plugin:modal */\n""")
+    eq(line, """            $modal.modal({  /* todo B5: js-modal */\n""")
 
 
 def test_add_todo_comments_for_flags_javascript_replace():
-    line = """            $popover.popover({  /* todo B5: plugin:modal */\n"""
+    line = """            $popover.popover({  /* todo B5: js-modal */\n"""
     flags = flag_changed_javascript_plugins(
         line, get_spec('bootstrap_3_to_5')
     )
     line = add_todo_comments_for_flags(flags, line, is_template=False)
-    eq(line, """            $popover.popover({  /* todo B5: plugin:popover */\n""")
+    eq(line, """            $popover.popover({  /* todo B5: js-popover */\n""")
 
 
 def test_add_todo_comments_for_flags_javascript_noop():

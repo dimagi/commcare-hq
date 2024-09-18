@@ -168,8 +168,8 @@ def flag_changed_css_classes(line, spec):
         regex = _get_direct_css_regex(css_class)
         if re.search(regex, line):
             flags.append([
-                f'css:{css_class}',
-                _get_change_guide(css_class)
+                f'css-{css_class}',
+                _get_change_guide(f'css-{css_class}')
             ])
     return flags
 
@@ -181,7 +181,7 @@ def flag_changed_javascript_plugins(line, spec):
         extension_regex = _get_extension_regex(plugin)
         if re.search(plugin_regex, line) or re.search(extension_regex, line):
             flags.append([
-                f'plugin:{plugin}',
+                f'js-{plugin}',
                 _get_change_guide(f"js-{plugin}")
             ])
     return flags
@@ -251,7 +251,7 @@ def flag_crispy_forms_in_template(line):
     regex = r"\{% crispy"
     if re.search(regex, line):
         flags.append([
-            "check crispy",
+            "crispy",
             _get_change_guide("crispy")
         ])
     return flags
