@@ -136,6 +136,9 @@
     "in_progress": true,
     "templates": [
       "download_data_files.html"
+    ],
+    "javascript": [
+      "js/download_data_files.js"
     ]
   }
 }
