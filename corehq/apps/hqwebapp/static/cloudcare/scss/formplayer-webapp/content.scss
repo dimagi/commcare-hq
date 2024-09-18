@@ -42,6 +42,12 @@ body {
   height: calc(100vh - #{$cloudcare-nav-height} - $breadcrumb-height-cloudcare);
 }
 
+#sidebar-and-content.remove-padding-on-mobile {
+  @include media-breakpoint-down(sm) {
+    margin: 0 !important;
+  }
+}
+
 #content-container {
   background: transparent;
   max-width: 1000px;
