@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy
 from django.views.generic import View
 
 from memoized import memoized
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 
 from dimagi.utils.web import get_url_base, json_response
 from soil import DownloadBase
@@ -310,9 +311,10 @@ class DashboardFeedPaywall(BaseProjectDataView):
 
 @location_safe
 @method_decorator(login_and_domain_required, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class DataFileDownloadList(BaseProjectDataView):
     urlname = 'download_data_files'
-    template_name = 'export/bootstrap3/download_data_files.html'
+    template_name = 'export/bootstrap5/download_data_files.html'
     page_title = gettext_lazy("Secure File Transfer")
 
     def dispatch(self, request, *args, **kwargs):
