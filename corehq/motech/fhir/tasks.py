@@ -564,7 +564,7 @@ def sync_all_appointments_domain(domain):
         for appointment in epic_appointment_records:
             appointment_resource = appointment.get('resource')
             appointment_id = appointment_resource.get('id')
-            if appointment_id and appointment_id not in appointment_map.keys():
+            if appointment_id and appointment_id not in appointment_map:
                 epic_appointments_to_add.append(appointment)
             elif appointment_id:
                 epic_appointments_to_update.append(appointment)
