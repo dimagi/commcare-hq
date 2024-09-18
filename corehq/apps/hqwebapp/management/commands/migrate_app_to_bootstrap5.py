@@ -7,6 +7,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     get_spec,
     make_direct_css_renames,
     make_numbered_css_renames,
+    make_select_form_control_renames,
     make_template_tag_renames,
     make_data_attribute_renames,
     make_javascript_dependency_renames,
@@ -17,6 +18,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_crispy_forms_in_template,
     flag_file_inputs,
     flag_inline_styles,
+    flag_selects_without_form_control,
     add_todo_comments_for_flags,
     update_gruntfile,
 )
@@ -577,6 +579,8 @@ class Command(BaseCommand):
 
         new_line, attribute_renames = make_data_attribute_renames(new_line, spec)
         renames.extend(attribute_renames)
+        new_line, select_renames = make_select_form_control_renames(new_line, spec)
+        renames.extend(select_renames)
         new_line, template_dependency_renames = make_template_dependency_renames(new_line, spec)
         renames.extend(template_dependency_renames)
         new_line, template_tag_renames = make_template_tag_renames(new_line, spec)
@@ -590,6 +594,7 @@ class Command(BaseCommand):
         flags.extend(flag_crispy_forms_in_template(template_line))
         flags.extend(flag_file_inputs(template_line))
         flags.extend(flag_inline_styles(template_line))
+        flags.extend(flag_selects_without_form_control(template_line))
         return flags
 
     @staticmethod

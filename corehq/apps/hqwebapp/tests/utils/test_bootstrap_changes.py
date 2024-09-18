@@ -3,6 +3,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     get_spec,
     make_direct_css_renames,
     make_numbered_css_renames,
+    make_select_form_control_renames,
     make_template_tag_renames,
     make_data_attribute_renames,
     make_javascript_dependency_renames,
@@ -13,6 +14,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     replace_path_references,
     check_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
+    flag_selects_without_form_control,
     check_bootstrap3_references_in_javascript,
     flag_file_inputs,
     flag_inline_styles,
@@ -48,6 +50,15 @@ def test_make_numbered_css_renames_bootstrap5():
     )
     eq(final_line, """        <div class="col-sm-6">\n""")
     eq(renames, ['renamed col-xs-<num> to col-sm-<num>'])
+
+
+def test_make_select_form_control_renames_bootstrap5():
+    line = """        <select data-bind:"visible: showMe" class="form-control">\n"""
+    final_line, renames = make_select_form_control_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """        <select data-bind:"visible: showMe" class="form-select">\n""")
+    eq(renames, ['renamed form-control to form-select'])
 
 
 def test_make_template_tag_renames_bootstrap5():
@@ -264,6 +275,13 @@ def test_flag_extended_changed_javascript_plugins_bootstrap5():
                 'plugin. Thanks!\n\nOld docs: https://getbootstrap.com/docs/3.4/'
                 'javascript/#popovers\nNew docs: https://getbootstrap.com/docs/5.3/'
                 'components/popovers/\n']])
+
+
+def test_flag_selects_without_form_control_bootstrap5():
+    line = """    <select\n"""
+    flags = flag_selects_without_form_control(line)
+    eq(flags[0][0], "css-select-form-control")
+    eq(flags[0][1].startswith("Please replace form-control with form-select."), True)
 
 
 def test_file_contains_reference_to_path():

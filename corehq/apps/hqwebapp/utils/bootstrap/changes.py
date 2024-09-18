@@ -102,6 +102,18 @@ def make_numbered_css_renames(line, spec):
     )
 
 
+def make_select_form_control_renames(line, spec):
+    if "<select" in line:
+        if re.search(_get_direct_css_regex("form-control"), line):
+            return _do_rename(
+                line,
+                {"form-control": "form-select"},
+                _get_direct_css_regex,
+                lambda x: r"\1form-select\3"
+            )
+    return line, []
+
+
 def make_template_tag_renames(line, spec):
     return _do_rename(
         line,
@@ -263,6 +275,17 @@ def flag_crispy_forms_in_template(line):
             "crispy",
             _get_change_guide("crispy")
         ])
+    return flags
+
+
+def flag_selects_without_form_control(line):
+    flags = []
+    if "<select" in line:
+        if "form-select" not in line and "form-control" not in line:
+            flags.append([
+                "css-select-form-control",
+                _get_change_guide("css-select-form-control")
+            ])
     return flags
 
 
