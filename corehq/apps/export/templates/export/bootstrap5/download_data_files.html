@@ -29,12 +29,12 @@
                 </td>
                 <td>
                   {{ data_file.description }}
-                  <textarea id="url_{{ data_file.id }}" style="display: none">{{ url_base }}{% url 'download_data_file' domain data_file.id data_file.filename %}</textarea>  {# todo B5: inline style #}
+                  <textarea id="url_{{ data_file.id }}" class="d-none">{{ url_base }}{% url 'download_data_file' domain data_file.id data_file.filename %}</textarea>
                 </td>
                 <td>
                   {% trans "Available until" %}: {{ data_file.delete_after|to_user_time:request }}
                 </td>
-                <td style="width: 6em; text-align: right;">  {# todo B5: inline style #}
+                <td class="text-end" style="width: 6em;">
                   <a href="#"
                      class="copy-data-file"
                      data-id={{ data_file.id }}
@@ -75,41 +75,36 @@
             <fieldset>
               <legend>{% trans "Upload file for transfer" %}</legend>
 
-              <div class="form-group">  {# todo B5: css:form-group #}
-                <label class="form-label col-lg-2 requiredField">
+              <div class="mb-3">
+                <label class="form-label requiredField">
                   {% trans "Description" %}<span class="asteriskField">*</span>
                 </label>
-                <div class="controls col-lg-6">
-                  <input class="textinput textInput form-control"
-                         name="description"
-                         required=""
-                         type="text" />
-                </div>
+                <input class="form-control"
+                       name="description"
+                       required=""
+                       type="text" />
               </div>
 
-              <div class="form-group">  {# todo B5: css:form-group #}
-                <label class="form-label col-lg-2 requiredField">
+              <div class="mb-3">
+                <label class="requiredField form-label">
                   {% trans "File" %}<span class="asteriskField">*</span>
                 </label>
-                <div class="controls col-lg-6">
-                  <input name="file"
-                         required=""
-                         type="file" />
-                </div>
+                <input name="file"
+                       class="form-control"
+                       required=""
+                       type="file" />
               </div>
 
-              <div class="form-group">  {# todo B5: css:form-group #}
-                <label class="form-label col-lg-2 requiredField">
+              <div class="mb-3">
+                <label class="form-label requiredField">
                   {% trans "Delete after" %}<span class="asteriskField">*</span>
                 </label>
-                <div class="controls col-lg-6">
-                  <select name="ttl" class="form-control">
-                    <option value="12">{% trans "12 hours" %}</option>
-                    <option selected="selected" value="24">{% trans "1 day" %}</option>
-                    <option value="48">{% trans "2 days" %}</option>
-                    <option value="72">{% trans "3 days" %}</option>
-                  </select>
-                </div>
+                <select name="ttl" class="form-select">
+                  <option value="12">{% trans "12 hours" %}</option>
+                  <option selected="selected" value="24">{% trans "1 day" %}</option>
+                  <option value="48">{% trans "2 days" %}</option>
+                  <option value="72">{% trans "3 days" %}</option>
+                </select>
               </div>
 
             </fieldset>
