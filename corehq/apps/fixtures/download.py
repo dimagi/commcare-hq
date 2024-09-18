@@ -70,7 +70,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
     if table_ids and table_ids[0]:
         try:
-            data_types_view = [LookupTable.objects.get(id=id) for id in table_ids]
+            data_types_view = [LookupTable.objects.get(id=id, domain=domain) for id in table_ids]
         except LookupTable.DoesNotExist:
             if html_response:
                 raise FixtureDownloadError(
