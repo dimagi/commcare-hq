@@ -4,12 +4,19 @@ from django.test import RequestFactory
 from testil import Regex
 
 from ..forms import AdminInvitesUserForm
+from corehq.apps.users.models import WebUser
 
 
 patch_query = patch.object(
     AdminInvitesUserForm,
     "_user_has_permission_to_access_locations",
     lambda *ignore: True,
+)
+
+mock_couch_user = WebUser(
+    username="testuser",
+    _id="user123",
+    domain="test-domain",
 )
 
 
@@ -30,6 +37,19 @@ def test_form_is_invalid_when_invite_existing_email_with_case_mismatch(mock_web_
     )
 
     msg = "this email address is already in this project"
+    assert not form.is_valid()
+    assert form.errors["email"] == [Regex(msg)], form.errors
+
+
+@patch_query
+@patch("corehq.apps.users.models.WebUser.get_by_username", return_value=mock_couch_user)
+def test_form_is_invalid_when_invite_deactivated_user(mock_web_user):
+    mock_web_user.is_active = False
+    form = create_form(
+        {"email": "test@TEST.com"},
+    )
+
+    msg = "A user with this email address is deactivated."
     assert not form.is_valid()
     assert form.errors["email"] == [Regex(msg)], form.errors
 
