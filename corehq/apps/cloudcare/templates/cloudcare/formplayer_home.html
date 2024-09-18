@@ -107,15 +107,17 @@
       <div class="container case-tile-container">
         <div id="persistent-case-tile" class="print-container"></div>
       </div>
-      <div id="content-container" class="container">
+      <div class="d-lg-flex">
         <div id="sidebar-region" class="noprint-sub-container"></div>
-        <div id="menu-region" class="print-container"></div>
-        <section id="webforms" data-bind="
-                  template: {
-                      name: 'form-fullform-ko-template',
-                      afterRender: afterRender
-                  }">
-        </section>
+        <div id="content-container" class="container">
+          <div id="menu-region" class="print-container"></div>
+          <section id="webforms" data-bind="
+                    template: {
+                        name: 'form-fullform-ko-template',
+                        afterRender: afterRender
+                    }">
+          </section>
+        </div>
       </div>
       <div id="persistent-menu-region"></div>
     </div>
