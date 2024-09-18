@@ -214,7 +214,7 @@ def test_flag_inline_styles():
     line = """method="post" style="float: left; margin-right: 5px;">"""
     flags = flag_inline_styles(line)
     eq(len(flags), 1)
-    eq(flags[0][0], "inline style")
+    eq(flags[0][0], "inline-style")
     eq(flags[0][1].startswith('This template uses inline styles.'), True)
 
 

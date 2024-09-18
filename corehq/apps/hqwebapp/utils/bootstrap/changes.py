@@ -238,10 +238,8 @@ def flag_inline_styles(line):
     regex = r"\bstyle\s*=\s*"
     if re.search(regex, line):
         flags.append([
-            "inline style",
-            "This template uses inline styles. Please revisit this usage.\n\n"
-            "Inline styles can often be replaced with Bootstrap 5's utility classes, "
-            "particularly the spacing utilities: https://getbootstrap.com/docs/5.0/utilities/spacing/"
+            "inline-style",
+            _get_change_guide("inline-style")
         ])
     return flags
 
