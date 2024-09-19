@@ -594,8 +594,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                                           "this project or has a pending invitation."))
         web_user = WebUser.get_by_username(email)
         if web_user and not web_user.is_active:
-            raise forms.ValidationError(_("A user with this email address is deactivated. "
-                                          "Please reactivate this user first."))
+            raise forms.ValidationError(_("A user with this email address is deactivated. "))
         return email
 
     def clean(self):
