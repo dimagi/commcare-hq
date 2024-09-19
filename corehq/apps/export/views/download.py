@@ -528,7 +528,7 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
 class DownloadNewDatasourceExportView(BaseProjectDataView):
     urlname = "data_export_page"
     page_title = gettext_noop("Export Data Source Data")
-    template_name = 'export/bootstrap5/datasource_export_view.html'
+    template_name = 'export/datasource_export_view.html'
 
     @use_bootstrap5
     def dispatch(self, *args, **kwargs):
