@@ -4,6 +4,7 @@ import jsonschema
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY
 from couchforms.geopoint import GeoPoint
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -206,7 +207,11 @@ class CaseOwnerUpdate:
         return [asdict(obj) for obj in case_owner_updates]
 
 
-def update_cases_owner(domain, case_owner_updates_dict):
+def update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases=False):
+    case_properties = {}
+    if flag_assigned_cases:
+        case_properties[ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY] = True
+
     for case_owner_update in case_owner_updates_dict:
         case_blocks = []
         cases_to_updates = [case_owner_update['case_id']] + case_owner_update['related_case_ids']
@@ -215,7 +220,8 @@ def update_cases_owner(domain, case_owner_updates_dict):
                 CaseBlock(
                     create=False,
                     case_id=case_id,
-                    owner_id=case_owner_update['owner_id']
+                    owner_id=case_owner_update['owner_id'],
+                    update=case_properties,
                 ).as_text()
             )
         submit_case_blocks(

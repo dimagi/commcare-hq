@@ -7,7 +7,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY, GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.utils import (
     CaseOwnerUpdate,
@@ -169,6 +169,14 @@ class TestUpdateCasesOwner(TestCase):
         for case in self.cases:
             case.refresh_from_db()
 
+    def _assert_for_assigned_cases_flag_absent(self):
+        for case in self.cases:
+            self.assertIsNone(case.case_json.get(ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY))
+
+    def _assert_for_assigned_cases_flag_present(self):
+        for case in self.cases:
+            self.assertTrue(case.case_json.get(ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY))
+
     def test_update_cases_owner(self):
         case_owner_updates = [
             CaseOwnerUpdate(case_id=self.case_1.case_id, owner_id=self.user_b.user_id),
@@ -184,6 +192,24 @@ class TestUpdateCasesOwner(TestCase):
         self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
         self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
         self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
+        self._assert_for_assigned_cases_flag_absent()
+
+    def test_update_cases_owner_with_flag_assigned_cases(self):
+        case_owner_updates = [
+            CaseOwnerUpdate(case_id=self.case_1.case_id, owner_id=self.user_b.user_id),
+            CaseOwnerUpdate(
+                case_id=self.case_2.case_id,
+                owner_id=self.user_a.user_id,
+                related_case_ids=[self.related_case_2.case_id]),
+        ]
+
+        update_cases_owner(self.domain, CaseOwnerUpdate.to_dict(case_owner_updates), flag_assigned_cases=True)
+
+        self._refresh_cases()
+        self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
+        self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
+        self._assert_for_assigned_cases_flag_present()
 
 
 class TestCeleryTaskTracker(TestCase):
