@@ -7,6 +7,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
+from django.test.utils import override_settings
 from django.utils import timezone
 
 from dateutil.parser import isoparse
@@ -624,6 +625,25 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.new_record(next_check=None, state=State.Success)
         overdue = RepeatRecord.objects.count_overdue()
         self.assertEqual(overdue, 3)
+
+    @override_settings(CHECK_REPEATERS_PARTITION_COUNT=2)
+    def test_count_overdue_for_partition(self):
+        from collections import defaultdict
+        now = datetime.utcnow()
+        expected_records_by_partition = defaultdict(int)
+        # add overdue records
+        for _ in range(5):
+            record = self.new_record(next_check=now - timedelta(hours=2))
+            partition = record.id % settings.CHECK_REPEATERS_PARTITION_COUNT
+            expected_records_by_partition[partition] += 1
+
+        # add not yet due records
+        for _ in range(5):
+            self.new_record(next_check=now - timedelta(minutes=1))
+
+        overdue_by_partition = RepeatRecord.objects.count_overdue_by_partition()
+        for result in overdue_by_partition:
+            self.assertEqual(result['count'], expected_records_by_partition[result['partition_id']])
 
     iter_partition = RepeatRecord.objects.iter_partition
 
