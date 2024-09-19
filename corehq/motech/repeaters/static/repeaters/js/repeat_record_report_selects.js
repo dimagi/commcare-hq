@@ -64,7 +64,7 @@ hqDefine('repeaters/js/repeat_record_report_selects', function () {
         turnOnCancelRequeue();
         if (selectFailed.checked) {
             buttonRequeue.disabled = true;
-            checkMultipleItems('cancel');
+            checkMultipleItems('cancel'); // TODO: this doesn't work for failed items, since we don't have a way to identify failed payloads in html
         } else {
             buttonRequeue.disabled = false;
         }
@@ -77,7 +77,7 @@ hqDefine('repeaters/js/repeat_record_report_selects', function () {
         turnOnCancelRequeue();
         if (selectInvalid.checked) {
             buttonCancel.disabled = true;
-            checkMultipleItems('requeue');
+            checkMultipleItems('requeue'); // TODO: this doesn't work for invalid items, since we don't have a way to identify invalid payloads in html
         } else {
             buttonCancel.disabled = false;
         }
