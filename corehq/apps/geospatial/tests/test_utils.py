@@ -13,6 +13,7 @@ from corehq.apps.geospatial.utils import (
     CaseOwnerUpdate,
     CeleryTaskTracker,
     create_case_with_gps_property,
+    get_flag_assigned_cases_config,
     get_geo_case_property,
     get_geo_user_property,
     set_case_gps_property,
@@ -211,3 +212,24 @@ class TestCeleryTaskTracker(TestCase):
         self.redis_client.set(self.TASK_KEY, 'ACTIVE')
         self.celery_task_tracker.mark_completed()
         self.assertFalse(self.redis_client.has_key(self.TASK_KEY))
+
+
+class TestGetFlagAssignedCasesConfig(TestCase):
+
+    DOMAIN = "test-domain"
+
+    def test_flag_not_set(self):
+        self.assertFalse(get_flag_assigned_cases_config(self.DOMAIN))
+
+    def test_flag_set(self):
+        config = GeoConfig(
+            domain=self.DOMAIN,
+            flag_assigned_cases=True,
+        )
+        config.save()
+        self.addCleanup(config.delete)
+
+        self.assertTrue(get_flag_assigned_cases_config(self.DOMAIN))
+
+    def test_invalid_domain_provided(self):
+        self.assertEqual(get_flag_assigned_cases_config(None), False)

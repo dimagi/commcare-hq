@@ -33,6 +33,15 @@ def get_geo_user_property(domain):
     return config.user_location_property_name
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60)
+def get_flag_assigned_cases_config(domain):
+    try:
+        config = GeoConfig.objects.get(domain=domain)
+    except GeoConfig.DoesNotExist:
+        config = GeoConfig()
+    return config.flag_assigned_cases
+
+
 def _format_coordinates(lat, lon):
     return f"{lat} {lon} 0.0 0.0"
 

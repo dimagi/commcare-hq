@@ -109,10 +109,11 @@ class GeoConfig(models.Model):
         return super().delete(*args, **kwargs)
 
     def _clear_caches(self):
-        from .utils import get_geo_case_property, get_geo_user_property
+        from .utils import get_flag_assigned_cases_config, get_geo_case_property, get_geo_user_property
 
         get_geo_case_property.clear(self.domain)
         get_geo_user_property.clear(self.domain)
+        get_flag_assigned_cases_config.clear(self.domain)
 
     @property
     def supports_travel_mode(self):
