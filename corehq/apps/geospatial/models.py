@@ -98,6 +98,7 @@ class GeoConfig(models.Model):
         max_length=50
     )
     api_token = models.CharField(max_length=255, blank=True, null=True, db_column="api_token")
+    flag_assigned_cases = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
