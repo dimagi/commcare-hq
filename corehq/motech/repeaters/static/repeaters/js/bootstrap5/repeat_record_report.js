@@ -5,6 +5,8 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         selectAll = document.getElementById('select-all'),
         selectPending = document.getElementById('select-pending'),
         selectCancelled = document.getElementById('select-cancelled'),
+        selectFailed = document.getElementById('select-failed'),
+        selectInvalid = document.getElementById('select-invalid'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
 
@@ -183,6 +185,10 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
                 return 'select_pending';
             } else if (selectCancelled.checked) {
                 return 'select_cancelled';
+            } else if (selectFailed.checked) {
+                return 'select_failed';
+            } else if (selectInvalid.checked) {
+                return 'select_invalid';
             }
         }
 
@@ -204,7 +210,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
         }
 
         function getRequestBody() {
-            const bulkSelectors = [selectAll, selectPending, selectCancelled];
+            const bulkSelectors = [selectAll, selectPending, selectCancelled, selectFailed, selectInvalid];
             if (bulkSelectors.some(selector => selector.checked)) {
                 return getBulkSelectionProperties();
             } else {

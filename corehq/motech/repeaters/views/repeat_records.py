@@ -250,11 +250,15 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         total = RepeatRecord.objects.filter(where).count()
         total_pending = RepeatRecord.objects.filter(where, state=State.Pending).count()  # include State.Fail?
         total_cancelled = RepeatRecord.objects.filter(where, state=State.Cancelled).count()
+        total_failed = RepeatRecord.objects.filter(where, state=State.Fail).count()
+        total_invalid = RepeatRecord.objects.filter(where, state=State.InvalidPayload).count()
 
         context.update(
             total=total,
             total_pending=total_pending,
             total_cancelled=total_cancelled,
+            total_failed=total_failed,
+            total_invalid=total_invalid,
             payload_id=self.payload_id,
             repeater_id=self.repeater_id,
         )
@@ -395,6 +399,8 @@ def _get_state_from_request(request):
         'select_all': None,
         'select_pending': State.Pending,
         'select_cancelled': State.Cancelled,
+        'select_failed': State.Fail,
+        'select_invalid': State.InvalidPayload,
     }[flag]
 
 

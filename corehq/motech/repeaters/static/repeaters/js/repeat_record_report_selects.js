@@ -4,6 +4,8 @@ hqDefine('repeaters/js/repeat_record_report_selects', function () {
         selectAll = document.getElementById('select-all'),
         selectPending = document.getElementById('select-pending'),
         selectCancelled = document.getElementById('select-cancelled'),
+        selectFailed = document.getElementById('select-failed'),
+        selectInvalid = document.getElementById('select-invalid'),
         buttonCancel = document.getElementById('cancel-all-button'),
         buttonRequeue = document.getElementById('requeue-all-button');
 
@@ -20,7 +22,8 @@ hqDefine('repeaters/js/repeat_record_report_selects', function () {
     $('#select-all').on('click', function () {
         if (selectAll.checked) {
             selectItems();
-            uncheck(selectPending, selectCancelled);
+            const checkboxesToDisable = [selectPending, selectCancelled, selectFailed, selectInvalid];
+            uncheck(checkboxesToDisable);
             turnOffCancelRequeue();
         } else {
             unSelectItems();
@@ -30,7 +33,8 @@ hqDefine('repeaters/js/repeat_record_report_selects', function () {
 
     $('#select-pending').on('click', function () {
         unSelectItems();
-        uncheck(selectAll, selectCancelled);
+        const checkboxesToDisable = [selectAll, selectCancelled, selectFailed, selectInvalid];
+        uncheck(checkboxesToDisable);
         turnOnCancelRequeue();
         if (selectPending.checked) {
             buttonRequeue.disabled = true;
@@ -42,9 +46,36 @@ hqDefine('repeaters/js/repeat_record_report_selects', function () {
 
     $('#select-cancelled').on('click', function () {
         unSelectItems();
-        uncheck(selectAll, selectPending);
+        const checkboxesToDisable = [selectAll, selectPending, selectFailed, selectInvalid];
+        uncheck(checkboxesToDisable);
         turnOnCancelRequeue();
         if (selectCancelled.checked) {
+            buttonCancel.disabled = true;
+            checkMultipleItems('requeue');
+        } else {
+            buttonCancel.disabled = false;
+        }
+    });
+
+    $('#select-failed').on('click', function () {
+        unSelectItems();
+        const checkboxesToDisable = [selectAll, selectPending, selectCancelled, selectInvalid];
+        uncheck(checkboxesToDisable);
+        turnOnCancelRequeue();
+        if (selectFailed.checked) {
+            buttonRequeue.disabled = true;
+            checkMultipleItems('cancel');
+        } else {
+            buttonRequeue.disabled = false;
+        }
+    });
+
+    $('#select-invalid').on('click', function () {
+        unSelectItems();
+        const checkboxesToDisable = [selectAll, selectPending, selectFailed];
+        uncheck(checkboxesToDisable);
+        turnOnCancelRequeue();
+        if (selectInvalid.checked) {
             buttonCancel.disabled = true;
             checkMultipleItems('requeue');
         } else {
@@ -74,15 +105,18 @@ hqDefine('repeaters/js/repeat_record_report_selects', function () {
         }
     }
 
-    function uncheck(checkbox1, checkbox2) {
-        checkbox1.checked = false;
-        checkbox2.checked = false;
+    function uncheck(checkboxes) {
+        for (const checkbox of checkboxes) {
+            checkbox.checked = false;
+        }
     }
 
     function uncheckSelects() {
         selectAll.checked = false;
         selectPending.checked = false;
         selectCancelled.checked = false;
+        selectFailed.checked = false;
+        selectInvalid.checked = false;
         turnOnCancelRequeue();
     }
 
