@@ -302,13 +302,13 @@ class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
 @method_decorator(use_bootstrap5, name='dispatch')
 class DailySavedExportPaywall(BaseProjectDataView):
     urlname = 'daily_saved_paywall'
-    template_name = 'export/bootstrap5/paywall.html'
+    template_name = 'export/paywall.html'
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
 class DashboardFeedPaywall(BaseProjectDataView):
     urlname = 'dashboard_feeds_paywall'
-    template_name = 'export/bootstrap5/paywall.html'
+    template_name = 'export/paywall.html'
 
 
 @location_safe
