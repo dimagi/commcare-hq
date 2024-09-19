@@ -1,5 +1,5 @@
 {% load i18n %}
-<div data-bind="visible: bulkExportDownloadCount()">
+<span data-bind="visible: bulkExportDownloadCount()">
   <input name="delete_list" type="hidden"/>
   <a class="btn btn-outline-danger"
      data-bs-toggle="modal"
@@ -24,4 +24,4 @@
     <!-- /ko -->
   </a>
   {% include "export/dialogs/bootstrap5/bulk_delete_custom_export_dialog.html" %}
-</div>
+</span>

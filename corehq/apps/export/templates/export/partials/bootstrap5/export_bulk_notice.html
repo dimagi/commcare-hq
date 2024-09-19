@@ -1,6 +1,6 @@
 {% load i18n %}
-<div data-bind="visible: bulkExportDownloadCount()">
-  <form class="form" method="post"
+<span class="d-inline-block ms-2" data-bind="visible: bulkExportDownloadCount()">
+  <form class="form d-inline" method="post"
         data-bind="submit: submitBulkExportDownload"
         action="{{ bulk_download_url }}">
     {% csrf_token %}
@@ -16,4 +16,4 @@
           data-placement="left"
     ></span>
   </form>
-</div>
+</span>
