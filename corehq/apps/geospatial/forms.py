@@ -1,6 +1,8 @@
+from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
+from crispy_forms.bootstrap import PrependedText
 from django.forms.widgets import Select
 
 from django.core.exceptions import ValidationError
@@ -18,7 +20,6 @@ LOCATION_SOURCE_OPTIONS = [
 
 
 class GeospatialConfigForm(forms.ModelForm):
-
     RADIAL_ALGORITHM_OPTION = (GeoConfig.RADIAL_ALGORITHM, _('Radial Algorithm'))
     ROAD_NETWORK_ALGORITHM_OPTION = (GeoConfig.ROAD_NETWORK_ALGORITHM, _('Road Network Algorithm'))
 
@@ -42,6 +43,7 @@ class GeospatialConfigForm(forms.ModelForm):
             "max_case_distance",
             "max_case_travel_time",
             "travel_mode",
+            "flag_assigned_cases",
         ]
 
     user_location_property_name = forms.CharField(
@@ -147,6 +149,14 @@ class GeospatialConfigForm(forms.ModelForm):
         required=False,
         widget=forms.PasswordInput(),
     )
+    flag_assigned_cases = forms.BooleanField(
+        label=_("Flag assigned cases"),
+        help_text=_(
+            "When enabled, cases that are assigned through disbursement from the Case Management page"
+            " will include a case property '{}' with value as True."
+        ).format(ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -222,6 +232,7 @@ class GeospatialConfigForm(forms.ModelForm):
                 ),
                 hqcrispy.FieldsetAccordionGroup(
                     _('Advanced Settings'),
+                    PrependedText('flag_assigned_cases', '', data_bind="checked: flagAssignedCases"),
                     crispy.Fieldset(
                         _("Location Data Properties"),
                         crispy.Field(
