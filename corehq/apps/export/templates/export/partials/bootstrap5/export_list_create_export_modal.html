@@ -6,11 +6,9 @@
   <div class="modal-dialog">
     <form name="exportOptionsForm" class="form form-horizontal" data-bind="submit: handleSubmitForm">
       <div class="modal-content">
-        <div class="modal-header">  {# todo B5: css:modal-header #}
-          <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css:close #}
-            <span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span>
-          </button>
+        <div class="modal-header">
           <h4 class="modal-title">{{ create_export_form_title }}</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
         </div>
         <div class="modal-body" data-bind="visible: !isLoaded()">
           <i class="fa fa-spinner fa-spin"></i> {% trans 'Loading Form' %}

@@ -168,18 +168,11 @@
                  data-bind="attr: {id: id() + '-odata-additional'}">
               <div class="modal-dialog">
                 <div class="modal-content">
-                  <div class="modal-header">  {# todo B5: css:modal-header #}
-                    <button type="button"
-                            class="btn-close"  {# todo B5: css:close #}
-                            data-bs-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                      <span class="sr-only">
-                        {% trans 'Close' %}
-                      </span>
-                    </button>
+                  <div class="modal-header">
                     <h4 class="modal-title">
                       {% trans "Additional Feeds" %}
                     </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
                   </div>
                   <div class="modal-body">
                     <p class="lead">
@@ -401,18 +394,11 @@
                  data-bind="attr: {id: 'modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}">
               <div class="modal-dialog">
                 <div class="modal-content">
-                  <div class="modal-header">  {# todo B5: css:modal-header #}
-                    <button type="button"
-                            class="btn-close"  {# todo B5: css:close #}
-                            data-bs-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                      <span class="sr-only">
-                        {% trans 'Close' %}
-                      </span>
-                    </button>
+                  <div class="modal-header">
                     <h4 class="modal-title">
                       {% trans "Confirm data updates" %}
                     </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
                   </div>
                   <div class="modal-body"
                        data-bind="visible: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning()">
@@ -462,18 +448,11 @@
                  data-bind="attr: {id: 'modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId()}">
               <div class="modal-dialog">
                 <div class="modal-content">
-                  <div class="modal-header">  {# todo B5: css:modal-header #}
-                    <button type="button"
-                            class="btn-close"  {# todo B5: css:close #}
-                            data-bs-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                      <span class="sr-only">
-                        {% trans 'Close' %}
-                      </span>
-                    </button>
+                  <div class="modal-header">
                     <h4 class="modal-title">
                       {% trans "Confirm data updates." %}
                     </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
                   </div>
                   <div class="modal-body">
                     <p data-bind="if: isDailySaved() && !isAutoRebuildEnabled()">
