@@ -47,7 +47,7 @@ from corehq.apps.domain.views import DomainAccountingSettings, BaseDomainView
 from corehq.apps.domain.views.accounting import PAYMENT_ERROR_MESSAGES, InvoiceStripePaymentView, \
     BulkStripePaymentView, WireInvoiceView, BillingStatementPdfView
 
-from corehq.apps.enterprise.enterprise import EnterpriseReport
+from corehq.apps.enterprise.enterprise import EnterpriseReport, EnterpriseFormReport
 
 from corehq.apps.enterprise.forms import EnterpriseSettingsForm
 from corehq.apps.enterprise.tasks import email_enterprise_report
@@ -72,6 +72,7 @@ def enterprise_dashboard(request, domain):
     context = {
         'account': request.account,
         'domain': domain,
+        'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
         'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
             EnterpriseReport.DOMAINS,
             EnterpriseReport.WEB_USERS,

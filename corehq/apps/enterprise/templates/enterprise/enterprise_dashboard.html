@@ -10,6 +10,8 @@
   {% registerurl "enterprise_dashboard_email" domain "---" %}
   {% registerurl "enterprise_dashboard_total" domain "---" %}
 
+  {% initial_page_data 'max_date_range_days' max_date_range_days %}
+
   <div class="row">
     {% for report in reports %}
       <div class="col-md-6 col-lg-6 col-xl-3">
