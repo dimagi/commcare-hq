@@ -230,7 +230,6 @@ class CeleryTaskTracker(object):
     def __init__(self, task_key):
         self.task_key = task_key
         self.progress_key = f'{task_key}_progress'
-        self.message_key = f'{task_key}_message'
         self._client = get_redis_client()
 
     def mark_requested(self, timeout=ONE_DAY):
