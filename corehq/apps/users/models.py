@@ -1548,7 +1548,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
             if by_username and by_username['id'] != self._id:
-                raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
+                raise self.Inconsistent("User with username %s already exists" % self.username)
 
             if update_django_user and self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()

@@ -980,6 +980,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_CHAT_SMS = 'CHT'
     CONTENT_EMAIL = 'EML'
     CONTENT_FCM_Notification = 'FCM'
+    CONTENT_CONNECT = 'CON'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, gettext_noop('None')),
@@ -993,6 +994,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_CHAT_SMS, gettext_noop('Message Sent Via Chat')),
         (CONTENT_EMAIL, gettext_noop('Email')),
         (CONTENT_FCM_Notification, gettext_noop('FCM Push Notification')),
+        (CONTENT_CONNECT, gettext_noop('Connect Message')),
     )
 
     CONTENT_TYPE_SLUGS = {
@@ -1006,7 +1008,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         CONTENT_API_SMS: "api-sms",
         CONTENT_CHAT_SMS: "chat-sms",
         CONTENT_EMAIL: "email",
-        CONTENT_FCM_Notification: 'fcm-notification',
+        CONTENT_FCM_Notification: "fcm-notification",
+        CONTENT_CONNECT: "connect",
     }
 
     RECIPIENT_CASE = 'CAS'
@@ -1319,6 +1322,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             EmailContent,
             CustomContent,
             FCMNotificationContent,
+            ConnectMessageContent
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
@@ -1331,6 +1335,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return cls.CONTENT_EMAIL, None, None, None
         elif isinstance(content, FCMNotificationContent):
             return cls.CONTENT_FCM_Notification, None, None, None
+        elif isinstance(content, ConnectMessageContent):
+            return cls.CONTENT_CONNECT, None, None, None
         else:
             return cls.CONTENT_NONE, None, None, None
 
@@ -2680,3 +2686,20 @@ class Email(models.Model):
     subject = models.TextField(null=True)
     body = models.TextField(null=True)
     html_body = models.TextField(null=True)
+
+
+class ConnectMessage(models.Model):
+    domain = models.CharField(max_length=126, db_index=True)
+    date = models.DateTimeField(db_index=True)
+    date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, db_index=True)
+    couch_recipient = models.CharField(max_length=126, db_index=True)
+    direction = None
+    location_id = None
+    backend_id = None
+    text = None
+    phone_number = None
+
+    
+    # The MessagingSubEvent that this email is tied to
+    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
