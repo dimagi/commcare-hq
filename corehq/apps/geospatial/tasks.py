@@ -28,7 +28,7 @@ def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict, task_k
         celery_task_tracker.mark_completed()
 
 
-@serial_task('async-index-es-docs', timeout=30 * 60, queue='background_queue', ignore_result=True)
+@serial_task('async-index-es-docs', timeout=60 * 60, queue='background_queue', ignore_result=True)
 def index_es_docs_with_location_props(domain):
     celery_task_tracker = get_celery_task_tracker(domain, INDEX_ES_TASK_HELPER_BASE_KEY)
     if celery_task_tracker.is_active():

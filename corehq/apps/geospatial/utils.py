@@ -238,7 +238,7 @@ class CeleryTaskTracker(object):
         self.clear_progress()
         self._client.set(self.task_key, 'ACTIVE', timeout=timeout)
 
-    def mark_as_error(self, timeout=ONE_DAY * 3):
+    def mark_as_error(self, timeout=ONE_DAY * 14):
         return self._client.set(self.task_key, 'ERROR', timeout=timeout)
 
     def is_active(self):
