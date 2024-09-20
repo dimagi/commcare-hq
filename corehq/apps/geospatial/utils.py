@@ -1,5 +1,6 @@
 from dataclasses import asdict, dataclass, field
 
+import math
 import jsonschema
 from jsonobject.exceptions import BadValueError
 
@@ -31,6 +32,11 @@ def get_geo_user_property(domain):
     except GeoConfig.DoesNotExist:
         config = GeoConfig()
     return config.user_location_property_name
+
+
+def get_celery_task_tracker(domain, task_slug):
+    task_key = f'{task_slug}_{domain}'
+    return CeleryTaskTracker(task_key)
 
 
 def _format_coordinates(lat, lon):
@@ -223,15 +229,41 @@ class CeleryTaskTracker(object):
 
     def __init__(self, task_key):
         self.task_key = task_key
+        self.progress_key = f'{task_key}_progress'
         self._client = get_redis_client()
 
     def mark_requested(self, timeout=ONE_DAY):
         # Timeout here is just a fail safe mechanism in case task is not processed by Celery
         # due to unexpected circumstances
+        self.clear_progress()
         self._client.set(self.task_key, 'ACTIVE', timeout=timeout)
 
+    def mark_as_error(self, timeout=ONE_DAY * 14):
+        return self._client.set(self.task_key, 'ERROR', timeout=timeout)
+
     def is_active(self):
-        return self._client.has_key(self.task_key)
+        return self._client.get(self.task_key) == 'ACTIVE'
+
+    def get_status(self):
+        return {
+            'status': self._client.get(self.task_key),
+            'progress': self.get_progress(),
+        }
 
     def mark_completed(self):
         return self._client.delete(self.task_key)
+
+    def update_progress(self, current, total, timeout=ONE_DAY):
+        progress_val = 0
+        if total > 0:
+            progress_val = math.ceil(current / total * 100)
+        return self._client.set(self.progress_key, progress_val, timeout)
+
+    def get_progress(self):
+        progress = self._client.get(self.progress_key)
+        if not progress:
+            return 0
+        return progress
+
+    def clear_progress(self):
+        return self._client.delete(self.progress_key)
