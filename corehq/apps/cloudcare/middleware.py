@@ -1,7 +1,8 @@
+from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
-
 FORMPLAYER_SESSION_COOKIE_NAME = 'formplayer_session'
+FORMPLAYER_SESSION_COOKIE_HTTPONLY = settings.SESSION_COOKIE_HTTPONLY
 
 
 class CloudcareMiddleware(MiddlewareMixin):
@@ -27,4 +28,5 @@ class CloudcareMiddleware(MiddlewareMixin):
         couch_user = getattr(request, 'couch_user', None)
         if couch_user:
             if request.COOKIES.get(FORMPLAYER_SESSION_COOKIE_NAME) != couch_user.user_id:
-                response.set_cookie(FORMPLAYER_SESSION_COOKIE_NAME, couch_user.user_id)
+                response.set_cookie(FORMPLAYER_SESSION_COOKIE_NAME, couch_user.user_id,
+                                    httponly=FORMPLAYER_SESSION_COOKIE_HTTPONLY)
