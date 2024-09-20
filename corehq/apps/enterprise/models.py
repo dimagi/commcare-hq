@@ -28,7 +28,6 @@ class EnterprisePermissions(models.Model):
     )
 
     @classmethod
-    @quickcache(['domain'], timeout=7 * 24 * 60 * 60)
     def get_by_domain(cls, domain):
         """
         Get or create the configuration associated with the given domain's account.
@@ -42,6 +41,18 @@ class EnterprisePermissions(models.Model):
             return cls(account=account)
 
     @classmethod
+    @quickcache(['domain'], timeout=7 * 24 * 60 * 60)
+    def get_source_domain(cls, domain):
+        """
+        If the given domain is controlled by another domain via enterprise permissions,
+        returns that controlling domain. Otherwise, returns None.
+        """
+        config = EnterprisePermissions.get_by_domain(domain)
+        if config.is_enabled and domain in config.domains:
+            return config.source_domain
+        return None
+
+    @classmethod
     @quickcache(['source_domain'], timeout=7 * 24 * 60 * 60)
     def get_domains(cls, source_domain):
         """
@@ -53,11 +64,29 @@ class EnterprisePermissions(models.Model):
             return []
         return list(set(config.domains) - {config.source_domain})
 
+    @classmethod
+    @quickcache(['domain'], timeout=7 * 24 * 60 * 60)
+    def is_source_domain(cls, domain):
+        """
+        Returns true if given domain is the source domain for an enabled configuration.
+        """
+        try:
+            cls.objects.get(is_enabled=True, source_domain=domain)
+        except cls.DoesNotExist:
+            return False
+        return True
+
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+        self.is_source_domain.clear(self.__class__, self.source_domain)
         for domain in self.account.get_domains():
             self.get_domains.clear(self.__class__, domain)
-            self.get_by_domain.clear(self.__class__, domain)
+            self.get_source_domain.clear(self.__class__, domain)
+
+        super().save(*args, **kwargs)
+        self.is_source_domain.clear(self.__class__, self.source_domain)
+        for domain in self.account.get_domains():
+            self.get_domains.clear(self.__class__, domain)
+            self.get_source_domain.clear(self.__class__, domain)
 
 
 class EnterpriseMobileWorkerSettings(models.Model):

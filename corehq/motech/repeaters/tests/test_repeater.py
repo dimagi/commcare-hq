@@ -947,6 +947,8 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'email': '',
                 'eulas': '[]',
                 'resource_uri': '/a/user-repeater/api/v0.5/user/{}/'.format(user._id),
+                'locations': [],
+                'primary_location': None,
             }
         )
 
@@ -1262,6 +1264,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         super().setUp()
         self.config = get_sample_data_source()
         self.config.save()
+        self.addCleanup(self.config.delete)
         self.adapter = get_indicator_adapter(self.config)
         self.adapter.build_table()
         self.addCleanup(self.adapter.drop_table)

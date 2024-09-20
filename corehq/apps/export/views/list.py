@@ -496,7 +496,7 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 
 class BaseExportListView(BaseProjectDataView):
-    template_name = 'export/export_list.html'
+    template_name = 'export/bootstrap3/export_list.html'
     lead_text = mark_safe(gettext_lazy(  # nosec: no user input
         '''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)

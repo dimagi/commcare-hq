@@ -187,6 +187,8 @@ class Command(PopulateSQLCommand):
 
 
 class TestDoc(SyncCouchToSQLMixin, Document):
+    __test__ = False
+
     class Meta:
         app_label = "couch"
 

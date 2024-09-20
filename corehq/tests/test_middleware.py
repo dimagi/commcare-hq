@@ -38,6 +38,7 @@ def slow_function_view(request):
 class TestReportDispatcher(ReportDispatcher):
     map_name = "REPORTS"
     prefix = "test"
+    __test__ = False
 
     @classmethod
     def get_reports(cls, domain):
@@ -50,6 +51,7 @@ class TestReportDispatcher(ReportDispatcher):
 class TestNoDomainReportDispatcher(ReportDispatcher):
     map_name = "REPORTS"
     prefix = "test_no_domain"
+    __test__ = False
 
     @classmethod
     def get_reports(cls, domain):
@@ -61,6 +63,7 @@ class TestNoDomainReportDispatcher(ReportDispatcher):
 class TestCustomReportDispatcher(TestNoDomainReportDispatcher):
     map_name = "REPORTS"
     prefix = "test_custom"
+    __test__ = False
 
     def dispatch(self, request, *args, **kwargs):
         return CustomReport(request).view_response

@@ -574,7 +574,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.make_records(2, state=State.Fail)
         self.make_records(3, state=State.Cancelled)
         self.make_records(5, state=State.Success)
-        counts = RepeatRecord.objects.count_by_repeater_and_state(domain="test")
+        counts = RepeatRecord.objects.count_by_repeater_and_state(domain=DOMAIN)
 
         rid = self.repeater.id
         self.assertEqual(counts[rid][State.Pending], 1)
@@ -645,23 +645,74 @@ class TestRepeatRecordManager(RepeaterTestCase):
             {'alex', 'alice'},
         )
 
-    def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
+    def test_get_repeat_record_ids_for_domain(self):
+        cancelled = self.new_record(state=State.Cancelled, next_check=None)
+        success = self.new_record(state=State.Success, next_check=None)
+        self.new_record(domain="exclude")
+        ids = RepeatRecord.objects.get_repeat_record_ids(DOMAIN)
+        self.assertCountEqual([cancelled.id, success.id], ids)
+
+    def test_get_repeat_record_ids_for_repeater(self):
+        non_default_repeater = FormRepeater.objects.create(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+        )
+
+        actual = self.new_record_for_repeater(non_default_repeater)
+        self.new_record()
+        ids = RepeatRecord.objects.get_repeat_record_ids(DOMAIN, repeater_id=non_default_repeater.id)
+        self.assertCountEqual([actual.id], ids)
+
+    def test_get_repeat_record_ids_for_state(self):
+        cancelled = self.new_record(state=State.Cancelled, next_check=None)
+        self.new_record(state=State.Success, next_check=None)
+        ids = RepeatRecord.objects.get_repeat_record_ids(DOMAIN, state=State.Cancelled)
+        self.assertCountEqual([cancelled.id], ids)
+
+    def test_get_repeat_record_ids_for_payload(self):
+        actual = self.new_record(payload_id="waldo")
+        self.new_record(payload_id="not-waldo")
+        ids = RepeatRecord.objects.get_repeat_record_ids(DOMAIN, payload_id="waldo")
+        self.assertCountEqual([actual.id], ids)
+
+    def test_get_repeat_record_ids_with_all_filters(self):
+        non_default_repeater = FormRepeater.objects.create(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+        )
+        actual = self.new_record_for_repeater(non_default_repeater, state=State.Fail, payload_id="waldo")
+        self.new_record_for_repeater(non_default_repeater, state=State.Pending, payload_id="waldo")
+        self.new_record_for_repeater(non_default_repeater, state=State.Fail, payload_id="not-waldo")
+        self.new_record_for_repeater(self.repeater, state=State.Fail, payload_id="waldo")
+        ids = RepeatRecord.objects.get_repeat_record_ids(
+            DOMAIN, repeater_id=non_default_repeater.id, state=State.Fail, payload_id="waldo"
+        )
+        self.assertCountEqual([actual.id], ids)
+
+    def new_record(self, next_check=before_now, state=State.Pending, domain=DOMAIN, payload_id="c0ffee"):
+        return self.new_record_for_repeater(
+            self.repeater, next_check=next_check, state=state, domain=domain, payload_id=payload_id
+        )
+
+    def new_record_for_repeater(
+        self, repeater, next_check=before_now, state=State.Pending, domain=DOMAIN, payload_id="c0ffee"
+    ):
         return RepeatRecord.objects.create(
             domain=domain,
-            repeater_id=self.repeater.repeater_id,
-            payload_id="c0ffee",
+            repeater_id=repeater.repeater_id,
+            payload_id=payload_id,
             registered_at=self.before_now,
             next_check=next_check,
             state=state,
         )
 
-    def make_records(self, n, state=State.Pending):
+    def make_records(self, n, domain=DOMAIN, state=State.Pending, payload_id="c0ffee"):
         now = timezone.now() - timedelta(seconds=10)
         is_pending = state in [State.Pending, State.Fail]
         records = RepeatRecord.objects.bulk_create(RepeatRecord(
-            domain="test",
+            domain=domain,
             repeater=self.repeater,
-            payload_id="c0ffee",
+            payload_id=payload_id,
             registered_at=now,
             next_check=(now if is_pending else None),
             state=state,

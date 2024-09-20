@@ -39,6 +39,7 @@ class TestProcessor(PillowProcessor):
     """
     Processor that just keeps the change in an in-memory list for testing
     """
+    __test__ = False
 
     def __init__(self):
         self.changes_seen = []
