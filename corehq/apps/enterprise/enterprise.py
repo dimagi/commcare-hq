@@ -234,7 +234,7 @@ class EnterpriseFormReport(EnterpriseReport):
             self.subtitle = _("past {} days").format(num_days)
 
         if self.datespan.enddate - self.datespan.startdate > timedelta(days=90):
-            raise ValueError(_('Date ranges with more than 90 days are not supported'))
+            raise TooMuchRequestedDataError(_('Date ranges with more than 90 days are not supported'))
 
         self.include_form_id = include_form_id
 
