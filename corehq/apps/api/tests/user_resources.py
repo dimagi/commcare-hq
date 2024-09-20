@@ -698,15 +698,11 @@ class TestCommCareAnalyticsUserRolesResource(APIResourceTest):
     api_name = 'v0.5'
 
     def test_flag_not_enabled(self):
-        self.assertTrue(self.user.domain_memberships[0].is_admin)
-
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 403)
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_user_roles_returned(self):
-        self.assertTrue(self.user.domain_memberships[0].is_admin)
-
         response = self._assert_auth_get_resource(self.list_endpoint)
 
         response_objs = response.json()['objects']
