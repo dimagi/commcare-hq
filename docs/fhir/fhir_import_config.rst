@@ -31,14 +31,6 @@ Configuring a FHIRImportConfig
 Currently, all configuration is managed via Django Admin (except for
 adding Connection Settings).
 
-.. warning::
-    Django Admin cannot filter select box values by domain. Name your
-    Connection Setting with the name of your domain so that typing the
-    domain name in the select box will find it fast.
-
-    .. TODO: Is this definitely true? Is there no way to filter select
-             box values by domain?
-
 In Django Admin, navigate to FHIR > FHIR Import Configs. If you have any
 FHIRImportConfig instances, they will be listed there, and you can
 filter by domain. To add a new one, click "Add FHIR Import Config +".
