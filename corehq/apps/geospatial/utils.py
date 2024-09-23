@@ -230,24 +230,30 @@ class CeleryTaskTracker(object):
     def __init__(self, task_key):
         self.task_key = task_key
         self.progress_key = f'{task_key}_progress'
+        self.error_slug_key = f'{task_key}_error_slug'
         self._client = get_redis_client()
 
     def mark_requested(self, timeout=ONE_DAY):
         # Timeout here is just a fail safe mechanism in case task is not processed by Celery
         # due to unexpected circumstances
         self.clear_progress()
+        self._client.delete(self.error_slug_key)
         self._client.set(self.task_key, 'ACTIVE', timeout=timeout)
 
-    def mark_as_error(self, timeout=ONE_DAY * 14):
+    def mark_as_error(self, error_slug=None, timeout=ONE_DAY * 14):
+        if error_slug:
+            self._client.set(self.error_slug_key, error_slug, timeout)
         return self._client.set(self.task_key, 'ERROR', timeout=timeout)
 
     def is_active(self):
         return self._client.get(self.task_key) == 'ACTIVE'
 
     def get_status(self):
+        status = self._client.get(self.task_key)
         return {
-            'status': self._client.get(self.task_key),
+            'status': status,
             'progress': self.get_progress(),
+            'error_slug': self._client.get(self.error_slug_key) if status == 'ERROR' else None,
         }
 
     def mark_completed(self):

@@ -189,6 +189,7 @@ class TestUpdateCasesOwner(TestCase):
 class TestCeleryTaskTracker(TestCase):
     TASK_KEY = 'test-key'
     PROGRESS_KEY = 'test-key_progress'
+    ERROR_SLUG_KEY = 'test-key_error_slug'
 
     @classmethod
     def setUpClass(cls):
@@ -215,12 +216,19 @@ class TestCeleryTaskTracker(TestCase):
         self.assertFalse(self.redis_client.has_key(self.TASK_KEY))
 
     def test_mark_error(self):
-        self.celery_task_tracker.mark_as_error()
+        self.celery_task_tracker.mark_as_error(error_slug='TEST')
         self.assertEqual(self.redis_client.get(self.TASK_KEY), 'ERROR')
+        self.assertEqual(self.redis_client.get(self.ERROR_SLUG_KEY), 'TEST')
 
     def test_get_status(self):
         self.redis_client.set(self.TASK_KEY, 'ERROR')
-        self.assertEqual(self.celery_task_tracker.get_status(), {'status': 'ERROR', 'progress': 0})
+        self.redis_client.set(self.ERROR_SLUG_KEY, 'TEST')
+        expected_output = {
+            'status': 'ERROR',
+            'progress': 0,
+            'error_slug': 'TEST'
+        }
+        self.assertEqual(self.celery_task_tracker.get_status(), expected_output)
 
     def test_set_progress(self):
         self.assertTrue(self.celery_task_tracker.update_progress(current=1, total=5))

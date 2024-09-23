@@ -38,7 +38,7 @@ def index_es_docs_with_location_props(domain):
     query = _es_case_query(domain, geo_case_prop)
     doc_count = query.count()
     if doc_count > MAX_GEOSPATIAL_INDEX_DOC_LIMIT:
-        celery_task_tracker.mark_as_error()
+        celery_task_tracker.mark_as_error(error_slug='TOO_MANY_CASES')
         return
 
     celery_task_tracker.mark_requested()
@@ -53,5 +53,7 @@ def index_es_docs_with_location_props(domain):
                 chunk_size=DEFAULT_CHUNK_SIZE,
             )
             celery_task_tracker.update_progress(current=i + 1, total=batch_count)
-    finally:
+    except Exception:
+        celery_task_tracker.mark_as_error(error_slug='CELERY')
+    else:
         celery_task_tracker.mark_completed()

@@ -3,10 +3,17 @@
 {% if task_status.status == 'ERROR' %}
 <div class="alert alert-danger">
   <p>
-    {% blocktrans %}
-      This domain contains too many cases and so they will not be made available
-      for use by this feature. Please reach out to support.
-    {% endblocktrans %}
+    {% if task_status.error_slug == 'TOO_MANY_CASES' %}
+      {% blocktrans %}
+        This domain contains too many cases and so they will not be made available
+        for use by this feature. Please reach out to support.
+      {% endblocktrans %}
+    {% elif task_status.error_slug == 'CELERY' %}
+      {% blocktrans %}
+        Oops! Something went wrong while attempting to make cases ready for use
+        by this feature. Please reach out to support.
+      {% endblocktrans %}
+    {% endif %}
   </p>
 </div>
 {% elif task_status.status == 'ACTIVE' %}
