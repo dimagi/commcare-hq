@@ -35,17 +35,9 @@ In Django Admin, navigate to FHIR > FHIR Import Configs. If you have any
 FHIRImportConfig instances, they will be listed there, and you can
 filter by domain. To add a new one, click "Add FHIR Import Config +".
 
-The form is quite straight forward. You will need to provide the ID of a
-mobile worker in the "Owner ID" field. All cases that are imported will
-be assigned to this user.
-
-This workflow will not scale for large projects. When such a project
-comes up, we have planned for two approaches, and will implement one or
-both based on the project's requirements:
-
-1. Set the owner to a user, group or location.
-2. Assign a FHIRImportConfig to a CommCare location, and set ownership
-   to the mobile worker at that location.
+The form is quite straightforward. You will need to provide the ID of a
+mobile worker, location, or group in the "Owner ID" field. All imported
+cases will be assigned to this ID.
 
 
 Mapping imported FHIR resource properties
