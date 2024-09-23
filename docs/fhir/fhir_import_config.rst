@@ -65,7 +65,7 @@ and select the case type.
     to send the same resources back to FHIR when they are modified in
     CommCare, then you will either need to stick to the Data Dictionary
     FHIR resource types limitation, or add the resource type you want to
-    the list in `corehq/motech/fhir/const.py`_.)
+    the ``FHIR_DATA_TYPES`` const in ``corehq/motech/fhir/const.py``
 
 The "Import related only" checkbox controls that third import strategy
 mentioned earlier.
@@ -119,8 +119,6 @@ some of the imported values before overwriting existing values on the
 case. It is wise to confirm with the delivery team how to treat case
 properties that can be edited.
 
-
-.. _corehq/motech/fhir/const.py: https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/fhir/const.py#L35
 .. _Patient search parameters: https://www.hl7.org/fhir/patient.html#search
 
 
