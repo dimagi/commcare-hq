@@ -53,8 +53,8 @@ FHIRResourceType instances (rendered as "FHIR Resource Types" in Django
 Admin) to configure mapping; FHIRImportConfig uses
 FHIRImportResourceType instances ("FHIR Import Resource Types").
 
-To see what this looks like, navigate to FHIR > FHIR Importer Resource
-Types, and click "Add FHIR Importer Resource Type".
+To see what this looks like, navigate to FHIR > FHIR Import Resource
+Types, and click "Add FHIR Import Resource Type".
 
 Select the FHIR Import Config, set the name of the FHIR resource type,
 and select the case type.
@@ -127,7 +127,7 @@ properties that can be edited.
 Configuring related resources
 -----------------------------
 
-If a FHIR Importer resource type has "Import related only" checked, we
+If a FHIR Import resource type has "Import related only" checked, we
 need to configure how the resource type is related.
 
 Navigate to FHIR > JSON Path to resource types, and click "Add JSON Path
