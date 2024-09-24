@@ -1549,10 +1549,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         handleSmallScreenChange: function (smallScreenEnabled) {
             const offcanvas = 'offcanvas';
             const collapse = 'collapse';
-            const containerDesktopClasses = collapse + ' show position-relative';
+            const containerDesktopClasses = collapse + ' position-relative';
             const containerMobileClasses = offcanvas + ' offcanvas-start';
             if (smallScreenEnabled) {
-                $('#persistent-menu-container').removeClass(containerDesktopClasses);
+                $('#persistent-menu-container').removeClass(containerDesktopClasses + ' show');
                 $('#persistent-menu-container').addClass(containerMobileClasses);
                 $('#persistent-menu-arrow-toggle').attr('aria-expanded', false);
                 $('#close-button').removeAttr('data-bs-toggle');
@@ -1561,6 +1561,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             } else {
                 $('#persistent-menu-container').removeClass(containerMobileClasses);
                 $('#persistent-menu-container').addClass(containerDesktopClasses);
+                if (sessionStorage.showPersistentMenu !== 'false') {
+                    $('#persistent-menu-container').addClass('show');
+                }
                 $('#persistent-menu-arrow-toggle').attr('aria-expanded', true);
                 $('#close-button').removeAttr('data-bs-dismiss');
                 $('#close-button').attr('data-bs-toggle', collapse);
@@ -1578,6 +1581,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         onDomRefresh: function () {
             this.handleSmallScreenChange(cloudcareUtils.smallScreenIsEnabled());
+            $('#persistent-menu-container').on('hidden.bs.collapse', function () {
+                sessionStorage.showPersistentMenu = false;
+            });
+            $('#persistent-menu-container').on('show.bs.collapse', function () {
+                sessionStorage.showPersistentMenu = true;
+            });
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
