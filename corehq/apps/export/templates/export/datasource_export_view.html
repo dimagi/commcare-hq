@@ -1,4 +1,4 @@
-{%  extends 'hqwebapp/bootstrap3/base_section.html' %}
+{%  extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load compress %}
@@ -13,15 +13,15 @@
 {% block page_content %}
   <p>
     {% blocktrans %}
-    Generate a query file for the Data Export Tool from any of the project's data sources.
+      Generate a query file for the Data Export Tool from any of the project's data sources.
     {% endblocktrans %}
   </p>
   <div id="datasources_export_id" class="form form-horizontal">
     <div data-bind='hidden: haveDatasources'>
       {% blocktrans %}
-      The project has no data sources configured.
+        The project has no data sources configured.
       {% endblocktrans %}
     </div>
-    {% crispy form %}  {# todo B5: check crispy #}
+    {% crispy form %}
   </div>
 {% endblock %}
