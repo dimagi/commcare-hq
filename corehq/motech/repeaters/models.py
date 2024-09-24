@@ -1389,7 +1389,6 @@ def domain_can_forward(domain):
     )
 
 
-@quickcache(['domain'], timeout=60)
 def domain_can_forward_now(domain):
     """
     Returns ``True`` if ``domain`` has the requisite privileges and data
