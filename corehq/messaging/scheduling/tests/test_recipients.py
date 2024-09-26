@@ -655,6 +655,37 @@ class SchedulingRecipientTest(TestCase):
             )
             self.assertIsNone(instance.recipient)
 
+    def test_user_id_case_property_recipient(self):
+        # test valid ID
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id,
+                update={'hq_user_id': self.web_user.get_id}
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_id='hq_user_id'
+            )
+            self.assertEqual(instance.recipient.get_id, self.web_user.get_id)
+
+        # test invalid ID
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id,
+                update={'hq_user_id': '1234abcd'}
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_id='hq_user_id'
+            )
+            self.assertEqual(instance.recipient, None)
+
     def test_email_case_property_recipient(self):
         with create_case(
                 self.domain,
