@@ -128,26 +128,40 @@ Configuring related resources
 If a FHIR Import resource type has "Import related only" checked, we
 need to configure how the resource type is related.
 
-Navigate to FHIR > JSON Path to resource types, and click "Add JSON Path
-to resource type".
+For example, Patient resources may have associated ServiceRequests, which you
+may want to import. To achieve this, you'd set up a FHIRImportResourceType for
+ServiceRequests, with "import related only" checked, so only those associated
+with patients in the import are fetched.
 
-A ServiceRequest.subject is a reference to the Patient it is referring.
+Navigate to FHIR > "Resource type relationships", and click "Add
+resource type relationship".
 
-Set "Resource type" to "ServiceRequest".
+Relationships are configured on the child resource type, with a
+reference to their parent, just like a typical foreign key relationship.
+Options available in this config are:
 
-Set "JSONPath" to "$.subject.reference".
+* Resource type - the type of the child or descendant resource.
+* Jsonpath - the path used to identify the parent or ancestor resource.
+* Related resource type - the type of the parent or ancestor resource.
+* Related resource is parent - checkbox indicating whether CommCare
+  should set up a parent/child index between the two cases.
 
-Set "Related resource type" to "Patient".
+.. admonition:: Example: Adding a patient service request
 
-If the "Related resource is parent" checkbox is not checked, then
-CommCare will just create a case for the Patient. If it is checked, then
-CommCare will also create an index on the case for the ServiceRequest as
-a child case, and link it to the case for the Patient as its parent
-case.
+    First set up a ServiceRequest resource type as described in the previous
+    section. Check "import related only" to only fetch those linked to patients
+    in the import. Then navigate to the "Add resource type relationship" page.
 
-The child-to-parent relationship will follow the direction of the
-reference. So if a Foo resource has a reference to a Bar resource,
-then in CommCare the "foo" case will be the child of the "bar" case.
+    ``ServiceRequest.subject`` references the Patient it is referring.
+    To set up this relationship:
+
+    * Set "Resource type" to "ServiceRequest".
+    * Set "Jsonpath" to ``$.subject.reference``.
+    * Set "Related resource type" to "Patient".
+
+    If the "Related resource is parent" checkbox is checked, then CommCare will
+    create an index on the ServiceRequest case, making the Patient case its
+    parent.
 
 
 Testing FHIRImportConfig configuration
