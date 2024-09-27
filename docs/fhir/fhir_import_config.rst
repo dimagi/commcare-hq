@@ -43,10 +43,9 @@ cases will be assigned to this ID.
 Mapping imported FHIR resource properties
 -----------------------------------------
 
-Resource properties are mapped via the Admin interface using
-ValueSource definitions, similar to :ref:`admin-interface-mapping` for
-data forwarding and the FHIR API. But there are a few important
-differences:
+Resource properties are mapped via the Admin interface using ValueSource
+definitions, similar to :ref:`admin-interface-mapping` for data
+forwarding and the FHIR API. But there are a few important differences:
 
 The first difference is that FHIRRepeater and the FHIR API use
 FHIRResourceType instances (rendered as "FHIR Resource Types" in Django
@@ -89,14 +88,14 @@ Patient's phone number. They might look like this:
 .. code:: javascript
 
     {
-      "jsonpath":"$.telecom[0].system",
+      "jsonpath": "$.telecom[0].system",
       "value": "phone"
     }
 
 .. code:: javascript
 
     {
-      "jsonpath":"$.telecom[0].value",
+      "jsonpath": "$.telecom[0].value",
       "case_property": "phone_number"
     }
 
@@ -108,7 +107,7 @@ item whose "system" is set to "phone". That is defined like this:
 .. code:: javascript
 
     {
-      "jsonpath":"$.telecom[?system='phone'].value",
+      "jsonpath": "$.telecom[?system='phone'].value",
       "case_property": "phone_number"
     }
 
