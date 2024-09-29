@@ -548,7 +548,8 @@ def sync_all_appointments_domain(domain):
             given = patient.get_case_property('given_name')
             family = patient.get_case_property('family_name')
             birthdate = patient.get_case_property('birthdate')
-            patient_fhir_id = get_patient_fhir_id(given, family, birthdate, access_token)
+            if given and family and birthdate:
+                patient_fhir_id = get_patient_fhir_id(given, family, birthdate, access_token)
 
             if patient_fhir_id is not None:
                 patient_helper.update({'properties': {
