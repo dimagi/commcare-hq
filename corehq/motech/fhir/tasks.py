@@ -450,8 +450,8 @@ def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
     base_url = "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Patient"
     params = {
         'birthdate': birthdate,
-        'family_name': family_name,
-        'given_name': given_name,
+        'family': family_name,
+        'given': given_name,
         '_format': 'json'
     }
     url = f'{base_url}?{urlencode(params)}'
