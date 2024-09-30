@@ -1166,7 +1166,8 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         dedupe_load_counter('unknown', case.domain)()
 
         if not case_matching_rule_criteria_exists_in_es(case, rule):
-            ALLOWED_ES_DELAY = timedelta(hours=1)
+            # refresh interval + avg time to refresh + extra buffer = 1 minute
+            ALLOWED_ES_DELAY = timedelta(minutes=1)
             if datetime.utcnow() - case.server_modified_on > ALLOWED_ES_DELAY:
                 # If old data was found that is not present in ElasticSearch, the data is unreliable.
                 # We've decided skipping this record and recording an error is likely the safest way to handle this
