@@ -543,7 +543,7 @@ def sync_all_appointments_domain(domain):
     }
     for patient in patient_cases:
         patient_helper = CaseHelper(case=patient, domain=domain)
-        patient_fhir_id = patient.get_case_property('patient_fhir_id')
+        patient_fhir_id = patient.get_case_property('fhir_id')
         if not patient_fhir_id:
             given = patient.get_case_property('given_name')
             family = patient.get_case_property('family_name')
