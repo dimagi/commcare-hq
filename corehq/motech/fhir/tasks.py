@@ -580,8 +580,8 @@ def sync_all_appointments_domain(domain):
                 appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(
                     appointment_fhir_timestamp)
                 appointment_fhir_id = appointment_resource.get('id')
-                reason = None
-                practitioner = None
+                reason = ''
+                practitioner = ''
                 for p in appointment_resource.get('participant'):
                     actor = p.get('actor')
                     if actor and 'Practitioner' in actor.get('reference'):
@@ -624,8 +624,8 @@ def sync_all_appointments_domain(domain):
                 appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(
                     appointment_fhir_timestamp)
                 appointment_fhir_id = appointment_resource.get('id')
-                reason = None
-                practitioner = None
+                reason = ''
+                practitioner = ''
                 for p in appointment_resource.get('participant'):
                     actor = p.get('actor')
                     if actor and 'Practitioner' in actor.get('reference'):
