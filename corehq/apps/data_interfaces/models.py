@@ -72,6 +72,7 @@ from corehq.sql_db.util import (
 )
 from corehq import toggles
 from corehq.util.log import with_progress_bar
+from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import dedupe_load_counter
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -1178,6 +1179,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 # but disabling this to avoid further quota issues.
                 # raise ValueError(f'Unable to find current ElasticSearch data for: {case.case_id}')
                 # Ignore this result for now
+                metrics_counter('commcare.dedupe.no_matching_case', tags={'domain': case.domain})
                 return CaseRuleActionResult(num_errors=1)
             else:
                 # Normal processing can involve latency between when a case is written to the database and when
