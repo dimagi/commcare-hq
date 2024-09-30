@@ -553,7 +553,7 @@ def sync_all_appointments_domain(domain):
 
             if patient_fhir_id is not None:
                 patient_helper.update({'properties': {
-                    'patient_fhir_id': patient_fhir_id,
+                    'fhir_id': patient_fhir_id,
                 }})
             else:
                 continue
