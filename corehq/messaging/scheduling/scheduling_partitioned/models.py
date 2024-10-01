@@ -635,9 +635,14 @@ class CaseScheduleInstanceMixin(object):
             )
             return custom_function(self)
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_USER:
-            username = self.case.get_case_property(self.recipient_id)
-            full_username = format_username(username, self.domain)
-            return CommCareUser.get_by_username(full_username)
+            username_or_id = self.case.get_case_property(self.recipient_id)
+            if username_or_id:
+                try_full_username = format_username(username_or_id, self.domain)
+                try_cc_user = CommCareUser.get_by_username(try_full_username)
+                if try_cc_user:
+                    return try_cc_user
+                else:
+                    return WebUser.get_by_user_id(username_or_id) or CommCareUser.get_by_user_id(username_or_id)
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
             return EmailAddressRecipient(self.case, self.recipient_id)
         else:
