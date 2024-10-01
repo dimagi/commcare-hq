@@ -98,7 +98,6 @@
 @media screen {
   .case-tile-container {
     position: sticky;
-    top: $breadcrumb-height-cloudcare;
     z-index: $zindex-persistent-tile-cloudcare;
 
     #persistent-case-tile .persistent-sticky {
