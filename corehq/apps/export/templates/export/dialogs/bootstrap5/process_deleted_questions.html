@@ -3,10 +3,7 @@
 <div class="modal fade" tabindex="-1" role="dialog" id="export-process-deleted-applications">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header">  {# todo B5: css:modal-header #}
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">  {# todo B5: css:close #}
-          <span aria-hidden="true">&times;</span>
-        </button>
+      <div class="modal-header">
         <h4 class="modal-title">
           {% if export_instance.type == 'form' %}
             {% trans "Show Deleted Questions" %}
@@ -14,6 +11,7 @@
             {% trans "Show Deleted Properties" %}
           {% endif %}
         </h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
       </div>
       <div class="modal-body">
         <p>
@@ -34,8 +32,8 @@
           {% trans "Unable to process applications. Please report an issue if this persists" %}
         </p>
         <div class="spacer"></div>
-        <div class="progress " data-bind="visible: showBuildSchemaProgressBar">  {# todo B5: css:progress #}
-          <div class="progress-bar" role="progressbar" data-bind="
+        <div class="progress" role="progressbar" data-bind="visible: showBuildSchemaProgressBar">
+          <div class="progress-bar" data-bind="
               style: {
                   width: buildSchemaProgress() + '%'
               }
