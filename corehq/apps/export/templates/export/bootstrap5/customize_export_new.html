@@ -49,13 +49,13 @@
             {% endif %}
           </label>
 
-            <p class="form-control-static">
+            <h4>
               {% if export_instance.type == 'case' %}
                 {{ export_instance.case_type }}
               {% else %}
                 {{ export_instance.formname }}
               {% endif %}
-            </p>
+            </h4>
 
         </div>
         <div class="mb-3">  {# Updated from form-group to mb-3 #}
@@ -99,100 +99,98 @@
           </div>
         </div>
         <div class="mb-3">  {# Updated from form-group to mb-3 #}
-          <div class="offset-md-4 offset-lg-3 offset-xl-2 col-md-6">
-            {% if not export_instance.is_odata_config %}
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input"
-                       id="transform-dates-checkbox"
-                       data-bind="checked: transform_dates" />
-                <label class="form-check-label" for="transform-dates-checkbox">
-                  <strong>{% trans "Automatically convert dates and multimedia links for Excel" %}</strong><br/>
-                  {% blocktrans %}
-                    Leaving this checked will ensure dates appear in excel format.
-                    Otherwise they will appear as a normal text format. This also allows for
-                    hyperlinks to the multimedia captured by your form submission.
-                  {% endblocktrans %}
-                </label>
-              </div>
-
-              {% if export_instance.type == 'form' and export_instance.export_format != 'html' %}
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input"
-                       id="format-data-in-excel-checkbox"
-                       data-bind="checked: format_data_in_excel" />
-                <label class="form-check-label" for="format-data-in-excel-checkbox">
-                  <strong>{% trans "Automatically format cells for Excel 2007+" %}</strong><br/>
-                  {% blocktrans %}
-                    If this setting is not selected, your export will be in Excel’s general format.
-                    If you enable this setting, Excel will format dates, integers, decimals,
-                    Boolean values (True/False) and currencies.
-                  {% endblocktrans %}
-                </label>
-              </div>
-              {% endif %}
-
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input"
-                       id="daily-saved-export-checkbox"
-                       data-bind="checked: is_daily_saved_export,
-                                  attr: { disabled: hasHtmlFormat() || !{{ has_daily_saved_export_access|JSON }}}"/>
-                <label class="form-check-label" for="daily-saved-export-checkbox">
-                  {% trans "Create a Daily Saved Export" %}
-                </label>
-                {% if not has_daily_saved_export_access %}
-                  <span class="hq-help-template"
-                        data-content='{% blocktrans %}
-                                        Daily saved exports are only available on the Standard Plan or higher.
-                                        Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
-                                      {% endblocktrans %}'
-                  ></span>
-                {% endif %}
-              </div>
-            {% endif %}
+          {% if not export_instance.is_odata_config %}
             <div class="form-check">
               <input type="checkbox" class="form-check-input"
-                     id="det-config-checkbox"
-                     data-bind="checked: show_det_config_download,
-                                attr: { disabled: !{{ has_api_access|JSON }} || {{ is_all_case_types_export|JSON }}}" />
-              <label class="form-check-label" for="det-config-checkbox">
-                {% trans "Generate a Data Export Tool config file" %}
+                     id="transform-dates-checkbox"
+                     data-bind="checked: transform_dates" />
+              <label class="form-check-label" for="transform-dates-checkbox">
+                <strong>{% trans "Automatically convert dates and multimedia links for Excel" %}</strong><br/>
+                {% blocktrans %}
+                  Leaving this checked will ensure dates appear in excel format.
+                  Otherwise they will appear as a normal text format. This also allows for
+                  hyperlinks to the multimedia captured by your form submission.
+                {% endblocktrans %}
               </label>
-              {% trans "Download a Data Export Tool configuration file for this export" as det_help %}
-              <span class="hq-help-template"
-                    data-content='{% blocktrans %}
-                                    <p>Checking this will add a button to download a configuration file
-                                       for the <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/CommCare+Data+Export+Tool+DET" target="_blank">
-                                       CommCare Data Export Tool</a> for the export.</p>
-                                   {% endblocktrans %}
-                                   {% if not has_api_access %}
-                                   {% blocktrans %}
-                                    <p>The Data Export Tool requires API access, which is only available on the Pro Plan or higher.
-                                       Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.</p>
-                                  {% endblocktrans %}
-                                  {% endif %}'
-                ></span>
             </div>
-            {% if export_instance.type == 'form' %}
-              <div class="form-check"
-                   {% if not request|toggle_enabled:'SUPPORT' %}data-bind="visible: initiallyIncludeErrors"{% endif %}>
-                <input type="checkbox" class="form-check-input"
-                       id="include-errors-checkbox"
-                       data-bind="checked: include_errors" />
-                <label class="form-check-label" for="include-errors-checkbox">
-                  {% trans "Include duplicates and other unprocessed forms" %}
-                </label>
-              </div>
 
-              <div id="split-multiselects-checkbox-div" class="form-check">
-                <input type="checkbox" class="form-check-input"
-                       id="split-multiselects-checkbox"
-                       data-bind="checked: split_multiselects" />
-                <label class="form-check-label" for="split-multiselects-checkbox">
-                  {% trans "Expand Checkbox Questions" %}
-                </label>
-              </div>
+            {% if export_instance.type == 'form' and export_instance.export_format != 'html' %}
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input"
+                     id="format-data-in-excel-checkbox"
+                     data-bind="checked: format_data_in_excel" />
+              <label class="form-check-label" for="format-data-in-excel-checkbox">
+                <strong>{% trans "Automatically format cells for Excel 2007+" %}</strong><br/>
+                {% blocktrans %}
+                  If this setting is not selected, your export will be in Excel’s general format.
+                  If you enable this setting, Excel will format dates, integers, decimals,
+                  Boolean values (True/False) and currencies.
+                {% endblocktrans %}
+              </label>
+            </div>
             {% endif %}
+
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input"
+                     id="daily-saved-export-checkbox"
+                     data-bind="checked: is_daily_saved_export,
+                                attr: { disabled: hasHtmlFormat() || !{{ has_daily_saved_export_access|JSON }}}"/>
+              <label class="form-check-label" for="daily-saved-export-checkbox">
+                {% trans "Create a Daily Saved Export" %}
+              </label>
+              {% if not has_daily_saved_export_access %}
+                <span class="hq-help-template"
+                      data-content='{% blocktrans %}
+                                      Daily saved exports are only available on the Standard Plan or higher.
+                                      Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
+                                    {% endblocktrans %}'
+                ></span>
+              {% endif %}
+            </div>
+          {% endif %}
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input"
+                   id="det-config-checkbox"
+                   data-bind="checked: show_det_config_download,
+                              attr: { disabled: !{{ has_api_access|JSON }} || {{ is_all_case_types_export|JSON }}}" />
+            <label class="form-check-label" for="det-config-checkbox">
+              {% trans "Generate a Data Export Tool config file" %}
+            </label>
+            {% trans "Download a Data Export Tool configuration file for this export" as det_help %}
+            <span class="hq-help-template"
+                  data-content='{% blocktrans %}
+                                  <p>Checking this will add a button to download a configuration file
+                                     for the <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/CommCare+Data+Export+Tool+DET" target="_blank">
+                                     CommCare Data Export Tool</a> for the export.</p>
+                                 {% endblocktrans %}
+                                 {% if not has_api_access %}
+                                 {% blocktrans %}
+                                  <p>The Data Export Tool requires API access, which is only available on the Pro Plan or higher.
+                                     Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.</p>
+                                {% endblocktrans %}
+                                {% endif %}'
+              ></span>
           </div>
+          {% if export_instance.type == 'form' %}
+            <div class="form-check"
+                 {% if not request|toggle_enabled:'SUPPORT' %}data-bind="visible: initiallyIncludeErrors"{% endif %}>
+              <input type="checkbox" class="form-check-input"
+                     id="include-errors-checkbox"
+                     data-bind="checked: include_errors" />
+              <label class="form-check-label" for="include-errors-checkbox">
+                {% trans "Include duplicates and other unprocessed forms" %}
+              </label>
+            </div>
+
+            <div id="split-multiselects-checkbox-div" class="form-check">
+              <input type="checkbox" class="form-check-input"
+                     id="split-multiselects-checkbox"
+                     data-bind="checked: split_multiselects" />
+              <label class="form-check-label" for="split-multiselects-checkbox">
+                {% trans "Expand Checkbox Questions" %}
+              </label>
+            </div>
+          {% endif %}
         </div>
         {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
           <div class="mb-3"
@@ -248,90 +246,82 @@
       {% endif %}
 
       {% if allow_deid %}
-        <fieldset>
+        <fieldset class="mb-3">
           <legend>
             {% trans "Privacy Settings" %}
           </legend>
-          <div class="mb-3">
-            <div class="offset-md-4 offset-lg-3 offset-xl-2 col-md-6">
-              <div data-bind="visible: isDeidColumnVisible()">
-                <div class="form-check">
-                  <input type="checkbox" class="form-check-input"
-                         id="is_deidentified"
-                         data-bind="checked: is_deidentified" />
-                  <label class="form-check-label" for="is_deidentified">
-                    {% trans "Publish as De-Identified" %}
-                  </label>
-                </div>
-                <span class="help-inline">
-                  {% trans "Check only if this export has been fully and safely de-identified." %}
-                </span>
-              </div>
-              <button class="btn btn-outline-primary"
-                      data-bind="visible: !isDeidColumnVisible() && !{{ is_all_case_types_export|JSON }},
-                                 click: showDeidColumn">
-                {% trans "Allow me to mark sensitive data" %}
-              </button>
+          <div class="mb-3" data-bind="visible: isDeidColumnVisible()">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input"
+                     id="is_deidentified"
+                     data-bind="checked: is_deidentified" />
+              <label class="form-check-label" for="is_deidentified">
+                {% trans "Publish as De-Identified" %}
+              </label>
             </div>
+            <span class="help-inline">
+              {% trans "Check only if this export has been fully and safely de-identified." %}
+            </span>
           </div>
+          <button class="btn btn-outline-primary"
+                  data-bind="visible: !isDeidColumnVisible() && !{{ is_all_case_types_export|JSON }},
+                             click: showDeidColumn">
+            {% trans "Allow me to mark sensitive data" %}
+          </button>
         </fieldset>
       {% endif %}
-      <div class="form-actions">
-        <div class="offset-md-4 offset-lg-3 offset-xl-2 col-md-8 col-lg-9 col-xl-10 controls">
-          {% if can_edit %}
-            <button type="submit"
-                    class="btn btn-lg btn-primary"
-                    data-bind="click: save,
-                               disable: saveStateSaving() || saveStateSuccess() || !isValid()">
-              <span data-bind="visible: saveStateReady(),
-                               text: getSaveText()"></span>
-              <span data-bind="visible: saveStateSaving()">
-                <i class="fa fa-refresh fa-spin"></i>
-                {% trans "Saving" %}
-              </span>
-              <span data-bind="visible: saveStateError()">
-                {% trans "Try Again" %}
-              </span>
-              <span data-bind="visible: saveStateSuccess()">
-                {% trans "Saved!" %}
-              </span>
-            </button>
-          {% endif %}
-          <a class="btn btn-outline-primary btn-lg" href="{{ export_home_url }}">
-            {% if can_edit %}
-              {% trans "Cancel" %}
-            {% else %}
-              {% trans "Back" %}
-            {% endif %}
-          </a>
-          {% if export_instance.get_id and can_edit %}
-            <a class="btn btn-lg btn-outline-primary float-end"
-               href="{% url 'copy_export' domain export_instance.get_id %}?next={{ export_home_url }}">
-              <i class="fa fa-copy fa-white"></i>
-              {% trans "Copy this Export" %}
-            </a>
-          {% endif %}
+      {% if can_edit %}
+        <button type="submit"
+                class="btn btn-lg btn-primary"
+                data-bind="click: save,
+                           disable: saveStateSaving() || saveStateSuccess() || !isValid()">
+          <span data-bind="visible: saveStateReady(),
+                           text: getSaveText()"></span>
+          <span data-bind="visible: saveStateSaving()">
+            <i class="fa fa-refresh fa-spin"></i>
+            {% trans "Saving" %}
+          </span>
+          <span data-bind="visible: saveStateError()">
+            {% trans "Try Again" %}
+          </span>
+          <span data-bind="visible: saveStateSuccess()">
+            {% trans "Saved!" %}
+          </span>
+        </button>
+      {% endif %}
+      <a class="btn btn-outline-primary btn-lg" href="{{ export_home_url }}">
+        {% if can_edit %}
+          {% trans "Cancel" %}
+        {% else %}
+          {% trans "Back" %}
+        {% endif %}
+      </a>
+      {% if export_instance.get_id and can_edit %}
+        <a class="btn btn-lg btn-outline-primary float-end"
+           href="{% url 'copy_export' domain export_instance.get_id %}?next={{ export_home_url }}">
+          <i class="fa fa-copy fa-white"></i>
+          {% trans "Copy this Export" %}
+        </a>
+      {% endif %}
 
-          {% if export_instance.is_odata_config %}
-            <div class="d-inline-block"
-                 data-bind="if: hasDuplicateColumnLabels">
-              <div class="alert alert-danger">
-                {% blocktrans %}
-                  Column labels must be unique. '<span data-bind="text: duplicateLabel"></span>'
-                  has been used more than once.
-                {% endblocktrans %}
-              </div>
-            </div>
-          {% endif %}
-
-          <div class="text-danger"
-               data-bind="if: !isValid(){% if export_instance.is_odata_config %} && !hasDuplicateColumnLabels(){% endif %}">
-            {% trans "There are errors with your configuration. Please fix them before creating the export." %}
+      {% if export_instance.is_odata_config %}
+        <div class="d-inline-block"
+             data-bind="if: hasDuplicateColumnLabels">
+          <div class="alert alert-danger">
+            {% blocktrans %}
+              Column labels must be unique. '<span data-bind="text: duplicateLabel"></span>'
+              has been used more than once.
+            {% endblocktrans %}
           </div>
         </div>
-        {% include "export/dialogs/bootstrap5/process_deleted_questions.html" %}
-        {% include "export/dialogs/bootstrap5/process_deprecated_properties.html" %}
+      {% endif %}
+
+      <div class="text-danger"
+           data-bind="if: !isValid(){% if export_instance.is_odata_config %} && !hasDuplicateColumnLabels(){% endif %}">
+        {% trans "There are errors with your configuration. Please fix them before creating the export." %}
       </div>
+    {% include "export/dialogs/bootstrap5/process_deleted_questions.html" %}
+    {% include "export/dialogs/bootstrap5/process_deprecated_properties.html" %}
     </form>
   </div>
   {% include "export/partials/bootstrap5/new_customize_export_templates.html" %}
