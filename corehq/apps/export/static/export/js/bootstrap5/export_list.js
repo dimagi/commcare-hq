@@ -462,23 +462,6 @@ hqDefine("export/js/bootstrap5/export_list", [
             return true;
         };
 
-        var tooltipText = "";
-        if (self.isOData || self.isFeed) {
-            tooltipText = gettext("All of the selected feeds will be deleted.");
-        } else {
-            tooltipText = gettext("All of the selected exports will be deleted.");
-        }
-
-        $(function () {
-            $('[data-toggle="tooltip-bulkExport"]').attr('title',
-                gettext("All of the selected exports will be collected for download to a " +
-                "single Excel file, with each export as a separate sheet.")).tooltip();  /* todo B5: plugin:tooltip */
-        });
-
-        $(function () {
-            $('[data-toggle="tooltip-bulkDelete"]').attr('title', tooltipText).tooltip({trigger: 'hover'});  /* todo B5: plugin:tooltip */
-        });
-
         self.isMultiple = ko.computed(function () {
             if (self.bulkDeleteList().length > 1) { return true; }
             return false;
