@@ -16,6 +16,7 @@ hqDefine("export/js/bootstrap5/export_list", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'clipboard/dist/clipboard',
     'analytix/js/google',
     'analytix/js/kissmetrix',
@@ -28,6 +29,7 @@ hqDefine("export/js/bootstrap5/export_list", [
     ko,
     _,
     assertProperties,
+    bootstrap,
     Clipboard,
     googleAnalytics,
     kissmetricsAnalytics,
@@ -181,7 +183,8 @@ hqDefine("export/js/bootstrap5/export_list", [
                         self.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
                     }
                     $button.enableButton();
-                    $('#modalEnableDisableAutoRefresh-' + self.id() + '-' + self.emailedExport.groupId()).modal('hide');  /* todo B5: plugin:modal */
+                    const modalId = 'modalEnableDisableAutoRefresh-' + self.id() + '-' + self.emailedExport.groupId();
+                    bootstrap.Modal.getInstance('#' + modalId).hide();
                 },
             });
         };
@@ -261,7 +264,9 @@ hqDefine("export/js/bootstrap5/export_list", [
         };
 
         self.updateData = function () {
-            $('#modalRefreshExportConfirm-' + exportId + '-' + self.groupId()).modal('hide');  /* todo B5: plugin:modal */
+            const modalId = 'modalRefreshExportConfirm-' + exportId + '-' + self.groupId();
+            bootstrap.Modal.getInstance('#' + modalId).hide();
+
             self.updatingData(true);
             $.ajax({
                 method: 'POST',
@@ -663,7 +668,7 @@ hqDefine("export/js/bootstrap5/export_list", [
                         if (export_.hasEmailedExport) {
                             export_.emailedExport.pollProgressBar();
                         }
-                        self.$filterModal.modal('hide');  /* todo B5: plugin:modal */
+                        bootstrap.Modal.getInstance(self.$filterModal.get(0)).hide();
                     } else {
                         self.formSubmitErrorMessage(data.error);
                     }
