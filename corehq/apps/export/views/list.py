@@ -996,7 +996,7 @@ class ODataFeedListHelper(ExportListHelper):
         form.fields['model_type'].label = _("Feed Type")
 
         model_type_choices = [
-            ('', _("Select field type")),
+            ('', _("Select feed type")),
         ]
         if self.has_case_export_permissions:
             model_type_choices.append(('case', _('Case')))
