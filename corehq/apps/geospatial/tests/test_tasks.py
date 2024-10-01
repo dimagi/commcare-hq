@@ -7,9 +7,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import INDEX_ES_TASK_HELPER_BASE_KEY
-from corehq.apps.geospatial.management.commands.index_geolocation_case_properties import (
-    _es_case_query,
-)
+from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.tasks import index_es_docs_with_location_props
 from corehq.apps.geospatial.utils import get_celery_task_tracker
@@ -49,7 +47,7 @@ class TestIndexESDocsWithLocationProps(TestCase):
 
     def test_index_docs(self):
         index_es_docs_with_location_props.apply(args=[self.domain])
-        doc_count = _es_case_query(self.domain, self.gps_prop_name).count()
+        doc_count = case_query_for_missing_geopoint_val(self.domain, self.gps_prop_name).count()
         self.assertEqual(doc_count, 0)
         expected_output = {
             'status': None,

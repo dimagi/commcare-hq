@@ -2,6 +2,7 @@ from corehq.util.decorators import serial_task
 
 from corehq.apps.celery import task
 from corehq.apps.geospatial.const import INDEX_ES_TASK_HELPER_BASE_KEY
+from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
 from corehq.apps.geospatial.utils import (
     get_celery_task_tracker,
     CeleryTaskTracker,
@@ -9,7 +10,6 @@ from corehq.apps.geospatial.utils import (
     get_geo_case_property,
 )
 from corehq.apps.geospatial.management.commands.index_geolocation_case_properties import (
-    _es_case_query,
     get_batch_count,
     process_batch,
     DEFAULT_QUERY_LIMIT,
@@ -35,7 +35,7 @@ def index_es_docs_with_location_props(domain):
         return
 
     geo_case_prop = get_geo_case_property(domain)
-    query = _es_case_query(domain, geo_case_prop)
+    query = case_query_for_missing_geopoint_val(domain, geo_case_prop)
     doc_count = query.count()
     if doc_count > MAX_GEOSPATIAL_INDEX_DOC_LIMIT:
         celery_task_tracker.mark_as_error(error_slug='TOO_MANY_CASES')
