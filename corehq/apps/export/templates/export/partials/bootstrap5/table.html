@@ -82,11 +82,10 @@
     <tr>
     {% if has_edit_permissions or allow_bulk_export %}
       <td>
-        <div class="checkbox checkbox-table-cell">  {# todo B5: css:checkbox #}
-          <label>
-            <input type="checkbox"  {# todo B5: css:checkbox #}
-                   data-bind="checked: addedToBulk" />
-          </label>
+        <div class="form-check checkbox-table-cell">
+          <input type="checkbox"
+                 class="form-check-input"
+                 data-bind="checked: addedToBulk" />
         </div>
       </td>
     {% endif %}
@@ -129,16 +128,11 @@
         <!-- ko if: isOData -->
           <!-- ko with: odataFeedUrl -->
           <p>
-            <div class="input-group">
-              <span data-bind="css: {
-                                 'input-group-btn': showLink  {# todo B5: css:input-group-btn #}
-                               },
-                               click: copyLinkRequested">
-                <a class="btn btn-outline-primary btn-sm">
-                  <i class="fa fa-clipboard"></i>
-                  {% trans "Copy OData Feed Link" %}
-                </a>
-              </span>
+            <div data-bind="css: {'input-group': showLink}">
+              <button class="btn btn-outline-primary btn-sm" data-bind="click: copyLinkRequested">
+                <i class="fa fa-clipboard"></i>
+                {% trans "Copy OData Feed Link" %}
+              </button>
               <input data-bind="visible: showLink,
                                 value: url"
                      type="text"
@@ -190,16 +184,11 @@
                     </p>
                     <!-- ko foreach: odataAdditionalFeedUrls -->
                     <p>
-                      <div class="input-group">
-                        <span data-bind="css: {
-                                           'input-group-btn': url.showLink  {# todo B5: css:input-group-btn #}
-                                         },
-                                         click: url.copyLinkRequested">
-                          <a class="btn btn-outline-primary btn-sm">
-                            <i class="fa fa-clipboard"></i>
-                            <span data-bind="text: label"></span>
-                          </a>
-                        </span>
+                      <div data-bind="css: {'input-group': url.showLink}">
+                        <button class="btn btn-outline-primary btn-sm" data-bind="click: url.copyLinkRequested">
+                          <i class="fa fa-clipboard"></i>
+                          <span data-bind="text: label"></span>
+                        </button>
                         <input data-bind="visible: url.showLink,
                                           value: url.url"
                                type="text"
@@ -282,15 +271,9 @@
                 {% trans "Updating Data, please wait..." %}
               </button>
               <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.started()">
-                <div class="progress">  {# todo B5: css:progress #}
-                  <div class="progress-bar progress-bar-striped active"
-                       role="progressbar"
-                       aria-valuemin="0"
-                       aria-valuemax="100"
-                       data-bind="attr: {
-                                    'aria-valuenow': emailedExport.taskStatus.percentComplete(),
-                                    'style': 'width: ' + emailedExport.taskStatus.percentComplete() + '%',
-                                  }">
+                <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-bind="attr: {'aria-valuenow': emailedExport.taskStatus.percentComplete()}">
+                  <div class="progress-bar progress-bar-striped"
+                       data-bind="attr: {style: 'width: ' + emailedExport.taskStatus.percentComplete() + '%'}">
                   </div>
                 </div>
               </div>
@@ -310,17 +293,12 @@
               {% trans "Download" %}
             </a>
             <!-- ko if: isFeed -->
-              <div class="input-group">
+              <div data-bind="css: {'input-group': showLink}">
                 <!-- ko with: feedUrl -->
-                <span data-bind="css: {
-                                   'input-group-btn': showLink  {# todo B5: css:input-group-btn #}
-                                 },
-                                 click: copyLinkRequested">
-                  <a class="btn btn-outline-primary btn-sm">
-                    <i class="fa fa-clipboard"></i>
-                    {% trans "Copy Dashboard Feed Link" %}
-                  </a>
-                </span>
+                <button class="btn btn-outline-primary btn-sm" data-bind="click: copyLinkRequested">
+                  <i class="fa fa-clipboard"></i>
+                  {% trans "Copy Dashboard Feed Link" %}
+                </button>
                 <input data-bind="visible: showLink,
                                   value: url"
                        type="text"
@@ -492,8 +470,8 @@
       </td>
     {% if model_type == "case" %}
       <td>
-        <h4 data-bind="text: case_type" style="display: inline-block;"></h4>  {# todo B5: inline style #}
-        <span data-bind="visible: is_case_type_deprecated" class="badge text-bg-warning" style="display: inline-block;">{% trans "deprecated" %}</span>  {# todo B5: inline style #}
+        <span class="h4" data-bind="text: case_type"></span>
+        <span data-bind="visible: is_case_type_deprecated" class="badge text-bg-warning">{% trans "deprecated" %}</span>
       </td>
     {% endif %}
 
