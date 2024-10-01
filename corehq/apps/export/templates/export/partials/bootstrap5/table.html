@@ -257,7 +257,7 @@
                       class="btn btn-outline-primary btn-sm"
                       data-bind="visible: emailedExport.canUpdateData,
                                  attr: {
-                                   'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()
+                                   'data-bs-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()
                                  }"
                       data-bs-toggle="modal">
                 <i class="fa fa-refresh"></i>
@@ -506,7 +506,7 @@
         <!-- ko if: isLocationSafeForUser() -->
         <a class="btn btn-outline-primary"
            data-bind="attr: {
-                        'data-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
+                        'data-bs-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
                       }"
            data-bs-toggle="modal">
           <span data-bind="visible: !isAutoRebuildEnabled()">
