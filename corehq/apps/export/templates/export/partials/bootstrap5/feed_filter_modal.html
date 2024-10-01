@@ -23,7 +23,7 @@
               </ul>
             </div>
           <!-- /ko -->
-          {% crispy export_filter_form %}  {# todo B5: check crispy #}
+          {% crispy export_filter_form %}
           <div class="alert alert-danger" role="alert" data-bind="visible: formSubmitErrorMessage">
             <span data-bind="text: formSubmitErrorMessage"></span>
             <span data-bind="visible: !formSubmitErrorMessage()">{% trans "There was an unknown error saving the filters" %}</span>
