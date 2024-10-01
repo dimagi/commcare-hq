@@ -78,10 +78,7 @@
           </textarea>
         </div>
         <div class="mb-3"  {# Updated from form-group to mb-3 #}
-             data-bind="css: {
-                            'has-error': hasDisallowedHtmlFormat {# todo B5: css:has-error #}
-                          },
-                          visible: formatOptions.length > 1">
+             data-bind="visible: formatOptions.length > 1">
           <label for="format-select" class="form-label">
             {% trans "Default file type" %}
           </label>
@@ -89,9 +86,10 @@
                   id="format-select"
                   data-bind="options: getFormatOptionValues(),
                              optionsText: getFormatOptionText,
-                             value: export_format">
+                             value: export_format,
+                             css: {'is-invalid': hasDisallowedHtmlFormat}">
           </select>
-          <div class="help-block"
+          <div class="invalid-feedback"
                data-bind="visible: hasDisallowedHtmlFormat">
             {% url "domain_subscription_view" domain as software_plan_url %}
             {% blocktrans %}
