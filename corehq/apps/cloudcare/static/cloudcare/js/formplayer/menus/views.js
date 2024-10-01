@@ -1579,7 +1579,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
-        onDomRefresh: function () {
+        onAttach: function () {
             this.handleSmallScreenChange(cloudcareUtils.smallScreenIsEnabled());
             $('#persistent-menu-container').on('hidden.bs.collapse', function () {
                 sessionStorage.showPersistentMenu = false;
