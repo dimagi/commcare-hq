@@ -38,7 +38,7 @@ def save_as_ndjson(path, data):
 
 def read_ndjson_file(path):
     with open(path, 'r') as file:
-        return [json.loads(line) for line in file.readlines()]
+        return set(json.loads(line) for line in file.readlines())
 
 
 def has_non_v2_form(domain, app, log_file):
@@ -67,14 +67,14 @@ V1_REFERENCES_PATTERN = r"<.*instance\('reports'\)/reports/.*>"
 RE_V1_ALL_REFERENCES = re.compile(f"{V1_FIXTURE_PATTERN}|{V1_REFERENCES_PATTERN}")
 
 
-skip_domains = []
+skip_domains = set()
 
 
 def process():
     try:
         processed_domains = read_ndjson_file(PROCESSED_DOMAINS_PATH)
     except FileNotFoundError:
-        processed_domains = []
+        processed_domains = set()
 
     mobile_ucr_domains = find_domains_with_toggle_enabled(MOBILE_UCR)
 
