@@ -100,6 +100,11 @@ def process():
                     save_in_log(log_file, f"Processing App: {domain}: {app.name}: {app.id}")
                     if not has_non_v2_form(domain, app, log_file):
                         update_app(domain, app, log_file)
+                    else:
+                        save_in_log(
+                            log_file,
+                            f"App contains V1 references and couldn't updated: {domain}: {app.name}: {app.id}",
+                        )
             except Exception as e:
                 save_in_log(log_file, f"Error occurred for {domain}: {str(e)}")
                 save_in_log(log_file, traceback.format_exc())
