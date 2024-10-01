@@ -21,7 +21,7 @@
               {% blocktrans %}If this problem persists, please <a href="#modalReportIssue" data-bs-toggle="modal">Report an Issue</a>.{% endblocktrans %}
             </p>
           </div>
-          {% crispy create_export_form %}  {# todo B5: check crispy #}
+          {% crispy create_export_form %}
           <div class="alert alert-info" data-bind="visible: showHasNoCaseTypes">
             {% blocktrans %}
               This application does not appear to be using
@@ -36,22 +36,27 @@
             <i class="fa-solid fa-triangle-exclamation"></i>
             {% trans "Mislabeled" %}
           </div>
-          <div class="card" data-bind="visible: showSuggestions">  {# todo B5: css:well #}
-            <h4>{% trans "Suggestions" %}</h4>
-            <div data-bind="visible: showAppDoesNotExist">
-              {% trans "These form submissions are tagged as if they belong to an application that doesn't exist." %}
-            </div>
-            <div data-bind="visible: showDuplicate">
-              <p>{% trans "These submissions could belong to one of the following forms:" %}</p>
-              <ul data-bind="foreach: duplicatePossibilities">
-                <ul>
-                  <span data-bind="text: app.name"></span> &gt;
-                  <span data-bind="text: $root.selectedFormName"></span>
-                  <span data-bind="visible: app_deleted">
-                                        {% trans "App was deleted." %}
-                                    </span>
-                  </li>
-                </ul>
+          <div class="card" data-bind="visible: showSuggestions">
+            <div class="card-body">
+              <h5 class="card-title">{% trans "Suggestions" %}</h5>
+              <div class="card-text">
+                <div data-bind="visible: showAppDoesNotExist">
+                  {% trans "These form submissions are tagged as if they belong to an application that doesn't exist." %}
+                </div>
+                <div data-bind="visible: showDuplicate">
+                  <p>{% trans "These submissions could belong to one of the following forms:" %}</p>
+                  <ul data-bind="foreach: duplicatePossibilities">
+                    <ul>
+                      <li>
+                        <span data-bind="text: app.name"></span> &gt;
+                        <span data-bind="text: $root.selectedFormName"></span>
+                        <span data-bind="visible: app_deleted">
+                          {% trans "App was deleted." %}
+                        </span>
+                      </li>
+                    </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>
