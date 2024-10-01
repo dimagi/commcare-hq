@@ -46,7 +46,7 @@ def has_non_v2_form(domain, app, log_file):
         save_in_log(log_file, f"Processing Form: {domain}: {form.name}")
         # The second condition should always be False if the first one is
         # but just as a precaution we check for it
-        if V1_FIXTURE_IDENTIFIER in form.source or re.findall(V1_ALL_REFERENCES, form.source):
+        if V1_FIXTURE_IDENTIFIER in form.source or RE_V1_ALL_REFERENCES.search(form.source):
             save_in_log(log_file, f"App Contains V1 Refs: {domain}: {app.name}")
             return True
     return False
@@ -64,7 +64,7 @@ LOG_FILE = '/home/zandre/cchq/update_to_v2_ucr_script.log'
 V1_FIXTURE_IDENTIFIER = 'src="jr://fixture/commcare:reports'
 V1_FIXTURE_PATTERN = r'<.*src="jr://fixture/commcare:reports.*>'
 V1_REFERENCES_PATTERN = r"<.*instance\('reports'\)/reports/.*>"
-V1_ALL_REFERENCES = f"{V1_FIXTURE_PATTERN}|{V1_REFERENCES_PATTERN}"
+RE_V1_ALL_REFERENCES = re.compile(f"{V1_FIXTURE_PATTERN}|{V1_REFERENCES_PATTERN}")
 
 
 skip_domains = []
