@@ -472,7 +472,7 @@ hqDefine("export/js/bootstrap5/export_list", [
             return false;
         });
 
-        self.BulkExportDelete = function (observable, event) {
+        self.BulkExportDelete = function () {
             var count = self.bulkExportDownloadCount;
             self.panels().forEach(panel => panel.isBulkDeleting(true));
             var bulkDelete = function () {
