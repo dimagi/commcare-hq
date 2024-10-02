@@ -31,7 +31,7 @@ from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import LogoForSystemEmailsReference
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
-from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.registration.models import RegistrationRequest, SelfSignupWorkflow
 from corehq.apps.registration.tasks import send_domain_registration_email
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.util.view_utils import absolute_reverse
@@ -106,7 +106,7 @@ def activate_new_user(
     return new_user
 
 
-def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False):
+def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False, is_self_signup=False):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user, strict=True)
 
@@ -160,6 +160,9 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
             })
             new_domain.delete()
             raise ErrorInitializingDomain(f"Subscription setup failed for '{name}'")
+
+        if is_self_signup:
+            SelfSignupWorkflow.objects.create(domain=new_domain.name, initiating_user=current_user.username)
 
     initialize_domain_with_default_roles(new_domain.name)
 

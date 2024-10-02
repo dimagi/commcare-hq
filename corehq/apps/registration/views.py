@@ -172,7 +172,8 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 request_new_domain(
                     self.request,
                     reg_form.cleaned_data['project_name'],
-                    is_new_user=True
+                    is_new_user=True,
+                    is_self_signup=False  # TODO: connect this to RegisterWebUserForm
                 )
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
