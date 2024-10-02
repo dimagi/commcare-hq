@@ -55,7 +55,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     };
 
     // This replaces createDateRangePicker in hqwebapp/js/daterangepicker.config
-    let createDateRangePicker = function (el, separator) {
+    let createDateRangePicker = function (el, separator, start, end) {
         let picker = new tempusDominus.TempusDominus(
             el, {
                 dateRange: true,
@@ -76,6 +76,12 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 }),
             }
         );
+
+        if (start && end) {
+            picker.dates.setValue(new tempusDominus.DateTime(start), 0);
+            picker.dates.setValue(new tempusDominus.DateTime(end), 1);
+        }
+
 
         // Handle single-date ranges
         picker.subscribe("hide.td", function () {
