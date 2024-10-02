@@ -1,6 +1,7 @@
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from http import HTTPStatus
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
@@ -14,6 +15,7 @@ from freezegun import freeze_time
 from nose.tools import assert_in, assert_raises
 
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.util.test_utils import _create_case
 
 from ..const import (
@@ -27,6 +29,7 @@ from ..const import (
     State,
 )
 from ..models import (
+    HTTP_STATUS_4XX_RETRY,
     FormRepeater,
     Repeater,
     RepeatRecord,
@@ -390,6 +393,75 @@ class AttemptsTests(RepeaterTestCase):
             self.assertEqual(len(self.repeat_record.attempts), 2)
         with self.assertNumQueries(0):
             self.assertEqual(len(self.repeat_record.attempts), 2)
+
+
+class TestRepeaterHandleResponse(RepeaterTestCase):
+
+    @contextmanager
+    def repeat_record(self):
+        repeat_record = self.repeater.repeat_records.create(
+            domain=DOMAIN,
+            payload_id='eggs',
+            registered_at=timezone.now(),
+        )
+        try:
+            yield repeat_record
+        finally:
+            repeat_record.delete()
+
+    def test_handle_response_success(self):
+        resp = RepeaterResponse(
+            status_code=200,
+            reason='OK',
+            text='<h1>Hello World</h1>',
+        )
+        with self.repeat_record() as repeat_record:
+            self.repeater.handle_response(resp, repeat_record)
+            self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
+
+    def test_handle_response_server_failure(self):
+        resp = RepeaterResponse(
+            status_code=504,
+            reason='Gateway Timeout',
+        )
+        with self.repeat_record() as repeat_record:
+            self.repeater.handle_response(resp, repeat_record)
+            self.assertEqual(repeat_record.state, RECORD_FAILURE_STATE)
+
+    def test_handle_4XX_retry_codes(self):
+        for status_code in HTTP_STATUS_4XX_RETRY:
+            resp = RepeaterResponse(
+                status_code=status_code,
+                reason='Retry',
+            )
+            with self.repeat_record() as repeat_record:
+                self.repeater.handle_response(resp, repeat_record)
+                self.assertEqual(repeat_record.state, RECORD_FAILURE_STATE)
+
+    def test_handle_4XX_invalid_payload(self):
+        for http_status in HTTPStatus:
+            if (
+                400 <= http_status.value < 500
+                and http_status not in HTTP_STATUS_4XX_RETRY
+            ):
+                resp = RepeaterResponse(
+                    status_code=http_status.value,
+                    reason='Invalid Payload',
+                )
+                with self.repeat_record() as repeat_record:
+                    self.repeater.handle_response(resp, repeat_record)
+                    self.assertEqual(repeat_record.state, RECORD_INVALIDPAYLOAD_STATE)
+
+    def test_handle_5XX_retry(self):
+        for http_status in HTTPStatus:
+            if 500 <= http_status.value < 600:
+                resp = RepeaterResponse(
+                    status_code=http_status.value,
+                    reason='Invalid Payload',
+                )
+                with self.repeat_record() as repeat_record:
+                    self.repeater.handle_response(resp, repeat_record)
+                    self.assertEqual(repeat_record.state, RECORD_FAILURE_STATE)
 
 
 class TestConnectionSettingsUsedBy(TestCase):

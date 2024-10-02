@@ -143,6 +143,21 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 
+# Retry responses with these status codes. All other 4XX status codes
+# are treated as InvalidPayload errors.
+HTTP_STATUS_4XX_RETRY = (
+    HTTPStatus.BAD_REQUEST,
+    HTTPStatus.REQUEST_TIMEOUT,
+    HTTPStatus.CONFLICT,
+    HTTPStatus.PRECONDITION_FAILED,
+    HTTPStatus.LOCKED,
+    HTTPStatus.FAILED_DEPENDENCY,
+    HTTPStatus.TOO_EARLY,
+    HTTPStatus.UPGRADE_REQUIRED,
+    HTTPStatus.PRECONDITION_REQUIRED,
+    HTTPStatus.TOO_MANY_REQUESTS,
+)
+
 
 def log_repeater_timeout_in_datadog(domain):
     metrics_counter('commcare.repeaters.timeout', tags={'domain': domain})
@@ -461,19 +476,6 @@ class Repeater(RepeaterSuperProxy):
 
         result may be either a response object or an exception
         """
-        _4XX_retry_codes = (
-            HTTPStatus.BAD_REQUEST,
-            HTTPStatus.REQUEST_TIMEOUT,
-            HTTPStatus.CONFLICT,
-            HTTPStatus.PRECONDITION_FAILED,
-            HTTPStatus.LOCKED,
-            HTTPStatus.FAILED_DEPENDENCY,
-            HTTPStatus.TOO_EARLY,
-            HTTPStatus.UPGRADE_REQUIRED,
-            HTTPStatus.PRECONDITION_REQUIRED,
-            HTTPStatus.TOO_MANY_REQUESTS,
-        )
-
         if isinstance(result, RequestConnectionError):
             repeat_record.handle_timeout(result)
         elif isinstance(result, Exception):
@@ -482,7 +484,7 @@ class Repeater(RepeaterSuperProxy):
             repeat_record.handle_success(result)
         elif not is_response(result) or (
             500 <= result.status_code < 600
-            or result.status_code in _4XX_retry_codes
+            or result.status_code in HTTP_STATUS_4XX_RETRY
         ):
             repeat_record.handle_failure(result)
         else:
