@@ -39,7 +39,7 @@ body {
 }
 
 .has-breadcrumbs #content-plus-persistent-menu-container {
-  height: calc(100vh - #{$cloudcare-nav-height} - $breadcrumb-height-cloudcare);
+  height: calc(100vh - #{$cloudcare-nav-height} - $breadcrumb-height);
 }
 
 #sidebar-and-content.remove-padding-on-mobile {
