@@ -1,4 +1,5 @@
 import dataclasses
+import doctest
 import json
 import uuid
 from datetime import datetime, timedelta
@@ -6,8 +7,8 @@ from unittest.mock import Mock, patch
 
 from django.test import TestCase
 
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.mock import CaseBlock, CaseFactory
+
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
@@ -19,9 +20,10 @@ from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.models.cases import FormSubmissionDetail
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.expression.repeaters import (
-    CaseExpressionRepeater,
+    MAX_REPEATER_CHAIN_LENGTH,
     ArcGISFormExpressionRepeater,
-    FormExpressionRepeater, MAX_REPEATER_CHAIN_LENGTH,
+    CaseExpressionRepeater,
+    FormExpressionRepeater,
 )
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.util.test_utils import flag_enabled, generate_cases
@@ -464,3 +466,10 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
             'f': 'json',
             'token': ''
         }
+
+
+def test_doctests():
+    import corehq.motech.repeaters.expression.repeaters as module
+
+    results = doctest.testmod(module)
+    assert results.failed == 0
