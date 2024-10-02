@@ -70,3 +70,9 @@ $persistent-menu-image-size: 3rem;
     background-color: darken($cc-bg, 5);
   }
 }
+
+@media print {
+  #persistent-menu-region {
+    display: none;
+  }
+}
