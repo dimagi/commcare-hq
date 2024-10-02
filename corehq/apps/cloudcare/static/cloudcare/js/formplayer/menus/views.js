@@ -616,6 +616,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, false, true);
             }
         },
+        onAttach: function () {
+            $('.case-tile-container').css('margin-bottom', '12px');
+        },
+        onDetach: function () {
+            $('.case-tile-container').css('margin-bottom', '0px');
+        },
     });
 
     const CaseListViewUI = function () {
