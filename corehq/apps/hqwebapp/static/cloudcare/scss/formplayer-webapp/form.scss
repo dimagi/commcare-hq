@@ -30,6 +30,7 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
 
   .sticky-submit {
     position: sticky;
+    bottom: 0;
     /* Puts the anchored submit button in front of form elements that use bootstrap's .form-control,
        which adds z-index of 2 (3 when focused) */
     z-index: $zindex-formplayer-anchored-submit;
@@ -94,6 +95,12 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
     border-top-right-radius: 0px;
   }
 
+}
+
+.has-debugger {
+  .sticky-submit {
+    bottom: $minimized-debugger-height;
+  }
 }
 
 .form-group-required-label {

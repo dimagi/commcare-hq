@@ -67,14 +67,13 @@ hqDefine("cloudcare/js/form_entry/utils", [
             ko.cleanNode($div[0]);
             $div.koApplyBindings(form);
 
-            if ($debug.length) {
+            if ($debug.length && !cloudcareUtils.smallScreenIsEnabled()) {
                 cloudCareDebugger = new CloudCareDebugger({
                     baseUrl: formJSON.xform_url,
                     formSessionId: formJSON.session_id,
                     username: formJSON.username,
                     restoreAs: formJSON.restoreAs,
                     domain: formJSON.domain,
-                    smallScreenIsEnabled: cloudcareUtils.smallScreenIsEnabled(),
                 });
                 ko.cleanNode($debug[0]);
                 $debug.koApplyBindings(cloudCareDebugger);

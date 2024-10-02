@@ -143,6 +143,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         $('#sidebar-and-content').removeClass('remove-padding-on-mobile');
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
+        $('#cloudcare-main').removeClass('has-debugger');
         $('.atwho-container').remove();
         bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
         sessionStorage.removeItem('collapsedIx');
@@ -398,11 +399,6 @@ hqDefine("cloudcare/js/formplayer/app", [
                 $('.last').removeClass('last');
             }
         );
-
-        self.smallScreenListener = CloudcareUtils.smallScreenListener(smallScreenEnabled => {
-            $.publish('smallScreenIsEnabled', smallScreenEnabled);
-        });
-        self.smallScreenListener.listen();
     });
 
     FormplayerFrontend.on('configureDebugger', function () {
@@ -431,7 +427,6 @@ hqDefine("cloudcare/js/formplayer/app", [
                 tabs: [
                     TabIDs.EVAL_XPATH,
                 ],
-                smallScreenIsEnabled: CloudcareUtils.smallScreenIsEnabled(),
             });
             ko.cleanNode($debug[0]);
             $debug.koApplyBindings(cloudCareDebugger);

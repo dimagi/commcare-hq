@@ -464,8 +464,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
         self.isAnchoredSubmitStyle = toggles.toggleEnabled('WEB_APPS_ANCHORED_SUBMIT');
-        self.isAppPreview = UsersModels.getCurrentUser().isAppPreview;
-        self.smallScreenIsEnabled = cloudcareUtils.smallScreenIsEnabled();
 
         self.currentIndex = ko.observable("0");
         self.atLastIndex = ko.observable(false);

@@ -45,10 +45,7 @@
       <div id="submit-button" class="form-actions noprint-sub-container"
            data-bind="
               visible: showSubmitButton,
-              css: { 'sticky-submit': isAnchoredSubmitStyle },
-              style: {
-                'bottom':isAnchoredSubmitStyle && !isAppPreview && !smallScreenIsEnabled && {{ request.couch_user.can_edit_data|yesno:'true,false' }}? '30px' : '0' {# data preview bar #}
-              }"
+              css: { 'sticky-submit': isAnchoredSubmitStyle }"
       >
         <div class="col-12 text-center submit">
           <button class="submit btn btn-primary"
