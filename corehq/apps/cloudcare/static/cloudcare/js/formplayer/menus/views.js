@@ -1555,8 +1555,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 $('#persistent-menu-container').removeClass(containerDesktopClasses + ' show');
                 $('#persistent-menu-container').addClass(containerMobileClasses);
                 $('#persistent-menu-arrow-toggle').attr('aria-expanded', false);
-                $('#close-button').removeAttr('data-bs-toggle');
-                $('#close-button').attr('data-bs-dismiss', offcanvas);
+                $('#persistent-menu-close-button').removeAttr('data-bs-toggle');
+                $('#persistent-menu-close-button').attr('data-bs-dismiss', offcanvas);
                 $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', offcanvas);
             } else {
                 $('#persistent-menu-container').removeClass(containerMobileClasses);
@@ -1565,8 +1565,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     $('#persistent-menu-container').addClass('show');
                 }
                 $('#persistent-menu-arrow-toggle').attr('aria-expanded', true);
-                $('#close-button').removeAttr('data-bs-dismiss');
-                $('#close-button').attr('data-bs-toggle', collapse);
+                $('#persistent-menu-close-button').removeAttr('data-bs-dismiss');
+                $('#persistent-menu-close-button').attr('data-bs-toggle', collapse);
                 $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', collapse);
             }
         },
