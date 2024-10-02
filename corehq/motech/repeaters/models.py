@@ -462,6 +462,7 @@ class Repeater(RepeaterSuperProxy):
         result may be either a response object or an exception
         """
         _4XX_retry_codes = (
+            HTTPStatus.BAD_REQUEST,
             HTTPStatus.REQUEST_TIMEOUT,
             HTTPStatus.CONFLICT,
             HTTPStatus.PRECONDITION_FAILED,
