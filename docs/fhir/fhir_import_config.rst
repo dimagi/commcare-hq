@@ -58,14 +58,6 @@ Types, and click "Add FHIR Import Resource Type".
 Select the FHIR Import Config, set the name of the FHIR resource type,
 and select the case type.
 
-.. note::
-    The resource types you can import are not limited to the resource
-    types that can be managed using the Data Dictionary. But if you want
-    to send the same resources back to FHIR when they are modified in
-    CommCare, then you will either need to stick to the Data Dictionary
-    FHIR resource types limitation, or add the resource type you want to
-    the ``FHIR_DATA_TYPES`` const in ``corehq/motech/fhir/const.py``
-
 The "Import related only" checkbox controls that third import strategy
 mentioned earlier.
 
