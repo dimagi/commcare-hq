@@ -365,10 +365,17 @@ def save_copy(request, domain, app_id):
     case_types = get_case_types_for_app_build(domain, app_id)
     deprecated_case_types = get_data_dict_deprecated_case_types(domain)
     used_deprecated_case_types = case_types.intersection(deprecated_case_types)
+    error_html = ''
+    warning_message = _check_app_for_mobile_ucr_v1_refs(domain, app)
+    if warning_message:
+        error_html = render_to_string("app_manager/partials/mobile_ucr_v1_warning.html", {
+            'warning_message': warning_message,
+        })
+
     return JsonResponse({
         "saved_app": copy_json,
         "deprecated_case_types": list(used_deprecated_case_types),
-        "error_html": "",
+        "error_html": error_html,
     })
 
 
