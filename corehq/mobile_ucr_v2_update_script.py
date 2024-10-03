@@ -37,7 +37,7 @@ RE_V1_ALL_REFERENCES = re.compile(f"{V1_FIXTURE_PATTERN}|{V1_REFERENCES_PATTERN}
 skip_domains = set()
 
 
-def process():
+def process(dry_run=False):
     try:
         processed_domains = read_ndjson_file(PROCESSED_DOMAINS_PATH)
     except FileNotFoundError:
@@ -64,7 +64,7 @@ def process():
                 if app.mobile_ucr_restore_version != '2.0':
                     save_in_log(f"Processing App: {domain}: {app.name}: {app.id}")
                     if not has_non_v2_form(domain, app):
-                        update_app(domain, app)
+                        update_app(domain, app, dry_run)
                     else:
                         save_in_log(
                             f"App contains V1 references and couldn't updated: {domain}: {app.name}: {app.id}",
@@ -103,7 +103,8 @@ def has_non_v2_form(domain, app):
     return False
 
 
-def update_app(domain, app):
+def update_app(domain, app, dry_run):
     save_in_log(f"Updating App: {domain}: {app.name}: {app.id}")
-    app.mobile_ucr_restore_version = MOBILE_UCR_VERSION_2
-    app.save()
+    if not dry_run:
+        app.mobile_ucr_restore_version = MOBILE_UCR_VERSION_2
+        app.save()
