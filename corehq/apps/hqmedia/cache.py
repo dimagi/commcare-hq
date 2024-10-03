@@ -21,7 +21,11 @@ class BaseMultimediaStatusCache(object):
         self.processing_id = processing_id
         self.in_celery = False
         self.complete = False
-        self.progress = 0
+        self.progress = {
+            'percent': 0,
+            'current': 0,
+            'total': 1,
+        }
         self.errors = []
         if self.upload_type is None:
             raise NotImplementedError("You need to specify an upload type.")
@@ -29,7 +33,7 @@ class BaseMultimediaStatusCache(object):
     def __str__(self):
         return "Status of process id %(processing_id)s: %(progress)d%%" % {
             'processing_id': self.processing_id,
-            'progress': self.progress,
+            'progress': self.progress['percent'],
         }
 
     def save(self):
@@ -97,8 +101,12 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
         if self.total_files is None:
             raise ValueError("You need to set total_files before you can update progress.")
         self.processed_files = num_files_processed
-        self.progress = int(100 * (self.processed_files / self.total_files))
-        if self.progress >= 100:
+        self.progress = {
+            'percent': int(100 * (self.processed_files / self.total_files)),
+            'current': self.processed_files,
+            'total': self.total_files,
+        }
+        if self.progress['percent'] >= 100:
             self.complete = True
         self.save()
 
