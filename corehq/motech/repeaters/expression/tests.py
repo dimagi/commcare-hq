@@ -1,4 +1,5 @@
 import dataclasses
+import doctest
 import json
 import uuid
 from datetime import datetime, timedelta
@@ -6,8 +7,8 @@ from unittest.mock import Mock, patch
 
 from django.test import TestCase
 
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.mock import CaseBlock, CaseFactory
+
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
@@ -18,10 +19,12 @@ from corehq.apps.userreports.models import UCRExpression
 from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.models.cases import FormSubmissionDetail
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.expression.repeaters import (
-    CaseExpressionRepeater,
+    MAX_REPEATER_CHAIN_LENGTH,
     ArcGISFormExpressionRepeater,
-    FormExpressionRepeater, MAX_REPEATER_CHAIN_LENGTH,
+    CaseExpressionRepeater,
+    FormExpressionRepeater,
 )
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.util.test_utils import flag_enabled, generate_cases
@@ -464,3 +467,45 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
             'f': 'json',
             'token': ''
         }
+
+    def test_send_request_error_handling(self):
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            uuid.uuid4().hex,
+            self._create_case_block(self.case_id),
+        )
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=MockResponse(429, 'Too many requests'),
+        ):
+            # The repeat record is first sent when the payload is registered
+            submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.assertEqual(repeat_record.state, State.Fail)
+
+        arcgis_error_response = MockResponse(200, json.dumps({
+            "error": {
+                "code": 403,
+                "details": [
+                    "You do not have permissions to access this resource or "
+                    "perform this operation."
+                ],
+                "message": "You do not have permissions to access this "
+                           "resource or perform this operation.",
+                "messageCode": "GWM_0003",
+            }
+        }))
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=arcgis_error_response,
+        ):
+            self.repeater.fire_for_record(repeat_record)
+
+        self.assertEqual(repeat_record.state, State.InvalidPayload)
+
+
+def test_doctests():
+    import corehq.motech.repeaters.expression.repeaters as module
+
+    results = doctest.testmod(module)
+    assert results.failed == 0
