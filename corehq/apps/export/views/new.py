@@ -103,7 +103,7 @@ class BaseExportView(BaseProjectDataView):
             'help_text': mark_safe(  # nosec: no user input
                 _("""
                 Learn more about exports on our <a
-                href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview"
+                href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports"
                 target="_blank">Help Site</a>.
             """)),
             'name_label': _("Export Name"),
