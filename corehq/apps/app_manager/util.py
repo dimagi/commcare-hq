@@ -27,6 +27,8 @@ from corehq.apps.app_manager.const import (
     USERCASE_ID,
     USERCASE_PREFIX,
     USERCASE_TYPE,
+    MOBILE_UCR_V1_FIXTURE_IDENTIFIER,
+    MOBILE_UCR_V1_ALL_REFERENCES,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.exceptions import (
@@ -752,3 +754,16 @@ def extract_instance_id_from_nodeset_ref(nodeset):
     if nodeset:
         matches = re.findall(r"instance\('(.*?)'\)", nodeset)
         return matches[0] if matches else None
+
+
+def does_app_have_mobile_ucr_v1_refs(app):
+    re_mobile_ucr_v1_all_refs = re.compile(MOBILE_UCR_V1_ALL_REFERENCES)
+    for form in app.get_forms():
+        # The second condition should always be False if the first one is
+        # but just as a precaution we'll check for it
+        if (
+            MOBILE_UCR_V1_FIXTURE_IDENTIFIER in form.source
+            or re_mobile_ucr_v1_all_refs.search(form.source)
+        ):
+            return True
+    return False
