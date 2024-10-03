@@ -1,6 +1,5 @@
 import logging
 import re
-
 from datetime import datetime
 
 from django.conf import settings
@@ -18,7 +17,6 @@ from django.views.generic.base import TemplateView, View
 
 from memoized import memoized
 
-from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
@@ -34,7 +32,10 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
-from corehq.apps.domain.exceptions import NameUnavailableException, ErrorInitializingDomain
+from corehq.apps.domain.exceptions import (
+    ErrorInitializingDomain,
+    NameUnavailableException,
+)
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
@@ -44,8 +45,8 @@ from corehq.apps.registration.forms import (
     RegisterWebUserForm,
 )
 from corehq.apps.registration.models import (
-    RegistrationRequest,
     AsyncSignupRequest,
+    RegistrationRequest,
 )
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
@@ -55,7 +56,13 @@ from corehq.apps.registration.utils import (
     send_mobile_experience_reminder,
     send_new_request_update_email,
 )
-from corehq.apps.users.models import CouchUser, WebUser, Invitation, EULA_CURRENT_VERSION
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.users.models import (
+    EULA_CURRENT_VERSION,
+    CouchUser,
+    Invitation,
+    WebUser,
+)
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation

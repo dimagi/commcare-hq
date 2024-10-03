@@ -2,17 +2,23 @@ import os
 from unittest import mock
 
 from django.contrib.auth.models import User
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqmedia.models import CommCareImage, LogoForSystemEmailsReference
+from corehq.apps.hqmedia.models import (
+    CommCareImage,
+    LogoForSystemEmailsReference,
+)
 from corehq.apps.hqmedia.views import ViewMultimediaFile
 from corehq.apps.registration.models import SelfSignupWorkflow
-from corehq.apps.registration.utils import request_new_domain, project_logo_emails_context
-from corehq.util.test_utils import flag_enabled
+from corehq.apps.registration.utils import (
+    project_logo_emails_context,
+    request_new_domain,
+)
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_enabled
 from corehq.util.view_utils import absolute_reverse
 
 
