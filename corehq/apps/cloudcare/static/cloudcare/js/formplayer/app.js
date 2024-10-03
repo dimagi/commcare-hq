@@ -140,8 +140,10 @@ hqDefine("cloudcare/js/formplayer/app", [
         FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
         $('#webforms').html("");
         $('.menu-scrollable-container').removeClass("d-none");
+        $('#sidebar-and-content').removeClass('remove-margins-on-mobile');
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
+        $('#cloudcare-main').removeClass('has-debugger');
         $('.atwho-container').remove();
         bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
         sessionStorage.removeItem('collapsedIx');
@@ -306,6 +308,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
         $('.menu-scrollable-container').addClass("d-none");
+        $('#sidebar-and-content').addClass('remove-margins-on-mobile');
     });
 
     FormplayerFrontend.on("start", function (model, options) {
