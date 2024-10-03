@@ -416,6 +416,9 @@ def revert_to_copy(request, domain, app_id):
     copy = get_app(domain, request.POST['build_id'])
     if copy.get_doc_type() == 'LinkedApplication' and app.get_doc_type() == 'Application':
         copy = copy.convert_to_application()
+    warning_message = _check_app_for_mobile_ucr_v1_refs(domain, app=copy)
+    if warning_message:
+        messages.warning(request, warning_message)
     app = app.make_reversion_to_copy(copy)
     app.save()
     messages.success(
