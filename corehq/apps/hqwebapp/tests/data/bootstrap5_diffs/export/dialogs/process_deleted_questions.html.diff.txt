@@ -1,17 +1,24 @@
 --- 
 +++ 
-@@ -3,8 +3,8 @@
- <div class="modal fade" tabindex="-1" role="dialog" id="export-process-deleted-applications">
+@@ -4,9 +4,6 @@
    <div class="modal-dialog" role="document">
      <div class="modal-content">
--      <div class="modal-header">
+       <div class="modal-header">
 -        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-+      <div class="modal-header">  {# todo B5: css:modal-header #}
-+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">  {# todo B5: css:close #}
-           <span aria-hidden="true">&times;</span>
-         </button>
+-          <span aria-hidden="true">&times;</span>
+-        </button>
          <h4 class="modal-title">
-@@ -34,7 +34,7 @@
+           {% if export_instance.type == 'form' %}
+             {% trans "Show Deleted Questions" %}
+@@ -14,6 +11,7 @@
+             {% trans "Show Deleted Properties" %}
+           {% endif %}
+         </h4>
++        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+       </div>
+       <div class="modal-body">
+         <p>
+@@ -34,7 +32,7 @@
            {% trans "Unable to process applications. Please report an issue if this persists" %}
          </p>
          <div class="spacer"></div>
@@ -20,7 +27,7 @@
            <div class="progress-bar" role="progressbar" data-bind="
                style: {
                    width: buildSchemaProgress() + '%'
-@@ -43,7 +43,7 @@
+@@ -43,7 +41,7 @@
          </div>
        </div>
        <div class="modal-footer">
