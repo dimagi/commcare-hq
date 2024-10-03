@@ -220,9 +220,7 @@ class ArcGISFormExpressionRepeater(FormExpressionRepeater):
 
     def send_request(self, repeat_record, payload):
         response = super().send_request(repeat_record, payload)
-        if not is_success_response(response):
-            return response
-        if 'error' in response.json():
+        if is_success_response(response) and 'error' in response.json():
             # It _looks_ like a success response, but it's an error. :/
             return self._error_response(response.json())
         return response
