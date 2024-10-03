@@ -3,8 +3,7 @@
 <div data-bind="attr: {id: 'bulk-delete-export-modal'}" class="modal fade">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header" style="color:black;">  {# todo B5: css:modal-header, inline style #}
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css:close #}
+      <div class="modal-header">
         <h4 class="modal-title">
           <!-- ko if: isOData || isFeed -->
             <!-- ko if: isMultiple -->
@@ -27,8 +26,9 @@
             <!-- /ko -->
           <!-- /ko -->
         </h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
       </div>
-      <div class="modal-body" style="color:black;">  {# todo B5: inline style #}
+      <div class="modal-body">
         <p>
           <!-- ko if: isOData || isFeed -->
             <!-- ko if: isMultiple -->
