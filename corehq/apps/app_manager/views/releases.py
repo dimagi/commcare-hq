@@ -276,6 +276,10 @@ def release_build(request, domain, app_id, saved_app_id):
     saved_app = get_app(domain, saved_app_id)
     if saved_app.copy_of != app_id:
         raise Http404
+    if is_released:
+        error_message = _check_app_for_mobile_ucr_v1_refs(domain, saved_app)
+        if error_message:
+            return json_response({'error': error_message})
     saved_app.is_released = is_released
     saved_app.last_released = datetime.datetime.utcnow() if is_released else None
     saved_app.is_auto_generated = False
