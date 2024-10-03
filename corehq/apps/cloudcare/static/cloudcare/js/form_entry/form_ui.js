@@ -10,6 +10,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/entries',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/form_entry/utils',
     'jquery-tiny-pubsub/dist/ba-tiny-pubsub',       // $.pubsub
 ], function (
@@ -23,6 +24,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     cloudcareUtils,
     constants,
     entries,
+    UsersModels,
     formEntryUtils
 ) {
     var groupNum = 0;
