@@ -16,8 +16,8 @@ The following steps outline the migration process on a per entry point basis.
 As a reminder, Entry Points are modules that are included directly on a page using a bundler template tag,
 like the ones listed below. We want to migrate the RequireJS entry points to Webpack entry points:
 
- - ``requirejs_main_b5`` to ``webpack_main``
- - ``requirejs_main`` to ``webpack_main_b3``
+ - ``requirejs_main_b5`` to ``js_entry``
+ - ``requirejs_main`` to ``js_entry_b3``
 
 Entry points are the modules that the bundler (RequireJS or Webpack) uses to build a dependency graph so
 that it knows what bundle of javascript dependencies and page-specific code is needed to render that page.
@@ -44,11 +44,11 @@ Bootstrap 5 Entry Points
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the ``case_importer/js/main`` example from Step 1, we can update the ``requirejs_main_b5`` template tag
-to ``webpack_main``, so that the final usage looks like:
+to ``js_entry``, so that the final usage looks like:
 
 ::
 
-    {% webpack_main "case_importer/js/main" %}
+    {% js_entry "case_importer/js/main" %}
 
 Then, in the file itself, we add the ``commcarehq`` dependency to the list of dependencies:
 
@@ -76,11 +76,11 @@ Bootstrap 3 Entry Points
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the ``domain/js/my_project_settings`` example from Step 1, we can update the ``requirejs_main``
-tag to ``webpack_main_b3``, so that the final usage looks like:
+tag to ``js_entry_b3``, so that the final usage looks like:
 
 ::
 
-    {% webpack_main_b3 "domain/js/my_project_settings" %}
+    {% js_entry_b3 "domain/js/my_project_settings" %}
 
 Then, in the file itself, we add the ``commcarehq_b3`` dependency to the list of dependencies:
 
