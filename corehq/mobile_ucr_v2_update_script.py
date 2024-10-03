@@ -34,40 +34,6 @@ V1_FIXTURE_PATTERN = r'<.*src="jr://fixture/commcare:reports.*>'
 V1_REFERENCES_PATTERN = r"<.*instance\('reports'\)/reports/.*>"
 RE_V1_ALL_REFERENCES = re.compile(f"{V1_FIXTURE_PATTERN}|{V1_REFERENCES_PATTERN}")
 
-
-def save_in_log(data):
-    print(data)
-    with open(LOG_FILE, 'a') as file:
-        file.write(data + '\n')
-
-
-def save_as_ndjson(path, data):
-    with open(path, 'a') as file:
-        print(json.dumps(data, separators=(',', ':')), file=file)
-
-
-def read_ndjson_file(path):
-    with open(path, 'r') as file:
-        return set(json.loads(line) for line in file.readlines())
-
-
-def has_non_v2_form(domain, app):
-    for form in app.get_forms():
-        save_in_log(f"Processing Form: {domain}: {form.name}")
-        # The second condition should always be False if the first one is
-        # but just as a precaution we check for it
-        if V1_FIXTURE_IDENTIFIER in form.source or RE_V1_ALL_REFERENCES.search(form.source):
-            save_in_log(f"App Contains V1 Refs: {domain}: {app.name}")
-            return True
-    return False
-
-
-def update_app(domain, app):
-    save_in_log(f"Updating App: {domain}: {app.name}: {app.id}")
-    app.mobile_ucr_restore_version = MOBILE_UCR_VERSION_2
-    app.save()
-
-
 skip_domains = set()
 
 
@@ -108,3 +74,36 @@ def process():
                 save_in_log(traceback.format_exc())
                 continue
         save_as_ndjson(PROCESSED_DOMAINS_PATH, domain)
+
+
+def save_in_log(data):
+    print(data)
+    with open(LOG_FILE, 'a') as file:
+        file.write(data + '\n')
+
+
+def save_as_ndjson(path, data):
+    with open(path, 'a') as file:
+        print(json.dumps(data, separators=(',', ':')), file=file)
+
+
+def read_ndjson_file(path):
+    with open(path, 'r') as file:
+        return set(json.loads(line) for line in file.readlines())
+
+
+def has_non_v2_form(domain, app):
+    for form in app.get_forms():
+        save_in_log(f"Processing Form: {domain}: {form.name}")
+        # The second condition should always be False if the first one is
+        # but just as a precaution we check for it
+        if V1_FIXTURE_IDENTIFIER in form.source or RE_V1_ALL_REFERENCES.search(form.source):
+            save_in_log(f"App Contains V1 Refs: {domain}: {app.name}")
+            return True
+    return False
+
+
+def update_app(domain, app):
+    save_in_log(f"Updating App: {domain}: {app.name}: {app.id}")
+    app.mobile_ucr_restore_version = MOBILE_UCR_VERSION_2
+    app.save()
