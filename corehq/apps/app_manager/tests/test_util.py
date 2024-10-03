@@ -7,7 +7,6 @@ from corehq.apps.app_manager.models import (
     BuildProfile,
     GlobalAppConfig,
     LatestEnabledBuildProfiles,
-    Module,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
