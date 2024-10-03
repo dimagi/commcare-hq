@@ -127,7 +127,7 @@ def make_data_attribute_renames(line, spec):
     return _do_rename(
         line,
         spec['data_attribute_renames'],
-        lambda x: r"([\n }])(" + x + r")(=[\"\'])",
+        lambda x: r"([\n }\"\'])(" + x + r")([\"\']?[=:]\s*[\"\'])",
         lambda x: r"\1" + spec['data_attribute_renames'][x] + r"\3"
     )
 

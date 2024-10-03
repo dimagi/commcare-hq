@@ -2516,50 +2516,6 @@ msgid "Current"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Sharing Options"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "License"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, No Derivatives"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial, and Share Alike"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial, and No Derivatives"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Share Alike"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Author"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Enter the name of the author."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attribution Notes"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Begin Upload"
 msgstr ""
 
@@ -3245,21 +3201,6 @@ msgstr ""
 msgid "Search Attendance Takers"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/bootstrap3/download_data_files.js
-#: corehq/apps/export/static/export/js/bootstrap5/download_data_files.js
-msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/bootstrap3/download_data_files.js
-#: corehq/apps/export/static/export/js/bootstrap5/download_data_files.js
-msgid "Data file URL copied to clipboard."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/bootstrap3/download_data_files.js
-#: corehq/apps/export/static/export/js/bootstrap5/download_data_files.js
-msgid "Data file deleted."
-msgstr ""
-
 #: corehq/apps/export/static/export/js/bootstrap3/download_export.js
 #: corehq/apps/export/static/export/js/bootstrap5/download_export.js
 msgid "Sorry, there was a problem reaching the server. Please try again."
@@ -3404,6 +3345,18 @@ msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js
 msgid "There is an issue communicating with the server at this time."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/download_data_files.js
+msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/download_data_files.js
+msgid "Data file URL copied to clipboard."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/download_data_files.js
+msgid "Data file deleted."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js

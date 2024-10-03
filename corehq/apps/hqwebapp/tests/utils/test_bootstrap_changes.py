@@ -79,6 +79,15 @@ def test_make_data_attribute_renames_bootstrap5():
     eq(renames, ['renamed data-toggle to data-bs-toggle'])
 
 
+def test_ko_make_data_attribute_renames_bootstrap5():
+    line = """        data-bind="attr: {'data-target': '#modalGroup-' + id()}"\n"""
+    final_line, renames = make_data_attribute_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """        data-bind="attr: {'data-bs-target': '#modalGroup-' + id()}"\n""")
+    eq(renames, ['renamed data-target to data-bs-target'])
+
+
 def test_make_javascript_dependency_renames():
     line = """        "hqwebapp/js/bootstrap3/widgets",\n"""
     final_line, renames = make_javascript_dependency_renames(
