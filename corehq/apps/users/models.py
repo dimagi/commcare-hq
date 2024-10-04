@@ -2736,9 +2736,8 @@ class Invitation(models.Model):
     domain = models.CharField(max_length=255)
     role = models.CharField(max_length=100, null=True, blank=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True, blank=True)   # couch id of a Program
-    supply_point = models.CharField(max_length=126, null=True, blank=True)  # couch id of a Location
     primary_location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
-                                 to_field='location_id', null=True, blank=True)  # to replace supply_point
+                                 to_field='location_id', null=True, blank=True)
     assigned_locations = models.ManyToManyField("locations.SQLLocation", symmetrical=False,
                                                 related_name='invitations')
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
