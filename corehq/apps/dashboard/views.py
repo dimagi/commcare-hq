@@ -25,6 +25,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import (
@@ -61,6 +62,7 @@ def dashboard_tile_total(request, domain, slug):
     return json_response({'total': tile.paginator.total})
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(always_allow_project_access, name='dispatch')
 @location_safe
 class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView, DomainViewMixin):

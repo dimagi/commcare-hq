@@ -1,3 +1,4 @@
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -10,10 +11,7 @@ from couchforms.analytics import (
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
-from corehq.apps.hqwebapp.utils.translation import (
-    format_html_lazy,
-    mark_safe_lazy,
-)
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.reports.analytics.couchaccessors import (
     get_all_form_definitions_grouped_by_app_and_xmlns,
     get_all_form_details,
@@ -89,7 +87,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     css_class = "span5"
     drilldown_empty_text = gettext_lazy("You don't have any applications set up, so there are no forms "
                                         "to choose from. Please create an application!")
-    template = "reports/filters/form_app_module_drilldown.html"
+    template = "reports/filters/bootstrap3/form_app_module_drilldown.html"
     unknown_slug = "unknown"
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True
@@ -620,10 +618,10 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
     default_text = gettext_lazy("Completion Time")
 
     def _generate_help_message():
-        completion_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+        completion_help = mark_safe(gettext_lazy(  # nosec: no user input
             "<strong>Completion</strong> time is when the form is completed on the phone."))
 
-        submission_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+        submission_help = mark_safe(gettext_lazy(  # nosec: no user input
             "<strong>Submission</strong> time is when {hq_name} receives the form.".format(
                 hq_name=commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME'])))
 

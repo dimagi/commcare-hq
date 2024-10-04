@@ -70,6 +70,7 @@ class SessionUtilsTest(TestCase):
 
     def test_load_session_data_for_web_user(self):
         user = WebUser.create(None, 'web-user@example.com', '123', None, None)
+        self.addCleanup(user.delete, None, None)
         data = get_user_contributions_to_touchforms_session('cloudcare-tests', user)
         self.assertEqual('web-user@example.com', data['username'])
         self.assertEqual(user._id, data['user_id'])

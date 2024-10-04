@@ -62,4 +62,4 @@ def zapier_subscription_post_delete(sender, instance, *args, **kwargs):
         raise ImmediateHttpResponse(
             HttpBadRequest('The passed event type is not valid.')
         )
-    repeater.delete()
+    repeater.retire()

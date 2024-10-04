@@ -240,7 +240,7 @@ class GetInfoForColumnsTests(TestCase):
         self.dataset_map.save()
         with tempdir() as tmp:
             call_command('populate_sqldatasetmap', log_path=tmp)
-            Command.discard_resume_state()
+            Command.discard_resume_state(verify_only=False)
         self.sqldataset_map = SQLDataSetMap.objects.get(
             domain=self.domain,
             couch_id=self.dataset_map._id,

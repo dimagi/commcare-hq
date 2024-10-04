@@ -449,6 +449,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     ga_opt_out = BooleanProperty(default=False)
     orphan_case_alerts_warning = BooleanProperty(default=False)
 
+    # For domains that have been migrated to a different environment
+    redirect_url = StringProperty()
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc

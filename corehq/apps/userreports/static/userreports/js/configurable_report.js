@@ -1,8 +1,9 @@
 hqDefine("userreports/js/configurable_report", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
-    if (typeof define === 'function' && define.amd || window.USE_REQUIREJS) {
-        throw new Error("This part of UCR is not yet migrated to RequireJS. Update the UCR logic in reports/js/standard_hq_report before removing this error.");
+    if (typeof define === 'function' && define.amd || (window.USE_REQUIREJS || window.USE_WEBPACK)) {
+        throw new Error("This part of UCR is not yet migrated to a Javascript Bundler (preferably Webpack). " +
+            "Update the UCR logic in reports/js/standard_hq_report before removing this error.");
     }
 
     var getStandardHQReport = function (isFirstLoad) {
@@ -56,7 +57,7 @@ hqDefine("userreports/js/configurable_report", function () {
                 enddate: initialPageData.get('enddate'),
             };
         }
-        var standardHQReport = hqImport("reports/js/hq_report").hqReport(reportOptions);
+        var standardHQReport = hqImport("reports/js/bootstrap3/hq_report").hqReport(reportOptions);
         standardHQReport.init();
         return standardHQReport;
     };
@@ -81,7 +82,7 @@ hqDefine("userreports/js/configurable_report", function () {
             defaultConfig.datespan_slug = null;
         }
 
-        var reportConfigModels = hqImport("reports/js/report_config_models"),
+        var reportConfigModels = hqImport("reports/js/bootstrap3/report_config_models"),
             reportConfigsView = reportConfigModels.reportConfigsViewModel({
                 filterForm: $("#paramSelectorForm"),
                 items: initialPageData.get("report_configs"),

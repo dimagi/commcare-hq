@@ -1,0 +1,19 @@
+{% extends "reports/bootstrap3/tabular.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block reporttable %}
+  <table style="width: 30%;" class="table table-bordered">
+    <tbody>
+    <tr>
+      <th>{% trans 'Processed Date' %}</th>
+      <td>{{ messaging_event_date }}</td>
+    </tr>
+    <tr>
+      <th>{% trans 'Event' %}</th>
+      <td>{{ messaging_event_type }}</td>
+    </tr>
+    </tbody>
+  </table>
+  {{ block.super }}
+{% endblock %}

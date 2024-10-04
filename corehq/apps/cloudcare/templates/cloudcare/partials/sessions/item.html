@@ -1,0 +1,22 @@
+{% load hq_shared_tags %}
+
+<script type="text/template" id="session-view-item-template">
+  <td class="module-column module-column-icon">
+    <div class="module-icon-container">
+      <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
+    </div>
+  </td>
+  <td class="module-column module-column-name module-column-name-session">
+    <h3 class="module-heading" role="link" tabindex="0">
+      <b><%- title %></b>
+      <% if (caseName) { %>(<%- caseName %>)<% } %>
+      opened <%- humanDateOpened %>
+    </h3>
+
+  </td>
+  <td class="module-column">
+    <div class="module-delete-control position-relative" role="button" tabindex="0" aria-label="{% trans_html_attr 'Delete form' %}">
+      <i class="fa-regular fa-trash-can module-icon module-delete-icon"></i>
+    </div>
+  </td>
+</script>

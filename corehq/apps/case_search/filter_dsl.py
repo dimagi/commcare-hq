@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass
-from typing import Union, List
+from typing import Union
 
 from django.utils.translation import gettext as _
 from eulxml.xpath import parse as parse_xpath
@@ -10,6 +10,7 @@ from eulxml.xpath.ast import (
     serialize,
 )
 
+import corehq
 from corehq.apps.case_search.const import OPERATOR_MAPPING, COMPARISON_OPERATORS, ALL_OPERATORS
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
@@ -25,18 +26,19 @@ from corehq.apps.case_search.xpath_functions.comparison import property_comparis
 
 @dataclass
 class SearchFilterContext:
-    domain: Union[str, List[str]]  # query domain
+    domain: str
     fuzzy: bool = False
-    request_domain: str = None
+    helper: Union[
+        'corehq.apps.case_search.utils.QueryHelper',
+        'corehq.apps.case_search.utils.RegistryQueryHelper',
+    ] = None
+    profiler: 'corehq.apps.case_search.utils.CaseSearchProfiler' = None
 
     def __post_init__(self):
-        if self.request_domain is None:
-            if isinstance(self.domain, str):
-                self.request_domain = self.domain
-            elif len(self.domain) == 1:
-                self.request_domain = self.domain[0]
-            else:
-                raise ValueError("When domain is a list with more than one item, request_domain cannot be None.")
+        from corehq.apps.case_search.utils import QueryHelper
+        if self.helper is None:
+            self.helper = QueryHelper(self.domain)
+        self.profiler = self.helper.profiler
 
 
 def print_ast(node):
@@ -125,7 +127,7 @@ def build_filter_from_ast(node, context):
     return visit(node)
 
 
-def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=None):
+def build_filter_from_xpath(xpath, *, domain=None, context=None):
     """Given an xpath expression this function will generate an Elasticsearch
     filter"""
     error_message = _(
@@ -133,7 +135,10 @@ def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=Non
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
-    context = SearchFilterContext(query_domain, fuzzy, request_domain)
+    if bool(context) == bool(domain):
+        raise TypeError("build_filter_from_xpath takes either a context or a domain, but not both")
+    if not context:
+        context = SearchFilterContext(domain)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:

@@ -1,15 +1,26 @@
 'use strict';
-/*global Backbone, Sentry */
-
 /**
  *  A menu is implemented as a collection of items. Typically, the user
  *  selects one of these items. The query screen is also implemented as
  *  a menu, where each search field is an item.
  */
-hqDefine("cloudcare/js/formplayer/menus/collections", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
-
+hqDefine("cloudcare/js/formplayer/menus/collections", [
+    'underscore',
+    'backbone',
+    'sentry_browser',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/models',
+    "cloudcare/js/form_entry/web_form_session",
+], function (
+    _,
+    Backbone,
+    Sentry,
+    FormplayerFrontend,
+    Utils,
+    UsersModels,
+    webFormSession
+) {
     function addBreadcrumb(collection, type, data) {
         Sentry.addBreadcrumb({
             category: "formplayer",
@@ -35,6 +46,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'noItemsText',
             'dynamicSearch',
             'metaData',
+            'persistentMenu',
         ],
 
         entityProperties: [
@@ -103,6 +115,10 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                 _.pick(response, ["queryKey", "selections"]),
                 _.identity
             );
+            if (response.locales && !response.tree) {
+                    this.langs = response.locales.slice(1);
+                    webFormSession.applyLangListener();
+                }
             if (response.commands) {
                 _.extend(this, _.pick(response, this.commandProperties));
                 addBreadcrumb(this, "menu", _.extend(sentryData, {

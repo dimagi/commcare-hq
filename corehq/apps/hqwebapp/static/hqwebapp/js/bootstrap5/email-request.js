@@ -26,7 +26,7 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
         self.hasSubmitError = ko.observable(false);
         self.hasSubjectError = ko.observable(false);
         self.hasEmailInputError = ko.observable(false);
-        self.hasRecipientsInputError = ko.observable(false);
+        self.recipientsErrorMessage = ko.observable(null);
 
         self.isRequestReportSubmitting = false;
         self.isReportSent = false;
@@ -48,8 +48,14 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
 
             const emailAddresses = self.recipientEmailsText().replace(/ /g, "").split(",");
             for (const email of emailAddresses) {
-                if (email && !isValidEmail(email)) {
-                    self.hasRecipientsInputError(true);
+                if (!email) {
+                    continue;
+                }
+                if (!isValidEmail(email)) {
+                    self.recipientsErrorMessage(gettext('Incorrect Format'));
+                    return false;
+                } else if (modalId === 'modalSolutionsFeatureRequest' && !isDimagiEmail(email)) {
+                    self.recipientsErrorMessage(gettext('Only Dimagi email addresses can be included'));
                     return false;
                 }
             }
@@ -84,7 +90,7 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
             self.$formElement.resetForm();
             self.cancelBtnEnabled(true);
             self.$submitBtn.changeButtonState('reset');
-            self.hasEmailInputError(false);
+            resetErrors();
         };
 
         function isValidEmail(email) {
@@ -92,11 +98,15 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
             return regex.test(email);
         }
 
+        function isDimagiEmail(email) {
+            return email.endsWith('@dimagi.com');
+        }
+
         function resetErrors() {
             self.hasSubmitError(false);
             self.hasSubjectError(false);
             self.hasEmailInputError(false);
-            self.hasRecipientsInputError(false);
+            self.recipientsErrorMessage(null);
         }
 
         function hqwebappRequestReportBeforeSerialize() {

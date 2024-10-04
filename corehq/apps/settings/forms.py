@@ -44,9 +44,7 @@ class HQPasswordChangeForm(PasswordChangeForm):
 
         super(HQPasswordChangeForm, self).__init__(user, *args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Specify New Password'),
@@ -56,13 +54,11 @@ class HQPasswordChangeForm(PasswordChangeForm):
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
                 'new_password2',
-                hqcrispy.FormActions(
-                    twbscrispy.StrictButton(
-                        _('Change Password'),
-                        css_class='btn-primary',
-                        type='submit',
-                        data_bind="enable: passwordSufficient(), click: submitCheck"
-                    )
+                twbscrispy.StrictButton(
+                    _('Change Password'),
+                    css_class='btn-primary',
+                    type='submit',
+                    data_bind="enable: passwordSufficient(), click: submitCheck"
                 ),
                 css_class='check-password',
             )
@@ -310,12 +306,10 @@ class HQApiKeyForm(forms.Form):
                 crispy.Field('ip_allowlist'),
                 crispy.Field('expiration_date', css_class='date-picker'),
             ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    format_html('<i class="fa fa-plus"></i> {}', _("Generate New API Key")),
-                    css_class='btn btn-primary',
-                    type='submit'
-                )
+            StrictButton(
+                format_html('<i class="fa fa-plus"></i> {}', _("Generate New API Key")),
+                css_class='btn btn-primary',
+                type='submit'
             )
         )
 

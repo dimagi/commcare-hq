@@ -5,11 +5,11 @@ from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
 from memoized import memoized
 
 from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.users.util import raw_username
 from corehq.motech.const import REQUEST_METHODS, REQUEST_POST
@@ -71,23 +71,18 @@ class GenericRepeaterForm(forms.Form):
             )
 
     def _initialize_crispy_layout(self):
-        self.helper = FormHelper(self)
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.offset_class = 'col-sm-offset-3 col-md-offset-2'
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Forwarding Settings',
                 *self.get_ordered_crispy_form_fields()
             ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    self.submit_btn_text,
-                    type="submit",
-                    css_class='btn-primary',
-                )
+            twbscrispy.StrictButton(
+                self.submit_btn_text,
+                type="submit",
+                css_class='btn-primary',
             )
         )
 
@@ -111,8 +106,11 @@ class GenericRepeaterForm(forms.Form):
 class FormRepeaterForm(GenericRepeaterForm):
     include_app_id_param = forms.BooleanField(
         required=False,
-        label="Include 'app_id' URL query parameter.",
-        initial=True
+        label=_(""),
+        initial=True,
+        widget=BootstrapCheckboxInput(
+            inline_label=_("Include 'app_id' URL query parameter."),
+        ),
     )
     user_blocklist = forms.MultipleChoiceField(
         required=False,

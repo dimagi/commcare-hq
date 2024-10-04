@@ -199,10 +199,10 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('repeaters.Repeater', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.RequestLog', SimpleFilter('domain')),
-    # NH (2021-01-08): Including SQLRepeatRecord because we dump (Couch)
+    # NH (2021-01-08): Including RepeatRecord because we dump (Couch)
     # RepeatRecord, but this does not seem like a good idea.
-    FilteredModelIteratorBuilder('repeaters.SQLRepeatRecord', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('repeaters.SQLRepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
+    FilteredModelIteratorBuilder('repeaters.RepeatRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('repeaters.RepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
     FilteredModelIteratorBuilder('saved_reports.ScheduledReportLog', SimpleFilter('domain')),
     UnfilteredModelIteratorBuilder('saved_reports.ScheduledReportsCheckpoint'),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
@@ -235,6 +235,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('events.AttendanceTrackingConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('geospatial.GeoConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('email.EmailSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('dhis2.SQLDataSetMap', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('dhis2.SQLDataValueMap', SimpleFilter('dataset_map__domain')),
 ]]
 
 

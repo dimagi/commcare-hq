@@ -63,11 +63,11 @@ class DomainPillowTest(TestCase):
     def test_reverted_domain_pillow_deletion(self):
         domain_name = 'domain-pillow-delete'
         with drop_connected_signals(commcare_domain_post_save):
-            domain = create_domain(domain_name)
+            domain_obj = create_domain(domain_name)
 
         # send to kafka
         since = get_topic_offset(topics.DOMAIN)
-        publish_domain_saved(domain)
+        publish_domain_saved(domain_obj)
 
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
@@ -77,7 +77,6 @@ class DomainPillowTest(TestCase):
         # verify there
         self._verify_domain_in_es(domain_name)
 
-        domain_obj = Domain.get_by_name(domain_name)
         domain_obj.doc_type = 'Domain-DUPLICATE'
         domain_obj.save()
 
@@ -86,7 +85,6 @@ class DomainPillowTest(TestCase):
         publish_domain_saved(domain_obj)
 
         # undelete
-        domain_obj = Domain.get_by_name(domain_name)
         domain_obj.doc_type = 'Domain'
         domain_obj.save()
 

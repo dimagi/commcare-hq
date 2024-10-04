@@ -24,7 +24,9 @@ from corehq.motech.utils import (
     pformat_json,
     unpack_request_args,
 )
+from corehq.toggles import DECREASE_REPEATER_TIMEOUT
 from corehq.util.metrics import metrics_counter
+from corehq.util.timer import TimingContext
 from corehq.util.urlvalidate.urlvalidate import (
     InvalidURL,
     PossibleSSRFAttempt,
@@ -43,7 +45,8 @@ def log_request(self, func, logger):
         response_headers = {}
         response_body = ''
         try:
-            response = func(method, url, *args, **kwargs)
+            with TimingContext() as timer:
+                response = func(method, url, *args, **kwargs)
             response_status = response.status_code
             response_headers = response.headers
             response_body = response.content
@@ -71,6 +74,7 @@ def log_request(self, func, logger):
                 response_status=response_status,
                 response_headers=response_headers,
                 response_body=response_body,
+                duration=int(timer.duration * 1000) + 1,  # round up
             )
             logger(log_level, entry)
 
@@ -136,7 +140,10 @@ class Requests(object):
         raise_for_status = kwargs.pop('raise_for_status', False)
         if not self.verify:
             kwargs['verify'] = False
-        kwargs.setdefault('timeout', REQUEST_TIMEOUT)
+        request_timeout = REQUEST_TIMEOUT
+        if DECREASE_REPEATER_TIMEOUT.enabled(self.domain_name):
+            request_timeout = 60
+        kwargs.setdefault('timeout', request_timeout)
         if self._session:
             response = self._session.request(method, url, *args, **kwargs)
         else:

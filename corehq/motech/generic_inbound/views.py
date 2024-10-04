@@ -15,6 +15,7 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.decorators import require_permission
@@ -46,6 +47,7 @@ def can_administer_generic_inbound(view_fn):
     )
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(can_administer_generic_inbound, name='dispatch')
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("Inbound API Configurations")
@@ -107,6 +109,7 @@ class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(can_administer_generic_inbound, name='dispatch')
 class ConfigurableAPIEditView(BaseProjectSettingsView):
     page_title = gettext_lazy("Edit API Configuration")
@@ -119,7 +122,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 
     @property
     @memoized
-    def api(self):
+    def configurable_api(self):
         try:
             return ConfigurableAPI.objects.get(domain=self.domain, id=self.api_id)
         except ConfigurableAPI.DoesNotExist:
@@ -131,8 +134,8 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 
     def get_form(self):
         if self.request.method == 'POST':
-            return ConfigurableAPIUpdateForm(self.request, self.request.POST, instance=self.api)
-        return ConfigurableAPIUpdateForm(self.request, instance=self.api)
+            return ConfigurableAPIUpdateForm(self.request, self.request.POST, instance=self.configurable_api)
+        return ConfigurableAPIUpdateForm(self.request, instance=self.configurable_api)
 
     @property
     def main_context(self):
@@ -144,11 +147,11 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
         ]
         main_context.update({
             "form": self.get_form(),
-            "api_model": self.api,
+            "configurable_api": self.configurable_api,
             "filter_expressions": filter_expressions,
             "validations": [
                 validation.to_json()
-                for validation in self.api.validations.all()
+                for validation in self.configurable_api.validations.all()
             ],
             "page_title": self.page_title
         })
@@ -156,7 +159,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 
     def post(self, request, domain, **kwargs):
         form = self.get_form()
-        validation_formset = ApiValidationFormSet(self.request.POST, instance=self.api)
+        validation_formset = ApiValidationFormSet(self.request.POST, instance=self.configurable_api)
         if form.is_valid() and validation_formset.is_valid():
             form.save()
             validation_formset.save()

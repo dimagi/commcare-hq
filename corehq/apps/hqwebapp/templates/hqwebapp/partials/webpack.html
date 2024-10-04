@@ -1,0 +1,11 @@
+{% load hq_shared_tags %}
+
+{% if webpack_main %}
+  <script>
+    window.USE_WEBPACK = {{ webpack_main|BOOL }};
+    console.log("Loaded webpack main module: {{ webpack_main }}");
+  </script>
+  {% for bundle_path in webpack_main|webpack_bundles %}
+    <script src="{% static bundle_path %}"></script>
+  {% endfor %}
+{% endif %}

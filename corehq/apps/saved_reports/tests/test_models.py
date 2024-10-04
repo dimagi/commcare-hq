@@ -81,8 +81,17 @@ class TestReportConfig(TestCase):
         self.assertEqual(self.config.filters.get('startdate'), None)
         self.assertEqual(self.config.filters.get('enddate'), None)
 
+    def test_report_config_for_type_domain_report_is_not_deleted_when_access_dispatcher(self):
+        # The dispatcher property surprisingly deletes the report config when the report type
+        # doesn't match any of the list of dispatcher's prefix
+        config = ReportConfig(report_type='domain_report')
+        config.save()
+        self.addCleanup(config.delete)
+        config._dispatcher
+        self.assertEqual(config.doc_type, 'ReportConfig')
 
-class TestReportNotification(SimpleTestCase):
+
+class TestReportNotification(TestCase):
     def test_unauthorized_user_cannot_view_report(self):
         report = ReportNotification(owner_id='5', domain='test_domain', recipient_emails=[])
         bad_user = self._create_user(id='3', is_domain_admin=False)

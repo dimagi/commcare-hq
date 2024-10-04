@@ -8,6 +8,7 @@
         "badge-warning": "text-bg-warning",
         "badge-info": "text-bg-info",
         "badge-light": "text-bg-light",
+        "hide": "d-none",
         "label": "badge",
         "label-default": "text-bg-secondary",
         "label-primary": "text-bg-primary",
@@ -21,7 +22,7 @@
         "panel-modern-gray": "card-modern-gray",
         "panel-form-only": "card-form-only",
         "panel-heading": "card-header",
-        "panel-default": "card-default",
+        "panel-default": "",
         "panel-info": "text-bg-info",
         "panel-danger": "text-bg-danger",
         "panel": "card",
@@ -66,19 +67,28 @@
         "col-sm-offset-<num>": "offset-md-<num>",
         "col-xs-offset-<num>": "offset-sm-<num>"
     },
+    "template_tag_renames": {
+        "requirejs_main": "requirejs_main_b5"
+    },
     "data_attribute_renames": {
         "data-toggle": "data-bs-toggle",
         "data-target": "data-bs-target",
         "data-dismiss": "data-bs-dismiss"
     },
+    "dependency_renames": {
+        "bootstrap3": "bootstrap5"
+    },
     "flagged_css_changes": [
         "breadcrumb",
+        "checkbox",
         "close",
         "dl-horizontal",
         "dropdown",
         "form-group",
         "form-inline",
         "glyphicon",
+        "has-error",
+        "has-success",
         "input-group-addon",
         "input-group-btn",
         "modal-header",
@@ -95,9 +105,18 @@
     "flagged_js_plugins": [
         "affix",
         "button",
+        "createDateRangePicker",
+        "datetimepicker",
         "modal",
         "popover",
         "tab",
         "tooltip"
+    ],
+    "template_tags_with_dependencies": [
+        "extends",
+        "requirejs_main",
+        "requirejs_main_b5",
+        "static",
+        "include"
     ]
 }

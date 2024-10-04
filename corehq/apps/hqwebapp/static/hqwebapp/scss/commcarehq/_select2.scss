@@ -77,7 +77,7 @@
 .select2-container--default .select2-selection--single,
 .select2-container--default .select2-selection--multiple {
   border-color: $border-color !important;
-  height: 32px !important;
+  min-height: 32px !important;
   border-radius: $input-border-radius !important;
 }
 
@@ -160,11 +160,15 @@
 
 .select2-container--default {
   .select2-selection--single .select2-selection__clear {
-    margin-right: 30px;
+    margin-right: 30px !important;
   }
 }
 
 .select2-container--default.select2-container--disabled .select2-selection--single {
   border-color: $input-disabled-bg !important;
   background-color: $input-disabled-bg !important;
+}
+
+.select2-container--open .select2-dropdown {
+  z-index: $zindex-select2-results;
 }

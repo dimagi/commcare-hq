@@ -23,7 +23,7 @@ class CCUserLocationAssignmentTest(TestCase):
 
         cls.loc1 = make_loc('1', 'loc1', cls.domain)
         cls.loc2 = make_loc('2', 'loc2', cls.domain)
-        cls.loc_ids = [l.location_id for l in [cls.loc1, cls.loc2]]
+        cls.loc_ids = [loc.location_id for loc in [cls.loc1, cls.loc2]]
 
     @classmethod
     def tearDownClass(cls):
@@ -155,7 +155,7 @@ class WebUserLocationAssignmentTest(TestCase):
 
         cls.loc1 = make_loc('1', 'loc1', cls.domain)
         cls.loc2 = make_loc('2', 'loc2', cls.domain)
-        cls.loc_ids = [l.location_id for l in [cls.loc1, cls.loc2]]
+        cls.loc_ids = [loc.location_id for loc in [cls.loc1, cls.loc2]]
 
     @classmethod
     def tearDownClass(cls):
@@ -188,6 +188,19 @@ class WebUserLocationAssignmentTest(TestCase):
         self.assertAssignedLocations(self.loc_ids)
         self.assertPrimaryLocation(self.loc1.location_id)
         self.assertNonPrimaryLocation(self.loc2.location_id)
+
+    def test_no_commit(self):
+        self.user.set_location(self.domain, self.loc1, commit=False)
+        saved_user = WebUser.get(self.user._id)
+        self.assertEqual(saved_user.get_sql_location(self.domain), None)
+
+    def test_reset_locations_doesnt_ovewrite_set_location_uncomitted(self):
+        # Even if the primary location change isn't committed, reset_locations shouldn't overwrite it
+        self.user.set_location(self.domain, self.loc2, commit=False)
+        self.user.reset_locations(self.domain, self.loc_ids, commit=False)
+        self.user.save()
+        saved_user = WebUser.get(self.user._id)
+        self.assertEqual(saved_user.get_sql_location(self.domain).location_id, self.loc2.location_id)
 
     def test_location_append(self):
         self.user.add_to_assigned_locations(self.domain, self.loc1)

@@ -21,6 +21,7 @@ IGNORE_MODELS = {
     "accounting.DomainUserHistory",
     "accounting.Feature",
     "accounting.FeatureRate",
+    "accounting.FormSubmittingMobileWorkerHistory",
     "accounting.Invoice",
     "accounting.InvoiceCommunicationHistory",
     "accounting.LineItem",
@@ -42,6 +43,8 @@ IGNORE_MODELS = {
     "analytics.PartnerAnalyticsDataPoint",
     "analytics.PartnerAnalyticsReport",
     "api.ApiUser",
+    "app_execution.AppWorkflowConfig",
+    "app_execution.AppExecutionLog",
     "app_manager.ExchangeApplication",
     "auth.Group",
     "auth.Permission",
@@ -82,6 +85,7 @@ IGNORE_MODELS = {
     "pillowtop.KafkaCheckpoint",
     "project_limits.DynamicRateDefinition",
     "project_limits.RateLimitedTwoFactorLog",
+    "project_limits.PillowLagGaugeDefinition",
 
     # 'registry' models only make sense across multiple domains
     "registry.DataRegistry",
@@ -120,8 +124,6 @@ UNKNOWN_MODELS = {
     "couchforms.UnfinishedSubmissionStub",
     "data_interfaces.CaseDuplicate",
     "data_interfaces.CaseDuplicateNew",
-    "dhis2.SQLDataSetMap",
-    "dhis2.SQLDataValueMap",
     "fhir.FHIRImportConfig",
     "fhir.FHIRImportResourceProperty",
     "fhir.FHIRImportResourceType",

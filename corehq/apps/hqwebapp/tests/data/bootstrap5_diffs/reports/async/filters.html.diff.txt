@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -4,7 +4,7 @@
+   <legend><span data-bind="text: filterHeadingName">{% trans "Report Filters" %}</span></legend>
+   {% for field in report_filters %}
+     <fieldset id="fieldset_{{ field.slug }}">
+-      <div class="form-group" id="group_{{ field.slug }}">
++      <div class="form-group" id="group_{{ field.slug }}">  {# todo B5: css:form-group #}
+         {{ field.field }}
+       </div>
+     </fieldset>

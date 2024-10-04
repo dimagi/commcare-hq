@@ -113,7 +113,7 @@ class ODataCaseMetadataView(BaseODataView):
 
         metadata = render_to_string('api/odata_metadata.xml', {
             'fields': case_fields,
-            'primary_key': primary_key,
+            'primary_keys': (primary_key,),
         })
         track_partner_access(ACCESS_ODATA, domain)
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
@@ -168,7 +168,7 @@ class ODataFormMetadataView(BaseODataView):
 
         metadata = render_to_string('api/odata_metadata.xml', {
             'fields': form_fields,
-            'primary_key': primary_key,
+            'primary_keys': (primary_key,),
         })
         track_partner_access(ACCESS_ODATA, domain)
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))

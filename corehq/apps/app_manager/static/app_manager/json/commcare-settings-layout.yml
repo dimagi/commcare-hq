@@ -36,7 +36,6 @@
     - properties.logo_android_home
     - properties.logo_android_login
     - properties.logo_android_demo
-    - properties.logo_web_apps
     - hq.auto_gps_capture
     - properties.lazy-load-video-files
     - properties.cc-login-duration-seconds
@@ -50,6 +49,14 @@
     - hq.grid_form_menus
     - hq.target_commcare_flavor
     - features.dependencies  # Required Android apps
+
+- title: 'Web Apps Settings'
+  id: app-settings-web-app
+  collapse: true
+  settings:
+    - properties.logo_web_apps
+    - hq.show_breadcrumbs
+    - hq.persistent_menu
 
 - title: 'Advanced'
   id: app-settings-advanced

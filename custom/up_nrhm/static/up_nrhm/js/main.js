@@ -60,7 +60,7 @@ hqDefine("up_nrhm/js/main", function () {
         var $datespan = $('#filter_range');
         var separator = $datespan.data("separator");
         var reportLabels = $datespan.data("report-labels");
-        var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+        var standardHQReport = hqImport("reports/js/bootstrap3/standard_hq_report").getStandardHQReport();
 
         $('#filter_range').createDateRangePicker(
             reportLabels,

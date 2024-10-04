@@ -193,6 +193,10 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
         filters["role"] = role.get_qualified_id()
 
     invitations = Invitation.by_domain(domain, **filters)
+    if 'web_user_assigned_location_ids' in user_filters.keys():
+        locations_accessible_to_user = SQLLocation.objects.get_locations_and_children(
+            user_filters['web_user_assigned_location_ids'])
+        invitations = invitations.filter(assigned_locations__in=locations_accessible_to_user)
     if count_only:
         return invitations.count()
     return invitations
@@ -219,6 +223,10 @@ def get_all_user_id_username_pairs_by_domain(domain, include_web_users=True, inc
         include_web_users=include_web_users,
         include_mobile_users=include_mobile_users
     ))
+
+
+def get_active_web_usernames_by_domain(domain):
+    return (row['key'][3] for row in get_all_user_rows(domain, include_mobile_users=False, include_inactive=False))
 
 
 def get_web_user_count(domain, include_inactive=True):

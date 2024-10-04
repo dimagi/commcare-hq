@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'reports/v2/js/views/explore_case_data' %}
+{% requirejs_main 'reports/v2/js/views/bootstrap3/explore_case_data' %}
 
 {% block page_sidebar_classes %}sidebar-offcanvas col-xs-12 col-sm-3 col-lg-2{% endblock %}
 
@@ -74,9 +74,9 @@
     {% blocktrans %}
       This feature allows you to quickly explore your case data for ad-hoc data
       queries or to identify unclean data.<br />
-      This is a Feature Preview.
+      This is an Add-On.
     {% endblocktrans %}
-    <a href="https://confluence.dimagi.com/display/commcarepublic/Feature+Previews"
+    <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947412/Add-Ons"
        target="_blank">
       {% trans "Learn more." %}
     </a>

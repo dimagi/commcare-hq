@@ -38,6 +38,7 @@ def has_scheme(url):
     scheme_regex = r'(?:.+:)?//'  # Should match 'http://', 'file://', '//' etc
     return bool(re.match(scheme_regex, url))
 
+
 @deconstructible
 class JSONSchemaValidator:
     """Field level validation for JSONField against a JSON Schema"""
@@ -53,7 +54,7 @@ class JSONSchemaValidator:
         def _extract_errors(_errors):
             for error in _errors:
                 if error.context:
-                    return self._extract_errors(error.context)
+                    return _extract_errors(error.context)
 
                 message = str(error).replace("\n\n", ": ").replace("\n", "")
                 django_errors.append(ValidationError(message))

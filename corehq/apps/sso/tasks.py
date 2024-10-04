@@ -1,20 +1,31 @@
 import datetime
 import logging
+import requests
 
 from celery.schedules import crontab
 
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
+from corehq.apps.sso.exceptions import EntraVerificationFailed, EntraUnsupportedType
+from corehq.apps.sso.models import (
+    IdentityProvider,
+    IdentityProviderProtocol,
+    IdentityProviderType,
+)
 from corehq.apps.sso.utils.context_helpers import (
     get_api_secret_expiration_email_context,
     get_idp_cert_expiration_email_context,
+    get_sso_deactivation_skip_email_context,
 )
+from corehq.apps.sso.utils.entra import MSGraphIssue
+from corehq.apps.sso.utils.user_helpers import convert_emails_to_lowercase
+from corehq.apps.users.models import WebUser
 from corehq.apps.users.models import HQApiKey
 from django.contrib.auth.models import User
 from corehq.sql_db.util import paginate_query
 from django.db import router
 from django.db.models import Q
+from django.utils.translation import gettext as _
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 
@@ -108,6 +119,84 @@ def send_idp_cert_expires_reminder_emails(num_days):
                 f"Failed to send cert reminder email for IdP {idp}: {exc!s}",
                 exc_info=True,
             )
+
+
+@periodic_task(run_every=crontab(minute=0, hour='*/4'), acks_late=True)
+def auto_deactivate_removed_sso_users():
+    for idp in IdentityProvider.objects.filter(
+        enable_user_deactivation=True,
+        idp_type=IdentityProviderType.ENTRA_ID,
+    ).all():
+        try:
+            usernames_in_idp = set(convert_emails_to_lowercase(idp.get_remote_member_usernames()))
+        except EntraVerificationFailed as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
+                                            error=EntraVerificationFailed.error,
+                                            error_description=EntraVerificationFailed.message)
+            continue
+        except requests.exceptions.HTTPError as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.HTTP_ERROR)
+            continue
+        except EntraUnsupportedType as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.UNSUPPORTED_ERROR,
+                                            error_description=e.message)
+            continue
+        except Exception as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.OTHER_ERROR)
+            continue
+
+        # if the Graph Users API returns an empty list of users we will skip auto deactivation
+        if len(usernames_in_idp) == 0:
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.EMPTY_ERROR)
+            continue
+
+        usernames_governed_by_idp = set(idp.get_local_member_usernames())
+
+        # Deactivate user that is not returned by Graph Users API
+        for username in usernames_governed_by_idp:
+            if username not in usernames_in_idp:
+                user = WebUser.get_by_username(username)
+                if user and user.is_active:
+                    user.is_active = False
+                    user.save()
+
+
+def send_deactivation_skipped_email(idp, failure_code, error=None, error_description=None):
+    if failure_code == MSGraphIssue.VERIFICATION_ERROR:
+        failure_reason = _("There was an issue connecting to the Microsoft Graph API. "
+                           f"Error: {error}. Error description: {error_description}")
+    elif failure_code == MSGraphIssue.HTTP_ERROR:
+        failure_reason = _("An HTTP error occured when connecting to the Microsoft Graph API, which usually"
+                           "indicates an issue with Microsoft's servers.")
+    elif failure_code == MSGraphIssue.EMPTY_ERROR:
+        failure_reason = _("We received an empty list of users from your Microsoft Entra ID instance.")
+    elif failure_code == MSGraphIssue.UNSUPPORTED_ERROR:
+        failure_reason = _("We encountered an issue when connecting to your Microsoft Graph API: "
+                           f"{error_description}")
+    elif failure_code == MSGraphIssue.OTHER_ERROR:
+        failure_reason = _("We encountered an unknown issue, please contact Commcare HQ Support.")
+
+    context = get_sso_deactivation_skip_email_context(idp, failure_reason)
+    for send_to in context["to"]:
+        send_html_email_async.delay(
+            context["subject"],
+            send_to,
+            context["html"],
+            text_content=context["plaintext"],
+            email_from=context["from"],
+            bcc=context["bcc"],
+        )
+        log.info(
+            "Sent sso user deactivation skipped notification"
+            "email for %(idp_name)s to %(send_to)s." % {
+                "idp_name": idp.name,
+                "send_to": send_to,
+            }
+        )
 
 
 @task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)

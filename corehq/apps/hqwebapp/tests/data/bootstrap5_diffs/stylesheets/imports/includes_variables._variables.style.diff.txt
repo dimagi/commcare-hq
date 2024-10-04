@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,124 +1,225 @@
+@@ -1,124 +1,230 @@
 -@import "@{b3-import-variables}";
 -
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
@@ -198,7 +198,7 @@
 -@zindex-formplayer-progress:          990;
 -@zindex-cloudcare-debugger:           1005;
 -@zindex-formplayer-scroll-to-bottom:    5;
--@zindex-formplayer-anchored-submit:     2;
+-@zindex-formplayer-anchored-submit:     4;
 -
 -
 -@input-border-radius-large:       5px;
@@ -224,8 +224,8 @@
 +
 +// Base color overrides
 +$blue: #5D70D2;
-+$green: #3FA12A;
-+$red: $dimagi-sunset;
++$green: #358623;
++$red: #E13019;
 +$teal: #01A2A9;
 +$yellow: $dimagi-marigold;
 +$indigo: $dimagi-indigo;
@@ -237,6 +237,7 @@
 +// Grays from default stylesheet — needed for reference
 +$gray-100: #f8f9fa;
 +$gray-200: #e9ecef;
++$gray-400: #ced4da;
 +$gray-600: #6c757d;
 +$gray-800: #343a40;
 +
@@ -271,7 +272,7 @@
 +$body-color: $dark;
 +$link-color: $blue-600;
 +$link-hover-color:$blue-900;
-+$border-color: $gray-200;
++$border-color: $gray-400;
 +
 +// New gradient for salmon
 +
@@ -286,7 +287,7 @@
 +$salmon-900: shade-color($salmon, 80%);
 +
 +
-+// Form Sates
++// Form States
 +
 +$form-feedback-valid-color:         $success;
 +$form-feedback-invalid-color:       $danger;
@@ -330,3 +331,7 @@
 +    "border-color": $dark,
 +  )
 +);
++
++// Make pagination-lg the same height as other lg inputs
++$pagination-padding-x-lg: 1.0rem;
++$pagination-padding-y-lg: 0.5rem;

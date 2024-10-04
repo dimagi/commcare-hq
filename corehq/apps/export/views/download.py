@@ -59,10 +59,9 @@ from corehq.apps.export.models.new import EmailExportWhenDoneRequest, datasource
 from corehq.apps.export.utils import get_export
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
-    get_timezone,
     case_type_or_app_limit_exceeded
 )
-from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_daterangepicker
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
@@ -74,6 +73,7 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import PAGINATED_EXPORTS
+from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import is_ajax
 from corehq.toggles import EXPORT_DATA_SOURCE_DATA
 from corehq.apps.userreports.models import DataSourceConfiguration
@@ -115,7 +115,7 @@ class DownloadExportViewHelper(object):
 
     def get_filter_form(self, filter_form_data):
         domain_object = Domain.get_by_name(self.domain)
-        timezone = get_timezone(self.domain, self.request.couch_user)
+        timezone = get_timezone(self.request, self.domain)
         filter_form = self.filter_form_class(domain_object, timezone, filter_form_data)
 
         if not filter_form.is_valid():
@@ -149,7 +149,7 @@ class SMSDownloadExportViewHelper(DownloadExportViewHelper):
 
 
 class BaseDownloadExportView(BaseProjectDataView):
-    template_name = 'export/download_export.html'
+    template_name = 'export/bootstrap3/download_export.html'
     http_method_names = ['get', 'post']
     show_date_range = False
     check_for_multimedia = False
@@ -179,7 +179,7 @@ class BaseDownloadExportView(BaseProjectDataView):
     @property
     @memoized
     def timezone(self):
-        return get_timezone(self.domain, self.request.couch_user)
+        return get_timezone(self.request, self.domain)
 
     @property
     @memoized
@@ -530,6 +530,7 @@ class DownloadNewDatasourceExportView(BaseProjectDataView):
     page_title = gettext_noop("Export Data Source Data")
     template_name = 'export/datasource_export_view.html'
 
+    @use_bootstrap5
     def dispatch(self, *args, **kwargs):
         if not EXPORT_DATA_SOURCE_DATA.enabled(self.domain):
             raise Http404()

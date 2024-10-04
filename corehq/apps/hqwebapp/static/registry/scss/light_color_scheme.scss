@@ -1,0 +1,81 @@
+// A paler version of Bootstrap's button and label color scheme
+
+.btn-default-light {
+  background-color: var(--bssecondary-bg-subtle) !important;
+  color: var(--bssecondary) !important;
+  font-weight: bold;
+}
+
+.btn-default-light:hover {
+  background-color: var(--bssecondary-border-subtle) !important;
+}
+
+.btn-default-light:focus {
+  outline-color: var(--bssecondary);
+}
+
+.btn-success-light {
+  background-color: var(--bssuccess-bg-subtle) !important;
+  color: var(--bssuccess) !important;
+  font-weight: bold;
+}
+
+.btn-success-light:hover {
+  background-color: var(--bssuccess-border-subtle) !important;
+}
+
+.btn-success-light:focus {
+  outline-color: var(--bssuccess);
+}
+
+.btn-warning-light {
+  background-color: var(--bswarning-bg-subtle) !important;
+  color: var(--bswarning) !important;
+  font-weight: bold;
+}
+
+.btn-warning-light:hover {
+  background-color: var(--bswarning-border-subtle) !important;
+}
+.btn-warning-light:focus {
+  outline-color: var(--bswarning);
+}
+
+.btn-danger-light {
+  background-color: var(--bsdanger-bg-subtle) !important;
+  color: var(--bsdanger) !important;
+  font-weight: bold;
+}
+
+.btn-danger-light:hover {
+  background-color: var(--bsdanger-border-subtle) !important;
+}
+
+.btn-danger-light:focus {
+  outline-color: var(--bsdanger);
+}
+
+.label-default-light {
+  background-color: var(--bssecondary-bg-subtle) !important;
+  color: var(--bssecondary) !important;
+}
+
+.label-info-light {
+  background-color: var(--bsinfo-bg-subtle) !important;
+  color: var(--bsinfo) !important;
+}
+
+.label-success-light {
+  background-color: var(--bssuccess-bg-subtle) !important;
+  color: var(--bssuccess) !important;
+}
+
+.label-warning-light {
+  background-color: var(--bswarning-bg-subtle) !important;
+  color: var(--bswarning) !important;
+}
+
+.label-danger-light {
+  background-color: var(--bsdanger-bg-subtle) !important;
+  color: var(--bsdanger) !important;
+}

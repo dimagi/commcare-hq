@@ -1,7 +1,6 @@
 from unittest.mock import call, patch
 
 from django.test import TestCase
-from django.utils.datastructures import MultiValueDict
 
 from testil import assert_raises, eq
 
@@ -85,15 +84,10 @@ def test_extract_criteria_config(self, case_type, data_registry, custom_related_
 def _make_request_dict(params):
     """All values must be a list to match what we get from Django during a request.
     """
-    request_dict = MultiValueDict()
-    for key, value in params.items():
-        if value is None:
-            continue
-        if isinstance(value, list):
-            request_dict.setlist(key, value)
-        else:
-            request_dict[key] = value
-    return request_dict
+    return {
+        key: (value if isinstance(value, list) else [value])
+        for key, value in params.items() if value is not None
+    }
 
 
 @generate_cases([

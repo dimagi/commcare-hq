@@ -1,11 +1,13 @@
 import re
 
-import attr
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.forms import model_to_dict
 from django.utils.translation import gettext as _
+
+import attr
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
@@ -197,7 +199,7 @@ class CaseSearchRequestConfig:
 
 
 def extract_search_request_config(request_dict):
-    params = dict(request_dict.lists())
+    params = request_dict.copy()
     for param_name in CASE_SEARCH_TAGS_MAPPING:
         params.pop(param_name, None)
     kwargs_from_params = {
@@ -288,6 +290,13 @@ class CaseSearchConfig(models.Model):
     sync_cases_on_form_entry = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
+    # Deprecated - this will be removed in a later PR
+    fuzzy_prefix_length = models.SmallIntegerField(blank=True, null=True, validators=[
+        MinValueValidator(0), MaxValueValidator(10),
+    ])
+    # See case_search_bha.py docstring for context
+    index_name = models.CharField(max_length=256, blank=True, default='', help_text=(
+        "Name or alias of alternative index to use for case search"))
 
     objects = GetOrNoneManager()
 

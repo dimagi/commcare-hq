@@ -184,6 +184,13 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         message = "Service Temporarily Unavailable"
         self.assertIn(message, res.content.decode('utf-8'))
 
+    @flag_enabled('DISABLE_MOBILE_ENDPOINTS')
+    def test_disable_mobile_endpoints(self):
+        file, res = self._submit('simple_form.xml')
+        self.assertEqual(503, res.status_code)
+        message = "Service Temporarily Unavailable"
+        self.assertIn(message, res.content.decode('utf-8'))
+
     def test_error_saving_normal_form(self):
         sql_patch = patch(
             'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',

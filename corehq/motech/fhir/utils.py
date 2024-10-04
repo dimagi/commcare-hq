@@ -18,18 +18,22 @@ def resource_url(domain, fhir_version_name, resource_type, case_id):
     return absolute_reverse(get_view, args=(domain, fhir_version_name, resource_type, case_id))
 
 
-def load_fhir_resource_mappings(domain):
+def load_fhir_case_type_mapping(domain):
     fhir_resource_types = FHIRResourceType.objects.select_related('case_type').filter(domain=domain)
-    fhir_resource_type_name_by_case_type = {
+    return {
         ft.case_type: ft.name
         for ft in fhir_resource_types
     }
-    fhir_resource_prop_by_case_prop = {
+
+
+def load_fhir_case_properties_mapping(domain):
+    fhir_resource_properties = FHIRResourceProperty.objects.select_related('case_property').filter(
+        resource_type__domain=domain
+    )
+    return {
         fr.case_property: fr.jsonpath
-        for fr in FHIRResourceProperty.objects.select_related('case_property').filter(
-            resource_type__in=fhir_resource_types)
+        for fr in fhir_resource_properties
     }
-    return fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop
 
 
 def update_fhir_resource_type(domain, case_type, fhir_resource_type):

@@ -1,9 +1,11 @@
 'use strict';
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/users/collections", function () {
-    var Models = hqImport("cloudcare/js/formplayer/users/models");
-
+hqDefine("cloudcare/js/formplayer/users/collections", [
+    'backbone',
+    'cloudcare/js/formplayer/users/models',
+], function (
+    Backbone,
+    Models
+) {
     /**
      * This collection represents a mobile worker user
      */

@@ -12,6 +12,7 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
     moment
 ) {
 
+    /* TODO B5: Remove me after bootstrap5 migration, replaced by hqwebapp/js/tempus_dominus */
     $.fn.getDateRangeSeparator = function () {
         return ' to ';
     };

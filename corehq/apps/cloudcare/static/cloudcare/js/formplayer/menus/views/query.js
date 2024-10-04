@@ -1,22 +1,47 @@
 'use strict';
-/*global Backbone, DOMPurify, Marionette */
-
-hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
-    // 'hqwebapp/js/bootstrap3/hq.helpers' is a dependency. It needs to be added
-    // explicitly when webapps is migrated to requirejs
-    var kissmetrics = hqImport("analytix/js/kissmetrix"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
-        markdown = hqImport("cloudcare/js/markdown"),
-        formEntryConstants = hqImport("cloudcare/js/form_entry/const"),
-        formplayerConstants = hqImport("cloudcare/js/formplayer/constants"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
-
-    var separator = " to ",
+hqDefine("cloudcare/js/formplayer/menus/views/query", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'backbone.marionette',
+    'moment',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/tempus_dominus',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/markdown',
+    'cloudcare/js/utils',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/utils/utils',
+    'hqwebapp/js/bootstrap5/hq.helpers',   // needed for hqHelp
+    'cloudcare/js/formplayer/menus/api',    // needed for app:select:menus
+    'select2/dist/js/select2.full.min',
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    Marionette,
+    moment,
+    initialPageData,
+    hqTempusDominus,
+    toggles,
+    kissmetrics,
+    markdown,
+    cloudcareUtils,
+    formEntryConstants,
+    formEntryUtils,
+    FormplayerFrontend,
+    formplayerConstants,
+    Collection,
+    formplayerUtils
+) {
+    var separator = hqTempusDominus.getDateRangeSeparator(),
         serverSeparator = "__",
         serverPrefix = "__range__",
         dateFormat = cloudcareUtils.dateFormat,
@@ -275,7 +300,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         events: {
             'change @ui.queryField': 'changeQueryField',
             'change @ui.searchForBlank': 'notifyParentOfFieldChange',
-            'dp.change @ui.queryField': 'changeDateQueryField',
+            'change.td @ui.date': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
@@ -354,9 +379,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.errorMessage = null;
             self.model.set('searchForBlank', false);
             sessionStorage.removeItem('geocoderValues');
-            if (self.ui.date.length) {
-                self.ui.date.data("DateTimePicker").clear();
-            }
             self._render();
             FormplayerFrontend.trigger('clearNotifications');
         },
@@ -445,33 +467,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onRender: function () {
             this._initializeSelect2Dropdown();
+            const fallback = this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled ?  'bottom' : 'right';
             this.ui.hqHelp.hqHelp({
-                placement: () => {
-                    if (this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled) {
-                        return 'auto bottom';
-                    } else {
-                        return 'auto right';
-                    }
-                },
+                placement: 'auto',
+                fallbackPlacements: [fallback],
             });
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
-            this.ui.dateRange.daterangepicker({
-                locale: {
-                    format: dateFormat,
-                    separator: separator,
-                },
-                autoUpdateInput: false,
-                "autoApply": true,
+            this.ui.dateRange.each(function (index, el) {
+                hqTempusDominus.createDefaultDateRangePicker(el, {
+                    localization: {
+                        format: dateFormat,
+                    },
+                });
             });
             this.ui.dateRange.attr("placeholder", dateFormat + separator + dateFormat);
             let separatorChars = _.unique(separator).join("");
             this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
-            this.ui.dateRange.on('cancel.daterangepicker', function () {
-                $(this).val('').trigger('change');
-            });
-            this.ui.dateRange.on('apply.daterangepicker', function (ev, picker) {
-                $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
-            });
             this.ui.dateRange.on('change', function () {
                 // Validate free-text input
                 var start, end,
@@ -493,7 +504,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (this.model.get('hidden') === 'true') {
-                this.$el.hide();
+                this.$el.addClass("d-none");
             }
         },
 
@@ -854,16 +865,21 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onBeforeDetach: function () {
             this.smallScreenListener.stopListening();
+            for (const topic of this.geocoderTopics) {
+                $.unsubscribe(topic);
+            }
         },
 
         initGeocoders: function () {
             var self = this;
+            self.geocoderTopics = new Set();
             _.each(self._getChildModels(), function (model, i) {
                 var $field = $($(".query-field")[i]);
 
                 // Set geocoder receivers to subscribe
                 if (model.get('receive')) {
                     var topic = model.get('receive').split("-")[0];
+                    self.geocoderTopics.add(topic);
                     $.subscribe(topic, updateReceiver($field));
                 }
 

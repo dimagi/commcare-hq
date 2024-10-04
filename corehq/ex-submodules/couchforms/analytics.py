@@ -50,18 +50,6 @@ def get_last_form_submission_received(domain):
     return iso_string_to_datetime(result[0]['received_on'])
 
 
-def app_has_been_submitted_to_in_last_30_days(domain, app_id):
-    now = datetime.datetime.utcnow()
-    _30_days = datetime.timedelta(days=30)
-
-    result = _received_on_query(domain, desc=True).app(app_id)[0]
-
-    if not result:
-        return False
-
-    return iso_string_to_datetime(result[0]['received_on']) > (now - _30_days)
-
-
 @quickcache(['domain'], memoize_timeout=0, timeout=12 * 3600)
 def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
     """This is used to get (XMLNS, app_id) from submitted forms. The results

@@ -297,6 +297,7 @@ USER_MAPPING = {
         "location_id": {
             "type": "keyword"
         },
+        # TODO: Remove password field when creating new mappings for this index.
         "password": {
             "type": "text"
         },

@@ -35,3 +35,11 @@ def periodic_task(**options):
     """
     from corehq.apps.celery.shared_task import task
     return task(base=PeriodicTask, **options)
+
+
+def periodic_task_when_true(boolean, *args, **kwargs):
+    """Register a periodic task only when the first arg evals to True"""
+    if boolean:
+        return periodic_task(*args, **kwargs)
+    else:
+        return lambda fn: fn

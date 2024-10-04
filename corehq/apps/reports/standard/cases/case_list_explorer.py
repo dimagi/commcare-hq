@@ -5,8 +5,8 @@ from memoized import memoized
 
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.case_search.const import (
-    CASE_COMPUTED_METADATA,
-    SPECIAL_CASE_PROPERTIES_MAP,
+    COMPUTED_METADATA,
+    INDEXED_METADATA_BY_KEY,
     DOCS_LINK_CASE_LIST_EXPLORER,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
@@ -106,8 +106,8 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
             column_id = int(self.request.GET["iSortCol_{}".format(col_num)])
             column = self.headers.header[column_id]
             try:
-                special_property = SPECIAL_CASE_PROPERTIES_MAP[column.prop_name]
-                if special_property.key == '@case_id':
+                meta_property = INDEXED_METADATA_BY_KEY[column.prop_name]
+                if meta_property.key == '@case_id':
                     # This condition is added because ES 5 does not allow sorting on _id.
                     #  When we will have case_id in root of the document, this should be removed.
                     sort_order = 'desc' if descending else 'asc'
@@ -119,7 +119,7 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
                         }
                     }]
                     return query
-                query = query.sort(special_property.sort_property, desc=descending)
+                query = query.sort(meta_property.es_field_name, desc=descending)
             except KeyError:
                 query = query.sort_by_case_property(column.prop_name, desc=descending)
         return query
@@ -157,7 +157,7 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
             DataTablesColumn(
                 column["label"],
                 prop_name=column["name"],
-                sortable=column not in CASE_COMPUTED_METADATA,
+                sortable=column not in COMPUTED_METADATA,
             )
             for column in CaseListExplorerColumns.get_value(self.request, self.domain)
         ]

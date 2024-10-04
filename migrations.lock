@@ -111,6 +111,12 @@ accounting
  0089_dedupe_priv
  0090_custom_domain_alerts_priv
  0091_remove_custom_banner_alerts_feature_flag
+ 0092_revert_application_error_report_priv
+ 0093_defaultproductplan_is_annual_plan
+ 0094_add_annual_softwareplans
+ 0095_update_softwareplan_visibilities
+ 0096_formsubmittingmobileworkerhistory_and_featuretype_choice
+ 0097_add_form_submitting_mobile_worker_feature
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -126,6 +132,11 @@ api
  0002_alter_permissions
  0003_populate_apiuser
  0004_rename_apiuser
+app_execution
+ 0001_initial
+ 0002_alter_appworkflowconfig_unique_together
+ 0003_appexecutionlog_updated
+ 0004_alter_appworkflowconfig_notification_emails_and_more
 app_manager
  0001_linked_app_domain
  0002_latestenabledbuildprofiles
@@ -195,6 +206,7 @@ blobs
  0011_blobmeta_compressed
  0012_rename_indexes
  0013_drop_icds_cas_index
+ 0014_alter_deletedblobmeta_id
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -222,6 +234,8 @@ case_search
  0010_casesearchconfig_synchronous_web_apps
  0011_domainsnotincasesearchindex
  0012_casesearchconfig_sync_cases_on_form_entry
+ 0013_casesearchconfig_fuzzy_prefix_length
+ 0014_casesearchconfig_index_name
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -344,6 +358,7 @@ data_interfaces
  0035_add_case_duplicate_new
  0036_backfill_dedupe_match_values
  0037_add_dedupe_update_toggle
+ 0038_alter_caseduplicate_potential_duplicates
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -411,6 +426,10 @@ es
  0006_verify_es2_indices_reindexed
  0007_init_indices_for_fresh_es_5
  0008_add_doc_id_to_all_mappings
+ 0009_add_indices_for_reindex_in_es5
+ 0010_delete_reverted_indices
+ 0011_add_indices_for_es5_reindex
+ 0012_add_new_index_for_bha
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -575,6 +594,8 @@ geospatial
  0003_auto_20230908_0927
  0004_auto_20230920_0821
  0005_auto_20240202_0807
+ 0006_geoconfig_max_cases_per_user_and_more
+ 0007_geoconfig_max_case_distance_and_more
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -668,6 +689,8 @@ locations
  0018_auto_20200430_1601
  0019_auto_20200924_1753
  0020_delete_locationrelation
+ 0021_add_fixture_queryset_case_sync_restriction
+ 0022_locationtype_has_users
 mobile_auth
  0001_initial
  0002_delete_sqlmobileauthkeyrecord
@@ -685,6 +708,9 @@ motech
  0011_connectionsettings_is_deleted
  0012_alter_connectionsettings_auth_type
  0013_alter_connectionsettings_auth_type
+ 0014_alter_connectionsettings_password
+ 0015_requestlog_duration
+ 0016_connectionsettings_include_client_id_and_more
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -777,6 +803,7 @@ products
 project_limits
  0001_initial
  0002_ratelimitedtwofactorlog
+ 0003_pillowlaggaugedefinition
 registration
  0001_initial
  0002_alter_request_ip
@@ -801,6 +828,12 @@ repeaters
  0005_datasourcerepeater
  0006_int_state_add_next_check_rm_repeater_id
  0007_lengthen_payload_id
+ 0008_sqlrepeatrecords
+ 0009_add_domain_to_indexes
+ 0010_rm_couch_artifacts
+ 0011_remove_obsolete_entities
+ 0012_formexpressionrepeater_arcgisformexpressionrepeater
+ 0013_alter_repeatrecord_state_and_more
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -817,6 +850,11 @@ reports
  0013_tableau_various_20221205
  0014_querystringhash
  0015_tableauserver_allowed_tableau_groups
+ 0016_alter_tableauuser_role
+ 0017_alter_tableauuser_tableau_user_id
+ 0018_alter_tableauuser_role
+ 0019_tableauvisualization_location_safe
+ 0020_tableauserver_get_reports_using_role
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -921,6 +959,7 @@ sms
  0056_backfill_sms_event_date
  0057_fcm_content_type_messaging_events
  0058_email_html_body
+ 0059_remove_unicel_backend
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1201,9 +1240,20 @@ users
  0055_add_user_data
  0056_add_manage_domain_alerts_permission
  0057_populate_sql_user_data
- 0058_invitation_copy_supply_point
+ 0058_createprofileanduserdata_copylocation
  0059_copy_transient_invitation_supply_point
- 0060_remove_invitation_supply_point
+ 0060_invitations_addtableau_roles_and_groupids
+ 0061_auto_20240423_0802
+ 0062_add_web_apps_groups_permission_flag
+ 0063_rename_location_invitation_primary_location_and_more
+ 0064_add_edit_view_tableau_config_permissions
+ 0065_transfer_to_tableau_config_permission
+ 0066_add_profile_permissions
+ 0067_alter_invitation_tableau_role
+ 0068_grant_web_apps_to_default_mobile_worker_role
+ 0069_alter_invitation_custom_user_data_and_more
+ 0070_alter_invitation_tableau_role
+ 0071_rm_user_data
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

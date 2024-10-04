@@ -38,6 +38,7 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    UCRDataLoadReport,
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
@@ -68,10 +69,7 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
 from corehq.motech.generic_inbound.reports import ApiRequestLogReport
-from corehq.motech.repeaters.views import (
-    DomainForwardingRepeatRecords,
-    SQLRepeatRecordReport,
-)
+from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
 from corehq.apps.geospatial.reports import (
     CaseManagementMap,
     CaseGroupingReport,
@@ -128,7 +126,6 @@ def REPORTS(project):
             commtrack.SimplifiedInventoryReport,
             commtrack.InventoryReport,
             commtrack.CurrentStockStatusReport,
-            commtrack.StockStatusMapReport,
         )
         reports.insert(0, (gettext_lazy("CommCare Supply"), supply_reports))
 
@@ -333,13 +330,13 @@ ADMIN_REPORTS = (
         AdminPhoneNumberReport,
         UserAuditReport,
         DeployHistoryReport,
+        UCRDataLoadReport,
     )),
 )
 
 DOMAIN_REPORTS = (
     (_('Project Settings'), (
         DomainForwardingRepeatRecords,
-        SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         ApiRequestLogReport,
     )),

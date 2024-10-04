@@ -22,6 +22,7 @@ from memoized import memoized
 from corehq.apps.accounting.utils.stripe import charge_through_stripe
 
 from corehq.apps.domain.shortcuts import publish_domain_saved
+from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain, get_web_user_count
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -30,7 +31,10 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.web import get_site_domain
 
-from corehq.apps.accounting.emails import send_subscription_change_alert
+from corehq.apps.accounting.emails import (
+    send_subscription_change_alert,
+    send_subscription_renewal_alert,
+)
 from corehq.apps.accounting.exceptions import (
     AccountingError,
     CreditLineError,
@@ -125,12 +129,18 @@ class FeatureType(object):
     USER = "User"
     SMS = "SMS"
     WEB_USER = "Web User"
+    FORM_SUBMITTING_MOBILE_WORKER = "Form-Submitting Mobile Worker"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
-        (WEB_USER, WEB_USER)
+        (WEB_USER, WEB_USER),
+        (FORM_SUBMITTING_MOBILE_WORKER, FORM_SUBMITTING_MOBILE_WORKER),
     )
+    EDITIONED_FEATURES = [
+        USER,
+        SMS,
+    ]
 
 
 class SoftwarePlanEdition(object):
@@ -170,14 +180,12 @@ class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
     TRIAL = "TRIAL"
-    ANNUAL = "ANNUAL"
     ARCHIVED = "ARCHIVED"
     CHOICES = (
         (PUBLIC, "PUBLIC - Anyone can subscribe"),
         (INTERNAL, "INTERNAL - Dimagi must create subscription"),
         (TRIAL, "TRIAL- This is a Trial Plan"),
         (ARCHIVED, "ARCHIVED - hidden from subscription change forms"),
-        (ANNUAL, "ANNUAL - public plans that on annual pricing"),
     )
 
 
@@ -524,7 +532,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
                     'subscriber__domain', flat=True))
 
     def has_enterprise_admin(self, email):
-        return self.is_customer_billing_account and email in self.enterprise_admin_emails
+        lower_emails = [e.lower() for e in self.enterprise_admin_emails]
+        return self.is_customer_billing_account and email.lower() in lower_emails
 
     def update_autopay_user(self, new_user, domain):
         if self.auto_pay_enabled and new_user != self.auto_pay_user:
@@ -602,6 +611,22 @@ class BillingAccount(ValidateModelMixin, models.Model):
             domain=domain,
             use_domain_gateway=True,
         )
+
+    def get_web_user_usernames(self):
+        domains = self.get_domains()
+        web_users = set()
+
+        for domain in domains:
+            web_users.update(get_active_web_usernames_by_domain(domain))
+
+        return web_users
+
+    def get_web_user_count(self):
+        domains = self.get_domains()
+        count = 0
+        for domain in domains:
+            count += get_web_user_count(domain, include_inactive=False)
+        return count
 
     @staticmethod
     def should_show_sms_billable_report(domain):
@@ -711,7 +736,7 @@ class Feature(models.Model):
     and will be what the FeatureRate references to provide a monthly fee, limit and per-excess fee.
     """
     name = models.CharField(max_length=40, unique=True)
-    feature_type = models.CharField(max_length=10, db_index=True, choices=FeatureType.CHOICES)
+    feature_type = models.CharField(max_length=40, db_index=True, choices=FeatureType.CHOICES)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta(object):
@@ -804,7 +829,7 @@ class SoftwarePlan(models.Model):
     class Meta(object):
         app_label = 'accounting'
 
-    @quickcache(vary_on=['self.pk'], timeout=10)
+    @quickcache(vary_on=['self.pk'], timeout=10, skip_arg=lambda *a, **k: settings.UNIT_TESTING)
     def get_version(self):
         try:
             return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
@@ -835,24 +860,25 @@ class DefaultProductPlan(models.Model):
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     is_trial = models.BooleanField(default=False)
     is_report_builder_enabled = models.BooleanField(default=False)
+    is_annual_plan = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta(object):
         app_label = 'accounting'
-        unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
+        unique_together = ('edition', 'is_trial', 'is_report_builder_enabled', 'is_annual_plan')
 
     @classmethod
     @quickcache(['edition', 'is_trial', 'is_report_builder_enabled'],
                 skip_arg=lambda *args, **kwargs: not settings.ENTERPRISE_MODE or settings.UNIT_TESTING)
     def get_default_plan_version(cls, edition=None, is_trial=False,
-                                 is_report_builder_enabled=False):
+                                 is_report_builder_enabled=False, is_annual_plan=False):
         if not edition:
             edition = (SoftwarePlanEdition.ENTERPRISE if settings.ENTERPRISE_MODE
                        else SoftwarePlanEdition.COMMUNITY)
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
                 edition=edition, is_trial=is_trial,
-                is_report_builder_enabled=is_report_builder_enabled
+                is_report_builder_enabled=is_report_builder_enabled, is_annual_plan=is_annual_plan
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
@@ -1560,9 +1586,10 @@ class Subscription(models.Model):
         """
         This creates a new subscription with a date_start that is
         equivalent to the current subscription's date_end.
-        - The date_end is left None.
-        - The plan_version is the cheapest self-subscribable plan with the
+        - If unspecified, the plan_version is the cheapest self-subscribable "pay monthly" plan with the
           same set of privileges that the current plan has.
+        - If new_version is a "pay annually" plan, the length of the new subscription is 1 year.
+          Otherwise, date_end is left None.
         """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
@@ -1583,13 +1610,19 @@ class Subscription(models.Model):
                 "There was an issue renewing your subscription. Someone "
                 "from Dimagi will get back to you shortly."
             )
+
+        if new_version.plan.is_annual_plan:
+            new_date_end = self.date_end.replace(year=self.date_end.year + 1)
+        else:
+            new_date_end = None
+
         renewed_subscription = Subscription(
             account=self.account,
             plan_version=new_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=self.date_end,
-            date_end=None,
+            date_end=new_date_end,
         )
         if service_type is not None:
             renewed_subscription.service_type = service_type
@@ -1606,6 +1639,8 @@ class Subscription(models.Model):
             self, method=adjustment_method, note=note, web_user=web_user,
             reason=SubscriptionAdjustmentReason.RENEW,
         )
+
+        send_subscription_renewal_alert(self.subscriber.domain, renewed_subscription, self)
 
         return renewed_subscription
 
@@ -3363,7 +3398,7 @@ class CreditLine(models.Model):
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     is_product = models.BooleanField(default=False)
-    feature_type = models.CharField(max_length=10, null=True, blank=True,
+    feature_type = models.CharField(max_length=40, null=True, blank=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
@@ -3930,18 +3965,38 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
             raise ValidationError(_("You can't specify both an invoice and a line item."))
 
 
-class DomainUserHistory(models.Model):
+class DomainUserHistoryBase(models.Model):
     """
-    A record of the number of users in a domain at the record_date.
-    Created by task calculate_users_in_all_domains on the first of every month.
-    Used to bill clients for the appropriate number of users
+    Base record of the number of mobile workers in a domain for a given date.
     """
     domain = models.CharField(max_length=256)
     record_date = models.DateField()
     num_users = models.IntegerField(default=0)
 
     class Meta:
+        abstract = True
         unique_together = ('domain', 'record_date')
+
+
+class DomainUserHistory(DomainUserHistoryBase):
+    """
+    The total number of mobile workers in a domain at the record_date.
+    Created by task calculate_users_in_all_domains on the first of every month.
+    Used to bill clients for the appropriate number of mobile workers.
+    """
+    pass
+
+
+class FormSubmittingMobileWorkerHistory(DomainUserHistoryBase):
+    """
+    The number of mobile workers in a domain who have submitted one or more
+    forms in the month preceeding the record_date. Ex: a record_date of
+    2024-07-09 includes all dates from 2024-06-09 to 2024-07-08, inclusive.
+    Created by task calculate_form_submitting_mobile_workers_in_all_domains
+    on the first of every month. Used to bill clients for the appropriate
+    number of form-submitting mobile workers.
+    """
+    pass
 
 
 class BillingAccountWebUserHistory(models.Model):

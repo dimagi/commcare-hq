@@ -9,21 +9,18 @@ from django.utils.translation import gettext as _
 import pytz
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.case_search.const import (
-    CASE_COMPUTED_METADATA,
-    SPECIAL_CASE_PROPERTIES,
-)
+from corehq.apps.case_search.const import METADATA_IN_REPORTS
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import get_user_id_from_form
 from corehq.apps.reports.v2.utils import report_date_to_json
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
+from corehq.form_processor.models import CommCareCase
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import parse_date
 from corehq.util.view_utils import absolute_reverse
-from corehq.apps.hqcase.case_helper import CaseCopier
-from corehq.form_processor.models import CommCareCase
 
 CASE_COPY_PROPERTY = CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME
 
@@ -393,7 +390,7 @@ class SafeCaseDisplay(object):
         if name == 'indices':
             return json.dumps([index.to_json() for index in self.case.indices])
 
-        if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
+        if name in METADATA_IN_REPORTS:
             return getattr(self.display, name.replace('@', ''))
 
         return self.case.get_case_property(name)

@@ -204,9 +204,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     FORMPLAYER_URL = 'http://formplayer:8080'
     FORMPLAYER_URL_WEBAPPS = 'http://localhost:8080'
 
-    CCHQ_API_THROTTLE_REQUESTS = 200
-    CCHQ_API_THROTTLE_TIMEFRAME = 10
-
     RESTORE_PAYLOAD_DIR_NAME = 'restore'
     SHARED_TEMP_DIR_NAME = 'temp'
 

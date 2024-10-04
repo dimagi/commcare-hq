@@ -14,7 +14,7 @@ class SubmitToggle(HQToggle):
 class SubmissionTypeFilter(BaseReportFilter):
     slug = "submitfilter"
     label = gettext_lazy("Submission Type")
-    template = "reports/filters/submit_error_types.html"
+    template = "reports/filters/bootstrap3/submit_error_types.html"
 
     doc_types = ["XFormInstance", "XFormError", "XFormDuplicate", "XFormDeprecated", "SubmissionErrorLog",
                  "XFormArchived"]

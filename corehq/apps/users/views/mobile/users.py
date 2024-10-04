@@ -32,6 +32,8 @@ from memoized import memoized
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.web import json_response
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -50,13 +52,13 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
-    PROFILE_SLUG,
 )
 from corehq.apps.domain.auth import get_connectid_userinfo
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
     login_or_basic_ex,
+    api_auth,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
@@ -71,13 +73,13 @@ from corehq.apps.events.tasks import create_attendee_for_user
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_multiselect
+from corehq.apps.hqwebapp.decorators import use_multiselect, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
-    location_safe,
-    user_can_access_location_id,
+    can_edit_workers_location,
+    location_safe
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import (
@@ -86,6 +88,7 @@ from corehq.apps.registration.forms import (
 )
 from corehq.apps.sms.api import send_sms
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
+from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
     send_account_confirmation_sms_if_necessary,
@@ -103,7 +106,7 @@ from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_can_use_filtered_user_download,
 )
-from corehq.apps.users.exceptions import InvalidRequestException
+from corehq.apps.users.exceptions import InvalidRequestException, ModifyUserStatusException
 from corehq.apps.users.forms import (
     CommCareAccountForm,
     CommCareUserFormSet,
@@ -133,7 +136,7 @@ from corehq.apps.users.util import (
     format_username,
     generate_mobile_username,
     log_user_change,
-    raw_username,
+    raw_username, verify_modify_user_conditions,
 )
 from corehq.apps.users.views import (
     BaseEditUserView,
@@ -143,7 +146,9 @@ from corehq.apps.users.views import (
     UserUploadJobPollView,
     get_domain_languages,
 )
-from corehq.apps.users.views.utils import get_user_location_info
+from corehq.apps.users.views.utils import (
+    filter_user_query_by_locations_accessible_to_user, get_user_location_info
+)
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
@@ -172,15 +177,6 @@ DEFAULT_USER_LIST_LIMIT = 10
 BAD_MOBILE_USERNAME_REGEX = re.compile("[^A-Za-z0-9.+-_]")
 
 
-def _can_edit_workers_location(web_user, mobile_worker):
-    if web_user.has_permission(mobile_worker.domain, 'access_all_locations'):
-        return True
-    loc_id = mobile_worker.location_id
-    if not loc_id:
-        return False
-    return user_can_access_location_id(mobile_worker.domain, web_user, loc_id)
-
-
 @location_safe
 class EditCommCareUserView(BaseEditUserView):
     urlname = "edit_commcare_user"
@@ -207,11 +203,13 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def main_context(self):
         context = super(EditCommCareUserView, self).main_context
-        profiles = [profile.to_json() for profile in self.form_user_update.custom_data.model.get_profiles()]
+
+        original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
+        field_view_context = self.form_user_update.custom_data.field_view.get_field_page_context(
+            self.domain, self.couch_user, self.form_user_update.custom_data, original_profile_id
+        )
+        context.update(field_view_context)
         context.update({
-            'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
-            'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
-            'custom_fields_profile_slug': PROFILE_SLUG,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
@@ -230,7 +228,7 @@ class EditCommCareUserView(BaseEditUserView):
             user = CouchUser.get_by_user_id(self.editable_user_id, self.domain)
         except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
-        if not user or not _can_edit_workers_location(self.couch_user, user):
+        if not user or not can_edit_workers_location(self.couch_user, user):
             raise Http404()
         return user
 
@@ -276,7 +274,6 @@ class EditCommCareUserView(BaseEditUserView):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
-        # currently only support one location on the UI
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
         program_id = self.editable_user.get_domain_membership(self.domain).program_id
@@ -337,6 +334,10 @@ class EditCommCareUserView(BaseEditUserView):
                     'update_form': self.commtrack_form,
                 },
             })
+        if toggles.SUPPORT.enabled(self.request.couch_user.username):
+            context["support_info"] = {
+                'locations': self.editable_user.get_sql_locations(self.domain)
+            }
         return context
 
     @property
@@ -468,7 +469,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
 @require_POST
 def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    if not _can_edit_workers_location(request.couch_user, user):
+    if not can_edit_workers_location(request.couch_user, user):
         raise PermissionDenied()
 
     user_location_id = user.user_location_id
@@ -487,7 +488,7 @@ def delete_commcare_user(request, domain, user_id):
 @require_POST
 def force_user_412(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    if not _can_edit_workers_location(request.couch_user, user):
+    if not can_edit_workers_location(request.couch_user, user):
         raise PermissionDenied()
 
     metrics_counter('commcare.force_user_412.count', tags={'domain': domain})
@@ -715,6 +716,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
             ko_model="custom_fields",
+            request_user=self.couch_user,
         )
 
     @property
@@ -727,13 +729,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     def page_context(self):
         bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
 
-        profiles = [profile.to_json() for profile in self.custom_data.model.get_profiles()]
-        return {
+        context = {
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
-            'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
-            'custom_fields_profiles': profiles,
-            'custom_fields_profile_slug': PROFILE_SLUG,
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
@@ -746,6 +744,13 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'show_deactivate_after_date': self.new_mobile_worker_form.show_deactivate_after_date,
             'two_stage_user_confirmation': self.two_stage_user_confirmation,
         }
+
+        field_view_context = self.custom_data.field_view.get_field_page_context(
+            self.domain, self.couch_user, self.custom_data
+        )
+        context.update(field_view_context)
+
+        return context
 
     @property
     @memoized
@@ -903,15 +908,11 @@ def deactivate_commcare_user(request, domain, user_id):
 
 def _modify_user_status(request, domain, user_id, is_active):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    if (not _can_edit_workers_location(request.couch_user, user)
-            or (is_active and not can_add_extra_mobile_workers(request))):
+    try:
+        verify_modify_user_conditions(request, user, is_active)
+    except ModifyUserStatusException as e:
         return JsonResponse({
-            'error': _("No Permission."),
-        })
-    if not is_active and user.user_location_id:
-        return JsonResponse({
-            'error': _("This is a location user, archive or delete the "
-                       "corresponding location to deactivate it."),
+            'error': _(str(e)),
         })
     user.is_active = is_active
     user.save(spawn_task=True)
@@ -953,11 +954,8 @@ def paginate_mobile_workers(request, domain):
         user_es = get_search_users_in_domain_es_query(
             domain=domain, search_string=search_string,
             offset=page * limit, limit=limit)
-        if not request.couch_user.has_permission(domain, 'access_all_locations'):
-            loc_ids = (SQLLocation.objects.accessible_to_user(domain, request.couch_user)
-                                          .location_ids())
-            user_es = user_es.location(list(loc_ids))
-        return user_es.mobile_users()
+        return filter_user_query_by_locations_accessible_to_user(user_es,
+            domain, request.couch_user).mobile_users()
 
     # backend pages start at 0
     users_query = _user_query(query, page - 1, limit)
@@ -1040,6 +1038,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             field_view=UserFieldsView,
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
+            request_user=self.request.couch_user,
         )
 
     @property
@@ -1106,8 +1105,9 @@ def get_user_upload_context(domain, request_params, download_url, adjective, plu
     return context
 
 
+@location_safe
 class UploadCommCareUsers(BaseUploadUser):
-    template_name = 'hqwebapp/bulk_upload.html'
+    template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
     urlname = 'upload_commcare_users'
     page_title = gettext_noop("Bulk Upload Mobile Workers")
     is_web_upload = False
@@ -1127,6 +1127,7 @@ class UploadCommCareUsers(BaseUploadUser):
         return super(UploadCommCareUsers, self).post(request, *args, **kwargs)
 
 
+@location_safe
 class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
     page_title = gettext_noop('Mobile Worker Upload Status')
@@ -1149,6 +1150,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@location_safe
 class CommcareUserUploadJobPollView(UserUploadJobPollView):
     urlname = "commcare_user_upload_job_poll"
     on_complete_long = 'Mobile Worker upload has finished'
@@ -1231,6 +1233,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserV
         return super().get(request, domain, *args, **kwargs)
 
 
+@location_safe
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
     page_title = gettext_noop('Filter and Download Users')
@@ -1464,6 +1467,7 @@ def count_commcare_users(request, domain):
 
 @require_can_edit_web_users
 @require_can_use_filtered_user_download
+@location_safe
 def count_web_users(request, domain):
     return _count_users(request, domain, WEB_USER_TYPE)
 
@@ -1679,3 +1683,26 @@ def link_connectid_user(request, domain):
         return HttpResponse(status=201)
     else:
         return HttpResponse()
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth()
+def bulk_user_upload_api(request, domain):
+    try:
+        if len(request.FILES) > 1:
+            raise UserUploadError(_("only one file can be uploaded at a time"))
+
+        file = request.FILES.get('bulk_upload_file')
+        if file is None:
+            raise UserUploadError(_('no file uploaded'))
+        workbook = get_workbook(file)
+        user_specs, group_specs = BaseUploadUser.process_workbook(workbook, domain, is_web_upload=False)
+        BaseUploadUser.upload_users(request, user_specs, group_specs, domain, is_web_upload=False)
+        return json_response({'success': True})
+    except (WorkbookJSONError, WorksheetNotFound, UserUploadError) as e:
+        return json_response({'success': False, 'message': _(str(e))}, status_code=400)
+    except Exception as e:
+        notify_exception(None, message=str(e))
+        return json_response({'success': False, 'message': str(e)}, status_code=500)

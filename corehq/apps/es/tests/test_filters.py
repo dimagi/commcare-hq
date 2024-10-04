@@ -333,10 +333,10 @@ class TestFiltersRun(SimpleTestCase):
         )
         self.assertEqual(query.run().doc_ids, ['doc3'])
 
-    def test_ids_query(self):
+    def test_doc_ids_filter(self):
         self._setup_data()
         ids = ['doc1', 'doc2']
         self.assertEqual(
-            FormES().remove_default_filters().ids_query(ids).exclude_source().run().doc_ids,
+            FormES().remove_default_filters().doc_id(ids).exclude_source().run().doc_ids,
             ids
         )

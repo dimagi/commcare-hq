@@ -16,18 +16,18 @@ class Command(BaseCommand):
 
         self.stdout.write("\n")
         self.stdout.write('fetching repeat record data...')
-        repeat_records_summary = RepeatRecord.get_db().view(
-            'repeaters/repeat_records',
-            group_level=1,
-            reduce=True
-        ).all()
+        repeat_records_summary = dict(
+            RepeatRecord.objects
+            .values("repeater__domain")
+            .order_by()
+            .annotate(record_count=Count("id"))
+            .values_list("repeater__domain", "record_count")
+        )
 
         self.stdout.write("\n\n\n")
         self.stdout.write("Domain\tRepeaters\tRepeatRecords")
-        for info in repeat_records_summary:
-            domain = info['key'][0]
-            num_repeaters = repeaters_by_domain.get(domain, 0)
-            num_repeat_records = info['value']
+        for domain, num_repeaters in sorted(repeaters_by_domain.items()):
+            num_repeat_records = repeat_records_summary.get(domain, 0)
             self.stdout.write(f'{domain}\t{num_repeaters}\t{num_repeat_records}')
         self.stdout.write('*' * 230)
         self.stdout.write('done...')

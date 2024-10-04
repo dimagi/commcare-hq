@@ -10,7 +10,7 @@ from casexml.apps.case.util import property_changed_in_action
 from couchexport.deid import deid_date, deid_ID
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
+from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
@@ -26,13 +26,15 @@ CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
+REPEATER_RESPONSE_XMLNS = 'http://commcarehq.org/data_forwarding/response'
 
 SYSTEM_FORM_XMLNS_MAP = {
     SYSTEM_FORM_XMLNS: gettext_lazy('System Form'),
     EDIT_FORM_XMLNS: gettext_lazy('Data Cleaning Form'),
     AUTO_UPDATE_XMLNS: gettext_lazy('Automatic Case Update Rule'),
     DEDUPE_XMLNS: gettext_lazy('Deduplication Rule'),
-    XMLNS_DHIS2: gettext_lazy('DHIS2 Integration')
+    XMLNS_DHIS2: gettext_lazy('DHIS2 Integration'),
+    REPEATER_RESPONSE_XMLNS: gettext_lazy('Data Forwarding Response'),
 }
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
@@ -258,8 +260,8 @@ def get_case_value(case, value):
     if not value:
         return None, None
 
-    if value in SPECIAL_CASE_PROPERTIES_MAP:
-        return SPECIAL_CASE_PROPERTIES_MAP[value].value_getter(case.to_json()), False
+    if value in INDEXED_METADATA_BY_KEY:
+        return INDEXED_METADATA_BY_KEY[value].get_value(case.to_json()), False
     elif value in case.case_json:
         return case.case_json.get(value, None), True
     return None, None

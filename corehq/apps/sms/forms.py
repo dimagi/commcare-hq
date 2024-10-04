@@ -1141,13 +1141,13 @@ class BackendMapForm(Form):
 
         try:
             backend = SQLMobileBackend.load(backend_id)
-        except:
+        except:  # noqa: E722
             raise ValidationError(_("Invalid Backend Specified."))
 
         if (
-            backend.deleted or
-            not backend.is_global or
-            backend.backend_type != SQLMobileBackend.SMS
+            backend.deleted
+            or not backend.is_global
+            or backend.backend_type != SQLMobileBackend.SMS
         ):
             raise ValidationError(_("Invalid Backend Specified."))
 
@@ -1157,7 +1157,7 @@ class BackendMapForm(Form):
         value = self.cleaned_data.get('backend_map')
         try:
             value = json.loads(value)
-        except:
+        except:  # noqa: E722
             raise ValidationError(_("An unexpected error occurred. Please reload and try again"))
 
         cleaned_value = {}

@@ -207,14 +207,13 @@ class TestCaseHierarchy(TestCase):
             walk_related=False
         ))
 
-        hierarchy = get_case_hierarchy(cp, {})
-        self.assertEqual(2, len(hierarchy['case_list']))
-        self.assertEqual(1, len(hierarchy['child_cases']))
+        hierarchy = get_case_hierarchy(cp)
+        self.assertEqual(2, len(hierarchy))
         return hierarchy
 
     def test_deleted_index(self):
         hierarchy = self.test_normal_index()
-        parent, child = hierarchy['case_list']
+        parent, child = hierarchy
 
         factory = CaseFactory()
         ref = CaseStructure()
@@ -229,9 +228,8 @@ class TestCaseHierarchy(TestCase):
 
         # re-fetch case to clear memoized properties
         parent = CommCareCase.objects.get_case(parent.case_id, parent.domain)
-        hierarchy = get_case_hierarchy(parent, {})
-        self.assertEqual(1, len(hierarchy['case_list']))
-        self.assertEqual(0, len(hierarchy['child_cases']))
+        hierarchy = get_case_hierarchy(parent)
+        self.assertEqual(1, len(hierarchy))
 
     def test_extension_index(self):
         factory = CaseFactory()
@@ -256,9 +254,8 @@ class TestCaseHierarchy(TestCase):
             )
         )
 
-        hierarchy = get_case_hierarchy(case, {})
-        self.assertEqual(2, len(hierarchy['case_list']))
-        self.assertEqual(1, len(hierarchy['child_cases']))
+        hierarchy = get_case_hierarchy(case)
+        self.assertEqual(2, len(hierarchy))
 
     def test_recursive_indexes(self):
         factory = CaseFactory()
@@ -271,8 +268,8 @@ class TestCaseHierarchy(TestCase):
         ))
 
         # this call used to fail with infinite recursion
-        hierarchy = get_case_hierarchy(case, {})
-        self.assertEqual(1, len(hierarchy['case_list']))
+        hierarchy = get_case_hierarchy(case)
+        self.assertEqual(1, len(hierarchy))
 
     def test_complex_index(self):
         factory = CaseFactory()
@@ -302,19 +299,8 @@ class TestCaseHierarchy(TestCase):
             walk_related=False,
         ))
 
-        # with 'ignore_relationship_types' if a case got processed along the ignored relationship first
-        # then it got marked as 'seen' and would be not be processed again when it came to the correct relationship
-        type_info = {
-            'task': {
-                'ignore_relationship_types': ['parent']
-            },
-        }
-
-        hierarchy = get_case_hierarchy(cp, type_info)
-        self.assertEqual(3, len(hierarchy['case_list']))
-        self.assertEqual(1, len(hierarchy['child_cases']))
-        self.assertEqual(2, len(hierarchy['child_cases'][0]['case_list']))
-        self.assertEqual(1, len(hierarchy['child_cases'][0]['child_cases']))
+        hierarchy = get_case_hierarchy(cp)
+        self.assertEqual(3, len(hierarchy))
 
     @softer_assert()
     def test_missing_transactions(self):
@@ -343,10 +329,6 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual('t1', case2.type)
 
 
-def _get_case_url_blank(case_id):
-    return ""
-
-
 @sharded
 class TestCaseHierarchyContext(TestCase):
     def setUp(self):
@@ -369,21 +351,21 @@ class TestCaseHierarchyContext(TestCase):
         self.child.delete()
 
     def test_case_hierarchy_context_parent(self):
-        hierarchy = case_hierarchy_context(self.parent, _get_case_url_blank)
+        hierarchy = case_hierarchy_context(self.parent)
         self.assertEqual(2, len(hierarchy['case_list']))
 
     def test_case_hierarchy_context_parent_deleted_index(self):
         self._delete_child_index()
-        hierarchy = case_hierarchy_context(self.parent, _get_case_url_blank)
+        hierarchy = case_hierarchy_context(self.parent)
         self.assertEqual(1, len(hierarchy['case_list']))
 
     def test_case_hierarchy_context_child(self):
-        hierarchy = case_hierarchy_context(self.child, _get_case_url_blank)
+        hierarchy = case_hierarchy_context(self.child)
         self.assertEqual(2, len(hierarchy['case_list']))
 
     def test_case_hierarchy_context_child_deleted_index(self):
         self._delete_child_index()
-        hierarchy = case_hierarchy_context(self.child, _get_case_url_blank)
+        hierarchy = case_hierarchy_context(self.child)
         self.assertEqual(1, len(hierarchy['case_list']))
 
     def _delete_child_index(self):

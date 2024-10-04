@@ -1,7 +1,10 @@
 from datetime import date
+
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.users.tests.util import patch_user_data_db_layer
 from custom.champ.tests.utils import TestDataSourceExpressions
 from custom.champ.utils import PREVENTION_XMLNS, TARGET_XMLNS
+from corehq.tests.util.context import add_context
 
 ENHANCED_PEER_MOBILIZATION_DATA_SOURCE = 'enhanced_peer_mobilization.json'
 
@@ -9,6 +12,10 @@ ENHANCED_PEER_MOBILIZATION_DATA_SOURCE = 'enhanced_peer_mobilization.json'
 class TestEnhancedPeerMobilization(TestDataSourceExpressions):
 
     data_source_name = ENHANCED_PEER_MOBILIZATION_DATA_SOURCE
+
+    def setUp(self):
+        super().setUp()
+        add_context(patch_user_data_db_layer(), self)
 
     def test_achievement_form_property(self):
         form = {
@@ -34,6 +41,7 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
 
         user = {
             'id': 'user_id',
+            'doc_type': 'CommCareUser',
             'domain': 'champ_cameroon',
             'location_id': 'test_location_id'
         }

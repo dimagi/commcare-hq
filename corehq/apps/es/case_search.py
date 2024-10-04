@@ -11,11 +11,9 @@ from corehq.apps.es import case_search as case_search_es
 """
 
 from copy import deepcopy
-from datetime import date, datetime
-from warnings import warn
+from datetime import datetime
 
-from django.utils.dateparse import parse_date, parse_datetime
-from django.utils.translation import gettext
+from django.conf import settings
 
 from memoized import memoized
 
@@ -29,16 +27,16 @@ from corehq.apps.case_search.const import (
     INDICES_PATH,
     REFERENCED_ID,
     RELEVANCE_SCORE,
-    SPECIAL_CASE_PROPERTIES,
-    SYSTEM_PROPERTIES,
+    INDEXED_METADATA_BY_KEY,
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
+from corehq.apps.es.transient_util import doc_adapter_from_cname
 from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
 from .cases import case_adapter
-from .client import ElasticDocumentAdapter, create_document_adapter
+from .client import BulkActionItem, ElasticDocumentAdapter, create_document_adapter
 from .const import (
     HQ_CASE_SEARCH_INDEX_CANONICAL_NAME,
     HQ_CASE_SEARCH_INDEX_NAME,
@@ -59,7 +57,6 @@ class CaseSearchES(CaseES):
     @property
     def builtin_filters(self):
         return [
-            case_property_filter,
             blacklist_owner_id,
             external_id,
             indexed_on,
@@ -86,25 +83,6 @@ class CaseSearchES(CaseES):
         """
         return self.add_query(case_property_query(case_property_name, value, fuzzy), clause)
 
-    def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` matches the regular expression in `regex`
-        """
-        return self.add_query(
-            _base_property_query(case_property_name, queries.regexp(PROPERTY_VALUE, regex)),
-            clause,
-        )
-
-    def numeric_range_case_property_query(self, case_property_name, gt=None,
-                                          gte=None, lt=None, lte=None, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` fulfills the range criteria.
-        """
-        return self.add_query(
-            case_property_range_query(case_property_name, gt, gte, lt, lte),
-            clause
-        )
-
     def xpath_query(self, domain, xpath, fuzzy=False):
         """Search for cases using an XPath predicate expression.
 
@@ -118,8 +96,9 @@ class CaseSearchES(CaseES):
 
         If fuzzy is true, all equality checks will be treated as fuzzy.
         """
-        from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
-        return self.filter(build_filter_from_xpath(domain, xpath, fuzzy=fuzzy))
+        from corehq.apps.case_search.filter_dsl import build_filter_from_xpath, SearchFilterContext
+        context = SearchFilterContext(domain, fuzzy=fuzzy)
+        return self.filter(build_filter_from_xpath(xpath, context=context))
 
     def get_child_cases(self, case_ids, identifier):
         """Returns all cases that reference cases with ids: `case_ids`
@@ -191,12 +170,47 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         doc = {
             desired_property: case_dict.get(desired_property)
             for desired_property in self.mapping['properties'].keys()
-            if desired_property not in SYSTEM_PROPERTIES
+            if desired_property != CASE_PROPERTIES_PATH
         }
         doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
         doc['case_properties'] = _get_case_properties(case_dict)
         doc['_id'] = case_dict['_id']
         return super()._from_dict(doc)
+
+    def _get_domain_from_doc(self, doc):
+        """
+        `doc` can be CommcCareCase instance or dict. This util method extracts domain from doc.
+        This will fail hard if domain is not present in doc.
+        """
+        if isinstance(doc, dict):
+            return doc["domain"]
+        if hasattr(doc, 'domain'):
+            return doc.domain
+
+    def index(self, doc, refresh=False):
+        """
+        Selectively multiplexes writes to a sub index based on the domain of the doc.
+        """
+        sub_index_adapter = multiplex_to_adapter(self._get_domain_from_doc(doc))
+        if sub_index_adapter:
+            # If we get a valid sub index adapter then we multiplex writes
+            doc_obj = BulkActionItem.index(doc)
+            payload = [self._render_bulk_action(doc_obj), sub_index_adapter._render_bulk_action(doc_obj)]
+            return self._bulk(payload, refresh=refresh, raise_errors=True)
+        # If adapter is None then simply index the docs
+        super().index(doc, refresh=refresh)
+
+    def bulk(self, actions, refresh=False, raise_errors=True):
+        """
+        Iterates over the list of actions and multiplexes writes to a sub index based on the domain of the doc.
+        """
+        payload = []
+        for action in actions:
+            payload.append(self._render_bulk_action(action))
+            adapter = multiplex_to_adapter(self._get_domain_from_doc(action.doc))
+            if adapter:
+                payload.append(adapter._render_bulk_action(action))
+        return self._bulk(payload, refresh=refresh, raise_errors=raise_errors)
 
 
 case_search_adapter = create_document_adapter(
@@ -207,18 +221,19 @@ case_search_adapter = create_document_adapter(
 )
 
 
-def case_property_filter(case_property_name, value):
-    warn("Use the query versions of this function from the case_search module instead", DeprecationWarning)
-    return filters.nested(
-        CASE_PROPERTIES_PATH,
-        filters.AND(
-            filters.term(PROPERTY_KEY, case_property_name),
-            filters.term(PROPERTY_VALUE, value),
-        )
-    )
+def multiplex_to_adapter(domain):
+    """
+    Reads `CASE_SEARCH_SUB_INDICES` from settings to see if we should multiplex writes for case_search index.
+    Returns the appropriate adapter based on the domain passed.
+    """
+    multiplex_info = settings.CASE_SEARCH_SUB_INDICES
+    domain_multiplex_settings = multiplex_info.get(domain, None)
+    if domain_multiplex_settings and domain_multiplex_settings.get('multiplex_writes'):
+        return doc_adapter_from_cname(domain_multiplex_settings['index_cname'])
+    return None
 
 
-def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None):
+def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None, boost_first=False):
     """
     Search for all cases where case property with name `case_property_name`` has text value `value`
     """
@@ -234,10 +249,19 @@ def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=
             filters.OR(
                 # fuzzy match. This portion of this query OR's together multi-word case
                 # property values and doesn't respect multivalue_mode
-                queries.fuzzy(value, PROPERTY_VALUE, fuzziness='AUTO'),
+                queries.fuzzy(value, PROPERTY_VALUE, fuzziness='AUTO', prefix_length=2),
                 # non-fuzzy match. added to improve the score of exact matches
                 queries.match(value, PROPERTY_VALUE, operator=multivalue_mode)
             ),
+        )
+    if boost_first:
+        return _base_property_query(
+            case_property_name,
+            filters.OR(
+                filters.term(PROPERTY_VALUE, value),
+                queries.match(value[0], PROPERTY_VALUE)
+            )
+
         )
     if not fuzzy and multivalue_mode in ['or', 'and']:
         return case_property_text_query(case_property_name, value, operator=multivalue_mode)
@@ -298,60 +322,20 @@ def case_property_starts_with(case_property_name, value):
     )
 
 
-def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
-    """Returns cases where case property `key` fall into the range provided.
-
-    """
+def case_property_numeric_range(case_property_name, gt=None, gte=None, lt=None, lte=None):
     kwargs = {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}
-    # if its a number, use it
-    try:
-        # numeric range
-        kwargs = {key: float(value) for key, value in kwargs.items() if value is not None}
-        return _base_property_query(
-            case_property_name,
-            queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
-        )
-    except (TypeError, ValueError):
-        pass
+    return _base_property_query(
+        case_property_name,
+        queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
+    )
 
-    # if its a date or datetime, use it
-    # date range
-    kwargs = {
-        key: value if isinstance(value, (date, datetime)) else _parse_date_or_datetime(value)
-        for key, value in kwargs.items()
-        if value is not None
-    }
-    if not kwargs:
-        raise TypeError()       # Neither a date nor number was passed in
 
+def case_property_date_range(case_property_name, gt=None, gte=None, lt=None, lte=None):
+    kwargs = {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}
     return _base_property_query(
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
-
-
-def _parse_date_or_datetime(value):
-    parsed_date = _parse_date(value)
-    if parsed_date is not None:
-        return parsed_date
-    parsed_datetime = _parse_datetime(value)
-    if parsed_datetime is not None:
-        return parsed_datetime
-    raise ValueError(gettext(f"{value} is not a correctly formatted date or datetime."))
-
-
-def _parse_date(value):
-    try:
-        return parse_date(value)
-    except ValueError:
-        raise ValueError(gettext(f"{value} is an invalid date."))
-
-
-def _parse_datetime(value):
-    try:
-        return parse_datetime(value)
-    except ValueError:
-        raise ValueError(gettext(f"{value} is an invalid datetime."))
 
 
 def reverse_index_case_query(case_ids, identifier=None):
@@ -391,9 +375,7 @@ def _case_property_not_set(case_property_name):
 
 
 def case_property_missing(case_property_name):
-    """case_property_name isn't set or is the empty string
-
-    """
+    """case_property_name isn't set or is the empty string"""
     return filters.OR(
         _case_property_not_set(case_property_name),
         exact_case_property_text_query(case_property_name, '')
@@ -460,7 +442,7 @@ def wrap_case_search_hit(hit, include_score=False):
         case_json={
             prop["key"]: prop[_VALUE]
             for prop in data.get(CASE_PROPERTIES_PATH, {})
-            if prop["key"] not in SPECIAL_CASE_PROPERTIES
+            if prop["key"] not in INDEXED_METADATA_BY_KEY
         },
         indices=data.get("indices", []),
     )

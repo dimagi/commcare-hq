@@ -5,7 +5,11 @@
  *
  * All task functions are expected to return a promise.
  */
-hqDefine("cloudcare/js/form_entry/task_queue", function () {
+hqDefine("cloudcare/js/form_entry/task_queue", [
+    'underscore',
+], function (
+    _
+) {
     var TaskQueue = function () {
         var self = {};
 

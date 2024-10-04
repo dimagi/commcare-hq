@@ -12,19 +12,18 @@
   {% initial_page_data "can_edit_roles" can_edit_roles %}
   {% initial_page_data "default_role" default_role %}
   {% initial_page_data "tableau_list" tableau_list %}
+  {% initial_page_data "profile_list" profile_list %}
   {% initial_page_data "report_list" report_list %}
-  {% initial_page_data "apps_list" apps_list %}
   {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
   {% initial_page_data "landing_page_choices" landing_page_choices %}
-  {% initial_page_data "web_apps_privilege" web_apps_privilege %}
-  {% initial_page_data "erm_privilege" erm_privilege %}
-  {% initial_page_data "mrm_privilege" mrm_privilege %}
+  {% initial_page_data "web_apps_choices" web_apps_choices %}
   {% initial_page_data "attendance_tracking_privilege" attendance_tracking_privilege %}
   {% initial_page_data "has_report_builder_access" has_report_builder_access %}
   {% initial_page_data "data_file_download_enabled" data_file_download_enabled %}
   {% initial_page_data "export_ownership_enabled" export_ownership_enabled %}
   {% initial_page_data "data_registry_choices" data_registry_choices %}
   {% initial_page_data "can_edit_linked_data" can_edit_linked_data %}
+  {% initial_page_data "commcare_analytics_roles" commcare_analytics_roles %}
 
   <p class="lead">
     {% if can_edit_roles %}
@@ -43,7 +42,7 @@
       <p>
         <i class="fa fa-info-circle"></i>
         {% blocktrans %}
-          <a href="https://confluence.dimagi.com/display/commcarepublic/Roles+and+Permissions"
+          <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview"
             target="_blank">Learn more</a> about how roles &amp; permissions are used.
         {% endblocktrans %}
       </p>

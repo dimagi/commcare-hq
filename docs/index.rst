@@ -46,6 +46,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     apps/builds
     web_apps
     formplayer
+    case_search_query_language
 
 .. toctree::
     :caption: Application Data Layer
@@ -64,7 +65,6 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :maxdepth: 1
 
     reporting
-    maps
     exports
     change_feeds
     pillows
@@ -82,7 +82,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :caption: Messaging
     :maxdepth: 1
 
-    messaging/messaging
+    messaging/index
 
 .. toctree::
     :caption: Integrations
@@ -132,7 +132,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :caption: Code
     :maxdepth: 1
 
-    toggles
+    toggles/index
     commtrack
     elasticsearch
     middleware

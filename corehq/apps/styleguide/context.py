@@ -87,7 +87,7 @@ def get_interaction_colors():
             title="Success",
             description="Use when an action has been completed successfully, primarily for messaging. "
                         "Rarely used for interactive elements like buttons.",
-            main_color=Color('success', '3FA12A'),
+            main_color=Color('success', '358623'),
             subtle_color=Color('success-subtle', 'D9ECD4'),
         ),
         ColorGroup(
@@ -101,7 +101,7 @@ def get_interaction_colors():
             title="Error, Negative Attention",
             description="Use to highlight an error, something negative or a critical risk. "
                         "Use as text, highlights, banners or destructive buttons. ",
-            main_color=Color('danger', 'E73C27'),
+            main_color=Color('danger', 'E13019'),
             subtle_color=Color('danger-subtle', 'FAD8D4'),
         ),
     ]

@@ -199,7 +199,7 @@ Now that you have Elasticsearch running you will need to install the necessary p
 
     ```shell
     $ curl "localhost:9200/_cat/plugins?s=component&h=component,version"
-    analysis-phonetic 5.6.16
+    > analysis-phonetic 5.6.16
     ```
 
 

@@ -15,16 +15,15 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
-from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
-from corehq.apps.users.forms import RoleForm
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
+from corehq.apps.users.models import CouchUser, WebUser
 
 
 class RegisterWebUserForm(forms.Form):
@@ -60,7 +59,7 @@ class RegisterWebUserForm(forms.Form):
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
-        label=mark_safe_lazy(_(
+        label=mark_safe(_(
             """I have read and agree to Dimagi's
             <a href="http://www.dimagi.com/terms/latest/privacy/"
                target="_blank">Privacy Policy</a>,
@@ -368,15 +367,15 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
     eula_confirmed = forms.BooleanField(
         required=False,
         label="",
-        help_text=mark_safe_lazy(_(
+        help_text=mark_safe(_(
             """I have read and agree to Dimagi's
-                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                <a href="https://dimagi.com/terms-privacy/"
                     target="_blank">Privacy Policy</a>,
-                <a href="http://www.dimagi.com/terms/latest/tos/"
+                <a href="https://dimagi.com/terms-of-service/"
                     target="_blank">Terms of Service</a>,
-                <a href="http://www.dimagi.com/terms/latest/ba/"
+                <a href="https://dimagi.com/terms-ba/"
                     target="_blank">Business Agreement</a>, and
-                <a href="http://www.dimagi.com/terms/latest/aup/"
+                <a href="https://dimagi.com/terms-aup/"
                     target="_blank">Acceptable Use Policy</a>.
                """))
     )
@@ -484,48 +483,40 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
         return ""
 
 
-# From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
-#
-# I'll put this in each app, so they can be standalone, but it should really go in some centralized
-# part of the distro
-
-class _BaseForm(object):
-
-    def clean(self):
-        for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], str):
-                self.cleaned_data[field] = self.cleaned_data[field].strip()
-        return self.cleaned_data
-
-
-class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
-    # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
-    # and do need to relabel some things.
+class AdminInvitesUserForm(SelectUserLocationForm):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, is_add_user=None, *args, **kwargs):
-        domain_obj = None
-        location = None
-        if 'domain' in kwargs:
-            domain_obj = Domain.get_by_name(kwargs['domain'])
-            del kwargs['domain']
-        if 'location' in kwargs:
-            location = kwargs['location']
-            del kwargs['location']
-        super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-        if domain_obj and domain_obj.commtrack_enabled:
-            self.fields['location_id'] = forms.CharField(label='Primary Location', required=False,
-                                            widget=LocationSelectWidget(domain_obj.name),
-                                            help_text=EMWF.location_search_help,
-                                            initial=location.location_id if location else '')
-            self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
-            programs = Program.by_domain(domain_obj.name)
-            choices = list((prog.get_id, prog.name) for prog in programs)
-            choices.insert(0, ('', ''))
-            self.fields['program'].choices = choices
-        self.excluded_emails = excluded_emails or []
+    def __init__(self, data=None, excluded_emails=None, is_add_user=None,
+                 role_choices=(), should_show_location=False, can_edit_tableau_config=False,
+                 *, domain, **kwargs):
+        self.request = kwargs.get('request')
+        super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
+        self.can_edit_tableau_config = can_edit_tableau_config
+        domain_obj = Domain.get_by_name(domain)
+        self.fields['role'].choices = [('', _("Select a role"))] + role_choices
+        if domain_obj:
+            if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
+                self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
+                from corehq.apps.users.views.mobile import UserFieldsView
+                self.valid_profiles = UserFieldsView.get_user_accessible_profiles(
+                    self.domain, self.request.couch_user
+                )
+                if len(self.valid_profiles) > 0:
+                    self.fields['profile'].choices = [('', '')] + [
+                        (profile.id, profile.name) for profile in self.valid_profiles
+                    ]
+            if domain_obj.commtrack_enabled:
+                self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
+                programs = Program.by_domain(domain_obj.name)
+                choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
+                self.fields['program'].choices = choices
+
+        self.excluded_emails = [x.lower() for x in excluded_emails] if excluded_emails else []
+
+        if self.can_edit_tableau_config:
+            self._initialize_tableau_fields(data, domain)
 
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
@@ -533,8 +524,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-
-        self.helper.layout = crispy.Layout(
+        fields = [
             crispy.Fieldset(
                 gettext("Information for new Web User"),
                 crispy.Field(
@@ -543,7 +533,27 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                     data_bind="textInput: email",
                 ),
                 'role',
-            ),
+                'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
+            )
+        ]
+        if should_show_location:
+            fields.append(
+                crispy.Fieldset(
+                    gettext("Location Settings"),
+                    'assigned_locations',
+                    'primary_location',
+                )
+            )
+        if self.can_edit_tableau_config:
+            fields.append(
+                crispy.Fieldset(
+                    gettext("Tableau Configuration"),
+                    'tableau_role',
+                    'tableau_group_indices' if len(self.fields['tableau_group_indices'].choices) > 0 else None
+                ),
+            )
+        self.helper.layout = crispy.Layout(
+            *fields,
             crispy.HTML(
                 render_to_string(
                     'users/partials/confirm_trust_identity_provider_message.html',
@@ -569,9 +579,46 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             ),
         )
 
+    def clean_profile(self):
+        profile_id = self.cleaned_data['profile']
+        if profile_id and profile_id not in {str(p.id) for p in self.valid_profiles}:
+            raise forms.ValidationError(
+                _('Invalid profile selected. Please select a valid profile.'),
+            )
+        return profile_id
+
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
-        if email in self.excluded_emails:
+        if email.lower() in self.excluded_emails:
             raise forms.ValidationError(_("A user with this email address is already in "
                                           "this project or has a pending invitation."))
+        web_user = WebUser.get_by_username(email)
+        if web_user and not web_user.is_active:
+            raise forms.ValidationError(_("A user with this email address is deactivated. "))
         return email
+
+    def clean(self):
+        cleaned_data = super(AdminInvitesUserForm, self).clean()
+
+        if (('tableau_role' in cleaned_data or 'tableau_group_indices' in cleaned_data)
+        and not self.can_edit_tableau_config):
+            raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
+
+        if 'tableau_group_indices' in cleaned_data:
+            cleaned_data['tableau_group_ids'] = [
+                self.tableau_form.allowed_tableau_groups[int(i)].id
+                for i in cleaned_data['tableau_group_indices']
+            ]
+            del cleaned_data['tableau_group_indices']
+
+        for field in cleaned_data:
+            if isinstance(cleaned_data[field], str):
+                cleaned_data[field] = cleaned_data[field].strip()
+        return cleaned_data
+
+    def _initialize_tableau_fields(self, data, domain):
+        self.tableau_form = BaseTableauUserForm(data, domain=domain)
+        self.fields['tableau_group_indices'] = self.tableau_form.fields["groups"]
+        self.fields['tableau_group_indices'].label = _('Tableau Groups')
+        self.fields['tableau_role'] = self.tableau_form.fields['role']
+        self.fields['tableau_role'].label = _('Tableau Role')

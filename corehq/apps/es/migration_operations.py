@@ -372,5 +372,32 @@ class CreateIndexIfNotExists(CreateIndex):
         return None
 
 
+class DeleteOnlyIfIndexExists(DeleteIndex):
+    """
+    The class will not error out if trying to delete the indices that don't exist.
+    The utility of this class would generally be in case of exceptions where a migration
+    has to be rolled back which were already applied on some of the environments.
+
+    Because of the nature of the operation, this class is not integrated into `make_elastic_migration` command.
+
+    """
+    def __init__(self, name, es_versions=[]):
+        # To satisfy parent class signature adding dummy reverse params
+        # Reverse for this class would be no-op
+        dummy_reverse_params = ('type', {}, {}, 'setting_key')
+        super().__init__(name, dummy_reverse_params, es_versions)
+
+    def run(self, *args, **kwargs):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
+            return
+        from corehq.apps.es.client import manager
+        if manager.index_exists(self.name):
+            return super().run(*args, **kwargs)
+        log.info(f"ElasticSearch index {self.name} does not exist. Skipping delete index operation.")
+
+    def reverse_run(self, *args, **kw):
+        return None
+
+
 class MappingUpdateFailed(Exception):
     """The mapping update operation failed."""

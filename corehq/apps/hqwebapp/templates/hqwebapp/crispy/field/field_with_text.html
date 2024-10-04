@@ -1,18 +1,1 @@
-{% load crispy_forms_field %}
-
-{% if field.is_hidden %}
-	{{ field }}
-{% else %}
-    <div class="control-group">
-        <label for="{{ field.id_for_label }}" class="control-label">
-            {{ field.label }}
-        </label>
-        <div class="controls" style="padding-top: 5px;">
-            <input type="hidden"
-                   name="{{ field.html_name }}"
-                   id="{{ field.auto_id }}"
-                   value="{{ field.value|default_if_none:"" }}" />
-            {{ field_text }}
-        </div>
-    </div>
-{% endif %}
+{% if use_bootstrap5 %}{% include 'hqwebapp/crispy/field/bootstrap5/field_with_text.html' %}{% else %}{% include 'hqwebapp/crispy/field/bootstrap3/field_with_text.html' %}{% endif %}

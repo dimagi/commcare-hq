@@ -1,6 +1,8 @@
 /**
  *  This file defines a model for editing custom data fields while creating or editing a mobile user.
  */
+'use strict';
+
 hqDefine("users/js/custom_data_fields", [
     'knockout',
     'underscore',
@@ -16,18 +18,20 @@ hqDefine("users/js/custom_data_fields", [
         return {
             value: ko.observable(options.value),
             previousValue: ko.observable(options.value),    // save user-entered value
-            disable: ko.observable(!!false),
+            disable: ko.observable(false),
         };
     };
 
     var customDataFieldsEditor = function (options) {
-        assertProperties.assertRequired(options, ['profiles', 'slugs', 'profile_slug'], ['user_data']);
+        assertProperties.assertRequired(options, ['profiles', 'slugs', 'profile_slug', 'can_edit_original_profile'],
+            ['user_data']);
         options.user_data = options.user_data || {};
         var self = {};
 
         self.profiles = _.indexBy(options.profiles, 'id');
         self.profile_slug = options.profile_slug;
         self.slugs = options.slugs;
+        self.can_edit_original_profile = options.can_edit_original_profile;
 
         var originalProfileFields = {},
             originalProfileId,
@@ -44,7 +48,6 @@ hqDefine("users/js/custom_data_fields", [
         _.each(self.slugs, function (slug) {
             self[slug] = fieldModel({
                 value: options.user_data[slug] || originalProfileFields[slug],
-                disable: !!originalProfileFields[slug],
             });
         });
 
@@ -58,6 +61,9 @@ hqDefine("users/js/custom_data_fields", [
         };
 
         self[self.profile_slug] = fieldModel({value: originalProfileId});
+        if (!self.can_edit_original_profile) {
+            self[self.profile_slug].disable(true);
+        }
         self[self.profile_slug].value.subscribe(function (newValue) {
             var fields = {};
             if (newValue) {

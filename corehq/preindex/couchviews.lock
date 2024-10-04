@@ -110,11 +110,3 @@ ae04d8c82218a9543491 corehq/couchapps/schemas_by_xmlns_or_case_type/views/view/r
 7d2e8e33683a7c27a8df corehq/couchapps/tests/test_all_docs.py
 7ae2e00ba081690d86c3 corehq/couchapps/users_extra/views/users_by_location_id/map.js
 ae04d8c82218a9543491 corehq/couchapps/users_extra/views/users_by_location_id/reduce.js
-ed6ff90fb4b24a10a222 corehq/motech/repeaters/_design/indexes/search/index.js
-8b4f00cb1a48d85286ec corehq/motech/repeaters/_design/views/repeat_records/map.js
-ae04d8c82218a9543491 corehq/motech/repeaters/_design/views/repeat_records/reduce.js
-7ad14540f9e12079225f corehq/motech/repeaters/_design/views/repeat_records_by_next_check/map.js
-83d4baace1fa5a6ede96 corehq/motech/repeaters/_design/views/repeat_records_by_next_check/reduce.js
-0337a63a6147e8f2fcc6 corehq/motech/repeaters/_design/views/repeat_records_by_payload_id/map.js
-637a41f78b2cb08b0aa7 corehq/motech/repeaters/_design/views/repeaters/map.js
-83d4baace1fa5a6ede96 corehq/motech/repeaters/_design/views/repeaters/reduce.js

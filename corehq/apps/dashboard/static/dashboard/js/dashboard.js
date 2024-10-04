@@ -1,10 +1,12 @@
+"use strict";
 hqDefine("dashboard/js/dashboard", [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/components.ko',    // pagination widget
-    'hqwebapp/js/bootstrap3/main',     // post-link function
+    'hqwebapp/js/bootstrap5/components.ko',    // pagination widget
+    'hqwebapp/js/bootstrap5/main',     // post-link function
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // popover
 ], function (
     $,
     ko,

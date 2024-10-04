@@ -13,12 +13,16 @@
   <nav id="TableOfContents">
     <ul>
       <li><a href="#overview">Overview</a></li>
-      <li><a href="#prepare-local-environment">Prepare Local Environment</a></li>
+      <li><a href="#prepare-local-environment">Step 0: Prepare Local Environment</a></li>
       <li><a href="#announce-migration">Step 1: Announce Migration</a></li>
-      <li><a href="#split-files">Step 2: Split Files</a>
+      <li><a href="#no-split">Step 2 (small apps): The "No Split" Process</li>
+      <li><a href="#split-files">Step 2 (large apps): Auto-Migrate &amp; Split Files</a>
         <ul>
+          <li><a href="#pre-work">Pre-Work: Lint</a></li>
+          <li><a href="#large-apps">Migrating Large Apps</a></li>
           <li><a href="#update-diffs">Configure &amp; Update Diffs</a></li>
           <li><a href="#verify-references">Verify References</a></li>
+          <li><a href="#re-migrate">Re-Migrate Files</a></li>
         </ul>
       </li>
       <li><a href="#update-stylesheets">Step 2B: Migrate Stylesheets</a></li>
@@ -45,86 +49,175 @@
     update this notice and leave this page as documentation for the next Bootstrap migration.
   </div>
   <p>
-    We are taking an app-by-app approach to migrating from Bootstrap 3 to 5. This process is summarized by the following:
+    <a href="https://getbootstrap.com/" target="_blank">Bootstrap</a> is a third-party UI library used throughout
+    HQ. It's essentially a set of stylesheets and javascript widgets. This means that migrating from one version to the
+    next involves the following kinds of work:
+
+    <ul>
+        <li>
+            <strong>Styling updates</strong>: This can be as simple as replacing a renamed CSS class, which is often handled
+            automatically by our migration tool. It can also mean updating HQ stylesheets to work harmoniously with
+            Bootstrap's new/updated styles.
+        </li>
+        <li>
+            <strong>HTML updates</strong>: Some of the new/updated Bootstrap styles correspond to HTML changes. This affects simple
+            widgets like dropdown menus, which may now need classes to be applied differently - for
+            example, the children of dropdown menus now need to use a new <code>dropdown-item</code> class.
+            Our migration tool detects widgets that need to be updated, although a developer is needed to implement
+            the changes. The tool can automatically make other HTML-related changes, such as renaming attributes
+            like <code>data-toggle</code> that have been renamed in the new version.
+        </li>
+        <li>
+            <strong>JavaScript updates</strong>: HQ uses a number of Bootstrap-provided interactive widgets, such as modal dialogs.
+            The APIs for accessing these widgets have changed, so the calling code needs to be updated.
+            There are also a few non-Bootstrap widgets that depend on a specific version of Bootstrap and need to
+            be migrated to a new version.
+            Our migration tool detects usage of widgets that need to be updated, but a developer is needed to make the
+            changes.
+        </li>
+    </ul>
   </p>
-  <ul>
-    <li>
-      <p>
-        Using an automated process, split template and javascript files that need changes into <code>bootstrap3</code>
-        and <code>bootstrap5</code> versions. This process will find/replace the straightforward changes and flag
-        more complex changes to be addressed later.
-      </p>
-    </li>
-    <li>
-      <p>
-        Migrate views in the app one-by-one by applying the <code>@use_bootstrap5</code> decorator and
-        ensuring template and javascript files for that view inherit from <code>bootstrap5</code> base templates
-        and javascript dependencies. This process will be visual in nature, and may involve updates to the
-        Bootstrap 5 stylesheet and/or restructuring HTML and javascript components to ensure the view renders properly
-        with no javascript errors.
-      </p>
-    </li>
-    <li>
-      <p>
-        Once <code>bootstrap3</code> versions of a template or javascript file are no longer referenced, the
-        <code>bootstrap5</code> version can be "un-split" and the file moved back to the original location prior to
-        the split.
-      </p>
-    </li>
-    <li>
-      <p>
-        An app will be considered fully migrated when all template and javascript files are no longer split into
-        <code>bootstrap3</code> and <code>bootstrap5</code> versions and every view in the app is decorated with
-        <code>@use_bootstrap5</code>.
-      </p>
-    </li>
-    <li>
-      <p>
-        Once all apps are fully migrated to Bootstrap 5, we can then remove the use of the any in-template splits
-        referencing <code>request.use_boostrap5</code>, so that any Bootstrap 3 related code is removed. Lastly, a final
-        cleanup should be done to remove the <code>@use_bootstrap5</code> decorator from all the views.
-      </p>
-    </li>
-  </ul>
+  <p>
+    Because the HQ codebase is large, we are taking an incremental approach to this migration.
+    For organizational purposes, we are executing and tracking this migration primarily on an app-by-app basis.
+  </p>
+  <p>
+    Multiple versions of Bootstrap cannot coexist on the same page.
+    The <code>@use_bootstrap5</code> decorator marks individual views as migrated to Bootstrap 5. This decorator
+    sets a <code>use_bootstrap5</code> attribute on the request that's used to set up the
+    relevant Bootstrap environment.
+  </p>
+  <p>
+    This means that files that are required by both migrated and unmigrated pages need to be "split" into two
+    versions: one to include on Bootstrap 3 pages and another to include on Bootstrap 5 pages. This applies largely to code that
+    is fundamental to HQ's UI and used throughout the platform, such as the <code>hqwebapp</code> app, the
+    analytics JavaScript libraries, etc.
+  </p>
+  <p>
+    It can also be helpful to "split" files in this way while migrating an app. This allows
+    Bootstrap 5 changes to be developed, reviewed, and merged in small pieces, before switching the Bootstrap
+    version used in production. It is a more complex process that adds more code during the migration,
+    although most of this code is automatically generated by the migration tool.
+    In these cases, once the app is fully migrated, the Bootstrap 3 files can be deleted.
+  </p>
+  <p>
+    To support this approach, we have tooling that facilitates "splitting" and "unsplitting" files:
+    copying files, moving them, and updating references to them. This tooling also performs the simpler migration
+    updates, such as renaming CSS classes. For updates that it cannot handle automatically, it adds a TODO comment
+    to the relevant code.
+  </p>
+  <p>
+    Once the entire platform is fully migrated to Bootstrap 5, any remaining Bootstrap 3 code can be removed:
+    the Bootstrap 3 versions of files in <code>hqwebapp</code> and similar apps, the <code>@use_bootstrap5</code>
+    decorator, any code related to <code>request.use_bootstrap5</code> or <code>window.USE_BOOTSTRAP_5</code>,
+    the Bootstrap 3 stylesheets and JavaScript library, and so forth.
+  </p>
 
   <h2 id="prepare-local-environment" class="pt-4">
-    Prepare Local Environment
+    Step 0: Prepare Local Environment
   </h2>
   <p>
     If you haven't done so, you will need to install Dart Sass to compile
     <code>scss</code> files. The recommended method is with homebrew <code>brew install sass/sass/sass</code>,
     as described in <code>DEV_SETUP.md</code>.
   </p>
-  <p>
-    Next, you will need to specify <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code> in <code>localsettings.py</code>. This
-    will be where the migration management command will leave longer notes for each migrated file.
-  </p>
 
   <h2 id="announce-migration" class="pt-3">
     Step 1: Announce Migration
   </h2>
   <p>
-    Before you begin the migration of an app, please announce your intention to do so in <code>#gtd-dev</code>. It is
-    important to communicate timelines for how long you expect the "split files" stage to last. Additionally, please
-    ask that people refrain from any front-end development in that app until changes from the split files step have
-    been merged.
-  </p>
-  <div class="alert alert-primary">
-    <strong>Important:</strong>
-    After announcing your intent to migrate the app, please update the app's migration status
     <strong><a href="https://docs.google.com/spreadsheets/d/1tkSXR643Da-fp6a-uYPa5dYs5if4W2LqtvUJs3IfUKs/edit#gid=0"
-       target="_blank">in this table</a></strong>. This is also a good place to see what apps have not been migrated yet, if
-    you are in need of ideas.
-  </div>
+       target="_blank">This spreadsheet</a></strong> is a high-level tracker of which apps have been migrated.
+    It contains notes on the approximate size of different apps (in terms of how many views they contain) and on
+    inter-app dependencies.
+  </p>
+  <p>
+    The migration tool supports two general workflows for migrating an app: one based on splitting all files into
+    Bootstrap 3 and Bootstrap 5 versions, and one based on migrating files "in place." The splitting files approach
+    is <strong>necessary</strong> for apps that are dependencies for other apps, which will need to support both
+    Bootstrap 3 and Bootstrap 5 for a while. It is <strong>optional</strong> for small, independent apps.
+  </p>
+  <p>
+    Before you begin the migration of an app, please announce your intention to do so in <code>#gtd-dev</code>.
+    It is helpful to be aware of other front-end development in the app. If the app has ongoing front-end
+    development, consider delaying either that development or the migration, to reduce code conflicts.
+    After announcing your intent to migrate the app, please update
+    <a href="https://docs.google.com/spreadsheets/d/1tkSXR643Da-fp6a-uYPa5dYs5if4W2LqtvUJs3IfUKs/edit#gid=0"
+    target="_blank">the app's migration status</a>.
+  </p>
 
-  <h2 id="split-files" class="pt-4">
-    Step 2: Split Files
+  <h2 id="no-split" class="pt-3">
+    Step 2 (small apps): The "No Split" Process
   </h2>
   <p>
-    The next step is to split affected template and javascript files into <code>bootstrap3</code> and
+    For small apps that are not depended on by other apps, the migration tool supports a streamlined process that
+    does not require splitting files into a Bootstrap 3 and Bootstrap 5 version. This is a good option for apps
+    with a small number of views, as it involves fewer pull requests and avoids the overhead of splitting files.
+    This approach does the entire migration in a single pull request, which
+    makes it unlikely to be a good choice for apps with 10+ views.
+  </p>
+  <p>
+    To begin a "no split" migration, first
+    <a href="http://localhost:8000/styleguide/b5/migration/#pre-work" target="_blank">lint</a> the app's JavaScript
+    and make a pull request for any linting changes. Then, to begin the actual migration, run:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py migrate_app_to_bootstrap5 &lt;app_name&gt; --no-split</pre>
+    </div>
+  </div>
+  <p>
+    This will iterate through all the templates and javascript files in <code>&lt;app_name&gt;</code>,
+    applying all automated fixes and adding TODO comments for fixes that aren't automated. After
+    staging the changes to each file, you will have the option to auto-commit those changes.
+  </p>
+  <p>
+    For each migrated template, the command will wait for you to apply the <code>@use_bootstrap5</code> decorator
+    to the relevant views (see <a href="#migrating-views">Migrating Views</a>) before moving on to the next template.
+  </p>
+  <p>
+    Once all the files are migrated in-place, go through the TODO comments, which reference helper documents in the
+    <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide"
+    target="_blank">changes_guide</a> directory.
+  </p>
+  <p>
+    After all TODOs are addressed, test your work: load the page and
+    test out any interactivity. Most migrations should also go through QA. Migrations can skip QA if they make
+    relatively superficial changes and are in low-risk areas.
+  </p>
+  <p>
+    Also mark the migration as "complete" as part of your pull request. This updates a status file where we
+    programmatically track the status of the overall platform migration. To do so:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py complete_bootstrap5_migration &lt;app_name&gt;</pre>
+    </div>
+  </div>
+  <p>
+    You're done! Ignore the rest of this document.
+  </p>
+
+  <h2 id="split-files" class="pt-4">
+    Step 2 (large apps): Auto-Migrate &amp; Split Files
+  </h2>
+  <p>
+    For large migrations, the first step is to split affected template and javascript files into <code>bootstrap3</code> and
     <code>bootstrap5</code> versions. This is an automated process that uses a management command to find and
     replace the straightforward changes, while flagging more complex changes to be addressed later.
   </p>
+  <p>
+    Once the migration changes are staged, the file and split into the two bootstrap versions, with the
+    migration changes saved to the <code>bootstrap5</code> version. The two files are then saved to separate
+    <code>bootstrap3</code> and <code>bootstrap5</code> directories under the original parent directory.
+  </p>
+  <p>
+    The command will then find references to the original filepath and replace them with the filepath to the
+    <code>bootstrap3</code> version.
+  </p>
+  <h3 id="pre-work" class="pt-3">
+    Pre-Work: Lint JavaScript
+  </h3>
   <p>
     Pre-work: Your life will be easier if you lint the app's JavaScript <em>before</em> the migration script
     duplicates every js file. This is usually not arduous. To find lint errors, make sure you have
@@ -144,12 +237,16 @@
     <strong>Important:</strong> Avoid including lint fixes and split-files changes in the SAME commit.
     These changes MUST be separated.
   </div>
+
+  <h3 id="large-apps" class="pt-3">
+    Step 2.1A: Migrating Large Apps
+  </h3>
   <p>
-    Now, on to the migration.
     Please set aside focused time to PR these changes as soon as possible to avoid any migration conflicts or
     missed renamed references, especially in parts of the codebase that are undergoing frequent front-end changes. This
     initial "split file" Pull Request should <strong>only</strong> contain changes automatically made by the management command.
     Additional changes should be made in subsequent PRs.
+    <a href="https://github.com/dimagi/commcare-hq/pull/34345" target="_blank">Here is an example Pull Request</a> of this step.
   </p>
   <p>
     Use the management command below with <code>&lt;app_name&gt;</code> being the
@@ -157,7 +254,7 @@
   </p>
   <div class="card text-bg-light mb-3">
     <div class="card-body">
-      <pre class="m-0">./manage.py migrate_app_to_bootstrap5 &lt;app_name&gt;</pre>
+      <pre class="m-0">./manage.py migrate_app_to_bootstrap5 &lt;app_name&gt; --skip-all</pre>
     </div>
   </div>
   <p>
@@ -165,28 +262,26 @@
     <code>&lt;app_name&gt;</code>.
   </p>
   <p>
-    The management command will iterate through all template and javascript files in the app. You have the option to
-    review and accept each change line-by-line or review the diff for each file at the end.
-    A changelog for each file will be saved to a markdown file in <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code>.
-  </p>
-  <div class="alert alert-primary">
-    Due to potential merge conflict issues, the markdown files outputted to <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code>
-    are not version controlled. If you want to work on migrating an application with multiple people, you can zip
-    these markdown files and share with your collaborators for future reference.
-  </div>
-  <p>
-    Once a file is updated and split into the two bootstrap versions, the command will
-    find references to the original filepath and replace them with the filepath to the <code>bootstrap3</code> version.
+    The option <code>--skip-all</code> is optional, but recommended unless you have a particularly tricky app
+    as it speeds up the migration process by auto-committing the split files changes for each template and
+    javascript file in the app. If you use <code>--skip-all</code>, you are still responsible for changes made by
+    the tool, so it's a good idea to review the auto-generated commits in GitHub or your favorite diff tool.
   </p>
   <p>
-    After applying all the actions related to splitting a file, it is recommended to commit those changes before
-    moving on to the next file. The management command will prompt you to do this with a suggested commit message.
-    Formatting our commits this way is important to maintain a clean git history.
+    If <code>--skip-all</code> is not used, the management command will iterate through all template and javascript
+    files in the app. You have the option to review and accept each change line-by-line or review
+    the diff for each file at the end.
+  </p>
+  <p>
+    Regardless of what route you take, code will also be updated with TODO comments noting areas that need
+    attention and could not automatically be updated.  These comments reference helper documents in the
+    <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide"
+    target="_blank">changes_guide</a> directory.
   </p>
   <div class="alert alert-primary">
     <p>
-      It is possible that you might have to run a migration multiple times on an app. It might be the case that templates
-      or javascript files have several nested dependencies.
+      If templates or javascript files have several nested dependencies, you may need to run this split files step
+      multiple times.
     </p>
     <p>
       For instance, let's suppose one template called <code>webapps_base.html</code> is
@@ -205,10 +300,10 @@
   </div>
 
   <h3 id="update-diffs" class="pt-3">
-    Configure &amp; Update Diffs
+    Step 2.2: Configure &amp; Update Diffs
   </h3>
   <p>
-    Since an app migration usually takes several weeks, we need to ensure that any changes
+    Since a large app migration usually takes several weeks, we need to ensure that any changes
     made to <code>bootstrap3</code> templates during this time are kept in sync with their <code>bootstrap5</code>
     counterparts. We do this by saving diffs of the split files and running tests against them to ensure diffs stay the
     same. Once changes are made to both split files, the diffs can be regenerated so that tests continue to pass.
@@ -243,7 +338,7 @@
   </div>
 
   <h3 id="verify-references" class="pt-3">
-    Verify References
+    Step 2.3: Verify References
   </h3>
   <p>
     Right before submitting the "split files" Pull Request, it is important to rebase the latest <code>master</code>
@@ -265,6 +360,31 @@
     opening the Pull Request.
   </p>
 
+  <h3 id="re-migrate" class="pt-3">
+    Step 2.4: Re-Migrate Files
+  </h3>
+  <p>
+    There is a chance that during the time your split-files PR was open, someone might have added a new template or
+    javascript file, or made a change to one of the <code>bootstrap3</code> versions of an already split file.
+    If you merge <code>master</code> into your split files branch and find that the diffs have diverged for a file,
+    please run the following command to re-migrate the <code>bootstrap3</code> version of that file.
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py migrate_app_to_bootstrap5 &lt;app_name&gt; --filename &lt;file_path&gt;</pre>
+    </div>
+  </div>
+  <p>
+    In this usage, <code>&lt;file_path&gt;</code> can either be the file name of the diverged file or the relative path.
+    For example, if <code>builds/bootstrap3/edit_menu.html</code> diverged, you can specify <code>edit_menu.html</code>
+    or <code>builds/bootstrap3/edit_menu.html</code> as the <code>&lt;file_path&gt;</code>.
+  </p>
+  <p>
+    This command will then re-apply the migration changes to the <code>bootstrap3</code> file and then save those
+    changes to the <code>bootstrap5</code> version. You can then commit those changes and then run
+    <code>build_bootstrap5_diffs</code> to rebuild the diffs.
+  </p>
+
   <h2 id="update-stylesheets" class="pt-4">
     Step 2B: Migrate Stylesheets
   </h2>
@@ -277,10 +397,90 @@
   <p>
     The process for this step in the migration is not automated due to the rarity and complexity of this requirement.
     You can begin this process by creating parallel <code>scss</code> files for all the existing <code>less</code>
-    files. The contents can be copied over from <code>less</code> to <code>scss</code> and the syntax updated to
+    files. The contents can be copied over from <code>less</code> to <code>scss</code>.
+  </p>
+  <p>
+    The syntax will need to be updated to
     use SCSS style variables and mixins.
     <a href="https://www.martyfriedel.com/blog/moving-from-less-to-scss" target="_blank">Here is a guide</a> to
-    help with those changes.
+    help with those changes. Changes that are common in HQ code include:
+    <ul>
+      <li>
+        Variables and string interpolation
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <pre class="m-0">// LESS
+@thing: 10px;
+.@{my-prefix}-kind-of-text: 10px;
+height: calc(~"100vh - 65px");
+
+// SCSS
+$thing: 10px;
+.#{$my-prefix}-kind-of-text: 10px;
+height: calc(100vh - 65px);  // tildes typically weren't necessary</pre>
+          </div>
+        </div>
+      </li>
+      <li>
+        Mixins
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <pre class="m-0">// LESS
+.my-mixin(@param1, @param2) { ... }
+.my-mixin(170px, 115px);
+
+// SCSS
+@mixin my-mixin { ... }
+@include my-mixin(170px, 115px);</pre>
+          </div>
+        </div>
+      </li>
+      <li>
+        Removing bootstrap 3 browser support mixins, including <code>.transition</code>, <code>.box-shadow</code>, and border radius mixins.
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <pre class="m-0">// LESS
+.box-shadow(0 0 10px 0 rgba(0, 0, 0, 0.2));
+
+// SCSS
+box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
+          </div>
+        </div>
+      </li>
+      <li>
+        Updating responsive styling that depends on screen widths:
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <pre class="m-0">// LESS
+@media(min-width: @screen-xs) { ... }
+@media(max-width: $screen-sm-max) { ... }
+
+// SCSS
+@include media-breakpoint-up(sm) { ... }
+@include media-breakpoint-down(lg) { ... }</pre>
+          </div>
+        </div>
+        Note that the screen size categories have changed from bootstrap 3 to 5, so see the
+        <a target="_blank" href="https://getbootstrap.com/docs/3.3/css/#responsive-utilities-classes">old docs</a>
+        and the
+        <a target="_blank" href="https://getbootstrap.com/docs/5.0/layout/breakpoints/">new docs</a>, and test
+        your changes. Also note that using the B5 mixins requires imports:
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <pre class="m-0">@import "mixins";
+@import "functions";</pre>
+      </li>
+      <li>
+        Updating imports. Look at how imports are done in other parts of HQ that use SCSS, such as
+        <a target="_blank" href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/scss/commcarehq.scss">hqwebapp</a> and
+        <a target="_blank" href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/cloudcare/scss/formplayer-common-main.scss">cloudcare</a>.
+        Imports may not be one-for-one replacements, since B3 and B5 are organized differently, and you may have dropped some B3 styles or added some B5 styles.
+      </li>
+      <li>
+        Remember to update the <code>&lt;link&gt;</code> elements in HTML, including changing the <code>type</code>
+        from <code>text/less</code> to <code>text/scss</code>.
+      </li>
+    </ul>
   </p>
   <p>
     It is important to update any variables from the old Bootstrap 3 stylesheet to their Bootstrap 5 counterparts.
@@ -288,8 +488,8 @@
     part accurately.
   </p>
   <div class="alert alert-primary">
-    It is important to create a separate Pull Request for stylesheet changes. This PR should come after the "split files"
-    changes in the previous step.
+    Updating stylesheets is in large part a mechanical process. As always, please commit large mechanical changes
+    separately from changes that need closer review.
   </div>
   <p>
     You will have to update <code>bootstrap5_diff_config.json</code> manually when working with stylesheet files.
@@ -314,22 +514,24 @@
   </p>
   <p>
     The migration process begins by either applying <code>@use_bootstrap5</code> decorator the view function or
-    <code>@method_decorator(use_bootstrap5, name='dispatch')</code> to the view class.
+    <code>@method_decorator(use_bootstrap5, name='dispatch')</code> to the view class. Also update the template's
+    name in the view from <code>bootstrap3/foo.html</code> to <code>bootstrap5/foo.html</code>.
   </p>
   <p>
-    Next, you should go into the view template and ensure that this template inherits from <code>bootstrap5</code>
-    base templates.
+    The automation should have updated the view template so that it inherits from <code>bootstrap5</code>
+    base templates. It should also have updated any <code>bootstrap3</code> javascript dependencies to their
+    <code>bootstrap5</code> versions.
   </p>
   <p>
-    Finally, you should make sure any javascript files needed to render that view also inherit from <code>bootstrap5</code>
-    dependencies. As you migrate a view's requirejs module, it is important to update the
-    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/build_requirejs.py#L147-L149"
-       target="_blank">split_bundles</a>
-    map in <code>build_requirejs</code>.
+    The automation will have added comments to the template and javascript files noting what changes need to be
+    made. Each comment will be marked with <code>todo B5</code> and the type of change that needs to be made.
+    Each type of change has a corresponding document in the
+    <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide"
+    target="_blank">changes_guide</a> directory explaining what needs to be done.
   </p>
   <p>
-    Once a view's template and javascript files updated, it is now time to load that view make visual observations and
-    make adjustments to get the view to render without javascript or visual errors. The view should be as similar
+    Once a view's template and javascript files are updated, it is now time to load that view and test for
+    any javascript or visual errors. The view should be as similar
     as possible to its Bootstrap 3 version, which you can compare with on production.
   </p>
   <p>
@@ -342,12 +544,6 @@
     The most important part of the migration is ensuring that the page is functionally similar to the user and that no
     errors are present on the page that were not previously present in the Bootstrap 3 version.
   </div>
-  <p>
-    There is a chance you might have to introduce changes to the stylesheet if you come across a custom component that
-    has not yet been migrated to Bootstrap 5. If this is the case, please flag this component with the lead developer
-    of the Bootstrap migration. They can assist with updating the stylesheet (if necessary) or updating guidance
-    for replacing this component with Bootstrap 5 best practices.
-  </p>
 
   <h3 id="un-split-view-files" class="pt-3">
     Un-Split View Files
@@ -382,15 +578,14 @@
   <h3 id="deploy-to-staging" class="pt-3">
     Deploy to Staging
   </h3>
-  <div class="alert alert-danger">
-    <strong>IMPORTANT: Do not skip this step!</strong> Please deploy to staging to avoid any fires. You have been warned.
-  </div>
   <p>
-    Once you have your migrated view working locally, it is important to deploy your view's branch to staging to ensure
-    that the requirejs build doesn't encounter any issues and that there are no other staticfiles or javascript
-    issues with this view. It is often the case that the production environment introduces front-end issues that are
-    often not discovered when testing locally, due to the complexity of the requirejs build, django compressor, caching,
-    and content distribution of static files.
+    Once you have your migrated view working locally, it is also helpful to deploy to staging and smoke test there.
+    This is particularly important for migrations that involve switching a JavaScript library from a Bootstrap 3 to
+    Bootstrap 5 version, such as switching the Bootstrap 3 date picker with Botostrap 5-compatible tempus dominus.
+  </p>
+  <p>
+    Most view migrations should also go through QA. Migrations can skip QA if they make
+    relatively superficial changes and are in low-risk areas.
   </p>
 
   <h3 id="rebuild-diffs" class="pt-3">
@@ -469,7 +664,7 @@
   <p>
     Finally, LESS files can be removed from all parts of HQ and <code>COMPRESS_PRECOMPILERS</code> in
     <code>settings.py</code> can be updated to only precompile SCSS. Any LESS-related dependencies can be removed from
-    <code>packange.json</code> and commcare-cloud, and new developer setup guides like <code>DEV_SETUP.md</code> can
+    <code>package.json</code> and commcare-cloud, and new developer setup guides like <code>DEV_SETUP.md</code> can
     be updated to remove references to LESS.
   </p>
   <p>

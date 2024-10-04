@@ -415,7 +415,7 @@ hqDefine('userreports/js/report_config', function () {
                     if (self.reportType() === "map" && mapSpec) {
                         self.displayMapPreview(true);
                         mapSpec.mapboxAccessToken = self._mapboxAccessToken;
-                        var render = hqImport('reports_core/js/maps').render;
+                        var render = hqImport('reports_core/js/bootstrap3/maps').render;
                         render(mapSpec, aaData, $("#map-preview-container"));
                     } else {
                         self.displayMapPreview(false);

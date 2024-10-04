@@ -4187,6 +4187,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     )
     split_screen_dynamic_search = BooleanProperty(default=False)
 
+    persistent_menu = BooleanProperty(default=False)
+    show_breadcrumbs = BooleanProperty(default=True)
+
     @property
     def id(self):
         return self._id
@@ -4531,12 +4534,14 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def save(self, response_json=None, increment_version=None, **params):
         from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
+        from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
         if self.get_id:
             # expire cache unless new application
             self.global_app_config.clear_version_caches()
+            get_app_context_by_case_type.clear(self.domain, self.get_id)
         get_all_case_properties.clear(self)
         expire_case_properties_caches(self.domain)
         get_usercase_properties.clear(self)

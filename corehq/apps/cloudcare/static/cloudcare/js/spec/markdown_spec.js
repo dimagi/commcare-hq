@@ -1,19 +1,28 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/spec/markdown_spec", function () {
+hqDefine("cloudcare/js/spec/markdown_spec", [
+    "sinon/pkg/sinon",
+    "hqwebapp/js/initial_page_data",
+    "integration/js/hmac_callout",
+    "cloudcare/js/markdown",
+], function (
+    sinon,
+    initialPageData,
+    hmacCallout,
+    markdown
+) {
     describe('Markdown', function () {
-        let markdown = hqImport('cloudcare/js/markdown'),
-            render = markdown.render,
-            initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            hmacCallout = hqImport("integration/js/hmac_callout");
+        let render = markdown.render;
 
         let sandbox;
         beforeEach(function () {
             initialPageData.clear();
+            initialPageData.register("toggles_dict", { CASE_LIST_TILE_CUSTOM: false });
             sandbox = sinon.sandbox.create();
         });
 
         afterEach(function () {
+            initialPageData.unregister("toggles_dict");
             sandbox.restore();
         });
 

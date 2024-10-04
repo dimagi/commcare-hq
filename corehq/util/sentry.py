@@ -5,8 +5,6 @@ import traceback
 from types import TracebackType
 
 from django.conf import settings
-from django.db.backends.base.base import BaseDatabaseWrapper
-from django.db.backends.utils import CursorWrapper
 from django.db.utils import OperationalError
 
 from corehq.util.cache_utils import is_rate_limited
@@ -114,10 +112,11 @@ def subtype_error(tb: TracebackType, rate_limit_key: str) -> str:
             dsn = f_locals['cursor'].connection.dsn
         elif f_locals.get('self'):
             frame_self = f_locals['self']
-            if isinstance(frame_self, BaseDatabaseWrapper):
-                dsn = frame_self.connection.dsn
-            if isinstance(frame_self, CursorWrapper):
-                dsn = frame_self.db.connection.dsn
+            connection = getattr(frame_self, 'connection', None)
+            if not connection and hasattr(frame_self, 'db'):
+                connection = getattr(frame_self.db, 'connection', None)
+            if connection:
+                dsn = connection.dsn
 
         if not dsn:
             return rate_limit_key

@@ -1,0 +1,57 @@
+#menu-region {
+  background: transparent;
+}
+
+#menu-region .module-menu-container,
+#menu-region .module-case-list-container {
+  background-color: white;
+  box-shadow: 0 0 10px 2px rgba(0,0,0,.1);
+  margin-bottom: 2rem;
+}
+
+#menu-region .module-menu-container {
+  padding-bottom: 6px;
+}
+
+.persistent-menu-toggle {
+  color: white;
+  background-color: $cc-brand-mid;
+  padding: $spacer / 2;
+  &:hover {
+    background-color: $cc-brand-low;
+  }
+}
+
+$persistent-menu-image-size: 2rem;
+
+.persistent-menu-image {
+  height: $persistent-menu-image-size;
+  width: $persistent-menu-image-size;
+  line-height: $persistent-menu-image-size;
+  text-align: center;
+  font-size: $persistent-menu-image-size / 2;
+  vertical-align: middle;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.persistent-menu {
+  ul {
+    padding-left: $spacer;
+    padding-top: $spacer / 2;
+  }
+
+  > ul {  // top level list only
+    padding-left: 0;
+    padding-top: 0;
+  }
+
+  .persistent-menu-item:hover {
+    background-color: darken($cc-bg, 5);
+  }
+}
+
+.persistent-menu-max-width {
+    max-width: 400px;
+}

@@ -6,3 +6,14 @@
  {% load hq_shared_tags %}
  {% load menu_tags %}
  
+@@ -14,8 +14,8 @@
+            class="{% block page_content_classes %}col-xs-8 col-sm-9 col-lg-10{% endblock %}">
+         {% captureas page_title_block %}{% block page_title %}{% endblock page_title %}{% endcaptureas %}
+         {% if page_title_block %}
+-          <div class="page-header" style="margin-top: 0;">
+-            <h1 class="lead" style="font-size: 1.8em;">{{ page_title_block }}</h1>
++          <div class="page-header mt-3">
++            <h1>{{ page_title_block }}</h1>
+           </div>
+         {% else %}
+           {% block pre_page_content %}

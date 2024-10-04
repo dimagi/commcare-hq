@@ -182,7 +182,6 @@ class ESQuery(object):
             filters.doc_id,
             filters.nested,
             filters.regexp,
-            filters.wildcard,
         ]
 
     def __getattr__(self, attr):
@@ -291,8 +290,9 @@ class ESQuery(object):
         return es
 
     def enable_profiling(self):
-        self.es_query['profile'] = True
-        return self
+        query = self.clone()
+        query.es_query['profile'] = True
+        return query
 
     def add_query(self, new_query, clause):
         """
@@ -330,11 +330,6 @@ class ESQuery(object):
             """
         self._legacy_fields = True
         return self.source(fields)
-
-    def ids_query(self, doc_ids):
-        return self.set_query(
-            queries.ids_query(doc_ids)
-        )
 
     def source(self, include, exclude=None):
         """

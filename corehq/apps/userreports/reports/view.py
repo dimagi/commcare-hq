@@ -49,6 +49,7 @@ from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
 )
 from corehq.apps.userreports.exceptions import (
+    BadBuilderConfigError,
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     TableNotFoundWarning,
@@ -454,7 +455,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             if settings.DEBUG:
                 raise
             return self.render_json_response({
-                'error': str(e),
+                'error_message': str(e),
                 'aaData': [],
                 'iTotalRecords': 0,
                 'iTotalDisplayRecords': 0,
@@ -592,13 +593,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 "chart_configs": report_config.charts,
                 "aaData": cls.sanitize_page(export.get_data()),
             }
-        except UserReportsError:
-            # User posted an invalid report configuration
-            return None
         except DataSourceConfigurationNotFoundError:
-            # A temporary data source has probably expired
-            # TODO: It would be more helpful just to quietly recreate the data source config from GET params
-            return None
+            raise BadBuilderConfigError(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
 
 
 # Base class for classes that provide custom rendering for UCRs

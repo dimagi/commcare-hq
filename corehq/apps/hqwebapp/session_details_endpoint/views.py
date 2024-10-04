@@ -87,7 +87,7 @@ class SessionDetailsView(View):
             'username': user.username,
             'djangoUserId': user.pk,
             'superUser': user.is_superuser,
-            'authToken': None,
+            'authToken': session_id,
             'domains': list(domains),
             'anonymous': False,
             'enabled_toggles': list(enabled_toggles),

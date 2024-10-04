@@ -22,6 +22,13 @@ from corehq.apps.app_manager.util import (
 from corehq.util.translation import localize
 
 
+# If the language name is not showing up properly in the language menu, you can
+# define those languages here, mapped to their two-letter language codes.
+CUSTOM_LANGUAGE_NAMES = {
+    'km': "ខ្មែរ",
+}
+
+
 def non_empty_only(dct):
     return {key: value for key, value in dct.items() if value}
 
@@ -60,8 +67,16 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             name = langcodes.get_name(lc) or lc
             if not name:
                 continue
-            with localize(convert_to_two_letter_code(lc)):
-                name = gettext(name)
+            letter_code = convert_to_two_letter_code(lc)
+
+            if letter_code in CUSTOM_LANGUAGE_NAMES.keys():
+                # These are languages not installed on our machines, so localize does not understand them.
+                # Though we don't want to install these langauges, we still want to support projects
+                # who want to see the name written properly.
+                name = CUSTOM_LANGUAGE_NAMES[letter_code]
+            else:
+                with localize(letter_code):
+                    name = gettext(name)
             yield lc, name
 
     yield id_strings.current_language(), lang
@@ -155,7 +170,7 @@ def _create_module_details_app_strings(module, langs):
                 clean_trans(column.header, langs)
             )
 
-            if column.format in ('enum', 'conditional-enum', 'enum-image', 'clickable-icon'):
+            if column.format in ('enum', 'conditional-enum', 'enum-image', 'clickable-icon', 'translatable-enum'):
                 for item in column.enum:
                     yield (
                         id_strings.detail_column_enum_variable(

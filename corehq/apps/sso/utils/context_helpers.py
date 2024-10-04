@@ -57,7 +57,33 @@ def get_idp_cert_expiration_email_context(idp):
         "subject": subject,
         "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
         "to": idp.owner.enterprise_admin_emails,
-        "bcc": [settings.ACCOUNTS_EMAIL],
+        "bcc": [],
+        "html": body_html,
+        "plaintext": body_txt,
+    }
+    if idp.owner.dimagi_contact:
+        email_context["bcc"].append(idp.owner.dimagi_contact)
+    return email_context
+
+
+def get_sso_deactivation_skip_email_context(idp, failure_reason):
+    subject = _("CommCare HQ Alert: Temporarily skipped automatic deactivation of SSO Web Users"
+                " (Remote User Management)")
+    template_context = {
+        "contact_email": settings.ACCOUNTS_EMAIL,
+        "base_url": get_site_domain(),
+        "failure_reason": failure_reason,
+    }
+    body_html, body_txt = render_multiple_to_strings(
+        template_context,
+        "sso/email/sso_deactivation_skip_notification.html",
+        "sso/email/sso_deactivation_skip_notification.txt",
+    )
+    email_context = {
+        "subject": subject,
+        "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
+        "to": idp.owner.enterprise_admin_emails or [idp.owner.dimagi_contact] or [settings.ACCOUNTS_EMAIL],
+        "bcc": [],
         "html": body_html,
         "plaintext": body_txt,
     }
@@ -104,7 +130,7 @@ def get_api_secret_expiration_email_context(idp):
         "subject": subject,
         "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
         "to": idp.owner.enterprise_admin_emails,
-        "bcc": [settings.ACCOUNTS_EMAIL],
+        "bcc": [],
         "html": body_html,
         "plaintext": body_txt,
     }

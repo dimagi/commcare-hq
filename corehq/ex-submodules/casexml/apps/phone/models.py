@@ -137,13 +137,13 @@ class OTARestoreUser(object):
         raise NotImplementedError()
 
     def get_owner_ids(self):
-        raise NotImplementedError()
+        return self._couch_user.get_owner_ids(self.domain)
 
     def get_call_center_indicators(self, config):
         raise NotImplementedError()
 
     def get_case_sharing_groups(self):
-        raise NotImplementedError()
+        return self._couch_user.get_case_sharing_groups(domain=self.domain)
 
     def get_fixture_last_modified(self):
         raise NotImplementedError()
@@ -175,19 +175,13 @@ class OTARestoreWebUser(OTARestoreUser):
     def get_commtrack_location_id(self):
         return None
 
-    def get_owner_ids(self):
-        return [self.user_id]
-
     def get_call_center_indicators(self, config):
         return None
 
-    def get_case_sharing_groups(self):
-        return []
-
     def get_fixture_last_modified(self):
-        from corehq.apps.fixtures.models import UserLookupTableStatus
+        from corehq.apps.fixtures.models import UserLookupTableType
 
-        return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
+        return self._couch_user.fixture_status(UserLookupTableType.LOCATION)
 
     def get_usercase_id(self):
         return self._couch_user.get_usercase_id(self.domain)
@@ -215,9 +209,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
 
         return get_commtrack_location_id(self._couch_user, self.project)
 
-    def get_owner_ids(self):
-        return self._couch_user.get_owner_ids(self.domain)
-
     def get_call_center_indicators(self, config):
         from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 
@@ -228,9 +219,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
             self._couch_user,
             indicator_config=config
         )
-
-    def get_case_sharing_groups(self):
-        return self._couch_user.get_case_sharing_groups()
 
     def get_fixture_last_modified(self):
         from corehq.apps.fixtures.models import UserLookupTableType

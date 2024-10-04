@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from django.conf import settings
 from django.urls import reverse
@@ -92,8 +93,8 @@ class CaseManagementMap(BaseCaseMapReport):
     name = gettext_noop("Case Management Map")
     slug = "case_management_map"
 
-    base_template = "geospatial/map_visualization_base.html"
-    report_template_path = "map_visualization.html"
+    base_template = "geospatial/case_management_base.html"
+    report_template_path = "case_management.html"
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
@@ -108,6 +109,7 @@ class CaseManagementMap(BaseCaseMapReport):
             DataTablesColumn(_("case_id"), prop_name="type.exact"),
             DataTablesColumn(_("gps_point"), prop_name="type.exact"),
             DataTablesColumn(_("link"), prop_name="name.exact", css_class="case-name-link"),
+            DataTablesColumn(_("name"), prop_name="name.exact"),
         )
         headers.custom_sort = [[2, 'desc']]
         return headers
@@ -124,7 +126,8 @@ class CaseManagementMap(BaseCaseMapReport):
             cases.append([
                 display.case_id,
                 coordinates,
-                display.case_link
+                display.case_link,
+                display.case_name,
             ])
         return cases
 
@@ -225,9 +228,9 @@ class CaseGroupingReport(BaseCaseMapReport):
             top_left=bounds['top_left'],
             bottom_right=bounds['bottom_right'],
         )]
-        if self.request.GET.get('features'):
+        if self.all_features:
             features_filter = self._get_filter_for_features(
-                self.request.GET['features']
+                self.all_features
             )
             filters_.append(features_filter)
         query = self._filter_query(query, filters_)
@@ -278,6 +281,31 @@ class CaseGroupingReport(BaseCaseMapReport):
         return apply_geohash_agg(query, case_property, precision)
 
     @property
+    def features_from_request(self):
+        features = {}
+        features_json = self.request.GET.get('features')
+        if features_json:
+            try:
+                features = json.loads(features_json)
+            except json.JSONDecodeError:
+                raise ValueError(f'{features_json!r} parameter is not valid JSON')
+        return features
+
+    @property
+    def saved_polygon_from_request(self):
+        features = {}
+        selected_feature_id = self.request.GET.get('selected_feature_id')
+        if selected_feature_id:
+            selected_polygon = GeoPolygon.objects.get(id=selected_feature_id)
+            geo_json_features = selected_polygon.geo_json['features']
+            features = {uuid.uuid4().hex: feature for feature in geo_json_features}
+        return features
+
+    @property
+    def all_features(self):
+        return self.features_from_request | self.saved_polygon_from_request
+
+    @property
     def total_records(self):
         """
         Returns the number of buckets.
@@ -295,13 +323,13 @@ class CaseGroupingReport(BaseCaseMapReport):
         query = super()._build_query()
         if self.request.GET.get('features'):
             features_filter = self._get_filter_for_features(
-                self.request.GET['features']
+                self.all_features
             )
             query = self._filter_query(query, [features_filter])
         return query
 
     @staticmethod
-    def _get_filter_for_features(features_json):
+    def _get_filter_for_features(features):
         """
         Returns an Elasticsearch filter to select for cases within the
         polygons defined by GeoJSON ``features_json``.
@@ -352,10 +380,6 @@ class CaseGroupingReport(BaseCaseMapReport):
             }
 
         """
-        try:
-            features = json.loads(features_json)
-        except json.JSONDecodeError:
-            raise ValueError(f'{features_json!r} parameter is not valid JSON')
         polygon_filters = []
         for feature in features.values():
             validate_geometry(feature['geometry'])

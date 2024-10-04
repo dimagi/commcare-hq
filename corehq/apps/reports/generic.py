@@ -37,6 +37,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.util import DatatablesParams
@@ -300,7 +301,7 @@ class GenericReportView(object):
     @memoized
     def template_async_base(self):
         if self.asynchronous:
-            return self.base_template_async or "reports/async/default.html"
+            return self.base_template_async or "reports/async/bootstrap3/default.html"
         return self.template_base
 
     @property
@@ -320,7 +321,7 @@ class GenericReportView(object):
     @property
     @memoized
     def template_filters(self):
-        return self.base_template_filters or "reports/async/filters.html"
+        return self.base_template_filters or "reports/async/bootstrap3/filters.html"
 
     @property
     @memoized
@@ -830,6 +831,7 @@ class GenericTabularReport(GenericReportView):
     statistics_rows = None
     force_page_size = False  # force page size to be as the default rows
     default_rows = 10
+    max_rows = 1000
     start_at_row = 0
     show_all_rows = False
     fix_left_col = False
@@ -844,7 +846,7 @@ class GenericTabularReport(GenericReportView):
     sortable = True
 
     # override old class properties
-    report_template_path = "reports/tabular.html"
+    report_template_path = "reports/bootstrap3/tabular.html"
     flush_layout = True
 
     # set to a list of functions that take in a report object
@@ -922,6 +924,8 @@ class GenericTabularReport(GenericReportView):
             self._pagination = DatatablesParams.from_request_dict(
                 self.request.POST if self.request.method == 'POST' else self.request.GET
             )
+            if self._pagination.count > self.max_rows:
+                raise BadRequestError(gettext("Row count is too large"))
         return self._pagination
 
     @property
@@ -1114,7 +1118,7 @@ class GenericTabularReport(GenericReportView):
                 },
                 'bad_request_error_text': report_table['bad_request_error_text'],
                 'pagination': {
-                    'hide': getattr(report_table['pagination'], 'hide', False),
+                    'hide': report_table['pagination'].get('hide', False),
                     'is_on': pagination_on,
                     'source': report_table['pagination']['source'] if pagination_on else None,
                     'params': report_table['pagination']['params'] if pagination_on else None,

@@ -1,9 +1,4 @@
 import datetime
-import numbers
-from functools import partial
-
-from django.urls import reverse
-from django.utils.translation import gettext as _
 
 import pytz
 from couchdbkit import ResourceNotFound
@@ -13,16 +8,12 @@ from casexml.apps.case.views import get_wrapped_case
 from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
 
 
-def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=None):
+def case_hierarchy_context(case, timezone=None):
     wrapped_case = get_wrapped_case(case)
     if timezone is None:
         timezone = pytz.utc
     columns = wrapped_case.related_cases_columns
-    type_info = wrapped_case.related_type_info
-
-    descendent_case_list = get_flat_descendant_case_list(
-        case, get_case_url, type_info=type_info
-    )
+    descendant_case_list = get_case_hierarchy(case)
 
     parent_cases = []
     if case.live_indices:
@@ -31,23 +22,21 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
         # relationships)
         for idx in case.live_indices:
             try:
-                parent_cases.append(idx.referenced_case)
+                parent_case = idx.referenced_case
             except ResourceNotFound:
                 parent_cases.append(None)
-        for parent_case in parent_cases:
-            if parent_case:
-                parent_case.edit_data = {
-                    'view_url': get_case_url(parent_case.case_id)
-                }
-                last_parent_id = parent_case.case_id
             else:
-                last_parent_id = None
+                parent_case.index_info = _index_to_context(idx, is_ancestor=True)
+                parent_cases.append(parent_case)
 
-        for c in descendent_case_list:
-            if not getattr(c, 'treetable_parent_node_id', None) and last_parent_id:
-                c.treetable_parent_node_id = last_parent_id
+        case.treetable_parent_node_id = parent_cases[-1].case_id if parent_cases[-1] else None
 
-    case_list = parent_cases + descendent_case_list
+    reverse_indices = {index.case_id: index for index in case.reverse_indices}
+    for descendant in descendant_case_list:
+        if idx := reverse_indices.get(descendant.case_id):
+            descendant.index_info = _index_to_context(idx, is_ancestor=False)
+
+    case_list = parent_cases + descendant_case_list
 
     for c in case_list:
         if not c:
@@ -55,174 +44,45 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
         c.columns = []
         case_dict = get_wrapped_case(c).to_full_dict()
         for column in columns:
-            c.columns.append(get_display_data(
-                case_dict, column, timezone=timezone))
+            c.columns.append(get_display_data(case_dict, column, timezone=timezone))
 
     return {
         'current_case': case,
         'domain': case.domain,
         'case_list': case_list,
         'columns': columns,
-        'num_columns': len(columns) + 1,
-        'show_view_buttons': show_view_buttons,
     }
 
 
-def normalize_date(val):
-    # Can't use isinstance since datetime is a subclass of date.
-    if type(val) == datetime.date:
-        return datetime.datetime.combine(val, datetime.time.min)
-
-    return val
-
-
-def get_inverse(val):
-    if isinstance(val, (datetime.datetime, datetime.date)):
-        return datetime.datetime.max - val
-    elif isinstance(val, numbers.Number):
-        return 10 ** 20
-    elif val is None or isinstance(val, bool):
-        return not val
-    else:
-        raise Exception("%r has uninversable type: %s" % (val, type(val)))
+def _index_to_context(index, is_ancestor):
+    return {
+        'identifier': index.identifier,
+        'relationship': index.relationship,
+        'is_ancestor': is_ancestor,
+    }
 
 
-def sortkey(child, type_info=None):
-    """Return sortkey based on sort order defined in type_info, or use default
-    based on open/closed and opened_on/closed_on dates.
-    """
-    type_info = type_info or {}
-    case = child['case']
-    if case.closed:
-        key = [1]
-        try:
-            for attr, direction in type_info[case.type]['closed_sortkeys']:
-                val = normalize_date(getattr(case, attr))
-                if direction.lower() == 'desc':
-                    val = get_inverse(val)
-                key.append(val)
-        except KeyError:
-            key.append(datetime.datetime.max - case.closed_on)
-    else:
-        key = [0]
-        try:
-            for attr, direction in type_info[case.type]['open_sortkeys']:
-                val = normalize_date(getattr(case, attr))
-                if direction.lower() == 'desc':
-                    val = get_inverse(val)
-                key.append(val)
-        except KeyError:
-            key.append(case.opened_on or datetime.datetime.min)
-    return key
+def _sortkey(child):
+    """Return sortkey based on open/closed and opened_on/closed_on dates"""
+    if child.closed:
+        return (1, datetime.datetime.max - child.closed_on)
+    return (0, child.opened_on or datetime.datetime.min)
 
 
-def get_session_data(case, current_case, type_info):
-    # this logic should ideally be implemented in subclasses of
-    # CommCareCase
-    if type_info and case.type in type_info:
-        attr = type_info[case.type]['case_id_attr']
-        return {
-            attr: case.case_id,
-            'case_id': current_case.case_id
-        }
-    else:
-        return {
-            'case_id': case.case_id
-        }
-
-
-TREETABLE_INDENT_PX = 19
-
-
-def process_case_hierarchy(case_output, get_case_url, type_info):
-    current_case = case_output['case']
-    submit_url_root = reverse('receiver_post', args=[current_case.domain])
-    form_url_root = reverse('formplayer_main', args=[current_case.domain])
-
-    def process_output(case_output, depth=0):
-        for c in case_output['child_cases']:
-            process_output(c, depth=depth + 1)
-
-        case = case_output['case']
-        common_data = {
-            'indent_px': depth * TREETABLE_INDENT_PX,
-            'submit_url_root': submit_url_root,
-            'form_url_root': form_url_root,
-            'view_url': get_case_url(case.case_id),
-            'session_data': get_session_data(case, current_case, type_info)
-        }
-        data = type_info.get(case.type, {})
-        if 'description_property' in data:
-            data['description'] = getattr(case, data['description_property'], None)
-        if 'edit_session_data' in data:
-            data['session_data'].update(data['edit_session_data'])
-        data.update(common_data)
-
-        case.edit_data = data
-
-        if 'child_type' in data and not case.closed:
-            child_type = data['child_type']
-            child_data = type_info.get(child_type, {})
-            child_data.update(common_data)
-            child_data.update({
-                "link_text": _("Add %(case_type)s") % {
-                    'case_type': child_data.get('type_name', child_type)
-                },
-                "parent_node_id": case.case_id,
-            })
-
-            if 'create_session_data' in child_data:
-                child_data['session_data'].update(child_data['create_session_data'])
-            case.add_child_data = child_data
-
-    process_output(case_output)
-
-
-def get_case_hierarchy(case, type_info):
-    def get_children(case, referenced_type=None, seen=None):
-        seen = seen or set()
-
-        ignore_types = type_info.get(case.type, {}).get("ignore_relationship_types", [])
-        if referenced_type and referenced_type in ignore_types:
-            return None
-
+def get_case_hierarchy(case):
+    def get_children(case, seen):
+        if case.case_id not in seen:
+            yield case
         seen.add(case.case_id)
+
         children = [
-            get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
+            i.referenced_case for i in case.reverse_indices
             if i.referenced_id and i.referenced_id not in seen
         ]
-
-        children = [c for c in children if c is not None]
-
-        # non-first-level descendants
-        descendant_types = []
-        for c in children:
-            descendant_types.extend(c['descendant_types'])
-        descendant_types = list(set(descendant_types))
-
-        children = sorted(children, key=partial(sortkey, type_info=type_info))
-
-        # set parent_case_id used by flat display
-        for c in children:
-            if not hasattr(c['case'], 'treetable_parent_node_id'):
-                c['case'].treetable_parent_node_id = case.case_id
-
-        child_cases = []
-        for c in children:
-            child_cases.extend(c['case_list'])
-
-        return {
-            'case': case,
-            'child_cases': children,
-            'descendant_types': list(set(descendant_types + [c['case'].type for c in children])),
-            'case_list': [case] + child_cases
-        }
-
-    return get_children(case)
-
-
-def get_flat_descendant_case_list(case, get_case_url, type_info=None):
-    type_info = type_info or {}
-    hierarchy = get_case_hierarchy(case, type_info)
-    process_case_hierarchy(hierarchy, get_case_url, type_info)
-    return hierarchy['case_list']
+        children.sort(key=_sortkey)
+        for child in children:
+            # set parent_case_id used by flat display
+            if not hasattr(child, 'treetable_parent_node_id'):
+                child.treetable_parent_node_id = case.case_id
+            yield from get_children(child, seen)
+    return list(get_children(case, seen=set()))

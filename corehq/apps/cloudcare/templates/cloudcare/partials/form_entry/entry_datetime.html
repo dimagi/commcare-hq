@@ -1,0 +1,9 @@
+<script type="text/html" id="datetime-entry-ko-template">
+  <div class="input-group">
+    <input type="text" class="form-control" data-bind="
+      css: { 'is-invalid': $parent.hasError() },
+      attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' },
+    "/>
+    <span class="input-group-text"><i class="fcc fcc-fd-datetime"></i></span>
+  </div>
+</script>

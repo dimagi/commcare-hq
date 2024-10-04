@@ -1,0 +1,57 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ 
+ {% if question_list_not_found %}
+   <div class="row">
+-    <div class="col-sm-6">
++    <div class="col-md-6">
+       <div class="alert alert-warning clear-fix">
+         <strong>{{ question_list_not_found.message }}</strong>
+         <br/>
+@@ -12,14 +12,15 @@
+     </div>
+   </div>
+ {% else %}
+-  <ul class="nav nav-pills formDisplayToggle" style="margin: 10px 0;">
+-    <!-- hrefs here aren't real but can't be '#' since JQuery crashes-->
+-    <li class="active"><a href="#readable-pill" class="showReadable">{% trans "Labels" %}</a></li>
+-    <li><a href="#raw-pill" class="showRaw">{% trans "Question IDs" %}</a></li>
+-  </ul>
+-  <div class="checkbox">
+-    <label>
+-      <input type="checkbox" class="showSkippedToggle"/>
++  <div class="form-check form-switch mb-2">
++    <input class="form-check-input" type="checkbox" id="showReadable"/>
++    <label class="form-check-label" for="showReadable">
++      {% trans "Show question ids" %}
++    </label>
++  </div>
++  <div class="form-check form-switch mb-2">
++    <input class="form-check-input" type="checkbox" id="showSkippedToggle"/>
++    <label class="form-check-label" for="showSkippedToggle">
+       {% trans "Show questions in form that were not shown to the user" %}
+       <span class="hq-help-template"
+             data-title="{% trans "Questions not shown to the user" %}"
+@@ -29,17 +30,17 @@
+   </div>
+ {% endif %}
+ <div class="row">
+-  <div class="col-sm-12">
++  <div class="col-md-12">
+     <div class="table-responsive">
+       <table class="table table-bordered form-data-table">
+         <tr>
+-          <th class="col-sm-6">
++          <th class="col-md-6">
+             <span class="form-data-readable">{% trans "Question" %}</span>
+             <span class="form-data-raw">{% trans "Question ID" %}</span>
+           </th>
+-          <th class="col-sm-6">{% trans "Response" %}</th>
++          <th class="col-md-6">{% trans "Response" %}</th>
+         </tr>
+-        {% include 'reports/form/partials/bootstrap3/single_form_tree.html' %}
++        {% include 'reports/form/partials/bootstrap5/single_form_tree.html' %}
+       </table>
+     </div>
+   </div>

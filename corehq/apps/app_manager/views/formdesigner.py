@@ -1,5 +1,6 @@
 import json
 import logging
+from looseversion import LooseVersion
 
 from django.conf import settings
 from django.contrib import messages
@@ -157,7 +158,6 @@ def _get_form_designer_view(request, domain, app, module, form):
             app,
             request.couch_user.username,
         ),
-        'show_ui_notification_to_hide_translations': (len(app.langs) > 2),
     })
     context.update(_get_requirejs_context())
 
@@ -327,6 +327,7 @@ def _get_vellum_features(request, domain, app):
         'sorted_itemsets': app.enable_sorted_itemsets,
         'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
         'markdown_tables': app.enable_markdown_tables,
+        'use_custom_repeat_button_text': app.build_version >= LooseVersion('2.55'),
     })
     return vellum_features
 

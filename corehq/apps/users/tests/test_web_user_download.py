@@ -7,7 +7,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.es.users import user_adapter
 from corehq.apps.users.bulk_download import parse_web_users
-from corehq.apps.users.models import Invitation, UserRole, WebUser
+from corehq.apps.users.models import Invitation, UserRole, WebUser, HqPermissions
 from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_tableau_server
 from corehq.apps.reports.tests.test_tableau_api_util import _mock_create_session_responses
@@ -113,7 +113,7 @@ class TestDownloadWebUsers(TestCase):
         super().tearDownClass()
 
     def test_download(self):
-        (headers, rows) = parse_web_users(self.domain_obj.name, {})
+        (headers, rows) = parse_web_users(self.domain_obj.name, {}, self.user1)
 
         rows = list(rows)
         self.assertEqual(3, len(rows))
@@ -136,7 +136,7 @@ class TestDownloadWebUsers(TestCase):
         self.assertEqual('Invited', spec['status'])
 
     def test_search_string(self):
-        (headers, rows) = parse_web_users(self.domain_obj.name, {"search_string": "Edith"})
+        (headers, rows) = parse_web_users(self.domain_obj.name, {"search_string": "Edith"}, self.user1)
         rows = list(rows)
         self.assertEqual(1, len(rows))
 
@@ -144,7 +144,8 @@ class TestDownloadWebUsers(TestCase):
         self.assertEqual('Edith', spec['first_name'])
 
     def test_multi_domain_download(self):
-        (headers, rows) = parse_web_users(self.domain_obj.name, {"domains": [self.domain, self.other_domain]})
+        (headers, rows) = parse_web_users(self.domain_obj.name,
+                                        {"domains": [self.domain, self.other_domain]}, self.user1)
 
         rows = list(rows)
         self.assertEqual(6, len(rows))
@@ -174,6 +175,21 @@ class TestDownloadWebUsers(TestCase):
     @disable_quickcache
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_tableau_user_download(self, mock_request):
+        role_with_tableau_access = UserRole.create(domain=self.domain,
+                                                name='Tableau Access',
+                                                permissions=HqPermissions(view_user_tableau_config=True))
+        owner = WebUser.create(
+            self.domain_obj.name,
+            'jeff@company.com',
+            'badpassword',
+            None,
+            None,
+            email='jeff@company.com',
+            first_name='Jeff',
+            last_name='Company',
+            role_id=role_with_tableau_access.get_id,
+        )
+
         self._setup_tableau_users()
         mock_request.side_effect = _mock_create_session_responses(self) + [
             self.tableau_instance.query_groups_response(),
@@ -184,10 +200,18 @@ class TestDownloadWebUsers(TestCase):
             self.tableau_instance.query_groups_response(),
             self.tableau_instance.failure_response()
         ]
-        (headers, rows) = parse_web_users(self.domain_obj.name, {})
+
+        # Web User does not have permission to view Tableau
+        (headers, rows) = parse_web_users(self.domain_obj.name, {}, self.user1)
+        spec = dict(zip(headers, list(rows)[0]))
+        self.assertNotIn("tableau_role", spec)
+        self.assertNotIn("tableau_groups", spec)
+
+        # Web User does have permission to view Tableau
+        (headers, rows) = parse_web_users(self.domain_obj.name, {}, owner)
 
         rows = list(rows)
-        self.assertEqual(3, len(rows))
+        self.assertEqual(4, len(rows))
 
         spec = dict(zip(headers, rows[0]))
         self.assertEqual(TableauUser.Roles.VIEWER.value, spec['tableau_role'])
@@ -197,7 +221,9 @@ class TestDownloadWebUsers(TestCase):
         spec = dict(zip(headers, rows[1]))
         self.assertEqual(TableauUser.Roles.EXPLORER.value, spec['tableau_role'])
 
-        (headers, rows) = parse_web_users(self.domain_obj.name, {})
+        (headers, rows) = parse_web_users(self.domain_obj.name, {}, owner)
         spec = dict(zip(headers, list(rows)[0]))
         # Should be ERROR since the second get_groups_for_user_id response fails
         self.assertEqual('ERROR', spec['tableau_groups'])
+
+        owner.delete(self.domain_obj.name, deleted_by=None)

@@ -206,3 +206,15 @@ def get_user_location_info(domain, user_location_ids, user_id):
         'orphaned_case_count_per_location': orphaned_case_count_per_location,
         'shared_locations': shared_locations,
     }
+
+
+def filter_user_query_by_locations_accessible_to_user(user_es, domain, couch_user):
+    if not couch_user.has_permission(domain, 'access_all_locations'):
+        loc_ids = (SQLLocation.objects.accessible_to_user(domain, couch_user).location_ids())
+        user_es = user_es.location(list(loc_ids))
+    return user_es
+
+
+def user_can_access_invite(domain, couch_user, invite):
+    return (couch_user.has_permission(domain, 'access_all_locations')
+        or invite.assigned_locations.all().accessible_to_user(domain, couch_user).exists())

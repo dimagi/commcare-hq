@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "reports_core/filters/bootstrap3/filter_base.html" %}
++{% extends "reports_core/filters/bootstrap5/filter_base.html" %}
+ {% load i18n %}
+ 
+ {% block filter-controls %}
+   <div class="row">
+-    <div class="col-md-6">
++    <div class="col-lg-6">
+       <label for="{{ filter.css_id }}-input-year">{% trans 'Year' %}: </label>
+       <select class="form-control" id="{{ filter.css_id }}-input-year" name="{{ filter.css_id }}-year">
+         {% for year_value, year_text in filter.years %}
+@@ -12,7 +12,7 @@
+       </select>
+     </div>
+ 
+-    <div class="col-md-6">
++    <div class="col-lg-6">
+       <label for="{{ filter.css_id }}-input-quarter">{% trans 'Quarter' %}: </label>
+       <select class="form-control" id="{{ filter.css_id }}-input-quarter" name="{{ filter.css_id }}-quarter">
+         <option value="1">Q1 {% trans 'January' %} - {% trans 'March' %}</option>

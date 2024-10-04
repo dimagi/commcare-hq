@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine('users/js/edit_commcare_user', [
     'jquery',
     'knockout',
@@ -10,7 +12,7 @@ hqDefine('users/js/edit_commcare_user', [
     'jquery-textchange/jquery.textchange',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko',
     'hqwebapp/js/bootstrap3/widgets',
-    'registration/js/password',
+    'registration/js/bootstrap3/password',
     'select2/dist/js/select2.full.min',
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
 ], function (
@@ -151,6 +153,7 @@ hqDefine('users/js/edit_commcare_user', [
                     profiles: initialPageData.get('custom_fields_profiles'),
                     profile_slug: initialPageData.get('custom_fields_profile_slug'),
                     slugs: initialPageData.get('custom_fields_slugs'),
+                    can_edit_original_profile: initialPageData.get('can_edit_original_profile'),
                 }),
             };
         });

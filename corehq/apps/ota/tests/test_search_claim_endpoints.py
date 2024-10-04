@@ -293,7 +293,7 @@ class CaseClaimEndpointTests(TestCase):
 
     def _assert_empty_search_result(self, response, message=None):
         self.assertEqual(response.status_code, 200, message)
-        self.assertEqual('<results id="case" />', response.content.decode('utf-8'), message)
+        self.assertEqual('<results id="case"/>', response.content.decode('utf-8'), message)
 
     def test_duplicate_claim_after_case_changes(self):
         """

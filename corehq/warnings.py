@@ -2,6 +2,8 @@ import os
 import re
 import warnings
 
+from django.utils.deprecation import RemovedInDjango50Warning, RemovedInDjango51Warning
+
 from sqlalchemy.exc import SAWarning
 
 
@@ -18,11 +20,15 @@ WHITELIST = [
 
     # warnings that may be resolved with a library upgrade
     ("couchdbkit.schema.properties", "'collections.abc'"),
+    ("ddtrace.internal.module", "the imp module is deprecated"),
+    ("eulxml", "pkg_resources is deprecated as an API"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
     ("nose.suite", "'collections.abc'"),
     ("nose.plugins.collect", "'collections.abc'"),
+    ("", "", RemovedInDjango50Warning),
+    ("", "", RemovedInDjango51Warning),
 
     # warnings that can be resolved with HQ code changes
     ("", "json_response is deprecated.  Use django.http.JsonResponse instead."),
@@ -38,8 +44,13 @@ WHITELIST = [
         UserWarning,
     ),
     (
-        # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
+        # Should be removed if fixed after upgrading to ES 6.x
         "elasticsearch5.connection.http_urllib3",
+        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
+    ),
+    (
+        # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
+        "elasticsearch6.connection.http_urllib3",
         "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
     # Should be removed when Nose is updated

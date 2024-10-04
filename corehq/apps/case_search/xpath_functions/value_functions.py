@@ -10,6 +10,7 @@ from eulxml.xpath.ast import serialize
 
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
+from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.domain.models import Domain
 
@@ -17,8 +18,6 @@ from .utils import confirm_args_count
 
 
 def date(node, context):
-    from corehq.apps.case_search.dsl_utils import unwrap_value
-
     assert node.name == 'date'
     confirm_args_count(node, 1)
     arg = node.args[0]
@@ -62,8 +61,6 @@ def today(node, context):
 
 
 def date_add(node, context):
-    from corehq.apps.case_search.dsl_utils import unwrap_value
-
     assert node.name == 'date-add'
 
     confirm_args_count(node, 3)

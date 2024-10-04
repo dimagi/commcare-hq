@@ -1,4 +1,4 @@
-{% extends "reports/tabular.html" %}
+{% extends "reports/bootstrap3/tabular.html" %}
 {% load i18n %}
 {% load compress %}
 {% load hq_shared_tags %}
@@ -8,7 +8,7 @@
   <div class="col col-md-2">
     <span id="lock-groups-controls">
       <div class="controls">
-        <button data-bind="visible: !groupsLocked(), click: toggleGroupLock" class="btn-default form-control">
+        <button id="gtm-lock-case-grouping-btn" data-bind="visible: !groupsLocked(), click: toggleGroupLock" class="btn-default form-control">
           <i class="fa fa-lock"></i>
           {% trans "Lock Case Grouping for Me" %}
         </button>
@@ -22,7 +22,7 @@
   <div class="col col-md-2">
     <span id="export-controls">
       <div class="controls">
-        <button class="btn-default form-control" data-bind="click: downloadCSV, disable: !groupsReady()">
+        <button id="gtm-export-groups-btn" class="btn-default form-control" data-bind="click: downloadCSV, disable: !groupsReady()">
           {% trans "Export Groups" %}
         </button>
       </div>
@@ -30,36 +30,13 @@
   </div>
 </div>
 
-<div class="panel" id="polygon-filters">
-  <div class="row">
-    <label for="saved-polygons" class="control-label col-sm-2 col-md-2 col-lg-2">
-    {% trans "Filter by Saved Area" %}</label>
-    <div class="controls col-sm-2 col-md-2 col-lg-2">
-        <select id="saved-polygons"
-                class="form-control"
-                data-bind="select2: savedPolygons,
-                        value: selectedSavedPolygonId,
-                        ">
-        </select>
-    </div>
-    <button class="btn btn-default" data-bind="click: clearActivePolygon, enable: selectedSavedPolygonId">
-      {% trans 'Clear' %}
-    </button>
-  </div>
-  <div class="alert alert-info" data-bind="visible: shouldRefreshPage">
-    {% blocktrans %}
-      Please
-      <a href="">refresh the page</a>
-      to apply the polygon filtering changes.
-    {% endblocktrans %}
-  </div>
-</div>
+{% include 'geospatial/partials/saved_polygon_filter.html' with uses_disbursement='false' %}
 <div id="case-grouping-map" style="height: 500px"></div>
 
 <div class="panel-body-datatable">
     {% block reporttable %}
       {% if report.needs_filters %}
-        {% include 'reports/partials/description.html' %}
+        {% include 'reports/partials/bootstrap3/description.html' %}
       {% else %}
         <table id="report_table_{{ report.slug }}" class="table table-striped datatable" width="100%" {% if pagination.filter %} data-filter="true"{% endif %}>
         </table>

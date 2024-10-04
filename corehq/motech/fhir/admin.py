@@ -69,6 +69,7 @@ class FHIRImportConfigAdmin(admin.ModelAdmin):
     )
     list_filter = ('domain',)
     list_select_related = ('connection_settings',)
+    autocomplete_fields = ('connection_settings',)
 
 
 class FHIRImportResourcePropertyInline(admin.TabularInline):

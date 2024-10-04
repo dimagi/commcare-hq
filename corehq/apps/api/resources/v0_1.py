@@ -61,7 +61,7 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
 
 class CommCareUserResource(UserResource):
     groups = fields.ListField(attribute='get_group_ids')
-    user_data = fields.DictField(attribute='user_data')
+    user_data = fields.DictField()
 
     class Meta(UserResource.Meta):
         authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)

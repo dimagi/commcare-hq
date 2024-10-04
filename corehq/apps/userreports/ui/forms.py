@@ -193,7 +193,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
 
         if toggles.SUPERSET_ANALYTICS.enabled(domain):
             self.fields['is_available_in_analytics'].widget = BootstrapCheckboxInput(
-                inline_label="Availabe in Analytics"
+                inline_label="Available in Analytics"
             )
         self.helper = FormHelper()
 

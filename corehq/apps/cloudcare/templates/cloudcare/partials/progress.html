@@ -1,0 +1,19 @@
+<script type="text/template" id="progress-view-template">
+  <div id="formplayer-progress">
+    <div class="progress-container">
+      <div class="progress-title">
+        <h1>
+          <i class="fa fa-spinner fa-spin js-loading"></i>
+          <%- progressMessage %>
+        </h1>
+        <h2 class="subtext text-start js-subtext"><small></small></h2>
+      </div>
+      <div class="progress d-none" role="progressbar">
+        <div
+          style="width: 0%"
+          class="js-progress-bar progress-bar progress-bar-striped active">
+        </div>
+      </div>
+    </div>
+  </div>
+</script>

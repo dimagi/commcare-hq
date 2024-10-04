@@ -1,13 +1,13 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block page_content %}
   <fieldset>
     <legend>{% trans "Remote API Logs" %}</legend>
-    <div class="form-group">
-      <form method="GET">
-        <span class="col-sm-2">
+    <form method="GET">
+      <div class="row">
+        <span class="col-md-2">
           <label for="filter_from_date">From date*</label>
           <input id="filter_from_date"
                  class="form-control"
@@ -17,7 +17,7 @@
                  placeholder="yyyy-mm-dd" />
         </span>
 
-        <span class="col-sm-2">
+        <span class="col-md-2">
           <label for="filter_to_date">To date</label>
           <input id="filter_to_date"
                  class="form-control"
@@ -27,7 +27,7 @@
                  placeholder="yyyy-mm-dd" />
         </span>
 
-        <span class="col-sm-2">
+        <span class="col-md-2">
           <label for="filter_payload">Payload</label>
           <input id="filter_payload"
                  class="form-control"
@@ -36,7 +36,7 @@
                  value="{{ filter_payload }}" />
         </span>
 
-        <span class="col-sm-3">
+        <span class="col-md-3">
           <label for="filter_url">URL starts with</label>
           <input id="filter_url"
                  class="form-control"
@@ -46,7 +46,7 @@
                  placeholder="http..." />
         </span>
 
-        <span class="col-sm-1">
+        <span class="col-md-1">
           <label for="filter_status">Status</label>
           <input id="filter_status"
                  class="form-control"
@@ -56,7 +56,7 @@
                  placeholder="2xx" />
         </span>
 
-        <span class="col-sm-1">
+        <span class="col-md-1">
           <label for="submit_button">&nbsp;</label>
           <input id="submit_button"
                  class="form-control btn btn-primary"
@@ -65,17 +65,17 @@
                  value="Filter"/>
         </span>
 
-        <span class="col-sm-1">
+        <span class="col-md-1">
           <label for="export_button">&nbsp;</label>
           <input id="export_button"
-                 class="form-control btn btn-default"
+                 class="form-control btn btn-outline-primary"
                  type="submit"
                  name="export_button"
                  formaction="{% url 'motech_log_export_view' domain %}"
                  value="Export"/>
         </span>
-      </form>
-    </div>
+      </div>
+    </form>
   </fieldset>
   <div class="spacer"></div>
 
@@ -87,22 +87,26 @@
           <th>{% trans "Payload" %}</th>
           <th>{% trans "Request" %}</th>
           <th>{% trans "Status" %}</th>
+          <th>{% trans "Duration (ms)" %}</th>
         </tr>
       </thead>
       <tbody>
       {% for log in logs %}
         <tr>
-          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}">
             {{ log.timestamp }}
           </a></td>
-          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}">
             {% if log.payload_id %}{{ log.payload_id }}{% else %}&nbsp;{% endif %}
           </a></td>
-          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}">
             {{ log.request_method }} {{ log.request_url }}
           </a></td>
-          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}">
             {{ log.response_status }}
+          </a></td>
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}">
+              {% if log.duration %}{{ log.duration }}{% else %}&nbsp;{% endif %}
           </a></td>
         </tr>
       {% endfor %}
@@ -110,7 +114,7 @@
     </table>
 
     {% if is_paginated %}
-    <div class="col-sm-10">
+    <div class="col-md-10">
       <span>
           {% if page_obj.has_previous %}
             [<a href="?{% url_replace 'page' page_obj.previous_page_number %}">Previous</a>]

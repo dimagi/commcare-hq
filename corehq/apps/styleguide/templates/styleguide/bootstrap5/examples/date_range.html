@@ -1,8 +1,9 @@
 <input type="text" name="date_range" class="form-control" id="id_date_range">
 
 <script>
-  $(function () {
-    $('#id_date_range').tempusDominus({
+  new tempusDominus.TempusDominus(
+    document.getElementById('id_date_range'),
+    {
       dateRange: true,
       multipleDatesSeparator: " - ",
       display: {
@@ -15,5 +16,4 @@
         format: 'L',
       },
     });
-  });
 </script>

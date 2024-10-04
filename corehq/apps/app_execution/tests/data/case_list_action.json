@@ -1,0 +1,48 @@
+{
+  "log": {
+    "entries": [
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu_start",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"skelly\",\"app_id\":\"b5e1e70227b04da49131361f82537f7f\",\"locale\":\"en\",\"offset\":null,\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Baby log\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"b5e1e70227b04da49131361f82537f7f\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 102\",\"selections\":null,\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Baby log\"],\"persistentCaseTile\":null,\"queryKey\":null,\"commands\":[{\"index\":0,\"displayText\":\"Baby Log\",\"imageUri\":\"jr://file/commcare/image/babylog.png\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":1,\"displayText\":\"Registration\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"}],\"type\":\"commands\",\"layoutStyle\":null}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"skelly\",\"app_id\":\"b5e1e70227b04da49131361f82537f7f\",\"locale\":\"en\",\"selections\":[\"0\"],\"offset\":0,\"search_text\":null,\"query_data\":{},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Baby Log\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"b5e1e70227b04da49131361f82537f7f\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 102\",\"selections\":[\"0\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Baby log\",\"Baby Log\"],\"persistentCaseTile\":null,\"queryKey\":null,\"entities\":[],\"actions\":[{\"text\":\"Continue To Registry\",\"id\":null,\"input\":null,\"value\":null,\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":null}],\"redoLast\":null,\"styles\":[{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null}],\"endpointActions\":[null],\"headers\":[\"Baby Name\"],\"tiles\":null,\"widthHints\":[100],\"numEntitiesPerRow\":0,\"useUniformUnits\":false,\"sortIndices\":[0],\"noItemsText\":null,\"selectText\":null,\"pageCount\":0,\"currentPage\":0,\"type\":\"entities\",\"usesCaseTiles\":false,\"maxWidth\":0,\"maxHeight\":0,\"maxSelectValue\":-1,\"hasDetails\":true,\"queryResponse\":null,\"groupHeaderRows\":-1,\"multiSelect\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"skelly\",\"app_id\":\"b5e1e70227b04da49131361f82537f7f\",\"locale\":\"en\",\"selections\":[\"0\",\"action 0\"],\"offset\":0,\"search_text\":null,\"query_data\":{},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Registry\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"b5e1e70227b04da49131361f82537f7f\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 102\",\"selections\":[\"0\",\"action 0\"],\"translations\":{\"forms.m1f0.submit_label\":\"Submit\"},\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"instanceXml\":{\"output\":\"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?><data xmlns=\\\"http://openrosa.org/formdesigner/4D60B1F8-CE71-40C8-B60F-40EA9A2C611E\\\" uiVersion=\\\"1\\\" version=\\\"102\\\" name=\\\"Registry\\\" xmlns:jrm=\\\"http://dev.commcarehq.org/jr/xforms\\\">\\n  <baby_name/>\\n  <dob/>\\n  <n0:case xmlns:n0=\\\"http://commcarehq.org/case/transaction/v2\\\" case_id=\\\"b8416b62-2bbb-47d2-b29e-9bd9a77e12db\\\" date_modified=\\\"\\\" user_id=\\\"655a8581da22f05fb953b19d8561b079\\\">\\n    <n0:create>\\n      <n0:case_name/>\\n      <n0:owner_id>655a8581da22f05fb953b19d8561b079</n0:owner_id>\\n      <n0:case_type>babylog</n0:case_type>\\n    </n0:create>\\n    <n0:update>\\n      <n0:baby_name/>\\n      <n0:dob/>\\n    </n0:update>\\n  </n0:case>\\n  <n1:meta xmlns:n1=\\\"http://openrosa.org/jr/xforms\\\">\\n    <n1:deviceID>Formplayer</n1:deviceID>\\n    <n1:timeStart>2024-05-17T11:38:12.880+02</n1:timeStart>\\n    <n1:timeEnd/>\\n    <n1:username>skelly@dimagi.com</n1:username>\\n    <n1:userID>655a8581da22f05fb953b19d8561b079</n1:userID>\\n    <n1:instanceID>da5378f2-320b-4979-9c95-03d32fb73874</n1:instanceID>\\n    <n2:appVersion xmlns:n2=\\\"http://commcarehq.org/xforms\\\">Formplayer Version: 2.53</n2:appVersion>\\n    <n1:drift/>\\n  </n1:meta>\\n</data>\\n\"},\"tree\":[{\"caption_audio\":null,\"caption_video\":null,\"caption_image\":null,\"caption_markdown\":null,\"caption\":\"Name\",\"binding\":\"/data/baby_name\",\"question_id\":\"baby_name\",\"required\":1,\"relevant\":0,\"answer\":null,\"datatype\":\"str\",\"style\":null,\"type\":\"question\",\"ix\":\"0\",\"choices\":null,\"repeatable\":null,\"exists\":null,\"header\":null,\"control\":1,\"help\":null,\"help_image\":null,\"help_audio\":null,\"help_video\":null,\"hint\":null,\"output\":null,\"add-choice\":null},{\"caption_audio\":null,\"caption_video\":null,\"caption_image\":null,\"caption_markdown\":null,\"caption\":\"Date of Birth\",\"binding\":\"/data/dob\",\"question_id\":\"dob\",\"required\":1,\"relevant\":0,\"answer\":null,\"datatype\":\"datetime\",\"style\":null,\"type\":\"question\",\"ix\":\"1\",\"choices\":null,\"repeatable\":null,\"exists\":null,\"header\":null,\"control\":1,\"help\":null,\"help_image\":null,\"help_audio\":null,\"help_video\":null,\"hint\":null,\"output\":null,\"add-choice\":null}],\"langs\":[\"en\"],\"breadcrumbs\":[\"Baby log\",\"Baby Log\",\"Registry\"],\"persistentCaseTile\":null,\"event\":null,\"session_id\":\"ffc424a6-9649-4de3-b1a2-65cb3cc40487\",\"seq_id\":0}"
+          }
+        }
+      }
+    ]
+  }
+}

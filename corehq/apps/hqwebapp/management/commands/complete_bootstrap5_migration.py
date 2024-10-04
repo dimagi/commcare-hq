@@ -1,5 +1,10 @@
 from django.core.management import BaseCommand
 
+from corehq.apps.hqwebapp.utils.bootstrap.git import (
+    apply_commit,
+    get_commit_string,
+    has_pending_git_changes,
+)
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_template_paths_for_app,
     get_all_javascript_paths_for_app,
@@ -8,8 +13,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
 )
 from corehq.apps.hqwebapp.utils.management_commands import (
     get_confirmation,
-    get_style_func,
-    Color,
+    enter_to_continue,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.references import (
     get_references,
@@ -38,6 +42,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, app_name, **options):
+        if has_pending_git_changes():
+            self.stdout.write(self.style.ERROR(
+                "You have un-committed changes. Please commit these changes before proceeding...\n"
+            ))
+            enter_to_continue()
+
         template = options.get('template')
         if template:
             self.mark_file_as_complete(app_name, template, is_template=True)
@@ -49,25 +59,29 @@ class Command(BaseCommand):
         self.mark_app_as_complete(app_name)
 
     def mark_app_as_complete(self, app_name):
+        has_changes = has_pending_git_changes()
         split_paths = [get_short_path(app_name, path, True)
                        for path in get_split_paths(get_all_template_paths_for_app(app_name))]
         split_paths.extend([get_short_path(app_name, path, False)
                             for path in get_split_paths(get_all_javascript_paths_for_app(app_name))])
         if split_paths:
-            self.stdout.write(
+            self.stdout.write(self.style.ERROR(
                 f"\nCannot mark '{app_name}' as complete as there are "
-                f"{len(split_paths)} file(s) left to migrate.\n",
-                style_func=get_style_func(Color.RED)
-            )
+                f"{len(split_paths)} file(s) left to migrate.\n"
+            ))
             self.optional_display_list("Show remaining files?", split_paths)
             return
-        self.stdout.write(
-            f"\nMarking '{app_name}' as complete!\n\n",
-            style_func=get_style_func(Color.GREEN)
-        )
+        self.stdout.write(self.style.SUCCESS(
+            f"\nMarking '{app_name}' as complete!\n\n"
+        ))
         mark_app_as_complete(app_name)
+        self.suggest_commit_message(
+            f"Marked '{app_name}' as complete",
+            show_apply_commit=not has_changes
+        )
 
     def mark_file_as_complete(self, app_name, filename, is_template):
+        has_changes = has_pending_git_changes()
         file_type = "template" if is_template else "js file"
         if is_template:
             relevant_paths = get_all_template_paths_for_app(app_name)
@@ -77,11 +91,10 @@ class Command(BaseCommand):
             app_name, filename, relevant_paths, is_template
         )
         if destination_path is None:
-            self.stdout.write(
+            self.stdout.write(self.style.ERROR(
                 f"\nIt appears that the {file_type} '{filename}'\n"
-                f"could not be found in '{app_name}'.",
-                style_func=get_style_func(Color.RED)
-            )
+                f"could not be found in '{app_name}'."
+            ))
             self.stdout.write("Please check that you have the right path and try again.\n\n")
             return
 
@@ -98,7 +111,8 @@ class Command(BaseCommand):
         else:
             mark_javascript_as_complete(app_name, destination_short_path)
         self.suggest_commit_message(
-            f"Marked {file_type} '{destination_short_path}' as complete and un-split files."
+            f"Marked {file_type} '{destination_short_path}' as complete and un-split files.",
+            show_apply_commit=not has_changes
         )
         self.show_next_steps(app_name)
 
@@ -124,11 +138,10 @@ class Command(BaseCommand):
 
     def sanitize_bootstrap3_from_filename(self, filename):
         if 'bootstrap3/' in filename:
-            self.stdout.write(
+            self.stdout.write(self.style.ERROR(
                 f"You specified '{filename}', which appears to be a Bootstrap 3 path!\n"
-                f"This file cannot be marked as complete with this tool.\n\n",
-                style_func=get_style_func(Color.RED)
-            )
+                f"This file cannot be marked as complete with this tool.\n\n"
+            ))
             filename = filename.replace('/bootstrap3/', '/bootstrap5/')
             confirm = get_confirmation(f"Did you mean '{filename}'?")
             if not confirm:
@@ -165,16 +178,14 @@ class Command(BaseCommand):
         destination_short_path = get_short_path(app_name, destination_path, is_template)
 
         self.stdout.write(f"\n\nUn-split to '{destination_short_path}':")
-        self.stdout.write(
-            f"keep the contents of the bootstrap 5 version ({bootstrap5_short_path})",
-            style_func=get_style_func(Color.GREEN)
-        )
+        self.stdout.write(self.style.SUCCESS(
+            f"keep the contents of the bootstrap 5 version ({bootstrap5_short_path})"
+        ))
         if bootstrap3_path:
             bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
-            self.stdout.write(
-                f"discard the contents of the bootstrap 3 version ({bootstrap3_short_path})",
-                style_func=get_style_func(Color.RED)
-            )
+            self.stdout.write(self.style.ERROR(
+                f"discard the contents of the bootstrap 3 version ({bootstrap3_short_path})"
+            ))
         else:
             bootstrap3_short_path = bootstrap5_short_path.replace('/bootstrap5/', '/bootstrap3/')
         confirm = get_confirmation("Proceed?")
@@ -208,10 +219,9 @@ class Command(BaseCommand):
 
         if len(bootstrap3_references) == 0:
             return False
-        self.stdout.write(
-            f"{len(bootstrap3_references)} reference(s) to the Bootstrap 3 version still exist!",
-            style_func=get_style_func(Color.RED)
-        )
+        self.stdout.write(self.style.ERROR(
+            f"{len(bootstrap3_references)} reference(s) to the Bootstrap 3 version still exist!"
+        ))
         self.stdout.write("Please ensure these references are properly "
                           "migrated before marking this file as complete!\n")
         self.optional_display_list("List references?", [
@@ -228,11 +238,10 @@ class Command(BaseCommand):
                 get_requirejs_reference(destination_short_path),
                 False
             ))
-        self.stdout.write(
+        self.stdout.write(self.style.SUCCESS(
             f"Updated {len(references)} references to {bootstrap5_short_path}\n"
-            f"with the new reference to {destination_short_path}!",
-            style_func=get_style_func(Color.GREEN)
-        )
+            f"with the new reference to {destination_short_path}!"
+        ))
         self.optional_display_list("List references?", [
             get_short_path(app_name, path, is_template) for path in references
         ])
@@ -244,17 +253,27 @@ class Command(BaseCommand):
             self.stdout.write("\n".join(list_to_display))
             self.stdout.write("\n\n")
 
-    def suggest_commit_message(self, message):
+    def suggest_commit_message(self, message, show_apply_commit=False):
         self.stdout.write("\nNow would be a good time to review changes with git and commit.")
-        self.stdout.write("\nSuggested command:")
-        self.stdout.write(f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\"")
+        if show_apply_commit:
+            confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
+            if confirm:
+                apply_commit(message)
+                return
+        commit_string = get_commit_string(message)
+        self.stdout.write("\n\nSuggested command:\n")
+        self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
         self.stdout.write("\n")
 
     def show_next_steps(self, app_name):
-        self.stdout.write("\nDone!\n\n", style_func=get_style_func(Color.GREEN))
+        self.stdout.write(self.style.SUCCESS("\nDone!\n\n"))
         self.stdout.write("After reviewing and committing changes, please run:\n")
-        self.stdout.write(f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n"
+        ))
         self.stdout.write("Commit those changes, if any.\n\n"
                           "Then run the full command and commit those changes:\n")
-        self.stdout.write("./manage.py build_bootstrap5_diffs\n\n")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "./manage.py build_bootstrap5_diffs\n\n"
+        ))
         self.stdout.write("Thank you! <3\n\n")

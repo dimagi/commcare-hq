@@ -1,36 +1,47 @@
 'use strict';
 /* eslint-env mocha */
-/* global Backbone */
-hqDefine("cloudcare/js/formplayer/spec/utils_spec", function () {
+hqDefine("cloudcare/js/formplayer/spec/utils_spec", [
+    "underscore",
+    "backbone",
+    "sinon/pkg/sinon",
+    "hqwebapp/js/initial_page_data",
+    "cloudcare/js/formplayer/app",
+    "cloudcare/js/formplayer/menus/api",
+    "cloudcare/js/formplayer/spec/fake_formplayer",
+    "cloudcare/js/formplayer/users/models",
+    "cloudcare/js/formplayer/utils/utils",
+    "cloudcare/js/formplayer/router",   // needed for navigation events, like menu:select
+], function (
+    _,
+    Backbone,
+    sinon,
+    initialPageData,
+    FormplayerFrontend,
+    API,
+    FakeFormplayer,
+    UsersModels,
+    Utils
+) {
     describe('Utils', function () {
-        let API = hqImport("cloudcare/js/formplayer/menus/api"),
-            FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer"),
-            FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-            Utils = hqImport("cloudcare/js/formplayer/utils/utils");
-
         describe('#displayOptions', function () {
             beforeEach(function () {
-                sinon.stub(Utils, 'getDisplayOptionsKey').callsFake(function () { return 'mykey'; });
+                sinon.stub(UsersModels, 'getDisplayOptionsKey').callsFake(function () { return 'mykey'; });
                 window.localStorage.clear();
             });
 
             afterEach(function () {
-                Utils.getDisplayOptionsKey.restore();
+                UsersModels.getDisplayOptionsKey.restore();
             });
 
             it('should retrieve saved display options', function () {
                 let options = { option: 'yes' };
-                Utils.saveDisplayOptions(options);
-                $.when(Utils.getSavedDisplayOptions(), function (response) {
-                    assert.deepEqual(response, options);
-                });
+                UsersModels.saveDisplayOptions(options);
+                assert.deepEqual(UsersModels.getSavedDisplayOptions(), options);
             });
 
             it('should not fail on bad json saved', function () {
-                localStorage.setItem(Utils.getDisplayOptionsKey(), 'bad json');
-                $.when(Utils.getSavedDisplayOptions(), function (response) {
-                    assert.deepEqual(response, {});
-                });
+                localStorage.setItem(UsersModels.getDisplayOptionsKey(), 'bad json');
+                assert.deepEqual(UsersModels.getSavedDisplayOptions(), {});
             });
 
         });
@@ -39,14 +50,14 @@ hqDefine("cloudcare/js/formplayer/spec/utils_spec", function () {
             let stubs = {};
 
             before(function () {
-                hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", {
+                initialPageData.register("toggles_dict", {
                     SPLIT_SCREEN_CASE_SEARCH: false,
                     DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
                 });
             });
 
             after(function () {
-                hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+                initialPageData.unregister("toggles_dict");
             });
 
             beforeEach(function () {

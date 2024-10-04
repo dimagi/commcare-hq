@@ -48,7 +48,8 @@ msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
-#: corehq/apps/reports/static/reports/js/maps_utils.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/maps_utils.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/maps_utils.js
 msgid "Other"
 msgstr ""
 
@@ -148,6 +149,22 @@ msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
 msgid "Your trial request has been received!"
+msgstr ""
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
+msgid "Seconds"
+msgstr ""
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
+msgid "Chart"
+msgstr ""
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_logs.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
+#: corehq/apps/registry/static/registry/js/registry_logs.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+msgid "Show All Dates"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js
@@ -303,7 +320,8 @@ msgid "Edit Graph"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-#: corehq/apps/reports/static/reports/js/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
 msgid "Copied!"
 msgstr ""
 
@@ -314,7 +332,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
-#: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
 msgid "None"
 msgstr ""
 
@@ -348,6 +367,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "There is an error in your property name: "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "You can only have one property with the 'Image' format"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
@@ -469,6 +492,15 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Conditional ID Mapping"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Translatable Text"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Image"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js
@@ -1047,7 +1079,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "Delete"
 msgstr ""
 
@@ -1363,7 +1394,8 @@ msgid "Date and Time"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 msgid "Time"
 msgstr ""
 
@@ -1558,7 +1590,8 @@ msgid "Add Expression"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "Save"
@@ -1788,6 +1821,8 @@ msgid "Use of each question"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
 msgid "Close"
 msgstr ""
 
@@ -2003,7 +2038,8 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/reports/static/reports/js/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
 msgid "Loading..."
 msgstr ""
 
@@ -2167,6 +2203,22 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Help Itext ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Add New Item Button Text"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Add New Itext ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Add Another Item Button Text"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Add Another Itext ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -2356,6 +2408,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Case ID"
 msgstr ""
 
@@ -2424,7 +2477,8 @@ msgid "Inlined attachments must have an attachment name"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
 msgid "Create"
 msgstr ""
 
@@ -2461,50 +2515,6 @@ msgid "Current"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Sharing Options"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "License"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, No Derivatives"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial, and Share Alike"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial, and No Derivatives"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Share Alike"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Author"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Enter the name of the author."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attribution Notes"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Begin Upload"
 msgstr ""
 
@@ -2522,10 +2532,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Hide Path"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -2668,6 +2674,10 @@ msgid "Not a valid choice"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "No file selected."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Invalid file type chosen. Please select a valid multimedia file."
 msgstr ""
 
@@ -2751,6 +2761,10 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "Form submission failed with error"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "You have a form in progress. Are you sure you want to navigate away?"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
@@ -2895,7 +2909,7 @@ msgid "Log in as <%- username %>?"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
-msgid "Yes, log in as this user"
+msgid "Log in"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
@@ -2928,106 +2942,6 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error breaking locks. Please report an issue if this persists."
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Go to today"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Clear selection"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Close the picker"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Select Month"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Previous Month"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Next Month"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Select Year"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Previous Year"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Next Year"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Select Decade"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Previous Decade"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Next Decade"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Previous Century"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Next Century"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Pick Hour"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Increment Hour"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Decrement Hour"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Pick Minute"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Increment Minute"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Decrement Minute"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Pick Second"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Increment Second"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Decrement Second"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Toggle Period"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Select Time"
 msgstr ""
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
@@ -3286,6 +3200,131 @@ msgstr ""
 msgid "Search Attendance Takers"
 msgstr ""
 
+#: corehq/apps/export/static/export/js/bootstrap3/download_export.js
+#: corehq/apps/export/static/export/js/bootstrap5/download_export.js
+msgid "Sorry, there was a problem reaching the server. Please try again."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/download_export.js
+#: corehq/apps/export/static/export/js/bootstrap5/download_export.js
+msgid "Server maintenance in progress. Please try again later."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/download_export.js
+#: corehq/apps/export/static/export/js/bootstrap5/download_export.js
+msgid "There was an error downloading your export."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid "Download Requested"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid "All of the selected feeds will be deleted."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid "All of the selected exports will be deleted."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid ""
+"All of the selected exports will be collected for download to a single Excel "
+"file, with each export as a separate sheet."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid "Invalid date format"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid "Problem saving dashboard feed filters"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Process"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Processing..."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Refresh page"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Web Page (Excel Dashboards)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "CSV (Zip file)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Excel (older versions)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Excel 2007+"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "GeoJSON"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Private"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Export Only"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Edit and Export"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid ""
+"<strong>Private</strong>: Only you can edit and export.<br/> <strong>Export "
+"Only</strong>: You can edit and export, other users can only export.<br/> "
+"<strong>Edit and Export</strong>: All users can edit and export."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "The table path should end with []"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Sensitive ID"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Sensitive Date"
+msgstr ""
+
 #: corehq/apps/export/static/export/js/create_export.js
 msgid "<%- count %> form submission available."
 msgstr ""
@@ -3319,107 +3358,6 @@ msgstr ""
 msgid "Data file deleted."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_export.js
-msgid "Sorry, there was a problem reaching the server. Please try again."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/download_export.js
-msgid "Server maintenance in progress. Please try again later."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/download_export.js
-msgid "There was an error downloading your export."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "Download Requested"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "All of the selected feeds will be deleted."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "All of the selected exports will be deleted."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid ""
-"All of the selected exports will be collected for download to a single Excel "
-"file, with each export as a separate sheet."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "Invalid date format"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "Problem saving dashboard feed filters"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Process"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Processing..."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Refresh page"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Web Page (Excel Dashboards)"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "CSV (Zip file)"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Excel (older versions)"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Excel 2007+"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "GeoJSON"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Private"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Export Only"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Edit and Export"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid ""
-"<strong>Private</strong>: Only you can edit and export.<br/> <strong>Export "
-"Only</strong>: You can edit and export, other users can only export.<br/> "
-"<strong>Edit and Export</strong>: All users can edit and export."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "The table path should end with []"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Sensitive ID"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Sensitive Date"
-msgstr ""
-
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "No group"
 msgstr ""
@@ -3437,6 +3375,7 @@ msgid "Group Center Coordinates"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Case Name"
 msgstr ""
 
@@ -3462,6 +3401,47 @@ msgid ""
 "will not be exported."
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Max cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Min cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Max distance to case"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "minutes"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Max travel time"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid ""
+"Oops! Something went wrong! Please check that your geospatial settings are "
+"configured correctly or contact admin if the problem persists."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid ""
+"Please ensure that the filtered area includes both cases and mobile workers "
+"before attempting to run disbursement."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "All locations"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid ""
+"Oops! Something went wrong! Please report an issue if the problem persists."
+msgstr ""
+
 #: corehq/apps/geospatial/static/geospatial/js/geo_config.js
 msgid "Token successfully verified!"
 msgstr ""
@@ -3470,20 +3450,6 @@ msgstr ""
 msgid ""
 "Invalid API token. Please verify that the token matches the one on your "
 "Mapbox account and has the correct scope configured."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Name of the Area"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid ""
-"Oops! Something went wrong! Please check that your geospatial settings are "
-"configured correctly or contact admin if the problem persists."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "All locations"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/gps_capture.js
@@ -3495,9 +3461,37 @@ msgid "Mobile Worker"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Refreshing Page..."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Name of the Area"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Please enter the name for the area!"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "No user selected (unassign mode)"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Assigned User ID"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Assigned Username"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Assigned User Primary Location"
 msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
@@ -3534,6 +3528,16 @@ msgstr ""
 msgid ""
 "Danny is pretty sad that you had to encounter this issue. He's making sure "
 "it gets fixed as soon as possible."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
+msgid "Incorrect Format"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
+msgid "Only Dimagi email addresses can be included"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
@@ -3620,12 +3624,6 @@ msgstr ""
 msgid "Clear"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
-#: corehq/apps/registry/static/registry/js/registry_logs.js
-#: corehq/apps/reports/static/reports/js/filters/main.js
-msgid "Show All Dates"
-msgstr ""
-
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
 msgid "Items"
 msgstr ""
@@ -3653,6 +3651,118 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js
 msgid ""
 "There was an issue communicating with the server. Please try back later."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Clear selection"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Close the picker"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "long"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "2-digit"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Century"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Month"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Century"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Month"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Date"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Month"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Time"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Go to today"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Toggle Meridiem"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
@@ -3700,6 +3810,21 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Key"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "This key is already defined"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Add Key, Translation Mapping"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Key contains invalid characters."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
@@ -3839,6 +3964,46 @@ msgstr ""
 msgid "Choose a primary location"
 msgstr ""
 
+#: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
+#: corehq/apps/prototype/static/prototype/js/webpack/knockout_pagination.js
+msgid ""
+"Could not load data. Please try again later or report an issue if this "
+"problem persists."
+msgstr ""
+
+#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
+#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
+msgid "yes"
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Password must have at least <%- passwordLength %> characters."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid ""
+"<i class='fa fa-warning'></i>This password is automatically generated. "
+"Please copy it or create your own. It will not be shown again."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid "Your password is too weak! Try adding numbers or symbols!"
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid "Your password is almost strong enough! Try adding numbers or symbols!"
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid "Good Job! Your password is strong!"
+msgstr ""
+
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please enter your name."
 msgstr ""
@@ -3859,34 +4024,11 @@ msgid "Please specify a password."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
-#: corehq/apps/registration/static/registration/js/password.js
-msgid "Password must have at least <%- passwordLength %> characters."
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify a project name."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify."
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/password.js
-msgid ""
-"<i class='fa fa-warning'></i>This password is automatically generated. "
-"Please copy it or create your own. It will not be shown again."
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/password.js
-msgid "Your password is too weak! Try adding numbers or symbols!"
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/password.js
-msgid "Your password is almost strong enough! Try adding numbers or symbols!"
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/password.js
-msgid "Good Job! Your password is strong!"
 msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
@@ -3998,66 +4140,240 @@ msgstr ""
 msgid "Search projects"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/base.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/base.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/base.js
 #: corehq/apps/userreports/static/userreports/js/configurable_report.js
 msgid "You can email a saved version<br />of this report."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/case_details.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/case_details.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/case_details.js
 msgid "Unknown"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/case_details.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/case_details.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/case_details.js
 msgid "Sorry, there was an issue communicating with the server."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
 msgid "Loading"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
 msgid "No data available to display. Please try changing your filters."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js
-#: corehq/apps/reports/static/reports/js/tabular.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/tabular.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/tabular.js
 msgid "Sorry!"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
 msgid ""
 "There was an error with your query, it has been logged, please try another "
 "query."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
 msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/data_corrections.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/data_corrections.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/data_corrections.js
 msgid "Select a value"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 msgid "From Time"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Select a language..."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 msgid "Available Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 msgid "Included Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 msgid "Search Reports..."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/hq_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/hq_report.js
+msgid ""
+"Your requested Excel report will be sent to the email address defined in "
+"your account settings."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/maps_utils.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/maps_utils.js
+msgid "No Data"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "Sorry, we couldn't load that."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "No data available in table"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/project_health_dashboard.js
+msgid "Showing _START_ to _END_ of _TOTAL_ entries"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/report_config_models.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/report_config_models.js
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/report_config_models.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/report_config_models.js
+msgid "Start date cannot be after end date."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
+msgid "Please check your Internet connection!"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
+msgid "Report Not Found."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
+msgid ""
+"Request timed out when rendering this report. This might be an issue with "
+"our servers or with your Internet connection. We encourage you to report an "
+"issue to CommCare HQ Support so we can look into any possible issues."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
+msgid ""
+"Problem Rendering Report. Our error monitoring tools have noticed this and "
+"we are working quickly to resolve this issue as soon as possible. We "
+"encourage you to contact CommCare HQ Support if this issue persists for more "
+"than a few minutes. We appreciate any additional information you can give us "
+"about this problem so we can fix it immediately."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
+msgid "Bad Gateway. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
+msgid ""
+"CommCare HQ is experiencing server difficulties. We're working quickly to "
+"resolve it. Thank you for your patience. We are extremely sorry."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
+msgid "Gateway Timeout. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
+msgid "Loading Stopped"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
+msgid "We were unsuccessful loading the report:"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/scheduled_reports_list.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/scheduled_reports_list.js
+msgid "My Scheduled Reports"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/scheduled_reports_list.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/scheduled_reports_list.js
+msgid "Other Scheduled Reports"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
+msgid "Labels"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
+msgid "Question IDs"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/standard_hq_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
+#: corehq/apps/userreports/static/userreports/js/configurable_report.js
+msgid "Report successfully emailed"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/standard_hq_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
+msgid "An error occurred emailing your report. Please try again."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
+msgid "Success!"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
+#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
+msgid "Failed"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
+msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+#: corehq/apps/reports/static/reports/js/filters/schedule_instance.js
+msgid "All"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+msgid "Select a group"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/filters/case_list_explorer.js
@@ -4068,15 +4384,6 @@ msgstr ""
 msgid "e.g. (dob <= '2017-02-01' and initial_home_visit_completed = 'yes') "
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters/main.js
-#: corehq/apps/reports/static/reports/js/filters/schedule_instance.js
-msgid "All"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/filters/main.js
-msgid "Select a group"
-msgstr ""
-
 #: corehq/apps/reports/static/reports/js/filters/phone_number.js
 msgid "That have phone numbers"
 msgstr ""
@@ -4085,137 +4392,19 @@ msgstr ""
 msgid "That do not have phone numbers"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/hq_report.js
-msgid ""
-"Your requested Excel report will be sent to the email address defined in "
-"your account settings."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/maps_utils.js
-msgid "No Data"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/project_health_dashboard.js
-msgid "Sorry, we couldn't load that."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/project_health_dashboard.js
-msgid "No data available in table"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/project_health_dashboard.js
-msgid "Showing _START_ to _END_ of _TOTAL_ entries"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/report_config_models.js
-msgid "Some required fields are missing. Please complete them before saving."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/report_config_models.js
-msgid "Start date cannot be after end date."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid "Please check your Internet connection!"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid "Report Not Found."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid ""
-"Request timed out when rendering this report. This might be an issue with "
-"our servers or with your Internet connection. We encourage you to report an "
-"issue to CommCare HQ Support so we can look into any possible issues."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid ""
-"Problem Rendering Report. Our error monitoring tools have noticed this and "
-"we are working quickly to resolve this issue as soon as possible. We "
-"encourage you to contact CommCare HQ Support if this issue persists for more "
-"than a few minutes. We appreciate any additional information you can give us "
-"about this problem so we can fix it immediately."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid "Bad Gateway. Please contact CommCare HQ Support."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid ""
-"CommCare HQ is experiencing server difficulties. We're working quickly to "
-"resolve it. Thank you for your patience. We are extremely sorry."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid "Gateway Timeout. Please contact CommCare HQ Support."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid "Your search term was too long. Please provide a shorter search filter"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid "Loading Stopped"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/reports.async.js
-msgid "We were unsuccessful loading the report:"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js
-msgid "My Scheduled Reports"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js
-msgid "Other Scheduled Reports"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/single_form.js
-msgid "Labels"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/single_form.js
-msgid "Question IDs"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/standard_hq_report.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
-msgid "Report successfully emailed"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/standard_hq_report.js
-msgid "An error occurred emailing your report. Please try again."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/submission_error_report.js
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
-msgid "Success!"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/submission_error_report.js
-#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
-msgid "Failed"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/submission_error_report.js
-msgid "Failed to re-process"
-msgstr ""
-
 #: corehq/apps/reports/static/reports/js/tableau.js
 msgid ""
 "An error occured with the tableau server request, please ensure the server "
 "configuration is correct and try again."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/v2/js/datagrid.js
+#: corehq/apps/reports/static/reports/v2/js/bootstrap3/datagrid.js
+#: corehq/apps/reports/static/reports/v2/js/bootstrap5/datagrid.js
 msgid "Save Filters"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/v2/js/datagrid.js
+#: corehq/apps/reports/static/reports/v2/js/bootstrap3/datagrid.js
+#: corehq/apps/reports/static/reports/v2/js/bootstrap5/datagrid.js
 msgid "Export Data"
 msgstr ""
 
@@ -4227,15 +4416,18 @@ msgstr ""
 msgid "Select <%= title %>..."
 msgstr ""
 
-#: corehq/apps/reports_core/static/reports_core/js/base_template_new.js
+#: corehq/apps/reports_core/static/reports_core/js/bootstrap3/base_template_new.js
+#: corehq/apps/reports_core/static/reports_core/js/bootstrap5/base_template_new.js
 msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
 
-#: corehq/apps/reports_core/static/reports_core/js/maps.js
+#: corehq/apps/reports_core/static/reports_core/js/bootstrap3/maps.js
+#: corehq/apps/reports_core/static/reports_core/js/bootstrap5/maps.js
 msgid "Streets"
 msgstr ""
 
-#: corehq/apps/reports_core/static/reports_core/js/maps.js
+#: corehq/apps/reports_core/static/reports_core/js/bootstrap3/maps.js
+#: corehq/apps/reports_core/static/reports_core/js/bootstrap5/maps.js
 msgid "Satellite"
 msgstr ""
 
@@ -4535,7 +4727,7 @@ msgid "Access All"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
-msgid "Access Selected"
+msgid "Limited Access"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -4554,6 +4746,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Mobile Workers"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
+"configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View tableau configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only tableau configuration for web users"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -4629,14 +4835,6 @@ msgid "Edit & View Data"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
-msgid "<strong>Web Apps</strong> &mdash; use Web Apps for online data entry"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Access Web Apps"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Messaging</strong> &mdash; configure and send conditional alerts"
 msgstr ""
@@ -4707,6 +4905,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit Attendance Tracking Events"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics "
+"associated with this project"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View CommCare Analytics"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only CommCare Analytics"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -4800,6 +5012,14 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Select which registry data the role can view:"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Use Web Apps for online data entry"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Select which web apps the role has access to:"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -5022,19 +5242,23 @@ msgstr ""
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to fetch attempts"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to fetch payload"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to send"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to cancel"
 msgstr ""
 
@@ -5048,6 +5272,10 @@ msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client Secret"
+msgstr ""
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "HTTP Header Name"
 msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js

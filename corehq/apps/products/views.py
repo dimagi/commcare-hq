@@ -270,7 +270,7 @@ class NewProductView(BaseCommTrackManageView):
 class UploadProductView(BaseCommTrackManageView):
     urlname = 'commtrack_upload_products'
     page_title = gettext_noop("Import Products")
-    template_name = 'hqwebapp/bulk_upload.html'
+    template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
 
     @property
     def page_context(self):
@@ -481,6 +481,7 @@ class EditProductView(NewProductView):
         )
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ProductFieldsView(CustomDataModelMixin, BaseCommTrackManageView):
     urlname = 'product_fields_view'
     field_type = 'ProductFields'

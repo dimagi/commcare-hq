@@ -18,12 +18,13 @@ from requests import RequestException
 from corehq import privileges
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.const import PASSWORD_PLACEHOLDER
+from corehq.motech.const import PASSWORD_PLACEHOLDER, OAUTH2_CLIENT, OAUTH2_PWD
 from corehq.motech.forms import ConnectionSettingsForm, UnrecognizedHost
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
@@ -36,6 +37,7 @@ class Http409(Http400):
     message = "Resource is in use."
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 class MotechLogListView(BaseProjectSettingsView, ListView):
     urlname = 'motech_log_list_view'
@@ -71,6 +73,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
         return self.get_queryset()
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     urlname = 'motech_log_detail_view'
@@ -184,6 +187,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
     page_title = _('Connection Settings')
     template_name = 'motech/connection_settings.html'
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
         if has_privilege(request, privileges.DATA_FORWARDING):
@@ -262,6 +266,7 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
     model = ConnectionSettings
     form_class = ConnectionSettingsForm
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
         if has_privilege(request, privileges.DATA_FORWARDING):
@@ -303,7 +308,14 @@ def test_connection_settings(request, domain):
         raise Http404
 
     # If auth_type is set to None, we ignore this check
-    if request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER and request.POST.get('auth_type'):
+    auth_type = request.POST.get('auth_type')
+    client_secret = request.POST.get('plaintext_client_secret')
+    if auth_type in (OAUTH2_CLIENT, OAUTH2_PWD) and client_secret == PASSWORD_PLACEHOLDER:
+        return JsonResponse({
+            "success": False,
+            "response": _("Please enter client secret again."),
+        })
+    if auth_type and request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER:
         # The user is editing an existing instance, and the form is
         # showing the password placeholder. (We don't tell the user what
         # the API password is.)

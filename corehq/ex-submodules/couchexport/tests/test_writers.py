@@ -17,7 +17,8 @@ from couchexport.writers import (
     ZippedExportWriter,
     GeoJSONWriter,
 )
-from corehq.apps.export.models.new import ExportInstance
+from corehq.apps.export.models import TableConfiguration
+from corehq.apps.export.models import SplitGPSExportColumn, GeopointItem, PathNode
 
 
 class ZippedExportWriterTests(SimpleTestCase):
@@ -241,7 +242,7 @@ class TestGeoJSONWriter(SimpleTestCase):
     GEO_PROPERTY = 'geo-prop'
 
     def test_get_features(self):
-        table = ExportInstance(selected_geo_property=self.GEO_PROPERTY)
+        table = TableConfiguration(selected_geo_property=self.GEO_PROPERTY)
         features = GeoJSONWriter().get_features(table, self._table_data())
 
         expected_features = [
@@ -264,12 +265,12 @@ class TestGeoJSONWriter(SimpleTestCase):
         self.assertEqual(features, expected_features)
 
     def test_get_features__other_geo_property_configured(self):
-        table = ExportInstance(selected_geo_property="some-other-property")
+        table = TableConfiguration(selected_geo_property="some-other-property")
         features = GeoJSONWriter().get_features(table, self._table_data())
         self.assertEqual(features, [])
 
     def test_get_features__invalid_geo_property_column_value(self):
-        table = ExportInstance(selected_geo_property=self.GEO_PROPERTY)
+        table = TableConfiguration(selected_geo_property=self.GEO_PROPERTY)
 
         data = self._table_data()
         data[1][1] = "not-a-geo-coordinate-value"
@@ -278,17 +279,80 @@ class TestGeoJSONWriter(SimpleTestCase):
         features_names = [feature['properties']['name'] for feature in features]
         self.assertTrue(data[1][2] not in features_names)
 
-    def _table_data(self):
-        data = [self._table_header]
+    def test_get_features_from_path(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="some.path",
+            path_string='some.path',
+        )
+        features = GeoJSONWriter().get_features(table, self._table_data(geo_property_header='some.path'))
+
+        expected_features = [
+            {
+                'geometry': {'coordinates': ['-71.057083', '42.361145'], 'type': 'Point'},
+                'properties': {'country': 'United States', 'name': 'Boston'},
+                'type': 'Feature'
+            },
+            {
+                'geometry': {'coordinates': ['18.423300', '-33.918861'], 'type': 'Point'},
+                'properties': {'country': 'South Africa', 'name': 'Cape Town'},
+                'type': 'Feature'
+            },
+            {
+                'geometry': {'coordinates': ['77.2300', '28.6100'], 'type': 'Point'},
+                'properties': {'country': 'India', 'name': 'Delhi'},
+                'type': 'Feature'
+            },
+        ]
+        self.assertEqual(features, expected_features)
+
+    def test_get_features_from_path__invalid_path(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="some.other.path",
+            path_string='some.path',
+        )
+        features = GeoJSONWriter().get_features(table, self._table_data(geo_property_header='some.path'))
+
+        expected_features = []
+        self.assertEqual(features, expected_features)
+
+    def test_get_features_from_path__location_metadata(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="form.meta.location",
+            path_string="form.meta.location",
+            header_name='location',
+        )
+        features = GeoJSONWriter().get_features(table, self._table_data(geo_property_header='location'))
+
+        expected_features = [
+            {
+                'geometry': {'coordinates': ['-71.057083', '42.361145'], 'type': 'Point'},
+                'properties': {'country': 'United States', 'name': 'Boston'},
+                'type': 'Feature'
+            },
+            {
+                'geometry': {'coordinates': ['18.423300', '-33.918861'], 'type': 'Point'},
+                'properties': {'country': 'South Africa', 'name': 'Cape Town'},
+                'type': 'Feature'
+            },
+            {
+                'geometry': {'coordinates': ['77.2300', '28.6100'], 'type': 'Point'},
+                'properties': {'country': 'India', 'name': 'Delhi'},
+                'type': 'Feature'
+            },
+        ]
+        self.assertEqual(features, expected_features)
+
+    def _table_data(self, geo_property_header=None):
+        data = [self._table_header(geo_property_header)]
         table_data_rows = self._table_data_rows
         [data.append(row) for row in table_data_rows]
         return data
 
-    @property
-    def _table_header(self):
+    def _table_header(self, geo_property_header=None):
+        geo_property_header = self.GEO_PROPERTY if geo_property_header is None else geo_property_header
         return [
             'name',
-            self.GEO_PROPERTY,
+            geo_property_header,
             'country',
         ]
 
@@ -299,3 +363,21 @@ class TestGeoJSONWriter(SimpleTestCase):
             ['Cape Town', '-33.918861 18.423300 0 0', 'South Africa'],
             ['Delhi', '28.6100 77.2300 0 0', 'India']
         ]
+
+    def geopoint_table_configuration(self, selected_geo_property, path_string, header_name=None):
+        path = [PathNode(name=node) for node in path_string.split('.')]
+        header_name = header_name if header_name is not None else 'MyGPSProperty'
+
+        return TableConfiguration(
+            selected=True,
+            selected_geo_property=selected_geo_property,
+            columns=[
+                SplitGPSExportColumn(
+                    label=header_name,
+                    item=GeopointItem(
+                        path=path,
+                    ),
+                    selected=True,
+                )
+            ]
+        )

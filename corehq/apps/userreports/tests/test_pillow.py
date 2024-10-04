@@ -43,7 +43,6 @@ from corehq.apps.userreports.tests.utils import (
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import (
     ConnectionSettings,
     DataSourceRepeater,
@@ -198,11 +197,9 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         }
         data_source_1.save()
         del ExpressionFactory.spec_map["missing_expression"]
-        ds_1_domain = data_source_1.domain
         table_manager = ConfigurableReportTableManager([DynamicDataSourceProvider()])
         table_manager.bootstrap()
-        self.assertEqual(0, len(table_manager.table_adapters_by_domain))
-        self.assertEqual(0, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(dict(table_manager.table_adapters_by_domain), {})
 
     def _copy_data_source(self, data_source):
         data_source_json = data_source.to_json()
@@ -404,7 +401,6 @@ class IndicatorPillowTest(BaseRepeaterTest):
         super(IndicatorPillowTest, cls).tearDownClass()
 
     def tearDown(self):
-        delete_all_repeat_records()
         self.adapter.clear_table()
 
     @flaky_slow
@@ -536,7 +532,7 @@ class IndicatorPillowTest(BaseRepeaterTest):
         self._test_process_deleted_doc_from_sql(datetime_mock)
         self.pillow = _get_pillow([self.config])
         later = datetime.utcnow() + timedelta(hours=50)
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=later)
+        repeat_records = RepeatRecord.objects.filter(domain=self.domain, next_check__lt=later)
         # We expect 2 repeat records for 2 repeaters each
         self.assertEqual(repeat_records.count(), 4)
 

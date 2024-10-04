@@ -11,6 +11,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème rapporté: pas de station de lavage de mains à l'entrée du site"
     warning_por: ""
     responsible_follow_up: "District Coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [people_hand_washing ]
     base_path: [morning_mobilization_grp, Q1a]
     comment: [hand_washing_station_comments]
@@ -22,6 +23,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Ne se lavent pas les mains avant d'entre sur le site d'opérations"
     warning_por: ""
     responsible_follow_up: "District Coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [sop_physical]
     base_path: [morning_mobilization_grp, Q2]
     comment: [sop_physical_comments]
@@ -33,6 +35,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Les chefs d'équipe n'effectuent pas d'inspection physique occasionnelle des opérations spéciales le matin."
     warning_por: "Problema reportado: Chefes de Equipa nao conduzem inspeccao fisica casualaos roceadores nas manhas."
     responsible_follow_up: "District coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [sop_health_problems]
     base_path: [morning_mobilization_grp]
     comment: [sop_physical_comments]
@@ -44,6 +47,8 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème de santé observé chez les opérateurs de pulvérisation. Remplissez un formulaire de rapport d'incident, si les symptômes sont probablement liés au travail."
     warning_por: "Problema reportado: Problemas de saude observado entre os roceadores. Preencher o Formulario de Relatorio de Incidente, se os sintomas estao relacionados com o trabalho."
     responsible_follow_up: "ECO"
+    description: [briefly_describe_the_situation]
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [mask]
     base_path: [morning_mobilization_grp, Q3]
     comment: [mask_comments]
@@ -55,6 +60,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: du personnel ne porte pas le masque ou ne matient pas les distances de sécurité"
     warning_por: ""
     responsible_follow_up: "District Coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [sop_eaten]
     base_path: [morning_mobilization_grp, Q4]
     comment: [sop_eaten_comments]
@@ -66,6 +72,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Les opérateurs de pulvérisation ne sont pas correctement nourris ou hydratés avant d'enfiler les EPI."
     warning_por: "Problema reportado: Roceador nao se alimentou ou hidratou propriamente antes de vestir EPI."
     responsible_follow_up: "District coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [insecticide_record]
     base_path: [morning_mobilization_grp, Q5]
     comment: [insecticide_record_comments]
@@ -77,6 +84,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Magasinier n'enregistre pas les numéros de série de tous les insecticides"
     warning_por: "Problema reportado: "
     responsible_follow_up: "ECO"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [teamlead_record]
     base_path: [morning_mobilization_grp, Q6]
     comment: [teamlead_record_comments]
@@ -88,6 +96,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Le chef d'équipe n'enregistre pas tous les numéros de série des insecticides"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [distrib_sign]
     base_path: [morning_mobilization_grp, Q7]
     comment: [distrib_sign_comments]
@@ -99,6 +108,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: chefs d'équipes et opérateurs de pulvérisation ne signent pas le formulaire de distribution d'insecticide"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [sop_full_ppe]
     base_path: [morning_mobilization_grp, Q8]
     comment: [sop_full_ppe_comments]
@@ -112,6 +122,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Le (s) opérateur (s) de pulvérisation ne porte (s) pas {msg} avant l'embarquement."
     warning_por: "Problema reportado: Roceador (s) nao esta usando {msg} antes de subir na viatura. "
     responsible_follow_up: "District coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [sop_eating_after_ppe]
     base_path: [morning_mobilization_grp, Q9]
     comment: [sop_eating_after_ppe_comments]
@@ -123,6 +134,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Opérateur (s) de pulvérisation mangeant ou buvant après avoir enfilé des EPI."
     warning_por: "Problema reportedo: Roceador(s) comendo ou bebendo antes de vestir EPI."
     responsible_follow_up: "District coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [sop_fill_pumps]
     comment: [sop_fill_pumps_comments]
     base_path: [morning_mobilization_grp, Q10]
@@ -134,6 +146,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Opérateur (s) de pulvérisation n'utilisant pas l'insecticide restant de la veille."
     warning_por: "Problema reportado: roceador (s) nao usam insecticida remanescente do dia anterior."
     responsible_follow_up: "District coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [barrels_empty_check]
     comment: [barrels_empty_check_comments]
     base_path: [morning_mobilization_grp, Q11]
@@ -145,6 +158,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: Tous les insecticides et l'eau de rinçage contaminée ne sont pas utilisés pour remplir les réservoirs des OP."
     warning_por: "Problema reportado: Os roceadores nao e usam todo insecticida e agua contaminada para encher os tanques das bombas."
     responsible_follow_up: "District coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
   - question: [vehicle_space]
     base_path: [morning_mobilization_grp, Q12]
     comment: [vehicle_space_comments]
@@ -156,6 +170,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     warning_fr: "Problème signalé: les membres de l'équipe ne s'espacent pas correctement dans le véhicule"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [morning_mobilization_grp, results, time_spend_morning]
 # Module 1 Form 3: Spray Operator Transportation Vehicle Inspection
 http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
   - question: [current_certificate_issued]
@@ -169,6 +184,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Le véhicule n'a pas été inspecté avant le contrat."
     warning_por: "Problema notado: Viatura nao foi inspecionada antes do celebrar o contrato."
     responsible_follow_up: "ECO"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [transport_certification]
     comment: [transport_certification_comments]
     base_path: [vehicle_inspection_grp, transport_certification_grp, Q2]
@@ -180,6 +196,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Le conducteur ne conduit pas avec sa licence et / ou son certificat."
     warning_por: "Problema notado: Motoristas nao estao a conduzir com suas cartas de conducao e /ou certificados."
     responsible_follow_up: "ECO"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [driver_safety_training]
     comment: [driver_safety_training_comments]
     base_path: [vehicle_inspection_grp, Q3]
@@ -191,6 +208,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Fournir une formation de sécurité au conducteur."
     warning_por: "Problema notado: Providenciar o treinamento de seguranca ao motorista."
     responsible_follow_up: "ECO"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [pesticides_transported]
     comment: [pesticides_transported_comments]
     base_path: [vehicle_inspection_grp, Q4]
@@ -202,6 +220,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Séparer le transport des insecticides nécessaires pour les opérateurs et les insecticides autres que l'approvisionnement du jour."
     warning_por: "Problema notado: Necessidade de um transporte separado para os roceadores e pesticidas para alem dos de uso do dia."
     responsible_follow_up: "District Coordinator"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [consumer_goods_transported]
     comment: [consumer_goods_transported_comments]
     base_path: [vehicle_inspection_grp, Q5]
@@ -213,6 +232,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Violation en transportant des marchandises mixtes, suggére une nouvelle formation."
     warning_por: "Problema notado: Mistura no transporte de bens, violacao, sugere-se um re- treinamento."
     responsible_follow_up: "District Coordinator"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [drivers_equipped]
     comment: [drivers_equipped_comments]
     base_path: [vehicle_inspection_grp, Q6]
@@ -224,6 +244,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Les conducteurs n'ont pas de téléphone cellulaire et / ou d'EPI approprié."
     warning_por: "Problema notado: Motoristas nao tem telefone e/ ou EPI apropriado."
     responsible_follow_up: "ECO"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [driver_masked]
     base_path: [vehicle_inspection_grp, Q7]
     comment: [driver_masked_comments]
@@ -235,6 +256,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème signalé: Conducteur ne porte pas son masque"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [pesticides_secured]
     comment: [pesticides_secured_comments]
     base_path: [vehicle_inspection_grp, Q8]
@@ -246,6 +268,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Nécessité de fournir des matériaux pour sécuriser et attacher les insecticides dans le véhicule"
     warning_por: "Problema notada: Necessita de providenciar materialpara segurar e marrar os insecticidas no veiculo."
     responsible_follow_up: "ECO"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [fire_extinguisher]
     comment: [fire_extinguisher_comments]
     base_path: [vehicle_inspection_grp, Q9]
@@ -257,6 +280,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème signalé: Le véhicule de transport de insecticides doit toujours transporter un extincteur."
     warning_por: "Problema reportado: Veiculo de transporte de pesticida deve sempre ter o extintor de fogo."
     responsible_follow_up: "ECO"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [seats_railings]
     comment: [seats_railings_comments]
     base_path: [vehicle_inspection_grp, Q10]
@@ -268,6 +292,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Le véhicule de transport par des opérateurs de pulvérisation doit être configuré avec des sièges et des rampes"
     warning_por: "Problema notado: Veiculo de transporte de roceadores deve estar munido de bancos e corrimãos "
     responsible_follow_up: "District Coordinator"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [first_aid_stocked]
     comment: [first_aid_stocked_comments]
     base_path: [vehicle_inspection_grp, Q11]
@@ -281,6 +306,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Manquant {msg} pour la trousse de premiers soins pour le véhicule. Confirmer la date de livraison pour {msg} pour la trousse de premiers soins."
     warning_por: "Problema notado: Em falta {msg} para kit de primeiros socorros da viatura. Confirmar datas de entrega para {msg} para kit de primeiros socorros."
     responsible_follow_up: "ECO"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [spill_prep]
     comment: [spill_prep_comments]
     base_path: [vehicle_inspection_grp, Q12]
@@ -294,6 +320,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Manquant {msg} pour le véhicule. Confirmer la date de livraison pour {msg}."
     warning_por: "Problema notado: Faltando {msg} para o veiculo. Confirmar as datas de entrega {msg}."
     responsible_follow_up: "ECO"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [sops_seated_properly]
     comment: [sops_seated_properly_comments]
     base_path: [vehicle_inspection_grp, sears_grp, Q13]
@@ -305,6 +332,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème signalé: Les opérateurs de pulvérisation doivent être correctement assis avec la pompe fixée entre leurs jambes dans le véhicule de transport."
     warning_por: "Problema reportado: Roceadores deverao estar propriamente sentados com bombas segurdas entre as suas pernas na viatura."
     responsible_follow_up: "District Coordinator"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [vehicle_overcrowded]
     comment: [vehicle_overcrowded_comments]
     base_path: [vehicle_inspection_grp, Q14]
@@ -316,6 +344,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Nécessité de fournir un véhicule supplémentaire pour les opérateurs de pulvérisation."
     warning_por: "Problema notado: Necessita providenciar uma viatura adicional para os roceadores."
     responsible_follow_up: "Operation Manager"
+    time_spent: [summary, results, time_spend_transportation]
   - question: [pesticide_leakage]
     comment: [pesticide_leakage_comments]
     base_path: [vehicle_inspection_grp, Q15]
@@ -327,6 +356,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     warning_fr: "Problème noté: Preuve de fuite de insecticide dans le véhicule."
     warning_por: "Problema notado: Evidencia de vazamento de insecticidas na viatura."
     responsible_follow_up: "ECO"
+    time_spent: [summary, results, time_spend_transportation]
 # Module 1 Form 6: End of Day Cleanup Inspection
 http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
   - question: [sop_return_in_ppe]
@@ -340,6 +370,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: tous les opérateurs de pulvérisation doivent continuer de porter l'EPI sur le chemin de retour des sites opérationnels"
     warning_por: "Problema reportado: Todos os roceadores deverão continuar usar o EPI no caminho de regresso a base operacional."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [eating_in_ppe]
     comment: [eating_in_ppe_comments]
     base_path: [obs_rcd_mgmt_grp, Q2]
@@ -351,6 +382,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: infrcomments faite en mangeant et/ou en buvant "
     warning_por: "Problema reportado: Violação relacionado a comer e/ou beber."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [reconcile_insecticide]
     base_path: [obs_rcd_mgmt_grp, Q3]
     comment: [reconcile_insecticide_comments]
@@ -362,6 +394,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Chef d'équipe ne réconcilie pas les unités d'insecticide avant le rinçage progressif"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [wash_criteria_met]
     comment: [wash_criteria_met_comments]
     base_path: [obs_rcd_mgmt_grp, Q4]
@@ -374,6 +407,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les chefs d'équipe ne supervisent pas le rinçage et le nettoyage"
     warning_por: "Problema reportado: Chefes de equipa nao supervisionam a lavagem do final do dia."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [wash_criteria_met]
     comment: [wash_criteria_met_comments]
     base_path: [obs_rcd_mgmt_grp, Q4]
@@ -386,6 +420,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problem reported: Wash facilities with soap and water must be available to operators."
     warning_por: "Problema reportado: Casas de banho com água e sabão  estar disponiveis para os roceadores."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [wash_criteria_met]
     comment: [wash_criteria_met_comments]
     base_path: [obs_rcd_mgmt_grp, Q4]
@@ -398,6 +433,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Tout le personnel dans l'aire de lavage doit porter un EPI complet."
     warning_por: "Problema reportado: Todo pessoal na area de lavagem deverão usar EPI completo.."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [accidents]
     comment: [accidents_comments]
     base_path: [obs_rcd_mgmt_grp, Q5]
@@ -409,6 +445,8 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Un incident a été signalé et un formulaire de rapport d'incident est nécessaire immédiatement. Effectuez un suivi auprès du chef de secteur pour vous assurer que le formulaire de rapport d'accident est rempli et envoyé à TPM et à ECM."
     warning_por: "Problema reportado: Algum incidente foi reportado e um relatório de incidente e necessário imediatamente. Seguimento com gestor do sector para certificar que o relatorio de acidente e preecnhido e enviado para  GTP e GCA."
     responsible_follow_up: "ECO"
+    description: [briefly_describe_the_situation]
+    time_spent: [results, time_spend_endofday]
   - question: [sop_irritation]
     comment: [sop_irritation_comments]
     base_path: [obs_rcd_mgmt_grp, Q6]
@@ -420,6 +458,8 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Exposition possible signalée: Suivi du statut de OP se plaignant d'irritation et s'assurer que le rapport d'incident a été envoyé au bureau à domicile TPM et ECM."
     warning_por: "Possivel exposição reportada: Seguimento do estado do roceador que reclamou de irritação e certificar-se que relatorio de incidente foi enviado para o escritório central GTP e GCA."
     responsible_follow_up: "ECO"
+    description: [briefly_describe_the_situation]
+    time_spent: [results, time_spend_endofday]
   - question: [form_criteria_check]
     comment: [form_criteria_check_comments]
     base_path: [obs_rcd_mgmt_grp, Q7]
@@ -432,6 +472,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les opérateurs de pulvérisation doivent remplir des formulaires de rapport quotidiens."
     warning_por: "Problema reportado: Roceadores deverao completar suas fichas d relatório diario."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [form_criteria_check]
     comment: [form_criteria_check_comments]
     base_path: [obs_rcd_mgmt_grp, Q7]
@@ -444,6 +485,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les superviseurs doivent vérifier les formulaires de pulvérisation."
     warning_por: "Problema reportado: Supervisores deverão verificar s fichas de pulverização."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [adequate_gravel]
     comment: [adequate_gravel_comments]
     base_path: [fsp_grp, Q8]
@@ -455,6 +497,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Gravier inadéquat dans la fosse d'infiltration"
     warning_por: "Problema reportado: Inadequado gravidade no tanque de retencaot."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_endofday]
   - question: [empties_returned]
     comment: [empties_returned_comments]
     base_path: [fsp_grp, Q9]
@@ -466,6 +509,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Le magasinier doit tenir des registres des insecticides distribués et retournés."
     warning_por: "Problema reportado: Fieis devem manter registos de insecticidas enviados e retornados."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [effluent_catch]
     comment: [effluent_catch_comments]
     base_path: [fsp_grp, Q10]
@@ -477,6 +521,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Le triple rinçage et la zone de lavage doivent être couverts d'une surface étanche et d'une fosse d'infiltration inclinée"
     warning_por: "Problema reportado: Tripla lavagem e area de lavagem deve estar coberto com lona plastica inclinada para o tanque de retencao."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_endofday]
   - question: [drums_water]
     comment: [drums_water_comments]
     base_path: [fsp_grp, Q11]
@@ -488,6 +533,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Eau insuffisante pour le triple rinçage."
     warning_por: "Problema reportado: Agua insufficiente para a tripla lavagem."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [pesticide_emptied]
     comment: [pesticide_emptied_comments]
     base_path: [fsp_grp, Q12]
@@ -499,6 +545,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Informer le coordinateur des opérations des violations de triple rinçage."
     warning_por: "Noticar ao coordenador das operações sobre a violação de procediemtno de tripla lavagem."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [pumps_rinsed]
     comment: [pumps_rinsed_comments]
     base_path: [fsp_grp, Q14]
@@ -510,6 +557,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: violations du triple rinçage."
     warning_por: "Problema reportado: Viloção de tripla lavagem."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [pumps_outside_rinsed]
     comment: [pumps_outside_rinsed_comments]
     base_path: [fsp_grp, Q15]
@@ -521,6 +569,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Pompes pas bien lavées"
     warning_por: "Problema reportado: Bombas nao adequadamente lavadas"
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [equipment_rinsed]
     comment: [equipment_rinsed_comments]
     base_path: [fsp_grp, Q16]
@@ -532,6 +581,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: EPI pas bien lavé"
     warning_por: "Problema reportado: EPI nao propriamente lavado"
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [worker_wash]
     base_path: [fsp_grp, Q17]
     comment: [worker_wash_comments]
@@ -543,6 +593,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les travailleurs ne se lavent pas les mains et le visage"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [mask_distance]
     base_path: [fsp_grp, Q18]
     comment: [copy-1-of-worker_wash_comments]
@@ -554,6 +605,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les travailleurs ne remettent pas leur masque après s'être lavés"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [contaminated_water_disposed]
     comment: [contaminated_water_disposed_comments]
     base_path: [fsp_grp, Q19]
@@ -565,6 +617,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Mauvais traitement des eaux usées."
     warning_por: "Problema reportado: Roceadores deverao lavar as mãos e cara com agua e sabao depois de remover o EPI."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [contaminated_water_drains]
     comment: [contaminated_water_drains_comments]
     base_path: [fsp_grp, Q20]
@@ -576,6 +629,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: L'eau ne s'écoule pas correctement dans la fosse."
     warning_por: "Problema reportado:  Deposição impropria de residuos liquidos."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_endofday]
   - question: [effluent_absorbed]
     comment: [effluent_absorbed_comments]
     base_path: [fsp_grp, Q21]
@@ -587,6 +641,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: La fosse n'est pas drainée correctement."
     warning_por: "Problema reportado: Agua nao drenando propriamnete para o tanque de retencao."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_endofday]
   - question: [pumps_hung]
     comment: [pumps_hung_comments]
     base_path: [fsp_grp, Q22]
@@ -598,6 +653,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les pompes ne sont pas suspendues à sécher"
     warning_por: "Problema reportado: Tanque de retenção nao drenando propriamente."
     responsible_follow_up: "Operation Manager"
+    time_spent: [results, time_spend_endofday]
   - question: [pumps_stored_properly]
     comment: [pumps_stored_properly_comments]
     base_path: [fsp_grp, Q23]
@@ -609,6 +665,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les pompes ne sont pas stockées correctement.."
     warning_por: "Problema reportado: Bombas nao penduradas para secar"
     responsible_follow_up: "Operation Manager"
+    time_spent: [results, time_spend_endofday]
   - question: [drums_covered]
     comment: [drums_covered_comments]
     base_path: [fsp_grp, Q24]
@@ -620,6 +677,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Barils d'eau de rinçage  et / ou d'effluents non couverts pendant la nuit."
     warning_por: "Problema reportado: Bombas nao armazenadas propiamente."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [msp_avoid_water]
     comment: [msp_avoid_water_comments]
     base_path: [msp_grp, Q25]
@@ -631,6 +689,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Le puisard mobile n'est pas installé à l'écart des plans d'eau, des pentes abruptes ou des zones sujettes aux inondations"
     warning_por: "Problema reportado: Lavagem e/ou baldes de lixo nao cobertos durante a noite."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_endofday]
   - question: [sachets_returned]
     comment: [sachets_returned_comments]
     base_path: [msp_grp, Q26]
@@ -642,6 +701,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Le magasinier doit tenir des registres des insecticides distribués et retournés."
     warning_por: "Problema reportado: Tanque de retencao Movel nao instalado distante de corpos de agua, inclinacoes ou locais propensos a inundacoes ."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [barrel_water_present]
     comment: [day1_operation_comments]
     base_path: [msp_grp, Q27]
@@ -653,6 +713,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les eaux usées provenant du fût de collecte sont restées dans l'aire de lavage pendant la nuit."
     warning_por: "Problema reportado: Fieis deverão manter os registos de pesticidas enviados e retornados."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [msp_correctly_installed]
     comment: [msp_correctly_installed_comments]
     base_path: [msp_grp, Q28]
@@ -664,6 +725,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: L'aire de triple rinçage et  lavage doit être couvert d'une surface étanche et incliné vers le puisard mobile."
     warning_por: "Problema reportado: Residuos liquidos ficaram no balde de colecta durante na area de lavagem durante a noite."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_endofday]
   - question: [rinse_water_drums]
     comment: [rinse_water_drums_comments]
     base_path: [msp_grp, Q29]
@@ -675,6 +737,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Eau insuffisante pour le triple rinçage."
     warning_por: "Problema reportado: Lavagem tripla e e area de lavagem deverão estar cobertos com lona plastica inlcinada para o tanque de retencao movel."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [pesticide_emptied]
     comment: [pesticide_emptied_comments]
     base_path: [msp_grp, Q30]
@@ -686,6 +749,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Informer le coordinateur des opérations des violations de triple rinçage  "
     warning_por: "Problema reportado: Agua insufficiente para a tripla lavagem."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [pumps_depressurized]
     comment: [pumps_depressurized_comments]
     base_path: [msp_grp, Q31]
@@ -697,6 +761,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Pulvérisateurs mal vidés"
     warning_por: "Notifficar o coordenador das operacoes sobre as violacoes da tripla lavagem."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [pumps_rinsed]
     comment: [pumps_rinsed_comments]
     base_path: [msp_grp, Q32]
@@ -708,6 +773,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: violations du triple rinçage."
     warning_por: "Problema reportado: Violações da tripla lavagem."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [pumps_rinsed_outside]
     comment: [pumps_rinsed_outside_comments]
     base_path: [msp_grp, Q33]
@@ -719,6 +785,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Pompes pas bien lavées"
     warning_por: "Problema reportado: Bombas nao lavadas propriamente"
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [waste_water_distributed]
     comment: [waste_water_distributed_comments]
     base_path: [msp_grp, Q34]
@@ -730,6 +797,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les eaux usées provenant du fût de collecte ne sont pas distribuées dans les pompes de pulvérisation."
     warning_por: "Problema reportado: Residuos liquidos do balde de colecta nao distribuida para as bombas."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [equipment_rinsed]
     comment: [equipment_rinsed_comments]
     base_path: [msp_grp, Q35]
@@ -741,6 +809,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: EPI mal lavé"
     warning_por: "Problema reportado: EPI nao lavado propriamente."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [workers_wash]
     comment: [workers_wash_comments]
     base_path: [msp_grp, Q36]
@@ -752,6 +821,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les opérateurs doivent se laver les mains et le visage avec de l'eau et du savon après avoir retiré l'EPI."
     warning_por: "Problema reportado: Roceadores deverao lavar as mãos e cara com agua e sabao depois de tirar o EPI."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [face_mask]
     base_path: [msp_grp, Q37]
     comment: [face_mask_comments]
@@ -763,6 +833,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les travailleurs ne mettent pas leur masque après s'être lavés"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [msp_used]
     comment: [msp_used_comments]
     base_path: [msp_grp, Q38]
@@ -774,6 +845,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Mauvais traitement des eaux usées."
     warning_por: "Problema reportado:  Deposição impróprio de residuos liquidos."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [contaminated_water_drains]
     comment: [contaminated_water_drains_comments]
     base_path: [msp_grp, Q39]
@@ -785,6 +857,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: L'eau ne s'écoule pas correctement vers le puisard mobile."
     warning_por: "Problema reportado: Drenamento improprio de agua para o tanque de retencao."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [effluent_absorbed]
     comment: [effluent_absorbed_comments]
     base_path: [msp_grp, Q40]
@@ -796,6 +869,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: L'eau ne se vide pas correctement du puisard"
     warning_por: "Problema reportado: Tanque de retenção móvel nao esta drenando propriamente."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_endofday]
   - question: [drums_covered]
     comment: [drums_covered_comments]
     base_path: [msp_grp, Q41]
@@ -807,6 +881,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Barils d'eau de rinçage  et / ou d'effluents non couverts pendant la nuit."
     warning_por: "Problema reportado: Lavagem e /ou baldes de lixo nao foi coberto durante a noite."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [ground_restored]
     comment: [last_day_operations_comments]
     base_path: [msp_grp, Q42]
@@ -818,6 +893,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: MSP pas correctement restauré."
     warning_por: "Problema reportado: TRM nao foi propiramnete retornado ao cova."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_endofday]
   - question: [msp_removed]
     comment: [last_day_operations_comments]
     base_path: [msp_grp, Q42]
@@ -829,6 +905,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Le site d'installation de MSP n'est pas sécurisé à la fin de la journée."
     warning_por: "Problema reportado: Instalação do TRM no local nao foi seguradano final do dia."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_endofday]
   - question: [msp_secure]
     comment: [msp_stored_comments]
     base_path: [msp_grp, Q43]
@@ -840,6 +917,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: MSP doit être sécurisé à la fin de la journée."
     warning_por: "Problema reportado: TRM tem que ser segurado no final do dia."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_endofday]
   - question: [overalls_wash]
     comment: [overalls_wash_comments]
     base_path: [msp_grp, Q44]
@@ -851,6 +929,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les porteurs ne transportent pas les combinaisons à laver et sécher"
     warning_por: "Problema reportado: Carregadores nao transportam fatos de trabalho para ser lavados e secos"
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
   - question: [overalls_clean]
     comment: [overalls_clean_comments]
     base_path: [msp_grp, Q45]
@@ -862,6 +941,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     warning_fr: "Problème signalé: Les porteurs ne transportent pas de combinaisons propres aux équipes de terrain"
     warning_por: "Problema reportado: Carregadores nao transportam os fatos de trabalho limpos para o campo"
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_endofday]
 # Module 1 Form 5: Storekeeper Performance Inspection
 http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
   - question: [ledger_present]
@@ -875,6 +955,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: pas de registre de stock dans le magasin"
     warning_por: "Problema reportado: Registo de estoque nao presente."
     responsible_follow_up: "Logistics Manager"
+    time_spent: [results, time_spend_storekeeper]
   - question: [ledger_updated]
     comment: [ledger_updated_comments]
     base_path: [stock_audit_grp, Q2]
@@ -886,6 +967,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: le registre de stock n'est pas entièrement mis à jour "
     warning_por: "Problema reportado: o livro do registo do armazem nao esta completa,ente actualizado."
     responsible_follow_up: "Logistics Manager"
+    time_spent: [results, time_spend_storekeeper]
   - question: [stock_cards_mounted]
     comment: [stock_cards_mounted_comments]
     base_path: [stock_audit_grp, Q3]
@@ -897,6 +979,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé : fiches de stocks non montées "
     warning_por: "Problema reportado: Cartoes de estoque nao estao montados."
     responsible_follow_up: "Logistics Manager"
+    time_spent: [results, time_spend_storekeeper]
   - question: [stock_cards_updated]
     comment: [stock_cards_updated_comments]
     base_path: [stock_audit_grp, Q4]
@@ -908,6 +991,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: les fiches de stocks insuffisants "
     warning_por: "Problema reportado: Deficiente arquivo de registo de estoque ."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [separate_pages_updated]
     comment: [separate_pages_updated_comments]
     base_path: [stock_audit_grp, Q5]
@@ -919,6 +1003,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: fiches de stocks manquantes : bouteilles/sachets vides et stocks de déchets "
     warning_por: "Problema reportado: Deficiente arquivo de registo de estoque: garrfas vazias e estoque de lixo."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [expired_insecticides_separate]
     comment: [expired_insecticides_separate_comments]
     base_path: [stock_audit_grp, Q6a]
@@ -930,6 +1015,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: les insecticides périmés ne sont pas séparés physiquement des autres insecticides dans le magasin"
     warning_por: "Problema reportado: Insecticida expirado nao esta fisicamente separado de outros."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [stock_used_cards]
     comment: [stock_used_cards_comments]
     base_path: [stock_audit_grp, Q8]
@@ -941,6 +1027,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: fiches de stock déficient: utilisation."
     warning_por: "Problema reportado: Deficiente arquivo de registo: uso."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [balance_mismatch]
     comment: [balance_mismatch_comments]
     base_path: [stock_audit_grp, Q9]
@@ -952,6 +1039,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: La balance dans du registre du magasin ne correspond pas au solde de la fiche de stock pour tous les articles en stock."
     warning_por: "Problema reportado: O balanco no livro de registo nao confere com o registo de cartoes de estoque para todos itens."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [balance_match_stock]
     comment: [balance_match_stock_comments]
     base_path: [stock_audit_grp, Q10]
@@ -963,6 +1051,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: le solde des fiches de stock ne correspond pas au résultat d'un comptage physique"
     warning_por: "Problema reportado: O balanco no cartao de estoque nao e igual ao resultado da contagem fisica do estoque para todos itens."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [reconciliation_completed]
     comment: [reconciliation_completed_comments]
     base_path: [stock_audit_grp, Q11]
@@ -974,6 +1063,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: Le formulaire de rapprochement des insecticides n'est pas rempli tous les jours."
     warning_por: "Problema reportado: A ficha diaria de registo de insecticida nao e completa diariamente ."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [balance_match_opening]
     comment: [balance_match_opening_comments]
     base_path: [stock_audit_grp, Q12]
@@ -985,6 +1075,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: Les registres de stocks de insecticides ne concordent pas."
     warning_por: "Problema reportado: O resgisto do balanco do insecticida nao e reconciliado."
     responsible_follow_up: "Operation Manager"
+    time_spent: [results, time_spend_storekeeper]
   - question: [number_empties_match]
     comment: [number_empties_match_comments]
     base_path: [stock_audit_grp, Q13]
@@ -996,6 +1087,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: Inventaire des insecticides non conforme "
     warning_por: "Problema reportado: Inventario de Pesticida nao esta no balanco."
     responsible_follow_up: "Operation Manager"
+    time_spent: [results, time_spend_storekeeper]
   - question: [covid_practices]
     base_path: [safety_reqs_grp, Q14]
     comment: [covid_practices_comments]
@@ -1007,6 +1099,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: Magasinier ne porte pas le masque approprié"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [pesticide_mishandling]
     comment: [pesticide_mishandling_comments]
     base_path: [safety_reqs_grp, Q15]
@@ -1018,6 +1111,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: le personnel manipule le insecticide sans porter masque, gants, bottes et combinaison"
     warning_por: "Problema reportado: Manuseio individual de insecticida sem o uso de mascaras , luvas, bootas and fato de trabalho."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [eating_warehouse]
     comment: [eating_warehouse_comments]
     base_path: [safety_reqs_grp, Q16]
@@ -1029,6 +1123,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: le personnel entrain de manger dans le magasin de insecticide "
     warning_por: "Problema reportado: Trabalhadores comendo dentro do armazem enquanto ha insecicida de PIDOM  em estoque."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [poisoning_symptoms]
     comment: [poisoning_symptoms_comments]
     base_path: [safety_reqs_grp, Q17]
@@ -1040,6 +1135,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: le magasinier n'est pas familier aux signes d'intoxication"
     warning_por: "Problema reportado: Fiel do armazem nao esta familiarizado com sintomas de intoxicao do insecticida em uso."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [first_aid_check]
     comment: [first_aid_check_comments]
     base_path: [safety_reqs_grp, Q18]
@@ -1053,6 +1149,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: besoins en éléments de premier secours. Manquant: {msg}"
     warning_por: "Problema reportado: necessidade de componentes do kit de primeiros socorros nesta base operacional. Em falta: {msg}"
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [warehouse_spill_kit]
     comment: [warehouse_spill_kit_comments]
     base_path: [safety_reqs_grp, Q19]
@@ -1066,6 +1163,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: manquant dans le magasin de stockage: {msg}"
     warning_por: "Problema reportadoFatas no armazem: {msg}"
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [nearest_health_facility_known]
     comment: [nearest_health_facility_known_comments]
     base_path: [safety_reqs_grp, Q20]
@@ -1077,6 +1175,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: le magasinier ne sait pas où se trouve la structure de santé la plus proche"
     warning_por: "Problema reportado: Fiel do armazem nao conhece onde se localiza a unidade sanitaria mais proxima."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [antidotes_provided]
     comment: [antidotes_provided_comments]
     base_path: [safety_reqs_grp, Q21]
@@ -1088,6 +1187,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: l'antidote n'est pas disponible au niveau de la strcuture de santé la plus proche"
     warning_por: "Problema reportado: Antidotos talves nao estejam disponiveis na unidade sanitaria mais proxima."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [soap_available]
     comment: [soap_available_comments]
     base_path: [store_materials_grp, Q20]
@@ -1099,6 +1199,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: bassines d'eau non disponibles dans le magasin pour le lavage des mains "
     warning_por: "Problem reported:  Water basins not provided in storeroom for washing hands."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [msds_posted]
     comment: [msds_posted_comments]
     base_path: [store_materials_grp, Q23]
@@ -1110,6 +1211,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problem reported: Material Safety Data sheet for the current insecticide(s) not posted."
     warning_por: "Problema reportado: Ficha de Informacao de  Seguranca de Material para o pescticida(s) em uso nao postado."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [thermometer_available]
     comment: [thermometer_available_comments]
     base_path: [store_materials_grp, Q24]
@@ -1121,6 +1223,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: besoin de thermomètre dans le magasin de stockage "
     warning_por: "Problema reportado: Necessidade de termometro no armazem."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [pesticide_leakage]
     comment: [pesticide_leakage_comments]
     base_path: [pesticide_management_grp, Q25]
@@ -1132,6 +1235,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: Fuite de insecticide découverte dans l'entrepôt"
     warning_por: "Problema reportado: Descoberto vazamento de pesticida no armazem."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [contaminants_separated]
     comment: [contaminants_separated_comments]
     base_path: [pesticide_management_grp, Q26]
@@ -1143,6 +1247,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: Procédures d'entreposage des insecticides et des déchets contaminés déficients"
     warning_por: "Problema reportado:Prodecidmento deficientede de armazenamento de pesticida e lixo contaminado."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [pesticides_labeled]
     comment: [pesticides_labeled_comments]
     base_path: [pesticide_management_grp, Q27]
@@ -1154,6 +1259,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: Étiquetage des insecticides déficient."
     warning_por: "Problema reportado: Deficiente rotulagem de  pesticida."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [insecticide_fefo]
     comment: [insecticide_fefo_comments]
     base_path: [pesticide_management_grp, Q28]
@@ -1165,6 +1271,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: Système d'inventaire FEFO non utilisé "
     warning_por: "Problema reportado: Nao uso do sistema de PEPS ."
     responsible_follow_up: "Operation Manager"
+    time_spent: [results, time_spend_storekeeper]
   - question: [insecticides_expired]
     comment: [insecticides_expired_comments]
     base_path: [pesticide_management_grp, Q29]
@@ -1176,6 +1283,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: insecticides expirés dans le magasin."
     warning_por: "Problema reportado: Pesticida expirado no armazem."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [barrels_empties_labeled]
     comment: [barrels_empties_labeled_comments]
     base_path: [pesticide_management_grp, Q30]
@@ -1187,6 +1295,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "roblème signalé: Stockage et / ou étiquetage déficient des déchets dangereux"
     warning_por: "Problema reportado: Deficiente armazenamento/ rotulagem de lixo perigoso."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_storekeeper]
   - question: [pesticide_stored_high]
     comment: [pesticide_stored_high_comments]
     base_path: [pesticide_management_grp, Q31]
@@ -1198,6 +1307,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: Stockage inadéquat des insecticides: patins et / ou hauteur d'empilage"
     warning_por: "Problema reportado:Armazenamento improprio de pesticida: Paletas e/ altura de empilhamento."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
   - question: [excess_accumulated_waste]
     comment: [excess_accumulated_waste_comments]
     base_path: [pesticide_management_grp, Q32]
@@ -1209,6 +1319,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     warning_fr: "Problème signalé: : Surplus de insecticide dans l'inventaire"
     warning_por: "Problema reportado: Pesticida excedente no inventario."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_storekeeper]
 
 # Module 1 Form 4: Homeowner Preparation and Spray Operator Performance
 http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
@@ -1223,6 +1334,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: Les effets personnels ne sont pas retirés de la structure."
     warning_por: "Problema reportado: Artigos nao removidos da casa."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_home_sub1]
   - question: [perso_distance]
     base_path: [household_prep_grp, Q2]
     comment: [perso_distance_comments]
@@ -1234,6 +1346,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: L'opérateur n'observe pas les distances de séparation adéquates"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_home_sub1]
   - question: [hand_washing]
     base_path: [household_prep_grp, Q3]
     comment: [hand_washing_comments]
@@ -1245,6 +1358,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: L'opérateur ne s'est pas lavé les mains avant d'aider le propriétaire"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_home_sub1]
   - question: [furniture_covered]
     comment: [furniture_covered_comments]
     base_path: [household_prep_grp, Q4]
@@ -1256,6 +1370,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: Les articles immobiliers qui n'ont pas été déplacés vers le centre de la pièce / les articles non recouverts d'une feuille de plastique."
     warning_por: "Problema reportado: artigos que nao podem ser removidos, nao foram colocados no centro da sala/ items nao cobertos com plastico."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_home_sub1]
   - question: [items_hanging]
     comment: [items_hanging_comments]
     base_path: [household_prep_grp, Q5]
@@ -1267,6 +1382,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé : Articles non retirés du mur ou du plafond"
     warning_por: "Problema reportado: Items noa removidos da parede ou teto."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_home_sub1]
   - question: [food_removed]
     comment: [food_store_rooms_comments]
     base_path: [household_prep_grp, Q6]
@@ -1278,6 +1394,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: des pièces contenant des aliments ont été pulvérisés "
     warning_por: "Problema reportado: Quartos pulverizados pelo roceador contendo comida."
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_home_sub1]
   - question: [unmovable_people]
     comment: [unmovable_people_comments]
     base_path: [household_prep_grp, Q7]
@@ -1289,6 +1406,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé:  Une maison a été aspergée avec des malades, de personnes âgées ou de bébés à la maison."
     warning_por: "Problema reportado: Casa pulverisada com pessoas doentes, idosos or bebes dentro."
     responsible_follow_up: "ECO"
+    time_spent: [results, time_spend_home_sub1]
   - question: [sop_wash_bf_glove]
     base_path: [household_prep_grp, Q8]
     comment: [sop_wash_bf_glove_comments]
@@ -1300,6 +1418,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: Un opérateur ne s'est pas lavé les mains avant de remettre les gants "
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
+    time_spent: [results, time_spend_home_sub1]
   - question: [sop_full_ppe]
     comment: [sop_full_ppe_comments]
     base_path: [insecticide_prep_grp, Q9]
@@ -1313,6 +1432,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: l'opérateur n'a pas porté l'EPI au complet"
     warning_por: "Problema reportado:  roceador não esta completamente equipado com EPI."
     responsible_follow_up: "District Coordinator"
+    time_spent: [insecticide_prep_grp, results, time_spend_home_sub2]
   - question: [triple_rinse]
     comment: [pesticide_packaged_comments]
     base_path: [insecticide_prep_grp, Q10]
@@ -1324,6 +1444,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé : L'opérateur de pulvérisation ne respecte pas la procédure de  triple rinçage de la bouteille."
     warning_por: "Problema reportado: Roceador nao observou o procedimento de enxaguamento triplo da garrafa."
     responsible_follow_up: "District Coordinator"
+    time_spent: [insecticide_prep_grp, results, time_spend_home_sub2]
   - question: [tank_volume]
     comment: [tank_volume_comments]
     base_path: [insecticide_prep_grp, Q11]
@@ -1335,6 +1456,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: Le réservoir n'a pas la bonne quantité d'eau et d'insecticide."
     warning_por: "Problema reportado: A bomba nao tem a quantidade correcta de agua e insecticida."
     responsible_follow_up: "District Coordinator"
+    time_spent: [insecticide_prep_grp, results, time_spend_home_sub2]
   - question: [tank_shaken]
     comment: [tank_shaken_comments]
     base_path: [insecticide_prep_grp, Q12]
@@ -1346,6 +1468,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problem reported: Spray operator not properly mixing insecticide before pressurizing tank."
     warning_por: "Problema reportado: Roceador nao fez a mistura apropriada de insecticida antes de agitar o tanque."
     responsible_follow_up: "District Coordinator"
+    time_spent: [insecticide_prep_grp, results, time_spend_home_sub2]
   - question: [pump_pressurized]
     comment: [pump_pressurized_comments]
     base_path: [insecticide_prep_grp, Q13]
@@ -1357,6 +1480,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: La pompe n'est pas correctement pressurisée"
     warning_por: "Problema reportado: roceador não pressurizou correctamente o tanque antes de pulverizar."
     responsible_follow_up: "District Coordinator"
+    time_spent: [insecticide_prep_grp, results, time_spend_home_sub2]
   - question: [sop_full_ppe]
     comment: [sop_full_ppe_comments]
     base_path: [spray_observe_grp, Q14]
@@ -1370,6 +1494,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: l'opérateur n'a pas porté l'EPI au complet"
     warning_por: "Problema reportado:  roceador não esta completamente equipado com EPI."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [sop_eating_during_spray]
     comment: [sop_eating_during_spray_comments]
     base_path: [spray_observe_grp, Q15]
@@ -1384,6 +1509,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: l'Operateur de pulvérisation {msg} est entrain de fumer ou manger pendant la préparation des pièces des bénéficiaires ou la pulverisation"
     warning_por: "Problema reportado: roceador {msg} fumando ou comendo durante a prepração do agregado ou pulverizando."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [sop_drinking_during_spray]
     comment: [sop_drinking_during_spray_comments]
     base_path: [spray_observe_grp, Q16]
@@ -1398,6 +1524,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: l'Operateur de pulvérisation {msg} est entrain de boire pendant la préparation des pièces des bénéficiaires ou la pulverisation"
     warning_por: "Problema reportado: roceador {msg} bebendo durante a prepração do agregado ou pulverizando."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [items_moved]
     comment: [items_moved_comments]
     base_path: [spray_observe_grp, Q17]
@@ -1409,6 +1536,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: les affaires qui ne peuvent être déplacés ne sont  pas déplacés/couvert au centre de la pièce avant la pulvérisation "
     warning_por: "Problema reportado: Items que não podem ser tirados para fora nao movidos para o centro da sala/ cobertos antes da pulverização"
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [loose_items_removed]
     comment: [loose_items_removed_comments]
     base_path: [spray_observe_grp, Q18]
@@ -1420,6 +1548,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: Les objets en vrac (vêtements, moustiquaires, photos / affiches) ne sont pas retirés de la maison avant d'être pulvérisés"
     warning_por: "Problema reportado: items soltos (roupa, rede mosquiteiras, fotografias/cartazes) não removidos da casa antes da pulverização"
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [pump_leaks]
     comment: [pump_leaks_comments]
     base_path: [spray_observe_grp, Q19]
@@ -1431,6 +1560,8 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé : Des fuites proviennent de la pompe"
     warning_por: "Problema reportado: vazamentos da bomba."
     responsible_follow_up: "District Coordinator"
+    description: [briefly_describe_the_situation]
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [pump_serviced]
     comment: [pump_leaks_comments]
     base_path: [spray_observe_grp, Q19]
@@ -1442,6 +1573,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: L'opérateur de pulvérisation n'a pas immédiatement réparé la pompe qui fuit."
     warning_por: "Problema reportado: Roceador não fez a manutenção imdiata da bomba."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [nozzle_tip]
     comment: [nozzle_tip_comments]
     base_path: [spray_observe_grp, Q20]
@@ -1453,6 +1585,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: L'operateur de pulverisation n'a pas respecté la bonne distance à partir du support  "
     warning_por: "Problema reportado: Roceador não pulverizou pulverizou a uma distância correcta da superficie."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [spray_speed]
     comment: [spray_speed_comments]
     base_path: [spray_observe_grp, Q21]
@@ -1464,6 +1597,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé : L’opérateur de pulvérisation ne pulvérise pas à la vitesse correcte. "
     warning_por: "Problema reportado: Roceador não pulverizou com a velocidade de correcta."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [swath_overlap]
     comment: [swath_overlap_comments]
     base_path: [spray_observe_grp, swath_grp, Q22]
@@ -1475,6 +1609,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé : Il n’y a pas de chevauchement de 5 cm d’une couche à l’autre. "
     warning_por: "Problema reportado: Não ha sobreposição sucessiva de 5 cm."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [swath_overlap]
     comment: [swath_overlap_comments]
     base_path: [spray_observe_grp, swath_grp_zim, Q22Z]
@@ -1486,6 +1621,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé : Il n’y a pas de chevauchement de 2 cm d’une couche à l’autre. "
     warning_por: "Problema reportado: Não ha sobreposição sucessiva de 2 cm."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [surfaces_sprayed]
     comment: [surfaces_sprayed_comments]
     base_path: [spray_observe_grp, Q23]
@@ -1497,6 +1633,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé : L’opérateur de pulvérisation ne pulvérise pas toutes les surfaces recommandées"
     warning_por: "Problema reportado: Roceador não pulverizou as superficies recomendadas."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [surfaces_sprayed_incorrect]
     comment: [surfaces_sprayed_incorrect_comments]
     base_path: [spray_observe_grp, Q24]
@@ -1508,6 +1645,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Probleme signalé: l'opérateur de pulvérisation pulvérise les mauvaises surfaces "
     warning_por: "Problema reportada: Roceador pulverizou superficies erradas."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [pump_re_pressurized]
     comment: [pump_re_pressurized_comments]
     base_path: [spray_observe_grp, Q25]
@@ -1519,6 +1657,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé : l'opérateur de pulvérisation n'a pas représsurisé la pompe "
     warning_por: "Problema reportado: Roceador nao re-pressurizou o tanque como se requere."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [items_removed]
     comment: [eaves_sprayed_comments]
     base_path: [spray_observe_grp, Q26]
@@ -1530,6 +1669,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: Les articles ménagers ne sont pas retirés de la zone avant la pulvérisation des avant-toits."
     warning_por: "Problema reportado: Os pertences do agregado nao foram removidos das abas antes da pulverização."
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [house_marked]
     comment: [house_marked_comments]
     base_path: [spray_observe_grp, Q27]
@@ -1541,6 +1681,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: l'opérateur de pulvérisation n'a pas correctement le marquage "
     warning_por: "Problema reportado: Roceador nao fez a marcação correcta da casa"
     responsible_follow_up: "District Coordinator"
+    time_spent: [spray_observe_grp, results, time_spend_home_sub3]
   - question: [resident_informed]
     comment: [resident_informed_comments]
     base_path: [sbcc_grp, Q28]
@@ -1552,6 +1693,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: les bénificiaires n'ont pas été informés de l'activité de pulvérisation "
     warning_por: "Problema reportado: O residente nao foi informado sobre as actividades de pulverização."
     responsible_follow_up: "District Coordinator"
+    time_spent: [sbcc_grp, results, time_spend_home_sub4]
   - question: [resident_informed_dist]
     comment: [resident_informed_dist_comments]
     base_path: [sbcc_grp, Q29]
@@ -1563,6 +1705,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: les bénificiaires n'ont pas été informés de l'activité de pulvérisation "
     warning_por: "Problema reportado: O residente nao foi informado que deveria manter  distância."
     responsible_follow_up: "District Coordinator"
+    time_spent: [sbcc_grp, results, time_spend_home_sub4]
   - question: [resident_instructed]
     comment: [resident_instructed_comments]
     base_path: [sbcc_grp, Q30]
@@ -1574,6 +1717,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: les bénéficiaires ne sont pas informés de ne pas entrer pendant 2 h avant d'ouvrir portes et fenêtre 30 min pour aérer avant de remettre les effets personnels, les aliments, et les animaux/personnes malades "
     warning_por: "Problema reportado: Residente nao foi  informado sobre os procedimentos pos pulverização."
     responsible_follow_up: "District Coordinator"
+    time_spent: [sbcc_grp, results, time_spend_home_sub4]
   - question: [resident_instructed_animals]
     comment: [resident_instructed_animals_comments]
     base_path: [sbcc_grp, Q31]
@@ -1585,6 +1729,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: les résidents ne sont informés des mesures de sécurité par rapport aux animaux "
     warning_por: "Problema reportado: Residente não informado sobre o protocolo com os animais."
     responsible_follow_up: "District Coordinator"
+    time_spent: [sbcc_grp, results, time_spend_home_sub4]
   - question: [resident_instructed_insect_removal]
     comment: [resident_instructed_insect_removal_comments]
     base_path: [sbcc_grp, Q32]
@@ -1596,6 +1741,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: les résidents ne sont pas informés des mesures du protocole à suivre après la pulvérisation "
     warning_por: "Problema reportado: Residente não foi  informado sobre o protocolo pós pulverização"
     responsible_follow_up: "District Coordinator"
+    time_spent: [sbcc_grp, results, time_spend_home_sub4]
   - question: [resident_instructed_surfaces]
     comment: [resident_instructed_surfaces_comments]
     base_path: [sbcc_grp, Q33]
@@ -1607,6 +1753,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: les résidents ne sont pas informés des mesures du protocole à suivre après la pulvérisation "
     warning_por: "Problema reportado: Residente nao foi informado sobre o protocolo pós pulverização."
     responsible_follow_up: "District Coordinator"
+    time_spent: [sbcc_grp, results, time_spend_home_sub4]
   - question: [resident_instructed_health]
     comment: [resident_instructed_health_comments]
     base_path: [sbcc_grp, Q34]
@@ -1618,6 +1765,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: les residents ne sont pas informés du protocole en cas d'exposition"
     warning_por: "Problema reportado: Residente não foi informado do protocolo de potencial exposição."
     responsible_follow_up: "District Coordinator"
+    time_spent: [sbcc_grp, results, time_spend_home_sub4]
   - question: [sop_data]
     comment: [sop_data_comments]
     base_path: [sbcc_grp, Q35]
@@ -1629,3 +1777,4 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     warning_fr: "Problème signalé: l'opérateur de pulvérisation ne remplit pas correctement les données "
     warning_por: "Problema reportado: Roceador não registou os dados correctamente."
     responsible_follow_up: "District Coordinator"
+    time_spent: [sbcc_grp, results, time_spend_home_sub4]

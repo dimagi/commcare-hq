@@ -138,6 +138,9 @@ function run_tests {
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         log_group_end  # only log group end on success (notice: `set -e`)
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
+            logmsg INFO "Building Webpack"
+            chown -R cchq:cchq ./webpack
+            su cchq -c "yarn build"
             su cchq -c scripts/test-prod-entrypoints.sh
             scripts/test-make-requirements.sh
             scripts/test-serializer-pickle-files.sh
@@ -211,7 +214,7 @@ function _run_tests {
     }
 
     function _test_javascript {
-        ./manage.py migrate --noinput
+        SKIP_GEVENT_PATCHING=1 ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         _wait_for_runserver
         logmsg INFO "grunt test ${js_test_args[*]}"

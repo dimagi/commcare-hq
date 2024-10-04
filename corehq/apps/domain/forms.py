@@ -115,7 +115,6 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.hqwebapp.widgets import (
     BootstrapCheckboxInput,
     GeoCoderInput,
@@ -352,6 +351,11 @@ class DomainGlobalSettingsForm(forms.Form):
     delete_logo = BooleanField(
         label=gettext_lazy("Delete Logo"),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Delete Logo after Submitting this Form"
+            ),
+        ),
         help_text=gettext_lazy("Delete your custom logo and use the standard one.")
     )
     logo_for_system_emails = ImageField(
@@ -365,6 +369,11 @@ class DomainGlobalSettingsForm(forms.Form):
     call_center_enabled = BooleanField(
         label=gettext_lazy("Call Center Application"),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Enable Call Center Application"
+            ),
+        ),
         help_text=gettext_lazy("Call Center mode is a CommCare HQ module for managing "
                     "call center workflows. It is still under "
                     "active development. Do not enable for your domain unless "
@@ -437,8 +446,13 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     release_mode_visibility = BooleanField(
-        label=gettext_lazy("Enable Release Mode"),
+        label=gettext_lazy("Release Mode"),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Enable Release Mode"
+            ),
+        ),
         help_text=gettext_lazy(
             """
             Check this box to enable release mode setting on the app release page.
@@ -450,8 +464,13 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     orphan_case_alerts_warning = BooleanField(
-        label=gettext_lazy("Show Orphan Case Alerts on Mobile Worker Edit Page"),
+        label=gettext_lazy("Orphan Case Alerts"),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Show Orphan Case Alerts on Mobile Worker Edit Page"
+            ),
+        ),
         help_text=gettext_lazy(
             """
             Displays a warning message on the mobile worker location edit page
@@ -467,21 +486,6 @@ class DomainGlobalSettingsForm(forms.Form):
         self.domain = self.project.name
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = hqcrispy.HQFormHelper(self)
-        self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
-        self.helper[7] = twbscrispy.PrependedText('call_center_enabled', '')
-        self.helper[15] = twbscrispy.PrependedText('release_mode_visibility', '')
-        self.helper[16] = twbscrispy.PrependedText('orphan_case_alerts_warning', '')
-        self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
-        self.helper.layout.append(
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Update Basic Info"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
-            )
-        )
         self.fields['default_timezone'].label = gettext_lazy('Default timezone')
 
         if not self.can_use_custom_logo:
@@ -511,6 +515,48 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_account_confirmation_by_sms_settings()
         self._handle_release_mode_setting_value()
         self._handle_orphan_case_alerts_setting_value()
+
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Edit Basic Information"),
+                'hr_name',
+                'project_description',
+                'default_timezone',
+                crispy.Div(*self.get_extra_fields()),
+                hqcrispy.CheckboxField('release_mode_visibility'),
+                hqcrispy.CheckboxField('orphan_case_alerts_warning'),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Basic Info"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def get_extra_fields(self):
+        extra_fields = [
+            'default_geocoder_location',  # might be removed in subclass (only following original logic)
+        ]
+        if self.can_use_custom_logo:
+            extra_fields.extend([
+                'logo',
+                hqcrispy.CheckboxField('delete_logo'),
+            ])
+        if self.system_emails_logo_enabled:
+            extra_fields.append('logo_for_system_emails')
+        if self.project and self.project.call_center_config.enabled:
+            extra_fields.extend([
+                hqcrispy.CheckboxField('call_center_enabled'),
+                'call_center_type',
+                'call_center_case_owner',
+                'call_center_case_type',
+            ])
+        if MOBILE_UCR.enabled(self.domain):
+            extra_fields.append('mobile_ucr_sync_interval')
+        return extra_fields
 
     def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
@@ -751,6 +797,16 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
         if not domain_has_privilege(self.domain, privileges.GEOCODER):
             del self.fields['default_geocoder_location']
 
+    def get_extra_fields(self):
+        extra_fields = super().get_extra_fields()
+        if not (self.project.cloudcare_releases == 'default'
+                or not domain_has_privilege(self.domain, privileges.CLOUDCARE)):
+            extra_fields.append('cloudcare_releases')
+        if (not domain_has_privilege(self.domain, privileges.GEOCODER)
+                and 'default_geocoder_location' in extra_fields):
+            extra_fields.remove('default_geocoder_location')
+        return extra_fields
+
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
 
@@ -797,7 +853,7 @@ class PrivacySecurityForm(forms.Form):
     secure_submissions = BooleanField(
         label=gettext_lazy("Secure submissions"),
         required=False,
-        help_text=mark_safe_lazy(gettext_lazy(  # nosec: no user input
+        help_text=mark_safe(gettext_lazy(  # nosec: no user input
             "Secure Submissions prevents others from impersonating your mobile workers. "
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
@@ -1168,7 +1224,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
     )
 
-    def __init__(self, domain, can_edit_eula, *args, **kwargs):
+    def __init__(self, domain, can_edit_eula, *args, user, **kwargs):
+        self.user = user
         super(DomainInternalForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.can_edit_eula = can_edit_eula
@@ -1266,6 +1323,13 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 ),
             ),
         )
+
+        if not self.user.is_staff:
+            self.fields['auto_case_update_limit'].disabled = True
+            self.fields['auto_case_update_limit'].help_text = (
+                'Case update rule limits are only modifiable by Dimagi admins. '
+                'Please reach out to support@dimagi.com if you wish to update this setting.'
+            )
 
     @property
     def current_values(self):
@@ -1803,6 +1867,9 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
     plan_edition = forms.CharField(
         widget=forms.HiddenInput,
     )
+    is_annual_plan = forms.CharField(
+        widget=forms.HiddenInput,
+    )
 
     def __init__(self, account, domain, creating_user, current_subscription,
                  renewed_version, data=None, *args, **kwargs):
@@ -1814,10 +1881,12 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['plan_edition'].initial = renewed_version.plan.edition
+        self.fields['is_annual_plan'].initial = renewed_version.plan.is_annual_plan
 
         from corehq.apps.domain.views.accounting import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
             'plan_edition',
+            'is_annual_plan',
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',

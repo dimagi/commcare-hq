@@ -1,0 +1,37 @@
+--- 
++++ 
+@@ -1,6 +1,6 @@
+ /* globals ace */
+ 'use strict';
+-hqDefine('repeaters/js/bootstrap3/repeat_record_report', function () {
++hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
+     const initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+         selectAll = document.getElementById('select-all'),
+         selectPending = document.getElementById('select-pending'),
+@@ -142,7 +142,7 @@
+                 action = getAction();
+             let $btn;
+ 
+-            $popUp.modal('hide');
++            $popUp.modal('hide');  /* todo B5: plugin:modal */
+             if (action === 'resend') {
+                 $btn = $('#resend-all-button');
+                 $btn.disableButton();
+@@ -167,7 +167,7 @@
+                 // leaving as is to preserve behavior
+                 if (isActionPossibleForCheckedItems(action, checkedRecords)) {
+                     hideAllWarnings();
+-                    $popUp.modal('show');
++                    $popUp.modal('show');  /* todo B5: plugin:modal */
+                 } else {
+                     showWarning('not-allowed');
+                 }
+@@ -240,7 +240,7 @@
+                     } else {
+                         btn.text(gettext('Failed'));
+                         btn.addClass('btn-danger');
+-                        $('#payload-error-modal').modal('show');
++                        $('#payload-error-modal').modal('show');  /* todo B5: plugin:modal */
+                         $('#payload-error-modal .error-message').text(response.failure_reason);
+                     }
+                 },

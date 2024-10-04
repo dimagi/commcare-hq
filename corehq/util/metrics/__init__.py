@@ -362,7 +362,7 @@ def _get_metrics_provider():
 
 
 def _global_setup():
-    if settings.UNIT_TESTING or settings.SERVER_ENVIRONMENT != 'staging':
+    if settings.UNIT_TESTING:
         try:
             from ddtrace import tracer
             tracer.enabled = False

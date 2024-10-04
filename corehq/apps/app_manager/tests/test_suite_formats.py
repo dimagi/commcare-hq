@@ -177,6 +177,76 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             'Girl'
         )
 
+    def _create_app_for_translatable_text(self):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Unititled Module', None))
+        module.case_type = 'food'
+        fruit1 = "fruit1"
+        fruit2 = "fruit2"
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Fruit'},
+                model='case',
+                field='concat("3 ", $k{key1_varname}, " and 2 ", $k{key2_varname})',
+                format='translatable-enum',
+                enum=[
+                    MappingItem(key=fruit1, value={'en': 'Apple', 'es': 'Manzana'}),
+                    MappingItem(key=fruit2, value={'en': 'Orange', 'es': 'Naranja'}),
+                ],
+            ),
+        ]
+        return app, fruit1, fruit2
+
+    def test_case_detail_translatable_text(self):
+        app, fruit1, fruit2 = self._create_app_for_translatable_text()
+
+        calculated_prop = "concat(&quot;3 &quot;, $k{key1_varname}, &quot; and 2 &quot;, $k{key2_varname})"
+
+        translatable_case_tile_text = """
+        <partial>
+          <template>
+            <text>
+              <xpath function="{calculated_prop}">
+                <variable name="k{key1_varname}">
+                  <locale id="m0.case_short.case_{calculated_prop}_1.enum.k{key1_varname}"/>
+                </variable>
+                <variable name="k{key2_varname}">
+                  <locale id="m0.case_short.case_{calculated_prop}_1.enum.k{key2_varname}"/>
+                </variable>
+              </xpath>
+            </text>
+          </template>
+        </partial>
+        """.format(
+            key1_varname=fruit1,
+            key2_varname=fruit2,
+            calculated_prop=calculated_prop
+        )
+        self.assertXmlPartialEqual(
+            translatable_case_tile_text,
+            app.create_suite(),
+            './detail[@id="m0_case_short"]/field/template'
+        )
+
+    def test_translatable_text_in_app_strings(self):
+        app, fruit1, _ = self._create_app_for_translatable_text()
+        calculated_prop_unescaped = 'concat("3 ", $k{key1_varname}, " and 2 ", $k{key2_varname})'
+
+        app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        self.assertEqual(
+            app_strings['m0.case_short.case_{calculated_prop}_1.enum.k{key1_varname}'.format(
+                key1_varname=fruit1, calculated_prop=calculated_prop_unescaped)],
+            'Apple'
+        )
+        app_strings = commcare_translations.loads(app.create_app_strings('es'))
+        self.assertEqual(
+            app_strings['m0.case_short.case_{calculated_prop}_1.enum.k{key1_varname}'.format(
+                key1_varname=fruit1, calculated_prop=calculated_prop_unescaped)],
+            'Manzana'
+        )
+
     def test_case_detail_icon_mapping(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
 

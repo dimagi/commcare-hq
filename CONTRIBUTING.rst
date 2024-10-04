@@ -94,7 +94,7 @@ to see how that works.
 
 .. _Dimagi: http://www.dimagi.com/
 .. _issue tracker: https://github.com/dimagi/commcare-hq/issues
-.. _bug reports: https://confluence.dimagi.com/display/commcarepublic/Bug+Reports
+.. _bug reports: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956931/Submit+a+Support+Request
 .. _Standards and Best Practices: STANDARDS.rst
 .. _Style Guide: https://www.commcarehq.org/styleguide/
 .. _Javascript Guide: docs/js-guide/README.md

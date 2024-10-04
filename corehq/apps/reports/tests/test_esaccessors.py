@@ -8,6 +8,7 @@ import pytz
 
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
@@ -554,12 +555,26 @@ class TestFormESAccessors(TestCase):
         self.assertEqual(results['2013-07-15'], 1)
 
     def test_get_paged_forms_by_type(self):
+        user = 'u1'
         self._send_form_to_es()
-        self._send_form_to_es()
+        self._send_form_to_es(user_id=user)
+        app1, app2 = '123', '456'
+        xmlns = 'abc'
+        self._send_form_to_es(form_name='test_a', app_id=app1, xmlns=xmlns)
+        self._send_form_to_es(form_name='test_b', app_id=app2, xmlns=xmlns)
 
         paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], size=1)
         self.assertEqual(len(paged_result.hits), 1)
-        self.assertEqual(paged_result.total, 2)
+        self.assertEqual(paged_result.total, 4)
+
+        paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], app_ids=[app2], xmlns=[xmlns])
+        self.assertEqual(len(paged_result.hits), 1)
+        form_dict = paged_result.hits[0]['form']
+        self.assertEqual(form_dict['@name'], 'test_b')
+
+        paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], user_ids=[user])
+        self.assertEqual(len(paged_result.hits), 1)
+        self.assertEqual(paged_result.hits[0]['user_id'], user)
 
     def test_timezone_differences(self):
         """
@@ -1186,7 +1201,7 @@ class TestCaseESAccessors(TestCase):
 
         self._send_case_to_es(opened_on=opened_on)
         self._send_case_to_es(opened_on=opened_on_not_active_range)
-        self._send_case_to_es(opened_on=opened_on, case_type='commcare-user')
+        self._send_case_to_es(opened_on=opened_on, case_type=USERCASE_TYPE)
 
         results = get_total_case_counts_by_owner(self.domain, datespan)
         self.assertEqual(results[self.owner_id], 2)
@@ -1256,7 +1271,7 @@ class TestCaseESAccessors(TestCase):
         opened_on = datetime(2013, 7, 15)
 
         self._send_case_to_es(opened_on=opened_on)
-        self._send_case_to_es(opened_on=opened_on, case_type='commcare-user')
+        self._send_case_to_es(opened_on=opened_on, case_type=USERCASE_TYPE)
 
         results = get_case_counts_opened_by_user(self.domain, datespan)
         self.assertEqual(results[self.user_id], 1)

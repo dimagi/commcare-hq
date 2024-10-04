@@ -5,11 +5,13 @@
 hqDefine('hqwebapp/js/bootstrap5/inactivity', [
     'jquery',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
     _,
+    bootstrap,
     assertProperties,
     initialPageData
 ) {
@@ -57,7 +59,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
     };
 
     $(function () {
-        var $modal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
+        var $loginModal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
             $warningModal = $("#inactivityWarningModal"),
             $newVersionModal = $('#newAppVersionModal');
 
@@ -71,11 +73,15 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             sessionExpiry = initialPageData.get('session_expiry');
 
         log("Page loaded, session expires at " + sessionExpiry);
-        if (!$modal.length) {
-            log("Could not find modal, returning");
+        if (!$loginModal.length) {
+            log("Could not find login modal, returning");
             return;
         }
+        const loginModal = new bootstrap.Modal($loginModal.get(0)),
+            warningModal = new bootstrap.Modal($warningModal.get(0));
+        let newVersionModal;
         if ($newVersionModal.length) {
+            newVersionModal = new bootstrap.Modal($newVersionModal.get(0));
             $('#refreshApp').click(function () {
                 document.location = document.location.origin + document.location.pathname;
             });
@@ -100,18 +106,17 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                 shouldShowWarning = true;
             } else {
                 shouldShowWarning = false;
-                // Close the New version modal before showing warning modal
-                if (isModalOpen($newVersionModal)) {
-                    $newVersionModal.modal('hide');
+                // Don't show if the new version modal is already showing
+                if (!isModalOpen($newVersionModal)) {
+                    warningModal.show();
                 }
-                $warningModal.modal('show');
             }
         };
 
         var hideWarningModal = function (showLogin) {
-            $warningModal.modal('hide');
+            $warningModal.hide();
             if (showLogin) {
-                $modal.modal({backdrop: 'static', keyboard: false});
+                loginModal.show();
             }
             // This flag should already have been turned off when the warning modal was shown,
             // but just in case, make sure it's really off. Wait until the modal is fully hidden
@@ -119,19 +124,21 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             shouldShowWarning = false;
         };
 
-        var isModalOpen = function (element) {
-            // https://stackoverflow.com/questions/19506672/how-to-check-if-bootstrap-modal-is-open-so-i-can-use-jquery-validate
-            return (element.data('bs.modal') || {}).isShown;
+        var isModalOpen = function ($element) {
+            return $element.is(":visible");
         };
 
         var showPageRefreshModal = function () {
             if ($('.webforms-nav-container').is(':visible')) {
-                $newVersionModal.find('#incompleteFormWarning').show();
+                $newVersionModal.find('#incompleteFormWarning').removeClass('d-none');
             } else {
-                $newVersionModal.find('#incompleteFormWarning').hide();
+                $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
             }
-            if (!isModalOpen($modal) && !isModalOpen($warningModal)) {
-                $newVersionModal.modal('show');
+            if (!isModalOpen($loginModal)) {
+                if (isModalOpen($warningModal)) {
+                    warningModal.hide();
+                }
+                newVersionModal.show();
             }
         };
 
@@ -145,7 +152,11 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                     selectedAppId = urlParams.appId;
                 }
             } catch (error) {
-                return;
+                // Parsing the app id out of URL hash will fail on the web apps home page, login as, etc.
+                // where the hash isn't a JSON object but instead a string like "#apps".
+                // In these cases, there's no app to check for a new version.
+                log("Could not parse app id out of " + window.location.hash);
+                selectedAppId = null;
             }
             var domain = initialPageData.get('domain');
             $.ajax({
@@ -161,13 +172,15 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                             $(el).select2('close');
                         });
                         // Close the New version modal before showing login iframe
-                        $newVersionModal.modal('hide');
+                        if (newVersionModal) {
+                            newVersionModal.hide();
+                        }
                         log("ping_login failed, showing login modal");
-                        var $body = $modal.find(".modal-body");
+                        var $body = $loginModal.find(".modal-body");
                         var src = initialPageData.reverse('iframe_domain_login');
                         src += "?next=" + initialPageData.reverse('domain_login_new_window');
                         src += "&username=" + initialPageData.get('secure_timeout_username');
-                        $modal.on('shown.bs.modal', function () {
+                        $loginModal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%- src %>" height="<%- height %>" width="<%- width %>" style="border: none;"></iframe>')({
                                 src: src,
                                 width: $body.width(),
@@ -176,10 +189,9 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                             $body.html(content);
                             $body.find("iframe").on("load", pollToHideModal);
                         });
-                        $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
+                        $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i></h1>');
                         hideWarningModal(true);
                     } else {
-                        log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
                     }
                     if (
@@ -199,6 +211,10 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
                 success: function (data) {
+                    log(
+                        "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
+                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version")
+                    );
                     $button.enableButton();
                     var error = "";
                     if (data.success) {
@@ -212,7 +228,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                     }
 
                     if (error) {
-                        $button.removeClass("btn-default").addClass("btn-danger");
+                        $button.removeClass("btn-default").addClass("btn-outline-danger");
                         $button.text(error);
                     } else {
                         // Keeps the input value in the outer window in sync with newest token generated in
@@ -224,12 +240,12 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                             iframeInputValue = iframe.getElementsByTagName('input')[0].value;
                             outerCSRFInput.val(iframeInputValue);
                         } catch (err) {
-                            $button.removeClass("btn-default").addClass("btn-danger");
+                            $button.removeClass("btn-default").addClass("btn-outline-danger");
                             error = gettext("There was a problem, please refresh and try again");
                             $button.text(error);
                             return null;
                         }
-                        $modal.modal('hide');
+                        $loginModal.hide();
                         $button.text(gettext("Done"));
                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
                     }
@@ -256,7 +272,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             });
         };
 
-        $modal.find(".modal-footer .dismiss-button").click(pollToHideModal);
+        $loginModal.find(".modal-footer .dismiss-button").click(pollToHideModal);
         $warningModal.find(".modal-footer .dismiss-button").click(function (e) {
             extendSession($(e.currentTarget));
         });
@@ -306,7 +322,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             if (message.isLoggedIn) {
                 log("session successfully extended via Single Sign On in external tab");
                 hideWarningModal();
-                $modal.modal('hide');
+                loginModal.hide();
                 localStorage.removeItem('ssoInactivityMessage');
             }
         };

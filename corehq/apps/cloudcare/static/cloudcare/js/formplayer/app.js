@@ -1,37 +1,64 @@
 'use strict';
-/*global Marionette, Backbone */
-
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
-hqDefine("cloudcare/js/formplayer/app", function () {
-    var appcues = hqImport('analytix/js/appcues'),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        CloudcareUtils = hqImport("cloudcare/js/utils"),
-        Const = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        GGAnalytics = hqImport("analytix/js/google"),
-        Kissmetrics = hqImport("analytix/js/kissmetrix"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        UsersModels = hqImport("cloudcare/js/formplayer/users/models"),
-        WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session');
+hqDefine("cloudcare/js/formplayer/app", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'markdown-it/dist/markdown-it',
+    'es6!hqwebapp/js/bootstrap5_loader',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/appcues',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/utils',
+    'cloudcare/js/formplayer/apps/api',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/layout/views/progress_bar',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/form_entry/web_form_session',
+    'marionette.templatecache/lib/marionette.templatecache.min',    // needed for Marionette.TemplateCache
+    'backbone.radio',
+    'jquery.cookie/jquery.cookie',  // $.cookie
+], function (
+    $,
+    ko,
+    _,
+    Backbone,
+    Marionette,
+    markdowner,
+    bootstrap,
+    initialPageData,
+    appcues,
+    GGAnalytics,
+    Kissmetrics,
+    CloudcareUtils,
+    AppsAPI,
+    Const,
+    FormplayerUtils,
+    ProgressBar,
+    UsersModels,
+    WebFormSession,
+    TemplateCache
+) {
+    Marionette.setRenderer(TemplateCache.render);
 
-    Marionette.setRenderer(Marionette.TemplateCache.render);
-    var FormplayerFrontend = new Marionette.Application();
+    const WebApp = Marionette.Application.extend({
+        getXSRF: function (options) {
+            return $.get({
+                url: options.formplayer_url + '/serverup',
+                global: false, xhrFields: {withCredentials: true},
+            });
+        },
+    });
 
-    FormplayerFrontend.on("before:start", function (app, options) {
-        const xsrfRequest = new $.Deferred();
-        this.xsrfRequest = xsrfRequest.promise();
-        // Make a get call if the csrf token isn't available when the page loads.
-        if ($.cookie('XSRF-TOKEN') === undefined) {
-            $.get(
-                {url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }}
-            ).always(() => { xsrfRequest.resolve(); });
-        } else {
-            // resolve immediately
-            xsrfRequest.resolve();
-        }
+    const FormplayerFrontend = new WebApp();
 
+    FormplayerFrontend.on("before:start", function () {
         if (!FormplayerFrontend.regions) {
             FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
         }
@@ -50,11 +77,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         });
     });
 
-    FormplayerFrontend.navigate = function (route, options) {
-        options || (options = {});
-        Backbone.history.navigate(route, options);
-    };
-
     FormplayerFrontend.getCurrentRoute = function () {
         return Backbone.history.fragment;
     };
@@ -63,13 +85,35 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         return Backbone.Radio.channel('formplayer');
     };
 
+    FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {
+        if (FormplayerFrontend.unsavedFormInProgress) {
+            const userConfirmedYes = window.confirm(gettext("You have a form in progress. Are you sure you want to navigate away?"));
+            if (!userConfirmedYes) {
+                return false;
+            }
+        }
+        FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
+        return true;
+    };
+
+    FormplayerFrontend.showRestoreAs = function (user) {
+        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                UsersViews.RestoreAsBanner({model: user, smallScreen: false}));
+            const mobileRegion = FormplayerFrontend.regions.getRegion('mobileRestoreAsBanner');
+            if (mobileRegion.$el.length) {      // This region doesn't exist in app preview
+                mobileRegion.show(UsersViews.RestoreAsBanner({model: user, smallScreen: true}));
+            }
+        });
+    };
+
     /**
      * This function maps a jr:// media path to its HTML path IE
      * jr://images/icon/mother.png -> https://commcarehq.org/hq/multimedia/file/CommCareImage/[app_id]/mother.png
      * The actual mapping is contained in the app Couch document
      */
     FormplayerFrontend.getChannel().reply('resourceMap', function (resourcePath, appId) {
-        var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
+        var currentApp = AppsAPI.getAppEntity(appId);
         if (!currentApp) {
             console.warn('App is undefined for app_id: ' + appId);
             console.warn('Not processing resource: ' + resourcePath);
@@ -80,28 +124,13 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
             var resource = currentApp.get('multimedia_map')[resourcePath];
             if (!resource) {
-                console.warn('Unable to find resource ' + resourcePath + ' in multimedia map');
+                console.warn('Unable to find resource ' + resourcePath + 'in multimedia map');
                 return;
             }
             var id = resource.multimedia_id;
             var name = _.last(resourcePath.split('/'));
             return '/hq/multimedia/file/' + resource.media_type + '/' + id + '/' + name;
         }
-    });
-
-    FormplayerFrontend.getChannel().reply('gridPolyfillPath', function (path) {
-        if (path) {
-            FormplayerFrontend.gridPolyfillPath = path;
-        } else {
-            return FormplayerFrontend.gridPolyfillPath;
-        }
-    });
-
-    FormplayerFrontend.getChannel().reply('currentUser', function () {
-        if (!FormplayerFrontend.currentUser) {
-            FormplayerFrontend.currentUser = UsersModels.CurrentUser();
-        }
-        return FormplayerFrontend.currentUser;
     });
 
     FormplayerFrontend.getChannel().reply('lastRecordedLocation', function () {
@@ -118,12 +147,14 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     });
 
     FormplayerFrontend.on('clearForm', function () {
+        FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
         $('#webforms').html("");
-        $('.menu-scrollable-container').removeClass('hide');
+        $('.menu-scrollable-container').removeClass("d-none");
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
         $('.atwho-container').remove();
-        $('#case-detail-modal').modal('hide');
+        bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
+        sessionStorage.removeItem('collapsedIx');
     });
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {
@@ -177,13 +208,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     FormplayerFrontend.on('startForm', function (data) {
         FormplayerFrontend.permitIntervalSync = false;
         FormplayerFrontend.getChannel().request("clearMenu");
-        hqRequire(["cloudcare/js/formplayer/menus/utils"], function (MenusUtils) {
-            MenusUtils.showBreadcrumbs(data.breadcrumbs);
-        });
 
         data.onLoading = CloudcareUtils.formplayerLoading;
         data.onLoadingComplete = CloudcareUtils.formplayerLoadingComplete;
-        var user = FormplayerFrontend.getChannel().request('currentUser');
+        var user = UsersModels.getCurrentUser();
         data.xform_url = user.formplayer_url;
         data.domain = user.domain;
         data.username = user.username;
@@ -209,8 +237,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             if (resp.status === "success") {
                 var $alert;
                 if (resp.submitResponseMessage) {
-                    var markdowner = window.markdownit(),
-                        analyticsLinks = [
+                    var analyticsLinks = [
                             { url: initialPageData.reverse('list_case_exports'), text: '[Data Feedback Loop Test] Clicked on Export Cases Link' },
                             { url: initialPageData.reverse('list_form_exports'), text: '[Data Feedback Loop Test] Clicked on Export Forms Link' },
                             { url: initialPageData.reverse('case_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
@@ -229,7 +256,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                             }
                         };
                     $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
-                    $alert = CloudcareUtils.showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
+                    $alert = CloudcareUtils.showSuccess(markdowner().render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
                 } else {
                     $alert = CloudcareUtils.showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"));
                 }
@@ -246,7 +273,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                     });
                 }
 
-                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
+                if (user.isAppPreview) {
                     Kissmetrics.track.event("[app-preview] User submitted a form");
                     GGAnalytics.track.event("App Preview", "User submitted a form");
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
@@ -271,10 +298,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");
                 } else {
-                    FormplayerFrontend.navigate('/apps', { trigger: true });
+                    FormplayerUtils.navigate('/apps', { trigger: true });
                 }
             } else {
-                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
+                if (user.isAppPreview) {
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: false });
                 }
                 CloudcareUtils.showError(resp.output, $("#cloudcare-notifications"));
@@ -288,59 +315,29 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         };
         var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
-        if (user.environment === Const.WEB_APPS_ENVIRONMENT) {
-            // This isn't a circular import, but importing it at the top level would
-            // mean it would need to be faked for tests
-            hqRequire(["notifications/js/bootstrap3/notifications_service_main"], function (Notifications) {
-                Notifications.initNotifications();
-            });
-        }
-        $('.menu-scrollable-container').addClass('hide');
+        $('.menu-scrollable-container').addClass("d-none");
     });
 
     FormplayerFrontend.on("start", function (model, options) {
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
-            self = this;
-        user.username = options.username;
-        user.domain = options.domain;
-        user.formplayer_url = options.formplayer_url;
-        user.debuggerEnabled = options.debuggerEnabled;
-        user.environment = options.environment;
-        user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
+        var self = this,
+            user = UsersModels.setCurrentUser(options);
 
-        hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
+        hqRequire([
+            "cloudcare/js/formplayer/users/utils",  // restoreAsUser
+        ], function () {
+            user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
-        $.when(FormplayerUtils.getSavedDisplayOptions()).done(function (savedDisplayOptions) {
-            savedDisplayOptions = _.pick(
-                savedDisplayOptions,
-                Const.ALLOWED_SAVED_OPTIONS
-            );
-            user.displayOptions = _.defaults(savedDisplayOptions, {
-                singleAppMode: options.singleAppMode,
-                landingPageAppMode: options.landingPageAppMode,
-                phoneMode: options.phoneMode,
-                oneQuestionPerScreen: options.oneQuestionPerScreen,
-                language: options.language,
-            });
 
-            FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
-            $.when(
-                FormplayerFrontend.getChannel().request("appselect:apps"),
-                FormplayerFrontend.xsrfRequest
-            ).done(function (appCollection) {
+        hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
+            FormplayerFrontend.router = Router.start();
+            $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                 var appId;
                 var apps = appCollection.toJSON();
                 if (Backbone.history) {
                     Backbone.history.start();
-                    hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
-                        FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                            UsersViews.RestoreAsBanner({
-                                model: user,
-                            })
-                        );
-                    });
-                    if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+                    FormplayerFrontend.showRestoreAs(user);
+                    if (user.displayOptions.singleAppMode) {
                         appId = apps[0]['_id'];
                     }
 
@@ -348,9 +345,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                         if (user.displayOptions.singleAppMode) {
                             FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
                             FormplayerFrontend.trigger("app:singleApp", appId);
-                        } else if (user.displayOptions.landingPageAppMode) {
-                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                            FormplayerFrontend.trigger("app:landingPageApp", appId);
                         } else {
                             FormplayerFrontend.trigger("apps:list", apps);
                         }
@@ -386,7 +380,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                             "for offline use. Please reconnect to the Internet before " +
                             "continuing."), $("#cloudcare-notifications"));
                         $('.submit').prop('disabled', 'disabled');
-                        $('.form-control').prop('disabled', 'disabled');
+                        $('.form-control, .form-select').prop('disabled', 'disabled');
                     }
                 },reconnectTimingWindow);
             });
@@ -396,14 +390,14 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 if ((new Date() - offlineTime) > reconnectTimingWindow) {
                     CloudcareUtils.showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
                     $('.submit').prop('disabled', false);
-                    $('.form-control').prop('disabled', false);
+                    $('.form-control, .form-select').prop('disabled', false);
                 }
             }
         );
 
         window.addEventListener(
             'beforeprint', function () {
-                $('.panel.panel-default, .q.form-group').last().addClass('last');
+                $('.card, .q').last().addClass('last');
             }
         );
 
@@ -418,7 +412,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         hqRequire(["cloudcare/js/debugger/debugger"], function (Debugger) {
             var CloudCareDebugger = Debugger.CloudCareDebuggerMenu,
                 TabIDs = Debugger.TabIDs,
-                user = FormplayerFrontend.getChannel().request('currentUser'),
+                user = UsersModels.getCurrentUser(),
                 cloudCareDebugger,
                 $debug = $('#cloudcare-debugger');
 
@@ -449,7 +443,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     FormplayerFrontend.getChannel().reply('getCurrentAppId', function () {
         // First attempt to grab app id from URL
         var urlObject = FormplayerUtils.currentUrlToObject(),
-            user = FormplayerFrontend.getChannel().request('currentUser'),
+            user = UsersModels.getCurrentUser(),
             appId;
 
         appId = urlObject.appId;
@@ -512,7 +506,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     function makeSyncRequest(route, requestData) {
         var options,
             complete,
-            user = FormplayerFrontend.getChannel().request('currentUser'),
+            user = UsersModels.getCurrentUser(),
             formplayerUrl = user.formplayer_url,
             data = {
                 "username": user.username,
@@ -620,7 +614,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
 
     FormplayerFrontend.on('setVersionInfo', function (versionInfo) {
-        var user = FormplayerFrontend.getChannel().request('currentUser');
+        var user = UsersModels.getCurrentUser();
         $("#version-info").text(versionInfo || '');
         if (versionInfo) {
             user.set('versionInfo',  versionInfo);
@@ -640,7 +634,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         if (!appId) {
             throw new Error('Attempt to refresh application for null appId');
         }
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
+        var user = UsersModels.getCurrentUser(),
             formplayerUrl = user.formplayer_url,
             resp,
             options = {
@@ -676,7 +670,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
      * current user. Returns the ajax promise.
      */
     FormplayerFrontend.getChannel().reply('breakLocks', function () {
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
+        var user = UsersModels.getCurrentUser(),
             formplayerUrl = user.formplayer_url,
             resp,
             options = {
@@ -705,7 +699,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
      * current user. Returns the ajax promise.
      */
     FormplayerFrontend.getChannel().reply('clearUserData', function () {
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
+        var user = UsersModels.getCurrentUser(),
             formplayerUrl = user.formplayer_url,
             resp,
             options = {
@@ -733,10 +727,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
         var urlObject = FormplayerUtils.currentUrlToObject(),
             appId,
-            currentUser = FormplayerFrontend.getChannel().request('currentUser');
+            currentUser = UsersModels.getCurrentUser();
         urlObject.clearExceptApp();
         FormplayerFrontend.regions.getRegion('sidebar').empty();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
+        FormplayerFrontend.regions.getRegion('persistentMenu').empty();
         if (currentUser.displayOptions.singleAppMode) {
             appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
             FormplayerFrontend.trigger("app:singleApp", appId);
@@ -775,6 +770,20 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             var match = (window || this).location.href.match(/#(.*)$/);
             return match ? decodeURI(match[1]) : '';
         },
+    });
+
+    FormplayerFrontend.on("setUnsavedFormInProgress", function () {
+        FormplayerFrontend.unsavedFormInProgress = true;
+        window.onbeforeunload = function () {
+            return true;
+        };
+    });
+
+    FormplayerFrontend.on("setUnsavedFormNotInProgress", function () {
+        if (FormplayerFrontend.unsavedFormInProgress) {
+            FormplayerFrontend.unsavedFormInProgress = false;
+            window.onbeforeunload = null;
+        }
     });
 
     return FormplayerFrontend;

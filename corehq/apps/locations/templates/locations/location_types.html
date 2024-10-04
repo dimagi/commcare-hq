@@ -40,10 +40,10 @@
     <fieldset>
       <div class="col-sm-12">
         <div class="form-group">
-          <button type="submit" class="btn btn-default pull-right" disabled>
+          <button type="submit" class="btn btn-primary pull-right" disabled>
             {% trans "Save" %}
           </button>
-          <button type="button" class="btn btn-primary" data-bind="click: new_loctype">
+          <button type="button" class="btn btn-default" data-bind="click: new_loctype">
             <i class="fa fa-plus"></i> {% trans "New Organization Level" %}
           </button>
           <hr />
@@ -157,6 +157,27 @@
                                           {% endblocktrans %}">
                                     </span>
               </th>
+              {% if request|toggle_enabled:"USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION" %}
+                <th data-bind="visible: advanced_mode">
+                  {% trans "View Child Data to Level" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "View Child Data to Level" %}"
+                        data-content="{% blocktrans %}
+                            <p>Only include cases that show up in the user's restore file down to this level (inclusive).</p>
+                        {% endblocktrans %}">
+                  </span>
+                </th>
+                <th data-bind="visible: advanced_mode">
+                  {% trans "Has Users" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Has Users" %}"
+                        data-content="{% blocktrans %}
+                            <p>Indicates whether locations of this level can have users assigned.</p>
+                            <p>You cannot turn this setting off if there are users assigned to one of the locations.</p>
+                        {% endblocktrans %}">
+                  </span>
+                </th>
+              {% endif %}
               <th></th>
             </tr>
             </thead>
@@ -234,6 +255,21 @@
               <td>
                 <input data-bind="checked: view_descendants" type="checkbox" />
               </td>
+              {% if request|toggle_enabled:"USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION" %}
+                <td data-bind="visible: $parent.advanced_mode">
+                  <select class="form-control"
+                          data-bind="options: $data.child_loc_types(),
+                                    optionsText: 'name',
+                                    optionsValue: 'pk',
+                                    value: expand_view_child_data_to,
+                                    optionsCaption: '\u2013{% trans 'default' %}\u2013',
+                                    enable: view_descendants">
+                  </select>
+                </td>
+                <td data-bind="visible: $parent.advanced_mode">
+                  <input data-bind="checked: has_users_setting, disable: has_users_setting() && actually_has_users()" type="checkbox" />
+                </td>
+              {% endif %}
               <td>
                 <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
                   <i class="fa-regular fa-trash-can"></i> {% trans "Remove" %}
