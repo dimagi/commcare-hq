@@ -553,6 +553,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
         self.yPlaceholder = ko.observable(origOrDefault('yPlaceholder', ""));
         self.copyPlaceholder = function (series, e) {
             var $button = $(e.currentTarget);
+            // TODO: This throws an illegal constructor error
             var clipboard = new Clipboard($button[0]);
             $button.tooltip({
                 title: gettext('Copied!'),
