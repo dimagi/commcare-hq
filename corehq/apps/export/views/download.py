@@ -61,7 +61,7 @@ from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     case_type_or_app_limit_exceeded
 )
-from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_daterangepicker
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
@@ -149,7 +149,7 @@ class SMSDownloadExportViewHelper(DownloadExportViewHelper):
 
 
 class BaseDownloadExportView(BaseProjectDataView):
-    template_name = 'export/download_export.html'
+    template_name = 'export/bootstrap3/download_export.html'
     http_method_names = ['get', 'post']
     show_date_range = False
     check_for_multimedia = False
@@ -530,6 +530,7 @@ class DownloadNewDatasourceExportView(BaseProjectDataView):
     page_title = gettext_noop("Export Data Source Data")
     template_name = 'export/datasource_export_view.html'
 
+    @use_bootstrap5
     def dispatch(self, *args, **kwargs):
         if not EXPORT_DATA_SOURCE_DATA.enabled(self.domain):
             raise Http404()

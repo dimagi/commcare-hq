@@ -144,6 +144,21 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 
+# Retry responses with these status codes. All other 4XX status codes
+# are treated as InvalidPayload errors.
+HTTP_STATUS_4XX_RETRY = (
+    HTTPStatus.BAD_REQUEST,
+    HTTPStatus.REQUEST_TIMEOUT,
+    HTTPStatus.CONFLICT,
+    HTTPStatus.PRECONDITION_FAILED,
+    HTTPStatus.LOCKED,
+    HTTPStatus.FAILED_DEPENDENCY,
+    HTTPStatus.TOO_EARLY,
+    HTTPStatus.UPGRADE_REQUIRED,
+    HTTPStatus.PRECONDITION_REQUIRED,
+    HTTPStatus.TOO_MANY_REQUESTS,
+)
+
 
 def log_repeater_timeout_in_datadog(domain):
     metrics_counter('commcare.repeaters.timeout', tags={'domain': domain})
@@ -494,18 +509,6 @@ class Repeater(RepeaterSuperProxy):
 
         result may be either a response object or an exception
         """
-        _4XX_retry_codes = (
-            HTTPStatus.REQUEST_TIMEOUT,
-            HTTPStatus.CONFLICT,
-            HTTPStatus.PRECONDITION_FAILED,
-            HTTPStatus.LOCKED,
-            HTTPStatus.FAILED_DEPENDENCY,
-            HTTPStatus.TOO_EARLY,
-            HTTPStatus.UPGRADE_REQUIRED,
-            HTTPStatus.PRECONDITION_REQUIRED,
-            HTTPStatus.TOO_MANY_REQUESTS,
-        )
-
         if isinstance(result, RequestConnectionError):
             repeat_record.handle_timeout(result)
         elif isinstance(result, Exception):
@@ -514,7 +517,7 @@ class Repeater(RepeaterSuperProxy):
             repeat_record.handle_success(result)
         elif not is_response(result) or (
             500 <= result.status_code < 600
-            or result.status_code in _4XX_retry_codes
+            or result.status_code in HTTP_STATUS_4XX_RETRY
         ):
             repeat_record.handle_failure(result)
         else:
@@ -1005,6 +1008,17 @@ class RepeatRecordManager(models.Manager):
 
     def get_domains_with_records(self):
         return self.order_by().values_list("domain", flat=True).distinct()
+
+    def get_repeat_record_ids(self, domain, repeater_id=None, state=None, payload_id=None):
+        where = models.Q(domain=domain)
+        if repeater_id:
+            where &= models.Q(repeater__id=repeater_id)
+        if state:
+            where &= models.Q(state=state)
+        if payload_id:
+            where &= models.Q(payload_id=payload_id)
+
+        return list(self.filter(where).order_by().values_list("id", flat=True))
 
 
 class RepeatRecord(models.Model):

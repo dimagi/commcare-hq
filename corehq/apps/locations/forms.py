@@ -14,6 +14,7 @@ from memoized import memoized
 from dimagi.utils.couch.database import iter_docs
 
 from corehq import toggles
+from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.apps.custom_data_fields.edit_entity import (
     CUSTOM_DATA_FIELD_PREFIX,
     CustomDataEditor,
@@ -32,6 +33,7 @@ from corehq.apps.locations.util import (
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.util.quickcache import quickcache
+from corehq.util.global_request import get_request_domain
 
 from .models import (
     LocationFixtureConfiguration,
@@ -62,10 +64,11 @@ class LocationSelectWidget(forms.Widget):
         location_ids = to_list(value) if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
-
+        use_location_display_name = USE_LOCATION_DISPLAY_NAME.enabled(get_request_domain())
         initial_data = [{
             'id': loc.location_id,
-            'text': loc.get_path_display(),
+            'text': loc.display_name if use_location_display_name else loc.get_path_display(),
+            'title': loc.get_path_display() if use_location_display_name else loc.display_name,
         } for loc in locations]
 
         return get_template(self.template).render({

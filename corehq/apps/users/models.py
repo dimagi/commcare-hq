@@ -481,9 +481,9 @@ class IsMemberOfMixin(DocumentSchema):
 
         if allow_enterprise:
             from corehq.apps.enterprise.models import EnterprisePermissions
-            config = EnterprisePermissions.get_by_domain(domain)
-            if config.is_enabled and domain in config.domains:
-                return self.is_member_of(config.source_domain, allow_enterprise=False)
+            source_domain = EnterprisePermissions.get_source_domain(domain)
+            if source_domain:
+                return self.is_member_of(source_domain, allow_enterprise=False)
 
         return False
 
@@ -520,9 +520,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 if domain in self.domains:
                     raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
                 from corehq.apps.enterprise.models import EnterprisePermissions
-                config = EnterprisePermissions.get_by_domain(domain)
-                if allow_enterprise and config.is_enabled and domain in config.domains:
-                    return self.get_domain_membership(config.source_domain, allow_enterprise=False)
+                source_domain = EnterprisePermissions.get_source_domain(domain)
+                if allow_enterprise and source_domain:
+                    return self.get_domain_membership(source_domain, allow_enterprise=False)
         except self.Inconsistent as e:
             logging.warning(e)
             self.domains = [d.domain for d in self.domain_memberships]
@@ -2736,9 +2736,8 @@ class Invitation(models.Model):
     domain = models.CharField(max_length=255)
     role = models.CharField(max_length=100, null=True, blank=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True, blank=True)   # couch id of a Program
-    supply_point = models.CharField(max_length=126, null=True, blank=True)  # couch id of a Location
     primary_location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
-                                 to_field='location_id', null=True, blank=True)  # to replace supply_point
+                                 to_field='location_id', null=True, blank=True)
     assigned_locations = models.ManyToManyField("locations.SQLLocation", symmetrical=False,
                                                 related_name='invitations')
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",

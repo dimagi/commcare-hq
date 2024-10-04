@@ -200,8 +200,8 @@ class LocationsSearchViewTest(TestCase):
         response = self.send_request(url, data)
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)['results']
-        self.assertEqual(results[0]['id'], self.loc1.location_id)
-        self.assertEqual(results[1]['id'], self.loc2.location_id)
+        expected = {self.loc1.location_id, self.loc2.location_id}
+        self.assertEqual({r['id'] for r in results}, expected)
 
     @flag_enabled('USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION')
     def test_search_view_has_users_only(self):
@@ -219,9 +219,8 @@ class LocationsSearchViewTest(TestCase):
         response = self.send_request(url, data)
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)['results']
-        self.assertEqual(len(results), 2)
-        self.assertEqual(results[0]['id'], self.loc1.location_id)
-        self.assertEqual(results[1]['id'], self.loc2.location_id)
+        expected = {self.loc1.location_id, self.loc2.location_id}
+        self.assertEqual({r['id'] for r in results}, expected)
 
 
 class BulkLocationUploadAPITest(TestCase):

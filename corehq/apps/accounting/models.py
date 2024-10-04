@@ -532,7 +532,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
                     'subscriber__domain', flat=True))
 
     def has_enterprise_admin(self, email):
-        return self.is_customer_billing_account and email in self.enterprise_admin_emails
+        lower_emails = [e.lower() for e in self.enterprise_admin_emails]
+        return self.is_customer_billing_account and email.lower() in lower_emails
 
     def update_autopay_user(self, new_user, domain):
         if self.auto_pay_enabled and new_user != self.auto_pay_user:
@@ -828,7 +829,7 @@ class SoftwarePlan(models.Model):
     class Meta(object):
         app_label = 'accounting'
 
-    @quickcache(vary_on=['self.pk'], timeout=10)
+    @quickcache(vary_on=['self.pk'], timeout=10, skip_arg=lambda *a, **k: settings.UNIT_TESTING)
     def get_version(self):
         try:
             return self.softwareplanversion_set.filter(is_active=True).latest('date_created')

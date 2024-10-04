@@ -5,12 +5,14 @@ hqDefine('cloudcare/js/markdown', [
     'markdown-it/dist/markdown-it',
     'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',
+    'hqwebapp/js/toggles',
 ], function (
     $,
     DOMPurify,
     markdowner,
     initialPageData,
-    HMACCallout
+    HMACCallout,
+    toggles
 ) {
 
     function updateTarget(tokens, idx, target) {
@@ -140,7 +142,21 @@ hqDefine('cloudcare/js/markdown', [
             // lazy init to avoid dependency order issues
             md = initMd();
         }
-        return md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
+        var rendered = md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
+        // sub case tile header with a caption
+        if (rendered.includes('<p><strong>') && toggles.toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
+            rendered = appendExtraStyleClass(rendered, '<p>', 'mb-0');
+            rendered = appendExtraStyleClass(rendered, '<h6>', 'mb-0');
+        }
+        return rendered;
+    }
+
+    function appendExtraStyleClass(htmlString, element, styleClass) {
+        if (htmlString.includes(element)) {
+            let styledElement = element.slice(0, -1) + ' class="' + styleClass + '"' + element.slice(-1);
+            return htmlString.replace(element, styledElement);
+        }
+        return htmlString;
     }
 
     /**

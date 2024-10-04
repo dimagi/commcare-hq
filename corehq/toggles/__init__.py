@@ -976,6 +976,14 @@ WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     owner='Jenny Schweers',
 )
 
+LOCATION_FIELD_USER_PROVISIONING = FeatureRelease(
+    'location_field_user_provisioning',
+    'USH: Holding feature flag for various works relating to the location field',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Minha Lee',
+)
+
 WEB_APPS_ANCHORED_SUBMIT = StaticToggle(
     'web_apps_anchored_submit',
     'USH: Keep submit button anchored at the bottom of screen for forms in Web Apps',
@@ -1390,7 +1398,7 @@ def _commtrackify(domain_name, toggle_is_enabled):
 COMMTRACK = StaticToggle(
     'commtrack',
     "CommCare Supply",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     description=(
         '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
