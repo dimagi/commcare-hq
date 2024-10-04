@@ -1348,25 +1348,25 @@ def rebuild_data_source(request, domain, config_id):
 
 def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
     if datasource_configuration.referenced_doc_type == 'CommCareCase':
+        es_query = CaseSearchES().domain(datasource_configuration.domain)
         case_types = [
             case_type
             for case_type in datasource_configuration.get_case_type_or_xmlns_filter()
             if case_type is not None
         ]
         if case_types:
-            count_of_records = CaseSearchES().domain(datasource_configuration.domain).case_type(case_types).count()
-        else:
-            count_of_records = CaseSearchES().domain(datasource_configuration.domain).count()
+            es_query = es_query.case_type(case_types)
+        count_of_records = es_query.count()
     elif datasource_configuration.referenced_doc_type == 'XFormInstance':
+        es_query = FormES().domain(datasource_configuration.domain)
         xmlnses = [
             xmlns
             for xmlns in datasource_configuration.get_case_type_or_xmlns_filter()
             if xmlns is not None
         ]
         if xmlnses:
-            count_of_records = FormES().domain(datasource_configuration.domain).xmlns(case_types).count()
-        else:
-            count_of_records = FormES().domain(datasource_configuration.domain).count()
+            es_query = es_query.xmlns(xmlnses)
+        count_of_records = es_query.count()
     else:
         # DataSourceConfiguration.referenced_doc_type is neither
         # 'CommCareCase' nor 'XFormInstance'
