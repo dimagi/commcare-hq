@@ -1347,18 +1347,20 @@ def rebuild_data_source(request, domain, config_id):
 
 
 def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
-    case_types_or_xmlns = datasource_configuration.get_case_type_or_xmlns_filter()
-    # case_types_or_xmlns could also be [None]
-    case_types_or_xmlns = list(filter(None, case_types_or_xmlns))
-
     if datasource_configuration.referenced_doc_type == 'CommCareCase':
-        if case_types_or_xmlns:
-            count_of_records = CaseSearchES().domain(datasource_configuration.domain).case_type(case_types_or_xmlns).count()
+        case_types = datasource_configuration.get_case_type_or_xmlns_filter()
+        # case_types could also be [None]
+        case_types = list(filter(None, case_types))
+        if case_types:
+            count_of_records = CaseSearchES().domain(datasource_configuration.domain).case_type(case_types).count()
         else:
             count_of_records = CaseSearchES().domain(datasource_configuration.domain).count()
     elif datasource_configuration.referenced_doc_type == 'XFormInstance':
-        if case_types_or_xmlns:
-            count_of_records = FormES().domain(datasource_configuration.domain).xmlns(case_types_or_xmlns).count()
+        xmlnses = datasource_configuration.get_case_type_or_xmlns_filter()
+        # xmlnses could also be [None]
+        xmlnses = list(filter(None, xmlnses))
+        if xmlnses:
+            count_of_records = FormES().domain(datasource_configuration.domain).xmlns(case_types).count()
         else:
             count_of_records = FormES().domain(datasource_configuration.domain).count()
     else:
