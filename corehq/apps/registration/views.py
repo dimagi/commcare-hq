@@ -21,7 +21,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
 
-from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.models import BillingAccount, SoftwarePlanEdition
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
@@ -47,6 +47,7 @@ from corehq.apps.registration.forms import (
 from corehq.apps.registration.models import (
     AsyncSignupRequest,
     RegistrationRequest,
+    SelfSignupWorkflow,
 )
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
@@ -525,7 +526,9 @@ def confirm_domain(request, guid=''):
             return render(request, 'registration/confirmation_error.html', context)
 
         requested_domain = Domain.get_by_name(req.domain)
-        view_name = "dashboard_default"
+        should_select_plan = bool(request.plan.plan.edition == SoftwarePlanEdition.COMMUNITY
+                                  and SelfSignupWorkflow.get_in_progress_for_domain(req.domain))
+        view_name = 'domain_select_plan' if should_select_plan else 'dashboard_default'
         view_args = [requested_domain.name]
 
         # Has guid already been confirmed?
