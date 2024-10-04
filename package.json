@@ -38,7 +38,7 @@
         "crypto-js": "4.2.0",
         "d3": "3.5.17",
         "datatables-bootstrap3": "Jowin/Datatables-Bootstrap3",
-        "datatables-fixedcolumns": "DataTables/FixedColumns#3.2.0",
+        "datatables-fixedcolumns": "DataTables/FixedColumns#5.0.3",
         "datatables.net": "1.11.3",
         "datatables.net-bs5": "1.13.8",
         "datatables.net-fixedcolumns-bs5": "4.3.0",
