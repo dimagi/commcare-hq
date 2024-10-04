@@ -1,4 +1,5 @@
 from smtplib import SMTPDataError
+from urllib.parse import urlencode, urljoin
 
 from django.conf import settings
 from django.core.mail import mail_admins
@@ -273,18 +274,27 @@ def send_domain_ucr_data_info_to_admins():
     table = UCRRebuildRestrictionTable(
         restriction_ff_status=UCRRestrictionFFStatus.ShouldEnable.name,
     )
-    subject = "Weekly report: projects for ucr restriction FF"
+    num_projects = len(table.rows)
+    first_few = min(num_projects, 12)
+    domain_names = '\n'.join([row[0] for row in table.rows[:first_few]])
+    if first_few < num_projects:
+        domain_names += '\n...'
+
     endpoint = reverse(AdminReportDispatcher.name(), args=(UCRDataLoadReport.slug,))
+    params = {
+        UCRRebuildStatusFilter.slug: UCRRestrictionFFStatus.ShouldEnable.name
+    }
+    report_url = urljoin(get_url_base(), endpoint) + '?' + urlencode(params)
 
-    filter_name = UCRRebuildStatusFilter.slug
-    filter_value = UCRRestrictionFFStatus.ShouldEnable.name
-    report_url = f"{get_url_base()}{endpoint}?{filter_name}={filter_value}"
-
+    subject = f"Weekly report: {num_projects} projects for UCR Restriction"
     message = f"""
-        We have identified {len(table.rows)} projects that require the RESTRICT_DATA_SOURCE_REBUILD
-        feature flag to be enabled. Please see the detailed report: {report_url}
-    """
+We have identified {num_projects} projects that require the
+RESTRICT_DATA_SOURCE_REBUILD feature flag to be enabled.
 
+{domain_names}
+
+Please see the detailed report: {report_url}
+"""
     send_mail_async.delay(
         subject, message, [settings.SOLUTIONS_AES_EMAIL]
     )
