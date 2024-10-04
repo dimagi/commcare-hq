@@ -1254,6 +1254,7 @@ users
  0069_alter_invitation_custom_user_data_and_more
  0070_alter_invitation_tableau_role
  0071_rm_user_data
+ 0072_remove_invitation_supply_point
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
