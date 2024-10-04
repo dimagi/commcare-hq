@@ -1,4 +1,3 @@
-/* globals Clipboard */
 hqDefine('app_manager/js/settings/commcare_settings', function () {
     function CommcareSettings(options) {
         var app_manager = hqImport('app_manager/js/app_manager');
