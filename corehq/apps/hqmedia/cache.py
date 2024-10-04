@@ -51,6 +51,7 @@ class BaseMultimediaStatusCache(object):
         return {
             'type': self.upload_type,
             'in_celery': self.in_celery,
+            'is_ready': self.complete,
             'complete': self.complete,
             'progress': self.progress,
             'errors': self.errors,
