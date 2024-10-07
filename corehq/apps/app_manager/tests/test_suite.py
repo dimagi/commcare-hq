@@ -1,5 +1,6 @@
 from django.test import SimpleTestCase
 
+from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_1
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
@@ -93,6 +94,7 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
         from corehq.apps.userreports.tests.utils import get_sample_report_config
 
         app = Application.new_app('domain', "Untitled Application")
+        app.mobile_ucr_restore_version = MOBILE_UCR_VERSION_1
 
         report = get_sample_report_config()
         report._id = 'd3ff18cd83adf4550b35db8d391f6008'

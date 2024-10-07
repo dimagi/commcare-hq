@@ -10,6 +10,7 @@ from casexml.apps.phone.tests.utils import (
 )
 
 from corehq import toggles
+from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_1
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
     report_fixture_generator,
     ReportFixturesProviderV1)
@@ -44,6 +45,7 @@ class AppAwareSyncTests(TestCase):
         cls.user = create_restore_user(cls.domain)
 
         cls.app1 = Application.new_app(cls.domain, 'Test App 1')
+        cls.app1.mobile_ucr_restore_version = MOBILE_UCR_VERSION_1
         cls.report_config1 = get_sample_report_config()
         cls.report_config1.domain = cls.domain
         cls.report_config1.save()
@@ -56,6 +58,7 @@ class AppAwareSyncTests(TestCase):
         cls.app1.save()
 
         cls.app2 = Application.new_app(cls.domain, 'Test App 2')
+        cls.app2.mobile_ucr_restore_version = MOBILE_UCR_VERSION_1
         cls.report_config2 = get_sample_report_config()
         cls.report_config2.domain = cls.domain
         cls.report_config2.save()
@@ -68,6 +71,7 @@ class AppAwareSyncTests(TestCase):
         cls.app2.save()
 
         cls.app3 = Application.new_app(cls.domain, 'Test App 3')
+        cls.app3.mobile_ucr_restore_version = MOBILE_UCR_VERSION_1
         cls.app3.save()
 
     @classmethod
