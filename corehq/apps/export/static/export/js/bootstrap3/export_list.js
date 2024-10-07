@@ -21,7 +21,7 @@ hqDefine("export/js/bootstrap3/export_list", [
     'analytix/js/kissmetrix',
     'export/js/utils',
     'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of startDate and endDate
-    'hqwebapp/js/bootstrap3/components.ko',        // pagination widget
+    'hqwebapp/js/components.ko',        // pagination widget
     'hqwebapp/js/components/bootstrap3/feedback',
     'select2/dist/js/select2.full.min',
 ], function (
