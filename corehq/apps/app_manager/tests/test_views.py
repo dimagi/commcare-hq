@@ -597,7 +597,7 @@ class TestViewGeneric(ViewsBase):
         'form', 'error', 'previews_dict', 'copy_app_form', 'LANGUAGE_CODE', 'menu', 'add_ons_privileges',
         'shadow_parent', 'restrict_domain_creation', 'show_mobile_ux_warning', 'WEBSOCKET_URI', 'PRIVACY_EMAIL',
         'custom_assertions', 'analytics', 'form_endpoint_options', 'title_context_block', 'secure_cookies',
-        'langs', 'details', 'None', 'CUSTOM_LOGO_URL', 'hq', 'selected_form', 'slug', 'env', 'False',
+        'langs', 'details', 'None', 'CUSTOM_LOGO_URL', 'hq', 'selected_form', 'slug', 'env', 'False', 'id',
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
         'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block',
     }
