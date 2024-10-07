@@ -2528,6 +2528,13 @@ RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
+    'web_user_invite_additional_fields',
+    'USH: Enable additional fields in web user invite form for enhanced user details',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege
