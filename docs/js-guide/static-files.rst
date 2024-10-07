@@ -59,7 +59,7 @@ How do I develop with a JavaScript bundler?
 To build Webpack locally for continuous development, run the ``yarn dev`` command.
 
 This command first runs
-``webpack/generateDetails.js`` to scan all template files for ``webpack_main`` template tags,
+``webpack/generateDetails.js`` to scan all template files for ``js_entry`` template tags,
 identifying Webpack entry points. It then builds Webpack bundles based on the ``webpack/webpack.dev.js``
 configuration.
 
