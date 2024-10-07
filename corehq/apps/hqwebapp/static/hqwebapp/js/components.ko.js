@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/bootstrap3/components.ko", [
+hqDefine("hqwebapp/js/components.ko", [
     'jquery',
     'knockout',
     'underscore',
