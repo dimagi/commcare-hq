@@ -1,11 +1,11 @@
 {% load hq_shared_tags %}
 
-{% if webpack_main %}
+{% if js_entry %}
   <script>
-    window.USE_WEBPACK = {{ webpack_main|BOOL }};
-    console.log("Loaded webpack main module: {{ webpack_main }}");
+    window.USE_WEBPACK = {{ js_entry|BOOL }};
+    console.log("Loaded JS entry point: {{ js_entry }}");
   </script>
-  {% for bundle_path in webpack_main|webpack_bundles %}
+  {% for bundle_path in js_entry|webpack_bundles %}
     <script src="{% static bundle_path %}"></script>
   {% endfor %}
 {% endif %}
