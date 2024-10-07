@@ -597,7 +597,7 @@ class TestViewGeneric(ViewsBase):
         'form', 'error', 'previews_dict', 'copy_app_form', 'LANGUAGE_CODE', 'menu', 'add_ons_privileges',
         'shadow_parent', 'restrict_domain_creation', 'show_mobile_ux_warning', 'WEBSOCKET_URI', 'PRIVACY_EMAIL',
         'custom_assertions', 'analytics', 'form_endpoint_options', 'title_context_block', 'secure_cookies',
-        'langs', 'details', 'None', 'CUSTOM_LOGO_URL', 'hq', 'selected_form', 'slug', 'env', 'False', 'id',
+        'langs', 'details', 'None', 'CUSTOM_LOGO_URL', 'hq', 'selected_form', 'slug', 'env', 'False',
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
         'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block',
     }
@@ -624,7 +624,7 @@ class TestViewGeneric(ViewsBase):
         'ANALYTICS_CONFIG', 'is_training_module', 'custom_icon', 'page_title_block', 'INVOICING_CONTACT_EMAIL',
         'form', 'error', 'previews_dict', 'copy_app_form', 'LANGUAGE_CODE', 'menu', 'add_ons_privileges',
         'restrict_domain_creation', 'show_mobile_ux_warning', 'WEBSOCKET_URI', 'PRIVACY_EMAIL',
-        'is_allowed_to_be_release_notes_form', 'custom_assertions', 'analytics', 'title_context_block', 'id',
+        'is_allowed_to_be_release_notes_form', 'custom_assertions', 'analytics', 'title_context_block',
         'secure_cookies', 'langs', 'None', 'CUSTOM_LOGO_URL', 'hq', 'allow_form_copy', 'selected_form', 'slug',
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'is_usercase_in_use',
         'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',

@@ -312,6 +312,5 @@
 
 {% block modals %}{{ block.super }}
   {% include "app_manager/partials/forms/form_view_modals.html" %}
-  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
-  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
+  {% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
