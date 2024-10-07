@@ -1,17 +1,20 @@
 --- 
 +++ 
-@@ -3,8 +3,8 @@
- <div class="modal fade" tabindex="-1" role="dialog" id="export-process-deprecated-properties">
+@@ -4,12 +4,10 @@
    <div class="modal-dialog" role="document">
      <div class="modal-content">
--      <div class="modal-header">
+       <div class="modal-header">
 -        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-+      <div class="modal-header">  {# todo B5: css:modal-header #}
-+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">  {# todo B5: css:close #}
-           <span aria-hidden="true">&times;</span>
-         </button>
+-          <span aria-hidden="true">&times;</span>
+-        </button>
          <h4 class="modal-title">
-@@ -21,7 +21,7 @@
+           {% trans "Show Deprecated Properties" %}
+         </h4>
++        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+       </div>
+       <div class="modal-body">
+         <p>
+@@ -21,7 +19,7 @@
          <div class="spacer"></div>
        </div>
        <div class="modal-footer">
