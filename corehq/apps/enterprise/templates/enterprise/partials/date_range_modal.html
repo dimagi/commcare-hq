@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 
 <div class="modal" role="dialog" tabindex="-1" id="enterpriseFormsDaterange">
@@ -5,7 +6,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">{% trans 'Customize Mobile Form Submissions Date Range' %}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr 'Close' %}"></button>
             </div>
             <div class="modal-body">
                 <select-toggle name="range_type" data-apply-bindings="false" params="value: presetType, options: presetOptions"></select-toggle>
