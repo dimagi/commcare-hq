@@ -197,7 +197,8 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-  {% include "app_manager/partials/nav_menu_media_modals.html" %}
+  {% include "app_manager/partials/nav_menu_media_modal.html" with id=multimedia.upload_managers.icon.slug type="image" %}
+  {% include "app_manager/partials/nav_menu_media_modal.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
   {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
     {% with print_uploader as uploader %}
       {% include 'hqmedia/partials/multimedia_uploader.html' %}
