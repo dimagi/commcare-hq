@@ -9,18 +9,20 @@
      'jquery',
      'knockout',
      'underscore',
-@@ -20,8 +20,8 @@
+@@ -20,9 +20,9 @@
      'analytix/js/google',
      'analytix/js/kissmetrix',
      'export/js/utils',
 -    'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of startDate and endDate
--    'hqwebapp/js/bootstrap3/components.ko',        // pagination & feedback widget
+-    'hqwebapp/js/bootstrap3/components.ko',        // pagination widget
+-    'hqwebapp/js/components/bootstrap3/feedback',
 +    'hqwebapp/js/bootstrap5/validators.ko',        // needed for validation of startDate and endDate
-+    'hqwebapp/js/bootstrap5/components.ko',        // pagination & feedback widget
++    'hqwebapp/js/bootstrap5/components.ko',        // pagination widget
++    'hqwebapp/js/components/bootstrap5/feedback',
      'select2/dist/js/select2.full.min',
  ], function (
      $,
-@@ -181,7 +181,7 @@
+@@ -182,7 +182,7 @@
                          self.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
                      }
                      $button.enableButton();
@@ -29,7 +31,7 @@
                  },
              });
          };
-@@ -261,7 +261,7 @@
+@@ -262,7 +262,7 @@
          };
  
          self.updateData = function () {
@@ -38,7 +40,7 @@
              self.updatingData(true);
              $.ajax({
                  method: 'POST',
-@@ -472,11 +472,11 @@
+@@ -473,11 +473,11 @@
          $(function () {
              $('[data-toggle="tooltip-bulkExport"]').attr('title',
                  gettext("All of the selected exports will be collected for download to a " +
@@ -52,7 +54,7 @@
          });
  
          self.isMultiple = ko.computed(function () {
-@@ -680,7 +680,7 @@
+@@ -681,7 +681,7 @@
                          if (export_.hasEmailedExport) {
                              export_.emailedExport.pollProgressBar();
                          }
