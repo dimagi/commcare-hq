@@ -12,7 +12,7 @@
           <source src="{{ download_url }}">
         </audio>
       {% else %}
-        <video controls {% if disable_download %} oncontextmenu="return false;" controlsList="nodownload" {% endif %} autoplay name="{{ content_name }}" style="top: 10%; left: 10%; position: absolute;">
+        <video controls oncontextmenu="return false;" controlsList="nodownload" autoplay name="{{ content_name }}" style="top: 10%; left: 10%; position: absolute;">
           <source src="{{ download_url }}">
         </video>
       {% endif %}
