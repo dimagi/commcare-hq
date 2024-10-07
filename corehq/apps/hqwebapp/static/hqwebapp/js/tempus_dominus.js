@@ -50,8 +50,8 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     };
 
     // This replaces createBootstrap3DefaultDateRangePicker in hqwebapp/js/daterangepicker.config
-    let createDefaultDateRangePicker = function (el) {
-        return createDateRangePicker(el, getDateRangeSeparator());
+    let createDefaultDateRangePicker = function (el, start, end) {
+        return createDateRangePicker(el, getDateRangeSeparator(), start, end);
     };
 
     // This replaces createDateRangePicker in hqwebapp/js/daterangepicker.config
@@ -144,7 +144,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     };
 
     let getDateRangeSeparator = function () {
-        return ' to ';
+        return gettext(' to ');
     };
 
     const defaultTranslations = {

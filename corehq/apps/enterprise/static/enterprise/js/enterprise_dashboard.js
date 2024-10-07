@@ -191,9 +191,8 @@ hqDefine("enterprise/js/enterprise_dashboard", [
     }
 
     $(function () {
-        const datePicker = tempusDominus.createDateRangePicker(
+        const datePicker = tempusDominus.createDefaultDateRangePicker(
             document.getElementById("id_date_range"),
-            gettext(" to "),
             moment().subtract(30, "days"),
             moment()
         );
