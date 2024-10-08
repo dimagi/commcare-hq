@@ -81,9 +81,9 @@ class TableauView(BaseDomainView):
 def get_tableau_server_ticket(request, domain):
     from requests_toolbelt.adapters import host_header_ssl
     visualization_data = {data: value[0] for data, value in dict(request.POST).items()}
-    server_name = visualization_data.pop('server_name')
-    validate_hostname = visualization_data.pop('validate_hostname')
-    target_site = visualization_data.pop('target_site')
+    server = TableauServer.objects.get(domain=domain)
+    validate_hostname = server.validate_hostname
+    target_site = server.target_site
 
     # Authenticate
     if not request.couch_user.can_view_tableau_viz(domain, TableauVisualization.objects.get(
@@ -96,7 +96,7 @@ def get_tableau_server_ticket(request, domain):
         # An equivalent Tableau user with the username "HQ/{username}" must exist.
         tableau_username = f"HQ/{request.couch_user.username}"
 
-    tabserver_url = 'https://{}/trusted/'.format(server_name)
+    tabserver_url = 'https://{}/trusted/'.format(server.server_name)
     post_arguments = {'username': tableau_username}
 
     if target_site != 'Default':
