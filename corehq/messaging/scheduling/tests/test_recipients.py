@@ -621,7 +621,7 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(
                 domain=self.domain,
                 case_id=case.case_id,
-                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
                 recipient_id='recipient'
             )
             self.assertEqual(instance.recipient.get_id, self.full_mobile_user.get_id)
@@ -636,7 +636,7 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(
                 domain=self.domain,
                 case_id=case.case_id,
-                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
                 recipient_id='recipient'
             )
             self.assertIsNone(instance.recipient)
@@ -650,7 +650,7 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(
                 domain=self.domain,
                 case_id=case.case_id,
-                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
                 recipient_id='recipient'
             )
             self.assertIsNone(instance.recipient)
@@ -666,7 +666,7 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(
                 domain=self.domain,
                 case_id=case.case_id,
-                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
                 recipient_id='hq_user_id'
             )
             self.assertEqual(instance.recipient.get_id, self.web_user.get_id)
@@ -681,7 +681,7 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(
                 domain=self.domain,
                 case_id=case.case_id,
-                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
                 recipient_id='hq_user_id'
             )
             self.assertEqual(instance.recipient, None)
