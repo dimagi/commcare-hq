@@ -751,9 +751,7 @@ def chat_contact_list(request, domain):
     total_records = len(data)
 
     if sSearch:
-        safe_search = re.escape(sSearch)
-        regex = re.compile('^.*%s.*$' % safe_search)
-        data = [row for row in data if regex.match(row[0]) or regex.match(row[2])]
+        data = [row for row in data if sSearch in row[0] or sSearch in row[2]]
     filtered_records = len(data)
 
     data.sort(key=lambda row: row[0])
