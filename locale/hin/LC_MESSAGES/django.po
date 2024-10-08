@@ -475,9 +475,7 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
 #: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
 #: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
 #: corehq/apps/settings/views.py corehq/apps/sms/forms.py
@@ -2966,9 +2964,7 @@ msgstr ""
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/reports/views.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
@@ -4600,8 +4596,7 @@ msgid "10"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
+#: corehq/apps/export/templates/export/download_data_files.html
 msgid "12 hours"
 msgstr ""
 
@@ -9449,9 +9444,8 @@ msgstr ""
 #: corehq/apps/data_dictionary/views.py
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
 #: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
 #: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
+#: corehq/apps/export/templates/export/download_data_files.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/program.html
@@ -9724,8 +9718,6 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/bootstrap3/table.html
 #: corehq/apps/export/templates/export/partials/bootstrap5/table.html
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Select"
 msgstr ""
@@ -11730,8 +11722,7 @@ msgid "Recent Uploads"
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
+#: corehq/apps/export/templates/export/download_data_files.html
 msgid "File"
 msgstr ""
 
@@ -20041,69 +20032,6 @@ msgid ""
 "the export."
 msgstr ""
 
-#: corehq/apps/export/templates/export/bootstrap3/datasource_export_view.html
-#: corehq/apps/export/templates/export/bootstrap5/datasource_export_view.html
-#: corehq/apps/export/views/download.py
-msgid "Export Data Source Data"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/datasource_export_view.html
-#: corehq/apps/export/templates/export/bootstrap5/datasource_export_view.html
-msgid ""
-"\n"
-"    Generate a query file for the Data Export Tool from any of the project's "
-"data sources.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/datasource_export_view.html
-#: corehq/apps/export/templates/export/bootstrap5/datasource_export_view.html
-msgid ""
-"\n"
-"      The project has no data sources configured.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
-msgid "Download Files"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
-msgid "Available until"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
-msgid "There are no data files available to download at the moment."
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
-msgid "Upload file for transfer"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
-msgid "Delete after"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
-msgid "1 day"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
-msgid "2 days"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/download_data_files.html
-#: corehq/apps/export/templates/export/bootstrap5/download_data_files.html
-msgid "3 days"
-msgstr ""
-
 #: corehq/apps/export/templates/export/bootstrap3/download_export.html
 #: corehq/apps/export/templates/export/bootstrap5/download_export.html
 msgid ""
@@ -20146,45 +20074,6 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/export/templates/export/bootstrap3/paywall.html
-#: corehq/apps/export/templates/export/bootstrap5/paywall.html
-msgid "Share Daily Data with Excel and Other Systems"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/paywall.html
-#: corehq/apps/export/templates/export/bootstrap5/paywall.html
-msgid ""
-"\n"
-"            Share Daily Data with Excel and Other Systems\n"
-"          "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/paywall.html
-#: corehq/apps/export/templates/export/bootstrap5/paywall.html
-msgid ""
-"\n"
-"            CommCare can automatically generate an Excel Dashboard Feed or a "
-"saved export, allowing you to easily\n"
-"            analyze and build reports for your project in Excel or another "
-"system.  These feeds and exports are\n"
-"            updated on a daily-basis with new data and can be filtered to "
-"data from a specific set of users or\n"
-"            locations.  Excel Dashboard Feeds and Daily Saved Exports are "
-"available on the Standard or\n"
-"            higher software plans.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/paywall.html
-#: corehq/apps/export/templates/export/bootstrap5/paywall.html
-msgid "Learn More About Pricing Plans"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/paywall.html
-#: corehq/apps/export/templates/export/bootstrap5/paywall.html
-msgid "Change My Subscription"
-msgstr ""
-
 #: corehq/apps/export/templates/export/commcare_analytics.html
 #: corehq/apps/export/views/list.py
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -20211,6 +20100,26 @@ msgid ""
 "    Navigate to Superset\n"
 "  </a>\n"
 "  "
+msgstr ""
+
+#: corehq/apps/export/templates/export/datasource_export_view.html
+#: corehq/apps/export/views/download.py
+msgid "Export Data Source Data"
+msgstr ""
+
+#: corehq/apps/export/templates/export/datasource_export_view.html
+msgid ""
+"\n"
+"      Generate a query file for the Data Export Tool from any of the "
+"project's data sources.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/export/templates/export/datasource_export_view.html
+msgid ""
+"\n"
+"        The project has no data sources configured.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/export/templates/export/dialogs/bootstrap3/bulk_delete_custom_export_dialog.html
@@ -20375,6 +20284,38 @@ msgid ""
 "          "
 msgstr ""
 
+#: corehq/apps/export/templates/export/download_data_files.html
+msgid "Download Files"
+msgstr ""
+
+#: corehq/apps/export/templates/export/download_data_files.html
+msgid "Available until"
+msgstr ""
+
+#: corehq/apps/export/templates/export/download_data_files.html
+msgid "There are no data files available to download at the moment."
+msgstr ""
+
+#: corehq/apps/export/templates/export/download_data_files.html
+msgid "Upload file for transfer"
+msgstr ""
+
+#: corehq/apps/export/templates/export/download_data_files.html
+msgid "Delete after"
+msgstr ""
+
+#: corehq/apps/export/templates/export/download_data_files.html
+msgid "1 day"
+msgstr ""
+
+#: corehq/apps/export/templates/export/download_data_files.html
+msgid "2 days"
+msgstr ""
+
+#: corehq/apps/export/templates/export/download_data_files.html
+msgid "3 days"
+msgstr ""
+
 #: corehq/apps/export/templates/export/partials/bootstrap3/delete_bulk_notice.html
 #: corehq/apps/export/templates/export/partials/bootstrap5/delete_bulk_notice.html
 msgid "Delete Selected Feeds"
@@ -20397,8 +20338,6 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/partials/bootstrap3/export_bulk_notice.html
 #: corehq/apps/export/templates/export/partials/bootstrap5/export_bulk_notice.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
 msgid "Bulk Export"
 msgstr ""
 
@@ -21266,6 +21205,40 @@ msgid ""
 "    "
 msgstr ""
 
+#: corehq/apps/export/templates/export/paywall.html
+msgid "Share Daily Data with Excel and Other Systems"
+msgstr ""
+
+#: corehq/apps/export/templates/export/paywall.html
+msgid ""
+"\n"
+"            Share Daily Data with Excel and Other Systems\n"
+"          "
+msgstr ""
+
+#: corehq/apps/export/templates/export/paywall.html
+msgid ""
+"\n"
+"            CommCare can automatically generate an Excel Dashboard Feed or a "
+"saved export, allowing you to easily\n"
+"            analyze and build reports for your project in Excel or another "
+"system.  These feeds and exports are\n"
+"            updated on a daily-basis with new data and can be filtered to "
+"data from a specific set of users or\n"
+"            locations.  Excel Dashboard Feeds and Daily Saved Exports are "
+"available on the Standard or\n"
+"            higher software plans.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/export/templates/export/paywall.html
+msgid "Learn More About Pricing Plans"
+msgstr ""
+
+#: corehq/apps/export/templates/export/paywall.html
+msgid "Change My Subscription"
+msgstr ""
+
 #: corehq/apps/export/views/download.py
 msgid "You have no submissions in this project."
 msgstr ""
@@ -21396,8 +21369,6 @@ msgstr ""
 
 #: corehq/apps/export/views/list.py
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
 msgid "Export"
 msgstr ""
 
@@ -21780,16 +21751,12 @@ msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/location_types.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "all"
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/location_types.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "none"
 msgstr ""
@@ -28399,6 +28366,10 @@ msgid ""
 "invitation."
 msgstr ""
 
+#: corehq/apps/registration/forms.py
+msgid "A user with this email address is deactivated. "
+msgstr ""
+
 #: corehq/apps/registration/forms.py corehq/apps/users/forms.py
 msgid "You do not have permission to edit Tableau Configuraion."
 msgstr ""
@@ -32615,21 +32586,6 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 msgid "Default Date Range"
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
-msgid "Add to Bulk Export"
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
-msgid "de-identified"
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/saved_exports.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/saved_exports.html
-msgid "Not Available"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html

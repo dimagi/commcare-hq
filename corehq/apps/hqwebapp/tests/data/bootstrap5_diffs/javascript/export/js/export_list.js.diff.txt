@@ -9,27 +9,20 @@
      'jquery',
      'knockout',
      'underscore',
-     'hqwebapp/js/assert_properties',
-+    'es6!hqwebapp/js/bootstrap5_loader',
-     'clipboard/dist/clipboard',
+@@ -20,9 +20,9 @@
      'analytix/js/google',
      'analytix/js/kissmetrix',
      'export/js/utils',
 -    'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of startDate and endDate
--    'hqwebapp/js/bootstrap3/components.ko',        // pagination & feedback widget
+-    'hqwebapp/js/bootstrap3/components.ko',        // pagination widget
+-    'hqwebapp/js/components/bootstrap3/feedback',
 +    'hqwebapp/js/bootstrap5/validators.ko',        // needed for validation of startDate and endDate
-+    'hqwebapp/js/bootstrap5/components.ko',        // pagination & feedback widget
++    'hqwebapp/js/bootstrap5/components.ko',        // pagination widget
++    'hqwebapp/js/components/bootstrap5/feedback',
      'select2/dist/js/select2.full.min',
  ], function (
      $,
-     ko,
-     _,
-     assertProperties,
-+    bootstrap,
-     Clipboard,
-     googleAnalytics,
-     kissmetricsAnalytics,
-@@ -181,7 +183,8 @@
+@@ -182,7 +182,7 @@
                          self.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
                      }
                      $button.enableButton();
@@ -39,7 +32,7 @@
                  },
              });
          };
-@@ -261,7 +264,9 @@
+@@ -262,7 +262,7 @@
          };
  
          self.updateData = function () {
@@ -50,20 +43,10 @@
              self.updatingData(true);
              $.ajax({
                  method: 'POST',
-@@ -462,29 +467,12 @@
-             return true;
-         };
- 
--        var tooltipText = "";
--        if (self.isOData || self.isFeed) {
--            tooltipText = gettext("All of the selected feeds will be deleted.");
--        } else {
--            tooltipText = gettext("All of the selected exports will be deleted.");
--        }
--
--        $(function () {
--            $('[data-toggle="tooltip-bulkExport"]').attr('title',
--                gettext("All of the selected exports will be collected for download to a " +
+@@ -473,11 +473,11 @@
+         $(function () {
+             $('[data-toggle="tooltip-bulkExport"]').attr('title',
+                 gettext("All of the selected exports will be collected for download to a " +
 -                "single Excel file, with each export as a separate sheet.")).tooltip();
 -        });
 -
@@ -76,12 +59,8 @@
              return false;
          });
  
--        self.BulkExportDelete = function (observable, event) {
-+        self.BulkExportDelete = function () {
-             var count = self.bulkExportDownloadCount;
-             self.panels().forEach(panel => panel.isBulkDeleting(true));
-             var bulkDelete = function () {
-@@ -680,7 +668,7 @@
+         self.isMultiple = ko.computed(function () {
+@@ -681,7 +681,7 @@
                          if (export_.hasEmailedExport) {
                              export_.emailedExport.pollProgressBar();
                          }

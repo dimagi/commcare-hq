@@ -6,7 +6,6 @@ hqDefine("hqwebapp/js/bootstrap3/components.ko", [
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/search_box',
     'hqwebapp/js/components/select_toggle',
-    'hqwebapp/js/components/bootstrap3/feedback',
 ], function (
     $,
     ko,
@@ -14,15 +13,13 @@ hqDefine("hqwebapp/js/bootstrap3/components.ko", [
     inlineEdit,
     pagination,
     searchBox,
-    selectToggle,
-    feedback
+    selectToggle
 ) {
     var components = {
         'inline-edit': inlineEdit,
         'pagination': pagination,
         'search-box': searchBox,
         'select-toggle': selectToggle,
-        'feedback': feedback,
     };
 
     _.each(components, function (moduleName, elementName) {

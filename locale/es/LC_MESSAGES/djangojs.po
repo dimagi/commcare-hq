@@ -2651,50 +2651,6 @@ msgid "Current"
 msgstr "Actual"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Sharing Options"
-msgstr "Opciones de Compartir Multimedia"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "License"
-msgstr "Licencia"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial"
-msgstr "Atribución de Creative Commons, No Comercial "
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, No Derivatives"
-msgstr "Atribución de Creative Commons, Sin Derivadas "
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution"
-msgstr "Atribución de Creative Commons"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial, and Share Alike"
-msgstr "Atribución de Creative Commons, No Comerciales, y Compartir Igual "
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial, and No Derivatives"
-msgstr "Atribución de Creative Commons, No Comerciales, y Sin Derivadas "
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Share Alike"
-msgstr "Atribución de Creative Commons, Compartir Igual"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Author"
-msgstr "Autor"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Enter the name of the author."
-msgstr "Ingrese el nombre del autor."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attribution Notes"
-msgstr "Notas de Atribución"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Begin Upload"
 msgstr "Iniciar Carga"
 
@@ -3390,21 +3346,6 @@ msgstr ""
 msgid "Search Attendance Takers"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/bootstrap3/download_data_files.js
-#: corehq/apps/export/static/export/js/bootstrap5/download_data_files.js
-msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
-msgstr "Copiar a portapapeles: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
-
-#: corehq/apps/export/static/export/js/bootstrap3/download_data_files.js
-#: corehq/apps/export/static/export/js/bootstrap5/download_data_files.js
-msgid "Data file URL copied to clipboard."
-msgstr "El archivo de datos URL fue copiado al portapapeles."
-
-#: corehq/apps/export/static/export/js/bootstrap3/download_data_files.js
-#: corehq/apps/export/static/export/js/bootstrap5/download_data_files.js
-msgid "Data file deleted."
-msgstr "Archivo de datos borrado."
-
 #: corehq/apps/export/static/export/js/bootstrap3/download_export.js
 #: corehq/apps/export/static/export/js/bootstrap5/download_export.js
 msgid "Sorry, there was a problem reaching the server. Please try again."
@@ -3551,6 +3492,18 @@ msgstr ""
 #: corehq/apps/export/static/export/js/create_export.js
 msgid "There is an issue communicating with the server at this time."
 msgstr "Hay un problema de comunicación con el servidor en este momento."
+
+#: corehq/apps/export/static/export/js/download_data_files.js
+msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
+msgstr "Copiar a portapapeles: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
+
+#: corehq/apps/export/static/export/js/download_data_files.js
+msgid "Data file URL copied to clipboard."
+msgstr "El archivo de datos URL fue copiado al portapapeles."
+
+#: corehq/apps/export/static/export/js/download_data_files.js
+msgid "Data file deleted."
+msgstr "Archivo de datos borrado."
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "No group"

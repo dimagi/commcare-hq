@@ -766,9 +766,9 @@ ability to assign other users as superuser in the in-app Superuser Management pa
 
 In order to build JavaScript bundles with Webpack, you will need to have `yarn dev`
 running in the background. It will watch any existing Webpack Entry Point, aka modules
-included on a page using the `webpack_main` template tag.
+included on a page using the `js_entry` template tag.
 
-When you add a new entry point (`webpack_main` tag), please remember to restart `yarn dev` so
+When you add a new entry point (`js_entry` tag), please remember to restart `yarn dev` so
 that it can identify the new entry point it needs to watch.
 
 To build Webpack bundles like it's done in production environments, pleas use `yarn build`.
