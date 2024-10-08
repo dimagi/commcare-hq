@@ -34,7 +34,26 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.parent = parent;
         self.slug = ko.observable(options.slug);
         self.label = ko.observable(options.label);
+
+        const [WEBUSER, MOBILEWORKER] = ["webuser", "mobileworker"];
+        const validRequiredForValues = [WEBUSER, MOBILEWORKER];
         self.is_required = ko.observable(options.is_required);
+
+        options.required_for = options.required_for || MOBILEWORKER;
+        if (!Array.isArray(options.required_for)) {
+            options.required_for = [options.required_for];
+        }
+        if (options.required_for.length > 0 && !options.required_for.every(item => validRequiredForValues.includes(item))) {
+            throw new Error(gettext("Invalid value for required_for. Must be an empty list or contain only: ") + validRequiredForValues.join(", "));
+        }
+
+        self.requiredForOptions = Object.freeze([
+            { text: gettext("Web Users"), value: [WEBUSER] },
+            { text: gettext("Mobile Workers"), value: [MOBILEWORKER] },
+            { text: gettext("Both"), value: [WEBUSER, MOBILEWORKER] },
+        ]);
+        self.required_for = ko.observable(options.required_for);
+
         self.choices = ko.observableArray(options.choices.map(function (choice) {
             return Choice(choice);
         }));
@@ -104,6 +123,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 'slug': self.slug(),
                 'label': self.label(),
                 'is_required': self.is_required(),
+                'required_for': self.required_for(),
                 'choices': choices,
                 'regex': regex,
                 'regex_msg': regexMsg,

@@ -91,6 +91,14 @@
       <div class="form-check mt-2">
         <input class="form-check-input" type="checkbox" data-bind="checked: is_required, attr: { 'disabled': !isEditable() }"/>
       </div>
+      <!-- ko if: is_required -->
+        <select class="form-select" data-bind="options: requiredForOptions,
+                                        optionsText: 'text',
+                                        optionsValue: 'value',
+                                        value: required_for,
+                                        attr: { disabled: !isEditable() }">
+        </select>
+      <!-- /ko -->
     </td>
     <td>
 
