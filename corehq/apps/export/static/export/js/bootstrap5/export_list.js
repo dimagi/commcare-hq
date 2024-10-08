@@ -16,6 +16,7 @@ hqDefine("export/js/bootstrap5/export_list", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'clipboard/dist/clipboard',
     'analytix/js/google',
     'analytix/js/kissmetrix',
@@ -28,6 +29,7 @@ hqDefine("export/js/bootstrap5/export_list", [
     ko,
     _,
     assertProperties,
+    bootstrap,
     Clipboard,
     googleAnalytics,
     kissmetricsAnalytics,
@@ -181,7 +183,8 @@ hqDefine("export/js/bootstrap5/export_list", [
                         self.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
                     }
                     $button.enableButton();
-                    $('#modalEnableDisableAutoRefresh-' + self.id() + '-' + self.emailedExport.groupId()).modal('hide');  /* todo B5: plugin:modal */
+                    const modalId = 'modalEnableDisableAutoRefresh-' + self.id() + '-' + self.emailedExport.groupId();
+                    bootstrap.Modal.getInstance('#' + modalId).hide();
                 },
             });
         };
@@ -261,7 +264,9 @@ hqDefine("export/js/bootstrap5/export_list", [
         };
 
         self.updateData = function () {
-            $('#modalRefreshExportConfirm-' + exportId + '-' + self.groupId()).modal('hide');  /* todo B5: plugin:modal */
+            const modalId = 'modalRefreshExportConfirm-' + exportId + '-' + self.groupId();
+            bootstrap.Modal.getInstance('#' + modalId).hide();
+
             self.updatingData(true);
             $.ajax({
                 method: 'POST',
@@ -462,29 +467,12 @@ hqDefine("export/js/bootstrap5/export_list", [
             return true;
         };
 
-        var tooltipText = "";
-        if (self.isOData || self.isFeed) {
-            tooltipText = gettext("All of the selected feeds will be deleted.");
-        } else {
-            tooltipText = gettext("All of the selected exports will be deleted.");
-        }
-
-        $(function () {
-            $('[data-toggle="tooltip-bulkExport"]').attr('title',
-                gettext("All of the selected exports will be collected for download to a " +
-                "single Excel file, with each export as a separate sheet.")).tooltip();  /* todo B5: plugin:tooltip */
-        });
-
-        $(function () {
-            $('[data-toggle="tooltip-bulkDelete"]').attr('title', tooltipText).tooltip({trigger: 'hover'});  /* todo B5: plugin:tooltip */
-        });
-
         self.isMultiple = ko.computed(function () {
             if (self.bulkDeleteList().length > 1) { return true; }
             return false;
         });
 
-        self.BulkExportDelete = function (observable, event) {
+        self.BulkExportDelete = function () {
             var count = self.bulkExportDownloadCount;
             self.panels().forEach(panel => panel.isBulkDeleting(true));
             var bulkDelete = function () {
@@ -680,7 +668,7 @@ hqDefine("export/js/bootstrap5/export_list", [
                         if (export_.hasEmailedExport) {
                             export_.emailedExport.pollProgressBar();
                         }
-                        self.$filterModal.modal('hide');  /* todo B5: plugin:modal */
+                        bootstrap.Modal.getInstance(self.$filterModal.get(0)).hide();
                     } else {
                         self.formSubmitErrorMessage(data.error);
                     }
