@@ -1,6 +1,6 @@
 hqDefine("app_manager/js/settings/app_logos", function () {
     var self = {};
-    var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders").get(),
+    var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
     var refs = initialPageData.get('media_refs');
     var mediaInfo = initialPageData.get('media_info');
@@ -8,7 +8,8 @@ hqDefine("app_manager/js/settings/app_logos", function () {
     var imageRefs = {};
     for (var slug in refs) {
         imageRefs[slug] = hqImport('hqmedia/js/media_reference_models').ImageReference(refs[slug]);
-        imageRefs[slug].upload_controller = HQMediaUploaders[slug];
+        imageRefs[slug].upload_controller = HQMediaUploaders.uploaderPreset(slug);
+        imageRefs[slug].upload_controller.init();
         imageRefs[slug].setObjReference(mediaInfo[slug]);
     }
 

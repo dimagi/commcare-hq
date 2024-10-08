@@ -74,7 +74,6 @@ hqDefine("hqmedia/js/media_reference_models", [
         };
 
         self.triggerUpload = function () {
-            self.upload_controller.resetUploader();
             self.upload_controller.currentReference = self;
             if (self.upload_controller) {
                 self.upload_controller.uploadParams = {
