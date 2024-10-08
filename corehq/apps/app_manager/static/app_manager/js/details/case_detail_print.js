@@ -1,11 +1,11 @@
 "use strict";
-/* globals HQMediaFileUploadController */
 hqDefine("app_manager/js/details/case_detail_print", function () {
     var printRef, printTemplateUploader;
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        printUploader = initialPageData.get("print_uploader_js");
+        printUploader = initialPageData.get("print_uploader_js"),
+        uploaders = hqImport("hqmedia/js/hqmediauploaders");
     if (printUploader) {
-        printTemplateUploader = new HQMediaFileUploadController(
+        printTemplateUploader = uploaders.uploader(
             printUploader.slug,
             printUploader.media_type,
             printUploader.options
