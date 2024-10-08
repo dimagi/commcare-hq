@@ -78,7 +78,7 @@ class TableauView(BaseDomainView):
 @login_and_domain_required
 @require_POST
 @location_safe
-def tableau_visualization_ajax(request, domain):
+def get_tableau_server_ticket(request, domain):
     from requests_toolbelt.adapters import host_header_ssl
     visualization_data = {data: value[0] for data, value in dict(request.POST).items()}
     server_name = visualization_data.pop('server_name')
