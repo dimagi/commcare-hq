@@ -57,7 +57,7 @@ hqDefine("hqmedia/js/hqmediauploaders", function () {
         self.updateUploadFormUI = function () {
             self.$container.find(self.uploadCompleteLabelSelector).addClass('hide');
 
-            if (self.currentReference.getUrl() && self.currentReference.isMediaMatched()) {
+            if (self.currentReference && self.currentReference.getUrl() && self.currentReference.isMediaMatched()) {
                 self.$existingFile.removeClass('hide');
                 self.$existingFile.find('.hqm-existing-controls').html(_.template(self.existingFileTemplate)({
                     url: self.currentReference.getUrl(),
@@ -153,8 +153,14 @@ hqDefine("hqmedia/js/hqmediauploaders", function () {
         return self;
     };
 
+    const uploaderPreset = function (slug) {
+        const ipd = _.find(initial_page_data("uploaders"), function (uploader) { return uploader.slug === slug; });
+        return uploader(ipd.slug, ipd.media_type, ipd.options);
+    };
+
     return {
         get: get,
         uploader: uploader,
+        uploaderPreset: uploaderPreset,
     };
 });
