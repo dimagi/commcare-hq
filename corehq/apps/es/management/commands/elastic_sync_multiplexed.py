@@ -164,7 +164,7 @@ class ESSyncUtil:
         self.perform_cleanup(adapter)
 
         def get_doc_count(_adapter):
-            return {_adapter.index_name: _adapter.count}
+            return {_adapter.index_name: _adapter.count()}
 
         greenlets = gevent.joinall([
             gevent.spawn(get_doc_count, adapter.primary),
