@@ -1,4 +1,5 @@
 import json
+import os
 from collections import OrderedDict
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
@@ -476,10 +477,14 @@ def _upload_fixture_api(request, domain):
     except FixtureAPIRequestError as e:
         return UploadFixtureAPIResponse('fail', str(e))
 
+    safe_base_path = '/safe/directory/path'
     with excel_file as filename:
+        normalized_path = os.path.normpath(filename)
+        if not normalized_path.startswith(safe_base_path):
+            raise Exception("Invalid file path")
 
         if is_async:
-            with open(filename, 'rb') as f:
+            with open(normalized_path, 'rb') as f:
                 file_ref = expose_cached_download(
                     f.read(),
                     file_extension=file_extention_from_filename(filename),
