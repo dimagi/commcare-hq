@@ -1398,7 +1398,7 @@ def _commtrackify(domain_name, toggle_is_enabled):
 COMMTRACK = StaticToggle(
     'commtrack',
     "CommCare Supply",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     description=(
         '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
@@ -2526,6 +2526,13 @@ RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
     'Limit which user profiles a web user can assign to other web users and mobile workers.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
+    'web_user_invite_additional_fields',
+    'USH: Enable additional fields in web user invite form for enhanced user details',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 

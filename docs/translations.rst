@@ -266,9 +266,9 @@ JavaScript has a ``gettext`` function that works exactly the same as in python:
     gettext("Welcome to CommCare HQ")
 
 ``gettext`` is available globally in HQ, coming from `django.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/django.js>`__
-which is available via the `base RequireJS setup
-<https://github.com/dimagi/commcare-hq/blob/f922211689b39240fcf16efe36d9dc13382977b8/corehq/apps/hqwebapp/templates/hqwebapp/partials/requirejs.html#L28>`__,
-so it doesn't need to be added as a dependency to modules that use it.
+which is part of the imports within the `commcarehq module
+<https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/commcarehq.js>`__,
+that is included within any ``js_entry`` entry point.
 
 For translations with interpolated variables, use Underscore's `_.template <https://underscorejs.org/#template>`__
 function similarly to python's string formatting, calling ``gettext`` on the template and __then__ interpolating

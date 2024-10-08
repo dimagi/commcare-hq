@@ -1,4 +1,4 @@
-hqDefine("export/js/bootstrap5/download_data_files",[
+hqDefine("export/js/download_data_files",[
     'jquery',
     'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/initial_page_data',
