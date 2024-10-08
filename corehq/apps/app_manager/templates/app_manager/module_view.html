@@ -38,11 +38,11 @@
   {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-  {% include 'hqmedia/partials/multimedia_js.html' %}
   {% compress js %}
-    <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
+    <!-- TODO restore these when working on menu/form icon/audio uploads -->
+    <!--script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-    <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
+    <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script-->
     <script src="{% static 'app_manager/js/details/case_detail_print.js' %}"></script>
     <script src="{% static 'app_manager/js/details/case_claim.js' %}"></script>
     <script src="{% static 'app_manager/js/details/case_list_callout.js' %}"></script>
