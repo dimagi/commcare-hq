@@ -77,7 +77,7 @@ hqDefine('hqwebapp/js/components/bootstrap5/feedback', [
     $(function () {
         _.each($('feedback'), function (el) {
             var $el = $(el);
-            if (!($el.data('apply-bindings') === false)) {
+            if ($el.data('apply-bindings') !== false) {
                 $(el).koApplyBindings();
             }
         });
