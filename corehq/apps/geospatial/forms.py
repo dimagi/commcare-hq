@@ -1,17 +1,18 @@
-from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
-from crispy_forms.bootstrap import PrependedText
-from django.forms.widgets import Select
-
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
 from django import forms
-from corehq.apps.geospatial.models import GeoConfig, validate_travel_mode
-from corehq.apps.hqwebapp.utils.translation import format_html_lazy
-from corehq import toggles
+from django.core.exceptions import ValidationError
+from django.forms.widgets import Select
+from django.utils.translation import gettext_lazy as _
 
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import PrependedText, StrictButton
+
+from corehq import toggles
+from corehq.apps.geospatial.const import (
+    ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY,
+)
+from corehq.apps.geospatial.models import GeoConfig, validate_travel_mode
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 
 LOCATION_SOURCE_OPTIONS = [
     (GeoConfig.CUSTOM_USER_PROPERTY, _("Custom user field")),
