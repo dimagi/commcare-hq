@@ -46,6 +46,7 @@
         "eonasdan-bootstrap-datetimepicker": "4.17.49",
         "exports-loader": "5.0.0",
         "fast-levenshtein": "2.0.6",
+        "htmx.org": "2.0.3",
         "intl-tel-input": "9.0.7",
         "jquery": "3.5.1",
         "jquery-form": "4.2.2",
