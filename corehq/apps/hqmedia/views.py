@@ -16,8 +16,10 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseRedirect,
     JsonResponse,
 )
+from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -35,7 +37,8 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from soil import DownloadBase
-from soil.util import expose_cached_download
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -59,7 +62,6 @@ from corehq.apps.hqmedia.cache import (
 )
 from corehq.apps.hqmedia.controller import (
     MultimediaAudioUploadController,
-    MultimediaBulkUploadController,
     MultimediaImageUploadController,
     MultimediaVideoUploadController,
 )
@@ -113,25 +115,29 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
     @property
     def page_context(self, **kwargs):
         context = super(BaseMultimediaTemplateView, self).page_context
-        views = [MultimediaReferencesView, BulkUploadMultimediaView]
+
+        def _section(view, icon):
+            return {
+                'title': view.page_title,
+                'url': reverse(view.urlname, args=[self.domain, self.app.id]),
+                'is_active': view.urlname == self.urlname,
+                'icon': f'fa {icon}'
+            }
+
+        sections = [
+            _section(MultimediaReferencesView, 'fa-check-square'),
+            _section(BulkUploadMultimediaView, 'fa-cloud-upload-alt'),
+        ]
         if toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(self.request):
-            views.append(ManageMultimediaPathsView)
+            sections.append(_section(ManageMultimediaPathsView, 'fa-route'))
             if len(self.app.langs) > 1:
-                views.append(MultimediaAudioTranslatorFileView)
-                views.append(MultimediaTranslationsCoverageView)
-        views = sorted(views, key=lambda v: v.page_title)
+                sections.append(_section(MultimediaAudioTranslatorFileView, 'fa-volume-up'))
+                sections.append(_section(MultimediaTranslationsCoverageView, 'fa-globe'))
+
         context.update({
             "domain": self.domain,
             "app": self.app,
-            "navigation_sections": (
-                (_("Multimedia"), [
-                    {
-                        'title': view.page_title,
-                        'url': reverse(view.urlname, args=[self.domain, self.app.id]),
-                        'is_active': view.urlname == self.urlname,
-                    } for view in views
-                ]),
-            ),
+            "navigation_sections": ((_("Multimedia"), sections),),
         })
         return context
 
@@ -250,7 +256,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         return (reference_index, references)
 
 
-class BulkUploadMultimediaView(BaseMultimediaUploaderView):
+class BulkUploadMultimediaView(BaseMultimediaTemplateView):
     urlname = "hqmedia_bulk_upload"
     template_name = "hqmedia/bulk_upload.html"
     page_title = gettext_noop("Bulk Upload Multimedia")
@@ -263,9 +269,63 @@ class BulkUploadMultimediaView(BaseMultimediaUploaderView):
         }]
 
     @property
-    def upload_controllers(self):
-        return [MultimediaBulkUploadController("hqmedia_bulk", reverse(ProcessBulkUploadView.urlname,
-                                                                       args=[self.domain, self.app_id]))]
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'bulk_upload': {
+                "help_site": {
+                    "address": "https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946840/Multimedia+Manager#Option-3:-Multimedia-Manager---Bulk-Media-Upload",  # noqa: E501
+                    "name": _("CommCare Help Site"),
+                },
+                "download_url": reverse(DownloadMultimediaZip.urlname, args=[self.domain, self.app.get_id]),
+                "adjective": _("multimedia"),
+                "plural_noun": _("multimedia files"),
+                "action": reverse(ProcessBulkUploadView.urlname, args=[self.domain, self.app.get_id]),
+            },
+            'multimedia_state': self.app.check_media_state(),
+        })
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
+
+
+class BulkUploadMultimediaPollView(BaseMultimediaTemplateView):
+    urlname = "hqmedia_bulk_upload_poll"
+
+    def get(self, request, domain, app_id, processing_id):
+        try:
+            context = get_download_context(processing_id)
+        except TaskFailedError:
+            return HttpResponseServerError()
+        status = BulkMultimediaStatusCache.get(processing_id)
+        context.update(status.get_response())
+        return render(request, 'hqmedia/partials/bulk_upload_status.html', context)
+
+
+class BulkUploadMultimediaStatusView(BaseMultimediaTemplateView):
+    urlname = "hqmedia_bulk_upload_status"
+    page_title = gettext_noop('Bulk Upload Multimedia Status')
+    template_name = "hqmedia/bulk_upload_status.html"
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['processing_id'],   # soil templates and js use "download_id"
+            'poll_url': reverse(BulkUploadMultimediaPollView.urlname,
+                                args=[self.domain, self.app.get_id, kwargs['processing_id']]),
+            'title': _("Bulk Upload Multimedia Status"),
+            'progress_text': _("Importing your multimedia. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
+            'next_url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
+            'next_url_text': _("Return to multimedia reference checker"),
+
+        })
+        return render(self.request, self.template_name, context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 @method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
@@ -485,6 +545,7 @@ class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
 
 
 class BaseProcessUploadedView(BaseMultimediaView):
+    upload_filename = 'Filedata'
 
     @property
     def username(self):
@@ -509,7 +570,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
     @property
     @memoized
     def uploaded_file(self):
-        return self.request.FILES.get('Filedata')
+        return self.request.FILES.get(self.upload_filename)
 
     @property
     @memoized
@@ -552,6 +613,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
 
 class ProcessBulkUploadView(BaseProcessUploadedView):
     urlname = "hqmedia_uploader_bulk"
+    upload_filename = "bulk_upload_file"
 
     @property
     @memoized
@@ -573,7 +635,8 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
 
     def process_upload(self):
         if hasattr(self.uploaded_file, 'temporary_file_path') and settings.SHARED_DRIVE_CONF.temp_dir:
-            processing_id = uuid.uuid4().hex
+            prefix = DownloadBase.new_id_prefix
+            processing_id = prefix + uuid.uuid4().hex
             path = settings.SHARED_DRIVE_CONF.get_temp_file(suffix='.upload')
             shutil.move(self.uploaded_file.temporary_file_path(), path)
             status = BulkMultimediaStatusCacheNfs(processing_id, path)
@@ -597,6 +660,23 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
                                       attribution_notes=self.attribution_notes)
 
         return status.get_response()
+
+    def post(self, request, *args, **kwargs):
+        self.errors = []
+        try:
+            self.validate_file()
+            response = self.process_upload()
+        except BadMediaFileException as e:
+            messages.error(request, str(e))
+            return HttpResponseRedirect(
+                reverse(BulkUploadMultimediaView.urlname, args=[self.domain, self.app.id])
+            )
+        return HttpResponseRedirect(
+            reverse(
+                BulkUploadMultimediaStatusView.urlname,
+                args=[self.domain, self.app.id, response['processing_id']],
+            )
+        )
 
     @classmethod
     def valid_mime_types(cls):
