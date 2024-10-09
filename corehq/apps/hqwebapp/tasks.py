@@ -274,6 +274,7 @@ def send_domain_ucr_data_info_to_admins():
     table = UCRRebuildRestrictionTable(
         restriction_ff_status=UCRRestrictionFFStatus.ShouldEnable.name,
     )
+    num_projects = len(table.rows)
 
     endpoint = reverse(AdminReportDispatcher.name(), args=(UCRDataLoadReport.slug,))
     params = {
@@ -281,9 +282,9 @@ def send_domain_ucr_data_info_to_admins():
     }
     report_url = urljoin(get_url_base(), endpoint) + '?' + urlencode(params)
 
-    subject = "Weekly report: projects for ucr restriction FF"
+    subject = f"Weekly report: {num_projects} projects for UCR Restriction"
     message = f"""
-        We have identified {len(table.rows)} projects that require the RESTRICT_DATA_SOURCE_REBUILD
+        We have identified {num_projects} projects that require the RESTRICT_DATA_SOURCE_REBUILD
         feature flag to be enabled. Please see the detailed report: {report_url}
     """
 
