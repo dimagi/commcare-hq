@@ -44,6 +44,7 @@ def is_system_key(slug):
 class Field(models.Model):
     slug = models.CharField(max_length=127)
     is_required = models.BooleanField(default=False)
+    required_for = models.JSONField(default=list)
     label = models.CharField(max_length=255)
     choices = models.JSONField(default=list, null=True)
     regex = models.CharField(max_length=127, null=True)
