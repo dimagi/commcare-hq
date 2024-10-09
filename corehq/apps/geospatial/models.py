@@ -100,21 +100,6 @@ class GeoConfig(models.Model):
     api_token = models.CharField(max_length=255, blank=True, null=True, db_column="api_token")
     flag_assigned_cases = models.BooleanField(default=False)
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self._clear_caches()
-
-    def delete(self, *args, **kwargs):
-        self._clear_caches()
-        return super().delete(*args, **kwargs)
-
-    def _clear_caches(self):
-        from .utils import get_flag_assigned_cases_config, get_geo_case_property, get_geo_user_property
-
-        get_geo_case_property.clear(self.domain)
-        get_geo_user_property.clear(self.domain)
-        get_flag_assigned_cases_config.clear(self.domain)
-
     @property
     def supports_travel_mode(self):
         return self.selected_disbursement_algorithm == self.ROAD_NETWORK_ALGORITHM

@@ -13,20 +13,16 @@ from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.const import ONE_DAY
-from corehq.util.quickcache import quickcache
 
 
-@quickcache(['domain'], timeout=24 * 60 * 60)
 def get_geo_case_property(domain):
     return get_geo_config(domain).case_location_property_name
 
 
-@quickcache(['domain'], timeout=24 * 60 * 60)
 def get_geo_user_property(domain):
     return get_geo_config(domain).user_location_property_name
 
 
-@quickcache(['domain'], timeo   ut=24 * 60 * 60)
 def get_flag_assigned_cases_config(domain):
     return get_geo_config(domain).flag_assigned_cases
 
