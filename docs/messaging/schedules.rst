@@ -4,7 +4,7 @@ Scheduled Messages
 The messaging framework supports scheduling messages to be sent on a one-time or recurring basis.
 
 It uses a queuing architecture similar to the SMS framework, to make it easier to scale
-reminders processing power horizontally.
+scheduled messages processing power horizontally.
 
 An earlier incarnation of this framework was called "reminders", so some code references to reminders remain, such
 as the ``reminder_queue``.
