@@ -169,12 +169,16 @@ class SelfSignupWorkflow(models.Model):
         null=True
     )
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["domain", "completed_on"]),
+        ]
+
     @classmethod
     def get_in_progress_for_domain(cls, domain):
         try:
             workflow = cls.objects.get(
                 domain=domain,
-                created_on__lt=datetime.datetime.now(),
                 completed_on__isnull=True
             )
             return workflow
