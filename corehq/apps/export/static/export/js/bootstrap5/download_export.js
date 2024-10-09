@@ -13,12 +13,12 @@ hqDefine('export/js/bootstrap5/download_export', [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/tempus_dominus',
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'reports/js/filters/bootstrap5/main',
     'reports/js/reports.util',
     'export/js/utils',
-    'hqwebapp/js/daterangepicker.config',   // createDateRangePicker
     'jquery.cookie/jquery.cookie',      // for resuming export downloads on refresh
 ], function (
     $,
@@ -26,6 +26,7 @@ hqDefine('export/js/bootstrap5/download_export', [
     _,
     assertProperties,
     initialPageData,
+    hqTempusDominus,
     googleAnalytics,
     kissmetricsAnalytics,
     reportFilters,
@@ -435,12 +436,7 @@ hqDefine('export/js/bootstrap5/download_export', [
 
         $(".hqwebapp-datespan").each(function () {
             var $el = $(this).find("input");
-            $el.createDateRangePicker(  /* todo B5: plugin:createDateRangePicker */
-                $el.data("labels"),
-                $el.data("separator"),
-                $el.data('startDate'),
-                $el.data('endDate')
-            );
+            hqTempusDominus.createDateRangePicker($el.get(0), $el.data("separator"));
         });
     });
 });
