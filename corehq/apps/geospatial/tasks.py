@@ -5,6 +5,7 @@ from corehq.apps.geospatial.const import INDEX_ES_TASK_HELPER_BASE_KEY
 from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
 from corehq.apps.geospatial.utils import (
     get_celery_task_tracker,
+    get_flag_assigned_cases_config,
     CeleryTaskTracker,
     update_cases_owner,
     get_geo_case_property,
@@ -22,7 +23,8 @@ from settings import MAX_GEOSPATIAL_INDEX_DOC_LIMIT
 @task(queue="background_queue", ignore_result=True)
 def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict, task_key):
     try:
-        update_cases_owner(domain, case_owner_updates_dict)
+        flag_assigned_cases = get_flag_assigned_cases_config(domain)
+        update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases)
     finally:
         celery_task_tracker = CeleryTaskTracker(task_key)
         celery_task_tracker.mark_completed()
