@@ -5,6 +5,7 @@ import jsonschema
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY
 from couchforms.geopoint import GeoPoint
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -13,25 +14,26 @@ from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.const import ONE_DAY
-from corehq.util.quickcache import quickcache
 
 
-@quickcache(['domain'], timeout=24 * 60 * 60)
 def get_geo_case_property(domain):
-    try:
-        config = GeoConfig.objects.get(domain=domain)
-    except GeoConfig.DoesNotExist:
-        config = GeoConfig()
-    return config.case_location_property_name
+    return get_geo_config(domain).case_location_property_name
 
 
-@quickcache(['domain'], timeout=24 * 60 * 60)
 def get_geo_user_property(domain):
+    return get_geo_config(domain).user_location_property_name
+
+
+def get_flag_assigned_cases_config(domain):
+    return get_geo_config(domain).flag_assigned_cases
+
+
+def get_geo_config(domain):
     try:
         config = GeoConfig.objects.get(domain=domain)
     except GeoConfig.DoesNotExist:
         config = GeoConfig()
-    return config.user_location_property_name
+    return config
 
 
 def get_celery_task_tracker(domain, task_slug):
@@ -203,7 +205,11 @@ class CaseOwnerUpdate:
         return [asdict(obj) for obj in case_owner_updates]
 
 
-def update_cases_owner(domain, case_owner_updates_dict):
+def update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases=False):
+    case_properties = {}
+    if flag_assigned_cases:
+        case_properties[ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY] = True
+
     for case_owner_update in case_owner_updates_dict:
         case_blocks = []
         cases_to_updates = [case_owner_update['case_id']] + case_owner_update['related_case_ids']
@@ -212,7 +218,8 @@ def update_cases_owner(domain, case_owner_updates_dict):
                 CaseBlock(
                     create=False,
                     case_id=case_id,
-                    owner_id=case_owner_update['owner_id']
+                    owner_id=case_owner_update['owner_id'],
+                    update=case_properties,
                 ).as_text()
             )
         submit_case_blocks(
