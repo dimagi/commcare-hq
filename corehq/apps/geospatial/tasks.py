@@ -1,5 +1,9 @@
 from corehq.apps.celery import task
-from corehq.apps.geospatial.utils import CeleryTaskTracker, get_flag_assigned_cases_config, update_cases_owner
+from corehq.apps.geospatial.utils import (
+    CeleryTaskTracker,
+    get_flag_assigned_cases_config,
+    update_cases_owner,
+)
 
 
 @task(queue="background_queue", ignore_result=True)

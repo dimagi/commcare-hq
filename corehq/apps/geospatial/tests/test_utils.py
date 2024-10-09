@@ -258,4 +258,4 @@ class TestGetFlagAssignedCasesConfig(TestCase):
         self.assertTrue(get_flag_assigned_cases_config(self.DOMAIN))
 
     def test_invalid_domain_provided(self):
-        self.assertEqual(get_flag_assigned_cases_config(None), False)
+        self.assertFalse(get_flag_assigned_cases_config(None))
