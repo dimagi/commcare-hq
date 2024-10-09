@@ -48,7 +48,7 @@ class TestConfirmDomainView(TestCase):
 
     def test_confirm_domain(self):
         response = self.client.get(self.url(self.valid_guid))
-        self.assertRedirects(response, reverse('dashboard_default', args=[self.domain.name]))
+        self.assertRedirects(response, reverse('dashboard_domain', args=[self.domain.name]))
 
         domain = Domain.get_by_name(self.domain.name)
         self.assertTrue(domain.is_active)
@@ -71,7 +71,7 @@ class TestConfirmDomainView(TestCase):
     def test_domain_already_confirmed(self):
         self.client.get(self.url(self.valid_guid))
         response = self.client.get(self.url(self.valid_guid))
-        self.assertRedirects(response, reverse('dashboard_default', args=[self.domain.name]))
+        self.assertRedirects(response, reverse('dashboard_domain', args=[self.domain.name]))
 
         messages = list(get_messages(response.wsgi_request))
         self.assertIn(

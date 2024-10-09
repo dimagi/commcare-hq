@@ -526,9 +526,7 @@ def confirm_domain(request, guid=''):
             return render(request, 'registration/confirmation_error.html', context)
 
         requested_domain = Domain.get_by_name(req.domain)
-        should_select_plan = bool(request.plan.plan.edition == SoftwarePlanEdition.COMMUNITY
-                                  and SelfSignupWorkflow.get_in_progress_for_domain(req.domain))
-        view_name = 'domain_select_plan' if should_select_plan else 'dashboard_default'
+        view_name = _confirm_domain_redirect(request.plan.plan.edition, req.domain)
         view_args = [requested_domain.name]
 
         # Has guid already been confirmed?
@@ -557,6 +555,14 @@ def confirm_domain(request, guid=''):
         request.session['CONFIRM'] = True
 
         return HttpResponseRedirect(reverse(view_name, args=view_args))
+
+
+def _confirm_domain_redirect(edition, domain):
+    from corehq.apps.dashboard.views import DomainDashboardView
+    from corehq.apps.domain.views import SelectPlanView
+    should_select_plan = bool(edition == SoftwarePlanEdition.COMMUNITY
+                              and SelfSignupWorkflow.get_in_progress_for_domain(domain))
+    return SelectPlanView.urlname if should_select_plan else DomainDashboardView.urlname
 
 
 @retry_resource(3)
