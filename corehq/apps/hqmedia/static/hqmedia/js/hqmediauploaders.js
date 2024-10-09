@@ -1,16 +1,7 @@
-/* globals HQMediaUploaderTypes */
 hqDefine("hqmedia/js/hqmediauploaders", function () {
     var HQMediaUploaders = {};  // This will be referenced by the media references
     const assertProperties = hqImport("hqwebapp/js/assert_properties"),
         initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-    _.each(initial_page_data("uploaders"), function (uploader) {
-        HQMediaUploaders[uploader.slug] = new HQMediaUploaderTypes[uploader.uploader_type](
-            uploader.slug,
-            uploader.media_type,
-            uploader.options
-        );
-        HQMediaUploaders[uploader.slug].init();
-    });
 
     var get = function () {
         return HQMediaUploaders;
@@ -114,8 +105,10 @@ hqDefine("hqmedia/js/hqmediauploaders", function () {
                     data = new FormData();
                 data.append("Filedata", file);
 
-                var newExtension = '.' + file.name.split('.').pop().toLowerCase();
-                self.uploadParams.path = self.uploadParams.path.replace(/(\.[^/.]+)?$/, newExtension);
+                if (self.uploadParams.path) {
+                    const newExtension = '.' + file.name.split('.').pop().toLowerCase();
+                    self.uploadParams.path = self.uploadParams.path.replace(/(\.[^/.]+)?$/, newExtension);
+                }
                 _.each(self.uploadParams, function (value, key) {
                     data.append(key, value);
                 });
@@ -129,7 +122,7 @@ hqDefine("hqmedia/js/hqmediauploaders", function () {
                     enctype: 'multipart/form-data',
                     success: function (response) {
                         response = JSON.parse(response);
-                        $('[data-hqmediapath^="' + response.ref.path.replace(/\.\w+$/, ".") + '"]').trigger('mediaUploadComplete', response);
+                        $('[data-hqmediapath^="' + self.currentReference.path.replace(/\.\w+$/, ".") + '"]').trigger('mediaUploadComplete', response);
                         self.$uploadStatusContainer.empty();
                         self.updateUploadButton(false, false);
                         self.updateUploadFormUI();
@@ -153,9 +146,16 @@ hqDefine("hqmedia/js/hqmediauploaders", function () {
         return self;
     };
 
+    let allUploaders = {};
     const uploaderPreset = function (slug) {
-        const ipd = _.find(initial_page_data("uploaders"), function (uploader) { return uploader.slug === slug; });
-        return uploader(ipd.slug, ipd.media_type, ipd.options);
+        if (!allUploaders[slug]) {
+            const options = _.find(initial_page_data("uploaders"), function (data) { return data.slug === slug });
+            if (options) {
+                allUploaders[slug] = uploader(options.slug, options.media_type, options.options);
+                allUploaders[slug].init();
+            }
+        }
+        return allUploaders[slug];
     };
 
     return {
