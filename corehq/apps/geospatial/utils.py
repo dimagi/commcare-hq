@@ -18,29 +18,25 @@ from corehq.util.quickcache import quickcache
 
 @quickcache(['domain'], timeout=24 * 60 * 60)
 def get_geo_case_property(domain):
-    try:
-        config = GeoConfig.objects.get(domain=domain)
-    except GeoConfig.DoesNotExist:
-        config = GeoConfig()
-    return config.case_location_property_name
+    return get_geo_config(domain).case_location_property_name
 
 
 @quickcache(['domain'], timeout=24 * 60 * 60)
 def get_geo_user_property(domain):
-    try:
-        config = GeoConfig.objects.get(domain=domain)
-    except GeoConfig.DoesNotExist:
-        config = GeoConfig()
-    return config.user_location_property_name
+    return get_geo_config(domain).user_location_property_name
 
 
-@quickcache(['domain'], timeout=24 * 60 * 60)
+@quickcache(['domain'], timeo   ut=24 * 60 * 60)
 def get_flag_assigned_cases_config(domain):
+    return get_geo_config(domain).flag_assigned_cases
+
+
+def get_geo_config(domain):
     try:
         config = GeoConfig.objects.get(domain=domain)
     except GeoConfig.DoesNotExist:
         config = GeoConfig()
-    return config.flag_assigned_cases
+    return config
 
 
 def _format_coordinates(lat, lon):
