@@ -8,7 +8,7 @@ hqDefine("enterprise/js/enterprise_dashboard", [
     'hqwebapp/js/tempus_dominus',
     'moment',
     'hqwebapp/js/bootstrap5/hq.helpers',
-    'hqwebapp/js/bootstrap5/components.ko', // used for the date range modal's select-toggle
+    'hqwebapp/js/components.ko', // used for the date range modal's select-toggle
 ], function (
     $,
     ko,
