@@ -30,14 +30,14 @@ class TestConfirmDomainView(TestCase):
         self.client.force_login(self.user.get_django_user())
         self.client.defaults.update({'plan': DefaultProductPlan.get_default_plan_version()})
 
-        self.valid_guid = 'abc123'
-        self.registration_request = RegistrationRequest.objects.create(
+    def create_registration_request(self, guid):
+        reg_request = RegistrationRequest.objects.create(
             request_time=datetime.now(),
-            activation_guid=self.valid_guid,
+            activation_guid=guid,
             domain=self.domain.name,
             new_user_username=self.user.username
         )
-        self.addCleanup(self.registration_request.delete)
+        self.addCleanup(reg_request.delete)
 
     @staticmethod
     def url(guid=None):
@@ -47,7 +47,10 @@ class TestConfirmDomainView(TestCase):
         return url
 
     def test_confirm_domain(self):
-        response = self.client.get(self.url(self.valid_guid))
+        guid = 'abc123'
+        self.create_registration_request(guid)
+
+        response = self.client.get(self.url(guid))
         self.assertRedirects(response, reverse('dashboard_domain', args=[self.domain.name]))
 
         domain = Domain.get_by_name(self.domain.name)
@@ -69,8 +72,11 @@ class TestConfirmDomainView(TestCase):
         self.assertIn(expected_message, response.content.decode())
 
     def test_domain_already_confirmed(self):
-        self.client.get(self.url(self.valid_guid))
-        response = self.client.get(self.url(self.valid_guid))
+        guid = 'abc123'
+        self.create_registration_request(guid)
+        self.client.get(self.url(guid))
+
+        response = self.client.get(self.url(guid))
         self.assertRedirects(response, reverse('dashboard_domain', args=[self.domain.name]))
 
         messages = list(get_messages(response.wsgi_request))
@@ -80,10 +86,10 @@ class TestConfirmDomainView(TestCase):
         )
 
     def test_self_signup_redirect(self):
-        SelfSignupWorkflow.objects.create(
-            domain=self.domain.name,
-            initiating_user=self.user.username
-        )
-        response = self.client.get(self.url(self.valid_guid))
+        guid = 'abc123'
+        self.create_registration_request(guid)
+        SelfSignupWorkflow.objects.create(domain=self.domain.name, initiating_user=self.user.username)
+
+        response = self.client.get(self.url(guid))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.get('Location'), reverse('domain_select_plan', args=[self.domain.name]))

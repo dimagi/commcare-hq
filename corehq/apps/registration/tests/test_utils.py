@@ -45,16 +45,16 @@ class TestRequestNewDomain(TestCase):
         cls.domain_test = 'test-1'
 
     def tearDown(self):
-        good_domains = [self.domain_sso_test, self.domain_test]
-        for domain in good_domains:
+        subscribed_domains = [self.domain_sso_test, self.domain_test]
+        for domain in subscribed_domains:
             Subscription._get_active_subscription_by_domain.clear(
                 Subscription,
                 domain
             )
-        SelfSignupWorkflow.objects.filter(domain__in=good_domains).delete()
+        SelfSignupWorkflow.objects.filter(domain__in=subscribed_domains).delete()
 
-        bad_domains = ['subscription-failed', 'init-default-roles-failed']
-        for test_domain in bad_domains:
+        failed_subscribed_domains = ['subscription-failed', 'init-default-roles-failed']
+        for test_domain in failed_subscribed_domains:
             domain = Domain.get_by_name(test_domain)
             if domain is not None:
                 domain.delete()
