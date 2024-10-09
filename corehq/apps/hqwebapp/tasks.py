@@ -275,18 +275,25 @@ def send_domain_ucr_data_info_to_admins():
         restriction_ff_status=UCRRestrictionFFStatus.ShouldEnable.name,
     )
     num_projects = len(table.rows)
-
-    endpoint = reverse(AdminReportDispatcher.name(), args=(UCRDataLoadReport.slug,))
-    params = {
-        UCRRebuildStatusFilter.slug: UCRRestrictionFFStatus.ShouldEnable.name,
-    }
-    report_url = urljoin(get_url_base(), endpoint) + '?' + urlencode(params)
-
     subject = f"Weekly report: {num_projects} projects for UCR Restriction"
-    message = f"""
-        We have identified {num_projects} projects that require the RESTRICT_DATA_SOURCE_REBUILD
-        feature flag to be enabled. Please see the detailed report: {report_url}
-    """
+    if num_projects:
+        endpoint = reverse(AdminReportDispatcher.name(), args=(UCRDataLoadReport.slug,))
+        params = {
+            UCRRebuildStatusFilter.slug: UCRRestrictionFFStatus.ShouldEnable.name,
+        }
+        report_url = urljoin(get_url_base(), endpoint) + '?' + urlencode(params)
+
+        message = f"""
+We have identified {num_projects} projects that require the
+RESTRICT_DATA_SOURCE_REBUILD feature flag to be enabled.
+
+Please see the detailed report: {report_url}
+"""
+    else:
+        message = """
+No projects were found that require the RESTRICT_DATA_SOURCE_REBUILD
+feature flag to be enabled.
+"""
 
     send_mail_async.delay(
         subject, message, [settings.SOLUTIONS_AES_EMAIL]
