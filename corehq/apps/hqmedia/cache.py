@@ -88,7 +88,7 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
             'unmatched_files': self.unmatched_files,
             'unmatched_count': len(self.unmatched_files),
             'matched_files': self.matched_files,
-            'matched_count': len(self.matched_files),
+            'matched_count': len([f for files in self.matched_files.values() for f in files]),
             'total_files': self.total_files,
             'processed_files': self.processed_files,
             'skipped_files': self.skipped_files,
