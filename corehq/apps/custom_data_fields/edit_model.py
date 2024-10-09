@@ -260,6 +260,7 @@ class CustomDataModelMixin(object):
     _show_profiles = False
     show_purge_existing = False
     entity_string = None  # User, Group, Location, Product...
+    required_for_options = []
 
     @use_bootstrap5
     @use_jquery_ui
@@ -409,6 +410,10 @@ class CustomDataModelMixin(object):
                 "show_profiles": True,
                 "custom_fields_profiles": sorted(profiles, key=lambda x: x['name'].lower()),
                 "custom_fields_profile_slug": PROFILE_SLUG,
+            })
+        if self.required_for_options:
+            context.update({
+                "required_for_options": self.required_for_options
             })
         return context
 

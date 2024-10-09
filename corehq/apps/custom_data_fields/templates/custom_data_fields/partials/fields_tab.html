@@ -92,7 +92,7 @@
         <input class="form-check-input" type="checkbox" data-bind="checked: is_required, attr: { 'disabled': !isEditable() }"/>
       </div>
       <!-- ko if: is_required -->
-        <select class="form-select" data-bind="options: requiredForOptions,
+        <select class="form-select" data-bind="options: $root.requiredForOptions,
                                         optionsText: 'text',
                                         optionsValue: 'value',
                                         value: required_for,

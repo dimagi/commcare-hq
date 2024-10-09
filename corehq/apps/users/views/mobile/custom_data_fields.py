@@ -20,6 +20,23 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     show_purge_existing = True
     _show_profiles = True
     page_title = _('Edit User Fields')
+    WEBUSER = "web_user"
+    MOBILEWORKER = "mobile_worker"
+    required_for_options = [
+        {
+            "text": "Web Users",
+            "value": [WEBUSER],
+        },
+        {
+            "text": "Mobile Workers",
+            "value": [MOBILEWORKER],
+            "isDefault": True
+        },
+        {
+            "text": "Both",
+            "value": [WEBUSER, MOBILEWORKER],
+        }
+    ]
 
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):

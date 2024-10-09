@@ -34,12 +34,13 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.parent = parent;
         self.slug = ko.observable(options.slug);
         self.label = ko.observable(options.label);
-
-        const [WEBUSER, MOBILEWORKER] = ["webuser", "mobileworker"];
-        const validRequiredForValues = [WEBUSER, MOBILEWORKER];
         self.is_required = ko.observable(options.is_required);
 
-        options.required_for = options.required_for || MOBILEWORKER;
+        const validRequiredForValues = self.parent.requiredForOptions.length > 0
+            ? _.uniq(_.flatten(self.parent.requiredForOptions.map(option => option.value)))
+            : [];
+
+        options.required_for = options.required_for || (self.parent.requiredForOptions.find(option => option.isDefault) || {}).value || [];
         if (!Array.isArray(options.required_for)) {
             options.required_for = [options.required_for];
         }
@@ -47,11 +48,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             throw new Error(gettext("Invalid value for required_for. Must be an empty list or contain only: ") + validRequiredForValues.join(", "));
         }
 
-        self.requiredForOptions = Object.freeze([
-            { text: gettext("Web Users"), value: [WEBUSER] },
-            { text: gettext("Mobile Workers"), value: [MOBILEWORKER] },
-            { text: gettext("Both"), value: [WEBUSER, MOBILEWORKER] },
-        ]);
         self.required_for = ko.observable(options.required_for);
 
         self.choices = ko.observableArray(options.choices.map(function (choice) {
@@ -188,7 +184,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
     function CustomDataFieldsModel(options) {
         assertProperties.assertRequired(options,
-            [ 'custom_fields', 'custom_fields_profiles', 'can_edit_linked_data']);
+            [ 'custom_fields', 'custom_fields_profiles', 'can_edit_linked_data', 'required_for_options']);
 
         var self = {};
         self.data_fields = ko.observableArray();
@@ -202,6 +198,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.toggleLinkedLock = function () {
             self.unlockLinkedData(!self.unlockLinkedData());
         };
+
+        self.requiredForOptions = options.required_for_options || [];
 
         self.hasLinkedData = ko.pureComputed(function () {
             const hasLinkedFields = self.data_fields().some(field => field.upstream_id);
@@ -323,6 +321,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             custom_fields: initialPageData.get('custom_fields'),
             custom_fields_profiles: initialPageData.get('custom_fields_profiles'),
             can_edit_linked_data: initialPageData.get('can_edit_linked_data'),
+            required_for_options: initialPageData.get('required_for_options'),
         });
         customDataFieldsModel.data_fields.subscribe(function () {
             $("#save-custom-fields").prop("disabled", false);
