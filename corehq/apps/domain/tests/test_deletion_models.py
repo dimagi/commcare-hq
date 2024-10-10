@@ -62,6 +62,8 @@ IGNORE_MODELS = {
     'fixtures.UserLookupTableStatus',
     'fixtures.LookupTableRow',          # handled by cascading delete
     'fixtures.LookupTableRowOwner',     # handled by cascading delete
+    'registration.AsyncSignupRequest',
+    'registration.SelfSignupWorkflow',
     'repeaters.RepeatRecord',         # handled by cascading delete
     'repeaters.RepeatRecordAttempt',  # handled by cascading delete
     'sms.MigrationStatus',
@@ -69,7 +71,6 @@ IGNORE_MODELS = {
     'util.ComplaintBounceMeta',
     'util.PermanentBounceMeta',
     'util.TransientBounceEmail',
-    'registration.AsyncSignupRequest',
     'users.UserHistory',
 }
 
