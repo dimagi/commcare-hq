@@ -133,3 +133,5 @@ POLYGON_COLLECTION_GEOJSON_SCHEMA = {
         }
     }
 }
+
+INDEX_ES_TASK_HELPER_BASE_KEY = 'geo_cases_index_cases'
