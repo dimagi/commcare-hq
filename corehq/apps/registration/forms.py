@@ -584,7 +584,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
     def _validate_profile(self, profile_id):
         valid_profile_ids = {choice[0] for choice in self.custom_data.form.fields[PROFILE_SLUG].widget.choices}
-        if profile_id not in valid_profile_ids:
+        if profile_id and profile_id not in valid_profile_ids:
             raise forms.ValidationError(
                 _('Invalid profile selected. Please select a valid profile.'),
             )
