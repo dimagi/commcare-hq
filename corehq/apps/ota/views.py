@@ -46,7 +46,7 @@ from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, CASE_SEARCH_TAGS_MAPPING
-from corehq.apps.case_search.utils import get_case_search_results_from_request
+from corehq.apps.case_search.utils import get_case_search_results_from_request, get_case_search_count
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import check_domain_mobile_access
 from corehq.apps.domain.models import Domain
@@ -164,6 +164,18 @@ def _log_search_timing(start_time, request_dict, domain, app_id):
             'request_dict': request_dict,
             'app_id': app_id,
         })
+
+
+@tracer.wrap(name="ota.case_search_count")
+@location_safe_bypass
+@csrf_exempt
+@mobile_auth
+@check_domain_mobile_access
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@require_POST  # since these queries can be very long
+def case_search_count(request, domain):
+    count = get_case_search_count(domain, request.POST.get('xpath'))
+    return HttpResponse(count, content_type="text/xml; charset=utf-8")
 
 
 @tracer.wrap(name="ota.claim")

@@ -313,3 +313,10 @@ class CaseClaimEndpointTests(TestCase):
             response = self.client.post(self.url, {'case_id': self.case_id},
                                         HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
             self.assertEqual(response.status_code, 201)
+
+    def test_case_search_count(self):
+        url = reverse('case_search_count', kwargs={'domain': DOMAIN})
+        response = self.client.post(url, {'xpath': f'opened_by = "{OWNER_ID}"'})
+        self.assertEqual(response.content, b'2')
+        response = self.client.post(url, {'xpath': f'case_name = "{CASE_NAME}"'})
+        self.assertEqual(response.content, b'1')
