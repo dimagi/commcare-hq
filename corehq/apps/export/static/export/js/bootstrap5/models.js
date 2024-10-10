@@ -8,6 +8,7 @@ hqDefine('export/js/bootstrap5/models', [
     'jquery',
     'knockout',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'analytix/js/google',
@@ -20,6 +21,7 @@ hqDefine('export/js/bootstrap5/models', [
     $,
     ko,
     _,
+    bootstrap,
     initialPageData,
     toggles,
     googleAnalytics,
@@ -451,7 +453,7 @@ hqDefine('export/js/bootstrap5/models', [
         table.showDeleted(!table.showDeleted());
 
         if (this.numberOfAppsToProcess > 0 && table.showDeleted()) {
-            $('#export-process-deleted-applications').modal('show');  /* todo B5: plugin:modal */
+            bootstrap.Modal.getOrCreateInstance('#export-process-deleted-applications').show();
         }
     };
 
@@ -576,7 +578,7 @@ hqDefine('export/js/bootstrap5/models', [
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
         if (urlParams.get('load_deprecated') !== 'True' && table.showDeprecated()) {
-            $('#export-process-deprecated-properties').modal('show');  /* todo B5: plugin:modal */
+            bootstrap.Modal.getOrCreateInstance('#export-process-deprecated-properties').show();
         }
     };
 
