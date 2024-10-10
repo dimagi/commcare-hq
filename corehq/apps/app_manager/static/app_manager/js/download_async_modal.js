@@ -1,4 +1,10 @@
-hqDefine('app_manager/js/download_async_modal', function () {
+hqDefine('app_manager/js/download_async_modal', [
+    'jquery',
+    'underscore',
+], function (
+    $,
+    _
+) {
     var asyncDownloader = function ($el) {
         "use strict";
         var self = {};
@@ -7,9 +13,9 @@ hqDefine('app_manager/js/download_async_modal', function () {
                              "If you see this repeatedly please report an issue.");
 
         self.$el = $el;
-        self.el_id = $el.attr("id");
-        self.$download_progress = self.$el.find("#" + self.el_id + "-download-progress");
-        self.$downloading = self.$el.find("#" + self.el_id + "-downloading");
+        self.elId = $el.attr("id");
+        self.$download_progress = self.$el.find("#" + self.elId + "-download-progress");
+        self.$downloading = self.$el.find("#" + self.elId + "-downloading");
 
         self.init = function () {
             self.download_in_progress = false;
@@ -40,29 +46,29 @@ hqDefine('app_manager/js/download_async_modal', function () {
             }
         };
 
-        self.updateProgress = function (progress_response) {
-            if (progress_response.trim().length) {
+        self.updateProgress = function (progressResponse) {
+            if (progressResponse.trim().length) {
                 self.$downloading.addClass("hide");
-                self.$download_progress.html(progress_response).removeClass("hide");
+                self.$download_progress.html(progressResponse).removeClass("hide");
             }
         };
 
-        self.isDone = function (progress_response) {
-            var ready_id = 'ready_' + self.download_poll_id,
-                error_id = 'error_' + self.download_poll_id;
-            return progress_response &&
-                progress_response.trim().length &&
-                _.any([ready_id, error_id], function (el_id) {
-                    return progress_response.indexOf(el_id) >= 0;
+        self.isDone = function (progressResponse) {
+            var readyId = 'ready_' + self.download_poll_id,
+                errorId = 'error_' + self.download_poll_id;
+            return progressResponse &&
+                progressResponse.trim().length &&
+                _.any([readyId, errorId], function (elId) {
+                    return progressResponse.indexOf(elId) >= 0;
                 });
         };
 
-        self.generateDownload = function (download_url, params) {
+        self.generateDownload = function (downloadUrl, params) {
             // prevent multiple calls
             if (!self.download_in_progress) {
                 self.download_in_progress = true;
                 $.ajax({
-                    url: download_url,
+                    url: downloadUrl,
                     type: "GET",
                     data: params,
                     dataType: "json",
