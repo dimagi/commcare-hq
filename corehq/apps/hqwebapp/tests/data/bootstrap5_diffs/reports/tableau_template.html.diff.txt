@@ -6,7 +6,7 @@
  {% load compress %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -23,7 +23,7 @@
+@@ -21,7 +21,7 @@
          <i class="fa fa-spin fa-spinner"></i>
      </div>
      <div id="vizContainer"></div>
