@@ -53,6 +53,7 @@ from .utils import (
     CaseOwnerUpdate,
     CeleryTaskTracker,
     create_case_with_gps_property,
+    get_flag_assigned_cases_config,
     get_geo_case_property,
     get_geo_user_property,
     get_lat_lon_from_dict,
@@ -480,7 +481,8 @@ class CasesReassignmentView(BaseDomainView):
             return HttpResponseBadRequest(error)
 
         if CaseOwnerUpdate.total_cases_count(case_owner_updates) <= self.ASYNC_CASES_UPDATE_THRESHOLD:
-            update_cases_owner(domain, CaseOwnerUpdate.to_dict(case_owner_updates))
+            flag_assigned_cases = get_flag_assigned_cases_config(self.domain)
+            update_cases_owner(domain, CaseOwnerUpdate.to_dict(case_owner_updates), flag_assigned_cases)
             return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
         else:
             return self._process_as_async(case_owner_updates)
