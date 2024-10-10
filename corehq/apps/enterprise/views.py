@@ -150,7 +150,7 @@ def enterprise_dashboard_email(request, domain, slug):
         response.status_code = 400
         return response
 
-    email_enterprise_report.delay(domain, slug, request.couch_user)
+    email_enterprise_report.delay(domain, slug, request.couch_user, **kwargs)
     message = _("Generating {title} report, will email to {email} when complete.").format(**{
         'title': report.title,
         'email': request.couch_user.username,
