@@ -533,7 +533,6 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                     data_bind="textInput: email",
                 ),
                 'role',
-                'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
             )
         ]
         if self.custom_data:
