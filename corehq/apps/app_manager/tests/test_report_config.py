@@ -11,7 +11,7 @@ from casexml.apps.phone.tests.utils import (
     create_restore_user,
 )
 
-from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_2
+from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_1, MOBILE_UCR_VERSION_2
 from corehq.apps.app_manager.fixtures import report_fixture_generator
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
     ReportFixturesProviderV1,
@@ -203,6 +203,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             cls.hidden_column_report_id: report_configuration_with_hidden_column
         }
         cls.app = Application.new_app(cls.domain, "Report Filter Test App")
+        cls.app.mobile_ucr_restore_version = MOBILE_UCR_VERSION_1
         report_module = cls.app.add_module(ReportModule.new_module("Report Module", 'en'))
         report_module.report_context_tile = True
         report_module.report_configs.append(
