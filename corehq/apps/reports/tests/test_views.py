@@ -998,6 +998,7 @@ class TestTableauView(TestReportsBase):
             server_type='server',
             server_name='a_server',
             target_site='a_site',
+            validate_hostname='',
         )
         cls.viz_1 = TableauVisualization.objects.create(
             domain=cls.DOMAIN,
@@ -1066,10 +1067,11 @@ class TestTableauView(TestReportsBase):
         response = self._get_ticket_view_response(self.viz_2)
         self.assertEqual(response.status_code, 403)
 
-    @patch('corehq.apps.reports.standard.tableau.requests.post')
-    def test_ticket_view_location_restricted_user_can_access_location_safe_report(self, mock_request):
+    @patch('corehq.apps.reports.standard.tableau.requests.Session')
+    def test_ticket_view_location_restricted_user_can_access_location_safe_report(self, mock_session):
+        mock_request = mock_session.return_value
         MockResponse = namedtuple('MockResponse', ['status_code', 'content'])
-        mock_request.return_value = MockResponse(status_code=200, content='1234'.encode('utf-8'))
+        mock_request.post.return_value = MockResponse(status_code=200, content='1234'.encode('utf-8'))
         self.role.set_permissions(HqPermissions(
             access_all_locations=False, view_tableau=False, view_tableau_list=[str(self.viz_2.id)]).to_list())
         response = self._get_ticket_view_response(self.viz_2)
