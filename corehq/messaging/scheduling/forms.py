@@ -2929,7 +2929,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
         CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
         CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
-        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
         CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
     ]
 
@@ -2992,6 +2993,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     )
 
     username_case_property = CharField(
+        required=False,
+    )
+
+    user_id_case_property = CharField(
         required=False,
     )
 
@@ -3170,7 +3175,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, _("The Case's Last Submitting User")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, _("The Case's Parent Case")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES, _("The Case's Child Cases")),
-            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER, _("User Specified via Case Property")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
+                _("Username Specified via Case Property")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
+                _("User ID Specified via Case Property")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL, _("Email Specified via Case Property")),
         ]
         new_choices.extend(self.fields['recipient_types'].choices)
@@ -3210,8 +3218,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         for recipient_type, recipient_id in recipients:
             if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM:
                 initial['custom_recipient'] = recipient_id
-            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER:
+            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME:
                 initial['username_case_property'] = recipient_id
+            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID:
+                initial['user_id_case_property'] = recipient_id
             if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
                 initial['email_case_property'] = recipient_id
 
@@ -3377,7 +3387,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 _("Username Case Property"),
                 twbscrispy.InlineField('username_case_property'),
                 data_bind="visible: recipientTypeSelected('%s')" %
-                          CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                          CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
+            ),
+            hqcrispy.B3MultiField(
+                _("User ID Case Property"),
+                twbscrispy.InlineField('user_id_case_property'),
+                data_bind="visible: recipientTypeSelected('%s')" %
+                          CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
             ),
             hqcrispy.B3MultiField(
                 _("Email Case Property"),
@@ -3776,9 +3792,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             custom_recipient_id = self.cleaned_data['custom_recipient']
             result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, custom_recipient_id))
 
-        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER in recipient_types:
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME in recipient_types:
             username_case_property = self.cleaned_data['username_case_property']
-            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER, username_case_property))
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
+                           username_case_property))
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID in recipient_types:
+            user_id_case_property = self.cleaned_data['user_id_case_property']
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID, user_id_case_property))
         if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL in recipient_types:
             email_case_property = self.cleaned_data['email_case_property']
             result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL, email_case_property))

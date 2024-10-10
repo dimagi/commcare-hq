@@ -558,7 +558,8 @@ class CaseScheduleInstanceMixin(object):
     RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
     RECIPIENT_TYPE_ALL_CHILD_CASES = 'AllChildCases'
     RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
-    RECIPIENT_TYPE_CASE_PROPERTY_USER = 'CasePropertyUser'
+    RECIPIENT_TYPE_CASE_PROPERTY_USERNAME = 'CasePropertyUser'
+    RECIPIENT_TYPE_CASE_PROPERTY_USER_ID = 'CasePropertyUserId'
     RECIPIENT_TYPE_CASE_PROPERTY_EMAIL = 'CasePropertyEmail'
 
     @property
@@ -634,10 +635,14 @@ class CaseScheduleInstanceMixin(object):
                 settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS[self.recipient_id][0]
             )
             return custom_function(self)
-        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_USER:
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME:
             username = self.case.get_case_property(self.recipient_id)
-            full_username = format_username(username, self.domain)
-            return CommCareUser.get_by_username(full_username)
+            if username:
+                return CouchUser.get_by_username(format_username(username, self.domain))
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID:
+            user_id = self.case.get_case_property(self.recipient_id)
+            if user_id:
+                return CouchUser.get_by_user_id(user_id)
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
             return EmailAddressRecipient(self.case, self.recipient_id)
         else:
