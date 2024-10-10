@@ -56,7 +56,7 @@
           {% trans 'Edit' %}
         {% else %}
           {% blocktrans %}
-            Copy &amp; Edit Feed
+            Copy &amp; Edit
           {% endblocktrans %}
         {% endif %}
       </th>
@@ -82,16 +82,15 @@
     <tr>
     {% if has_edit_permissions or allow_bulk_export %}
       <td>
-        <div class="checkbox checkbox-table-cell">  {# todo B5: css:checkbox #}
-          <label>
-            <input type="checkbox"  {# todo B5: css:checkbox #}
-                   data-bind="checked: addedToBulk" />
-          </label>
+        <div class="form-check checkbox-table-cell">
+          <input type="checkbox"
+                 class="form-check-input"
+                 data-bind="checked: addedToBulk" />
         </div>
       </td>
     {% endif %}
       <td>
-        <h4 data-bind="css: {'text-body-secondary': hasEmailedExport && !isAutoRebuildEnabled()}">
+        <div data-bind="css: {'text-body-secondary': hasEmailedExport && !isAutoRebuildEnabled()}">
           <inline-edit params="value: name,
                                url: editNameUrl,
                                placeholder: '{% trans "Enter name here"|escapejs %}',
@@ -101,7 +100,7 @@
                  data-bind="visible: isDeid()">
             {% trans 'De-Identified' %}
           </label>
-        </h4>
+        </div>
         <p data-bind="visible: formname,
                       css: {
                         'text-body-secondary': hasEmailedExport && !isAutoRebuildEnabled()
@@ -129,16 +128,11 @@
         <!-- ko if: isOData -->
           <!-- ko with: odataFeedUrl -->
           <p>
-            <div class="input-group">
-              <span data-bind="css: {
-                                 'input-group-btn': showLink  {# todo B5: css:input-group-btn #}
-                               },
-                               click: copyLinkRequested">
-                <a class="btn btn-outline-primary btn-sm">
-                  <i class="fa fa-clipboard"></i>
-                  {% trans "Copy OData Feed Link" %}
-                </a>
-              </span>
+            <div data-bind="css: {'input-group': showLink}">
+              <button class="btn btn-outline-primary btn-sm" data-bind="click: copyLinkRequested">
+                <i class="fa fa-clipboard"></i>
+                {% trans "Copy OData Feed Link" %}
+              </button>
               <input data-bind="visible: showLink,
                                 value: url"
                      type="text"
@@ -149,7 +143,7 @@
           <!-- /ko -->
           <!-- ko if: hasAdditionalODataFeeds -->
             <p>
-              <a class="btn btn-link btn-sm"
+              <a class="btn btn-sm btn-outline-primary"
                  data-bind="attr: {
                               href: '#' + id() + '-odata-additional'
                             },
@@ -168,18 +162,11 @@
                  data-bind="attr: {id: id() + '-odata-additional'}">
               <div class="modal-dialog">
                 <div class="modal-content">
-                  <div class="modal-header">  {# todo B5: css:modal-header #}
-                    <button type="button"
-                            class="btn-close"  {# todo B5: css:close #}
-                            data-bs-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                      <span class="sr-only">
-                        {% trans 'Close' %}
-                      </span>
-                    </button>
+                  <div class="modal-header">
                     <h4 class="modal-title">
                       {% trans "Additional Feeds" %}
                     </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
                   </div>
                   <div class="modal-body">
                     <p class="lead">
@@ -197,16 +184,11 @@
                     </p>
                     <!-- ko foreach: odataAdditionalFeedUrls -->
                     <p>
-                      <div class="input-group">
-                        <span data-bind="css: {
-                                           'input-group-btn': url.showLink  {# todo B5: css:input-group-btn #}
-                                         },
-                                         click: url.copyLinkRequested">
-                          <a class="btn btn-outline-primary btn-sm">
-                            <i class="fa fa-clipboard"></i>
-                            <span data-bind="text: label"></span>
-                          </a>
-                        </span>
+                      <div data-bind="css: {'input-group': url.showLink}">
+                        <button class="btn btn-outline-primary btn-sm" data-bind="click: url.copyLinkRequested">
+                          <i class="fa fa-clipboard"></i>
+                          <span data-bind="text: label"></span>
+                        </button>
                         <input data-bind="visible: url.showLink,
                                           value: url.url"
                                type="text"
@@ -231,7 +213,7 @@
         <!-- /ko -->
 
         <!-- ko if: hasEmailedExport && !isAutoRebuildEnabled() -->
-        <p class="text-warning">
+        <p class="text-danger">
           <i class="fa-solid fa-triangle-exclamation"></i>
           {% blocktrans %}
             Automatic updates for this saved {{ export_type }} have been disabled. Click 'Enable'
@@ -275,7 +257,7 @@
                       class="btn btn-outline-primary btn-sm"
                       data-bind="visible: emailedExport.canUpdateData,
                                  attr: {
-                                   'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()
+                                   'data-bs-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()
                                  }"
                       data-bs-toggle="modal">
                 <i class="fa fa-refresh"></i>
@@ -289,15 +271,9 @@
                 {% trans "Updating Data, please wait..." %}
               </button>
               <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.started()">
-                <div class="progress">  {# todo B5: css:progress #}
-                  <div class="progress-bar progress-bar-striped active"
-                       role="progressbar"
-                       aria-valuemin="0"
-                       aria-valuemax="100"
-                       data-bind="attr: {
-                                    'aria-valuenow': emailedExport.taskStatus.percentComplete(),
-                                    'style': 'width: ' + emailedExport.taskStatus.percentComplete() + '%',
-                                  }">
+                <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-bind="attr: {'aria-valuenow': emailedExport.taskStatus.percentComplete()}">
+                  <div class="progress-bar progress-bar-striped"
+                       data-bind="attr: {style: 'width: ' + emailedExport.taskStatus.percentComplete() + '%'}">
                   </div>
                 </div>
               </div>
@@ -317,17 +293,12 @@
               {% trans "Download" %}
             </a>
             <!-- ko if: isFeed -->
-              <div class="input-group">
+              <div data-bind="css: {'input-group': showLink}">
                 <!-- ko with: feedUrl -->
-                <span data-bind="css: {
-                                   'input-group-btn': showLink  {# todo B5: css:input-group-btn #}
-                                 },
-                                 click: copyLinkRequested">
-                  <a class="btn btn-outline-primary btn-sm">
-                    <i class="fa fa-clipboard"></i>
-                    {% trans "Copy Dashboard Feed Link" %}
-                  </a>
-                </span>
+                <button class="btn btn-outline-primary btn-sm" data-bind="click: copyLinkRequested">
+                  <i class="fa fa-clipboard"></i>
+                  {% trans "Copy Dashboard Feed Link" %}
+                </button>
                 <input data-bind="visible: showLink,
                                   value: url"
                        type="text"
@@ -339,7 +310,7 @@
           </div>
 
           <div data-bind="if: isLocationSafeForUser()">
-            <p class="text-warning"
+            <p class="text-danger"
                data-bind="if: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning() && isAutoRebuildEnabled()">
               <i class="fa-solid fa-triangle-exclamation"></i>
               {% blocktrans %}
@@ -401,18 +372,11 @@
                  data-bind="attr: {id: 'modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}">
               <div class="modal-dialog">
                 <div class="modal-content">
-                  <div class="modal-header">  {# todo B5: css:modal-header #}
-                    <button type="button"
-                            class="btn-close"  {# todo B5: css:close #}
-                            data-bs-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                      <span class="sr-only">
-                        {% trans 'Close' %}
-                      </span>
-                    </button>
+                  <div class="modal-header">
                     <h4 class="modal-title">
                       {% trans "Confirm data updates" %}
                     </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
                   </div>
                   <div class="modal-body"
                        data-bind="visible: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning()">
@@ -462,18 +426,11 @@
                  data-bind="attr: {id: 'modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId()}">
               <div class="modal-dialog">
                 <div class="modal-content">
-                  <div class="modal-header">  {# todo B5: css:modal-header #}
-                    <button type="button"
-                            class="btn-close"  {# todo B5: css:close #}
-                            data-bs-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                      <span class="sr-only">
-                        {% trans 'Close' %}
-                      </span>
-                    </button>
+                  <div class="modal-header">
                     <h4 class="modal-title">
                       {% trans "Confirm data updates." %}
                     </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
                   </div>
                   <div class="modal-body">
                     <p data-bind="if: isDailySaved() && !isAutoRebuildEnabled()">
@@ -513,8 +470,8 @@
       </td>
     {% if model_type == "case" %}
       <td>
-        <h4 data-bind="text: case_type" style="display: inline-block;"></h4>  {# todo B5: inline style #}
-        <span data-bind="visible: is_case_type_deprecated" class="badge text-bg-warning" style="display: inline-block;">{% trans "deprecated" %}</span>  {# todo B5: inline style #}
+        <span class="h4" data-bind="text: case_type"></span>
+        <span data-bind="visible: is_case_type_deprecated" class="badge text-bg-warning">{% trans "deprecated" %}</span>
       </td>
     {% endif %}
 
@@ -549,7 +506,7 @@
         <!-- ko if: isLocationSafeForUser() -->
         <a class="btn btn-outline-primary"
            data-bind="attr: {
-                        'data-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
+                        'data-bs-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
                       }"
            data-bs-toggle="modal">
           <span data-bind="visible: !isAutoRebuildEnabled()">
@@ -588,7 +545,7 @@
                   <i class="fa fa-pencil"></i>
                   <span>
                     {% blocktrans %}
-                      Copy &amp; Edit Feed
+                      Copy &amp; Edit
                     {% endblocktrans %}
                   </span>
                 </div>
@@ -612,7 +569,7 @@
                   <i class="fa fa-pencil"></i>
                   <span>
                     {% blocktrans %}
-                      Copy &amp; Edit Feed
+                      Copy &amp; Edit
                     {% endblocktrans %}
                   </span>
                 </div>
@@ -660,7 +617,7 @@
                 <i class="fa fa-pencil"></i>
                 <span>
                   {% blocktrans %}
-                    Copy &amp; Edit Feed
+                    Copy &amp; Edit
                   {% endblocktrans %}
                 </span>
               </div>

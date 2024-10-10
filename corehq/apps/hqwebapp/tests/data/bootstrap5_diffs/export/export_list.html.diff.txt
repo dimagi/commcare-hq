@@ -1,6 +1,10 @@
 --- 
 +++ 
-@@ -4,7 +4,7 @@
+@@ -1,10 +1,10 @@
+-{%  extends 'hqwebapp/bootstrap3/base_section.html' %}
++{%  extends 'hqwebapp/bootstrap5/base_section.html' %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
  {% load hq_shared_tags %}
  {% load compress %}
  
