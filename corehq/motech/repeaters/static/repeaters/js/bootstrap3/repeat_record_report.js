@@ -78,7 +78,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', function () {
                     }
                     if (contentType === 'text/xml') {
                         editor.session.setMode('ace/mode/xml');
-                    } else if (contentType === 'application/json') {
+                    } else if (['application/json', 'application/x-www-form-urlencoded'].includes(contentType)) {
                         editor.session.setMode('ace/mode/json');
                     }
                     editor.session.setValue(data.payload);
