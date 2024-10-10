@@ -535,3 +535,7 @@ def _get_case_search_cases(helper, case_ids):
 # Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
 def _tag_is_related_case(case):
     case.case_json[IS_RELATED_CASE] = "true"
+
+
+def get_case_search_count(domain, xpath_query):
+    return CaseSearchES().domain(domain).xpath_query(domain, xpath_query).count()
