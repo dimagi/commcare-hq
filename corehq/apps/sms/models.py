@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import hashlib
+from abc import ABC, abstractmethod
 from collections import namedtuple
 from datetime import datetime
 
@@ -593,6 +594,45 @@ class PhoneBlacklist(models.Model):
         return True
 
 
+class AbstractNumber(ABC):
+    owner_doc_type = None
+    owner_id = None
+    is_two_way = None
+    phone_number = None
+    domain = None
+
+    @property
+    @abstractmethod
+    def backend(self):
+        pass
+
+
+
+class ConnectMessagingNumber(AbstractNumber):
+    owner_doc_type = "CommCareUser"
+    is_two_way = True
+
+    def __init__(self, user_link):
+        self.user_link = user_link
+
+    #must be implemented
+    phone_number = None
+
+
+    @property
+    def backend(self):
+        return None
+
+    @property
+    def owner_id(self):
+        return CouchUser.get_by_username(self.user_link.commcare_user.username)._id
+
+    @property
+    def domain(self):
+        self.user_link.domain
+
+    
+
 class PhoneNumber(UUIDGeneratorMixin, models.Model):
     UUIDS_TO_GENERATE = ['couch_id']
 
@@ -980,6 +1020,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_CHAT_SMS = 'CHT'
     CONTENT_EMAIL = 'EML'
     CONTENT_FCM_Notification = 'FCM'
+    CONTENT_CONNECT = 'CON'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, gettext_noop('None')),
@@ -993,6 +1034,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_CHAT_SMS, gettext_noop('Message Sent Via Chat')),
         (CONTENT_EMAIL, gettext_noop('Email')),
         (CONTENT_FCM_Notification, gettext_noop('FCM Push Notification')),
+        (CONTENT_CONNECT, gettext_noop('Connect Message')),
     )
 
     CONTENT_TYPE_SLUGS = {
@@ -1006,7 +1048,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         CONTENT_API_SMS: "api-sms",
         CONTENT_CHAT_SMS: "chat-sms",
         CONTENT_EMAIL: "email",
-        CONTENT_FCM_Notification: 'fcm-notification',
+        CONTENT_FCM_Notification: "fcm-notification",
+        CONTENT_CONNECT: "connect",
     }
 
     RECIPIENT_CASE = 'CAS'
@@ -1319,6 +1362,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             EmailContent,
             CustomContent,
             FCMNotificationContent,
+            ConnectMessageContent
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
@@ -1331,6 +1375,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return cls.CONTENT_EMAIL, None, None, None
         elif isinstance(content, FCMNotificationContent):
             return cls.CONTENT_FCM_Notification, None, None, None
+        elif isinstance(content, ConnectMessageContent):
+            return cls.CONTENT_CONNECT, None, None, None
         else:
             return cls.CONTENT_NONE, None, None, None
 
@@ -2680,3 +2726,8 @@ class Email(models.Model):
     subject = models.TextField(null=True)
     body = models.TextField(null=True)
     html_body = models.TextField(null=True)
+
+
+class ConnectMessage(Log):
+    date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)
+    text = models.CharField(max_length=300)

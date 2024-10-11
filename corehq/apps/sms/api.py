@@ -28,6 +28,7 @@ from corehq.apps.sms.messages import (
 )
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (
+    ConnectMessage,
     INCOMING,
     OUTGOING,
     SMS,
@@ -131,6 +132,13 @@ def get_sms_class():
     return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
 
 
+def get_message_class(phone_number):
+    if phone_number.is_sms:
+        return get_sms_class()
+    else:
+        return ConnectMessage
+
+
 def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent=None):
     """
     Sends an outbound SMS. Returns false if it fails.
@@ -174,7 +182,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     return queue_outgoing_sms(msg)
 
 
-def send_sms_to_verified_number(verified_number, text, metadata=None, logged_subevent=None, events=None):
+def send_message_to_verified_number(verified_number, text, metadata=None, logged_subevent=None, events=None):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -183,6 +191,8 @@ def send_sms_to_verified_number(verified_number, text, metadata=None, logged_sub
 
     return  True on success, False on failure
     """
+    __import__("pdb").set_trace()
+
     try:
         backend = verified_number.backend
     except BadSMSConfigException as e:
@@ -192,7 +202,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None, logged_sub
             return False
         raise
 
-    msg = get_sms_class()(
+    msg = get_message_class(verified_number)(
         couch_recipient_doc_type=verified_number.owner_doc_type,
         couch_recipient=verified_number.owner_id,
         phone_number="+" + str(verified_number.phone_number),
@@ -215,7 +225,10 @@ def send_sms_to_verified_number(verified_number, text, metadata=None, logged_sub
                 msg.custom_metadata[field] = value
     msg.save()
 
-    return queue_outgoing_sms(msg)
+    if phone_number.is_sms:
+        return queue_outgoing_sms(msg)
+    else:
+        return send_connect_message(msg)
 
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):

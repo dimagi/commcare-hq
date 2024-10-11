@@ -7,7 +7,7 @@ from django.db import models, transaction
 from corehq import toggles
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
-from corehq.apps.sms.api import MessageMetadata, send_sms, send_sms_to_verified_number
+from corehq.apps.sms.api import MessageMetadata, send_sms, send_message_to_verified_number
 from corehq.apps.sms.forms import (
     LANGUAGE_FALLBACK_NONE,
     LANGUAGE_FALLBACK_SCHEDULE,
@@ -166,7 +166,7 @@ class Schedule(models.Model):
             content = event.memoized_content
             if isinstance(content, (SMSContent, SMSCallbackContent)):
                 result |= set(content.message)
-            elif isinstance(content, EmailContent):
+            elif isinstance(content, (EmailContent, ConnectMessageContent)):
                 result |= set(content.subject)
                 result |= set(content.message)
 
@@ -242,6 +242,8 @@ class ContentForeignKeyMixin(models.Model):
     sms_callback_content = models.ForeignKey('scheduling.SMSCallbackContent', null=True, on_delete=models.CASCADE)
     fcm_notification_content = models.ForeignKey('scheduling.FCMNotificationContent', null=True,
                                                  on_delete=models.CASCADE)
+    connect_message_content = models.ForeignKey('scheduling.ConnectMessageContent', null=True,
+                                                on_delete=models.CASCADE)
 
     class Meta(object):
         abstract = True
@@ -262,6 +264,8 @@ class ContentForeignKeyMixin(models.Model):
             return self.sms_callback_content
         elif self.fcm_notification_content:
             return self.fcm_notification_content
+        elif self.connect_message_content:
+            return self.connect_message_content
 
         raise NoAvailableContent()
 
@@ -276,8 +280,8 @@ class ContentForeignKeyMixin(models.Model):
 
     @content.setter
     def content(self, value):
-        from corehq.messaging.scheduling.models import (SMSContent, EmailContent,
-            SMSSurveyContent, IVRSurveyContent, CustomContent, SMSCallbackContent, FCMNotificationContent)
+        from corehq.messaging.scheduling.models import (SMSContent, EmailContent, SMSSurveyContent,
+            IVRSurveyContent, CustomContent, SMSCallbackContent, FCMNotificationContent, ConnectMessageContent)
 
         self.sms_content = None
         self.email_content = None
@@ -285,6 +289,7 @@ class ContentForeignKeyMixin(models.Model):
         self.ivr_survey_content = None
         self.custom_content = None
         self.sms_callback_content = None
+        self.connect_message_content = None
 
         if isinstance(value, SMSContent):
             self.sms_content = value
@@ -300,6 +305,8 @@ class ContentForeignKeyMixin(models.Model):
             self.sms_callback_content = value
         elif isinstance(value, FCMNotificationContent):
             self.fcm_notification_content = value
+        elif isinstance(value, ConnectMessageContent):
+            self.connect_message_content = value
         else:
             raise UnknownContentType()
 
@@ -507,7 +514,7 @@ class Content(models.Model):
         metadata = self.get_sms_message_metadata(logged_subevent)
 
         if isinstance(phone_entry_or_number, PhoneNumber):
-            send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
+            send_message_to_verified_number(phone_entry_or_number, message, metadata=metadata,
                 logged_subevent=logged_subevent)
         else:
             send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata,
