@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from functools import wraps
 from urllib.parse import unquote
 
 from django.conf import settings
@@ -102,22 +103,25 @@ def restore(request, domain, app_id=None):
     return response
 
 
-@tracer.wrap(name="ota.search")
-@location_safe_bypass
-@csrf_exempt
-@mobile_auth
-@check_domain_mobile_access
-@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+def case_search_ota_view(fn):
+    @wraps(fn)
+    @tracer.wrap(name=f"ota.{fn.__name__}")
+    @location_safe_bypass
+    @csrf_exempt
+    @mobile_auth
+    @check_domain_mobile_access
+    @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+    def inner(*args, **kwargs):
+        return fn(*args, **kwargs)
+    return inner
+
+
+@case_search_ota_view
 def search(request, domain):
     return app_aware_search(request, domain, None)
 
 
-@tracer.wrap(name="ota.app_aware_search")
-@location_safe_bypass
-@csrf_exempt
-@mobile_auth
-@check_domain_mobile_access
-@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@case_search_ota_view
 def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
@@ -166,25 +170,15 @@ def _log_search_timing(start_time, request_dict, domain, app_id):
         })
 
 
-@tracer.wrap(name="ota.case_search_count")
-@location_safe_bypass
-@csrf_exempt
-@mobile_auth
-@check_domain_mobile_access
-@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@case_search_ota_view
 @require_POST  # since these queries can be very long
 def case_search_count(request, domain):
     count = get_case_search_count(domain, request.POST.get('xpath'))
     return HttpResponse(count, content_type="text/xml; charset=utf-8")
 
 
-@tracer.wrap(name="ota.claim")
-@location_safe_bypass
-@csrf_exempt
+@case_search_ota_view
 @require_POST
-@mobile_auth
-@check_domain_mobile_access
-@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
@@ -502,11 +496,7 @@ def recovery_measures(request, domain, build_id):
     return JsonResponse(response)
 
 
-@tracer.wrap(name="ota.case_fixture")
-@location_safe_bypass
-@csrf_exempt
-@mobile_auth
-@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@case_search_ota_view
 def case_fixture(request, domain, app_id):
     request_dict = request.GET if request.method == 'GET' else request.POST
     case_ids = request_dict.getlist("case_id")
