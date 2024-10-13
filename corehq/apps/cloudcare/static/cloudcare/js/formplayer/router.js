@@ -35,7 +35,6 @@ hqDefine("cloudcare/js/formplayer/router", [
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
             "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
-            "home/:id": "landingPageApp", // Show app in landing page mode (LandingPageAppView)
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
             "restore_as/:page/:query": "listUsers",
@@ -58,9 +57,6 @@ hqDefine("cloudcare/js/formplayer/router", [
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             user.previewAppId = appId;
             appsController.singleApp(appId);
-        },
-        landingPageApp: function (appId) {
-            appsController.landingPageApp(appId);
         },
         selectApp: function (appId, isInitial) {
             menusController.selectMenu({
@@ -163,11 +159,6 @@ hqDefine("cloudcare/js/formplayer/router", [
     FormplayerFrontend.on('app:singleApp', function (appId) {
         utils.navigate("/single_app/" + appId);
         API.singleApp(appId);
-    });
-
-    FormplayerFrontend.on('app:landingPageApp', function (appId) {
-        utils.navigate("/home/" + appId);
-        API.landingPageApp(appId);
     });
 
     FormplayerFrontend.on("menu:select", function (index) {

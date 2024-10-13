@@ -1546,7 +1546,7 @@ def change_password(request, domain, login_id):
     else:
         form = SetUserPasswordForm(request.project, login_id, user=django_user)
     json_dump['formHTML'] = render_crispy_form(form)
-    return HttpResponse(json.dumps(json_dump))
+    return JsonResponse(json_dump)
 
 
 @httpdigest

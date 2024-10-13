@@ -1,4 +1,4 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load compress %}
@@ -8,8 +8,8 @@
 {% block page_content %}
   {% block main_column_content %}
     <div class="row">
-      <div class="col-md-2"></div>
-      <div class="col-md-8">
+      <div class="col-lg-2"></div>
+      <div class="col-lg-8">
         <h1>
           {% blocktrans %}
             Share Daily Data with Excel and Other Systems
@@ -24,14 +24,14 @@
             higher software plans.
           {% endblocktrans %}
         </p>
-        <a class="btn btn-default" href="{% prelogin_url "go_to_pricing" %}">
+        <a class="btn btn-outline-primary" href="{% prelogin_url "go_to_pricing" %}">
           {% trans "Learn More About Pricing Plans" %}
         </a>
-        <a class="btn btn-primary pull-right" href="{% url "domain_select_plan" domain %}">
+        <a class="btn btn-primary float-end" href="{% url "domain_select_plan" domain %}">
           {% trans "Change My Subscription" %}
         </a>
       </div>
-      <div class="col-md-2"></div>
+      <div class="col-lg-2"></div>
     </div>
   {% endblock main_column_content %}
 {% endblock %}

@@ -15,10 +15,18 @@ class BaseExpressionRepeaterView(AddRepeaterView):
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater = super().set_repeater_attr(repeater, cleaned_data)
         repeater.configured_filter = (
-            self.add_repeater_form.cleaned_data['configured_filter'])
+            self.add_repeater_form.cleaned_data['configured_filter']
+        )
         repeater.configured_expression = (
-            self.add_repeater_form.cleaned_data['configured_expression'])
+            self.add_repeater_form.cleaned_data['configured_expression']
+        )
         repeater.url_template = self.add_repeater_form.cleaned_data['url_template']
+        repeater.case_action_filter_expression = (
+            self.add_repeater_form.cleaned_data['case_action_filter_expression']
+        )
+        repeater.case_action_expression = (
+            self.add_repeater_form.cleaned_data['case_action_expression']
+        )
         return repeater
 
 

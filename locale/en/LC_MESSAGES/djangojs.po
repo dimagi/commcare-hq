@@ -332,7 +332,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
-#: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
 msgid "None"
 msgstr ""
 
@@ -1170,6 +1171,7 @@ msgid "no formatting"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
 msgid "Custom"
 msgstr ""
 
@@ -1589,7 +1591,8 @@ msgid "Add Expression"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "Save"
@@ -2204,6 +2207,22 @@ msgid "Help Itext ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Add New Item Button Text"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Add New Itext ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Add Another Item Button Text"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Add Another Itext ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add Other Content"
 msgstr ""
 
@@ -2459,7 +2478,8 @@ msgid "Inlined attachments must have an attachment name"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/export/static/export/js/models.js
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
 msgid "Create"
 msgstr ""
 
@@ -2493,50 +2513,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Current"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Sharing Options"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "License"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, No Derivatives"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial, and Share Alike"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial, and No Derivatives"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Share Alike"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Author"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Enter the name of the author."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attribution Notes"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -2696,6 +2672,10 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Not a valid choice"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "No file selected."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
@@ -3177,6 +3157,29 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
+msgid "Last 30 Days"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Month"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
+msgid "Spans <%- startDate %> to <%- endDate %> (UTC)"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
+msgid ""
+"Error updating display total, please try again or report an issue if this "
+"persists."
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
+msgid "??"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
 msgid ""
 "Error sending email, please try again or report an issue if this persists."
 msgstr ""
@@ -3221,6 +3224,131 @@ msgstr ""
 msgid "Search Attendance Takers"
 msgstr ""
 
+#: corehq/apps/export/static/export/js/bootstrap3/download_export.js
+#: corehq/apps/export/static/export/js/bootstrap5/download_export.js
+msgid "Sorry, there was a problem reaching the server. Please try again."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/download_export.js
+#: corehq/apps/export/static/export/js/bootstrap5/download_export.js
+msgid "Server maintenance in progress. Please try again later."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/download_export.js
+#: corehq/apps/export/static/export/js/bootstrap5/download_export.js
+msgid "There was an error downloading your export."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid "Download Requested"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid "All of the selected feeds will be deleted."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid "All of the selected exports will be deleted."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid ""
+"All of the selected exports will be collected for download to a single Excel "
+"file, with each export as a separate sheet."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid "Invalid date format"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/export_list.js
+#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
+msgid "Problem saving dashboard feed filters"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Process"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Processing..."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Refresh page"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Web Page (Excel Dashboards)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "CSV (Zip file)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Excel (older versions)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Excel 2007+"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "GeoJSON"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Private"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Export Only"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Edit and Export"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid ""
+"<strong>Private</strong>: Only you can edit and export.<br/> <strong>Export "
+"Only</strong>: You can edit and export, other users can only export.<br/> "
+"<strong>Edit and Export</strong>: All users can edit and export."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "The table path should end with []"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Sensitive ID"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/bootstrap3/models.js
+#: corehq/apps/export/static/export/js/bootstrap5/models.js
+msgid "Sensitive Date"
+msgstr ""
+
 #: corehq/apps/export/static/export/js/create_export.js
 msgid "<%- count %> form submission available."
 msgstr ""
@@ -3252,107 +3380,6 @@ msgstr ""
 
 #: corehq/apps/export/static/export/js/download_data_files.js
 msgid "Data file deleted."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/download_export.js
-msgid "Sorry, there was a problem reaching the server. Please try again."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/download_export.js
-msgid "Server maintenance in progress. Please try again later."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/download_export.js
-msgid "There was an error downloading your export."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "Download Requested"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "All of the selected feeds will be deleted."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "All of the selected exports will be deleted."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid ""
-"All of the selected exports will be collected for download to a single Excel "
-"file, with each export as a separate sheet."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "Invalid date format"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "Problem saving dashboard feed filters"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Process"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Processing..."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Refresh page"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Web Page (Excel Dashboards)"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "CSV (Zip file)"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Excel (older versions)"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Excel 2007+"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "GeoJSON"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Private"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Export Only"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Edit and Export"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid ""
-"<strong>Private</strong>: Only you can edit and export.<br/> <strong>Export "
-"Only</strong>: You can edit and export, other users can only export.<br/> "
-"<strong>Edit and Export</strong>: All users can edit and export."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "The table path should end with []"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Sensitive ID"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/models.js
-msgid "Sensitive Date"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
@@ -3398,6 +3425,47 @@ msgid ""
 "will not be exported."
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Max cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Min cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Max distance to case"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "minutes"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Max travel time"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid ""
+"Oops! Something went wrong! Please check that your geospatial settings are "
+"configured correctly or contact admin if the problem persists."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid ""
+"Please ensure that the filtered area includes both cases and mobile workers "
+"before attempting to run disbursement."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "All locations"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid ""
+"Oops! Something went wrong! Please report an issue if the problem persists."
+msgstr ""
+
 #: corehq/apps/geospatial/static/geospatial/js/geo_config.js
 msgid "Token successfully verified!"
 msgstr ""
@@ -3406,47 +3474,6 @@ msgstr ""
 msgid ""
 "Invalid API token. Please verify that the token matches the one on your "
 "Mapbox account and has the correct scope configured."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Max cases per user"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Min cases per user"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Max distance to case"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "minutes"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Max travel time"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid ""
-"Oops! Something went wrong! Please check that your geospatial settings are "
-"configured correctly or contact admin if the problem persists."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid ""
-"Please ensure that the filtered area includes both casesand mobile workers "
-"before attempting to run disbursement."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "All locations"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid ""
-"Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/gps_capture.js
@@ -3651,6 +3678,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid " to "
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Clear selection"
 msgstr ""
 
@@ -3724,10 +3755,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Decade"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Month"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -3962,9 +3989,15 @@ msgid "Choose a primary location"
 msgstr ""
 
 #: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
+#: corehq/apps/prototype/static/prototype/js/webpack/knockout_pagination.js
 msgid ""
 "Could not load data. Please try again later or report an issue if this "
 "problem persists."
+msgstr ""
+
+#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
+#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
+msgid "yes"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js

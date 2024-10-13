@@ -1,27 +1,44 @@
+import dataclasses
+import doctest
 import json
-from datetime import datetime, timedelta
 import uuid
+from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
 
 from django.test import TestCase
 
-from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.mock import CaseBlock, CaseFactory
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.utils import REPEATER_RESPONSE_XMLNS
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.models import UCRExpression
+from corehq.form_processor.models import CaseTransaction, CommCareCase
+from corehq.form_processor.models.cases import FormSubmissionDetail
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.expression.repeaters import (
-    CaseExpressionRepeater,
+    MAX_REPEATER_CHAIN_LENGTH,
     ArcGISFormExpressionRepeater,
+    CaseExpressionRepeater,
     FormExpressionRepeater,
 )
 from corehq.motech.repeaters.models import RepeatRecord
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, generate_cases
 
-from casexml.apps.case.mock import CaseBlock
+
+@dataclasses.dataclass
+class MockResponse:
+    status_code: int
+    text: str = ""
+    headers: dict = dataclasses.field(default_factory=dict)
+    reason: str = "success"
+
+    def json(self):
+        return json.loads(self.text)
 
 
 class BaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
@@ -176,6 +193,106 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
             self.repeater.get_url(repeat_record),
             expected_url
         )
+
+    def test_process_response_filter(self):
+        self.factory.create_case(case_type='forward-me')
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.repeater.case_action_filter_expression = {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "jsonpath",
+                "jsonpath": "response.status_code",
+            },
+            "operator": "eq",
+            "property_value": 201,
+        }
+        self.repeater._perform_case_update = Mock()
+        response = MockResponse(200)
+        self.assertFalse(self.repeater._process_response_as_case_update(response, repeat_record))
+        self.repeater._perform_case_update.assert_not_called()
+
+        response = MockResponse(201)
+        self.assertTrue(self.repeater._process_response_as_case_update(response, repeat_record))
+        self.repeater._perform_case_update.assert_called()
+
+    def test_process_response(self):
+        self.factory.create_case(case_type='forward-me')
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.repeater.case_action_filter_expression = {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "jsonpath",
+                "jsonpath": "response.status_code",
+            },
+            "operator": "eq",
+            "property_value": 200,
+        }
+        self.repeater.case_action_expression = {
+            'type': 'dict',
+            'properties': {
+                'create': False,
+                'case_id': {
+                    'type': 'jsonpath',
+                    'jsonpath': 'payload.id',
+                },
+                'properties': {
+                    'type': 'dict',
+                    'properties': {
+                        'type': 'dict',
+                        'prop_from_response': {
+                            'type': 'jsonpath',
+                            'jsonpath': 'response.body.aValue',
+                        }
+                    }
+                }
+            }
+        }
+        response = MockResponse(200, '{"aValue": "aResponseValue"}')
+        self.repeater.handle_response(response, repeat_record)
+        case = CommCareCase.objects.get_case(repeat_record.payload_id, self.domain)
+        self.assertEqual(case.get_case_property('prop_from_response'), 'aResponseValue')
+
+        # case shouldn't be eligible to forward again because it was just updated by the repeater
+        self.assertFalse(self.repeater.allowed_to_forward(case))
+
+        # case should be eligible to forward by a different repeater (one with a different id)
+        self.repeater.id = "a different repeater"
+        self.assertTrue(self.repeater.allowed_to_forward(case))
+
+    @generate_cases([
+        ([{"is_repeater": False, "this_repeater": False}], True),
+        ([{"is_repeater": True, "this_repeater": True}], False),
+        ([{"is_repeater": True, "this_repeater": False}], True),
+        # 1 below max chain length
+        ([{"is_repeater": True, "this_repeater": False}] * (MAX_REPEATER_CHAIN_LENGTH - 1), True),
+        # at max chain length
+        ([{"is_repeater": True, "this_repeater": False}] * MAX_REPEATER_CHAIN_LENGTH, False),
+        # transaction from this repeater
+        ([
+             {"is_repeater": True, "this_repeater": False},  # noqa
+             {"is_repeater": True, "this_repeater": False},
+             {"is_repeater": True, "this_repeater": True},
+        ], False),
+        # non-repeater transaction
+        ([
+             {"is_repeater": True, "this_repeater": False},  # noqa
+             {"is_repeater": True, "this_repeater": False},
+             {"is_repeater": False, "this_repeater": False},
+        ], True),
+    ])
+    def test_allowed_to_forward(self, transaction_details, can_forward):
+        case = self.factory.create_case(case_type='forward-me')
+        transactions = []
+        for transaction in transaction_details:
+            xmlns = REPEATER_RESPONSE_XMLNS if transaction["is_repeater"] else "another_xmlns"
+            device_id = self.repeater.device_id if transaction["this_repeater"] else "another_device_id"
+            detail = FormSubmissionDetail(xmlns=xmlns, device_id=device_id).to_json()
+            transactions.append(CaseTransaction(details=detail))
+        with patch(
+            'corehq.motech.repeaters.expression.repeaters.CaseTransaction.objects.get_last_n_recent_form_transaction',  # noqa
+            return_value=transactions
+        ):
+            self.assertEqual(self.repeater.allowed_to_forward(case), can_forward)
 
 
 class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
@@ -350,3 +467,45 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
             'f': 'json',
             'token': ''
         }
+
+    def test_send_request_error_handling(self):
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            uuid.uuid4().hex,
+            self._create_case_block(self.case_id),
+        )
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=MockResponse(429, 'Too many requests'),
+        ):
+            # The repeat record is first sent when the payload is registered
+            submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.assertEqual(repeat_record.state, State.Fail)
+
+        arcgis_error_response = MockResponse(200, json.dumps({
+            "error": {
+                "code": 403,
+                "details": [
+                    "You do not have permissions to access this resource or "
+                    "perform this operation."
+                ],
+                "message": "You do not have permissions to access this "
+                           "resource or perform this operation.",
+                "messageCode": "GWM_0003",
+            }
+        }))
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=arcgis_error_response,
+        ):
+            self.repeater.fire_for_record(repeat_record)
+
+        self.assertEqual(repeat_record.state, State.InvalidPayload)
+
+
+def test_doctests():
+    import corehq.motech.repeaters.expression.repeaters as module
+
+    results = doctest.testmod(module)
+    assert results.failed == 0

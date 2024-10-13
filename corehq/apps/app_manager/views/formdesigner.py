@@ -1,5 +1,6 @@
 import json
 import logging
+from looseversion import LooseVersion
 
 from django.conf import settings
 from django.contrib import messages
@@ -204,7 +205,7 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
     kw = {}
     if "pretty" in request.GET:
         kw["indent"] = 2
-    return HttpResponse(json.dumps(data, **kw))
+    return HttpResponse(json.dumps(data, **kw), content_type='application/json')
 
 
 @require_GET
@@ -326,6 +327,7 @@ def _get_vellum_features(request, domain, app):
         'sorted_itemsets': app.enable_sorted_itemsets,
         'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
         'markdown_tables': app.enable_markdown_tables,
+        'use_custom_repeat_button_text': app.build_version >= LooseVersion('2.55'),
     })
     return vellum_features
 

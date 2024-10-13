@@ -4,7 +4,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',  // ace editor for UCR filter
-    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
+    'hqwebapp/js/components.ko',    // select toggle widget
 ], function ($, _, ko, initialPageData, baseAce) {
 
     var CaseRuleCriteria = function (initial, constants, caseTypeObservable) {
@@ -199,8 +199,10 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                     obj.match_type(value.match_type);
                     self.criteria.push(obj);
                 } else if (
-                    value.match_type === constants.MATCH_DAYS_BEFORE ||
-                    value.match_type === constants.MATCH_DAYS_AFTER
+                    value.match_type === constants.MATCH_DAYS_LESS_THAN ||
+                    value.match_type === constants.MATCH_DAYS_LESS_OR_EQUAL ||
+                    value.match_type === constants.MATCH_DAYS_GREATER_THAN ||
+                    value.match_type === constants.MATCH_DAYS_GREATER_OR_EQUAL
                 ) {
                     var days = Number.parseInt(value.property_value);
                     if (days === 0) {
