@@ -13,7 +13,7 @@ from django.http import (
     HttpResponseRedirect,
 )
 from django.http.response import HttpResponseServerError, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -1683,6 +1683,23 @@ def link_connectid_user(request, domain):
         return HttpResponse(status=201)
     else:
         return HttpResponse()
+
+
+@csrf_exempt
+@api_auth()
+def connectid_messaging_key(request, domain):
+    link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
+    return JsonResponse({"key": link.messaging_key})
+
+
+@csrf_exempt
+@require_POST
+@api_auth()
+def update_connectid_messaging_consent(request, domain):
+    link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
+    link.messaging_consent = request.POST.get("consent", False)
+    link.save()
+    return HttpResponse(status=200)
 
 
 @waf_allow('XSS_BODY')
