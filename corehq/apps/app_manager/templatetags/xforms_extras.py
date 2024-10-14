@@ -212,7 +212,6 @@ def _get_dynamic_input_trans_options(name, escape_method: EscapeMethod, langs=No
 
 
 def _escape_options(options, escape_method: EscapeMethod):
-    escaped_options = {}
     if escape_method == EscapeMethod.HTML:
         escape_func = html.escape
     elif escape_method == EscapeMethod.JS:
