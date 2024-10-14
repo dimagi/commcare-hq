@@ -65,6 +65,7 @@ from corehq.apps.domain.utils import (
     guess_domain_language,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.mobile_auth.utils import generate_aes_key
 from corehq.apps.reports.const import TABLEAU_ROLES
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.user_importer.models import UserUploadRecord
@@ -3282,6 +3283,12 @@ class ConnectIDUserLink(models.Model):
     connectid_username = models.TextField()
     commcare_user = models.ForeignKey(User, related_name='connectid_user', on_delete=models.CASCADE)
     domain = models.TextField()
+    messaging_consent = models.BooleanField(default=False)
+    messaging_key = models.CharField(max_length=32, null=True, blank=True)
 
     class Meta:
         unique_together = ('domain', 'commcare_user')
+
+    def save(self, *args, **kwargs):
+        self.messaging_key = generate_aes_key().decode("utf-8")
+        super().save(**kwargs)
