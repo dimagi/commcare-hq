@@ -21,7 +21,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     _show_profiles = True
     page_title = _('Edit User Fields')
     WEBUSER = "web_user"
-    MOBILEWORKER = "mobile_worker"
+    COMMCARE_USER = "commcare_user"
     required_for_options = [
         {
             "text": "Web Users",
@@ -29,12 +29,12 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         },
         {
             "text": "Mobile Workers",
-            "value": [MOBILEWORKER],
-            "isDefault": True
+            "value": [COMMCARE_USER],
+            "isDefault": True,
         },
         {
             "text": "Both",
-            "value": [WEBUSER, MOBILEWORKER],
+            "value": [WEBUSER, COMMCARE_USER],
         }
     ]
 

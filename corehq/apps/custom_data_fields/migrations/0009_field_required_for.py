@@ -5,7 +5,7 @@ from django.db import migrations, models
 from corehq.util.django_migrations import skip_on_fresh_install
 
 CUSTOM_USER_DATA_FIELD_TYPE = 'UserFields'
-DEFAULT_REQUIRED_FOR = ['mobile_worker']
+DEFAULT_REQUIRED_FOR = ['commcare_user']
 
 
 @skip_on_fresh_install
