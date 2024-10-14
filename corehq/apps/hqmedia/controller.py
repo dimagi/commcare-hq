@@ -1,5 +1,4 @@
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils.translation import gettext_noop
 
 
@@ -36,17 +35,11 @@ class BaseMultimediaFileUploadController(object):
         raise NotImplementedError("You must specify a list of supported files for this uploader.")
 
     @property
-    def processing_url(self):
-        from corehq.apps.hqmedia.views import MultimediaUploadStatusView
-        return reverse(MultimediaUploadStatusView.urlname)
-
-    @property
     def js_options(self):
         options = {
             'allowCloseDuringUpload': True,
             'fileFilters': self.supported_files,
             'uploadURL': self.destination,
-            'processingURL': self.processing_url,
             'uploadParams': self.upload_params,
             'licensingParams': self.licensing_params,
         }

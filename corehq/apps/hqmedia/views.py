@@ -1,7 +1,6 @@
 import io
 import itertools
 import json
-import logging
 import os
 import shutil
 import uuid
@@ -11,7 +10,6 @@ from mimetypes import guess_all_extensions, guess_type
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.http import (
     Http404,
     HttpResponse,
@@ -996,39 +994,6 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
     @method_decorator(safe_cached_download)
     def dispatch(self, request, *args, **kwargs):
         return super(DownloadMultimediaZip, self).dispatch(request, *args, **kwargs)
-
-
-class MultimediaUploadStatusView(View):
-    urlname = "hqmedia_upload_status"
-
-    @property
-    @memoized
-    def processing_id(self):
-        return self.request.POST.get('processing_id')
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(MultimediaUploadStatusView, self).dispatch(request, *args, **kwargs)
-
-    def get(self, request, *args, **kwargs):
-        return HttpResponseBadRequest("Please post to this.")
-
-    def post(self, request, *args, **kwargs):
-        if not self.processing_id:
-            return HttpResponseBadRequest("A processing_id is required.")
-        status = BulkMultimediaStatusCache.get(self.processing_id)
-        if status is None:
-            # No status could be retrieved from the cache
-            fake_status = BulkMultimediaStatusCache(self.processing_id)
-            fake_status.complete = True
-            fake_status.errors.append(_('There was an issue retrieving the status from the cache. '
-                                      'We are looking into it. Please try uploading again.'))
-            logging.error("[Multimedia Bulk Upload] Process ID #%s encountered an issue while retrieving "
-                          "a status from the cache." % self.processing_id)
-            response = fake_status.get_response()
-        else:
-            response = status.get_response()
-        return JsonResponse(response)
 
 
 class ViewMultimediaFile(View):
