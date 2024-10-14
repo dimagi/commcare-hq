@@ -1,6 +1,6 @@
 hqDefine("app_manager/js/settings/app_logos", function () {
     var self = {};
-    var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders"),
+    var HQMediaUploaders = hqImport("hqmedia/js/uploaders"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
     var refs = initialPageData.get('media_refs');
     var mediaInfo = initialPageData.get('media_info');

@@ -3,7 +3,7 @@ hqDefine("hqmedia/js/media_reference_models", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
-    'hqmedia/js/hqmediauploaders',
+    'hqmedia/js/uploaders',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,

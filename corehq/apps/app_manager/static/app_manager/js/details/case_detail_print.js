@@ -3,7 +3,7 @@ hqDefine("app_manager/js/details/case_detail_print", function () {
     var printRef, printTemplateUploader;
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         printUploader = initialPageData.get("print_uploader_js"),
-        uploaders = hqImport("hqmedia/js/hqmediauploaders");
+        uploaders = hqImport("hqmedia/js/uploaders");
     if (printUploader) {
         printTemplateUploader = uploaders.uploader(
             printUploader.slug,

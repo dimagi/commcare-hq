@@ -1,4 +1,4 @@
-hqDefine("hqmedia/js/hqmediauploaders", function () {
+hqDefine("hqmedia/js/uploaders", function () {
     var HQMediaUploaders = {};  // This will be referenced by the media references
     const assertProperties = hqImport("hqwebapp/js/assert_properties"),
         initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
