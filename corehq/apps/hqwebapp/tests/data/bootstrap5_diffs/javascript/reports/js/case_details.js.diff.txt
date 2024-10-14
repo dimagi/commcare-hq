@@ -21,7 +21,7 @@
      'bootstrap',    // needed for $.tab
      'jquery-memoized-ajax/jquery.memoized.ajax.min',
  ], function (
-@@ -99,7 +99,7 @@
+@@ -92,7 +92,7 @@
                      // form data panel uses sticky tabs when it's its own page
                      // but that behavior would be disruptive here
                      $panel.find(".sticky-tabs").removeClass("sticky-tabs");
@@ -30,7 +30,7 @@
  
                      singleForm.initSingleForm({
                          instance_id: data.xform_id,
-@@ -282,7 +282,7 @@
+@@ -275,7 +275,7 @@
          $propertiesModal.koApplyBindings(modalData);
          $casePropertyNames.click(function () {
              modalData.init($(this).data('property-name'));
