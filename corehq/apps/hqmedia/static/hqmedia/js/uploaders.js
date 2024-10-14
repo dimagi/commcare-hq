@@ -57,86 +57,84 @@ hqDefine("hqmedia/js/uploaders", function () {
             });
         };
 
-        self.init = function () {
-            self.$container.on('show.bs.modal', function () {
-                self.updateUploadFormUI();
+        self.$container.on('show.bs.modal', function () {
+            self.updateUploadFormUI();
+        });
+
+        // Don't allow user to close modal while server is processing upload
+        var allowClose = true;
+        self.$container.on('hide.bs.modal', function (event) {
+            if (!self.allowClose) {
+                event.preventDefault();
+            }
+        });
+
+        self.$fileInputTrigger.click(function () {
+            self.$fileInput.click();
+        });
+
+        self.$fileInput.change(function () {
+            var MEGABYTE = 1048576;
+
+            if (self.$fileInput.get(0).files.length) {
+                var file = self.$fileInput.get(0).files[0];
+                self.$uploadStatusContainer.html(_.template(self.queueTemplate)({
+                    file_size: (file.size / MEGABYTE).toFixed(3),
+                    file_name: file.name,
+                }));
+                self.updateUploadButton(true, false);
+            } else {
+                self.$uploadStatusContainer.empty();
+                self.updateUploadButton(false, false);
+            }
+        });
+
+        self.$uploadButton.click(function () {
+            event.preventDefault();
+
+            self.updateUploadButton(false, true);
+            self.allowClose = false;
+
+            var file = self.$fileInput.get(0).files[0],
+                data = new FormData();
+            data.append("Filedata", file);
+
+            if (self.uploadParams.path) {
+                const newExtension = '.' + file.name.split('.').pop().toLowerCase();
+                self.uploadParams.path = self.uploadParams.path.replace(/(\.[^/.]+)?$/, newExtension);
+            }
+            _.each(self.uploadParams, function (value, key) {
+                data.append(key, value);
             });
 
-            // Don't allow user to close modal while server is processing upload
-            var allowClose = true;
-            self.$container.on('hide.bs.modal', function (event) {
-                if (!self.allowClose) {
-                    event.preventDefault();
-                }
-            });
-
-            self.$fileInputTrigger.click(function () {
-                self.$fileInput.click();
-            });
-
-            self.$fileInput.change(function () {
-                var MEGABYTE = 1048576;
-
-                if (self.$fileInput.get(0).files.length) {
-                    var file = self.$fileInput.get(0).files[0];
-                    self.$uploadStatusContainer.html(_.template(self.queueTemplate)({
-                        file_size: (file.size / MEGABYTE).toFixed(3),
-                        file_name: file.name,
-                    }));
-                    self.updateUploadButton(true, false);
-                } else {
+            $.ajax({
+                url: options.uploadURL,
+                type: 'POST',
+                data: data,
+                contentType: false,
+                processData: false,
+                enctype: 'multipart/form-data',
+                success: function (response) {
+                    response = JSON.parse(response);
+                    $('[data-hqmediapath^="' + self.currentReference.path.replace(/\.\w+$/, ".") + '"]').trigger('mediaUploadComplete', response);
                     self.$uploadStatusContainer.empty();
                     self.updateUploadButton(false, false);
-                }
+                    self.updateUploadFormUI();
+                    self.$container.find(self.uploadCompleteLabelSelector).removeClass('hide');
+                    self.allowClose = true;
+                },
+                error: function (response) {
+                    response = JSON.parse(response.responseText);
+                    self.$container.find(".hqm-error").removeClass('hide');
+                    self.$container.find(".hqm-errors").html(_.template(self.errorsTemplate)({
+                        errors: response.errors,
+                    }));
+                    self.$container.find(".hqm-begin").hide();
+                    self.updateUploadButton(false, false);
+                    self.allowClose = true;
+                },
             });
-
-            self.$uploadButton.click(function () {
-                event.preventDefault();
-
-                self.updateUploadButton(false, true);
-                self.allowClose = false;
-
-                var file = self.$fileInput.get(0).files[0],
-                    data = new FormData();
-                data.append("Filedata", file);
-
-                if (self.uploadParams.path) {
-                    const newExtension = '.' + file.name.split('.').pop().toLowerCase();
-                    self.uploadParams.path = self.uploadParams.path.replace(/(\.[^/.]+)?$/, newExtension);
-                }
-                _.each(self.uploadParams, function (value, key) {
-                    data.append(key, value);
-                });
-
-                $.ajax({
-                    url: options.uploadURL,
-                    type: 'POST',
-                    data: data,
-                    contentType: false,
-                    processData: false,
-                    enctype: 'multipart/form-data',
-                    success: function (response) {
-                        response = JSON.parse(response);
-                        $('[data-hqmediapath^="' + self.currentReference.path.replace(/\.\w+$/, ".") + '"]').trigger('mediaUploadComplete', response);
-                        self.$uploadStatusContainer.empty();
-                        self.updateUploadButton(false, false);
-                        self.updateUploadFormUI();
-                        self.$container.find(self.uploadCompleteLabelSelector).removeClass('hide');
-                        self.allowClose = true;
-                    },
-                    error: function (response) {
-                        response = JSON.parse(response.responseText);
-                        self.$container.find(".hqm-error").removeClass('hide');
-                        self.$container.find(".hqm-errors").html(_.template(self.errorsTemplate)({
-                            errors: response.errors,
-                        }));
-                        self.$container.find(".hqm-begin").hide();
-                        self.updateUploadButton(false, false);
-                        self.allowClose = true;
-                    },
-                });
-            });
-        };
+        });
 
         return self;
     };

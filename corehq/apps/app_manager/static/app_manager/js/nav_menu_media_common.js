@@ -9,7 +9,6 @@ hqDefine("app_manager/js/nav_menu_media_common", function () {
             uploader.media_type,
             uploader.options
         );
-        uploaders[type].init();
     });
 
     return {
