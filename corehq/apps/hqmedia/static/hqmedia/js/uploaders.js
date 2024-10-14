@@ -1,11 +1,6 @@
 hqDefine("hqmedia/js/uploaders", function () {
-    var HQMediaUploaders = {};  // This will be referenced by the media references
     const assertProperties = hqImport("hqwebapp/js/assert_properties"),
         initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-
-    var get = function () {
-        return HQMediaUploaders;
-    };
 
     const uploader = function (slug, media_type, options) {
         assertProperties.assertRequired(options, [
@@ -159,7 +154,6 @@ hqDefine("hqmedia/js/uploaders", function () {
     };
 
     return {
-        get: get,
         uploader: uploader,
         uploaderPreset: uploaderPreset,
     };
