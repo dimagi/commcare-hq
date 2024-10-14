@@ -216,6 +216,6 @@ def _escape_options(options, escape_method: EscapeMethod):
         escape_func = html.escape
     elif escape_method == EscapeMethod.JS:
         escape_func = html.escapejs
-    
+
     escaped_options = {key: escape_func(value) for key, value in options.items()}
     return escaped_options
