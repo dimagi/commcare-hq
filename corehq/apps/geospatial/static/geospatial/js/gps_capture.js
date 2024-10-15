@@ -3,7 +3,7 @@ hqDefine("geospatial/js/gps_capture",[
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
-    "hqwebapp/js/bootstrap3/components.ko", // for pagination
+    "hqwebapp/js/components.ko", // for pagination
     'select2/dist/js/select2.full.min',
 ], function (
     $,
