@@ -257,7 +257,7 @@ class ArcGISFormExpressionRepeater(FormExpressionRepeater):
         # `reason` is what is shown in the Repeat Records Report under
         # the "Responses" button. If `error_json` is missing "message",
         # then set a value that is more useful to users than no message.
-        reason = error_json.get('message', 'Unspecified ArcGIS REST API error')
+        reason = error_json.get('message', '[No error message given by ArcGIS]')
         if 'messageCode' in error_json:
             reason += f' ({error_json["messageCode"]})'
 

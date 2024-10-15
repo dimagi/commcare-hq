@@ -542,7 +542,7 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
         error_json = {}
         resp = ArcGISFormExpressionRepeater._error_response(error_json)
         self.assertEqual(resp.status_code, 500)
-        self.assertEqual(resp.reason, "Unspecified ArcGIS REST API error")
+        self.assertEqual(resp.reason, "[No error message given by ArcGIS]")
         self.assertEqual(resp.text, "")
 
 
