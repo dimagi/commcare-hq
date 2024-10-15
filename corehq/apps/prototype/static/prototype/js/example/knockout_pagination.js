@@ -5,7 +5,7 @@ hqDefine("prototype/js/example/knockout_pagination",[
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    "hqwebapp/js/components.ko", // for pagination
+    "hqwebapp/js/components/pagination",
 ], function ($, ko, _, initialPageData) {
     $(function () {
         let rowData = function (data) {
