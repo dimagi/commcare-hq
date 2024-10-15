@@ -1584,6 +1584,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 couch_user.sync_from_django_user(django_user)
 
                 try:
+                    if couch_user.username == 'jcheng_test@dimagi.org':
+                        notify_exception(None, "jcheng_test@dimagi.org saved in django_user_post_save_signal")
                     # avoid triggering cyclical sync
                     super(CouchUser, couch_user).save(**get_safe_write_kwargs())
                 except ResourceConflict:
