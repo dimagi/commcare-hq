@@ -21,7 +21,8 @@ hqDefine("export/js/bootstrap5/export_list", [
     'analytix/js/kissmetrix',
     'export/js/utils',
     'hqwebapp/js/bootstrap5/validators.ko',        // needed for validation of startDate and endDate
-    'hqwebapp/js/components.ko',        // pagination widget
+    'hqwebapp/js/components/inline_edit',
+    'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/bootstrap5/feedback',
     'select2/dist/js/select2.full.min',
 ], function (
@@ -485,7 +486,7 @@ hqDefine("export/js/bootstrap5/export_list", [
             return false;
         });
 
-        self.BulkExportDelete = function (observable, event) {
+        self.BulkExportDelete = function () {
             var count = self.bulkExportDownloadCount;
             self.panels().forEach(panel => panel.isBulkDeleting(true));
             var bulkDelete = function () {

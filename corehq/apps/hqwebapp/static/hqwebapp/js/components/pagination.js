@@ -39,7 +39,7 @@ hqDefine('hqwebapp/js/components/pagination', [
     _,
     initialPageData
 ) {
-    return {
+    const component = {
         viewModel: function (params) {
             var self = {};
 
@@ -124,4 +124,17 @@ hqDefine('hqwebapp/js/components/pagination', [
         },
         template: '<div data-bind="template: { name: \'ko-pagination-template\' }"></div>',
     };
+
+    ko.components.register('pagination', component);
+
+    $(function () {
+        _.each($('pagination'), function (el) {
+            var $el = $(el);
+            if ($el.data('apply-bindings') !== false) {
+                $(el).koApplyBindings();
+            }
+        });
+    });
+
+    return component;
 });
