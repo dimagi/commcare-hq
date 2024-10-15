@@ -811,6 +811,7 @@ registration
  0003_populate_sqlregistrationrequest
  0004_rename_sqlregistrationrequest
  0005_asyncsignuprequest
+ 0006_selfsignupworkflow
 registry
  0001_initial
  0002_registry_slug_globally_unique
