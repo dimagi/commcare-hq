@@ -36,19 +36,14 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.label = ko.observable(options.label);
         self.is_required = ko.observable(options.is_required);
 
-        const validRequiredForValues = self.parent.requiredForOptions.length > 0
-            ? _.uniq(_.flatten(self.parent.requiredForOptions.map(option => option.value)))
-            : [];
-
-        options.required_for = options.required_for || (self.parent.requiredForOptions.find(option => option.isDefault) || {}).value || [];
-        if (!Array.isArray(options.required_for)) {
-            options.required_for = [options.required_for];
-        }
-        if (options.required_for.length > 0 && !options.required_for.every(item => validRequiredForValues.includes(item))) {
-            throw new Error(gettext("Invalid value for required_for. Must be an empty list or contain only: ") + validRequiredForValues.join(", "));
-        }
-
-        self.required_for = ko.observable(options.required_for);
+        // Compare stringified arrays to match contents, not references.
+        // Direct assignment of the observable to options.required_for won't match requiredForOptions
+        const matchingOption = parent.requiredForOptions.find(option =>
+            JSON.stringify(option.value) === JSON.stringify(options.required_for || [])
+        );
+        const initialRequiredFor = matchingOption ? matchingOption.value :
+            ((parent.requiredForOptions.find(option => option.isDefault) || {}).value || []);
+        self.required_for = ko.observableArray(initialRequiredFor);
 
         self.choices = ko.observableArray(options.choices.map(function (choice) {
             return Choice(choice);
