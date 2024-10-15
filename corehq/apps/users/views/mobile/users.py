@@ -119,6 +119,7 @@ from corehq.apps.users.forms import (
 )
 from corehq.apps.users.models import (
     CommCareUser,
+    ConnectIDMessagingKey,
     CouchUser,
     DeactivateMobileWorkerTrigger,
     check_and_send_limit_email,
@@ -1689,7 +1690,8 @@ def link_connectid_user(request, domain):
 @api_auth()
 def connectid_messaging_key(request, domain):
     link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
-    return JsonResponse({"key": link.messaging_key})
+    messaging_key = ConnectIDMessagingKey.objects.create(connectid_user_link=link)
+    return JsonResponse({"key": messaging_key.key})
 
 
 @csrf_exempt
