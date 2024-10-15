@@ -2067,7 +2067,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             except ResourceNotFound:
                 faulty_groups.append(to_add)
                 continue
-            if group and group.domain != self.domain:
+            if group.domain != self.domain:
                 faulty_groups.append(to_add)
                 continue
             group.add_user(self._id, save=False)
