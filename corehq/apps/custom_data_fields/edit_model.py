@@ -299,6 +299,10 @@ class CustomDataModelMixin(object):
         return CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
 
     @classmethod
+    def is_field_required(cls, field):
+        return field.is_required
+
+    @classmethod
     def validate_incoming_fields(cls, existing_fields, new_fields, can_edit_linked_data=False):
         existing_synced_fields = {field.upstream_id: field for field in existing_fields if field.upstream_id}
 

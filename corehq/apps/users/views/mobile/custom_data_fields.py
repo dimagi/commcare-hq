@@ -20,6 +20,8 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     show_purge_existing = True
     _show_profiles = True
     page_title = _('Edit User Fields')
+
+    user_type = None
     WEBUSER = "web_user"
     COMMCARE_USER = "commcare_user"
     required_for_options = [
@@ -93,3 +95,17 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
             'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
             'custom_fields_profile_slug': PROFILE_SLUG,
         }
+
+    @classmethod
+    def is_field_required(cls, field):
+        if cls.user_type is None:
+            raise NotImplementedError("user_type must be defined in child classes")
+        return field.is_required and cls.user_type in field.required_for
+
+
+class WebUserFieldsView(UserFieldsView):
+    user_type = UserFieldsView.WEBUSER
+
+
+class CommcareUserFieldsView(UserFieldsView):
+    user_type = UserFieldsView.COMMCARE_USER

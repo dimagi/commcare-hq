@@ -1162,12 +1162,12 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @cached_property
     def custom_data(self):
-        from corehq.apps.users.views.mobile import UserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
         post_dict = None
         if self.request.method == 'POST':
             post_dict = self.request.POST
         custom_data = CustomDataEditor(
-            field_view=UserFieldsView,
+            field_view=WebUserFieldsView,
             domain=self.domain,
             post_dict=post_dict,
             ko_model="custom_fields",

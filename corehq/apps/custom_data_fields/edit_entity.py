@@ -109,9 +109,10 @@ class CustomDataEditor(object):
 
     def _make_field(self, field):
         safe_label = escape(field.label)
+        is_required_field = self.field_view.is_field_required(field)
         if field.regex:
             validator = RegexValidator(field.regex, field.regex_msg)
-            return forms.CharField(label=safe_label, required=field.is_required,
+            return forms.CharField(label=safe_label, required=is_required_field,
                                    validators=[validator])
         elif field.choices:
             # If form uses knockout, knockout must have control over the select2.
@@ -129,12 +130,12 @@ class CustomDataEditor(object):
 
             return forms.ChoiceField(
                 label=safe_label,
-                required=field.is_required,
+                required=is_required_field,
                 choices=placeholder_choices + [(c, c) for c in field.choices],
                 widget=forms.Select(attrs=attrs)
             )
         else:
-            return forms.CharField(label=safe_label, required=field.is_required)
+            return forms.CharField(label=safe_label, required=is_required_field)
 
     def make_fieldsets(self, form_fields, is_post, field_name_includes_prefix=False):
         if self.ko_model:
