@@ -200,6 +200,7 @@ class CustomDataFieldForm(forms.Form):
         }
     )
     is_required = forms.BooleanField(required=False)
+    required_for = forms.CharField(widget=forms.HiddenInput, required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
     regex = forms.CharField(required=False)
     regex_msg = forms.CharField(required=False)
@@ -209,10 +210,14 @@ class CustomDataFieldForm(forms.Form):
         # Pull the raw_choices out here, because Django incorrectly
         # serializes the list and you can't get it
         self._raw_choices = [_f for _f in raw.get('choices', []) if _f]
+        self._raw_required_for = [_f for _f in raw.get('required_for', []) if _f]
         super(CustomDataFieldForm, self).__init__(raw, *args, **kwargs)
 
     def clean_choices(self):
         return self._raw_choices
+
+    def clean_required_for(self):
+        return self._raw_required_for
 
     def clean_regex(self):
         regex = self.cleaned_data.get('regex')
@@ -382,6 +387,7 @@ class CustomDataModelMixin(object):
         return Field(
             slug=field.get('slug'),
             is_required=field.get('is_required'),
+            required_for=field.get('required_for'),
             label=field.get('label'),
             choices=choices,
             regex=regex,
