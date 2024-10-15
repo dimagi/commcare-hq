@@ -21,7 +21,6 @@ from corehq.util.log import with_progress_bar
 logger = logging.getLogger('build_requirejs')
 BOOTSTRAP_VERSIONS = [3, 5]
 
-REQUIREJS_MAIN_GREP_PATTERN = r'{% requirejs_main\(_b5\)\? .\(\([^%]*\)/[^/%]*\). %}'
 REQUIREJS_MAIN_PYTHON_PATTERN = r'{% requirejs_main(_b(5))? .(([^%]*)/[^/%]*). %}'
 
 _pattern = r"sourceMappingURL=bundle.b[%s].js.map$"
@@ -133,12 +132,9 @@ class Command(ResourceStaticCommand):
         logger.info("Mapping main modules to django apps")
         dirs = {v: defaultdict(set) for v in BOOTSTRAP_VERSIONS}
         for filename in html_files:
-            proc = subprocess.Popen(["grep", REQUIREJS_MAIN_GREP_PATTERN, filename],
-                                    stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            out = out.decode('utf-8')
-            if out:
-                match = re.search(REQUIREJS_MAIN_PYTHON_PATTERN, out)
+            with open(filename, "r") as fh:
+                content = fh.read()
+                match = re.search(REQUIREJS_MAIN_PYTHON_PATTERN, content)
                 if match:
                     bootstrap_version = int(match.group(2) or '3')
                     main = match.group(3)
