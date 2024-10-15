@@ -32,7 +32,7 @@ hqDefine('hqwebapp/js/components/inline_edit', [
     _,
     DOMPurify
 ) {
-    return {
+    const component = {
         viewModel: function (params) {
             var self = this;
 
@@ -144,4 +144,17 @@ hqDefine('hqwebapp/js/components/inline_edit', [
         },
         template: '<div data-bind="template: { name: \'ko-inline-edit-template\' }"></div>',
     };
+
+    ko.components.register('inline-edit', component);
+
+    $(function () {
+        _.each($('inline-edit'), function (el) {
+            var $el = $(el);
+            if ($el.data('apply-bindings') !== false) {
+                $(el).koApplyBindings();
+            }
+        });
+    });
+
+    return component;
 });

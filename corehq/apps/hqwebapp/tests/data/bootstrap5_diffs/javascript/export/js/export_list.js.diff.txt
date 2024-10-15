@@ -9,19 +9,20 @@
      'jquery',
      'knockout',
      'underscore',
-@@ -20,9 +20,9 @@
+@@ -20,10 +20,10 @@
      'analytix/js/google',
      'analytix/js/kissmetrix',
      'export/js/utils',
 -    'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of startDate and endDate
 +    'hqwebapp/js/bootstrap5/validators.ko',        // needed for validation of startDate and endDate
-     'hqwebapp/js/components.ko',        // pagination widget
+     'hqwebapp/js/components/inline_edit',
+     'hqwebapp/js/components/pagination',
 -    'hqwebapp/js/components/bootstrap3/feedback',
 +    'hqwebapp/js/components/bootstrap5/feedback',
      'select2/dist/js/select2.full.min',
  ], function (
      $,
-@@ -182,7 +182,7 @@
+@@ -183,7 +183,7 @@
                          self.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
                      }
                      $button.enableButton();
@@ -30,7 +31,7 @@
                  },
              });
          };
-@@ -262,7 +262,7 @@
+@@ -263,7 +263,7 @@
          };
  
          self.updateData = function () {
@@ -39,7 +40,7 @@
              self.updatingData(true);
              $.ajax({
                  method: 'POST',
-@@ -473,11 +473,11 @@
+@@ -474,11 +474,11 @@
          $(function () {
              $('[data-toggle="tooltip-bulkExport"]').attr('title',
                  gettext("All of the selected exports will be collected for download to a " +
@@ -53,7 +54,7 @@
          });
  
          self.isMultiple = ko.computed(function () {
-@@ -681,7 +681,7 @@
+@@ -682,7 +682,7 @@
                          if (export_.hasEmailedExport) {
                              export_.emailedExport.pollProgressBar();
                          }
