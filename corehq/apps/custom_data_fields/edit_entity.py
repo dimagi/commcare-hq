@@ -176,7 +176,7 @@ class CustomDataEditor(object):
     def init_form(self, post_dict=None):
         form_fields = OrderedDict()
 
-        from corehq.apps.users.views.mobile import UserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         has_profile_privilege_and_is_user_fields_view = (
             domain_has_privilege(self.domain, privileges.APP_USER_PROFILES)
             and self.field_view is UserFieldsView
