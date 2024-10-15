@@ -1546,6 +1546,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # When updating this method, please also ensure that your updates also
         # carry over to bulk_auto_deactivate_commcare_users.
         self.last_modified = datetime.utcnow()
+        if self.username == 'jcheng_test@dimagi.org':
+            notify_exception(None, "CouchUser jcheng_test@dimagi.org is saved!!")
         with CriticalSection(['username-check-%s' % self.username], fail_hard=fail_hard, timeout=120):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
