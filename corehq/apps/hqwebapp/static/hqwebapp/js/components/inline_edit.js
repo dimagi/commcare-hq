@@ -32,7 +32,7 @@ hqDefine('hqwebapp/js/components/inline_edit', [
     _,
     DOMPurify
 ) {
-    const compnonent = {
+    const component = {
         viewModel: function (params) {
             var self = this;
 
