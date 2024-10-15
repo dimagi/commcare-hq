@@ -6,7 +6,8 @@ hqDefine("linked_domain/js/domain_links", [
     'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/multiselect_utils',
     'analytix/js/kissmetrix',
-    'hqwebapp/js/components.ko', // for pagination and search box
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
     'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
 ], function (
     RMI,

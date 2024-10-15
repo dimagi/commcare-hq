@@ -3,7 +3,7 @@ hqDefine("sms/js/settings", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler',
-    'hqwebapp/js/components.ko',    // select toggle widget
+    'hqwebapp/js/components/select_toggle',
     'bootstrap-timepicker/js/bootstrap-timepicker',
     'hqwebapp/js/bootstrap3/widgets', //multi-emails
 ], function(
