@@ -5,6 +5,7 @@ hqDefine("reports/js/bootstrap5/saved_reports_main", [
     'reports/js/bootstrap5/report_config_models',
     'reports/js/scheduled_reports_list',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko', // modal binding
+    'hqwebapp/js/components/pagination',
 ], function (
     $,
     ko,
