@@ -54,6 +54,15 @@
          });
  
          self.isMultiple = ko.computed(function () {
+@@ -486,7 +486,7 @@
+             return false;
+         });
+ 
+-        self.BulkExportDelete = function (observable, event) {
++        self.BulkExportDelete = function () {
+             var count = self.bulkExportDownloadCount;
+             self.panels().forEach(panel => panel.isBulkDeleting(true));
+             var bulkDelete = function () {
 @@ -682,7 +682,7 @@
                          if (export_.hasEmailedExport) {
                              export_.emailedExport.pollProgressBar();
