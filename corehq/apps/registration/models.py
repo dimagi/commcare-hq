@@ -159,7 +159,7 @@ class AsyncSignupRequest(models.Model):
 
 
 class SelfSignupWorkflow(models.Model):
-    domain = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255, db_index=True)
     initiating_user = models.CharField(max_length=80)
     created_on = models.DateTimeField(auto_now_add=True)
     completed_on = models.DateTimeField(null=True)
@@ -168,11 +168,6 @@ class SelfSignupWorkflow(models.Model):
         max_length=25,
         null=True
     )
-
-    class Meta:
-        indexes = [
-            models.Index(fields=["domain", "completed_on"]),
-        ]
 
     @classmethod
     def get_in_progress_for_domain(cls, domain):
