@@ -172,7 +172,11 @@ class CustomDataEditor(object):
     @property
     @memoized
     def fields(self):
-        return list(self.model.get_fields(required_only=self.required_only))
+        field_filter_config = CustomDataFieldsDefinition.FieldFilterConfig(
+            required_only=self.required_only,
+            is_required_check_func=self.field_view.is_field_required
+        )
+        return list(self.model.get_fields(field_filter_config=field_filter_config))
 
     def init_form(self, post_dict=None):
         form_fields = OrderedDict()
