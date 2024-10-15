@@ -2060,7 +2060,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         touched = []
         faulty_groups = []
         for to_add in desired - current:
-            group = Group.get(to_add)
+            try:
+                group = Group.get(to_add)
+            except ResourceNotFound:
+                faulty_groups.append(to_add)
+                continue
             if group.domain != self.domain:
                 faulty_groups.append(to_add)
                 continue
