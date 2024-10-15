@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import gettext as _
 
 from corehq.apps.registration.models import AsyncSignupRequest
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_ip
 
 from corehq.apps.analytics.tasks import (
@@ -82,8 +83,11 @@ class SsoBackend(ModelBackend):
             is_new_user = True
 
         if not is_new_user and not web_user.is_active:
-            web_user.is_active = True
-            web_user.save()
+            try:
+                web_user.is_active = True
+                web_user.save()
+            except Exception as e:
+                notify_exception(request, message=str(e), details={'user': web_user})
             request.sso_new_user_messages['success'].append(
                 _("User account for {} has been re-activated.").format(web_user.username)
             )
