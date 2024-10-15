@@ -18,11 +18,13 @@ hqDefine('hqwebapp/js/components/bootstrap3/feedback', [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',
 ], function (
     ko,
     $,
     _,
-    initialPageData
+    initialPageData,
+    koComponents
 ) {
     const component = {
         viewModel: function (params) {
@@ -77,16 +79,7 @@ hqDefine('hqwebapp/js/components/bootstrap3/feedback', [
         template: '<div data-bind="template: { name: \'ko-feedback-template\' }"></div>',
     };
 
-    ko.components.register('feedback', component);
-
-    $(function () {
-        _.each($('feedback'), function (el) {
-            var $el = $(el);
-            if ($el.data('apply-bindings') !== false) {
-                $(el).koApplyBindings();
-            }
-        });
-    });
+    koComponents.register('feedback', component);
 
     return component;
 });
