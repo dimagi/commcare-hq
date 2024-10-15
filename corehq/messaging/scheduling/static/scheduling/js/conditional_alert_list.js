@@ -13,8 +13,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
     assertProperties,
     initialPageData
 ) {
-    var table = null;
-
     var rule = function (options) {
         var self = ko.mapping.fromJS(options);
         self.requestInProgress = ko.observable(false);

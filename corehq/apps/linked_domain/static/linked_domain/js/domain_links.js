@@ -552,11 +552,11 @@ hqDefine("linked_domain/js/domain_links", [
     };
 
     $(function () {
-        var view_data = initialPageData.get('view_data');
+        var viewData = initialPageData.get('view_data');
         var csrfToken = $("#csrfTokenContainer").val();
         setRMI(initialPageData.reverse('linked_domain:domain_link_rmi'), csrfToken);
 
-        var model = DomainLinksViewModel(view_data);
+        var model = DomainLinksViewModel(viewData);
         $("#ko-linked-projects").koApplyBindings(model);
 
         if ($("#new-downstream-domain-modal").length) {
