@@ -26,11 +26,13 @@ hqDefine('hqwebapp/js/components/inline_edit', [
     'knockout',
     'underscore',
     'DOMPurify/dist/purify.min',
+    'hqwebapp/js/components.ko',
 ], function (
     $,
     ko,
     _,
-    DOMPurify
+    DOMPurify,
+    koComponents
 ) {
     const component = {
         viewModel: function (params) {
@@ -145,16 +147,7 @@ hqDefine('hqwebapp/js/components/inline_edit', [
         template: '<div data-bind="template: { name: \'ko-inline-edit-template\' }"></div>',
     };
 
-    ko.components.register('inline-edit', component);
-
-    $(function () {
-        _.each($('inline-edit'), function (el) {
-            var $el = $(el);
-            if ($el.data('apply-bindings') !== false) {
-                $(el).koApplyBindings();
-            }
-        });
-    });
+    koComponents.register('inline-edit', component);
 
     return component;
 });

@@ -15,10 +15,12 @@ hqDefine('hqwebapp/js/components/search_box', [
     'jquery',
     'knockout',
     'underscore',
+    'hqwebapp/js/components.ko',
 ], function (
     $,
     ko,
-    _
+    _,
+    koComponents
 ) {
     const component = {
         viewModel: function (params) {
@@ -54,16 +56,7 @@ hqDefine('hqwebapp/js/components/search_box', [
         template: '<div data-bind="template: { name: \'ko-search-box-template\' }"></div>',
     };
 
-    ko.components.register('search-box', component);
-
-    $(function () {
-        _.each($('search-box'), function (el) {
-            var $el = $(el);
-            if ($el.data('apply-bindings') !== false) {
-                $(el).koApplyBindings();
-            }
-        });
-    });
+    koComponents.register('search-box', component);
 
     return component;
 });
