@@ -108,6 +108,7 @@
           </div>
           <div class="tab-pane {% if schedule_form_active %}active{% endif %}" id="schedule">
             <div class="panel-body">
+              {% crispy recipient_filter_form %}
               {% include 'scheduling/partials/schedule_form.html' %}
             </div>
             {% include 'scheduling/partials/conditional_alert_save.html' %}
