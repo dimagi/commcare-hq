@@ -161,11 +161,23 @@ class Command(ResourceStaticCommand):
         """
         logger.info("Mapping main modules to django apps")
         dirs = {v: defaultdict(set) for v in BOOTSTRAP_VERSIONS}
+        time_with_subprocess = 0
+        time_with_read = 0
+        from datetime import datetime
         for filename in html_files:
+            start = datetime.now().timestamp()
             proc = subprocess.Popen(["grep", REQUIREJS_MAIN_GREP_PATTERN, filename],
                                     stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
             out = out.decode('utf-8')
+            time_with_subprocess = time_with_subprocess + (datetime.now().timestamp() - start)
+
+            start = datetime.now().timestamp()
+            with open(filename, "r") as fh:
+                content = fh.read()
+                match = re.search(REQUIREJS_MAIN_PYTHON_PATTERN, content)
+            time_with_read = time_with_read + (datetime.now().timestamp() - start)
+
             if out:
                 match = re.search(REQUIREJS_MAIN_PYTHON_PATTERN, out)
                 if match:
@@ -175,6 +187,8 @@ class Command(ResourceStaticCommand):
                     if '/spec/' not in main:  # ignore tests
                         if os.path.exists(self._staticfiles_path(main + '.js')):
                             dirs[bootstrap_version][directory].add(main)
+        print(f"TIME with subprocess = {time_with_subprocess}")
+        print(f"TIME with read = {time_with_read}")
         return dirs
 
     def _add_bundles(self, main_module_map, bootstrap_version=3):
