@@ -28,7 +28,7 @@ def purge_old_device_report_entries():
 
 @no_result_task(queue='sumologic_logs_queue', default_retry_delay=10 * 60, max_retries=3, bind=True)
 def send_device_log_to_sumologic(self, url, data, headers, domain):
-    # `domain` is added inorder to be able to filter out this task by domain in datadog
+    # `domain` is added in order to be able to filter out this task by domain in datadog
     # `corehq.celery_monitoring.signals.get_domain_from_task` will use this argument to get the domain
     # and pass it to datadog post celery task run
     encoded_headers = {key.encode('utf-8'): header.encode('utf-8') for key, header in headers.items()}
