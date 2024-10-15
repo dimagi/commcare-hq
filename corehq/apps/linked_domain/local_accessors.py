@@ -65,6 +65,7 @@ def get_custom_data_models(domain, limit_types=None):
                     'id': field.id,
                     'slug': field.slug,
                     'is_required': field.is_required,
+                    'required_for': field.required_for,
                     'label': field.label,
                     'choices': field.choices,
                     'regex': field.regex,
