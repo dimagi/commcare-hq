@@ -9,7 +9,8 @@ hqDefine("users/js/web_users",[
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
     "users/js/web_users_list",
-    'hqwebapp/js/components.ko',    // pagination and search box widgets
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // for modals
 ], function ($, ko, _, moment, assertProperties, initialPageData, webUsersList) {
 
