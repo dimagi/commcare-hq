@@ -184,7 +184,7 @@ class CustomDataEditor(object):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         has_profile_privilege_and_is_user_fields_view = (
             domain_has_privilege(self.domain, privileges.APP_USER_PROFILES)
-            and self.field_view is UserFieldsView
+            and issubclass(self.field_view, UserFieldsView)
         )
         if has_profile_privilege_and_is_user_fields_view:
             original_profile_id = None
