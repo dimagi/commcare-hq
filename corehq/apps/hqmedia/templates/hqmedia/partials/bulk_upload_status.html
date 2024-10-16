@@ -70,7 +70,7 @@
             {% if audio.updated %}
               <span class="label label-success">{% trans 'Updated' %}</span>
             {% endif %}
-            <a href="<%- audio.url %>"
+            <a href="{{ audio.url }}"
                   target="_blank"
                   data-content="{% trans 'Playing audio directly on this page is currently not supported.' %}">
               {% trans 'Listen to Audio' %}</a>
@@ -91,7 +91,7 @@
             {% if video.updated %}
               <span class="label label-success">{% trans 'Updated' %}</span>
             {% endif %}
-            <a href="<%- video.url %>"
+            <a href="{{ video.url }}"
                   target="_blank"
                   data-content="{% trans 'Watching video directly on this page is not supported. Opens a new tab.' %}">
               {% trans 'Watch Video' %}</a>
