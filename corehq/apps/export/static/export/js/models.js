@@ -4,22 +4,24 @@
  *
  */
 
-hqDefine('export/js/bootstrap3/models', [
+hqDefine('export/js/models', [
     'jquery',
     'knockout',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'export/js/const',
     'export/js/utils',
-    'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of customPathString
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // needed for multirow_sortable binding
+    'hqwebapp/js/bootstrap5/validators.ko',        // needed for validation of customPathString
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // needed for multirow_sortable binding
 ], function (
     $,
     ko,
     _,
+    bootstrap,
     initialPageData,
     toggles,
     googleAnalytics,
@@ -451,7 +453,7 @@ hqDefine('export/js/bootstrap3/models', [
         table.showDeleted(!table.showDeleted());
 
         if (this.numberOfAppsToProcess > 0 && table.showDeleted()) {
-            $('#export-process-deleted-applications').modal('show');
+            bootstrap.Modal.getOrCreateInstance('#export-process-deleted-applications').show();
         }
     };
 
@@ -576,7 +578,7 @@ hqDefine('export/js/bootstrap3/models', [
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
         if (urlParams.get('load_deprecated') !== 'True' && table.showDeprecated()) {
-            $('#export-process-deprecated-properties').modal('show');
+            bootstrap.Modal.getOrCreateInstance('#export-process-deprecated-properties').show();
         }
     };
 
