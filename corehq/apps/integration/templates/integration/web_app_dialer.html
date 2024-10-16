@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load static %}
 {% load compress %}
-{% requirejs_main "integration/js/dialer/domain_dialer_main" %}
+{% requirejs_main_b5 "integration/js/dialer/domain_dialer_main" %}
 
 {% block stylesheets %}
   {{ block.super }}
@@ -69,7 +69,7 @@
                 <div class="panelHeading">{% trans 'Preferences'%}</div>
                 <div class="panelBody">
                     <div class="checkBox">
-                        <input type="checkbox" name="chkAutoDial" id="checkbox-autodial" value="">
+                        <input type="checkbox" name="chkAutoDial" id="checkbox-autodial" value="">  {# todo B5: css-checkbox #}
                         <label for="chkAutoDial">{% trans 'Auto dial on load'%}</label>
                     </div>
                     <div class="pad90"></div>
