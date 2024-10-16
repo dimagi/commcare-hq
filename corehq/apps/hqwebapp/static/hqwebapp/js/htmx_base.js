@@ -23,21 +23,25 @@
  *   in the `modals` block of the page, or `include` a template that extends it.
  */
 import htmx from 'htmx.org';
-// Update the default timeout to something reasonable
-htmx.config.timeout = 20000;
 
 import 'hqwebapp/js/htmx_utils/hq_hx_action';
 import 'hqwebapp/js/htmx_utils/csrf_token';
 import retryHtmxRequest from 'hqwebapp/js/htmx_utils/retry_request';
 import { showHtmxErrorModal } from 'hqwebapp/js/htmx_utils/errors';
 
+// By default, there is no timeout and requests hang indefinitely, so update to reasonable value.
+htmx.config.timeout = 20000;  // 20 seconds, in milliseconds
+
+const HTTP_BAD_GATEWAY = 504;
+const HTTP_REQUEST_TIMEOUT = 408;
+
 document.body.addEventListener('htmx:responseError', (evt) => {
     let errorCode = evt.detail.xhr.status;
-    if (errorCode === 504) {
+    if (errorCode === HTTP_BAD_GATEWAY) {
         if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig)) {
             showHtmxErrorModal(
                 errorCode,
-                gettext('Gateway Timeout Error: max retries exceeded')
+                gettext('Gateway Timeout Error. Max retries exceeded.')
             );
         }
         return;
@@ -58,8 +62,8 @@ document.body.addEventListener('htmx:timeout', (evt) => {
      */
     if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig) && evt.detail.requestConfig.verb === 'get') {
         showHtmxErrorModal(
-            504,
-            gettext('Gateway Timeout Error: max retries exceeded')
+            HTTP_REQUEST_TIMEOUT,
+            gettext('Request timed out. Max retries exceeded.')
         );
     }
 });
