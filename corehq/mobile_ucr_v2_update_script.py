@@ -14,13 +14,12 @@
 
 import json
 import re
+import resource
 import traceback
 
-from corehq.apps.app_manager.dbaccessors import (
-    get_latest_app_ids_and_versions,
-    get_apps_by_id,
-)
+from corehq.apps.app_manager.dbaccessors import get_apps_by_id
 from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_2
+from corehq.apps.app_manager.models import Application
 from corehq.toggles import MOBILE_UCR
 from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
 from corehq.util.log import with_progress_bar
@@ -37,7 +36,10 @@ RE_V1_ALL_REFERENCES = re.compile(f"{V1_FIXTURE_PATTERN}|{V1_REFERENCES_PATTERN}
 skip_domains = set()
 
 
-def process(dry_run=True):
+def process(dry_run=True, max_memory_size=None):
+    if max_memory_size:
+        set_max_memory(max_memory_size)
+
     try:
         processed_domains = read_ndjson_file(PROCESSED_DOMAINS_PATH)
     except FileNotFoundError:
@@ -108,3 +110,35 @@ def update_app(domain, app, dry_run):
     if not dry_run:
         app.mobile_ucr_restore_version = MOBILE_UCR_VERSION_2
         app.save()
+
+
+def set_max_memory(size):
+    """
+    Can be used to set max memory for the process (used for low memory machines)
+    Example: 800 MB set_max_memory(1024 * 1000 * 800)
+
+    - size: in bytes
+    """
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    resource.setrlimit(resource.RLIMIT_AS, (size, hard))
+
+
+def get_latest_app_ids_and_versions(domain):
+    key = [domain]
+    results = Application.get_db().view(
+        'app_manager/applications_brief',
+        startkey=key + [{}],
+        endkey=key,
+        descending=True,
+        reduce=False,
+        include_docs=False,
+    )
+    latest_ids_and_versions = {}
+    for result in results:
+        app_id = result['value']['_id']
+        version = result['value']['version']
+
+        # Since we have sorted, we know the first instance is the latest version
+        if app_id not in latest_ids_and_versions:
+            latest_ids_and_versions[app_id] = version
+    return latest_ids_and_versions
