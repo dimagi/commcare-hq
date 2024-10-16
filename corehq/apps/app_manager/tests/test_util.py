@@ -218,7 +218,7 @@ class TestSplitPath(SimpleTestCase):
         self.assertEqual(name, '')
 
 
-class TestDoesAppHaveMobileUCRV1Refs(SimpleTestCase, SuiteMixin):
+class TestDoesAppHaveMobileUCRV1Refs(TestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def _create_app_with_form(self, xml_source_name):
