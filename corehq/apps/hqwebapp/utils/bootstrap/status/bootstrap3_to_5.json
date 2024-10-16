@@ -166,7 +166,8 @@
       "js/customize_export_new.js",
       "js/incremental_export.js",
       "js/download_export.js",
-      "js/models.js"
+      "js/models.js",
+      "js/export_list_main.js"
     ]
   },
   "integration": {
