@@ -8,7 +8,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
     'underscore',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components.ko',  // pagination widget
+    'hqwebapp/js/components/pagination',
 ], function (
     $,
     ko,
