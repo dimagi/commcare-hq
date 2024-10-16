@@ -33,6 +33,12 @@ V1_FIXTURE_PATTERN = r'<.*src="jr://fixture/commcare:reports.*>'
 V1_REFERENCES_PATTERN = r"<.*instance\('reports'\)/reports/.*>"
 RE_V1_ALL_REFERENCES = re.compile(f"{V1_FIXTURE_PATTERN}|{V1_REFERENCES_PATTERN}")
 
+# Pattern for references in case list/detail.
+# The below instance needs to be referred in a fixture setup and
+# is then later used in Case List/Detail filters and columns.
+V1_CASE_LIST_REFERENCES_PATTERN = r"instance\('commcare:reports'\)/reports/report\[@id='.*'\]/rows/row"
+RE_V1_CASE_LIST_REFERENCES_PATTERN = re.compile(V1_CASE_LIST_REFERENCES_PATTERN)
+
 skip_domains = set()
 
 
@@ -65,7 +71,7 @@ def process(dry_run=True, max_memory_size=None):
                 # Don't look at app.is_released since the latest version might not be released yet
                 if app.mobile_ucr_restore_version != '2.0':
                     save_in_log(f"Processing App: {domain}: {app.name}: {app.id}")
-                    if not has_non_v2_form(domain, app):
+                    if not has_non_v2_reference(domain, app):
                         update_app(domain, app, dry_run)
                     else:
                         save_in_log(
@@ -94,7 +100,12 @@ def read_ndjson_file(path):
         return set(json.loads(line) for line in file.readlines())
 
 
-def has_non_v2_form(domain, app):
+def has_non_v2_reference(domain, app):
+    suite = app.create_suite()
+    if re.search(RE_V1_CASE_LIST_REFERENCES_PATTERN, suite.decode()):
+        save_in_log(f"App Case List Contains V1 Refs: {domain}: {app.name}")
+        return True
+
     for form in app.get_forms():
         save_in_log(f"Processing Form: {domain}: {form.name}")
         # The second condition should always be False if the first one is
