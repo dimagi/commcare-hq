@@ -1546,6 +1546,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # When updating this method, please also ensure that your updates also
         # carry over to bulk_auto_deactivate_commcare_users.
         self.last_modified = datetime.utcnow()
+        if self.username == 'jcheng_test@dimagi.org':
+            notify_exception(None, "CouchUser jcheng_test@dimagi.org is saved!!")
         with CriticalSection(['username-check-%s' % self.username], fail_hard=fail_hard, timeout=120):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
@@ -1582,6 +1584,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 couch_user.sync_from_django_user(django_user)
 
                 try:
+                    if couch_user.username == 'jcheng_test@dimagi.org':
+                        notify_exception(None, "jcheng_test@dimagi.org saved in django_user_post_save_signal")
                     # avoid triggering cyclical sync
                     super(CouchUser, couch_user).save(**get_safe_write_kwargs())
                 except ResourceConflict:
@@ -2523,6 +2527,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                 yield user_doc['email']
 
     def save(self, fire_signals=True, **params):
+        if self.username == 'jcheng_test@dimagi.org':
+            fire_signals = False
         super().save(fire_signals=fire_signals, **params)
         if fire_signals and not self.to_be_deleted():
             from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
