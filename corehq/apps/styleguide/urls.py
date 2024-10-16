@@ -64,6 +64,8 @@ urlpatterns = [
         name="styleguide_migration_guide_b5"),
     url(r'^b5/javascript/$', bootstrap5.styleguide_javascript_guide,
         name="styleguide_javascript_guide_b5"),
+    url(r'^b5/htmx_alpine/$', bootstrap5.styleguide_htmx_and_alpine,
+        name="styleguide_htmx_and_alpine_b5"),
     url(r'^b5/atoms/accessibility/$', bootstrap5.styleguide_atoms_accessibility,
         name="styleguide_atoms_accessibility_b5"),
     url(r'^b5/atoms/typography/$', bootstrap5.styleguide_atoms_typography,
