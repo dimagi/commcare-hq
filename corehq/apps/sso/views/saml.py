@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import auth
 from django.http import (
     HttpResponse,
@@ -28,6 +30,9 @@ from corehq.apps.sso.utils.view_helpers import (
     render_sso_user_login_failed,
     render_saml_acs_error,
 )
+
+logger = logging.getLogger(__name__)
+logger.setLevel('DEBUG')
 
 
 @identity_provider_required
@@ -94,6 +99,10 @@ def sso_saml_acs(request, idp_slug):
     show_sso_login_success_or_error_messages(request)
 
     if user:
+        if user.username == 'jcheng_test@dimagi.org':
+            logger.info("[SSO DEBUG] after authentication, now log in. The django user.is_active is"
+                        f" {user.is_active}."
+                        "If it is True, then we're not using a stale django user.")
         auth.login(request, user)
         process_async_signup_requests(request, user)
 

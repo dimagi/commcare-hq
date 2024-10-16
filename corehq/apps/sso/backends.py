@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
@@ -24,6 +26,9 @@ from corehq.const import (
     USER_CHANGE_VIA_SSO_INVITE,
     USER_CHANGE_VIA_SSO_NEW_USER,
 )
+
+logger = logging.getLogger(__name__)
+logger.setLevel('DEBUG')
 
 
 class SsoBackend(ModelBackend):
@@ -82,6 +87,8 @@ class SsoBackend(ModelBackend):
             is_new_user = True
 
         if not is_new_user and not web_user.is_active:
+            if web_user.username == 'jcheng_test@dimagi.org':
+                logger.info("[SSO DEBUG]web_user.is_active will be set to True in the next line!")
             web_user.is_active = True
             web_user.save()
             request.sso_new_user_messages['success'].append(
@@ -92,6 +99,9 @@ class SsoBackend(ModelBackend):
             self._process_invitation(request, async_signup.invitation, web_user, is_new_user)
 
         request.sso_login_error = None
+        if user.username == 'jcheng_test@dimagi.org':
+            logger.info(f"[SSO DEBUG]At the end of SsoBackend.authentiate, user.is_active is {user.is_active}, "
+                        f"web_user.is_active is {web_user.is_active}")
         return user
 
     def _create_new_user(self, request, username, async_signup):
