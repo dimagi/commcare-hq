@@ -150,7 +150,8 @@
       "partials/delete_bulk_notice.html",
       "partials/export_download_prepare.html",
       "partials/odata_feed_limit_reached_modal.html",
-      "partials/table.html"
+      "partials/table.html",
+      "partials/export_bulk_notice.html"
     ],
     "javascript": [
       "js/download_data_files.js"
