@@ -965,6 +965,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
+#: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/events/templates/edit_attendee.html
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
@@ -2984,6 +2985,7 @@ msgid "Generating Report..."
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html
+#: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/geospatial/templates/case_management.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
@@ -4122,7 +4124,6 @@ msgid "Copy version"
 msgstr ""
 
 #: corehq/apps/app_manager/forms.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Current"
 msgstr ""
 
@@ -6324,7 +6325,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
@@ -7861,7 +7861,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
@@ -9691,45 +9690,6 @@ msgstr ""
 msgid "No Multimedia"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Upload Icon Image"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Select Icon Image"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Select"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Current Icon"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Begin Upload"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Upload Menu Audio"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Select Menu Audio"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Current Audio"
-msgstr ""
-
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
@@ -10263,6 +10223,7 @@ msgid "Replace Logo"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Upload Logo"
 msgstr ""
 
@@ -12299,6 +12260,15 @@ msgstr ""
 msgid "Show Full Menu"
 msgstr ""
 
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
+#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
+#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Select"
+msgstr ""
+
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/detail.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/no_items_text.html
 msgid "List is empty."
@@ -12762,16 +12732,16 @@ msgid "Select one"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_entity.py
+msgid "Additional Information"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_entity.py
 #: corehq/apps/registration/forms.py
 msgid "Invalid profile selected. Please select a valid profile."
 msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_entity.py
 msgid "Select a profile"
-msgstr ""
-
-#: corehq/apps/custom_data_fields/edit_entity.py
-msgid "Additional Information"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_entity.py
@@ -18580,7 +18550,7 @@ msgid "past {} days"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-msgid "Date ranges with more than 90 days are not supported"
+msgid "Date ranges with more than {} days are not supported"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
@@ -18916,6 +18886,10 @@ msgstr ""
 msgid ""
 "Web users in the controlling project space will <strong>not</strong> have "
 "permissions in the following project spaces."
+msgstr ""
+
+#: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
+msgid "Customize Mobile Form Submissions Date Range"
 msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
@@ -23895,6 +23869,11 @@ msgid "Select Files"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Begin Upload"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
 msgid "Bulk Upload File Queue"
 msgstr ""
 
@@ -23931,63 +23910,64 @@ msgstr ""
 msgid "Uploaded Files"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Multimedia Sharing Options"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "License"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Creative Commons Attribution, Non-Commercial (CC BY-NC)"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Creative Commons Attribution, No Derivatives (CC BY-ND)"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Creative Commons Attribution (CC BY)"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid ""
-"Creative Commons Attribution, Non-Commercial, and Share Alike (CC BY-NC-SA)"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid ""
-"Creative Commons Attribution, Non-Commercial, and No Derivatives (CC BY-NC-"
-"ND)"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Creative Commons Attribution, Share Alike (CC BY-SA)"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Author"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Enter the name of the author"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Attribution Notes"
-msgstr ""
-
 #: corehq/apps/hqmedia/templates/hqmedia/partials/manage_paths.html
 msgid "Include only paths where the multimedia file is missing?"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select New"
+msgid "Upload Icon Image"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Upload Audio"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Upload Video"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Upload File"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Select Icon Image"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Select Menu Audio"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Select Video"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Select Logo"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Select File"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Current Icon"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Current Audio"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Current Video"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Current Logo"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Current File"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
@@ -45065,6 +45045,10 @@ msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 msgid "Failure"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
+msgid "Invalid"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html

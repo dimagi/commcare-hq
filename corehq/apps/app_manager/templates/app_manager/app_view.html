@@ -20,7 +20,6 @@
     <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
     <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
     <script src="{% static 'app_manager/js/settings/translations.js' %}"></script>
-    <script src="{% static 'app_manager/js/settings/password_setter.jquery.js' %}"></script>
     <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
     <script src="{% static 'hqmedia/js/media_reference_models.js' %}"></script>
     <script src="{% static 'app_manager/js/app_view.js' %}"></script>
@@ -78,6 +77,5 @@
   {% for uploader in uploaders %}
     {% include 'hqmedia/partials/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
   {% endfor %}
-  {% include 'app_manager/partials/settings/password_setter_modal.html' %}
   {% include 'app_manager/partials/toggle_diff_modal.html' %}
 {% endblock %}

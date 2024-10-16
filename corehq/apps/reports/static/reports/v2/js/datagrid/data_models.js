@@ -2,13 +2,13 @@
  * todo add docstring
  */
 
-hqDefine('reports/v2/js/datagrid/bootstrap5/data_models', [
+hqDefine('reports/v2/js/datagrid/data_models', [
     'jquery',
     'knockout',
     'underscore',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap5/components.ko',  // pagination widget
+    'hqwebapp/js/components/pagination',
 ], function (
     $,
     ko,
@@ -55,7 +55,7 @@ hqDefine('reports/v2/js/datagrid/bootstrap5/data_models', [
                 .width($rows.width())
                 .css('left', position.left + 'px')
                 .css('top', position.top + "px");
-            
+
             $loading.find('.loading-text')
                 .css('margin-top', marginTop + 'px');
         });
