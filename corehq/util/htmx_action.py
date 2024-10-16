@@ -93,7 +93,10 @@ class HqHtmxActionMixin:
 
         handler = getattr(self, action, None)
         if not callable(handler):
-            return super().dispatch(request, *args, **kwargs)
+            return HtmxResponseForbidden(
+                f"Method '{type(self).__name__}.{action}' "
+                f"does not exist"
+            )
 
         action_method = getattr(handler, "hq_hx_action", None)
         if not action_method:
