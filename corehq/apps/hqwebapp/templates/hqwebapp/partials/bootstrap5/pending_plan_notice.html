@@ -1,0 +1,34 @@
+{% load i18n %}
+
+<div class="paused-plan card mb-3 p-3">
+  <div class="row">
+    <div class="col-sm-3 column-icon">
+      <i class="fa-regular fa-hourglass-half"></i>
+    </div>
+    <div class="col-sm-9 column-text">
+      <h3>
+        {% blocktrans %}
+          Your subscription is pending plan selection.
+        {% endblocktrans %}
+      </h3>
+      <p class="lead">
+        {% blocktrans %}
+          Please <a href="{{ change_plan_url }}">select a plan</a> to get started with your CommCare subscription.
+          <br/>
+          For now, enjoy free Community Edition access to CommCare with limited features.
+        {% endblocktrans %}
+      </p>
+      <p>
+        <a href="{{ change_plan_url }}" class="btn btn-lg btn-primary">
+          {% trans "Select Plan" %}
+        </a>
+      </p>
+      <p class="small">
+        {% blocktrans %}
+          Prefer to stay with Community Edition instead?
+          <a href="#">Don't show this banner again.</a>
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+</div>

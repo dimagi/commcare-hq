@@ -107,6 +107,7 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
             ),
         }
         context.update(get_paused_plan_context(self.request, self.domain))
+        context.update(get_pending_plan_context(self.request, self.domain))
         return context
 
 
