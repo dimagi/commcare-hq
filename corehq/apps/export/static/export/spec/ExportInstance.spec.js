@@ -4,7 +4,7 @@ hqDefine("export/spec/ExportInstance.spec", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'export/js/const',
-    'export/js/bootstrap5/models',
+    'export/js/models',
     'export/spec/data/export_instances',
 ], function (
     $,

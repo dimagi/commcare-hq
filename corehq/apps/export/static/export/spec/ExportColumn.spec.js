@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 hqDefine("export/spec/ExportColumn.spec", [
     'underscore',
-    'export/js/bootstrap5/models',
+    'export/js/models',
 ], function (
     _,
     viewModels

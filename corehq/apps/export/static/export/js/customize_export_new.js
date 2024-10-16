@@ -3,7 +3,7 @@ hqDefine('export/js/customize_export_new', [
     'knockout',
     'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
-    'export/js/bootstrap5/models',
+    'export/js/models',
     'hqwebapp/js/toggles',
     'export/js/const',
 ], function (
