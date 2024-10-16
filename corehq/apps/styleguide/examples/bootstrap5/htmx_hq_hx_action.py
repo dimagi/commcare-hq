@@ -91,7 +91,7 @@ class TodoListStore(CacheStore):
     Caution: Please don't use this for real features.
     """
     slug = 'styleguide-todo-list'
-    default_value = [
+    initial_value = [
         {
             "id": 1,
             "name": "get coat hangers",

@@ -23,14 +23,16 @@ class CacheStore(ABC):
 
     @property
     @abstractmethod
-    def default_value(self):
+    def initial_value(self):
         """
-        Please make sure the default value can be properly pickled and stored
-        in cached memory. Safe options are strings, dicts, and lists of strings.
+        Please make sure the initial value can be properly pickled and stored
+        in cached memory. Safe options are strings, booleans, integers, dicts,
+        and lists of strings, booleans, and integers.
+
         If you want to store more complicated objects, perhaps it's time to start
         using a database. Please remember this is only for prototyping and examples!
         """
-        raise NotImplementedError("please specify a 'default_value'")
+        raise NotImplementedError("please specify an 'initial_value'")
 
     @property
     def cache_key(self):
@@ -40,7 +42,7 @@ class CacheStore(ABC):
         cache.set(self.cache_key, data, self.timeout)
 
     def get(self):
-        return cache.get(self.cache_key, copy.deepcopy(self.default_value))
+        return cache.get(self.cache_key, copy.deepcopy(self.initial_value))
 
     def delete(self):
         cache.delete(self.cache_key)
