@@ -1208,6 +1208,10 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                 messages.success(request, _('Data source "{}" saved!').format(
                     config.display_name
                 ))
+                messages.success(request, _(
+                    'This data source will be built/rebuilt automatically the '
+                    'next time a row is added.'
+                ))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(
                         EditDataSourceView.urlname, args=[self.domain, config._id])
