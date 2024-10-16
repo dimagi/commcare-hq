@@ -131,6 +131,7 @@ hqDefine("export/js/create_export", [
                 $formElem.select2({
                     data: self._app_types || [],
                     width: '100%',
+                    dropdownParent: $("#createExportOptionsModal"),
                 }).val(drilldownDefaults.app_type).trigger('change');
             }
         },
@@ -152,6 +153,7 @@ hqDefine("export/js/create_export", [
                         $formElem.select2({
                             data: fieldData || [],
                             width: '100%',
+                            dropdownParent: $("#createExportOptionsModal"),
                         }).val(drilldownDefaults[fieldSlug]).trigger('change');
                     }
                 }
