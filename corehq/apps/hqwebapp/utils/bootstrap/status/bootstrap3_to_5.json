@@ -143,7 +143,8 @@
       "partials/export_list_controller.html",
       "download_export.html",
       "customize_export_new.html",
-      "partials/feed_filter_modal.html"
+      "partials/feed_filter_modal.html",
+      "partials/new_customize_export_templates.html"
     ],
     "javascript": [
       "js/download_data_files.js"
