@@ -30,7 +30,7 @@
     >
       {% for item in items %}
         {% if not item.is_done %}
-          {% include 'styleguide/bootstrap5/examples/htmx_todo_item.html' %}
+          {% include 'styleguide/htmx_todo/item.html' %}
         {% endif %}
       {% endfor %}
     </ul>
@@ -44,7 +44,7 @@
     >
       {% for item in items %}
         {% if item.is_done %}
-          {% include 'styleguide/bootstrap5/examples/htmx_todo_item_done.html' %}
+          {% include 'styleguide/htmx_todo/item_done.html' %}
         {% endif %}
       {% endfor %}
     </ul>

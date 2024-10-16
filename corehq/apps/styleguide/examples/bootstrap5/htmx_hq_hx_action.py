@@ -17,7 +17,7 @@ class TodoListDemoView(HqHtmxActionMixin, BasePageView):
     HTMX responses when HTMX interacts with this view using the `hq-hx-action` attribute.
     """
     urlname = "sg_htmx_todo_list_example"
-    template_name = 'styleguide/bootstrap5/examples/htmx_todo_list.html'
+    template_name = 'styleguide/htmx_todo/main.html'
 
     @property
     def page_url(self):
@@ -45,8 +45,8 @@ class TodoListDemoView(HqHtmxActionMixin, BasePageView):
                 return item
 
     def render_item_response(self, request, item):
-        template = ("styleguide/bootstrap5/examples/htmx_todo_item_done_swap.html" if item["is_done"]
-                    else "styleguide/bootstrap5/examples/htmx_todo_item.html")
+        template = ("styleguide/htmx_todo/item_done_oob_swap.html" if item["is_done"]
+                    else "styleguide/htmx_todo/item.html")
         context = {
             'item': item,
         }

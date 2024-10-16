@@ -19,7 +19,7 @@ class HtmxAlpineFormDemoView(BasePageView):
     form view below asynchronously in the page content.
     """
     urlname = "sg_htmx_alpine_form_demo"
-    template_name = 'styleguide/bootstrap5/examples/htmx_alpine_form_demo.html'
+    template_name = "styleguide/htmx_alpine_crispy/main.html"
 
     @property
     def page_url(self):
@@ -42,7 +42,7 @@ class FilterDemoFormView(TemplateView):
     partial HTML template, so we don't need to extend any of the base HQ templates.
     """
     urlname = "sg_htmx_alpine_filter_form"
-    template_name = "styleguide/bootstrap5/examples/htmx_alpine_filter_form.html"
+    template_name = "styleguide/htmx_alpine_crispy/partial_form.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

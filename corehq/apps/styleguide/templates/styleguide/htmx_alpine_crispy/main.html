@@ -2,12 +2,13 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{# use this entry point if you don't need to add any extra javascript to an HTMX + Alpine page #}
+{# use the `hqwebapp/js/htmx_and_alpine` entry point to get started with HTMX and Alpine without any extra javascript #}
 {% js_entry "hqwebapp/js/htmx_and_alpine" %}
 
 {% block content %}
   <div
       class="container p-5"
+      {# loads FilterDemoFormView on load with hx-get #}
       hx-trigger="load"
       hx-get="{{ filter_form_url }}"
   >
