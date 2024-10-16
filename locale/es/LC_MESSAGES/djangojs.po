@@ -879,10 +879,6 @@ msgstr "Tiene configuraciones sin guardar."
 msgid "Settings"
 msgstr "Configuración"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/password_setter.jquery.js
-msgid "Reset"
-msgstr "Reiniciar"
-
 #: corehq/apps/app_manager/static/app_manager/js/source_files.js
 msgid "Please enter a version to compare"
 msgstr ""
@@ -3304,7 +3300,7 @@ msgstr ""
 
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
 msgid "Last 30 Days"
-msgstr ""
+msgstr "Últimos 30 Días"
 
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -3316,14 +3312,10 @@ msgid "Spans <%- startDate %> to <%- endDate %> (UTC)"
 msgstr ""
 
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
-#, fuzzy
-#| msgid "Could not clear user data. Please report an issue if this persists."
 msgid ""
 "Error updating display total, please try again or report an issue if this "
 "persists."
 msgstr ""
-"No es posible borrar los datos del usuario. Por favor reporte un problema si "
-"esto continúa."
 
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
 msgid "??"
@@ -3836,7 +3828,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid " to "
-msgstr ""
+msgstr "para"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Clear selection"
@@ -4523,16 +4515,6 @@ msgstr ""
 msgid "We were unsuccessful loading the report:"
 msgstr "No pudimos cargar el reporte:"
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/scheduled_reports_list.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/scheduled_reports_list.js
-msgid "My Scheduled Reports"
-msgstr "Mis Reportes Agendados"
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/scheduled_reports_list.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/scheduled_reports_list.js
-msgid "Other Scheduled Reports"
-msgstr ""
-
 #: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
 msgid "Labels"
@@ -4602,6 +4584,14 @@ msgstr "Que tengan números de teléfono"
 #: corehq/apps/reports/static/reports/js/filters/phone_number.js
 msgid "That do not have phone numbers"
 msgstr "Que no tengan números de teléfono"
+
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js
+msgid "My Scheduled Reports"
+msgstr "Mis Reportes Agendados"
+
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js
+msgid "Other Scheduled Reports"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/tableau.js
 msgid ""
@@ -5527,3 +5517,6 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
+
+#~ msgid "Reset"
+#~ msgstr "Reiniciar"

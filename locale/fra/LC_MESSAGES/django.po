@@ -1067,7 +1067,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
@@ -3076,7 +3075,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
 #: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
@@ -10836,36 +10834,6 @@ msgid "This application currently does not contain any multimedia references."
 msgstr ""
 "Cette application ne contient pas de références multimédia actuellement."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "Set Password"
-msgstr "Définir un mot de passe"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "The passwords don't match. Please try again."
-msgstr "Les mots de passe ne correspondent pas. Veuillez réessayer."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "Please enter a password or cancel."
-msgstr "Veuillez entrer un mot de passe ou annuler."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
-#: corehq/apps/hqwebapp/forms.py
-#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
-#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-#: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
-#: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
-#: corehq/messaging/smsbackends/mach/forms.py
-#: corehq/messaging/smsbackends/push/forms.py
-#: corehq/messaging/smsbackends/start_enterprise/forms.py
-#: corehq/motech/forms.py corehq/motech/openmrs/forms.py
-msgid "Password"
-msgstr "Mot de passe"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "Repeat Password"
-msgstr "Répéter le mot de passe"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/supported_languages.html
 msgid "Set as default"
 msgstr ""
@@ -13754,6 +13722,19 @@ msgstr "Choix multiple"
 msgid "GPS"
 msgstr "GPS"
 
+#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
+#: corehq/apps/hqwebapp/forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
+#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+#: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
+#: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
+#: corehq/messaging/smsbackends/mach/forms.py
+#: corehq/messaging/smsbackends/push/forms.py
+#: corehq/messaging/smsbackends/start_enterprise/forms.py
+#: corehq/motech/forms.py corehq/motech/openmrs/forms.py
+msgid "Password"
+msgstr "Mot de passe"
+
 #: corehq/apps/data_dictionary/models.py
 msgid "No Type Currently Selected"
 msgstr ""
@@ -15884,6 +15865,18 @@ msgid ""
 "moving\n"
 "            the only assigned mobile worker out of the location owning that "
 "cases.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Use elasticsearch when fetching apps for exports"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            (Internal) Fetches apps using elasticsearch instead of couch in "
+"exports\n"
 "            "
 msgstr ""
 
@@ -19221,10 +19214,8 @@ msgid "past {} days"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Remote apps are not supported"
 msgid "Date ranges with more than {} days are not supported"
-msgstr "Les applications à distance ne sont pas supportées"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Form ID"
@@ -22066,10 +22057,6 @@ msgid "Export Case Data"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
-msgid "Export De-Identified Cases"
-msgstr "Exporter les dossiers anonymisés "
-
-#: corehq/apps/export/views/list.py
 msgid "Populating tables for <strong>{}</strong>. ({}%)"
 msgstr ""
 
@@ -22113,6 +22100,12 @@ msgstr ""
 #: corehq/apps/export/views/list.py
 msgid "Export De-Identified Form Data"
 msgstr ""
+
+#: corehq/apps/export/views/list.py
+#, fuzzy
+#| msgid "Export De-Identified Cases"
+msgid "Export De-Identified Case Data"
+msgstr "Exporter les dossiers anonymisés "
 
 #: corehq/apps/export/views/list.py
 msgid "Export De-Identified Daily Saved Exports"
@@ -23016,6 +23009,18 @@ msgstr ""
 msgid ""
 "Enter your Mapbox API token here. Make sure your token has the correct scope "
 "configured for use of the Mapbox Matrix API."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Reassign Cases"
+msgid "Flag assigned cases"
+msgstr "Transférer les dossiers"
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"When enabled, cases that are assigned through disbursement from the Case "
+"Management page will include a case property '{}' with value as True."
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
@@ -24687,22 +24692,16 @@ msgid "Upload Icon Image"
 msgstr "Télécharger l'image de l'icône "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Upload Menu Audio"
 msgid "Upload Audio"
-msgstr "Téléchargez Fichier du Audio pour le Menu"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Upload file"
 msgid "Upload Video"
-msgstr "Uploader un fichier"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Upload file"
 msgid "Upload File"
-msgstr "Uploader un fichier"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Select Icon Image"
@@ -24713,16 +24712,12 @@ msgid "Select Menu Audio"
 msgstr "Sélectionnez le Fichier Audio pour le Menu"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Select File"
 msgid "Select Video"
-msgstr "Sélectionner un fichier"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Delete Logo"
 msgid "Select Logo"
-msgstr "Supprimer le logo"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Select File"
@@ -24737,22 +24732,16 @@ msgid "Current Audio"
 msgstr "Fichier Audio Actuel"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Current Audio"
 msgid "Current Video"
-msgstr "Fichier Audio Actuel"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Current Icon"
 msgid "Current Logo"
-msgstr "L'icône courant"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Current Price"
 msgid "Current File"
-msgstr "Prix Actuel"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
 msgid ""
@@ -43949,8 +43938,16 @@ msgid "The Case's Child Cases"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-msgid "User Specified via Case Property"
-msgstr ""
+#, fuzzy
+#| msgid "Please specify a case property name."
+msgid "Username Specified via Case Property"
+msgstr "Veuillez spécifier un nom de la propriété de dossier."
+
+#: corehq/messaging/scheduling/forms.py
+#, fuzzy
+#| msgid "Enter a Case Property"
+msgid "User ID Specified via Case Property"
+msgstr "Entrez la propriété du Cas"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Email Specified via Case Property"
@@ -43979,6 +43976,12 @@ msgstr ""
 #: corehq/messaging/scheduling/forms.py
 msgid "Username Case Property"
 msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+#, fuzzy
+#| msgid "Enter a Case Property"
+msgid "User ID Case Property"
+msgstr "Entrez la propriété du Cas"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Email Case Property"
@@ -46454,10 +46457,8 @@ msgid "Failure"
 msgstr "Echec"
 
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
-#, fuzzy
-#| msgid "Invalid URL"
 msgid "Invalid"
-msgstr "URL non valide"
+msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 msgid "You haven't configured any services to forward to yet."
@@ -48081,44 +48082,14 @@ msgstr "Le Score à la Fonctionnalité"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
-#~ msgid "Multimedia Sharing Options"
-#~ msgstr "Options de partage multimédia"
+#~ msgid "Set Password"
+#~ msgstr "Définir un mot de passe"
 
-#~ msgid "License"
-#~ msgstr "Licence"
+#~ msgid "The passwords don't match. Please try again."
+#~ msgstr "Les mots de passe ne correspondent pas. Veuillez réessayer."
 
-#~ msgid "Creative Commons Attribution, Non-Commercial (CC BY-NC)"
-#~ msgstr "Creative Commons Attribution, Non-Commerciale (CC BY-NC)"
+#~ msgid "Please enter a password or cancel."
+#~ msgstr "Veuillez entrer un mot de passe ou annuler."
 
-#~ msgid "Creative Commons Attribution, No Derivatives (CC BY-ND)"
-#~ msgstr "Creative Commons Attribution, Aucun Dérivé (CC BY-NC)"
-
-#~ msgid "Creative Commons Attribution (CC BY)"
-#~ msgstr "Creative Commons Attribution (CC BY)"
-
-#~ msgid ""
-#~ "Creative Commons Attribution, Non-Commercial, and Share Alike (CC BY-NC-"
-#~ "SA)"
-#~ msgstr ""
-#~ "Creative Commons Attribution, Non-Commerciale, et de Partage (CC BY-NC)"
-
-#~ msgid ""
-#~ "Creative Commons Attribution, Non-Commercial, and No Derivatives (CC BY-"
-#~ "NC-ND)"
-#~ msgstr ""
-#~ "Creative Commons Attribution, Non-Commerciale, et Aucun Dérivé (CC BY-NC)"
-
-#~ msgid "Creative Commons Attribution, Share Alike (CC BY-SA)"
-#~ msgstr "Creative Commons Attribution,  de Partage (CC BY-NC)"
-
-#~ msgid "Author"
-#~ msgstr "Auteur"
-
-#~ msgid "Enter the name of the author"
-#~ msgstr "Entrez le nom de l'auteur"
-
-#~ msgid "Attribution Notes"
-#~ msgstr "Notes d'attribution"
-
-#~ msgid "Select New"
-#~ msgstr "Sélectionner un élément nouveau"
+#~ msgid "Repeat Password"
+#~ msgstr "Répéter le mot de passe"
