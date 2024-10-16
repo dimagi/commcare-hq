@@ -11,7 +11,7 @@ class CacheStore(ABC):
 
     DO NOT USE with released features! Prototypes only.
     """
-    timeout = 2 * 60 * 60
+    timeout = 2 * 60 * 60  # equivalent to 2 hours (in seconds)
 
     def __init__(self, request):
         self.username = request.user.username
