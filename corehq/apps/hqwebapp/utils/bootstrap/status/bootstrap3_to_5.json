@@ -152,7 +152,8 @@
       "partials/odata_feed_limit_reached_modal.html",
       "partials/table.html",
       "partials/export_bulk_notice.html",
-      "dialogs/bulk_delete_custom_export_dialog.html"
+      "dialogs/bulk_delete_custom_export_dialog.html",
+      "dialogs/process_deprecated_properties.html"
     ],
     "javascript": [
       "js/download_data_files.js"
