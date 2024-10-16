@@ -21,6 +21,45 @@ class TestCustomDataFieldsFields(SimpleTestCase):
         self.assertIsNone(optional_field.validate_required('sea cucumber'))
         self.assertIsNone(optional_field.validate_required(None))
 
+    def test_validate_required_for(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import CommcareUserFieldsView
+        from corehq.apps.locations.views import LocationFieldsView
+        web_user_required_field = Field(
+            slug='web_user_field',
+            is_required=True,
+            required_for=["web_user"],
+            label='Web User Field',
+        )
+        self.assertTrue(WebUserFieldsView.is_field_required(web_user_required_field))
+        self.assertFalse(CommcareUserFieldsView.is_field_required(web_user_required_field))
+
+        commcare_user_required_field = Field(
+            slug='commcare_user_field',
+            is_required=True,
+            required_for=["commcare_user"],
+            label='Commcare User Field',
+        )
+        self.assertTrue(CommcareUserFieldsView.is_field_required(commcare_user_required_field))
+        self.assertFalse(WebUserFieldsView.is_field_required(commcare_user_required_field))
+
+        commcare_and_web_user_required_field = Field(
+            slug='commcare_and_web_user_field',
+            is_required=True,
+            required_for=["commcare_user", "web_user"],
+            label='Commcare and Web User Field',
+        )
+        self.assertTrue(WebUserFieldsView.is_field_required(commcare_and_web_user_required_field))
+        self.assertTrue(CommcareUserFieldsView.is_field_required(commcare_and_web_user_required_field))
+
+        location_required_field = Field(
+            slug='location_field',
+            is_required=True,
+            required_for=[],
+            label='Location Field',
+        )
+        self.assertTrue(LocationFieldsView.is_field_required(location_required_field))
+
     def test_validate_choices(self):
         field = Field(
             slug='warm_color',
