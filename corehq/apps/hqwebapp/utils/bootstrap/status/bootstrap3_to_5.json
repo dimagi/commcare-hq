@@ -144,7 +144,8 @@
       "download_export.html",
       "customize_export_new.html",
       "partials/feed_filter_modal.html",
-      "partials/new_customize_export_templates.html"
+      "partials/new_customize_export_templates.html",
+      "partials/export_download_progress.html"
     ],
     "javascript": [
       "js/download_data_files.js"
