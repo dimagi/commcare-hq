@@ -60,14 +60,14 @@
                 class="btn btn-outline-primary btn-sm"
                 data-bs-toggle="collapse"
                 data-bind="attr: {
-                  'data-bs-target': '#rowDetailsCollapse-' + $index(),
-                  'aria-controls': 'rowDetailsCollapse-' + $index()
+                  'data-bs-target': '#rowDetailsCollapse-' + $parentContext.$index(),
+                  'aria-controls': 'rowDetailsCollapse-' + $parentContext.$index()
                 }"
                 aria-expanded="false">
           {% trans "Toggle Affected Row(s)" %}
         </button>
         <div class="collapse"
-             data-bind="attr: { id: 'rowDetailsCollapse-' + $index() }">
+             data-bind="attr: { id: 'rowDetailsCollapse-' + $parentContext.$index() }">
           <div class="card card-body mt-3"
                data-bind="text: rows.join(', ')"></div>
         </div>
