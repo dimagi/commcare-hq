@@ -100,7 +100,7 @@ class SsoBackend(ModelBackend):
 
         request.sso_login_error = None
         if user.username == 'jcheng_test@dimagi.org':
-            logger.info(f"[SSO_DEBUG]At the end of SsoBackend.authentiate, user.is_active is {user.is_active}, "
+            logger.info(f"[SSO DEBUG]At the end of SsoBackend.authentiate, user.is_active is {user.is_active}, "
                         f"web_user.is_active is {web_user.is_active}")
         return user
 
