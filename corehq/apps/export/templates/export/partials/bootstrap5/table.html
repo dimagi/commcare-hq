@@ -293,8 +293,8 @@
               {% trans "Download" %}
             </a>
             <!-- ko if: isFeed -->
-              <div data-bind="css: {'input-group': showLink}">
-                <!-- ko with: feedUrl -->
+              <!-- ko with: feedUrl -->
+                <div data-bind="css: {'input-group': showLink}">
                 <button class="btn btn-outline-primary btn-sm" data-bind="click: copyLinkRequested">
                   <i class="fa fa-clipboard"></i>
                   {% trans "Copy Dashboard Feed Link" %}
@@ -304,8 +304,8 @@
                        type="text"
                        class="form-control input-sm"
                        readonly />
-                <!-- /ko -->
-              </div>
+                </div>
+              <!-- /ko -->
             <!-- /ko -->
           </div>
 

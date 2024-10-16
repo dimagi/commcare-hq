@@ -251,7 +251,7 @@
                    </div>
                  </div>
                </div>
-@@ -312,22 +288,17 @@
+@@ -312,34 +288,29 @@
                              href: emailedExport.fileData.downloadUrl()
                            },
                            click: downloadRequested"
@@ -262,8 +262,7 @@
              </a>
              <!-- ko if: isFeed -->
 -              <div class="input-group">
-+              <div data-bind="css: {'input-group': showLink}">
-                 <!-- ko with: feedUrl -->
+-                <!-- ko with: feedUrl -->
 -                <span data-bind="css: {
 -                                   'input-group-btn': showLink
 -                                 },
@@ -273,6 +272,8 @@
 -                    {% trans "Copy Dashboard Feed Link" %}
 -                  </a>
 -                </span>
++              <!-- ko with: feedUrl -->
++                <div data-bind="css: {'input-group': showLink}">
 +                <button class="btn btn-outline-primary btn-sm" data-bind="click: copyLinkRequested">
 +                  <i class="fa fa-clipboard"></i>
 +                  {% trans "Copy Dashboard Feed Link" %}
@@ -280,7 +281,13 @@
                  <input data-bind="visible: showLink,
                                    value: url"
                         type="text"
-@@ -339,7 +310,7 @@
+                        class="form-control input-sm"
+                        readonly />
+-                <!-- /ko -->
+-              </div>
++                </div>
++              <!-- /ko -->
+             <!-- /ko -->
            </div>
  
            <div data-bind="if: isLocationSafeForUser()">
