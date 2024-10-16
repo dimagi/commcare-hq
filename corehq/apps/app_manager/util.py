@@ -29,6 +29,7 @@ from corehq.apps.app_manager.const import (
     USERCASE_TYPE,
     MOBILE_UCR_V1_FIXTURE_IDENTIFIER,
     MOBILE_UCR_V1_ALL_REFERENCES,
+    MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.exceptions import (
@@ -759,6 +760,11 @@ def extract_instance_id_from_nodeset_ref(nodeset):
 
 
 def does_app_have_mobile_ucr_v1_refs(app):
+    suite = app.create_suite()
+    re_mobile_ucr_v1_case_list_references_pattern = re.compile(MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN)
+    if re.search(re_mobile_ucr_v1_case_list_references_pattern, suite.decode()):
+        return True
+
     re_mobile_ucr_v1_all_refs = re.compile(MOBILE_UCR_V1_ALL_REFERENCES)
     for form in app.get_forms():
         # The second condition should always be False if the first one is
