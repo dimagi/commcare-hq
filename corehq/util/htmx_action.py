@@ -1,6 +1,3 @@
-import random
-import time
-
 from django.http import HttpResponseForbidden, HttpResponse
 
 ANY_METHOD = 'any_method'
@@ -51,14 +48,6 @@ class HqHtmxActionMixin:
     """
     default_htmx_error_template = "prototype/htmx/partials/htmx_action_error.html"
 
-    # simulate slow server responses by setting this to True and requests will wait
-    # ``slow_response_time`` seconds with each request
-    simulate_slow_response = False
-    slow_response_time = 5  # in seconds
-
-    # when True, simulate flaky gateway problems locally (to test HTMX retries or other error handling)
-    simulate_flaky_gateway = False
-
     def get_htmx_error_context(self, **kwargs):
         """
         Use this method to return the context for the HTMX error template.
@@ -98,12 +87,6 @@ class HqHtmxActionMixin:
         )
 
     def dispatch(self, request, *args, **kwargs):
-        if self.simulate_slow_response:
-            time.sleep(self.slow_response_time)
-
-        if self.simulate_flaky_gateway and _is_mostly_false():
-            return FakeGatewayTimeoutResponse()
-
         action = request.META.get('HTTP_HQ_HX_ACTION')
         if not action:
             return super().dispatch(request, *args, **kwargs)
@@ -160,19 +143,3 @@ class HtmxResponseException(Exception):
         if status is not None:
             self.status_code = status
         super().__init__(*args, **kwargs)
-
-
-class FakeGatewayTimeoutResponse(HttpResponse):
-    status_code = 504
-
-
-def _is_mostly_false():
-    """
-    This is a little utility to return mostly False and sometimes True.
-    Used to simulate a flaky gateway which usually returns a 200 response
-    but sometimes returns a 504.
-    """
-    return bool(random.choices(
-        [0, 1],
-        weights=[0.8, 0.2]
-    )[0])
