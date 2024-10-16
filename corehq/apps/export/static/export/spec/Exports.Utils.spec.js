@@ -1,8 +1,8 @@
 /* eslint-env mocha */
-hqDefine("export/spec/bootstrap3/Exports.Utils.spec", [
+hqDefine("export/spec/Exports.Utils.spec", [
     'underscore',
     'export/js/const',
-    'export/js/bootstrap3/models',
+    'export/js/bootstrap5/models',
     'export/js/utils',
 ], function (
     _,
@@ -14,12 +14,12 @@ hqDefine("export/spec/bootstrap3/Exports.Utils.spec", [
         describe('#getTagCSSClass', function () {
             it('Should get regular tag class', function () {
                 var cls = utils.getTagCSSClass('random-tag');
-                assert.equal(cls, 'label label-default');
+                assert.equal(cls, 'badge text-bg-secondary');
             });
 
             it('Should get warning tag class', function () {
                 var cls = utils.getTagCSSClass(constants.TAG_DELETED);
-                assert.equal(cls, 'label label-warning');
+                assert.equal(cls, 'badge text-bg-warning');
             });
         });
 
