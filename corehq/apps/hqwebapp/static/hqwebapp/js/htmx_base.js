@@ -34,7 +34,7 @@ import { showHtmxErrorModal } from 'hqwebapp/js/htmx_utils/errors';
 document.body.addEventListener('htmx:responseError', (evt) => {
     let errorCode = evt.detail.xhr.status;
     if (errorCode === 504) {
-        if (!retryHtmxRequest(evt)) {
+        if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig)) {
             showHtmxErrorModal(
                 errorCode,
                 gettext('Gateway Timeout Error: max retries exceeded')
@@ -49,8 +49,7 @@ document.body.addEventListener('htmx:responseError', (evt) => {
 });
 
 document.body.addEventListener('htmx:timeout', (evt) => {
-    if (!retryHtmxRequest(evt)) {
-        // show error modal
+    if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig)) {
         showHtmxErrorModal(
             504,
             gettext('Gateway Timeout Error: max retries exceeded')

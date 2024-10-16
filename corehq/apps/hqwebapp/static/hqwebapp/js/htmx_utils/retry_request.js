@@ -6,14 +6,16 @@ const retryPathCounts = {};
 /**
  * Retries an HTMX request up to a specified max retry count.
  *
- * @param {Object} evt - The HTMX event object containing details about the request.
+ * @param {Object} elt - The HTMX element object (usually found in evt.detail.elt)
+ * @param {Object} pathInfo - The HTMX pathInfo object (usually found in evt.detail.pathInfo)
+ * @param {Object} requestConfig - The HTMX requestConfig object (usually found in evt.detail.requestConfig)
  * @param {number} [maxRetries=DEFAULT_MAX_RETRIES] - The maximum number of retries allowed.
  * @returns {boolean} - Returns `false` if max retries are exceeded, otherwise `true`.
  */
-const retryHtmxRequest = (evt, maxRetries = DEFAULT_MAX_RETRIES) => {
+const retryHtmxRequest = (elt, pathInfo, requestConfig, maxRetries = DEFAULT_MAX_RETRIES) => {
     // Extract values from the HTMX event
-    const replaceUrl = evt.detail.elt.getAttribute('hx-replace-url');
-    const requestPath = evt.detail.pathInfo.finalRequestPath;
+    const replaceUrl = elt.getAttribute('hx-replace-url');
+    const requestPath = pathInfo.finalRequestPath;
 
     // Initialize retry count if necessary
     retryPathCounts[requestPath] = retryPathCounts[requestPath] || 0;
@@ -26,15 +28,15 @@ const retryHtmxRequest = (evt, maxRetries = DEFAULT_MAX_RETRIES) => {
 
     // Prepare the context for the htmx request
     const context = {
-        source: evt.detail.elt,
-        target: evt.detail.requestConfig.target,
-        swap: evt.detail.elt.getAttribute('hx-swap'),
-        headers: evt.detail.requestConfig.headers,
-        values: JSON.parse(evt.detail.elt.getAttribute('hx-vals')),
+        source: elt,
+        target: requestConfig.target,
+        swap: elt.getAttribute('hx-swap'),
+        headers: requestConfig.headers,
+        values: JSON.parse(elt.getAttribute('hx-vals')),
     };
 
     // Make the htmx request and handle URL update if necessary
-    htmx.ajax(evt.detail.requestConfig.verb, requestPath, context).then(() => {
+    htmx.ajax(requestConfig.verb, requestPath, context).then(() => {
         if (replaceUrl === 'true') {
             window.history.pushState(null, '', requestPath);
         } else if (replaceUrl) {
