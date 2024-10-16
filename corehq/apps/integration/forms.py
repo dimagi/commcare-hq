@@ -260,8 +260,11 @@ class HmacCalloutSettingsForm(forms.ModelForm):
 
 class SimprintsIntegrationForm(forms.Form):
     is_enabled = forms.BooleanField(
-        label=gettext_noop("Enable Simprints Integration"),
-        required=False
+        label="",
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_noop("Enable Simprints Integration"),
+        ),
     )
     project_id = forms.CharField(
         label=gettext_noop("Project ID"),
@@ -283,22 +286,15 @@ class SimprintsIntegrationForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
-            hqcrispy.B3MultiField(
-                _("Simprints Integration"),
-                hqcrispy.InlineField(
-                    'is_enabled', data_bind="checked: isEnabled"
-                ),
-            ),
+            PrependedText('is_enabled', "", data_bind="checked: isEnabled"),
             crispy.Div(
                 crispy.Field('project_id', data_bind="value: projectId"),
                 crispy.Field('user_id', data_bind="value: userId"),
                 crispy.Field('module_id', data_bind="value: moduleId"),
                 data_bind="visible: isEnabled"
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', gettext_lazy("Update"))
-                )
+            crispy.ButtonHolder(
+                Submit('submit', gettext_lazy("Update"))
             )
         )
 

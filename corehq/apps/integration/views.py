@@ -38,6 +38,7 @@ class BiometricIntegrationView(BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Biometric Integration")
     template_name = 'integration/biometric.html'
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(toggles.BIOMETRIC_INTEGRATION.required_decorator())
     def dispatch(self, request, *args, **kwargs):

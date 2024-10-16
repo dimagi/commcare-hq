@@ -8,15 +8,8 @@
 {% block page_content %}
   {% initial_page_data 'simprintsFormData' simprints_form.initial_data %}
 
-  <div class="card card-modern-gray">  {# todo B5: css-panel #}
-    <div class="card-header">
-      <h4 class="card-title panel-title-nolink">
-        {% trans 'Simprints Integration' %}
-      </h4>
-    </div>
-    <div class="card-body" id="simprints-form">
-      {% crispy simprints_form %}  {# todo B5: crispy #}
-    </div>
+  <div id="simprints-form">
+    {% crispy simprints_form %}
   </div>
 
 {% endblock %}
