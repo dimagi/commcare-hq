@@ -1,14 +1,14 @@
-{% extends "hqwebapp/bootstrap3/base_navigation.html" %}
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
 {% load i18n %}
 {% load static %}
 {% load hq_shared_tags %}
 {% load compress %}
 
 {% block navigation %}
-  <div class="navbar integration-navbar navbar-static-top">
+  <div class="navbar integration-navbar navbar-static-top">  {# todo B5: css-navbar #}
     <div class="container-fluid">
       <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> Web Apps</a>
-      <ul class="nav navbar-nav navbar-right" >
+      <ul class="nav navbar-nav navbar-right" >  {# todo B5: css-nav #}
         <li><a href="#" onclick="window.close()" "id="commcare-menu-toggle">{% trans 'Close' %} {%block title%}{{block.super}}{%endblock%}</a></li>
       </ul>
     </div>
