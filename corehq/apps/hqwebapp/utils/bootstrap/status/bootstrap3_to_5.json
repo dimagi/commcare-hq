@@ -153,7 +153,8 @@
       "partials/table.html",
       "partials/export_bulk_notice.html",
       "dialogs/bulk_delete_custom_export_dialog.html",
-      "dialogs/process_deprecated_properties.html"
+      "dialogs/process_deprecated_properties.html",
+      "dialogs/delete_custom_export_dialog.html"
     ],
     "javascript": [
       "js/download_data_files.js"
