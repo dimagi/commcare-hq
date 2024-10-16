@@ -81,6 +81,7 @@ from corehq.apps.locations.permissions import (
     can_edit_workers_location,
     location_safe
 )
+from corehq.apps.mobile_auth.utils import generate_aes_key
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import (
     MobileWorkerAccountConfirmationBySMSForm,
@@ -1690,7 +1691,8 @@ def link_connectid_user(request, domain):
 @api_auth()
 def connectid_messaging_key(request, domain):
     link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
-    messaging_key = ConnectIDMessagingKey.objects.create(connectid_user_link=link)
+    key = generate_aes_key().decode("utf-8")
+    messaging_key = ConnectIDMessagingKey.objects.create(connectid_user_link=link, domain=request.domain, key=key)
     return JsonResponse({"key": messaging_key.key})
 
 
