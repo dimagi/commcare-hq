@@ -113,6 +113,9 @@ MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
 
 EULA_CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
 
+logger = logging.getLogger(__name__)
+logger.setLevel('DEBUG')
+
 
 def _add_to_list(list, obj, default):
     if obj in list:
@@ -1402,6 +1405,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 attr_val = attr_val[:30]
             setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER = True
+        logger.info(f"[SSO DEBUG] When sync_to_django_user, django_user.is_active is {django_user.is_active}")
         return django_user
 
     @classmethod
@@ -1546,6 +1550,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # When updating this method, please also ensure that your updates also
         # carry over to bulk_auto_deactivate_commcare_users.
         self.last_modified = datetime.utcnow()
+        if self.username == 'jcheng_test@dimagi.org':
+            notify_exception(None, "CouchUser jcheng_test@dimagi.org is saved!!")
         with CriticalSection(['username-check-%s' % self.username], fail_hard=fail_hard, timeout=120):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
@@ -1575,6 +1581,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
         if hasattr(django_user, 'DO_NOT_SAVE_COUCH_USER'):
+            if django_user.username == 'jcheng_test@dimagi.org':
+                couch_user = cls.from_django_user(django_user)
+                notify_exception(None, "We tried to delete DO_NOT_SAVE_COUCH_USER for jcheng_test@dimagi.org")
+                logger.info(f"[SSO DEBUG] We tried to delete DO_NOT_SAVE_COUCH_USER, "
+                            f"CouchUser.is_active is {couch_user.is_active}, "
+                            f"django user.is_active is {django_user.is_active}")
             del django_user.DO_NOT_SAVE_COUCH_USER
         else:
             couch_user = cls.from_django_user(django_user)
@@ -1582,6 +1594,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 couch_user.sync_from_django_user(django_user)
 
                 try:
+                    if couch_user.username == 'jcheng_test@dimagi.org':
+                        notify_exception(None, "jcheng_test@dimagi.org saved in django_user_post_save_signal")
+                        logger.info(f"[SSO DEBUG] We tried to save DOCUMENT! "
+                            f"CouchUser.is_active is {couch_user.is_active}, "
+                            f"django user.is_active is {django_user.is_active}")
                     # avoid triggering cyclical sync
                     super(CouchUser, couch_user).save(**get_safe_write_kwargs())
                 except ResourceConflict:
@@ -2523,6 +2540,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                 yield user_doc['email']
 
     def save(self, fire_signals=True, **params):
+        if self.username == 'jcheng_test@dimagi.org':
+            fire_signals = False
         super().save(fire_signals=fire_signals, **params)
         if fire_signals and not self.to_be_deleted():
             from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
