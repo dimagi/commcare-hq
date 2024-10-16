@@ -138,7 +138,8 @@
       "download_data_files.html",
       "paywall.html",
       "datasource_export_view.html",
-      "customize_export_new.html"
+      "customize_export_new.html",
+      "export_list.html"
     ],
     "javascript": [
       "js/download_data_files.js"
