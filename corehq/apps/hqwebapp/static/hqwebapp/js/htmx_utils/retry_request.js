@@ -1,7 +1,7 @@
 import htmx from 'htmx.org';
 
 const DEFAULT_MAX_RETRIES = 20;
-let retryPathCounts = {};
+const retryPathCounts = {};
 
 /**
  * Retries an HTMX request up to a specified max retry count.
