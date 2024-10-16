@@ -34,9 +34,9 @@ hqDefine("reports/js/bootstrap3/data_corrections", [
     "underscore",
     "hqwebapp/js/assert_properties",
     "analytix/js/kissmetrix",
-    "hqwebapp/js/bootstrap3/components.ko",     // pagination
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
     "select2/dist/js/select2.full.min",
-    "hqwebapp/js/bootstrap3/components.ko",    // search box
 ], function (
     $,
     ko,

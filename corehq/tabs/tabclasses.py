@@ -562,7 +562,7 @@ class ProjectDataTab(UITab):
     @memoized
     def can_only_see_deid_exports(self):
         from corehq.apps.export.views.utils import user_can_view_deid_exports
-        return (not self.can_view_form_exports
+        return (not self.can_view_form_or_case_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
     @property
@@ -663,11 +663,16 @@ class ProjectDataTab(UITab):
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
                 DeIdFormExportListView,
+                DeIdCaseExportListView,
                 ODataFeedListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
                 'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
+            })
+            export_data_views.append({
+                'title': _(DeIdCaseExportListView.page_title),
+                'url': reverse(DeIdCaseExportListView.urlname, args=(self.domain,)),
             })
             export_data_views.extend([
                 {
@@ -1838,7 +1843,7 @@ class EnterpriseSettingsTab(UITab):
         if self.couch_user.is_superuser:
             from corehq.apps.enterprise.models import EnterprisePermissions
             if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
+                    or EnterprisePermissions.is_source_domain(self.domain):
                 enterprise_views.append({
                     'title': _("Enterprise Permissions"),
                     'url': reverse("enterprise_permissions", args=[self.domain]),

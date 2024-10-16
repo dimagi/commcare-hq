@@ -2,6 +2,8 @@ from datetime import datetime
 
 from django.utils.text import slugify
 
+from casexml.apps.case.const import CASE_UI_OWNER_ID
+
 from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 from corehq.apps.es import queries
@@ -46,12 +48,7 @@ def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):
                     queries.MUST_NOT,
                 )
         elif isinstance(definition, LocationFilterDefinition):
-            # Get all users owning cases at definition.location_id
-            owners_ids = user_ids_at_locations([definition.location_id])
-            # Add the definition.location_id for cases which belong to definition.location_id
-            owners_ids.append(definition.location_id)
-
-            query_ = query_.owner(owners_ids)
+            query_ = query_.owner(_get_owner_ids_for_definition(definition))
 
         return query_
 
@@ -59,6 +56,15 @@ def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):
         query = apply_criterion_to_query(query, criterion.definition)
 
     return query
+
+
+def _get_owner_ids_for_definition(location_definition):
+    location_ids = location_definition.get_location_ids()
+    owner_ids = user_ids_at_locations(location_ids)
+    # Add the location_ids for cases which belong to a location
+    owner_ids.extend(location_ids)
+
+    return owner_ids
 
 
 def case_exists_in_es(
@@ -121,12 +127,17 @@ def find_duplicate_case_ids(
 
 
 def add_case_properties_to_query(es, case, case_properties, match_type):
+    # HACK: due to inconsistencies in how case metadata properties are displayed
+    # to users, we need to translate the display value to the backend value
+    display_to_backend_properties_map = {CASE_UI_OWNER_ID: "@owner_id"}
+
     clause = queries.MUST if match_type == "ALL" else queries.SHOULD
     _case_json = None
 
     at_least_one_property_query = False
 
     for case_property_name in case_properties:
+        case_property_name = display_to_backend_properties_map.get(case_property_name, case_property_name)
         if case_property_name in INDEXED_METADATA_BY_KEY:
             if _case_json is None:
                 _case_json = case.to_json()

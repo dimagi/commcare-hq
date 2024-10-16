@@ -15,6 +15,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
@@ -62,7 +63,7 @@ from corehq.apps.data_dictionary.models import CaseProperty
 
 class BaseExportView(BaseProjectDataView):
     """Base class for all create and edit export views"""
-    template_name = 'export/customize_export_new.html'
+    template_name = 'export/bootstrap3/customize_export_new.html'
     export_type = None
     metric_name = None  # Override
     is_async = True
@@ -412,6 +413,16 @@ class CreateNewCustomCaseExportView(BaseExportView):
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
 
+        if (
+            case_type not in get_case_types_for_domain(request.domain)
+            and case_type != ALL_CASE_TYPE_EXPORT
+        ):
+            messages.error(
+                request,
+                _("Case type '{case_type}' does not exist for this project.").format(case_type=case_type)
+            )
+            url = self.export_home_url
+            return HttpResponseRedirect(url)
         # First check if project is allowed to do a bulk export and redirect if necessary
         if case_type == ALL_CASE_TYPE_EXPORT and case_type_or_app_limit_exceeded(self.domain):
             messages.error(

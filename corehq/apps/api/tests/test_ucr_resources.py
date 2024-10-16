@@ -27,6 +27,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tests.utils import cleanup_ucr
 from corehq.apps.users.models import Document, WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled
@@ -439,8 +440,8 @@ class TestUCRPaginated(TestCase):
             table_id=uuid.uuid4().hex,
         )
         cls.data_source.save()
-        cls.addClassCleanup(cls.data_source.delete)
         rebuild_indicators(cls.data_source._id)
+        cls.addClassCleanup(cleanup_ucr, cls.data_source)
         cls.client = Client()
 
     def test_forbidden_when_feature_flag_not_enabled(self):

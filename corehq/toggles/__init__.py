@@ -976,6 +976,14 @@ WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     owner='Jenny Schweers',
 )
 
+LOCATION_FIELD_USER_PROVISIONING = FeatureRelease(
+    'location_field_user_provisioning',
+    'USH: Holding feature flag for various works relating to the location field',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Minha Lee',
+)
+
 WEB_APPS_ANCHORED_SUBMIT = StaticToggle(
     'web_apps_anchored_submit',
     'USH: Keep submit button anchored at the bottom of screen for forms in Web Apps',
@@ -1390,7 +1398,7 @@ def _commtrackify(domain_name, toggle_is_enabled):
 COMMTRACK = StaticToggle(
     'commtrack',
     "CommCare Supply",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     description=(
         '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
@@ -1598,6 +1606,15 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
+
+
+EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
+    'export_apps_use_elasticsearch',
+    'Use elasticsearch when fetching apps for exports',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
@@ -2518,6 +2535,13 @@ RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
     'Limit which user profiles a web user can assign to other web users and mobile workers.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
+    'web_user_invite_additional_fields',
+    'USH: Enable additional fields in web user invite form for enhanced user details',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 

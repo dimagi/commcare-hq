@@ -11,9 +11,11 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.users.audit.change_messages import (
     GROUPS_FIELD,
+    LOCATION_FIELD,
     PASSWORD_FIELD,
     ROLE_FIELD,
 )
@@ -31,6 +33,11 @@ class TestUpdateUserMethods(TestCase):
         cls.domain = 'test-domain'
         cls.domain_obj = create_domain(cls.domain)
         cls.addClassCleanup(cls.domain_obj.delete)
+        cls.loc_type = LocationType.objects.create(domain=cls.domain, name='loc_type')
+        cls.loc1 = SQLLocation.objects.create(
+            location_id='loc1', location_type=cls.loc_type, domain=cls.domain)
+        cls.loc2 = SQLLocation.objects.create(
+            location_id='loc2', location_type=cls.loc_type, domain=cls.domain)
 
     def setUp(self) -> None:
         super().setUp()
@@ -135,6 +142,10 @@ class TestUpdateUserMethods(TestCase):
         with self.assertRaises(ValidationError):
             update(self.user, 'groups', [group._id])
 
+    def test_update_groups_with_fake_group_id_raises_exception(self):
+        with self.assertRaises(ValidationError):
+            update(self.user, 'groups', ["fake_id"])
+
     def test_update_unknown_field_raises_exception(self):
         with self.assertRaises(UpdateUserException) as cm:
             update(self.user, 'username', 'new-username')
@@ -190,6 +201,48 @@ class TestUpdateUserMethods(TestCase):
         profile.save()
         return profile.id
 
+    def test_update_locations_raises_if_primary_location_not_in_location_list(self):
+        with self.assertRaises(UpdateUserException) as e:
+            update(self.user, 'location',
+                   {'primary_location': self.loc2.location_id, 'locations': [self.loc1.location_id]})
+
+        self.assertEqual(str(e.exception), 'Primary location must be included in the list of locations.')
+
+    def test_update_locations_raises_if_any_location_does_not_exist(self):
+        with self.assertRaises(UpdateUserException) as e:
+            update(self.user, 'location',
+                   {'primary_location': 'fake_loc', 'locations': [self.loc1.location_id, 'fake_loc']})
+        self.assertEqual(str(e.exception), "Could not find location ids: fake_loc.")
+
+    def test_update_locations_raises_if_primary_location_not_provided(self):
+        with self.assertRaises(UpdateUserException) as e:
+            update(self.user, 'location', {'locations': [self.loc1.location_id]})
+        self.assertEqual(str(e.exception), 'Both primary_location and locations must be provided together.')
+
+    def test_update_locations_raises_if_locations_not_provided(self):
+        with self.assertRaises(UpdateUserException) as e:
+            update(self.user, 'location', {'primary_location': self.loc1.location_id})
+        self.assertEqual(str(e.exception), 'Both primary_location and locations must be provided together.')
+
+    def test_update_locations_do_nothing_if_nothing_provided(self):
+        self.user.set_location(self.loc1)
+        update(self.user, 'location', {'primary_location': None, 'locations': None})
+        self.assertEqual(self.user.get_location_ids(self.domain), [self.loc1.location_id])
+        self.assertEqual(self.user.get_location_id(self.domain), self.loc1.location_id)
+
+    def test_update_locations_removes_locations_if_empty_string_provided(self):
+        self.user.set_location(self.loc1)
+        update(self.user, 'location', {'primary_location': '', 'locations': []})
+        self.assertEqual(self.user.get_location_ids(self.domain), [])
+        self.assertEqual(self.user.get_location_id(self.domain), None)
+
+    def test_update_locations_succeeds(self):
+        update(self.user, 'location',
+               {'primary_location': self.loc1.location_id,
+                'locations': [self.loc1.location_id, self.loc2.location_id]})
+        self.assertEqual(self.user.get_location_ids(self.domain), [self.loc1.location_id, self.loc2.location_id])
+        self.assertEqual(self.user.get_location_id(self.domain), self.loc1.location_id)
+
 
 class TestUpdateUserMethodsLogChanges(TestCase):
 
@@ -199,6 +252,11 @@ class TestUpdateUserMethodsLogChanges(TestCase):
         cls.domain = 'test-domain'
         cls.domain_obj = create_domain(cls.domain)
         cls.addClassCleanup(cls.domain_obj.delete)
+        cls.loc_type = LocationType.objects.create(domain=cls.domain, name='loc_type')
+        cls.loc1 = SQLLocation.objects.create(
+            location_id='loc1', location_type=cls.loc_type, domain=cls.domain)
+        cls.loc2 = SQLLocation.objects.create(
+            location_id='loc2', location_type=cls.loc_type, domain=cls.domain)
 
     def setUp(self) -> None:
         super().setUp()
@@ -332,3 +390,25 @@ class TestUpdateUserMethodsLogChanges(TestCase):
         update(self.user, 'role', 'edit-data', user_change_logger=self.user_change_logger)
 
         self.assertNotIn(ROLE_FIELD, self.user_change_logger.change_messages.keys())
+
+    def test_update_location_logs_change(self):
+        update(self.user, 'location',
+               {'primary_location': self.loc1.location_id,
+                'locations': [self.loc1.location_id, self.loc2.location_id]},
+               user_change_logger=self.user_change_logger)
+        self.assertIn(LOCATION_FIELD, self.user_change_logger.change_messages.keys())
+
+    def test_update_location_without_include_location_fields_does_not_log_change(self):
+        update(self.user, 'location',
+               {'primary_location': None, 'locations': None},
+               user_change_logger=self.user_change_logger)
+        self.assertNotIn(LOCATION_FIELD, self.user_change_logger.change_messages.keys())
+
+    def test_update_location_with_current_locations_does_not_log_change(self):
+        self.user.set_location(self.loc2)
+        self.user.set_location(self.loc1)
+        update(self.user, 'location',
+               {'primary_location': self.loc1.location_id,
+                'locations': [self.loc1.location_id, self.loc2.location_id]},
+               user_change_logger=self.user_change_logger)
+        self.assertNotIn(LOCATION_FIELD, self.user_change_logger.change_messages.keys())

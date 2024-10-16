@@ -240,10 +240,18 @@ class RepeaterTest(BaseRepeaterTest):
         )
         self.assertEqual(len(repeat_records), 2)
 
-    def test_repeater_payload_failed_cancels(self):
-        """
-        This tests records with bad payloads are cancelled
-        """
+    def test_bad_payload_invalid(self):
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=MockResponse(status_code=401, reason='Unauthorized')
+        ):
+            for repeat_record in self.repeat_records():
+                repeat_record.fire()
+
+        for repeat_record in self.repeat_records():
+            self.assertEqual(repeat_record.state, State.InvalidPayload)
+
+    def test_bad_request_fail(self):
         with patch(
             'corehq.motech.repeaters.models.simple_request',
             return_value=MockResponse(status_code=400, reason='Bad Request')
@@ -252,7 +260,7 @@ class RepeaterTest(BaseRepeaterTest):
                 repeat_record.fire()
 
         for repeat_record in self.repeat_records():
-            self.assertEqual(repeat_record.state, State.Cancelled)
+            self.assertEqual(repeat_record.state, State.Fail)
 
     def test_update_failure_next_check(self):
         now = datetime.utcnow()
@@ -947,6 +955,8 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'email': '',
                 'eulas': '[]',
                 'resource_uri': '/a/user-repeater/api/user/v1/{}/'.format(user._id),
+                'locations': [],
+                'primary_location': None,
             }
         )
 
@@ -1262,6 +1272,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         super().setUp()
         self.config = get_sample_data_source()
         self.config.save()
+        self.addCleanup(self.config.delete)
         self.adapter = get_indicator_adapter(self.config)
         self.adapter.build_table()
         self.addCleanup(self.adapter.drop_table)

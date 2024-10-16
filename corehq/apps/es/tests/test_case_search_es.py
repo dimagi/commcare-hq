@@ -391,10 +391,11 @@ class BaseCaseSearchTest(TestCase):
 
     def _assert_query_runs_correctly(self, domain, input_cases, query, xpath_query, output):
         self._bootstrap_cases_in_es_for_domain(domain, input_cases)
-        self.assertItemsEqual(
-            query.get_ids(),
-            output
-        )
+        if query:
+            self.assertItemsEqual(
+                query.get_ids(),
+                output
+            )
         if xpath_query:
             self.assertItemsEqual(
                 CaseSearchES().xpath_query(self.domain, xpath_query).get_ids(),
@@ -433,6 +434,20 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             CaseSearchES().domain(self.domain).case_property_query("foo", "backbeard", fuzzy=True),
             None,
             ['c3']
+        )
+
+    def test_fuzzy_date(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'dob': date(2020, 3, 1)},
+                {'_id': 'c2', 'dob': date(2020, 1, 3)},
+                {'_id': 'c3', 'dob': date(2002, 3, 1)},
+                {'_id': 'c4', 'dob': date(2020, 3, 4)},
+            ],
+            None,
+            "fuzzy-date(dob, '2020-03-01')",
+            ['c1', 'c2', 'c3']
         )
 
     def test_multiple_case_search_queries(self):

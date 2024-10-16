@@ -4,6 +4,16 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
+aiohappyeyeballs==2.3.4
+    # via aiohttp
+aiohttp==3.10.0
+    # via
+    #   aiohttp-retry
+    #   twilio
+aiohttp-retry==2.8.3
+    # via twilio
+aiosignal==1.3.1
+    # via aiohttp
 alabaster==0.7.12
     # via sphinx
 alembic==1.7.7
@@ -19,10 +29,13 @@ asttokens==2.0.5
     #   stack-data
     #   transifex-python
 async-timeout==4.0.2
-    # via redis
+    # via
+    #   aiohttp
+    #   redis
 attrs==23.1.0
     # via
     #   -r base-requirements.in
+    #   aiohttp
     #   cattrs
     #   ddtrace
     #   jsonschema
@@ -243,7 +256,7 @@ eulxml==1.1.3
     # via -r base-requirements.in
 exceptiongroup==1.1.1
     # via cattrs
-executing==2.0.0
+executing==2.0.1
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
@@ -259,6 +272,10 @@ flaky==3.7.0
     # via -r test-requirements.in
 freezegun==1.1.0
     # via -r test-requirements.in
+frozenlist==1.4.1
+    # via
+    #   aiohttp
+    #   aiosignal
 future==0.18.3
     # via
     #   pyjwkest
@@ -339,7 +356,9 @@ httplib2==0.20.4
     #   google-api-python-client
     #   google-auth-httplib2
 idna==3.7
-    # via requests
+    # via
+    #   requests
+    #   yarl
 imagesize==1.4.1
     # via sphinx
 importlib-metadata==6.0.0
@@ -389,7 +408,7 @@ kombu==5.2.4
     # via celery
 looseversion==1.0.3
     # via -r base-requirements.in
-lxml==4.9.1
+lxml==5.3.0
     # via
     #   -r base-requirements.in
     #   eulxml
@@ -424,6 +443,10 @@ msal==1.26.0
     # via -r sso-requirements.in
 msgpack==1.0.5
     # via cachecontrol
+multidict==6.0.5
+    # via
+    #   aiohttp
+    #   yarl
 myst-parser==2.0.0
     # via -r docs-requirements.in
 nose==1.3.7
@@ -579,7 +602,6 @@ pytz==2024.1
     #   -r base-requirements.in
     #   babel
     #   celery
-    #   twilio
 pyyaml==6.0
     # via
     #   -r base-requirements.in
@@ -764,7 +786,7 @@ tropo-webapi-python==0.1.3
     # via -r base-requirements.in
 turn-python==0.0.1
     # via -r base-requirements.in
-twilio==7.12.0
+twilio==9.2.3
     # via -r base-requirements.in
 typing-extensions==4.8.0
     # via
@@ -819,12 +841,14 @@ xlrd==2.0.1
     # via -r base-requirements.in
 xlwt==1.3.0
     # via -r base-requirements.in
-xmlsec==1.3.12
+xmlsec==1.3.14
     # via python3-saml
 xmltodict==0.13.0
     # via ddtrace
 yapf==0.31.0
     # via -r dev-requirements.in
+yarl==1.9.4
+    # via aiohttp
 zipp==3.19.1
     # via importlib-metadata
 zope-event==5.0
