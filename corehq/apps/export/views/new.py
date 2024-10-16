@@ -65,7 +65,7 @@ from corehq.apps.data_dictionary.models import CaseProperty
 @method_decorator(use_bootstrap5, name='dispatch')
 class BaseExportView(BaseProjectDataView):
     """Base class for all create and edit export views"""
-    template_name = 'export/bootstrap5/customize_export_new.html'
+    template_name = 'export/customize_export_new.html'
     export_type = None
     metric_name = None  # Override
     is_async = True
