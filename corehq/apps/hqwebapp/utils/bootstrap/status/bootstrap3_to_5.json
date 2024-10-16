@@ -155,7 +155,8 @@
       "dialogs/bulk_delete_custom_export_dialog.html",
       "dialogs/process_deprecated_properties.html",
       "dialogs/delete_custom_export_dialog.html",
-      "dialogs/process_deleted_questions.html"
+      "dialogs/process_deleted_questions.html",
+      "spec/ko/mocha.html"
     ],
     "javascript": [
       "js/download_data_files.js"
