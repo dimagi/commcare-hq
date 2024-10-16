@@ -1194,6 +1194,7 @@ msgid "no formatting"
 msgstr "sin formato"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
 msgid "Custom"
 msgstr "Personalizado"
 
@@ -3302,6 +3303,33 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
+msgid "Last 30 Days"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Month"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
+msgid "Spans <%- startDate %> to <%- endDate %> (UTC)"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
+#, fuzzy
+#| msgid "Could not clear user data. Please report an issue if this persists."
+msgid ""
+"Error updating display total, please try again or report an issue if this "
+"persists."
+msgstr ""
+"No es posible borrar los datos del usuario. Por favor reporte un problema si "
+"esto continúa."
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
+msgid "??"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
 msgid ""
 "Error sending email, please try again or report an issue if this persists."
 msgstr ""
@@ -3807,6 +3835,10 @@ msgstr ""
 "tarde."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid " to "
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Clear selection"
 msgstr ""
 
@@ -3880,10 +3912,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Decade"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Month"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js

@@ -596,6 +596,7 @@ geospatial
  0005_auto_20240202_0807
  0006_geoconfig_max_cases_per_user_and_more
  0007_geoconfig_max_case_distance_and_more
+ 0008_geoconfig_flag_assigned_cases
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -810,6 +811,7 @@ registration
  0003_populate_sqlregistrationrequest
  0004_rename_sqlregistrationrequest
  0005_asyncsignuprequest
+ 0006_selfsignupworkflow
 registry
  0001_initial
  0002_registry_slug_globally_unique

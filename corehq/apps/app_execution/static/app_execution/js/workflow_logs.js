@@ -5,7 +5,7 @@ hqDefine("app_execution/js/workflow_logs", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/tempus_dominus',
     'app_execution/js/workflow_charts',
-    'hqwebapp/js/bootstrap5/components.ko',
+    'hqwebapp/js/components.ko',
 ], function ($, ko, initialPageData, hqTempusDominus) {
     let logsModel = function () {
         let self = {};

@@ -292,7 +292,7 @@ class RepeatRecordView(View):
 
         if content_type == 'text/xml':
             payload = indent_xml(payload)
-        elif content_type == 'application/json':
+        elif content_type in ['application/json', 'application/x-www-form-urlencoded']:
             payload = pformat_json(payload)
 
         dhis2_errors = []
