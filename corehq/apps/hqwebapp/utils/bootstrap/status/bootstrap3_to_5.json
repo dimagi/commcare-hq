@@ -162,7 +162,8 @@
       "js/download_data_files.js",
       "spec/ExportInstance.spec.js",
       "spec/ExportColumn.spec.js",
-      "spec/Exports.Utils.spec.js"
+      "spec/Exports.Utils.spec.js",
+      "js/customize_export_new.js"
     ]
   },
   "integration": {

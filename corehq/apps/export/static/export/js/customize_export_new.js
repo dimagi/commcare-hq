@@ -1,13 +1,15 @@
-hqDefine('export/js/bootstrap3/customize_export_new', [
+hqDefine('export/js/customize_export_new', [
     'jquery',
     'knockout',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
-    'export/js/bootstrap3/models',
+    'export/js/bootstrap5/models',
     'hqwebapp/js/toggles',
     'export/js/const',
 ], function (
     $,
     ko,
+    bootstrap,
     initialPageData,
     models,
     toggles,
@@ -31,7 +33,9 @@ hqDefine('export/js/bootstrap3/customize_export_new', [
             "build_schema", "/a/---/data/export/build_full_schema/"
         );
         $('#customize-export').koApplyBindings(customExportView);
-        $('.export-tooltip').tooltip();
+        $('.export-tooltip').each(function (index, trigger) {
+            new bootstrap.Tooltip(trigger);
+        });
 
         if (toggles.toggleEnabled('SUPPORT_GEO_JSON_EXPORT')) {
             const exportFormat = initialPageData.get('export_instance').export_format;
