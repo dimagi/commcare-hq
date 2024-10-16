@@ -97,14 +97,14 @@ class HqHtmxActionMixin:
 
         action_method = getattr(handler, "hq_hx_action", None)
         if not action_method:
-            return HttpResponseForbidden(
+            return HtmxResponseForbidden(
                 f"Method '{type(self).__name__}.{action}' has no "
                 f"@hq_hx_action decorator."
             )
 
         if action_method != ANY_METHOD and action_method.lower() != request.method.lower():
-            return HttpResponseForbidden(
-                f"Method '{type(self).__name__}.{action}' is not allowed for "
+            return HtmxResponseForbidden(
+                f"Method '{type(self).__name__}.{action}' is not allowed to use "
                 f"HTTP {request.method} requests."
             )
 
@@ -129,6 +129,17 @@ def hq_hx_action(method=ANY_METHOD):
         setattr(func, 'hq_hx_action', method)
         return func
     return decorator
+
+
+class HtmxResponseForbidden(HttpResponseForbidden):
+
+    def __init__(self, error_message, *args, **kwargs):
+        super().__init__(
+            error_message,
+            reason=f"Forbidden: {error_message}",
+            *args,
+            **kwargs
+        )
 
 
 class HtmxResponseException(Exception):
