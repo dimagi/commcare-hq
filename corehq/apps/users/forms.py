@@ -1518,14 +1518,15 @@ class _UserFormSet(object):
     def user_form(self):
         raise NotImplementedError()
 
+    @property
+    def field_view(self):
+        raise NotImplementedError()
+
     @cached_property
     def custom_data(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import (
-            UserFieldsView,
-        )
         return CustomDataEditor(
             domain=self.domain,
-            field_view=UserFieldsView,
+            field_view=self.field_view,
             existing_custom_data=self.editable_user.get_user_data(self.domain).to_dict(),
             post_dict=self.data,
             ko_model="custom_fields",
@@ -1567,6 +1568,11 @@ class CommCareUserFormSet(_UserFormSet):
             request=self.request,
         )
 
+    @property
+    def field_view(self):
+        from .views.mobile.custom_data_fields import CommcareUserFieldsView
+        return CommcareUserFieldsView
+
 
 class WebUserFormSet(_UserFormSet):
     """Combines UpdateUserRoleForm and the Custom Data form"""
@@ -1575,6 +1581,11 @@ class WebUserFormSet(_UserFormSet):
     def user_form(self):
         return UpdateUserRoleForm(data=self.data, domain=self.domain,
                                   existing_user=self.editable_user, request=self.request)
+
+    @property
+    def field_view(self):
+        from .views.mobile.custom_data_fields import WebUserFieldsView
+        return WebUserFieldsView
 
 
 class UserFilterForm(forms.Form):

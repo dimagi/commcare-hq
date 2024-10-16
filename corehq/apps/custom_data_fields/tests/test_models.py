@@ -7,6 +7,7 @@ class FieldTests(SimpleTestCase):
         field = Field(
             slug='test-field',
             is_required=False,
+            required_for=["web_user", "commcare_user"],
             label='test-label',
             choices=['yes', 'no'],
             regex=None,
@@ -17,6 +18,7 @@ class FieldTests(SimpleTestCase):
         self.assertEqual(field.to_dict(), {
             'slug': 'test-field',
             'is_required': False,
+            'required_for': ['web_user', 'commcare_user'],
             'label': 'test-label',
             'choices': ['yes', 'no'],
             'regex': None,
