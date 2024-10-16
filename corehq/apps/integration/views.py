@@ -201,6 +201,7 @@ class DialerSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.GAEN_OTP_SERVER.required_decorator(), name='dispatch')
 class GaenOtpServerSettingsView(BaseProjectSettingsView):
     urlname = 'gaen_otp_server_settings_view'

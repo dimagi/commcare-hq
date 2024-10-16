@@ -100,8 +100,11 @@ class DialerSettingsForm(forms.ModelForm):
 
 class GaenOtpServerSettingsForm(forms.ModelForm):
     is_enabled = forms.BooleanField(
-        label=_("Enable GAEN OTP server integration"),
-        required=False
+        label="",
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy("Enable GAEN OTP server integration"),
+        ),
     )
 
     server_type = forms.CharField(
@@ -138,10 +141,7 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
-            hqcrispy.B3MultiField(
-                _("OTP Callouts"),
-                hqcrispy.InlineField('is_enabled'),
-            ),
+            PrependedText('is_enabled', ""),
             crispy.Div(
                 crispy.Field('server_type'),
             ),
@@ -151,10 +151,8 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
             crispy.Div(
                 crispy.Field('auth_token'),
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', _("Update"))
-                )
+            crispy.ButtonHolder(
+                Submit('submit', _("Update"))
             )
         )
 
