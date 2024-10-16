@@ -1405,7 +1405,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 attr_val = attr_val[:30]
             setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER = True
-        logger.info(f"[SSO DEBUG] When sync_to_django_user, django_user.is_active is {django_user.is_active}")
+        if django_user.username == "jcheng_test@dimagi.org":
+            notify_exception(None, "sync_to_django_user is being called for jcheng_test@dimagi.org. "
+                             f"django_user.is_active is {django_user.is_active}")
+            logger.info(f"[SSO DEBUG] When sync_to_django_user, django_user.is_active is {django_user.is_active}")
         return django_user
 
     @classmethod
