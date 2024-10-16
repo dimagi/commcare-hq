@@ -38,7 +38,10 @@ class FilterDemoForm(forms.Form):
     match = forms.ChoiceField(
         label=gettext_lazy("Match Type"),
         choices=MatchType.OPTIONS,
-        required=False
+        required=False,
+        help_text=gettext_lazy(
+            "Hint: select 'is empty' to watch the Value field below disappear"
+        )
     )
     value = forms.CharField(
         label=gettext_lazy("Value"),
