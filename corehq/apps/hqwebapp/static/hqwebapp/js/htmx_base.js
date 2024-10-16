@@ -22,7 +22,9 @@
  * - To show errors encountered by HTMX requests, include the `hqwebapp/htmx/error_modal.html` template
  *   in the `modals` block of the page, or `include` a template that extends it.
  */
-import 'htmx.org';
+import htmx from 'htmx.org';
+// Update the default timeout to something reasonable
+htmx.config.timeout = 20000;
 
 import 'hqwebapp/js/htmx_utils/hq_hx_action';
 import 'hqwebapp/js/htmx_utils/csrf_token';
