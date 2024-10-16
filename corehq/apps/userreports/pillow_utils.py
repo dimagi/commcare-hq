@@ -102,5 +102,10 @@ def rebuild_table(adapter, diffs=None):
         adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
         return
 
-    rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id,
-                             diffs=diff_dicts, domain=config.domain)
+    rebuild_indicators.delay(
+        adapter.config.get_id,
+        source='pillowtop',
+        engine_id=adapter.engine_id,
+        diffs=diff_dicts,
+        domain=config.domain,
+    )
