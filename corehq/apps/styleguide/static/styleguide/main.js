@@ -2,7 +2,7 @@ $(function () {
     'use strict';
     let initialPageData = hqImport("hqwebapp/js/initial_page_data");
     ace.config.set('basePath', initialPageData.get('ace_base_path'));
-    _.each(["python", "html", "js"], function (lang) {
+    _.each(["python", "html", "js", "django"], function (lang) {
         $('pre[data-lang="' + lang + '"]').each(function () {
             let editor = ace.edit($(this).get(0), {
                     showPrintMargin: false,
