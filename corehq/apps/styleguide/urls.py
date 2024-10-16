@@ -1,6 +1,11 @@
 from django.urls import include, re_path as url
 
 from corehq.apps.styleguide.examples.bootstrap5.example_urls import urlpatterns as example_urlpatterns
+from corehq.apps.styleguide.examples.bootstrap5.htmx_alpine_form_views import (
+    HtmxAlpineFormDemoView,
+    FilterDemoFormView,
+)
+from corehq.apps.styleguide.examples.bootstrap5.htmx_hq_hx_action import TodoListDemoView
 from corehq.apps.styleguide.views import (
     AtomsStyleGuideView,
     MainStyleGuideView,
@@ -19,6 +24,12 @@ doc_urlpatterns = [
         include('corehq.apps.styleguide.examples.simple_crispy_form.urls')),
 ]
 
+advanced_demo_urlpatterns = [
+    url(r'^htmx_todo/$', TodoListDemoView.as_view(), name=TodoListDemoView.urlname),
+    url(r'^htmx_alpine_form/$', HtmxAlpineFormDemoView.as_view(), name=HtmxAlpineFormDemoView.urlname),
+    url(r'^htmx_alpine_form/form/$', FilterDemoFormView.as_view(), name=FilterDemoFormView.urlname),
+]
+
 urlpatterns = [
     url(r'^$', MainStyleGuideView.as_view(), name=MainStyleGuideView.urlname),
     url(r'^atoms/$', AtomsStyleGuideView.as_view(),
@@ -30,6 +41,7 @@ urlpatterns = [
     url(r'^pages/$', PagesStyleGuideView.as_view(),
         name=PagesStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
+    url(r'^demo/', include(advanced_demo_urlpatterns)),
     url(r'^b5/$', bootstrap5.styleguide_home, name="styleguide_home_b5"),
     url(r'^b5/data/select2_ajax_demo$', bootstrap5_data.select2_ajax_demo,
         name="styleguide_data_select2_ajax_demo"),
