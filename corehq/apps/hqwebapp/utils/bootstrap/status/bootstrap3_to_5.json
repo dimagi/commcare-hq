@@ -148,7 +148,8 @@
       "partials/export_download_progress.html",
       "partials/export_list_create_export_modal.html",
       "partials/delete_bulk_notice.html",
-      "partials/export_download_prepare.html"
+      "partials/export_download_prepare.html",
+      "partials/odata_feed_limit_reached_modal.html"
     ],
     "javascript": [
       "js/download_data_files.js"
