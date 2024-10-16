@@ -53,7 +53,7 @@
       <button
           class="btn btn-outline-danger"
           type="button"
-          {# this button posts to a non existent hx_action method in the view, purposely triggering the error modal #}
+          {# this button posts to a non existent @hq_hx_action method in the view, purposely triggering the error modal #}
           hx-post="{{ request.path_info }}"
           hq-hx-action="does_not_exist"
       >

@@ -6,18 +6,18 @@ from django.http import HttpResponseForbidden, HttpResponse
 ANY_METHOD = 'any_method'
 
 
-class HtmxActionMixin:
+class HqHtmxActionMixin:
     """
     A mixin for TemplateView classes that dispatches requests from HTMX where
     the triggering element has the ``hq-hx-action`` attribute specified and
-    the ``HTTP_HX_ACTION`` is present.
+    the ``HTTP_HQ_HX_ACTION`` is present (HQ-HX-Action in the header)
 
     The dispatch method will then route the action request to the method in the
-    class with the same name as the slug present in hq-hx-action.
+    class with the same name as the slug present in ``hq-hx-action``.
 
-    A security requirement is that the receiving method must be decorated with @hx_action()
+    A security requirement is that the receiving method must be decorated with ``@hq_hx_action()``
 
-    Each method decorated with ``hx_action`` should receive the following arguments:
+    Each method decorated with ``hq_hx_action`` should receive the following arguments:
         ``request``, ``*args``, ``**kwargs``
 
     It should return a template response using:
@@ -26,22 +26,21 @@ class HtmxActionMixin:
         - ``self.render_htmx_partial_response(request, template, context)`` if a partial template
           response is required that is different from the template in ``self.template_name``
 
-
     Example trigger element in requesting HTML:
 
         <div hq-hx-action="make_edit" hx-post="{{ url_to_view }}"...></div>
 
     Example usage in receiving TemplateView:
 
-        @htmx_action()
+        @hq_hx_action()
         def make_edit(request, *args, **kwargs):
             ...
             return super().get(request, *args, **kwargs)
 
-    To limit requests to a specific HTTP method, specify the method type in ``@htmx_action``.
+    To limit requests to a specific HTTP method, specify the method type in ``@hq_hx_action``.
     For instance, to limit requests to ``POST``:
 
-        @htmx_action('post')
+        @hq_hx_action('post')
         def make_edit(request, *args, **kwargs):
             ...
             return super().get(request, *args, **kwargs)
@@ -105,7 +104,7 @@ class HtmxActionMixin:
         if self.simulate_flaky_gateway and _is_mostly_false():
             return FakeGatewayTimeoutResponse()
 
-        action = request.META.get('HTTP_HX_ACTION')
+        action = request.META.get('HTTP_HQ_HX_ACTION')
         if not action:
             return super().dispatch(request, *args, **kwargs)
 
@@ -113,11 +112,11 @@ class HtmxActionMixin:
         if not callable(handler):
             return super().dispatch(request, *args, **kwargs)
 
-        action_method = getattr(handler, "hx_action", None)
+        action_method = getattr(handler, "hq_hx_action", None)
         if not action_method:
             return HttpResponseForbidden(
                 f"Method '{type(self).__name__}.{action}' has no "
-                f"decorator '@hx_action'"
+                f"@hq_hx_action decorator."
             )
 
         if action_method != ANY_METHOD and action_method.lower() != request.method.lower():
@@ -136,15 +135,15 @@ class HtmxActionMixin:
         return response
 
 
-def hx_action(method=ANY_METHOD):
+def hq_hx_action(method=ANY_METHOD):
     """
     All methods that can be referenced from the value of an `hq-hx-action` attribute
-    must be decorated with ``@hx_action``.
+    must be decorated with ``@hq_hx_action``.
 
-    See ``HtmxActionMixin`` docstring for usage examples.
+    See ``HqHtmxActionMixin`` docstring for usage examples.
     """
     def decorator(func):
-        setattr(func, 'hx_action', method)
+        setattr(func, 'hq_hx_action', method)
         return func
     return decorator
 

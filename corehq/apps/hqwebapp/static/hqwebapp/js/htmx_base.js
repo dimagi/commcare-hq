@@ -18,7 +18,7 @@
  *      Alpine.start();
  *
  * Tips:
- * - Use the `HtmxActionMixin` to group related HTMX calls and responses as part of one class based view.
+ * - Use the `HqHtmxActionMixin` to group related HTMX calls and responses as part of one class based view.
  * - To show errors encountered by HTMX requests, include the `hqwebapp/htmx/error_modal.html` template
  *   in the `modals` block of the page, or `include` a template that extends it.
  */

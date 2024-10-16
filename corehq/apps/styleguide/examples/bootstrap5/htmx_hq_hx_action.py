@@ -6,14 +6,14 @@ from corehq.apps.domain.decorators import login_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.prototype.models.cache_store import CacheStore
-from corehq.util.htmx_action import HtmxActionMixin, hx_action
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
-class TodoListDemoView(HtmxActionMixin, BasePageView):
+class TodoListDemoView(HqHtmxActionMixin, BasePageView):
     """
-    This view demonstrates how we use HtmxActionMixin with a view to provide
+    This view demonstrates how we use HqHtmxActionMixin with a view to provide
     HTMX responses when HTMX interacts with this view using the `hq-hx-action` attribute.
     """
     urlname = "sg_htmx_todo_list_example"
@@ -54,7 +54,7 @@ class TodoListDemoView(HtmxActionMixin, BasePageView):
 
     # we can now reference `hq-hx-action="create_new_item"`
     # alongside a `hx-post` to this view URL
-    @hx_action('post')
+    @hq_hx_action('post')
     def create_new_item(self, request, *args, **kwargs):
         items = self.get_items()
         new_item = {
@@ -66,7 +66,7 @@ class TodoListDemoView(HtmxActionMixin, BasePageView):
         self.save_items(items)
         return self.render_item_response(request, new_item)
 
-    @hx_action('post')
+    @hq_hx_action('post')
     def edit_item(self, request, *args, **kwargs):
         item = self.update_item(
             int(request.POST['itemId']),
@@ -74,7 +74,7 @@ class TodoListDemoView(HtmxActionMixin, BasePageView):
         )
         return self.render_item_response(request, item)
 
-    @hx_action('post')
+    @hq_hx_action('post')
     def mark_item_done(self, request, *args, **kwargs):
         item = self.update_item(
             int(request.POST['itemId']),
