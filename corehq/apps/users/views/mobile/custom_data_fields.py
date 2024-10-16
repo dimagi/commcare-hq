@@ -26,16 +26,16 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     COMMCARE_USER = "commcare_user"
     required_for_options = [
         {
-            "text": "Web Users",
+            "text": _("Web Users"),
             "value": [WEBUSER],
         },
         {
-            "text": "Mobile Workers",
+            "text": _("Mobile Workers"),
             "value": [COMMCARE_USER],
             "isDefault": True,
         },
         {
-            "text": "Both",
+            "text": _("Both"),
             "value": [WEBUSER, COMMCARE_USER],
         }
     ]
