@@ -1060,6 +1060,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
+#: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/events/templates/edit_attendee.html
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
@@ -3226,6 +3227,7 @@ msgid "Generating Report..."
 msgstr "Generando Reporte..."
 
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html
+#: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/geospatial/templates/case_management.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
@@ -4391,7 +4393,6 @@ msgid "Copy version"
 msgstr ""
 
 #: corehq/apps/app_manager/forms.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Current"
 msgstr "Actual"
 
@@ -6744,7 +6745,6 @@ msgstr "Instale CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
@@ -8293,7 +8293,6 @@ msgstr "XForm"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
@@ -10198,45 +10197,6 @@ msgstr ""
 msgid "No Multimedia"
 msgstr "No hay Multimedia"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Upload Icon Image"
-msgstr "Subir Imagen de Íncono"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Select Icon Image"
-msgstr "Seleccione Imagen de Ícono"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Select"
-msgstr "Seleccione"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Current Icon"
-msgstr "Ícono actual"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Begin Upload"
-msgstr "Empiece a Cargar"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Upload Menu Audio"
-msgstr "Cargar Menú de Audio"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Select Menu Audio"
-msgstr "Seleccione Menú de Audio"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-msgid "Current Audio"
-msgstr "Audio actual"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
@@ -10773,6 +10733,7 @@ msgid "Replace Logo"
 msgstr "Reemplazar Logo"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Upload Logo"
 msgstr "Subir Logo"
 
@@ -12902,6 +12863,15 @@ msgstr "Aplicaciones Web"
 msgid "Show Full Menu"
 msgstr "Mostrar el Menú Completo"
 
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
+#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
+#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Select"
+msgstr "Seleccione"
+
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/detail.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/no_items_text.html
 msgid "List is empty."
@@ -13374,6 +13344,10 @@ msgid "Select one"
 msgstr "Seleccione uno"
 
 #: corehq/apps/custom_data_fields/edit_entity.py
+msgid "Additional Information"
+msgstr "Información Adicional"
+
+#: corehq/apps/custom_data_fields/edit_entity.py
 #: corehq/apps/registration/forms.py
 msgid "Invalid profile selected. Please select a valid profile."
 msgstr ""
@@ -13381,10 +13355,6 @@ msgstr ""
 #: corehq/apps/custom_data_fields/edit_entity.py
 msgid "Select a profile"
 msgstr ""
-
-#: corehq/apps/custom_data_fields/edit_entity.py
-msgid "Additional Information"
-msgstr "Información Adicional"
 
 #: corehq/apps/custom_data_fields/edit_entity.py
 msgid "Unrecognized Information"
@@ -19320,8 +19290,10 @@ msgid "past {} days"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-msgid "Date ranges with more than 90 days are not supported"
-msgstr ""
+#, fuzzy
+#| msgid "Remote apps are not supported"
+msgid "Date ranges with more than {} days are not supported"
+msgstr "Las aplicaciones remotas no son soportadas"
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Form ID"
@@ -19656,6 +19628,10 @@ msgstr ""
 msgid ""
 "Web users in the controlling project space will <strong>not</strong> have "
 "permissions in the following project spaces."
+msgstr ""
+
+#: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
+msgid "Customize Mobile Form Submissions Date Range"
 msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
@@ -24725,6 +24701,11 @@ msgid "Select Files"
 msgstr "Seleccionar Archivos"
 
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Begin Upload"
+msgstr "Empiece a Cargar"
+
+#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
 msgid "Bulk Upload File Queue"
 msgstr "Cola de Archivos para Carga General "
 
@@ -24761,66 +24742,81 @@ msgstr "Procesando la Carga"
 msgid "Uploaded Files"
 msgstr "Archivos Cargados"
 
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Multimedia Sharing Options"
-msgstr "Opciones de Compartir Multimedia"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "License"
-msgstr "Licencia"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Creative Commons Attribution, Non-Commercial (CC BY-NC)"
-msgstr "Atribución de Creative Commons, No Comercial (CC BY-NC)"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Creative Commons Attribution, No Derivatives (CC BY-ND)"
-msgstr "Atribución de Creative Commons, Sin Derivadas (CC BY-ND)"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Creative Commons Attribution (CC BY)"
-msgstr "Atribución de Creative Commons (CC BY)"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid ""
-"Creative Commons Attribution, Non-Commercial, and Share Alike (CC BY-NC-SA)"
-msgstr ""
-"Atribución de Creative Commons, No Comercial, y Compartir Igual (CC BY-NC-SA)"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid ""
-"Creative Commons Attribution, Non-Commercial, and No Derivatives (CC BY-NC-"
-"ND)"
-msgstr ""
-"Atribución de Creative Commons, No Comercial, y Sin Derivadas (CC BY-NC-ND)"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Creative Commons Attribution, Share Alike (CC BY-SA)"
-msgstr "Atribución de Creative Commons, Compartir Igual (CC BY-SA)"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Author"
-msgstr "Autor"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Enter the name of the author"
-msgstr "Ingrese el nombre del autor"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html
-msgid "Attribution Notes"
-msgstr "Notas de Atribución"
-
 #: corehq/apps/hqmedia/templates/hqmedia/partials/manage_paths.html
 msgid "Include only paths where the multimedia file is missing?"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select New"
-msgstr "Seleccione uno Nuevo"
+msgid "Upload Icon Image"
+msgstr "Subir Imagen de Íncono"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#, fuzzy
+#| msgid "Upload Menu Audio"
+msgid "Upload Audio"
+msgstr "Cargar Menú de Audio"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#, fuzzy
+#| msgid "Upload file"
+msgid "Upload Video"
+msgstr "Cargar archivo"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#, fuzzy
+#| msgid "Upload file"
+msgid "Upload File"
+msgstr "Cargar archivo"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Select Icon Image"
+msgstr "Seleccione Imagen de Ícono"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Select Menu Audio"
+msgstr "Seleccione Menú de Audio"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#, fuzzy
+#| msgid "Select File"
+msgid "Select Video"
+msgstr "Seleccione Archivo"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#, fuzzy
+#| msgid "Delete Logo"
+msgid "Select Logo"
+msgstr "Eliminar Logo"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Select File"
 msgstr "Seleccione Archivo"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Current Icon"
+msgstr "Ícono actual"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Current Audio"
+msgstr "Audio actual"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#, fuzzy
+#| msgid "Current Audio"
+msgid "Current Video"
+msgstr "Audio actual"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#, fuzzy
+#| msgid "Current Icon"
+msgid "Current Logo"
+msgstr "Ícono actual"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#, fuzzy
+#| msgid "Current Price"
+msgid "Current File"
+msgstr "Precio Actual"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
 msgid ""
@@ -46493,6 +46489,12 @@ msgid "Failure"
 msgstr "Falla"
 
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
+#, fuzzy
+#| msgid "Invalid URL"
+msgid "Invalid"
+msgstr "URL Inválido"
+
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
 msgid "You haven't configured any services to forward to yet."
 msgstr ""
 
@@ -48078,11 +48080,46 @@ msgstr ""
 msgid "Enter valid JSON"
 msgstr ""
 
-#~ msgid "Add to Bulk Export"
-#~ msgstr "Añadir a Exportación General"
+#~ msgid "Multimedia Sharing Options"
+#~ msgstr "Opciones de Compartir Multimedia"
 
-#~ msgid "de-identified"
-#~ msgstr "anónimo"
+#~ msgid "License"
+#~ msgstr "Licencia"
 
-#~ msgid "Not Available"
-#~ msgstr "No Disponible"
+#~ msgid "Creative Commons Attribution, Non-Commercial (CC BY-NC)"
+#~ msgstr "Atribución de Creative Commons, No Comercial (CC BY-NC)"
+
+#~ msgid "Creative Commons Attribution, No Derivatives (CC BY-ND)"
+#~ msgstr "Atribución de Creative Commons, Sin Derivadas (CC BY-ND)"
+
+#~ msgid "Creative Commons Attribution (CC BY)"
+#~ msgstr "Atribución de Creative Commons (CC BY)"
+
+#~ msgid ""
+#~ "Creative Commons Attribution, Non-Commercial, and Share Alike (CC BY-NC-"
+#~ "SA)"
+#~ msgstr ""
+#~ "Atribución de Creative Commons, No Comercial, y Compartir Igual (CC BY-NC-"
+#~ "SA)"
+
+#~ msgid ""
+#~ "Creative Commons Attribution, Non-Commercial, and No Derivatives (CC BY-"
+#~ "NC-ND)"
+#~ msgstr ""
+#~ "Atribución de Creative Commons, No Comercial, y Sin Derivadas (CC BY-NC-"
+#~ "ND)"
+
+#~ msgid "Creative Commons Attribution, Share Alike (CC BY-SA)"
+#~ msgstr "Atribución de Creative Commons, Compartir Igual (CC BY-SA)"
+
+#~ msgid "Author"
+#~ msgstr "Autor"
+
+#~ msgid "Enter the name of the author"
+#~ msgstr "Ingrese el nombre del autor"
+
+#~ msgid "Attribution Notes"
+#~ msgstr "Notas de Atribución"
+
+#~ msgid "Select New"
+#~ msgstr "Seleccione uno Nuevo"

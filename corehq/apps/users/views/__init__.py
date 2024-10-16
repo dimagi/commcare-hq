@@ -17,7 +17,7 @@ from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
-from corehq.toggles import TABLEAU_USER_SYNCING, WEB_USER_INVITE_ADDITIONAL_FIELDS
+from corehq.toggles import TABLEAU_USER_SYNCING
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -1184,13 +1184,12 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def page_context(self):
-        ctx = {'registration_form': self.invite_web_user_form}
-        if WEB_USER_INVITE_ADDITIONAL_FIELDS.enabled(self.domain):
-            field_view_context = self.custom_data.field_view.get_field_page_context(
+        ctx = {
+            'registration_form': self.invite_web_user_form,
+            **self.custom_data.field_view.get_field_page_context(
                 self.domain, self.request.couch_user, self.custom_data, None
             )
-            ctx.update(field_view_context)
-
+        }
         return ctx
 
     def _assert_user_has_permission_to_access_locations(self, assigned_location_ids):
@@ -1571,7 +1570,7 @@ def change_password(request, domain, login_id):
     else:
         form = SetUserPasswordForm(request.project, login_id, user=django_user)
     json_dump['formHTML'] = render_crispy_form(form)
-    return HttpResponse(json.dumps(json_dump))
+    return JsonResponse(json_dump)
 
 
 @httpdigest

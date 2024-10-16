@@ -142,6 +142,10 @@ class TestUpdateUserMethods(TestCase):
         with self.assertRaises(ValidationError):
             update(self.user, 'groups', [group._id])
 
+    def test_update_groups_with_fake_group_id_raises_exception(self):
+        with self.assertRaises(ValidationError):
+            update(self.user, 'groups', ["fake_id"])
+
     def test_update_unknown_field_raises_exception(self):
         with self.assertRaises(UpdateUserException) as cm:
             update(self.user, 'username', 'new-username')
