@@ -53,26 +53,31 @@ class FilterDemoForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper()
-        # we defer to defining the <form> tag in the template as we will use HTMX to load and submit
-        # the form. Keeping the HTMX local to the template is better to understand the context
-        # of the attribute values.
+
+        # We defer to defining the <form> tag in the template as we will
+        # use HTMX to load and submit the form. Keeping the HTMX attributes
+        # local to the template is preferred to maintain context.
         self.helper.form_tag = False
 
-        # this form layout uses Alpine to toggle the visibility of the "value" field
+        # This form layout uses Alpine to toggle the visibility of
+        # the "value" field:
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 'slug',
                 crispy.Field(
                     'match',
-                    # we initialize the match value in the alpine model defined below
+                    # We initialize the match value in the alpine
+                    # model defined below:
                     x_init="match = $el.value",
-                    # and then two-way bind the alpine match model variable to this input
+                    # and then two-way bind the alpine match
+                    # model variable to this input:
                     x_model="match",
                 ),
                 crispy.Div(
                     'value',
-                    # this uses alpine to determine whether to show the value field, based
-                    # on the valueMatches list defined in the alpine model below
+                    # This uses alpine to determine whether to
+                    # show the value field, based on the valueMatches
+                    # list defined in the alpine model below:
                     x_show="valueMatches.includes(match)",
                 ),
                 twbscrispy.StrictButton(
@@ -80,8 +85,8 @@ class FilterDemoForm(forms.Form):
                     type="submit",
                     css_class="btn-primary htmx-loading",
                 ),
-                # an alpine model is easily added to the form to control
-                # hiding/showing the value field
+                # The Alpine data model is easily bound to the form
+                # to control hiding/showing the value field:
                 x_data=json.dumps({
                     "match": self.fields['match'].initial,
                     "valueMatches": MatchType.MATCHES_WITH_VALUES,

@@ -45,6 +45,9 @@ class HqHtmxActionMixin:
     To raise exceptions in these HTMX action responses, you can raise an ``HtmxResponseException``
     and override either ``default_htmx_error_template`` and/or ``get_htmx_error_template``
     to return the appropriate error template based on the HTMX Action.
+
+    Example docs here: commcarehq.org/styleguide/b5/htmx_alpine/
+    See working demo here: commcarehq.org/styleguide/demo/htmx_todo/
     """
     default_htmx_error_template = "prototype/htmx/partials/htmx_action_error.html"
 
