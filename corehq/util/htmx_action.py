@@ -3,6 +3,7 @@ import time
 
 from django.http import HttpResponseForbidden, HttpResponse
 
+ANY_METHOD = 'any_method'
 
 
 class HtmxActionMixin:
@@ -119,7 +120,7 @@ class HtmxActionMixin:
                 f"decorator '@hx_action'"
             )
 
-        if action_method != 'auto' and action_method.lower() != request.method.lower():
+        if action_method != ANY_METHOD and action_method.lower() != request.method.lower():
             return HttpResponseForbidden(
                 f"Method '{type(self).__name__}.{action}' is not allowed for "
                 f"HTTP {request.method} requests."
@@ -135,7 +136,7 @@ class HtmxActionMixin:
         return response
 
 
-def hx_action(method='auto'):
+def hx_action(method=ANY_METHOD):
     """
     All methods that can be referenced from the value of an `hq-hx-action` attribute
     must be decorated with ``@hx_action``.
