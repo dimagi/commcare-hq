@@ -37,7 +37,7 @@ RE_V1_ALL_REFERENCES = re.compile(f"{V1_FIXTURE_PATTERN}|{V1_REFERENCES_PATTERN}
 skip_domains = set()
 
 
-def process(dry_run=False):
+def process(dry_run=True):
     try:
         processed_domains = read_ndjson_file(PROCESSED_DOMAINS_PATH)
     except FileNotFoundError:
