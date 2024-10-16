@@ -4,43 +4,6 @@ import time
 from django.http import HttpResponseForbidden, HttpResponse
 
 
-class FakeGatewayTimeoutResponse(HttpResponse):
-    status_code = 504
-
-
-def hx_action(method='auto'):
-    """
-    All methods that can be referenced from the value of an `hq-hx-action` attribute
-    must be decorated with ``@hx_action``.
-
-    See ``HtmxActionMixin`` docstring for usage examples.
-    """
-    def decorator(func):
-        setattr(func, 'hx_action', method)
-        return func
-    return decorator
-
-
-class HtmxResponseException(Exception):
-    """
-    Exception class for triggering HTTP 4XX responses for HTMX responses, where expected.
-    """
-    status_code = 400
-    message = None
-
-    def __init__(self, message=None, status=None, *args, **kwargs):
-        self.message = message
-        if status is not None:
-            self.status_code = status
-        super().__init__(*args, **kwargs)
-
-
-def _is_mostly_false():
-    return bool(random.choices(
-        [0, 1],
-        weights=[0.8, 0.2]
-    )[0])
-
 
 class HtmxActionMixin:
     """
@@ -170,3 +133,46 @@ class HtmxActionMixin:
             self.template_name = self.get_htmx_error_template(action, err)
             return self.render_to_response(context)
         return response
+
+
+def hx_action(method='auto'):
+    """
+    All methods that can be referenced from the value of an `hq-hx-action` attribute
+    must be decorated with ``@hx_action``.
+
+    See ``HtmxActionMixin`` docstring for usage examples.
+    """
+    def decorator(func):
+        setattr(func, 'hx_action', method)
+        return func
+    return decorator
+
+
+class HtmxResponseException(Exception):
+    """
+    Exception class for triggering HTTP 4XX responses for HTMX responses, where expected.
+    """
+    status_code = 400
+    message = None
+
+    def __init__(self, message=None, status=None, *args, **kwargs):
+        self.message = message
+        if status is not None:
+            self.status_code = status
+        super().__init__(*args, **kwargs)
+
+
+class FakeGatewayTimeoutResponse(HttpResponse):
+    status_code = 504
+
+
+def _is_mostly_false():
+    """
+    This is a little utility to return mostly False and sometimes True.
+    Used to simulate a flaky gateway which usually returns a 200 response
+    but sometimes returns a 504.
+    """
+    return bool(random.choices(
+        [0, 1],
+        weights=[0.8, 0.2]
+    )[0])
