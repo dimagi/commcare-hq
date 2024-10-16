@@ -49,7 +49,14 @@ document.body.addEventListener('htmx:responseError', (evt) => {
 });
 
 document.body.addEventListener('htmx:timeout', (evt) => {
-    if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig)) {
+    /**
+     * Safely retry on GET request timeouts. Use caution on other types of requests.
+     *
+     * If you want retry on POST requests, please create a new `js_entry` point and add a
+     * similar event listener there. Also, you may want to adjust the `htmx.config.timeout`
+     * value as well.
+     */
+    if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig) && evt.detail.requestConfig.verb === 'get') {
         showHtmxErrorModal(
             504,
             gettext('Gateway Timeout Error: max retries exceeded')
