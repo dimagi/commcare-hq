@@ -26,7 +26,7 @@
         hx-swap="outerHTML"
         hx-target="#item-{{ item.id }}"
         {# :disabled is shorthand for Alpine's x-bind:disabled #}
-        :disabled="isEditing"
+        :disabled="isEditing || isSubmitting"
     >
 
     {# the element below defines what the text looks like when not in edit mode #}
