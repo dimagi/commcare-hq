@@ -68,6 +68,9 @@ def process(dry_run=True, max_memory_size=None):
         apps = get_apps_by_id(domain, app_ids)
         for app in apps:
             try:
+                if not list(app.get_report_modules()):
+                    continue
+
                 # Don't look at app.is_released since the latest version might not be released yet
                 if app.mobile_ucr_restore_version != '2.0':
                     save_in_log(f"Processing App: {domain}: {app.name}: {app.id}")
