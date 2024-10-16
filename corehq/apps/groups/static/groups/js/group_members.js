@@ -8,7 +8,7 @@ hqDefine("groups/js/group_members", [
     "hqwebapp/js/bootstrap5/alert_user",
     "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list",
     "hqwebapp/js/select_2_ajax_widget",     // "Group Membership" select2
-    "hqwebapp/js/components.ko",            // select toggle for "Edit Setings" popup
+    "hqwebapp/js/components/select_toggle",            // select toggle for "Edit Setings" popup
 ], function (
     $,
     _,
