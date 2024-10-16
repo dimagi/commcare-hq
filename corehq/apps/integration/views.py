@@ -159,6 +159,7 @@ def get_post_data_for_otp(request, domain):
     return post_params
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class DialerSettingsView(BaseProjectSettingsView):
     urlname = 'dialer_settings_view'
     page_title = gettext_lazy('Dialer Settings')

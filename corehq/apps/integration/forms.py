@@ -19,8 +19,11 @@ from corehq.apps.integration.models import (
 
 class DialerSettingsForm(forms.ModelForm):
     is_enabled = forms.BooleanField(
-        label=_("Enable AWS Connect Dialer"),
-        required=False
+        label="",
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=_("Enable AWS Connect Dialer"),
+        ),
     )
     aws_instance_id = forms.CharField(
         label=_('AWS Instance ID'),
@@ -53,10 +56,7 @@ class DialerSettingsForm(forms.ModelForm):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
-            hqcrispy.B3MultiField(
-                _("Telephony Services"),
-                hqcrispy.InlineField('is_enabled'),
-            ),
+            PrependedText('is_enabled', ""),
             crispy.Div(
                 crispy.Field('aws_instance_id'),
             ),
@@ -66,10 +66,8 @@ class DialerSettingsForm(forms.ModelForm):
             crispy.Div(
                 crispy.Field('dialer_page_subheader'),
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', _("Update"))
-                )
+            crispy.ButtonHolder(
+                Submit('submit', _("Update"))
             )
         )
 
