@@ -139,7 +139,8 @@
       "paywall.html",
       "datasource_export_view.html",
       "customize_export_new.html",
-      "export_list.html"
+      "export_list.html",
+      "partials/export_list_controller.html"
     ],
     "javascript": [
       "js/download_data_files.js"
