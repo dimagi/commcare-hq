@@ -18,6 +18,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.integration.forms import (
     DialerSettingsForm,
     HmacCalloutSettingsForm,
@@ -240,6 +241,7 @@ class GaenOtpServerSettingsView(BaseProjectSettingsView):
 
 
 @method_decorator(toggles.HMAC_CALLOUT.required_decorator(), name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class HmacCalloutSettingsView(BaseProjectSettingsView):
     urlname = 'hmac_callout_settings_view'
     page_title = gettext_lazy('Signed Callout Settings')

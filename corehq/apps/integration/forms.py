@@ -2,11 +2,13 @@ from django import forms
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
+from crispy_forms.bootstrap import PrependedText
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Submit
 from memoized import memoized
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.integration.models import (
     DialerSettings,
     HmacCalloutSettings,
@@ -183,8 +185,11 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
 
 class HmacCalloutSettingsForm(forms.ModelForm):
     is_enabled = forms.BooleanField(
-        label=_("Enable Signed Callout in Web Apps"),
-        required=False
+        label="",
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=_("Enable in Web Apps"),
+        ),
     )
     destination_url = forms.CharField(
         label=_('External Callout URL'),
@@ -193,11 +198,11 @@ class HmacCalloutSettingsForm(forms.ModelForm):
 
     api_key = forms.CharField(
         label=_('API Key'),
-        help_text=_("API Key for CommCare in the external System")
+        help_text=_("API Key for CommCare in the external system")
     )
     api_secret = forms.CharField(
         label=_('API Secret'),
-        help_text=_("API Secret for message Signing"),
+        help_text=_("API secret for message signing"),
         widget=forms.PasswordInput
     )
 
@@ -217,10 +222,7 @@ class HmacCalloutSettingsForm(forms.ModelForm):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
-            hqcrispy.B3MultiField(
-                _("Signed Callout Config"),
-                hqcrispy.InlineField('is_enabled'),
-            ),
+            PrependedText('is_enabled', ""),
             crispy.Div(
                 crispy.Field('destination_url'),
             ),
@@ -230,10 +232,8 @@ class HmacCalloutSettingsForm(forms.ModelForm):
             crispy.Div(
                 crispy.Field('api_secret'),
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', _("Update"))
-                )
+            crispy.ButtonHolder(
+                Submit('submit', _("Update"))
             )
         )
 
