@@ -32,8 +32,8 @@
           {% trans "Unable to process applications. Please report an issue if this persists" %}
         </p>
         <div class="spacer"></div>
-        <div class="progress " data-bind="visible: showBuildSchemaProgressBar">  {# todo B5: css:progress #}
-          <div class="progress-bar" role="progressbar" data-bind="
+        <div class="progress" role="progressbar" data-bind="visible: showBuildSchemaProgressBar">
+          <div class="progress-bar" data-bind="
               style: {
                   width: buildSchemaProgress() + '%'
               }

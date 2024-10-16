@@ -1,5 +1,7 @@
 Form validation markup has been reworked, which includes dropping `has-error`.
 In general, replace `has-error` and `help-block` with `is-invalid` and `invalid-feedback`.
+Note that `invalid-feedback` must be a **sibling** of an input with `is_invalid`, or it will be hidden.
+This is a change from `has-error`, which was used on containers and would apply to all descendants.
 
 An EXAMPLE for how to apply this change is provided below.
 Please see docs for further details.
