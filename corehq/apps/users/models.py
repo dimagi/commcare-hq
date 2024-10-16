@@ -113,6 +113,9 @@ MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
 
 EULA_CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
 
+logger = logging.getLogger(__name__)
+logger.setLevel('DEBUG')
+
 
 def _add_to_list(list, obj, default):
     if obj in list:
@@ -1402,6 +1405,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 attr_val = attr_val[:30]
             setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER = True
+        logger.info(f"[SSO DEBUG] When sync_to_django_user, django_user.is_active is {django_user.is_active}")
         return django_user
 
     @classmethod
@@ -1577,6 +1581,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
         if hasattr(django_user, 'DO_NOT_SAVE_COUCH_USER'):
+            if django_user.username == 'jcheng_test@dimagi.org':
+                couch_user = cls.from_django_user(django_user)
+                notify_exception(None, "We tried to delete DO_NOT_SAVE_COUCH_USER for jcheng_test@dimagi.org")
+                logger.info(f"[SSO DEBUG] We tried to delete DO_NOT_SAVE_COUCH_USER, "
+                            f"CouchUser.is_active is {couch_user.is_active}, "
+                            f"django user.is_active is {django_user.is_active}")
             del django_user.DO_NOT_SAVE_COUCH_USER
         else:
             couch_user = cls.from_django_user(django_user)
@@ -1586,6 +1596,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 try:
                     if couch_user.username == 'jcheng_test@dimagi.org':
                         notify_exception(None, "jcheng_test@dimagi.org saved in django_user_post_save_signal")
+                        logger.info(f"[SSO DEBUG] We tried to save DOCUMENT! "
+                            f"CouchUser.is_active is {couch_user.is_active}, "
+                            f"django user.is_active is {django_user.is_active}")
                     # avoid triggering cyclical sync
                     super(CouchUser, couch_user).save(**get_safe_write_kwargs())
                 except ResourceConflict:
