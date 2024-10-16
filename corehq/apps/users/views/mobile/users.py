@@ -1688,7 +1688,7 @@ def link_connectid_user(request, domain):
 
 
 @csrf_exempt
-@api_auth()
+@login_or_basic_ex(allow_cc_users=True)
 def connectid_messaging_key(request, domain):
     link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
     key = generate_aes_key().decode("utf-8")
@@ -1698,7 +1698,7 @@ def connectid_messaging_key(request, domain):
 
 @csrf_exempt
 @require_POST
-@api_auth()
+@login_or_basic_ex(allow_cc_users=True)
 def update_connectid_messaging_consent(request, domain):
     link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
     link.messaging_consent = request.POST.get("consent", False)
