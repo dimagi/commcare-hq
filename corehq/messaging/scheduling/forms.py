@@ -3074,9 +3074,12 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     allow_custom_immediate_schedule = True
 
-    def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
+    def __init__(
+            self, domain, schedule, can_use_sms_surveys, rule,
+            criteria_form, recipient_filter_form, *args, **kwargs):
         self.initial_rule = rule
         self.criteria_form = criteria_form
+        self.recipient_filter_form = recipient_filter_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
         if self.initial_rule:
             self.set_read_only_fields_during_editing()
