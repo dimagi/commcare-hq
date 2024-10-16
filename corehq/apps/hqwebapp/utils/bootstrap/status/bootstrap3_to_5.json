@@ -159,7 +159,8 @@
       "spec/ko/mocha.html"
     ],
     "javascript": [
-      "js/download_data_files.js"
+      "js/download_data_files.js",
+      "spec/ExportInstance.spec.js"
     ]
   },
   "integration": {
