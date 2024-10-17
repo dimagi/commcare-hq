@@ -144,7 +144,6 @@ hqDefine("hqmedia/js/uploaders", function () {
             const options = _.find(initialPageData.get("uploaders"), function (data) { return data.slug === slug; });
             if (options) {
                 allUploaders[slug] = uploader(options.slug, options.options);
-                allUploaders[slug].init();
             }
         }
         return allUploaders[slug];
