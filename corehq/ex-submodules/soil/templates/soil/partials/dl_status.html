@@ -16,7 +16,7 @@
           <i class="fa fa-check"></i>&nbsp;{% trans 'Your export is ready.' %}
         {% endif %}
       </p>
-      <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">{% csrf_token %}
+      <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">{% csrf_token %}  {# todo B5: css-form-inline #}
         <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
           <i class="fa fa-download"></i>
           {% trans "Download File Now" %}
