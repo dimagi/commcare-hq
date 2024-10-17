@@ -170,6 +170,7 @@ class SelfSignupWorkflow(models.Model):
     )
 
     @classmethod
+    @memoized
     def get_in_progress_for_domain(cls, domain):
         try:
             workflow = cls.objects.get(
@@ -184,3 +185,4 @@ class SelfSignupWorkflow(models.Model):
         self.completed_on = datetime.datetime.now()
         self.subscribed_edition = edition
         self.save()
+        self.get_in_progress_for_domain.reset_cache(self.domain)
