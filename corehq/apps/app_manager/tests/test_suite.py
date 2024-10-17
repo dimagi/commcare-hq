@@ -20,6 +20,7 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
@@ -89,6 +90,7 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
     def test_printing(self, *args):
         self._test_generic_suite('app_print_detail', 'suite-print-detail')
 
+    @flag_enabled('MOBILE_UCR')
     def test_report_module(self, *args):
         from corehq.apps.userreports.tests.utils import get_sample_report_config
 
