@@ -13,7 +13,7 @@ from django.http import (
     HttpResponseRedirect,
 )
 from django.http.response import HttpResponseServerError, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -81,6 +81,7 @@ from corehq.apps.locations.permissions import (
     can_edit_workers_location,
     location_safe
 )
+from corehq.apps.mobile_auth.utils import generate_aes_key
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import (
     MobileWorkerAccountConfirmationBySMSForm,
@@ -119,6 +120,7 @@ from corehq.apps.users.forms import (
 )
 from corehq.apps.users.models import (
     CommCareUser,
+    ConnectIDMessagingKey,
     CouchUser,
     DeactivateMobileWorkerTrigger,
     check_and_send_limit_email,
@@ -1683,6 +1685,25 @@ def link_connectid_user(request, domain):
         return HttpResponse(status=201)
     else:
         return HttpResponse()
+
+
+@csrf_exempt
+@login_or_basic_ex(allow_cc_users=True)
+def connectid_messaging_key(request, domain):
+    link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
+    key = generate_aes_key().decode("utf-8")
+    messaging_key = ConnectIDMessagingKey.objects.create(connectid_user_link=link, domain=request.domain, key=key)
+    return JsonResponse({"key": messaging_key.key})
+
+
+@csrf_exempt
+@require_POST
+@login_or_basic_ex(allow_cc_users=True)
+def update_connectid_messaging_consent(request, domain):
+    link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
+    link.messaging_consent = request.POST.get("consent", False)
+    link.save()
+    return HttpResponse(status=200)
 
 
 @waf_allow('XSS_BODY')

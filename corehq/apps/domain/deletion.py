@@ -447,6 +447,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'InvalidUCRData', 'domain'),
     ModelDeletion('userreports', 'UCRExpression', 'domain'),
     ModelDeletion('users', 'ConnectIDUserLink', 'domain'),
+    ModelDeletion('users', 'ConnectIDMessagingKey', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'DeactivateMobileWorkerTrigger', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
