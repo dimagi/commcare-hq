@@ -68,7 +68,10 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tasks import (
     create_build_files_for_all_app_profiles,
 )
-from corehq.apps.app_manager.util import get_and_assert_practice_user_in_domain
+from corehq.apps.app_manager.util import (
+    get_and_assert_practice_user_in_domain,
+    does_app_have_mobile_ucr_v1_refs,
+)
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import (
@@ -273,6 +276,10 @@ def release_build(request, domain, app_id, saved_app_id):
     saved_app = get_app(domain, saved_app_id)
     if saved_app.copy_of != app_id:
         raise Http404
+    if is_released:
+        error_message = _check_app_for_mobile_ucr_v1_refs(domain, saved_app)
+        if error_message:
+            return json_response({'error': error_message})
     saved_app.is_released = is_released
     saved_app.last_released = datetime.datetime.utcnow() if is_released else None
     saved_app.is_auto_generated = False
@@ -362,10 +369,17 @@ def save_copy(request, domain, app_id):
     case_types = get_case_types_for_app_build(domain, app_id)
     deprecated_case_types = get_data_dict_deprecated_case_types(domain)
     used_deprecated_case_types = case_types.intersection(deprecated_case_types)
+    error_html = ''
+    warning_message = _check_app_for_mobile_ucr_v1_refs(domain, app)
+    if warning_message:
+        error_html = render_to_string("app_manager/partials/mobile_ucr_v1_warning.html", {
+            'warning_message': warning_message,
+        })
+
     return JsonResponse({
         "saved_app": copy_json,
         "deprecated_case_types": list(used_deprecated_case_types),
-        "error_html": "",
+        "error_html": error_html,
     })
 
 
@@ -388,6 +402,19 @@ def _track_build_for_app_preview(domain, couch_user, app_id, message):
     })
 
 
+def _check_app_for_mobile_ucr_v1_refs(domain, app):
+    if not toggles.MOBILE_UCR.enabled(domain):
+        return
+    if app.mobile_ucr_restore_version != '2.0':
+        return _("The mobile UCR restore version for v%(app_version)s needs to be updated to V2.0") % {
+            'app_version': app.version,
+        }
+    if does_app_have_mobile_ucr_v1_refs(app):
+        return _("One or more forms for v%(app_version)s contain V1 Mobile UCR references.") % {
+            'app_version': app.version,
+        }
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def revert_to_copy(request, domain, app_id):
@@ -400,6 +427,9 @@ def revert_to_copy(request, domain, app_id):
     copy = get_app(domain, request.POST['build_id'])
     if copy.get_doc_type() == 'LinkedApplication' and app.get_doc_type() == 'Application':
         copy = copy.convert_to_application()
+    warning_message = _check_app_for_mobile_ucr_v1_refs(domain, app=copy)
+    if warning_message:
+        messages.warning(request, warning_message)
     app = app.make_reversion_to_copy(copy)
     app.save()
     messages.success(
