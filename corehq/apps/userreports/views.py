@@ -1208,6 +1208,10 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                 messages.success(request, _('Data source "{}" saved!').format(
                     config.display_name
                 ))
+                messages.success(request, _(
+                    'This data source will be built/rebuilt automatically the '
+                    'next time a row is added.'
+                ))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(
                         EditDataSourceView.urlname, args=[self.domain, config._id])
@@ -1432,9 +1436,12 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-    rebuild_indicators_in_place.delay(config_id, request.user.username,
-                                      source='edit_data_source_build_in_place',
-                                      domain=config.domain)
+    rebuild_indicators_in_place.delay(
+        config_id,
+        request.user.username,
+        source='edit_data_source_build_in_place',
+        domain=config.domain,
+    )
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
