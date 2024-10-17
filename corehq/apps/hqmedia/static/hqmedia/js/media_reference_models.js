@@ -3,7 +3,7 @@ hqDefine("hqmedia/js/media_reference_models", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
-    'hqmedia/js/hqmediauploaders',
+    'hqmedia/js/uploaders',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
@@ -13,9 +13,7 @@ hqDefine("hqmedia/js/media_reference_models", [
     mediaUploaders,
     initialPageData
 ) {
-    var HQMediaUploaders = mediaUploaders.get();
-
-    function BaseMediaReference(ref) {
+    function BaseMediaReference(ref, uploader_slug) {
         'use strict';
         var self = {};
 
@@ -27,7 +25,11 @@ hqDefine("hqmedia/js/media_reference_models", [
         self.path = ref.path;
         self.type_icon = ref.icon_class;
 
-        self.upload_controller = null; // override
+        self.slug = uploader_slug;
+        self.upload_controller = null;
+        if (self.slug) {
+            self.upload_controller = mediaUploaders.uploaderPreset(self.slug);
+        }
 
         // for matching
         self.is_matched = ko.observable(false);
@@ -74,7 +76,6 @@ hqDefine("hqmedia/js/media_reference_models", [
         };
 
         self.triggerUpload = function () {
-            self.upload_controller.resetUploader();
             self.upload_controller.currentReference = self;
             if (self.upload_controller) {
                 self.upload_controller.uploadParams = {
@@ -103,17 +104,17 @@ hqDefine("hqmedia/js/media_reference_models", [
         self.uploadComplete = function (trigger, event, data) {
             if (data && !data.errors.length) {
                 self.setObjReference(data.ref);
+                self.upload_controller.updateUploadFormUI();
             }
         };
 
         return self;
     }
 
-    function ImageReference(ref) {
+    function ImageReference(ref, uploader_slug) {
         'use strict';
         var self = {};
-        self = BaseMediaReference(ref);
-        self.upload_controller = HQMediaUploaders['hqimage'];
+        self = BaseMediaReference(ref, uploader_slug || "hqimage");
         self.preview_template = "image-preview-template";
         self.thumb_url = ko.computed(function () {
             return (self.url()) ? self.url() + "?thumb=50" : "";
@@ -125,11 +126,10 @@ hqDefine("hqmedia/js/media_reference_models", [
     ImageReference.prototype = Object.create(BaseMediaReference.prototype);
     ImageReference.prototype.constructor = ImageReference;
 
-    function AudioReference(ref) {
+    function AudioReference(ref, uploader_slug) {
         'use strict';
         var self = {};
-        self = BaseMediaReference(ref);
-        self.upload_controller = HQMediaUploaders['hqaudio'];
+        self = BaseMediaReference(ref, uploader_slug || "hqaudio");
         self.preview_template = "audio-preview-template";
         return self;
     }
@@ -137,11 +137,10 @@ hqDefine("hqmedia/js/media_reference_models", [
     AudioReference.prototype = Object.create(BaseMediaReference.prototype);
     AudioReference.prototype.constructor = AudioReference;
 
-    function VideoReference(ref) {
+    function VideoReference(ref, uploader_slug) {
         'use strict';
         var self = {};
-        self = BaseMediaReference(ref);
-        self.upload_controller = HQMediaUploaders['hqvideo'];
+        self = BaseMediaReference(ref, uploader_slug || "hqvideo");
         self.preview_template = "video-preview-template";
         return self;
     }
