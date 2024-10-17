@@ -7,7 +7,6 @@ hqDefine("app_manager/js/details/case_detail_print", function () {
     if (printUploader) {
         printTemplateUploader = uploaders.uploader(
             printUploader.slug,
-            printUploader.media_type,
             printUploader.options
         );
         printRef = hqImport('hqmedia/js/media_reference_models').BaseMediaReference(initialPageData.get('print_ref'));
