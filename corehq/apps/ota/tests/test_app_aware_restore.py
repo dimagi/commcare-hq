@@ -1,7 +1,7 @@
-from django.test import TestCase
-
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
+
+from django.test import TestCase
 
 from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.phone.tests.utils import (
@@ -11,8 +11,8 @@ from casexml.apps.phone.tests.utils import (
 
 from corehq import toggles
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
-    report_fixture_generator,
     ReportFixturesProviderV2,
+    report_fixture_generator,
 )
 from corehq.apps.app_manager.models import (
     Application,
@@ -97,7 +97,9 @@ class AppAwareSyncTests(TestCase):
         """
         ReportFixturesProvider should iterate all apps if app not given
         """
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
             with mock_datasource_config():
@@ -114,7 +116,9 @@ class AppAwareSyncTests(TestCase):
         """
         ReportFixturesProvider should not iterate all apps if app given
         """
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
             with mock_datasource_config():
@@ -130,7 +134,9 @@ class AppAwareSyncTests(TestCase):
         When sync interval is set, ReportFixturesProvider should provide reports only if
         the interval has passed since the last sync or a new build is being requested.
         """
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
             with mock_datasource_config():
@@ -166,16 +172,21 @@ class AppAwareSyncTests(TestCase):
                 self.domain_obj.default_mobile_ucr_sync_interval = None
 
     def test_report_fixtures_provider_with_app_that_doesnt_have_reports(self):
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
             fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app3)
         self.assertEqual(len(list(fixtures)), 0)
 
     def test_user_restore(self):
-        from casexml.apps.phone.utils import MockDevice
         from casexml.apps.case.xml import V3
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from casexml.apps.phone.utils import MockDevice
+
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
 
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows

@@ -1,10 +1,9 @@
 import os
 from collections import OrderedDict
+from unittest import mock
 from xml.etree import cElementTree as ElementTree
 
 from django.test import SimpleTestCase, TestCase
-
-from unittest import mock
 
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,
