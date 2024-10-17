@@ -236,29 +236,24 @@ class ArcGISFormExpressionRepeater(FormExpressionRepeater):
 
         >>> response_json = {
         ...     "error": {
-        ...         "code": 403,
-        ...         "details": [
-        ...             "You do not have permissions to access this "
-        ...             "resource or perform this operation."
-        ...         ],
-        ...         "message": "You do not have permissions to access "
-        ...                    "this resource or perform this operation.",
-        ...         "messageCode": "GWM_0003"
+        ...         "code": 503,
+        ...         "details": [],
+        ...         "message": "An error occurred."
         ...     }
         ... }
         >>> resp = ArcGISFormExpressionRepeater._error_response(response_json)
         >>> resp.status_code
-        403
+        503
         >>> resp.reason
-        'You do not have permissions to access this resource or perform this operation. (GWM_0003)'
-        >>> resp.text
-        'You do not have permissions to access this resource or perform this operation.'
+        'An error occurred.'
 
         """
+        reason = response_json['error']['message']
+        if 'messageCode' in response_json['error']:
+            reason += f' ({response_json["error"]["messageCode"]})'
         return RepeaterResponse(
             status_code=response_json['error']['code'],
-            reason=f'{response_json["error"]["message"]} '
-                   f'({response_json["error"]["messageCode"]})',
+            reason=reason,
             text='\n'.join(response_json['error']['details']),
         )
 

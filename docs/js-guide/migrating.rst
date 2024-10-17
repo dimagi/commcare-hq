@@ -50,12 +50,12 @@ Once these conditions are met, migrating to Webpack is essentially the
 process of explicitly adding each module’s dependencies to the module’s
 definition, and also updating each HTML page to reference a single
 “main” module rather than including a bunch of ``<script>`` tags: 1. Add
-``webpack_main`` tag and remove ``<script>`` tags 1. Add dependencies
+``js_entry`` tag and remove ``<script>`` tags 1. Add dependencies
 1. Test
 
 .. note::
     The sample PRs below were created when we were still using RequireJS.
-    You can read the sample PRs and substitute ``webpack_main`` where you see
+    You can read the sample PRs and substitute ``js_entry`` where you see
     ``requirejs_main``. Additionally, you should be sure to include the ``commcarehq``
     module in the list of dependencies of the final ``hqDefine`` entry point.
 
@@ -74,10 +74,10 @@ modules (analytics, ``hq.helpers.js``, etc.). This also contains the
 changes to ``hqModules.js`` that make ``hqDefine`` support both migrated
 and unmigrated pages.
 
-Add ``webpack_main`` tag and remove ``<script>`` tags
+Add ``js_entry`` tag and remove ``<script>`` tags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``webpack_main`` tag is what indicates that a page should use
+The ``js_entry`` tag is what indicates that a page should use
 Webpack. The page should have one "main" module, referred to as an Entry Point.
 Most of our pages are already set up like this: they might include a bunch of scripts, but
 there's one in particular that handles the event handlers, bindings,
@@ -103,9 +103,9 @@ Considerations when choosing or creating an Entry Point
   - app-specific reusable modules like `accounting/js/widgets <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/accounting/static/accounting/js/widgets.js>`__, which are also sometimes used as entry points
   - page-specific modules like `accounting/js/subscriptions_main <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/accounting/static/accounting/js/subscriptions_main.js>`__
 - There's a growing convention of using the suffix ``_main`` for entry points - more specifically, for any module that runs logic in a document ready handler.
-- HTML files that are only used as the base for other templates don't need to have a entry point or a ``webpack_main`` tag.
+- HTML files that are only used as the base for other templates don't need to have a entry point or a ``js_entry`` tag.
 
-Add ``{% webpack_main "myApp/js/my_module" %}`` near the top of the
+Add ``{% js_entry "myApp/js/my_module" %}`` near the top of the
 template: it can go after ``load`` and ``extends`` but should appear
 before content blocks. Note that it’s a module name, not a file name, so
 it doesn’t include ``.js``.
@@ -155,13 +155,13 @@ To declare dependencies:
 - If you removed any ``<script>`` tags from the template
   and haven’t yet added them to the dependency list, do that.
 - Check the template’s parent template
-    - If the parent has a ``webpack_main`` module, the template you’re migrating should include a dependency on that module.
+    - If the parent has a ``js_entry`` module, the template you’re migrating should include a dependency on that module.
        - If the parent still has ``<script>`` tags, the template
          you’re migrating should include those as dependencies. It’s usually
          convenient to migrate the parent and any “sibling” templates at the same
          time so you can remove the ``<script>`` tags altogether. If that isn’t
          possible, make the parent check before including script tags:
-         ``{% if webpack_main %}<script ...></script>{% endif %}``
+         ``{% if js_entry %}<script ...></script>{% endif %}``
        - Also check the parent’s parent template, etc. Stop once you get to
          ``hqwebapp/base.html``, ``hqwebapp/bootstrap5/two_column.html``, or
          ``hqwebapp/bootstrap5/base_section.html``, which already support a bundler.

@@ -44,7 +44,7 @@ const scanTemplates = function (dir, entryRegex, allAppPaths, details, isProdMod
             let content = fs.readFileSync(fullPath, 'utf-8');
             let match;
 
-            // Extract all matches of the {% webpack_main "path" %} tag
+            // Extract all matches of the {% js_entry "path" %} tag
             while ((match = entryRegex.exec(content)) !== null) {
                 let entryName = match[1];
                 let folders = entryName.split('/');
@@ -133,12 +133,12 @@ if (require.main === module) {
 
     // This splits the builds into bootstrap 5 and bootstrap 3 versions
     const defaultDetails = getDetails(
-        /{% webpack_main ["']([\/\w\-]+)["'] %}/g,
+        /{% js_entry ["']([\/\w\-]+)["'] %}/g,
         allAppPaths,
         isProductionMode
     );
     const b3Details = getDetails(
-        /{% webpack_main_b3 ["']([\/\w\-]+)["'] %}/g,
+        /{% js_entry_b3 ["']([\/\w\-]+)["'] %}/g,
         allAppPaths,
         isProductionMode
     );

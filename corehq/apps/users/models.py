@@ -552,7 +552,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
     def add_as_web_user(self, domain, role, primary_location_id=None,
                         assigned_location_ids=None, program_id=None, profile=None,
-                        tableau_role=None, tableau_group_ids=None):
+                        tableau_role=None, tableau_group_ids=None, custom_user_data=None):
         if assigned_location_ids is None:
             assigned_location_ids = []
         domain_obj = Domain.get_by_name(domain)
@@ -564,9 +564,11 @@ class _AuthorizableMixin(IsMemberOfMixin):
             if primary_location_id:
                 self.set_location(domain, primary_location_id, commit=False)
             self.reset_locations(domain, assigned_location_ids, commit=False)
+        user_data = self.get_user_data(domain_obj.name)
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
-            user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
+        if custom_user_data:
+            user_data.update(custom_user_data)
         if TABLEAU_USER_SYNCING.enabled(domain) and (tableau_role or tableau_group_ids):
             if tableau_group_ids is None:
                 tableau_group_ids = []
@@ -2060,7 +2062,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         touched = []
         faulty_groups = []
         for to_add in desired - current:
-            group = Group.get(to_add)
+            try:
+                group = Group.get(to_add)
+            except ResourceNotFound:
+                faulty_groups.append(to_add)
+                continue
             if group.domain != self.domain:
                 faulty_groups.append(to_add)
                 continue
@@ -2852,6 +2858,7 @@ class Invitation(models.Model):
             assigned_location_ids=list(self.assigned_locations.all().values_list('location_id', flat=True)),
             program_id=self.program,
             profile=self.profile,
+            custom_user_data=self.custom_user_data,
             tableau_role=self.tableau_role,
             tableau_group_ids=self.tableau_group_ids
         )
