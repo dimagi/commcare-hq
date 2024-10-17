@@ -42,7 +42,11 @@ RE_V1_CASE_LIST_REFERENCES_PATTERN = re.compile(V1_CASE_LIST_REFERENCES_PATTERN)
 skip_domains = set()
 
 
-def process(dry_run=True, max_memory_size=None):
+def process(dry_run=True, max_memory_size=None, single_app_retrieve=False):
+    """
+    - single_app_retrieve: Only retrieve and process one app at a time from DB. Results
+    in more DB hits, but reduces memory usage
+    """
     if max_memory_size:
         set_max_memory(max_memory_size)
 
@@ -65,9 +69,17 @@ def process(dry_run=True, max_memory_size=None):
 
         save_in_log(f"Processing domain: {domain} ...")
         app_ids = list(get_latest_app_ids_and_versions(domain))
-        apps = get_apps_by_id(domain, app_ids)
-        for app in apps:
+        if single_app_retrieve:
+            apps_or_ids = app_ids
+        else:
+            apps_or_ids = get_apps_by_id(domain, app_ids)
+
+        for app_or_id in apps_or_ids:
             try:
+                if single_app_retrieve:
+                    app = get_apps_by_id(domain, [app_or_id])
+                else:
+                    app = app_or_id
                 if not list(app.get_report_modules()):
                     continue
 
