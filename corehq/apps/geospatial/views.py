@@ -107,6 +107,9 @@ class GeoPolygonListView(BaseDomainView):
             )
 
         geo_polygon_name = geo_json.pop('name')
+        if geo_polygon_name == '':
+            return HttpResponseBadRequest(_('Please specify name for the GeoPolygon area.'))
+
         if GeoPolygon.objects.filter(domain=self.domain, name__iexact=geo_polygon_name).exists():
             return HttpResponseBadRequest(
                 'GeoPolygon with given name already exists! Please use a different name.'
