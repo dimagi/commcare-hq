@@ -4179,7 +4179,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     has_submissions = BooleanProperty(default=False)
 
     mobile_ucr_restore_version = StringProperty(
-        default=const.MOBILE_UCR_VERSION_1, choices=const.MOBILE_UCR_VERSIONS, required=False
+        default=const.MOBILE_UCR_VERSION_2, choices=const.MOBILE_UCR_VERSIONS, required=False
     )
     location_fixture_restore = StringProperty(
         default=const.DEFAULT_LOCATION_FIXTURE_OPTION, choices=const.LOCATION_FIXTURE_OPTIONS,
