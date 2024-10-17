@@ -23,12 +23,15 @@
           {% trans "Select Plan" %}
         </a>
       </p>
-      <p class="small">
-        {% blocktrans %}
-          Prefer to stay with Community Edition instead?
-          <a href="#">Don't show this banner again.</a>
-        {% endblocktrans %}
-      </p>
+      <form action="{% url 'dismiss_self_signup' domain %}" method="POST">
+        {% csrf_token %}
+        <p class="small">
+          {% blocktrans %}
+            Prefer to stay with Community Edition instead?
+            <button class="btn btn-sm btn-link p-0" type="submit">Don't show this banner again.</button>
+          {% endblocktrans %}
+        </p>
+      </form>
     </div>
   </div>
 </div>
