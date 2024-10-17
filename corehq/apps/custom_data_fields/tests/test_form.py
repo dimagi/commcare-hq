@@ -43,7 +43,7 @@ class TestCustomDataEditorFormFields(SimpleTestCase, FieldsViewMixin):
         web_user_editor = CustomDataEditor(WebUserFieldsView, self.domain)
         commcare_user_editor = CustomDataEditor(CommcareUserFieldsView, self.domain)
 
-        web_user_field = self._create_field(is_required=True, required_for=[UserFieldsView.WEBUSER])
+        web_user_field = self._create_field(is_required=True, required_for=[UserFieldsView.WEB_USER])
         commcare_user_field = self._create_field(is_required=True, required_for=[UserFieldsView.COMMCARE_USER])
 
         form_field = web_user_editor._make_field(web_user_field)

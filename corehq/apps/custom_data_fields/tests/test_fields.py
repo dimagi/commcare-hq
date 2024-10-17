@@ -31,7 +31,7 @@ class TestCustomDataFieldsFields(SimpleTestCase):
         web_user_required_field = Field(
             slug='web_user_field',
             is_required=True,
-            required_for=[UserFieldsView.WEBUSER],
+            required_for=[UserFieldsView.WEB_USER],
             label='Web User Field',
         )
         self.assertTrue(WebUserFieldsView.is_field_required(web_user_required_field))
@@ -49,7 +49,7 @@ class TestCustomDataFieldsFields(SimpleTestCase):
         commcare_and_web_user_required_field = Field(
             slug='commcare_and_web_user_field',
             is_required=True,
-            required_for=[UserFieldsView.COMMCARE_USER, UserFieldsView.WEBUSER],
+            required_for=[UserFieldsView.COMMCARE_USER, UserFieldsView.WEB_USER],
             label='Commcare and Web User Field',
         )
         self.assertTrue(WebUserFieldsView.is_field_required(commcare_and_web_user_required_field))

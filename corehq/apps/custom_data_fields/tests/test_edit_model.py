@@ -261,7 +261,7 @@ class TestCustomDataFieldForm(SimpleTestCase):
         raw_field = {
             'label': 'Test Field',
             'slug': 'test_field',
-            'required_for': [UserFieldsView.WEBUSER, UserFieldsView.COMMCARE_USER],
+            'required_for': [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER],
             'choices': ['blue', 'red'],
         }
 
@@ -269,5 +269,5 @@ class TestCustomDataFieldForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
 
         cleaned_data = form.cleaned_data
-        self.assertEqual(cleaned_data['required_for'], [UserFieldsView.WEBUSER, UserFieldsView.COMMCARE_USER])
+        self.assertEqual(cleaned_data['required_for'], [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER])
         self.assertEqual(cleaned_data['choices'], ['blue', 'red'])

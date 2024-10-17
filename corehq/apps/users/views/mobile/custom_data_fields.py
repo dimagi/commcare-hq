@@ -22,12 +22,12 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     page_title = _('Edit User Fields')
 
     user_type = None
-    WEBUSER = "web_user"
+    WEB_USER = "web_user"
     COMMCARE_USER = "commcare_user"
     required_for_options = [
         {
             "text": _("Web Users"),
-            "value": [WEBUSER],
+            "value": [WEB_USER],
         },
         {
             "text": _("Mobile Workers"),
@@ -36,7 +36,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         },
         {
             "text": _("Both"),
-            "value": [WEBUSER, COMMCARE_USER],
+            "value": [WEB_USER, COMMCARE_USER],
         }
     ]
 
@@ -104,7 +104,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
 
 
 class WebUserFieldsView(UserFieldsView):
-    user_type = UserFieldsView.WEBUSER
+    user_type = UserFieldsView.WEB_USER
 
 
 class CommcareUserFieldsView(UserFieldsView):
