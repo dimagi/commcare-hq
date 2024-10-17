@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from datetime import datetime, timedelta
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.phone.tests.utils import (
@@ -12,7 +12,8 @@ from casexml.apps.phone.tests.utils import (
 from corehq import toggles
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
     report_fixture_generator,
-    ReportFixturesProviderV1)
+    ReportFixturesProviderV2,
+)
 from corehq.apps.app_manager.models import (
     Application,
     ReportAppConfig,
@@ -82,10 +83,15 @@ class AppAwareSyncTests(TestCase):
         domain.delete()
         super(AppAwareSyncTests, cls).tearDownClass()
 
-    def _get_fixture(self, fixtures, fixture_id):
-        matches = [f for f in fixtures if f.attrib.get('id') == fixture_id]
-        if matches:
-            return matches[0]
+    def _get_fixtures_by_prefix(self, fixtures, fixture_id_prefix):
+        return [f for f in fixtures if f.attrib.get('id').startswith(fixture_id_prefix)]
+
+    def _expected_v2_report_fixtures_for_id(self, report_id):
+        return {
+            f'{ReportFixturesProviderV2.id}:index',
+            f'{ReportFixturesProviderV2.id}:{report_id}',
+            f'{ReportFixturesProviderV2.id}-filters:{report_id}',
+        }
 
     def test_report_fixtures_provider_without_app(self):
         """
@@ -96,10 +102,13 @@ class AppAwareSyncTests(TestCase):
             get_data_mock.return_value = self.rows
             with mock_datasource_config():
                 fixtures = call_fixture_generator(report_fixture_generator, self.user)
-                reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id).findall('.//report')
-        self.assertEqual(len(reports), 2)
-        report_ids = {r.attrib.get('id') for r in reports}
-        self.assertEqual(report_ids, {'123456', 'abcdef'})
+                v2_report_fixtures = self._get_fixtures_by_prefix(fixtures, ReportFixturesProviderV2.id)
+        self.assertEqual(len(v2_report_fixtures), 5)
+        report_ids = {r.attrib.get('id') for r in v2_report_fixtures}
+        self.assertEqual(
+            report_ids,
+            self._expected_v2_report_fixtures_for_id('123456') | self._expected_v2_report_fixtures_for_id('abcdef')
+        )
 
     def test_report_fixtures_provider_with_app(self):
         """
@@ -110,10 +119,11 @@ class AppAwareSyncTests(TestCase):
             get_data_mock.return_value = self.rows
             with mock_datasource_config():
                 fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1)
-                reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id).findall('.//report')
+                v2_report_fixtures = self._get_fixtures_by_prefix(fixtures, ReportFixturesProviderV2.id)
 
-        self.assertEqual(len(reports), 1)
-        self.assertEqual(reports[0].attrib.get('id'), '123456')
+        self.assertEqual(len(v2_report_fixtures), 3)
+        report_ids = {r.attrib.get('id') for r in v2_report_fixtures}
+        self.assertEqual(report_ids, self._expected_v2_report_fixtures_for_id('123456'))
 
     def test_default_mobile_ucr_sync_interval(self):
         """
@@ -134,9 +144,10 @@ class AppAwareSyncTests(TestCase):
                 )
                 recent_sync.save()
                 fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1,
-                                                  last_sync=recent_sync, project=self.domain_obj)
-                reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id)
-                self.assertIsNone(reports)
+                                                  last_sync=recent_sync, project=self.domain_obj,
+                                                  current_sync_log=Mock())
+                v2_report_fixtures = self._get_fixtures_by_prefix(fixtures, ReportFixturesProviderV2.id)
+                self.assertEqual(len(v2_report_fixtures), 0)
 
                 recent_sync_new_build = SimplifiedSyncLog(
                     domain=self.domain_obj.name,
@@ -146,10 +157,12 @@ class AppAwareSyncTests(TestCase):
                 )
                 recent_sync_new_build.save()
                 fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1,
-                                                  last_sync=recent_sync_new_build, project=self.domain_obj)
-                reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id).findall('.//report')
-                self.assertEqual(len(reports), 1)
-                self.assertEqual(reports[0].attrib.get('id'), '123456')
+                                                  last_sync=recent_sync_new_build, project=self.domain_obj,
+                                                  current_sync_log=Mock())
+                v2_report_fixtures = self._get_fixtures_by_prefix(fixtures, ReportFixturesProviderV2.id)
+                self.assertEqual(len(v2_report_fixtures), 3)
+                report_ids = {r.attrib.get('id') for r in v2_report_fixtures}
+                self.assertEqual(report_ids, self._expected_v2_report_fixtures_for_id('123456'))
                 self.domain_obj.default_mobile_ucr_sync_interval = None
 
     def test_report_fixtures_provider_with_app_that_doesnt_have_reports(self):
