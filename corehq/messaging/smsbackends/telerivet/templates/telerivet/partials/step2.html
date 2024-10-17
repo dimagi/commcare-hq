@@ -14,7 +14,7 @@
                 {% endblocktrans %}
             </p>
             <p data-bind="visible: showApiKeyGeneration()">
-                <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/generate_api_key.png' %}" />
+                <img class="img-fluid img-thumbnail" src="{% static 'telerivet/img/generate_api_key.png' %}" />
             </p>
         </div>
     </li>
@@ -33,11 +33,11 @@
                 {% endblocktrans %}
             </p>
             <p data-bind="visible: showApiInfoLocation()">
-                <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/api_settings.png' %}" />
+                <img class="img-fluid img-thumbnail" src="{% static 'telerivet/img/api_settings.png' %}" />
             </p>
         </div>
         <div class="row">
-            {% crispy outgoing_sms_form %}
+            {% crispy outgoing_sms_form %}  {# todo B5: crispy #}
         </div>
     </li>
     <li>
@@ -55,7 +55,7 @@
                 {% endblocktrans %}
             </p>
             <div class="row">
-                {% crispy test_sms_form %}
+                {% crispy test_sms_form %}  {# todo B5: crispy #}
             </div>
         </div>
     </li>
@@ -67,7 +67,7 @@
                 {% endblocktrans %}
             </p>
             <div class="form-actions">
-                <button class="btn btn-danger col-sm-2" data-bind="click: function() { showOutboundTroubleshoot(true); }">
+                <button class="btn btn-outline-danger col-md-2" data-bind="click: function() { showOutboundTroubleshoot(true); }">
                     {% trans "No, Troubleshoot" %}
                 </button>
                 <button class="btn btn-primary" data-bind="click: nextStep">
