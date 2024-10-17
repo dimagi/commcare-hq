@@ -2,8 +2,6 @@
 hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
     const items = document.getElementsByName('xform_ids'),
         selectAll = document.getElementById('select-all'),
-        selectPending = document.getElementById('select-pending'),
-        selectCancelled = document.getElementById('select-cancelled'),
         buttonCancel = document.getElementById('cancel-all-button'),
         buttonRequeue = document.getElementById('requeue-all-button');
 
@@ -20,7 +18,6 @@ hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
     $('#select-all').on('click', function () {
         if (selectAll.checked) {
             selectItems();
-            uncheck(selectPending, selectCancelled);
             turnOffCancelRequeue();
         } else {
             unSelectItems();
@@ -28,29 +25,28 @@ hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
         }
     });
 
-    $('#select-pending').on('click', function () {
-        unSelectItems();
-        uncheck(selectAll, selectCancelled);
-        turnOnCancelRequeue();
-        if (selectPending.checked) {
-            buttonRequeue.disabled = true;
-            checkMultipleItems('cancel');
-        } else {
-            buttonRequeue.disabled = false;
-        }
-    });
+    // TODO: apply this logic based on state data associated with select-all element
+    // $('#select-pending').on('click', function () {
+    //     unSelectItems();
+    //     turnOnCancelRequeue();
+    //     if (selectPending.checked) {
+    //         buttonRequeue.disabled = true;
+    //         checkMultipleItems('cancel');
+    //     } else {
+    //         buttonRequeue.disabled = false;
+    //     }
+    // });
 
-    $('#select-cancelled').on('click', function () {
-        unSelectItems();
-        uncheck(selectAll, selectPending);
-        turnOnCancelRequeue();
-        if (selectCancelled.checked) {
-            buttonCancel.disabled = true;
-            checkMultipleItems('requeue');
-        } else {
-            buttonCancel.disabled = false;
-        }
-    });
+    // $('#select-cancelled').on('click', function () {
+    //     unSelectItems();
+    //     turnOnCancelRequeue();
+    //     if (selectCancelled.checked) {
+    //         buttonCancel.disabled = true;
+    //         checkMultipleItems('requeue');
+    //     } else {
+    //         buttonCancel.disabled = false;
+    //     }
+    // });
 
     $('body').on('DOMNodeInserted', 'tbody', function () {
         for (const item of items) {
@@ -74,15 +70,8 @@ hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
         }
     }
 
-    function uncheck(checkbox1, checkbox2) {
-        checkbox1.checked = false;
-        checkbox2.checked = false;
-    }
-
     function uncheckSelects() {
         selectAll.checked = false;
-        selectPending.checked = false;
-        selectCancelled.checked = false;
         turnOnCancelRequeue();
     }
 

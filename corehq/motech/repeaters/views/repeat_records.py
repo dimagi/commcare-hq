@@ -248,13 +248,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         if self.payload_id:
             where &= Q(payload_id=self.payload_id)
         total = RepeatRecord.objects.filter(where).count()
-        total_pending = RepeatRecord.objects.filter(where, state=State.Pending).count()  # include State.Fail?
-        total_cancelled = RepeatRecord.objects.filter(where, state=State.Cancelled).count()
 
         context.update(
             total=total,
-            total_pending=total_pending,
-            total_cancelled=total_cancelled,
             payload_id=self.payload_id,
             repeater_id=self.repeater_id,
         )
