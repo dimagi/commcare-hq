@@ -22,8 +22,7 @@ class TestCustomDataFieldsFields(SimpleTestCase):
         self.assertIsNone(optional_field.validate_required(None))
 
     def test_validate_required_for(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
-        from corehq.apps.users.views.mobile.custom_data_fields import CommcareUserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView, CommcareUserFieldsView
         from corehq.apps.locations.views import LocationFieldsView
         web_user_required_field = Field(
             slug='web_user_field',
