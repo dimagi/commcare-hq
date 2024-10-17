@@ -798,7 +798,7 @@ hqDefine('geospatial/js/models', [
                     error: function (response) {
                         const responseText = response.responseText;
                         if (responseText) {
-                            alertUser.alert_user(gettext(responseText), 'danger');
+                            alertUser.alert_user(responseText, 'danger');
                         } else {
                             alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
                         }
