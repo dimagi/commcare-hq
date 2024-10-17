@@ -14,13 +14,13 @@
       {% trans "Something went wrong! " %} {{ progress.error_message }}
     </p>
   {% else %}
-    <div class="progress progress-striped active">
+    <div class="progress progress-striped active">  {# todo B5: css-progress #}
       <div class="progress-bar"
            role="progressbar"
            aria-valuenow="{{ progress.percent }}"
            aria-valuemin="0"
            aria-valuemax="100"
-           style="width: {{ progress.percent }}%;">
+           style="width: {{ progress.percent }}%;">  {# todo B5: inline-style #}
         <span class="sr-only">{{ progress.percent }}% {% trans 'Complete' %}</span>
       </div>
     </div>
