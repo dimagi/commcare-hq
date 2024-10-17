@@ -2,7 +2,10 @@ import logging
 from json import JSONDecodeError
 
 from django.utils.translation import gettext_lazy as _
+
 from memoized import memoized
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.case_helper import UserDuck
@@ -10,18 +13,24 @@ from corehq.apps.hqcase.utils import REPEATER_RESPONSE_XMLNS
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.form_processor.models import CaseTransaction, CommCareCase, XFormInstance
+from corehq.form_processor.models import (
+    CaseTransaction,
+    CommCareCase,
+    XFormInstance,
+)
+from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.expression.repeater_generators import (
     ArcGISFormExpressionPayloadGenerator,
+    ExpressionPayloadGenerator,
     FormExpressionPayloadGenerator,
 )
-from corehq.motech.repeaters.expression.repeater_generators import (
-    ExpressionPayloadGenerator,
+from corehq.motech.repeaters.models import (
+    OptionValue,
+    Repeater,
+    is_response,
+    is_success_response,
 )
-from corehq.motech.repeaters.models import OptionValue, Repeater
-from corehq.motech.repeaters.models import is_response, is_success_response
 from corehq.toggles import ARCGIS_INTEGRATION, EXPRESSION_REPEATER
-from dimagi.utils.logging import notify_exception
 
 # max number of repeater updates in a chain before we stop forwarding
 MAX_REPEATER_CHAIN_LENGTH = 5
@@ -207,6 +216,45 @@ class ArcGISFormExpressionRepeater(FormExpressionRepeater):
         return (
             super(ArcGISFormExpressionRepeater, cls).available_for_domain(domain)
             and ARCGIS_INTEGRATION.enabled(domain)
+        )
+
+    def send_request(self, repeat_record, payload):
+        response = super().send_request(repeat_record, payload)
+        if is_success_response(response) and 'error' in response.json():
+            # It _looks_ like a success response, but it's an error. :/
+            return self._error_response(response.json())
+        return response
+
+    @staticmethod
+    def _error_response(response_json):
+        """
+        The ArcGIS API returns error responses with status code 200.
+
+        This method extracts the details from the response JSON, and
+        returns a RepeaterResponse with the error details so that the
+        response will be handled correctly.
+
+        >>> response_json = {
+        ...     "error": {
+        ...         "code": 503,
+        ...         "details": [],
+        ...         "message": "An error occurred."
+        ...     }
+        ... }
+        >>> resp = ArcGISFormExpressionRepeater._error_response(response_json)
+        >>> resp.status_code
+        503
+        >>> resp.reason
+        'An error occurred.'
+
+        """
+        reason = response_json['error']['message']
+        if 'messageCode' in response_json['error']:
+            reason += f' ({response_json["error"]["messageCode"]})'
+        return RepeaterResponse(
+            status_code=response_json['error']['code'],
+            reason=reason,
+            text='\n'.join(response_json['error']['details']),
         )
 
 

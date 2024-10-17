@@ -135,7 +135,9 @@
   "export": {
     "in_progress": true,
     "templates": [
-      "download_data_files.html"
+      "download_data_files.html",
+      "paywall.html",
+      "datasource_export_view.html"
     ],
     "javascript": [
       "js/download_data_files.js"

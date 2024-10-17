@@ -19,6 +19,7 @@ WHITELIST = [
     # (module_path, message_substring_or_regex, optional_warning_class, override_action)
 
     # warnings that may be resolved with a library upgrade
+    ("bs4.builder", "option of HTMLParser() has never done anything"),
     ("couchdbkit.schema.properties", "'collections.abc'"),
     ("ddtrace.internal.module", "the imp module is deprecated"),
     ("eulxml", "pkg_resources is deprecated as an API"),
