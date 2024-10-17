@@ -9,7 +9,6 @@ from corehq.apps.hqmedia.views import (
     MultimediaAudioTranslatorFileView,
     MultimediaReferencesView,
     MultimediaTranslationsCoverageView,
-    MultimediaUploadStatusView,
     ProcessAudioFileUploadView,
     ProcessBulkUploadView,
     ProcessDetailPrintTemplateUploadView,
@@ -27,7 +26,6 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 urlpatterns = [
     url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(.+)?$',
         ViewMultimediaFile.as_view(), name=ViewMultimediaFile.urlname),
-    url(r'^upload_status/$', MultimediaUploadStatusView.as_view(), name=MultimediaUploadStatusView.urlname)
 ]
 
 application_urls = [

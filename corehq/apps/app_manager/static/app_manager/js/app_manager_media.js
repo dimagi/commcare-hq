@@ -122,7 +122,6 @@ hqDefine('app_manager/js/app_manager_media', function () {
         };
 
         self.passToUploadController = function () {
-            self.uploadController.resetUploader();
             self.uploadController.currentReference = self.getControllerRef();
             self.uploadController.uploadParams = self.getUploadParams();
             self.uploadController.updateUploadFormUI();
