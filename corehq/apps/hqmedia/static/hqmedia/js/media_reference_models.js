@@ -13,9 +13,9 @@ hqDefine("hqmedia/js/media_reference_models", [
     mediaUploaders,
     initialPageData
 ) {
-    function BaseMediaReference(ref, uploader_slug) {
+    function BaseMediaReference(ref, uploaderSlug) {
         'use strict';
-        var self = {};
+        let self = {};
 
         self.media_class = ref.media_class;
         self.media_type = ref.media_type;
@@ -25,7 +25,7 @@ hqDefine("hqmedia/js/media_reference_models", [
         self.path = ref.path;
         self.type_icon = ref.icon_class;
 
-        self.slug = uploader_slug;
+        self.slug = uploaderSlug;
         self.upload_controller = null;
         if (self.slug) {
             self.upload_controller = mediaUploaders.uploaderPreset(self.slug);
@@ -111,10 +111,10 @@ hqDefine("hqmedia/js/media_reference_models", [
         return self;
     }
 
-    function ImageReference(ref, uploader_slug) {
+    function ImageReference(ref, uploaderSlug) {
         'use strict';
-        var self = {};
-        self = BaseMediaReference(ref, uploader_slug || "hqimage");
+        let self = {};
+        self = BaseMediaReference(ref, uploaderSlug || "hqimage");
         self.preview_template = "image-preview-template";
         self.thumb_url = ko.computed(function () {
             return (self.url()) ? self.url() + "?thumb=50" : "";
@@ -126,10 +126,10 @@ hqDefine("hqmedia/js/media_reference_models", [
     ImageReference.prototype = Object.create(BaseMediaReference.prototype);
     ImageReference.prototype.constructor = ImageReference;
 
-    function AudioReference(ref, uploader_slug) {
+    function AudioReference(ref, uploaderSlug) {
         'use strict';
-        var self = {};
-        self = BaseMediaReference(ref, uploader_slug || "hqaudio");
+        let self = {};
+        self = BaseMediaReference(ref, uploaderSlug || "hqaudio");
         self.preview_template = "audio-preview-template";
         return self;
     }
@@ -137,10 +137,10 @@ hqDefine("hqmedia/js/media_reference_models", [
     AudioReference.prototype = Object.create(BaseMediaReference.prototype);
     AudioReference.prototype.constructor = AudioReference;
 
-    function VideoReference(ref, uploader_slug) {
+    function VideoReference(ref, uploaderSlug) {
         'use strict';
-        var self = {};
-        self = BaseMediaReference(ref, uploader_slug || "hqvideo");
+        let self = {};
+        self = BaseMediaReference(ref, uploaderSlug || "hqvideo");
         self.preview_template = "video-preview-template";
         return self;
     }

@@ -62,7 +62,6 @@ hqDefine("hqmedia/js/uploaders", function () {
         });
 
         // Don't allow user to close modal while server is processing upload
-        var allowClose = true;
         self.$container.on('hide.bs.modal', function (event) {
             if (!self.allowClose) {
                 event.preventDefault();
@@ -142,7 +141,7 @@ hqDefine("hqmedia/js/uploaders", function () {
     let allUploaders = {};
     const uploaderPreset = function (slug) {
         if (!allUploaders[slug]) {
-            const options = _.find(initial_page_data("uploaders"), function (data) { return data.slug === slug });
+            const options = _.find(initial_page_data("uploaders"), function (data) { return data.slug === slug; });
             if (options) {
                 allUploaders[slug] = uploader(options.slug, options.media_type, options.options);
                 allUploaders[slug].init();
