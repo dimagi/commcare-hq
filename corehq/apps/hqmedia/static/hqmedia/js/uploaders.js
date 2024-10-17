@@ -1,14 +1,14 @@
 hqDefine("hqmedia/js/uploaders", function () {
     const assertProperties = hqImport("hqwebapp/js/assert_properties"),
-        initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
-    const uploader = function (slug, media_type, options) {
+    const uploader = function (slug, options) {
         assertProperties.assertRequired(options, [
             'uploadURL', 'uploadParams',
             'queueTemplate', 'errorsTemplate', 'existingFileTemplate',
         ]);
 
-        var self = {};
+        let self = {};
 
         self.queueTemplate = options.queueTemplate;
         self.errorsTemplate = options.errorsTemplate;
@@ -73,10 +73,10 @@ hqDefine("hqmedia/js/uploaders", function () {
         });
 
         self.$fileInput.change(function () {
-            var MEGABYTE = 1048576;
+            const MEGABYTE = 1048576;
 
             if (self.$fileInput.get(0).files.length) {
-                var file = self.$fileInput.get(0).files[0];
+                const file = self.$fileInput.get(0).files[0];
                 self.$uploadStatusContainer.html(_.template(self.queueTemplate)({
                     file_size: (file.size / MEGABYTE).toFixed(3),
                     file_name: file.name,
@@ -94,7 +94,7 @@ hqDefine("hqmedia/js/uploaders", function () {
             self.updateUploadButton(false, true);
             self.allowClose = false;
 
-            var file = self.$fileInput.get(0).files[0],
+            const file = self.$fileInput.get(0).files[0],
                 data = new FormData();
             data.append("Filedata", file);
 
@@ -141,9 +141,9 @@ hqDefine("hqmedia/js/uploaders", function () {
     let allUploaders = {};
     const uploaderPreset = function (slug) {
         if (!allUploaders[slug]) {
-            const options = _.find(initial_page_data("uploaders"), function (data) { return data.slug === slug; });
+            const options = _.find(initialPageData.get("uploaders"), function (data) { return data.slug === slug; });
             if (options) {
-                allUploaders[slug] = uploader(options.slug, options.media_type, options.options);
+                allUploaders[slug] = uploader(options.slug, options.options);
                 allUploaders[slug].init();
             }
         }
