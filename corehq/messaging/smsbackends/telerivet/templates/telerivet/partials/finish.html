@@ -13,7 +13,7 @@
     </p>
 </div>
 <div data-bind="visible: !setupComplete()">
-    {% crispy finalize_gateway_form %}
+    {% crispy finalize_gateway_form %}  {# todo B5: crispy #}
 </div>
 <div data-bind="visible: setupComplete()">
     {% blocktrans %}
