@@ -9,7 +9,13 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsProfile,
     Field,
 )
-from corehq.apps.custom_data_fields.edit_model import CustomDataFieldsForm, CustomDataModelMixin
+from corehq.apps.custom_data_fields.edit_model import (
+    CustomDataFieldForm,
+    CustomDataFieldsForm,
+    CustomDataModelMixin,
+)
+
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
 class FieldsView(CustomDataModelMixin, View):
@@ -49,12 +55,13 @@ def fields_are_equal(left, right):
 
 class FieldsViewMixin:
 
-    def create_field(self, slug='test_field', label='Test Field', is_required=False, choices=[], regex=None,
-            regex_msg=None, upstream_id=None):
+    def create_field(self, slug='test_field', label='Test Field', is_required=False, required_for=[], choices=[],
+            regex=None, regex_msg=None, upstream_id=None):
         return Field(
             slug=slug,
             label=label,
             is_required=is_required,
+            required_for=required_for,
             choices=choices,
             regex=regex,
             regex_msg=regex_msg,
@@ -247,3 +254,20 @@ class TestCustomDataFieldsForm(FieldsViewMixin, SimpleTestCase):
             'data_fields': fields_json,
             'profiles': profiles_json
         })
+
+
+class TestCustomDataFieldForm(SimpleTestCase):
+    def test_required_for_and_choices_field_serialization(self):
+        raw_field = {
+            'label': 'Test Field',
+            'slug': 'test_field',
+            'required_for': [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER],
+            'choices': ['blue', 'red'],
+        }
+
+        form = CustomDataFieldForm(raw_field)
+        self.assertTrue(form.is_valid())
+
+        cleaned_data = form.cleaned_data
+        self.assertEqual(cleaned_data['required_for'], [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER])
+        self.assertEqual(cleaned_data['choices'], ['blue', 'red'])
