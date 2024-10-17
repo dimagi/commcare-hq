@@ -6,7 +6,7 @@ testil
 requests-mock
 sqlalchemy-postgres-copy
 Faker
-flaky
+flaky>=3.8  # required for pytest 8.2 (and possibly earlier versions)
 freezegun
 radon>=5.0  # v5 no longer depends on flake8-polyfill
 # pytest is pinned to a git commit until 8.4 is released.
