@@ -19,7 +19,7 @@
                 {% endblocktrans %}
             </p>
             <p data-bind="visible: showAddWebhookNavigation()">
-                <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/add_webhook_service.png' %}" />
+                <img class="img-fluid img-thumbnail" src="{% static 'telerivet/img/add_webhook_service.png' %}" />
             </p>
         </div>
     </li>
@@ -32,7 +32,7 @@
                 <a data-bind="visible: showWebhookDetails(), click: function() { showWebhookDetails(false) }">Hide Instructions</a>
                 {% endblocktrans %}
             </p>
-            <table style="width: auto;" class="table table-bordered">
+            <table style="width: auto;" class="table table-bordered">  {# todo B5: inline-style #}
                 <tr>
                     <th><strong>Service Name</strong></th>
                     <td>CommCare HQ</td>
@@ -57,7 +57,7 @@
             </p>
             {% endif %}
             <p data-bind="visible: showWebhookDetails()">
-                <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/webhook_detail_screen.png' %}" />
+                <img class="img-fluid img-thumbnail" src="{% static 'telerivet/img/webhook_detail_screen.png' %}" />
             </p>
         </div>
     </li>
@@ -70,7 +70,7 @@
             </p>
             <p>
             {% blocktrans %}
-                <button class="btn" data-bind="css: {'btn-default': messageReceived(), 'btn-primary': !messageReceived()}, click: startInboundPolling">
+                <button class="btn" data-bind="css: {'btn-outline-primary': messageReceived(), 'btn-primary': !messageReceived()}, click: startInboundPolling">
                     Click Here
                 </button>
                 after you have sent the reply SMS.
@@ -90,7 +90,7 @@
             <p data-bind="visible: messageNotReceived">
                 {% blocktrans %}
                 Message not received.
-                <button class="btn btn-danger" data-bind="click: function() { showInboundTroubleshoot(true); }">Troubleshoot</button>
+                <button class="btn btn-outline-danger" data-bind="click: function() { showInboundTroubleshoot(true); }">Troubleshoot</button>
                 {% endblocktrans %}
             </p>
             <p data-bind="visible: pollingErrorOccurred">
