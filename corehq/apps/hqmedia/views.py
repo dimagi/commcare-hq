@@ -23,7 +23,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView, View
 
@@ -580,8 +579,6 @@ class BaseProcessUploadedView(BaseMultimediaView):
             raise BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
 
     @method_decorator(require_permission(HqPermissions.edit_apps, login_decorator=login_and_domain_required))
-    # YUI js uploader library doesn't support csrf
-    @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
         return super(BaseMultimediaView, self).dispatch(request, *args, **kwargs)
 
