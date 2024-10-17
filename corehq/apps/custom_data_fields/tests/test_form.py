@@ -4,7 +4,11 @@ from unittest.mock import patch
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import Field
 
-from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView, CommcareUserFieldsView
+from corehq.apps.users.views.mobile.custom_data_fields import (
+    UserFieldsView,
+    WebUserFieldsView,
+    CommcareUserFieldsView,
+)
 from corehq.apps.locations.views import LocationFieldsView
 
 
@@ -39,8 +43,8 @@ class TestCustomDataEditorFormFields(SimpleTestCase, FieldsViewMixin):
         web_user_editor = CustomDataEditor(WebUserFieldsView, self.domain)
         commcare_user_editor = CustomDataEditor(CommcareUserFieldsView, self.domain)
 
-        web_user_field = self._create_field(is_required=True, required_for=['web_user'])
-        commcare_user_field = self._create_field(is_required=True, required_for=['commcare_user'])
+        web_user_field = self._create_field(is_required=True, required_for=[UserFieldsView.WEBUSER])
+        commcare_user_field = self._create_field(is_required=True, required_for=[UserFieldsView.COMMCARE_USER])
 
         form_field = web_user_editor._make_field(web_user_field)
         self.assertTrue(form_field.required)

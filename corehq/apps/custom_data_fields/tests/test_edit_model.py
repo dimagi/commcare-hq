@@ -15,6 +15,8 @@ from corehq.apps.custom_data_fields.edit_model import (
     CustomDataModelMixin,
 )
 
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+
 
 class FieldsView(CustomDataModelMixin, View):
     field_type = 'UserFields'
@@ -259,7 +261,7 @@ class TestCustomDataFieldForm(SimpleTestCase):
         raw_field = {
             'label': 'Test Field',
             'slug': 'test_field',
-            'required_for': ['web_user', 'commcare_user'],
+            'required_for': [UserFieldsView.WEBUSER, UserFieldsView.COMMCARE_USER],
             'choices': ['blue', 'red'],
         }
 
@@ -267,5 +269,5 @@ class TestCustomDataFieldForm(SimpleTestCase):
         self.assertTrue(form.is_valid())
 
         cleaned_data = form.cleaned_data
-        self.assertEqual(cleaned_data['required_for'], ['web_user', 'commcare_user'])
+        self.assertEqual(cleaned_data['required_for'], [UserFieldsView.WEBUSER, UserFieldsView.COMMCARE_USER])
         self.assertEqual(cleaned_data['choices'], ['blue', 'red'])

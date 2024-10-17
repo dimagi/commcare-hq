@@ -22,12 +22,16 @@ class TestCustomDataFieldsFields(SimpleTestCase):
         self.assertIsNone(optional_field.validate_required(None))
 
     def test_validate_required_for(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView, CommcareUserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            WebUserFieldsView,
+            CommcareUserFieldsView,
+            UserFieldsView
+        )
         from corehq.apps.locations.views import LocationFieldsView
         web_user_required_field = Field(
             slug='web_user_field',
             is_required=True,
-            required_for=["web_user"],
+            required_for=[UserFieldsView.WEBUSER],
             label='Web User Field',
         )
         self.assertTrue(WebUserFieldsView.is_field_required(web_user_required_field))
@@ -36,7 +40,7 @@ class TestCustomDataFieldsFields(SimpleTestCase):
         commcare_user_required_field = Field(
             slug='commcare_user_field',
             is_required=True,
-            required_for=["commcare_user"],
+            required_for=[UserFieldsView.COMMCARE_USER],
             label='Commcare User Field',
         )
         self.assertTrue(CommcareUserFieldsView.is_field_required(commcare_user_required_field))
@@ -45,7 +49,7 @@ class TestCustomDataFieldsFields(SimpleTestCase):
         commcare_and_web_user_required_field = Field(
             slug='commcare_and_web_user_field',
             is_required=True,
-            required_for=["commcare_user", "web_user"],
+            required_for=[UserFieldsView.COMMCARE_USER, UserFieldsView.WEBUSER],
             label='Commcare and Web User Field',
         )
         self.assertTrue(WebUserFieldsView.is_field_required(commcare_and_web_user_required_field))
