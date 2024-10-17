@@ -80,18 +80,7 @@ def process(dry_run=True, max_memory_size=None, single_app_retrieve=False):
                     app = get_apps_by_id(domain, [app_or_id])
                 else:
                     app = app_or_id
-                if not list(app.get_report_modules()):
-                    continue
-
-                # Don't look at app.is_released since the latest version might not be released yet
-                if app.mobile_ucr_restore_version != '2.0':
-                    save_in_log(f"Processing App: {domain}: {app.name}: {app.id}")
-                    if not has_non_v2_reference(domain, app):
-                        update_app(domain, app, dry_run)
-                    else:
-                        save_in_log(
-                            f"App contains V1 references and couldn't updated: {domain}: {app.name}: {app.id}",
-                        )
+                process_app(domain, app, dry_run)
             except Exception as e:
                 save_in_log(f"Error occurred for {domain}: {str(e)}")
                 save_in_log(traceback.format_exc())
@@ -129,6 +118,23 @@ def has_non_v2_reference(domain, app):
             save_in_log(f"App Contains V1 Refs: {domain}: {app.name}")
             return True
     return False
+
+
+def process_app(domain, app, dry_run):
+    if not list(app.get_report_modules()):
+        return
+
+    # Don't look at app.is_released since the latest version might not be released yet
+    if app.mobile_ucr_restore_version == '2.0':
+        return
+
+    save_in_log(f"Processing App: {domain}: {app.name}: {app.id}")
+    if not has_non_v2_reference(domain, app):
+        update_app(domain, app, dry_run)
+    else:
+        save_in_log(
+            f"App contains V1 references and couldn't updated: {domain}: {app.name}: {app.id}",
+        )
 
 
 def update_app(domain, app, dry_run):
