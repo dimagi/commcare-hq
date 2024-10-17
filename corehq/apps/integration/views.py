@@ -72,6 +72,7 @@ class BiometricIntegrationView(BaseAdminProjectSettingsView):
 
 
 @toggles.WIDGET_DIALER.required_decorator()
+@use_bootstrap5
 @login_and_domain_required
 @require_GET
 def dialer_view(request, domain):
@@ -83,6 +84,7 @@ def dialer_view(request, domain):
 
 
 @toggles.GAEN_OTP_SERVER.required_decorator()
+@use_bootstrap5
 @login_and_domain_required
 @require_POST
 def gaen_otp_view(request, domain):
