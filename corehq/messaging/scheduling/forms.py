@@ -3079,9 +3079,12 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     allow_custom_immediate_schedule = True
 
-    def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
+    def __init__(
+            self, domain, schedule, can_use_sms_surveys, rule,
+            criteria_form, recipient_filter_form, *args, **kwargs):
         self.initial_rule = rule
         self.criteria_form = criteria_form
+        self.recipient_filter_form = recipient_filter_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
         if self.initial_rule:
             self.set_read_only_fields_during_editing()
@@ -3983,5 +3986,65 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
 
     def __init__(self, *args, **kwargs):
         super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
+        if self.initial_rule:
+            self.set_read_only_fields_during_editing()
+
+
+class RecipientFilterForm(CaseRuleCriteriaForm):
+
+    @property
+    def show_fieldset_title(self):
+        return False
+
+    @property
+    def fieldset_help_text(self):
+        return _("An instance of the schedule will be created for each "
+                 "open case matching all filter criteria below.")
+
+    @property
+    def allow_parent_case_references(self):
+        return False
+
+    @property
+    def allow_case_modified_filter(self):
+        return False
+
+    @property
+    def allow_case_property_filter(self):
+        return True
+
+    @property
+    def allow_date_case_property_filter(self):
+        return False
+
+    @property
+    def allow_regex_case_property_match(self):
+        return True
+
+    @property
+    def allow_custom_filter(self):
+        return False
+
+    def set_read_only_fields_during_editing(self):
+        # Django also handles keeping the field's value to its initial value no matter what is posted
+        # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
+
+        # Prevent case_type from being changed when we are using the form to edit
+        # an existing conditional alert. Being allowed to assume that case_type
+        # doesn't change makes it easier to run the rule for this alert.
+        self.fields['case_type'].disabled = True
+
+    def set_case_type_choices(self, initial):
+        # If this is an edit form, case type won't be editable (see set_read_only_fields_during_editing),
+        # so don't bother fetching case types.
+        if self.initial_rule:
+            self.fields['case_type'].choices = (
+                (case_type, case_type) for case_type in [initial or '']
+            )
+        else:
+            super().set_case_type_choices(initial)
+
+    def __init__(self, *args, **kwargs):
+        super(RecipientFilterForm, self).__init__(*args, **kwargs)
         if self.initial_rule:
             self.set_read_only_fields_during_editing()
