@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import stat
@@ -9,13 +8,18 @@ from wsgiref.util import FileWrapper
 from django.conf import settings
 from django.core import cache
 from django.core.cache import DEFAULT_CACHE_ALIAS
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.urls import reverse
-from django.http import HttpResponse, StreamingHttpResponse
 
 from django_transfer import TransferHttpResponse
-from soil.progress import get_task_progress, get_multiple_task_progress, set_task_progress
-from corehq.blobs import get_blob_db, CODES
 
+from soil.progress import (
+    get_multiple_task_progress,
+    get_task_progress,
+    set_task_progress,
+)
+
+from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
@@ -70,7 +74,7 @@ class DownloadBase(object):
         return cache.caches[self.cache_backend]
 
     def get_content(self):
-        raise NotImplemented("Use CachedDownload or FileDownload!")
+        raise NotImplementedError("Use CachedDownload or FileDownload!")
 
     def get_filename(self):
         """
@@ -120,11 +124,11 @@ class DownloadBase(object):
         return response
 
     def get_start_response(self):
-        return HttpResponse(json.dumps({
+        return JsonResponse({
             'download_id': self.download_id,
             'download_url': reverse('ajax_job_poll', kwargs={'download_id': self.download_id}),
             'message': self.message
-        }))
+        })
 
     def __str__(self):
         return "content-type: %s, disposition: %s" % (self.content_type, self.content_disposition)
@@ -237,8 +241,8 @@ class FileDownload(DownloadBase):
                  transfer_encoding=None, extras=None, download_id=None, cache_backend=SOIL_DEFAULT_CACHE,
                  use_transfer=False, content_type=None, owner_ids=None):
         super(FileDownload, self).__init__(
-                content_type if content_type else mimetype, content_disposition,
-                transfer_encoding, extras, download_id, cache_backend, owner_ids=owner_ids)
+            content_type if content_type else mimetype, content_disposition,
+            transfer_encoding, extras, download_id, cache_backend, owner_ids=owner_ids)
         self.filename = filename
         self.use_transfer = use_transfer
 

@@ -24,12 +24,12 @@ The different types of modules you will encounter are:
 
 Entry Point Modules
     Modules that are included directly on a page using a bundler template tag, like
-    ``webpack_main``. These are the modules that the bundler (Webpack) uses to build
+    ``js_entry``. These are the modules that the bundler (Webpack) uses to build
     a dependency graph so that it knows what bundle of javascript dependencies and
     page-specific code is needed to render that page / entry point.
 
 Dependency Modules
-    These are modules that are never referenced by ``webpack_main`` and are only
+    These are modules that are never referenced by ``js_entry`` and are only
     in the list of dependencies for other modules. Often these modules are used as utility modules
     or a way to organize JavaScript for a page that is very front-end heavy.
 
@@ -68,9 +68,9 @@ If this module is a webpack entry point, then it is eligible for an update. In t
 
 ::
 
-    {% webpack_main "hqwebapp/js/my_module %}
+    {% js_entry "hqwebapp/js/my_module %}
 
-The entry point can also be specified with ``webpack_main_b3`` if the module is part of the Bootstrap 3 build
+The entry point can also be specified with ``js_entry_b3`` if the module is part of the Bootstrap 3 build
 of Webpack.
 
 If this module is inside a ``requirejs_main`` or ``requirejs_main_b5`` tag, then it is NOT eligible for an update.
@@ -164,13 +164,13 @@ to
 
 Note that ``import "commcarehq";`` has been moved to the top of the file. The ordering is
 for consistency purposes, but it's important that either ``import "commcarehq";`` or
-``import "commcarehq_b3";`` (for Bootstrap 3 / ``webpack_main_b3``) is present in the list
+``import "commcarehq_b3";`` (for Bootstrap 3 / ``js_entry_b3``) is present in the list
 of imports for Webpack Entry Point modules. If this import is not present in an entry point,
 then site-wide navigation, notifications, modals, and other global widgets will not
 work on that page.
 
 Remember, an Entry Point is any module that is included directly on a page using the
-``webpack_main`` or ``webpack_main_b3`` template tags.
+``js_entry`` or ``js_entry_b3`` template tags.
 
 Modules that are not entry points are not required to have this import. If you are updating the
 syntax of a dependency (non-entry point) module, do not worry about including this import if

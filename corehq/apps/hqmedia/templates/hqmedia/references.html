@@ -156,7 +156,7 @@
     </script>
 
     {% for uploader in uploaders %}
-      {% include 'hqmedia/partials/multimedia_uploader.html' %}
+      {% include 'hqmedia/partials/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
     {% endfor %}
 
   </div>

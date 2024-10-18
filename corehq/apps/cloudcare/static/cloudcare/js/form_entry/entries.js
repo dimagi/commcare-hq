@@ -835,7 +835,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         this.templateType = 'time';
         if (question.style) {
             if (question.stylesContains(constants.TIME_12_HOUR)) {
-                this.clientFormat = 'h:mm T';
+                this.clientFormat = 'h:mm A';
             }
         }
         DateTimeEntryBase.call(this, question, options);

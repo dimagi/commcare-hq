@@ -68,10 +68,10 @@ const getStaticPathForApp = function (appName, directory) {
 const getEntries = function (otherEntry) {
     /**
      * Entries in Webpack are also referred to as "modules". These
-     * entries are determined by the `webpack_main` or `webpack_main_b3` template
+     * entries are determined by the `js_entry` or `js_entry_b3` template
      * tags in `hq_shared_tags.py`
      *
-     * For instance, {% webpack_main `hqwebapp/js/some_page` %}
+     * For instance, {% js_entry `hqwebapp/js/some_page` %}
      * Where the entry then looks something like:
      * ```
      * "hqwebapp/js/some_page": {
