@@ -247,7 +247,7 @@ class Command(BaseCommand):
         ])
 
     def optional_display_list(self, confirmation_message, list_to_display):
-        confirm = get_confirmation(confirmation_message)
+        confirm = get_confirmation(confirmation_message) if len(list_to_display) > 5 else True
         if confirm:
             self.stdout.write("\n\n")
             self.stdout.write("\n".join(list_to_display))

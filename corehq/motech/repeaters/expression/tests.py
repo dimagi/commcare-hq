@@ -503,6 +503,48 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
 
         self.assertEqual(repeat_record.state, State.InvalidPayload)
 
+    def test_error_response_with_message_code(self):
+        error_json = {
+            "code": 403,
+            "details": [
+                "You do not have permissions to access this resource or "
+                "perform this operation."
+            ],
+            "message": "You do not have permissions to access this resource "
+                       "or perform this operation.",
+            "messageCode": "GWM_0003",
+        }
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(
+            resp.reason,
+            "You do not have permissions to access this resource or perform "
+            "this operation. (GWM_0003)"
+        )
+        self.assertEqual(
+            resp.text,
+            "You do not have permissions to access this resource or perform "
+            "this operation."
+        )
+
+    def test_error_response_without_message_code(self):
+        error_json = {
+            "code": 503,
+            "details": [],
+            "message": "An error occurred."
+        }
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 503)
+        self.assertEqual(resp.reason, "An error occurred.")
+        self.assertEqual(resp.text, "")
+
+    def test_error_response_with_empty_error(self):
+        error_json = {}
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 500)
+        self.assertEqual(resp.reason, "[No error message given by ArcGIS]")
+        self.assertEqual(resp.text, "")
+
 
 def test_doctests():
     import corehq.motech.repeaters.expression.repeaters as module
