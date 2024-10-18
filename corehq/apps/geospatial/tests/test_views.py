@@ -485,7 +485,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         response = self._make_post_request({'geo_json': _sample_geojson_data(name='')})
         self._assert_error_message(
             response,
-            message='Please specify name for the GeoPolygon area.'
+            message='Please specify a name for the GeoPolygon area.'
         )
 
     @flag_enabled('GEOSPATIAL')

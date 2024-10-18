@@ -130,7 +130,7 @@ class GeoPolygonListView(BaseDomainView):
 
     def _validate_request_geo_polygon_name(self, geo_polygon_name):
         if geo_polygon_name == '':
-            raise GeoPolygonValidationError(_('Please specify name for the GeoPolygon area.'))
+            raise GeoPolygonValidationError(_('Please specify a name for the GeoPolygon area.'))
 
         if GeoPolygon.objects.filter(domain=self.domain, name__iexact=geo_polygon_name).exists():
             raise GeoPolygonValidationError(
