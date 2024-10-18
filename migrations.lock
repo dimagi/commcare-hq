@@ -1256,7 +1256,7 @@ users
  0070_alter_invitation_tableau_role
  0071_rm_user_data
  0072_remove_invitation_supply_point
- 0073_connectiduserlink_messaging_consent_and_more
+ 0073_connectiduserlink_channel_id_and_more
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

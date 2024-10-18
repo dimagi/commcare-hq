@@ -3283,6 +3283,7 @@ class ConnectIDUserLink(models.Model):
     commcare_user = models.ForeignKey(User, related_name='connectid_user', on_delete=models.CASCADE)
     domain = models.TextField()
     messaging_consent = models.BooleanField(default=False)
+    channel_id = models.CharField(null=True, blank=True)
 
     class Meta:
         unique_together = ('domain', 'commcare_user')
@@ -3293,3 +3294,4 @@ class ConnectIDMessagingKey(models.Model):
     connectid_user_link = models.ForeignKey(ConnectIDUserLink, on_delete=models.CASCADE)
     key = models.CharField(max_length=44, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
