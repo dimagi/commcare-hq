@@ -21,7 +21,7 @@ from corehq.apps.users.audit.change_messages import (
 )
 from corehq.apps.users.models import CommCareUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.users.views.mobile import UserFieldsView
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 
 

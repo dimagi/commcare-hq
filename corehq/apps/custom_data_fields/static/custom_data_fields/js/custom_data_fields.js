@@ -35,6 +35,16 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.slug = ko.observable(options.slug);
         self.label = ko.observable(options.label);
         self.is_required = ko.observable(options.is_required);
+
+        // Compare stringified arrays to match contents, not references.
+        // Direct assignment of the observable to options.required_for won't match requiredForOptions
+        const matchingOption = parent.requiredForOptions.find(option =>
+            JSON.stringify(option.value) === JSON.stringify(options.required_for || [])
+        );
+        const initialRequiredFor = matchingOption ? matchingOption.value :
+            ((parent.requiredForOptions.find(option => option.isDefault) || {}).value || []);
+        self.required_for = ko.observableArray(initialRequiredFor);
+
         self.choices = ko.observableArray(options.choices.map(function (choice) {
             return Choice(choice);
         }));
@@ -104,6 +114,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 'slug': self.slug(),
                 'label': self.label(),
                 'is_required': self.is_required(),
+                'required_for': self.required_for(),
                 'choices': choices,
                 'regex': regex,
                 'regex_msg': regexMsg,
@@ -168,7 +179,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
     function CustomDataFieldsModel(options) {
         assertProperties.assertRequired(options,
-            [ 'custom_fields', 'custom_fields_profiles', 'can_edit_linked_data']);
+            [ 'custom_fields', 'custom_fields_profiles', 'can_edit_linked_data', 'required_for_options']);
 
         var self = {};
         self.data_fields = ko.observableArray();
@@ -182,6 +193,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.toggleLinkedLock = function () {
             self.unlockLinkedData(!self.unlockLinkedData());
         };
+
+        self.requiredForOptions = options.required_for_options || [];
 
         self.hasLinkedData = ko.pureComputed(function () {
             const hasLinkedFields = self.data_fields().some(field => field.upstream_id);
@@ -303,6 +316,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             custom_fields: initialPageData.get('custom_fields'),
             custom_fields_profiles: initialPageData.get('custom_fields_profiles'),
             can_edit_linked_data: initialPageData.get('can_edit_linked_data'),
+            required_for_options: initialPageData.get('required_for_options'),
         });
         customDataFieldsModel.data_fields.subscribe(function () {
             $("#save-custom-fields").prop("disabled", false);
