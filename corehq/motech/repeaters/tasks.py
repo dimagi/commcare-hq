@@ -234,11 +234,20 @@ def process_repeaters():
     """
     process_repeater_lock = get_redis_lock(
         PROCESS_REPEATERS_KEY,
-        timeout=24 * 60 * 60,
+        timeout=None,  # Iterating repeaters forever is fine
         name=PROCESS_REPEATERS_KEY,
     )
+    # How to recover from a crash: If `process_repeaters()` needs to be
+    # restarted and `process_repeater_lock` was not released, expire the
+    # lock to allow `process_repeaters()` to start:
+    #
+    # >>> from dimagi.utils.couch.cache.cache_core import get_redis_client
+    # >>> from corehq.motech.repeaters.const import PROCESS_REPEATERS_KEY
+    # >>> client = get_redis_client()
+    # >>> client.expire(PROCESS_REPEATERS_KEY, timeout=0)
     if not process_repeater_lock.acquire(blocking=False):
         return
+
     try:
         for domain, repeater_id, lock_token in iter_ready_repeater_ids_forever():
             process_repeater.delay(domain, repeater_id, lock_token)
