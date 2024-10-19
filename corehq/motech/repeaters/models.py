@@ -275,9 +275,10 @@ class Repeater(RepeaterSuperProxy):
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
+    max_workers = models.IntegerField(default=0)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
-    is_deleted = models.BooleanField(default=False, db_index=True)
+    is_deleted = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
@@ -286,6 +287,13 @@ class Repeater(RepeaterSuperProxy):
 
     class Meta:
         db_table = 'repeaters_repeater'
+        indexes = [
+            models.Index(
+                name='is_deleted_partial_idx',
+                fields=['id'],
+                condition=models.Q(is_deleted=False),
+            ),
+        ]
 
     payload_generator_classes = ()
 
@@ -1010,7 +1018,12 @@ class RepeatRecord(models.Model):
                 name="next_check_not_null",
                 fields=["next_check"],
                 condition=models.Q(next_check__isnull=False),
-            )
+            ),
+            models.Index(
+                name="state_partial_idx",
+                fields=["repeater_id"],
+                condition=models.Q(state__in=(State.Pending, State.Fail)),
+            ),
         ]
         constraints = [
             models.CheckConstraint(
