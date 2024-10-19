@@ -300,8 +300,8 @@ class Repeater(RepeaterSuperProxy):
         indexes = [
             models.Index(
                 fields=['next_attempt_at'],
-                condition=models.Q(is_paused=False),
-                name='next_attempt_at_not_paused_idx',
+                condition=models.Q(("is_deleted", False), ("is_paused", False)),
+                name='next_attempt_at_partial_idx',
             ),
         ]
 

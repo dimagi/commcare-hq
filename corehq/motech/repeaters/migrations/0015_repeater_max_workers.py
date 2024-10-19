@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("repeaters", "0013_alter_repeatrecord_state_and_more"),
+        ("repeaters", "0014_alter_repeater_request_method"),
     ]
 
     operations = [
