@@ -7,7 +7,7 @@ from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import JsonField
-from corehq.motech.const import ALL_REQUEST_METHODS, REQUEST_POST
+from corehq.motech.const import ALL_REQUEST_METHODS, REQUEST_DELETE, REQUEST_GET, REQUEST_POST
 from corehq.motech.repeaters.forms import GenericRepeaterForm
 
 
@@ -19,7 +19,9 @@ LABELS = {
 
 class BaseExpressionRepeaterForm(GenericRepeaterForm):
     configured_filter = JsonField(expected_type=dict, help_text=help_text.CONFIGURED_FILTER)
-    configured_expression = JsonField(expected_type=dict)
+    configured_expression = JsonField(expected_type=dict, required=False, help_text=_(
+        "This expression is used to generate the request payload. It is required for POST, and PUT requests."
+    ))
     url_template = CharField(
         required=False,
         help_text=_("Items to add to the end of the URL. Please see the documentation for more information.")
@@ -66,14 +68,16 @@ class BaseExpressionRepeaterForm(GenericRepeaterForm):
         ]
 
     def clean_configured_expression(self):
-        try:
-            ExpressionFactory.from_spec(
-                self.cleaned_data['configured_expression'], FactoryContext.empty(domain=self.domain)
-            )
-        except BadSpecError as e:
-            raise ValidationError(e)
+        raw = self.cleaned_data['configured_expression']
+        if raw:
+            try:
+                ExpressionFactory.from_spec(
+                    raw, FactoryContext.empty(domain=self.domain)
+                )
+            except BadSpecError as e:
+                raise ValidationError(e)
 
-        return self.cleaned_data['configured_expression']
+        return raw
 
     def clean_configured_filter(self):
         try:
@@ -107,6 +111,15 @@ class BaseExpressionRepeaterForm(GenericRepeaterForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        request_method = self.cleaned_data['request_method']
+        body_required = request_method not in (REQUEST_GET, REQUEST_DELETE)
+        if body_required and not self.cleaned_data['configured_expression']:
+            raise ValidationError({
+                'configured_expression': _("This field is required for {request_method} requests.").format(
+                    request_method=request_method
+                ),
+            })
+
         case_filter = bool(cleaned_data.get('case_action_filter_expression'))
         case_operation = bool(cleaned_data.get('case_action_expression'))
         if case_filter ^ case_operation:
