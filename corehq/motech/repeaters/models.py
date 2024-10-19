@@ -415,6 +415,10 @@ class Repeater(RepeaterSuperProxy):
 
     def reset_backoff(self):
         if self.last_attempt_at or self.next_attempt_at:
+            # `_get_retry_interval()` implements exponential backoff by
+            # multiplying the previous interval by 3. Set last_attempt_at
+            # to None so that the next time we need to back off, we
+            # know it is the first interval.
             self.last_attempt_at = None
             self.next_attempt_at = None
             # Avoid a possible race condition with self.pause(), etc.
