@@ -436,11 +436,16 @@ metrics_gauge_task(
     multiprocess_mode=MPM_MAX
 )
 
-# This metric monitors the number of Repeaters waiting to be sent. A
-# steep increase indicates a problem with `process_repeaters()`.
+
+def get_all_ready_count():
+    return Repeater.objects.all_ready().count()
+
+
+# This metric monitors the number of Repeaters with RepeatRecords ready to
+# be sent. A steep increase indicates a problem with `process_repeaters()`.
 metrics_gauge_task(
     'commcare.repeaters.all_ready',
-    lambda: Repeater.objects.all_ready().count(),
+    get_all_ready_count,
     run_every=crontab(minute='*/5'),  # every five minutes
     multiprocess_mode=MPM_MAX
 )
