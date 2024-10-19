@@ -1,4 +1,4 @@
-from django.forms import CharField, ValidationError
+from django.forms import CharField, ValidationError, ChoiceField
 from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -7,6 +7,7 @@ from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import JsonField
+from corehq.motech.const import ALL_REQUEST_METHODS, REQUEST_POST
 from corehq.motech.repeaters.forms import GenericRepeaterForm
 
 
@@ -45,6 +46,17 @@ class BaseExpressionRepeaterForm(GenericRepeaterForm):
             '">these docs</a>'
         )
     )
+
+    def set_extra_django_form_fields(self):
+        super().set_extra_django_form_fields()
+
+        # Allow GET requests
+        self.fields['request_method'] = ChoiceField(
+            label=_("HTTP Request Method"),
+            choices=[(rm, rm) for rm in ALL_REQUEST_METHODS],
+            initial=REQUEST_POST,
+            required=True,
+        )
 
     def get_ordered_crispy_form_fields(self):
         fields = super().get_ordered_crispy_form_fields()
