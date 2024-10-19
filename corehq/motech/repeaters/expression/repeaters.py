@@ -88,6 +88,9 @@ class BaseExpressionRepeater(Repeater):
 
     @memoized
     def get_payload(self, repeat_record):
+        if not self.configured_expression:
+            return None
+
         return self.generator.get_payload(
             repeat_record,
             self.payload_doc(repeat_record),

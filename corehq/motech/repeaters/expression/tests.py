@@ -160,6 +160,13 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
             "a-constant": "foo",
         }))
 
+    def test_payload_empty_expression(self):
+        self.repeater.configured_expression = None
+        self.repeater.save()
+        self.factory.create_case(case_type='forward-me')
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.assertIsNone(repeat_record.get_payload())
+
     @flag_enabled("UCR_EXPRESSION_REGISTRY")
     def test_custom_url(self):
 
