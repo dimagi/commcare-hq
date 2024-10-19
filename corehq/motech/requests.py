@@ -14,6 +14,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.auth import AuthManager, BasicAuthManager
 from corehq.motech.const import (
     REQUEST_DELETE,
+    REQUEST_GET,
     REQUEST_POST,
     REQUEST_PUT,
     REQUEST_TIMEOUT,
@@ -275,11 +276,15 @@ def simple_request(domain, url, data, *, headers, auth_manager, verify,
         REQUEST_DELETE: requests.delete,
         REQUEST_POST: requests.post,
         REQUEST_PUT: requests.put,
+        REQUEST_GET: requests.get,
     }
     try:
         request_method = request_methods[method]
     except KeyError:
         raise ValueError(f"Method must be one of {', '.join(request_methods.keys())}")
+
+    if method == REQUEST_GET:
+        data = None
 
     try:
         response = request_method(None, data=data, headers=default_headers)
