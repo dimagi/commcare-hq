@@ -7,7 +7,7 @@ from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import JsonField
-from corehq.motech.const import ALL_REQUEST_METHODS, REQUEST_DELETE, REQUEST_GET, REQUEST_POST
+from corehq.motech.const import ALL_REQUEST_METHODS, REQUEST_POST, REQUEST_PUT
 from corehq.motech.repeaters.forms import GenericRepeaterForm
 
 
@@ -112,7 +112,7 @@ class BaseExpressionRepeaterForm(GenericRepeaterForm):
     def clean(self):
         cleaned_data = super().clean()
         request_method = self.cleaned_data['request_method']
-        body_required = request_method not in (REQUEST_GET, REQUEST_DELETE)
+        body_required = request_method in (REQUEST_POST, REQUEST_PUT)
         if body_required and not self.cleaned_data['configured_expression']:
             raise ValidationError({
                 'configured_expression': _("This field is required for {request_method} requests.").format(
