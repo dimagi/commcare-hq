@@ -1218,8 +1218,7 @@ class RepeatRecord(models.Model):
                 self.repeater.fire_for_record(self, timing_context=timing_context)
             except Exception as e:
                 self.handle_payload_error(str(e), traceback_str=traceback.format_exc())
-            finally:
-                return self.state
+            return self.state
         return None
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
