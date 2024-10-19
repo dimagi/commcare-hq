@@ -3,6 +3,7 @@ hqDefine("hqwebapp/js/bootstrap3/hq.helpers", [
     'knockout',
     'underscore',
     'analytix/js/google',
+    'bootstrap',  // for popover constructor override
 ], function (
     $,
     ko,

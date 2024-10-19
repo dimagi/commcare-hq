@@ -142,5 +142,8 @@
     "javascript": [
       "js/download_data_files.js"
     ]
+  },
+  "integration": {
+    "is_complete": true
   }
 }

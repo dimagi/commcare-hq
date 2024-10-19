@@ -104,7 +104,7 @@ from corehq.form_processor.models import (
 )
 from corehq.motech.const import (
     MAX_REQUEST_LOG_LENGTH,
-    REQUEST_METHODS,
+    ALL_REQUEST_METHODS,
     REQUEST_POST,
 )
 from corehq.motech.models import ConnectionSettings
@@ -278,7 +278,7 @@ class Repeater(RepeaterSuperProxy):
     name = models.CharField(max_length=255, null=True)
     format = models.CharField(max_length=64, null=True)
     request_method = models.CharField(
-        choices=list(zip(REQUEST_METHODS, REQUEST_METHODS)),
+        choices=list(zip(ALL_REQUEST_METHODS, ALL_REQUEST_METHODS)),
         default=REQUEST_POST,
         max_length=16,
     )

@@ -74,12 +74,12 @@ A typical new module structure will look something like:
 
 
 
-To register your module as a Webpack entry point, add the ``webpack_main`` template tag to your HTML template,
+To register your module as a Webpack entry point, add the ``js_entry`` template tag to your HTML template,
 near the top and outside of any other block:
 
 ::
 
-   {% webpack_main 'prototype/js/example' %}
+   {% js_entry 'prototype/js/example' %}
 
 Some pages don't have any unique logic but do rely on other modules.
 These are usually pages that use some common widgets but don't have custom UI interactions.
@@ -89,7 +89,7 @@ page's entry point:
 
 ::
 
-   {% webpack_main 'locations/js/widgets' %}
+   {% js_entry 'locations/js/widgets' %}
 
 If your page relies on multiple modules, it still needs one entry point.
 You can handle this by making a module that only imports other modules.
@@ -109,7 +109,7 @@ Then in your HTML page:
 
 ::
 
-   {% webpack_main 'prototype/js/combined_example' %}
+   {% js_entry 'prototype/js/combined_example' %}
 
 The exception to the above is if your page inherits from a legacy page that
 doesn't use a JavaScript bundler, like reports and app manager. This is rare,
@@ -270,7 +270,7 @@ No-Bundler Pages
 .. note::
 
     No-Bundler pages are pages that do not have a Webpack (or RequireJS) entry point.
-    New pages should never be created without a ``webpack_main`` entry point.
+    New pages should never be created without a ``js_entry`` entry point.
 
     Eventually, the remaining pages in this category will be modularized properly to integrate with Webpack
     as part of the `JS Bundler Migration
