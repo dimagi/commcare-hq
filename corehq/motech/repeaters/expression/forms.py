@@ -68,45 +68,18 @@ class BaseExpressionRepeaterForm(GenericRepeaterForm):
         ]
 
     def clean_configured_expression(self):
-        raw = self.cleaned_data['configured_expression']
-        if raw:
-            try:
-                ExpressionFactory.from_spec(
-                    raw, FactoryContext.empty(domain=self.domain)
-                )
-            except BadSpecError as e:
-                raise ValidationError(e)
-
-        return raw
+        return self._clean_expression('configured_expression')
 
     def clean_configured_filter(self):
-        try:
-            FilterFactory.from_spec(self.cleaned_data['configured_filter'])
-        except BadSpecError as e:
-            raise ValidationError(e)
-
-        return self.cleaned_data['configured_filter']
+        return self._clean_filter(self.cleaned_data['configured_filter'])
 
     def clean_case_action_expression(self):
-        raw = self.cleaned_data.get('case_action_expression')
-        if raw:
-            try:
-                ExpressionFactory.from_spec(
-                    raw, FactoryContext.empty(domain=self.domain)
-                )
-            except BadSpecError as e:
-                raise ValidationError(e)
-
-        return raw
+        return self._clean_expression('case_action_expression')
 
     def clean_case_action_filter_expression(self):
         raw = self.cleaned_data.get('case_action_filter_expression')
         if raw:
-            try:
-                FilterFactory.from_spec(raw)
-            except BadSpecError as e:
-                raise ValidationError(e)
-
+            return self._clean_filter(raw)
         return raw
 
     def clean(self):
@@ -131,3 +104,23 @@ class BaseExpressionRepeaterForm(GenericRepeaterForm):
                 ),
             })
         return cleaned_data
+
+    def _clean_expression(self, field_name):
+        raw = self.cleaned_data.get(field_name)
+        if raw:
+            try:
+                ExpressionFactory.from_spec(
+                    raw, FactoryContext.empty(domain=self.domain)
+                )
+            except BadSpecError as e:
+                raise ValidationError(e)
+
+        return raw
+
+    def _clean_filter(self, raw_expression):
+        try:
+            FilterFactory.from_spec(raw_expression, FactoryContext.empty(domain=self.domain))
+        except BadSpecError as e:
+            raise ValidationError(e)
+
+        return raw_expression
