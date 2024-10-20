@@ -588,12 +588,8 @@
         <option value="none" data-bind="text: accessNoneText"></option>
         <option value="all" data-bind="text: accessAllText"></option>
         <option value="selected" data-bind="text: accessSelectedText"></option>
-    </select>
-    </div>
-  </div>
-  <div class="form-group" data-bind="visible: showItems, css: {'has-error': hasError()}">
-    <div class="col-sm-8 col-sm-offset-4 controls">
-      <div class="panel panel-default">
+      </select>
+      <div class="panel panel-default"data-bind="visible: showItems, css: {'has-error': hasError()}" style="margin-top: 15px;">
         <div class="panel-heading" data-bind="text: listHeading"></div>
         <div class="panel-body">
           <div data-bind="foreach: specific, slideVisible: showItems">
