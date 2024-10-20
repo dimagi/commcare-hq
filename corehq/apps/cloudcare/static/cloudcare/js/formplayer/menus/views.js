@@ -1326,6 +1326,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 this.onClickHome();
             }
         },
+        onAttach: function () {
+            // Add class to #cloudcare-main so other elements can offset with CSS
+            FormplayerFrontend.regions.el.classList.add('has-breadcrumbs');
+        },
+        onBeforeDetach: function () {
+            FormplayerFrontend.regions.el.classList.remove('has-breadcrumbs');
+        },
     });
 
     const LanguageOptionView = Marionette.View.extend({
