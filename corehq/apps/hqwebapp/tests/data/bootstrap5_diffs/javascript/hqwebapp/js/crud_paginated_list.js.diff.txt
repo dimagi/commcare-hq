@@ -17,18 +17,18 @@
  ) {
      var CRUDPaginatedListModel = function (
          total,
-@@ -196,8 +198,9 @@
+@@ -198,8 +200,9 @@
              self.changePage(1);
          };
  
--        self.deleteItem = function (paginatedItem, event) {
+-        self.deleteItem = function (paginatedItem) {
 +        self.deleteItem = function (paginatedItem, event, button) {
              var pList = self.paginatedList();
 +            $(button).enableButton();
              paginatedItem.dismissModals();
              self.paginatedList(_(pList).without(paginatedItem));
              self.deletedList.push(paginatedItem);
-@@ -221,7 +224,7 @@
+@@ -223,7 +226,7 @@
              });
          };
  
@@ -37,7 +37,7 @@
              $.ajax({
                  url: '',
                  type: 'post',
-@@ -237,6 +240,7 @@
+@@ -239,6 +242,7 @@
                  statusCode: self.handleStatusCode,
                  success: function (data) {
                      self.utils.reloadList(data);
@@ -45,7 +45,7 @@
                  },
              });
          };
-@@ -267,15 +271,9 @@
+@@ -270,15 +274,9 @@
          };
  
          self.dismissModals = function () {
@@ -64,7 +64,7 @@
              }
          };
  
-@@ -318,15 +316,15 @@
+@@ -321,15 +319,15 @@
              var $deleteButton = $(elems).find('.delete-item-confirm');
              if ($deleteButton) {
                  $deleteButton.click(function () {

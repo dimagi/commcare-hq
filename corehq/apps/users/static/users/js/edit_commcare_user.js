@@ -37,7 +37,7 @@ hqDefine('users/js/edit_commcare_user', [
         return false;
     });
 
-    $('#reset-password-form').submit(function (e) {
+    $('#reset-password-form').submit(function () {
         $.ajax({
             url: $(this).attr('action'),
             method: $(this).attr('method'),

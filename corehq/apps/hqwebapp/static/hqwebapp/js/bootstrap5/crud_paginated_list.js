@@ -59,7 +59,7 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
         });
 
         self.isPaginatedListEmpty = ko.computed(function () {
-            return self.paginatedList().length == 0;
+            return self.paginatedList().length === 0;
         });
 
         self.isNewListVisible = ko.computed(function () {
@@ -90,12 +90,14 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
         });
 
         self.allPages = ko.computed(function () {
-            var last_ind = self.maxPage() + 1;
-            if (self.maxPage() <= 5 || self.currentPage() <= 3)
-                return _.range(1, Math.min(last_ind, 6));
-            if (self.currentPage() >= self.maxPage() - 2)
-                return _.range(self.maxPage() - 4, last_ind);
-            return _.range(self.currentPage() - 2, Math.min(last_ind, self.currentPage() + 3));
+            var lastIndex = self.maxPage() + 1;
+            if (self.maxPage() <= 5 || self.currentPage() <= 3) {
+                return _.range(1, Math.min(lastIndex, 6));
+            }
+            if (self.currentPage() >= self.maxPage() - 2) {
+                return _.range(self.maxPage() - 4, lastIndex);
+            }
+            return _.range(self.currentPage() - 2, Math.min(lastIndex, self.currentPage() + 3));
         });
 
         self.utils = {
@@ -249,9 +251,10 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             return null;
         };
 
-        self.initRow = function (rowElems, paginatedItem) {
+        self.initRow = function () {
             // Intended to be overridden with additional initialization for
             // each row in the paginated list.
+            // Arguments: rowElems, paginatedItem
         };
 
         return self;
