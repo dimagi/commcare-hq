@@ -5,6 +5,7 @@ from django.db import migrations, models
 from corehq.util.django_migrations import skip_on_fresh_install
 
 CUSTOM_USER_DATA_FIELD_TYPE = 'UserFields'
+EXISTING_REQUIRED_FOR = ['web_user', 'commcare_user']
 DEFAULT_REQUIRED_FOR = ['commcare_user']
 
 
@@ -16,7 +17,13 @@ def update_user_fields_required_for(apps, schema_editor):
     user_fields_definitions = CustomDataFieldsDefinition.objects.filter(field_type=CUSTOM_USER_DATA_FIELD_TYPE)
 
     for definition in user_fields_definitions:
-        Field.objects.filter(definition=definition).update(required_for=DEFAULT_REQUIRED_FOR)
+        fields = Field.objects.filter(definition=definition)
+        for field in fields:
+            if field.is_required:
+                field.required_for = EXISTING_REQUIRED_FOR
+            else:
+                field.required_for = DEFAULT_REQUIRED_FOR
+            field.save()
 
 
 class Migration(migrations.Migration):
