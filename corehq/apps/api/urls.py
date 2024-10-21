@@ -39,7 +39,10 @@ from corehq.apps.api.object_fetch_api import (
     CaseAttachmentAPI,
     view_form_attachment,
 )
-from corehq.apps.api.odata.urls import urlpatterns as odata_urlpatterns
+from corehq.apps.api.odata.urls import (
+    odata_case_urlpatterns,
+    odata_form_urlpatterns,
+)
 from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
 from corehq.apps.api.resources.messaging_event.view import messaging_events
 from corehq.apps.api.resources.v0_5 import (
@@ -122,8 +125,11 @@ def versioned_apis(api_list):
 
 
 urlpatterns = [
-    url(r'(?P<api_version>v0.5)/odata/', include(odata_urlpatterns)),
-    url(r'odata/(?P<api_version>v1)/', include(odata_urlpatterns)),
+    url(r'(?P<api_version>v0.5)/odata/cases/', include(odata_case_urlpatterns)),
+    url(r'(?P<api_version>v0.5)/odata/forms/', include(odata_form_urlpatterns)),
+    url(r'odata/cases/(?P<api_version>v1)/', include(odata_case_urlpatterns)),
+    url(r'odata/forms/(?P<api_version>v1)/', include(odata_form_urlpatterns)),
+
     url(r'(?P<api_version>v0.5)/messaging-event/$',
         messaging_events, name="api_messaging_event_list"),
     url(r'(?P<api_version>v0.5)/messaging-event/(?P<event_id>\d+)/$',

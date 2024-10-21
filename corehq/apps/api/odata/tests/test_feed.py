@@ -79,7 +79,7 @@ class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
             {
-                '@odata.context': 'http://localhost:8000/a/test_domain/api/odata/v1/cases/config_id/$metadata#feed',
+                '@odata.context': 'http://localhost:8000/a/test_domain/api/odata/cases/v1/config_id/$metadata#feed',
                 'value': []
             }
         )
@@ -164,7 +164,7 @@ class TestODataFormFeed(TestCase, FormOdataTestMixin):
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
             {
-                '@odata.context': 'http://localhost:8000/a/test_domain/api/odata/v1/forms/config_id/$metadata#feed',
+                '@odata.context': 'http://localhost:8000/a/test_domain/api/odata/forms/v1/config_id/$metadata#feed',
                 'value': []
             }
         )

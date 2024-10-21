@@ -32,7 +32,7 @@ class TestCaseServiceDocument(TestCase, CaseOdataTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['OData-Version'], '4.0')
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
-            '@odata.context': f'http://localhost:8000/a/test_domain/api/odata/v1/cases/{self.instance._id}/$metadata',
+            '@odata.context': f'http://localhost:8000/a/test_domain/api/odata/cases/v1/{self.instance._id}/$metadata',
             'value': [{
                 'name': 'feed',
                 'kind': 'EntitySet',
@@ -63,7 +63,7 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['OData-Version'], '4.0')
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
-            '@odata.context': f'http://localhost:8000/a/test_domain/api/odata/v1/forms/{self.instance._id}/$metadata',
+            '@odata.context': f'http://localhost:8000/a/test_domain/api/odata/forms/v1/{self.instance._id}/$metadata',
             'value': [{
                 'name': 'feed',
                 'kind': 'EntitySet',
