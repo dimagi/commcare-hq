@@ -143,16 +143,15 @@ hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list", [
         };
 
         self.initCreateForm = function () {
-            var $createForm = $("#create-item-form");
+            const $createForm = $("#create-item-form");
             $createForm.submit(function (e) {
                 e.preventDefault();
-                $createForm.ajaxSubmit({
-                    url: "",
-                    type: 'post',
+                let formData = new FormData($createForm.get(0));
+                formData.set("action", "create");
+                $.ajax({
+                    method: 'POST',
                     dataType: 'json',
-                    data: {
-                        'action': 'create',
-                    },
+                    data: Object.fromEntries(formData),
                     statusCode: self.handleStatusCode,
                     success: function (data) {
                         $createForm[0].reset();
@@ -296,14 +295,12 @@ hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list", [
             var $updateForm = $(elems).find('.update-item-form');
             if ($updateForm) {
                 $updateForm.submit(function (e) {
+                    let formData = new FormData($updateForm.get(0));
+                    formData.set("action", "update");
                     e.preventDefault();
-                    $updateForm.ajaxSubmit({
-                        url: "",
-                        type: 'post',
-                        dataType: 'json',
-                        data: {
-                            action: 'update',
-                        },
+                    $.ajax({
+                        method: 'POST',
+                        data: Object.fromEntries(formData),
                         success: function (data) {
                             if (data.updatedItem) {
                                 self.dismissModals();
