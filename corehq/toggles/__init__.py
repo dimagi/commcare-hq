@@ -2573,7 +2573,7 @@ ATTENDANCE_TRACKING = StaticToggle(
 
 
 def _handle_geospatial_es_index(domain, is_enabled):
-    from corehq.apps.geospatial.es import index_es_docs_with_location_props
+    from corehq.apps.geospatial.tasks import index_es_docs_with_location_props
 
     if is_enabled:
         index_es_docs_with_location_props.delay(domain)
