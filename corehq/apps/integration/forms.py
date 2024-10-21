@@ -2,11 +2,13 @@ from django import forms
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
+from crispy_forms.bootstrap import PrependedText
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Submit
 from memoized import memoized
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.integration.models import (
     DialerSettings,
     HmacCalloutSettings,
@@ -17,8 +19,11 @@ from corehq.apps.integration.models import (
 
 class DialerSettingsForm(forms.ModelForm):
     is_enabled = forms.BooleanField(
-        label=_("Enable AWS Connect Dialer"),
-        required=False
+        label="",
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=_("Enable AWS Connect Dialer"),
+        ),
     )
     aws_instance_id = forms.CharField(
         label=_('AWS Instance ID'),
@@ -51,10 +56,7 @@ class DialerSettingsForm(forms.ModelForm):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
-            hqcrispy.B3MultiField(
-                _("Telephony Services"),
-                hqcrispy.InlineField('is_enabled'),
-            ),
+            PrependedText('is_enabled', ""),
             crispy.Div(
                 crispy.Field('aws_instance_id'),
             ),
@@ -64,10 +66,8 @@ class DialerSettingsForm(forms.ModelForm):
             crispy.Div(
                 crispy.Field('dialer_page_subheader'),
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', _("Update"))
-                )
+            crispy.ButtonHolder(
+                Submit('submit', _("Update"))
             )
         )
 
@@ -98,8 +98,11 @@ class DialerSettingsForm(forms.ModelForm):
 
 class GaenOtpServerSettingsForm(forms.ModelForm):
     is_enabled = forms.BooleanField(
-        label=_("Enable GAEN OTP server integration"),
-        required=False
+        label="",
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy("Enable GAEN OTP server integration"),
+        ),
     )
 
     server_type = forms.CharField(
@@ -136,10 +139,7 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
-            hqcrispy.B3MultiField(
-                _("OTP Callouts"),
-                hqcrispy.InlineField('is_enabled'),
-            ),
+            PrependedText('is_enabled', ""),
             crispy.Div(
                 crispy.Field('server_type'),
             ),
@@ -149,10 +149,8 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
             crispy.Div(
                 crispy.Field('auth_token'),
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', _("Update"))
-                )
+            crispy.ButtonHolder(
+                Submit('submit', _("Update"))
             )
         )
 
@@ -183,8 +181,11 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
 
 class HmacCalloutSettingsForm(forms.ModelForm):
     is_enabled = forms.BooleanField(
-        label=_("Enable Signed Callout in Web Apps"),
-        required=False
+        label="",
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=_("Enable in Web Apps"),
+        ),
     )
     destination_url = forms.CharField(
         label=_('External Callout URL'),
@@ -193,11 +194,11 @@ class HmacCalloutSettingsForm(forms.ModelForm):
 
     api_key = forms.CharField(
         label=_('API Key'),
-        help_text=_("API Key for CommCare in the external System")
+        help_text=_("API Key for CommCare in the external system")
     )
     api_secret = forms.CharField(
         label=_('API Secret'),
-        help_text=_("API Secret for message Signing"),
+        help_text=_("API secret for message signing"),
         widget=forms.PasswordInput
     )
 
@@ -217,10 +218,7 @@ class HmacCalloutSettingsForm(forms.ModelForm):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
-            hqcrispy.B3MultiField(
-                _("Signed Callout Config"),
-                hqcrispy.InlineField('is_enabled'),
-            ),
+            PrependedText('is_enabled', ""),
             crispy.Div(
                 crispy.Field('destination_url'),
             ),
@@ -230,10 +228,8 @@ class HmacCalloutSettingsForm(forms.ModelForm):
             crispy.Div(
                 crispy.Field('api_secret'),
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', _("Update"))
-                )
+            crispy.ButtonHolder(
+                Submit('submit', _("Update"))
             )
         )
 
@@ -264,8 +260,11 @@ class HmacCalloutSettingsForm(forms.ModelForm):
 
 class SimprintsIntegrationForm(forms.Form):
     is_enabled = forms.BooleanField(
-        label=gettext_noop("Enable Simprints Integration"),
-        required=False
+        label="",
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_noop("Enable Simprints Integration"),
+        ),
     )
     project_id = forms.CharField(
         label=gettext_noop("Project ID"),
@@ -287,22 +286,15 @@ class SimprintsIntegrationForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
-            hqcrispy.B3MultiField(
-                _("Simprints Integration"),
-                hqcrispy.InlineField(
-                    'is_enabled', data_bind="checked: isEnabled"
-                ),
-            ),
+            PrependedText('is_enabled', "", data_bind="checked: isEnabled"),
             crispy.Div(
                 crispy.Field('project_id', data_bind="value: projectId"),
                 crispy.Field('user_id', data_bind="value: userId"),
                 crispy.Field('module_id', data_bind="value: moduleId"),
                 data_bind="visible: isEnabled"
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', gettext_lazy("Update"))
-                )
+            crispy.ButtonHolder(
+                Submit('submit', gettext_lazy("Update"))
             )
         )
 

@@ -57,10 +57,6 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
                     repeater.count_State[State.Empty.name]
                     + repeater.count_State[State.Success.name]
                 )
-                repeater.count_State['InvalidOrCancelled'] = (
-                    repeater.count_State[State.InvalidPayload.name]
-                    + repeater.count_State[State.Cancelled.name]
-                )
             return repeaters
 
         return [

@@ -264,10 +264,9 @@ class FilteredLocationDownload(BaseLocationView):
 
 class LocationOptionsController(EmwfOptionsController):
     namespace_locations = False
-    case_sharing_only = False
 
-    def __init__(self, *args, include_locations_with_no_users=True):
-        super().__init__(*args)
+    def __init__(self, *args, include_locations_with_no_users=True, **kwargs):
+        super().__init__(*args, **kwargs)
         self.include_locations_with_no_users = include_locations_with_no_users
 
     @property

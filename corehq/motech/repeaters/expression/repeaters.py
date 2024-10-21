@@ -2,7 +2,10 @@ import logging
 from json import JSONDecodeError
 
 from django.utils.translation import gettext_lazy as _
+
 from memoized import memoized
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.case_helper import UserDuck
@@ -10,18 +13,24 @@ from corehq.apps.hqcase.utils import REPEATER_RESPONSE_XMLNS
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.form_processor.models import CaseTransaction, CommCareCase, XFormInstance
+from corehq.form_processor.models import (
+    CaseTransaction,
+    CommCareCase,
+    XFormInstance,
+)
+from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.expression.repeater_generators import (
     ArcGISFormExpressionPayloadGenerator,
+    ExpressionPayloadGenerator,
     FormExpressionPayloadGenerator,
 )
-from corehq.motech.repeaters.expression.repeater_generators import (
-    ExpressionPayloadGenerator,
+from corehq.motech.repeaters.models import (
+    OptionValue,
+    Repeater,
+    is_response,
+    is_success_response,
 )
-from corehq.motech.repeaters.models import OptionValue, Repeater
-from corehq.motech.repeaters.models import is_response, is_success_response
 from corehq.toggles import ARCGIS_INTEGRATION, EXPRESSION_REPEATER
-from dimagi.utils.logging import notify_exception
 
 # max number of repeater updates in a chain before we stop forwarding
 MAX_REPEATER_CHAIN_LENGTH = 5
@@ -79,6 +88,9 @@ class BaseExpressionRepeater(Repeater):
 
     @memoized
     def get_payload(self, repeat_record):
+        if not self.configured_expression:
+            return None
+
         return self.generator.get_payload(
             repeat_record,
             self.payload_doc(repeat_record),
@@ -207,6 +219,56 @@ class ArcGISFormExpressionRepeater(FormExpressionRepeater):
         return (
             super(ArcGISFormExpressionRepeater, cls).available_for_domain(domain)
             and ARCGIS_INTEGRATION.enabled(domain)
+        )
+
+    def send_request(self, repeat_record, payload):
+        response = super().send_request(repeat_record, payload)
+        if is_success_response(response) and 'error' in response.json():
+            # It _looks_ like a success response, but it's an error. :/
+            return self._error_response(response.json()['error'])
+        return response
+
+    @staticmethod
+    def _error_response(error_json):
+        """
+        The ArcGIS API returns error responses with status code 200.
+
+        This method extracts the details from the response JSON, and
+        returns a RepeaterResponse with the error details so that the
+        response will be handled correctly.
+
+        >>> error_json = {
+        ...     "code": 503,
+        ...     "details": [],
+        ...     "message": "An error occurred."
+        ... }
+        >>> resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        >>> resp.status_code
+        503
+        >>> resp.reason
+        'An error occurred.'
+
+        """
+        # The ArcGIS REST API documentation does not give the error
+        # response schema, so we have to guess based on what we've seen.
+
+        # `status_code` is required for us to make decisions about the
+        # repeat record.  If `error_json` does not include "code", then
+        # use 500 so that the repeat record will be sent again later.
+        status_code = error_json.get('code', 500)
+
+        # `reason` is what is shown in the Repeat Records Report under
+        # the "Responses" button. If `error_json` is missing "message",
+        # then set a value that is more useful to users than no message.
+        fallback_msg = _('[No error message given by ArcGIS]')
+        reason = error_json.get('message', fallback_msg)
+        if 'messageCode' in error_json:
+            reason += f' ({error_json["messageCode"]})'
+
+        return RepeaterResponse(
+            status_code=status_code,
+            reason=reason,
+            text='\n'.join(error_json.get('details', [])),
         )
 
 

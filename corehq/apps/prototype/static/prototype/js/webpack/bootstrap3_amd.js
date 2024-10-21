@@ -8,8 +8,8 @@ hqDefine("prototype/js/webpack/bootstrap3_amd",[
     "commcarehq_b3",  // IMPORTANT :: this has to be included with any Bootstrap 3 entry point
 ], function ($, ko, _, initialPageData) {
     /**
-     * This is an (HQ)AMD-formatted module, intended to be used with webpack_main as follows:
-     * {% webpack_main_b3 "prototype/js/webpack/bootstrap3_amd" %}
+     * This is an (HQ)AMD-formatted module, intended to be used with js_entry as follows:
+     * {% js_entry_b3 "prototype/js/webpack/bootstrap3_amd" %}
      *
      * It serves as a test to see that Webpack is working fine with this type of module
      * and is an example of what a quick migration of an existing requirejs module might
