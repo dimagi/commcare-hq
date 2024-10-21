@@ -28,13 +28,13 @@
       <div class="form-check">
         <input class="form-check-input" type="radio" value="false" data-bind="checked: restrict.JSON" id="radioFalse"/>
         <label class="form-check-label" for="radioFalse">
-          {% blocktrans %}Allow all mobile workers to see all Web Apps applications.{% endblocktrans %}
+          {% blocktrans %}Use Roles & Permissions to manage Web Apps access{% endblocktrans %}
         </label>
       </div>
       <div class="form-check">
         <input class="form-check-input" type="radio" value="true" data-bind="checked: restrict.JSON" id="radioTrue"/>
         <label class="form-check-label" for="radioTrue">
-          {% blocktrans %}Customize each mobile worker's access to Web Apps{% endblocktrans %}
+          {% blocktrans %}Manage Web Apps access for each mobile worker based on their group{% endblocktrans %}
         </label>
       </div>
       <div data-bind="visible: restrict">
