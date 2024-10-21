@@ -1415,9 +1415,7 @@ class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSp
         domain = kwargs['domain']
         if not toggles.SUPERSET_ANALYTICS.enabled(domain):
             raise ImmediateHttpResponse(
-                HttpForbidden(gettext_noop(
-                    "This domain requires the superset-analytics flag to access this endpoint."
-                ))
+                HttpForbidden()
             )
 
         user = CouchUser.get_by_username(bundle.request.user.username)
