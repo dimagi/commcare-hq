@@ -31,6 +31,15 @@
           {% blocktrans %}Use Roles & Permissions to manage Web Apps access{% endblocktrans %}
         </label>
       </div>
+      <div class="form-check ms-3" data-bind="visible: !restrict()">
+        <input type="checkbox" class="form-check-input" data-bind="checked: disable_feature_flag" id="disable_ff"/>
+        <label class="form-check-label" for="disable_ff">
+          {% blocktrans %}
+          Web Apps permissions have been transferred to "Roles & Permissions", and this deprecated feature can be turned off.
+          Please note that once you "save", you will no longer have access to this page.
+          {% endblocktrans %}
+        </label>
+      </div>
       <div class="form-check">
         <input class="form-check-input" type="radio" value="true" data-bind="checked: restrict.JSON" id="radioTrue"/>
         <label class="form-check-label" for="radioTrue">
