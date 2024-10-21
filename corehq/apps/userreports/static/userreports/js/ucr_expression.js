@@ -43,7 +43,9 @@ hqDefine("userreports/js/ucr_expression", [
         };
 
         self.saveExpression = function (form) {
-            $(form).ajaxSubmit({
+            $.ajax({
+                method: 'POST',
+                data: Object.fromEntries(new FormData(form)),
                 dataType: 'json',
                 success: function (response) {
                     alertUser.alert_user(gettext("Expression saved"), 'success');
