@@ -9,10 +9,6 @@ hqDefine("hqmedia/js/uploaders", function () {
         ]);
 
         let self = {};
-
-        self.queueTemplate = options.queueTemplate;
-        self.errorsTemplate = options.errorsTemplate;
-        self.existingFileTemplate = options.existingFileTemplate;
         self.uploadParams = options.uploadParams;
 
         self.$container = $("#" + slug);
@@ -45,7 +41,7 @@ hqDefine("hqmedia/js/uploaders", function () {
 
             if (self.currentReference && self.currentReference.getUrl() && self.currentReference.isMediaMatched()) {
                 self.$existingFile.removeClass('hide');
-                self.$existingFile.find('.hqm-existing-controls').html(_.template(self.existingFileTemplate)({
+                self.$existingFile.find('.hqm-existing-controls').html(_.template(options.existingFileTemplate)({
                     url: self.currentReference.getUrl(),
                 }));
             } else {
@@ -77,7 +73,7 @@ hqDefine("hqmedia/js/uploaders", function () {
 
             if (self.$fileInput.get(0).files.length) {
                 const file = self.$fileInput.get(0).files[0];
-                self.$uploadStatusContainer.html(_.template(self.queueTemplate)({
+                self.$uploadStatusContainer.html(_.template(options.queueTemplate)({
                     file_size: (file.size / MEGABYTE).toFixed(3),
                     file_name: file.name,
                 }));
@@ -125,7 +121,7 @@ hqDefine("hqmedia/js/uploaders", function () {
                 error: function (response) {
                     response = JSON.parse(response.responseText);
                     self.$container.find(".hqm-error").removeClass('hide');
-                    self.$container.find(".hqm-errors").html(_.template(self.errorsTemplate)({
+                    self.$container.find(".hqm-errors").html(_.template(options.errorsTemplate)({
                         errors: response.errors,
                     }));
                     self.$container.find(".hqm-begin").hide();
