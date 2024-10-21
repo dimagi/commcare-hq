@@ -1425,3 +1425,8 @@ class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSp
         if not (user and user.is_member_of(domain) and user.is_active):
             return None
         return user
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail')),
+        ]

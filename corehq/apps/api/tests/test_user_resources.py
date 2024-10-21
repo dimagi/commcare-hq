@@ -732,22 +732,13 @@ class TestCommCareAnalyticsUserResource(APIResourceTest):
     resource = v0_5.CommCareAnalyticsUserResource
     api_name = 'v0.5'
 
-    def single_endpoint(self, id, **kwargs):
-        endpoint = reverse('api_dispatch_detail', kwargs=dict(
-            domain=self.domain.name,
-            api_name=self.api_name,
-            resource_name=self.resource._meta.resource_name,
-            pk=id,
-        ))
-        return endpoint
-
     def test_flag_not_enabled(self):
-        response = self._assert_auth_get_resource(self.single_endpoint(self.user.user_id))
+        response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 403)
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_user_roles_returned(self):
-        response = self._assert_auth_get_resource(self.single_endpoint(self.user.user_id))
+        response = self._assert_auth_get_resource(self.list_endpoint)
         expected_response_obj = {
             'permissions': {'can_edit': True, 'can_view': True},
             'resource_uri': '',
