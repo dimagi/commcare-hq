@@ -160,6 +160,13 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
             "a-constant": "foo",
         }))
 
+    def test_payload_empty_expression(self):
+        self.repeater.configured_expression = None
+        self.repeater.save()
+        self.factory.create_case(case_type='forward-me')
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.assertIsNone(repeat_record.get_payload())
+
     @flag_enabled("UCR_EXPRESSION_REGISTRY")
     def test_custom_url(self):
 
@@ -502,6 +509,48 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
             self.repeater.fire_for_record(repeat_record)
 
         self.assertEqual(repeat_record.state, State.InvalidPayload)
+
+    def test_error_response_with_message_code(self):
+        error_json = {
+            "code": 403,
+            "details": [
+                "You do not have permissions to access this resource or "
+                "perform this operation."
+            ],
+            "message": "You do not have permissions to access this resource "
+                       "or perform this operation.",
+            "messageCode": "GWM_0003",
+        }
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(
+            resp.reason,
+            "You do not have permissions to access this resource or perform "
+            "this operation. (GWM_0003)"
+        )
+        self.assertEqual(
+            resp.text,
+            "You do not have permissions to access this resource or perform "
+            "this operation."
+        )
+
+    def test_error_response_without_message_code(self):
+        error_json = {
+            "code": 503,
+            "details": [],
+            "message": "An error occurred."
+        }
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 503)
+        self.assertEqual(resp.reason, "An error occurred.")
+        self.assertEqual(resp.text, "")
+
+    def test_error_response_with_empty_error(self):
+        error_json = {}
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 500)
+        self.assertEqual(resp.reason, "[No error message given by ArcGIS]")
+        self.assertEqual(resp.text, "")
 
 
 def test_doctests():

@@ -1,0 +1,13 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load hq_shared_tags %}
+
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block content %}
+  Do HTMX and Alpine things here!
+{% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

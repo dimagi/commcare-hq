@@ -32,7 +32,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, UserES
 from corehq.apps.es.users import missing_or_empty_user_data_property
-from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError
+from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError, GeoPolygonValidationError
 from corehq.apps.geospatial.filters import GPSDataFilter
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
@@ -108,24 +108,16 @@ class GeoPolygonListView(BaseDomainView):
             geo_json = json.loads(request.body).get('geo_json', None)
         except json.decoder.JSONDecodeError:
             return HttpResponseBadRequest(
-                'POST Body must be a valid json in {"geo_json": <geo_json>} format'
+                _('POST Body must be a valid json in {"geo_json": <geo_json>} format')
             )
-
-        if not geo_json:
-            return HttpResponseBadRequest('Empty geo_json POST field')
 
         try:
-            jsonschema.validate(geo_json, POLYGON_COLLECTION_GEOJSON_SCHEMA)
-        except jsonschema.exceptions.ValidationError:
-            return HttpResponseBadRequest(
-                'Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons'
-            )
+            self._validate_request_geo_json(geo_json)
 
-        geo_polygon_name = geo_json.pop('name')
-        if GeoPolygon.objects.filter(domain=self.domain, name__iexact=geo_polygon_name).exists():
-            return HttpResponseBadRequest(
-                'GeoPolygon with given name already exists! Please use a different name.'
-            )
+            geo_polygon_name = geo_json.pop('name')
+            self._validate_request_geo_polygon_name(geo_polygon_name)
+        except GeoPolygonValidationError as error:
+            return HttpResponseBadRequest(error)
 
         # Drop ids since they are specific to the Mapbox draw event
         for feature in geo_json["features"]:
@@ -139,6 +131,26 @@ class GeoPolygonListView(BaseDomainView):
         return json_response({
             'id': geo_polygon.id,
         })
+
+    def _validate_request_geo_json(self, geo_json):
+        if not geo_json:
+            raise GeoPolygonValidationError(_('Empty geo_json POST field'))
+
+        try:
+            jsonschema.validate(geo_json, POLYGON_COLLECTION_GEOJSON_SCHEMA)
+        except jsonschema.exceptions.ValidationError:
+            raise GeoPolygonValidationError(
+                _('Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons')
+            )
+
+    def _validate_request_geo_polygon_name(self, geo_polygon_name):
+        if geo_polygon_name == '':
+            raise GeoPolygonValidationError(_('Please specify a name for the GeoPolygon area.'))
+
+        if GeoPolygon.objects.filter(domain=self.domain, name__iexact=geo_polygon_name).exists():
+            raise GeoPolygonValidationError(
+                _('GeoPolygon with given name already exists! Please use a different name.')
+            )
 
 
 @method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
