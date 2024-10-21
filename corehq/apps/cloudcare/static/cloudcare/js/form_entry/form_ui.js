@@ -1012,8 +1012,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 currentNode = parent;
             }
             var el = $("#" + self.entry.entryId + "-label");
-            $('html, body').animate({
-                scrollTop: $(el).offset().top - 60,
+            const scrollContainer = $('#content-plus-version-info-container');
+            scrollContainer.animate({
+                scrollTop: scrollContainer.scrollTop() + $(el).offset().top - 80,
             });
             self.form().currentJumpPoint = self;
             el.fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);
