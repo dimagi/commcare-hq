@@ -729,7 +729,7 @@ class TestUserDomainsResource(TestCase):
 
 
 class TestCommCareAnalyticsUserResource(APIResourceTest):
-    resource = v0_5.CommCareAnalyticsUserRolesResource
+    resource = v0_5.CommCareAnalyticsUserResource
     api_name = 'v0.5'
 
     def single_endpoint(self, id, **kwargs):
