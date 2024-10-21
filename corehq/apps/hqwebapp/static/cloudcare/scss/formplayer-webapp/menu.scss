@@ -72,6 +72,12 @@ $persistent-menu-image-size: 3rem;
 }
 
 @media print {
+  #content-plus-version-info-container {
+    overflow: visible !important;
+  }
+}
+
+@media print {
   #persistent-menu-region {
     display: none;
   }
