@@ -6,12 +6,12 @@
 
 */
 
-hqDefine("reports/js/bootstrap3/scheduled_reports_list", [
+hqDefine("reports/js/scheduled_reports_list", [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
-    'hqwebapp/js/bootstrap3/components.ko', // pagination & feedback widget
+    'hqwebapp/js/components.ko', // pagination & feedback widget
 ], function (
     $,
     ko,
@@ -205,5 +205,3 @@ hqDefine("reports/js/bootstrap3/scheduled_reports_list", [
     };
 
 });
-
-

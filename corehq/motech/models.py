@@ -117,7 +117,7 @@ class ConnectionSettings(models.Model):
     encrypted_fields = {"password": PASSWORD_PLACEHOLDER, "client_secret": PASSWORD_PLACEHOLDER}
 
     def __str__(self):
-        return self.name
+        return f"{self.name} [{self.domain}]"
 
     @property
     def repeaters(self):

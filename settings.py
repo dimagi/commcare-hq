@@ -146,6 +146,7 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
+    'corehq.middleware.SecureCookiesMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -171,8 +172,6 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
-    # middleware that adds cookies must come before SecureCookiesMiddleware
-    'corehq.middleware.SecureCookiesMiddleware',
     'field_audit.middleware.FieldAuditMiddleware',
 ]
 
@@ -933,8 +932,6 @@ LESS_B3_PATHS = {
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
 
-BOOTSTRAP_MIGRATION_LOGS_DIR = None
-
 USER_AGENTS_CACHE = 'default'
 
 # Invoicing
@@ -1147,6 +1144,7 @@ COMMCARE_ANALYTICS_HOST = ""
 FCM_CREDS = None
 
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
+CONNECTID_SECRET_KEY = ''
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR

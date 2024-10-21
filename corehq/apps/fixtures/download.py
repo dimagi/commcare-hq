@@ -68,23 +68,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     # Please remove this flag when this method no longer triggers an 'E' or 'F'
     # classification from the radon code static analysis
 
-    if table_ids and table_ids[0]:
-        try:
-            data_types_view = [LookupTable.objects.get(id=id) for id in table_ids]
-        except LookupTable.DoesNotExist:
-            if html_response:
-                raise FixtureDownloadError(
-                    _("Sorry, we couldn't find that table. If you think this "
-                      "is a mistake please report an issue."))
-            data_types_view = LookupTable.objects.by_domain(domain)
-    else:
-        data_types_view = LookupTable.objects.by_domain(domain)
-
-    if html_response:
-        data_types_view = list(data_types_view)[0:1]
-    else:
-        data_types_view = list(data_types_view)
-
+    data_types_view = _generate_data_types_view(table_ids, domain, html_response)
     total_tables = len(data_types_view)
     # when total_tables < 4 the final percentage can be >= 100%, but for
     # a small number of tables it renders more accurate progress
@@ -318,6 +302,25 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         excel_sheets[data_type.tag] = item_sheet
 
     return data_types_book, excel_sheets
+
+
+def _generate_data_types_view(table_ids, domain, html_response):
+    if table_ids and table_ids[0]:
+        try:
+            data_types_view = [LookupTable.objects.get(id=id, domain=domain) for id in table_ids]
+        except LookupTable.DoesNotExist:
+            if html_response:
+                raise FixtureDownloadError(
+                    _("Sorry, we couldn't find that table. If you think this "
+                      "is a mistake please report an issue."))
+            data_types_view = LookupTable.objects.by_domain(domain)
+    else:
+        data_types_view = LookupTable.objects.by_domain(domain)
+
+    if html_response:
+        return list(data_types_view)[0:1]
+    else:
+        return list(data_types_view)
 
 
 class OwnerNames:

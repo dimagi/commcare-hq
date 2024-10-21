@@ -123,6 +123,8 @@ class ExportListHelper(object):
                 return DeIdFormExportListHelper(request)
             return FormExportListHelper(request)
         elif form_or_case == 'case':
+            if is_deid:
+                return DeIdCaseExportListHelper(request)
             return CaseExportListHelper(request)
 
         raise ValueError("Could not determine ExportListHelper subclass")
@@ -479,6 +481,14 @@ class DeIdFormExportListHelper(FormExportListHelper):
         return None
 
 
+class DeIdCaseExportListHelper(CaseExportListHelper):
+    is_deid = True
+
+    @property
+    def create_export_form(self):
+        return None
+
+
 class DeIdDailySavedExportListHelper(DailySavedExportListHelper):
     is_deid = True
 
@@ -721,12 +731,6 @@ class CaseExportListView(BaseExportListView, CaseExportListHelper):
     urlname = 'list_case_exports'
     page_title = gettext_noop("Export Case Data")
 
-    @property
-    def page_name(self):
-        if self.is_deid:
-            return _("Export De-Identified Cases")
-        return self.page_title
-
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         bulk_export_progress = cache.get(f'{BULK_CASE_EXPORT_CACHE}:{request.domain}')
@@ -771,6 +775,11 @@ class DashboardFeedListView(DailySavedExportListView, DashboardFeedListHelper):
 class DeIdFormExportListView(FormExportListView, DeIdFormExportListHelper):
     page_title = gettext_noop("Export De-Identified Form Data")
     urlname = 'list_form_deid_exports'
+
+
+class DeIdCaseExportListView(CaseExportListView, DeIdCaseExportListHelper):
+    page_title = gettext_noop("Export De-Identified Case Data")
+    urlname = 'list_case_deid_exports'
 
 
 @location_safe
