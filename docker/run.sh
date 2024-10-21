@@ -176,29 +176,29 @@ function _run_tests {
         python-sharded*)
             export USE_PARTITIONED_DATABASE=yes
             # TODO make it possible to run a subset of python-sharded tests
-            py_test_args+=("--attr=sharded")
+            py_test_args+=("-msharded")
             ;;
         python-elasticsearch-v5)
             export ELASTICSEARCH_HOST='elasticsearch5'
             export ELASTICSEARCH_PORT=9205
             export ELASTICSEARCH_MAJOR_VERSION=5
-            py_test_args+=("--attr=es_test")
+            py_test_args+=("-mes_test")
             ;;
     esac
 
     function _test_python {
         ./manage.py create_kafka_topics
         if [ -n "$CI" ]; then
-            logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
+            logmsg INFO "coverage run $(which pytest) ${py_test_args[*]}"
             # `coverage` generates a file that's then sent to codecov
-            coverage run manage.py test "${py_test_args[@]}"
+            coverage run $(which pytest) "${py_test_args[@]}"
             coverage xml
             if [ -n "$TRAVIS" ]; then
                 bash <(curl -s https://codecov.io/bash)
             fi
         else
-            logmsg INFO "./manage.py test ${py_test_args[*]}"
-            ./manage.py test "${py_test_args[@]}"
+            logmsg INFO "pytest ${py_test_args[*]}"
+            pytest "${py_test_args[@]}"
         fi
     }
 
