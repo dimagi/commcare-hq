@@ -38,12 +38,12 @@
 {% endif %}
 
 <div id="export-list" class="ko-template">
-  <div class="mt-n3 text-end" data-bind="visible: bulkExportDownloadCount()">
-    {% if has_edit_permissions %}
-      {% include 'export/partials/bootstrap5/delete_bulk_notice.html' %}
-    {% endif %}
+  <div class="mt-n3 clearfix" data-bind="visible: bulkExportDownloadCount()">
     {% if allow_bulk_export %} {# form exports only #}
       {% include 'export/partials/bootstrap5/export_bulk_notice.html' %}
+    {% endif %}
+    {% if has_edit_permissions %}
+      {% include 'export/partials/bootstrap5/delete_bulk_notice.html' %}
     {% endif %}
   </div>
   <div data-bind="foreach: panels">
