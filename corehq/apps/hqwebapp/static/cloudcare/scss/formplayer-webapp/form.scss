@@ -221,6 +221,7 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
 #next-error {
   position: fixed;
   bottom: 35px;
+  z-index: 5; // Above the sticky submit button
 }
 
 .my-05em-for-hs {
