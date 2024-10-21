@@ -5,7 +5,7 @@
 -<div data-bind="visible: bulkExportDownloadCount()"
 -     style="float:right; margin-left:8px; margin-bottom:8px">
 -  <form class="form form-inline" method="post"
-+<span class="d-inline-block ms-2" data-bind="visible: bulkExportDownloadCount()">
++<span class="d-inline-block ms-2 float-end" data-bind="visible: bulkExportDownloadCount()">
 +  <form class="form d-inline" method="post"
          data-bind="submit: submitBulkExportDownload"
          action="{{ bulk_download_url }}">
