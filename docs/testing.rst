@@ -2,24 +2,17 @@
 Testing infrastructure
 ======================
 
-Tests are run with `nose <https://nose.readthedocs.io/en/latest/man.html>`_.
-Unlike many projects that use nose, tests cannot normally be invoked with the
-``nosetests`` command because it does not perform necessary Django setup.
-Instead, tests are invoked using the standard Django convention:
-``./manage.py test``.
+Tests are run with `pytest <https://docs.pytest.org/en/stable/>`_.
 
-Nose plugins
-============
+Pytest plugins
+==============
 
-Nose plugins are used for various purposes, some of which are optional and can
+Pytest plugins are used for various purposes, some of which are optional and can
 be enabled with command line parameters or environment variables. Others are
-required by the test environment and are always enabled. Custom plugins are
-registered with `django-nose <https://github.com/dimagi/django-nose>`_ via the
-``NOSE_PLUGINS`` setting in
-`testsettings <https://github.com/dimagi/commcare-hq/blob/master/testsettings.py>`_.
+required by the test environment and are always enabled.
 
 One very important always-enabled plugin applies
-`patches <https://github.com/dimagi/commcare-hq/blob/master/corehq/tests/noseplugins/patches.py>`_
+`patches <https://github.com/dimagi/commcare-hq/blob/master/corehq/tests/pytest_plugins/patches.py>`_
 before tests are run. The patches remain in effect for the duration of the test
 run unless utilities are provided to temporarily disable them. For example,
 `sync_users_to_es <https://github.com/dimagi/commcare-hq/blob/master/corehq/util/es/testing.py>`_
@@ -36,9 +29,10 @@ Testing best practices
 Test set up
 ===========
 
-Doing a lot of work in the ``setUp`` call of a test class means that it will be run on every test. This
-quickly adds a lot of run time to the tests. Some things that can be easily moved to ``setUpClass`` are domain
-creation, user creation, or any other static models needed for the test.
+The ``setUp`` method is run before each test, so doing a lot of work there can add a lot of run time to the tests.
+If possible, consider moving common setup of things that are not mutated by tests into ``setUpClass``. Some things
+that can be easily moved to ``setUpClass`` are domain creation, user creation, or any other static models needed
+for the test.
 
 Sometimes classes share the same base class and inherit the ``setUpClass`` function. Below is an example:
 
@@ -83,23 +77,49 @@ In the above example the ``setUpClass`` is run twice, once for ``MyTestClass`` a
             ...
 
 However this can lead to giant Test classes. If you find that all the tests in a package or module are sharing
-the same set up, you can write a setup method for the entire package or module. More information on that can be found `here <http://pythontesting.net/framework/nose/nose-fixture-reference/#package>`_.
+the same set up, you can use a 'module' or 'package' `scoped fixture <https://github.com/dimagi/pytest-unmagic#fixture-scope>`_.
+
 
 Test tear down
-==================
+==============
 
-It is important to ensure that all objects you have created in the test database are deleted when the test
-class finishes running. This often happens in the ``tearDown`` method or the ``tearDownClass`` method.
-However, unneccessary cleanup "just to be safe" can add a large amount of time onto your tests.
+It is important to ensure that all objects you have created in databases are deleted when the test class finishes
+running. The best practice is to use pytest `fixtures <https://github.com/dimagi/pytest-unmagic>`_ or `addCleanup`
+or `addClassCleanup` to call cleanup routines. Cleanup can also be done in the ``tearDown`` method or the
+``tearDownClass`` method, although pytest fixtures and `add[Class]Cleanup` are preferred because, unlike
+`tearDown[Class]`, they get run if `setUp[Class]` raises an exception.
+
+SQL data in non-shard databases is automatically cleaned up on transaction rollback by test classes that override
+`django.test.TestCase` or function tests that use pytest-django's `db` fixture, so it is not necessary to delete
+SQL data in most cases. One exception to this is the shard dbs, since most usages of shard databases do not support
+transactions.
+
+Also beware that unneccessary cleanup "just to be safe" can add a large amount of time onto your tests and should
+be avoided.
+
+Functional database tests
+=========================
+
+Function tests may access databases by using pytest-django's ``db`` or ``transactional_db`` fixture. This is
+similar to extending ``django.test.TestCase`` or ``django.test.TransactionTestCase`` respectively.
+
+.. code:: python
+
+    from unmagic import use
+
+    @use("db")
+    def test_database():
+        ...
 
 
-Using SimpleTestCase
-====================
+Using ``SimpleTestCase`` and function tests
+===========================================
 
-The SimpleTestCase runs tests without a database. Many times this can be achieved through the use of the `mock
-library <http://www.voidspace.org.uk/python/mock/>`_. A good rule of thumb is to have 80% of your tests be unit
-tests that utilize ``SimpleTestCase``, and then 20% of your tests be integration tests that utilize the
-database and ``TestCase``.
+``SimpleTestCase`` and function tests that do not use the ``db`` or ``transactional_db`` fixture run tests without
+a database and are often MUCH faster than database tests. Many times this can be achieved through the use of the
+`mock library <https://docs.python.org/3/library/unittest.mock.html>`_. A good rule of thumb is to have 80% of your
+tests be unit tests that do not touch the database, and 20% of your tests be integration tests that use the
+database.
 
 CommCare HQ also has some custom in mocking tools.
 

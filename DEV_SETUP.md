@@ -1038,8 +1038,8 @@ Or, to drop the current test DB and create a fresh one
 ./manage.py test corehq.apps.app_manager --reusedb=reset
 ```
 
-See `corehq.tests.nose.HqdbContext` ([source](corehq/tests/nose.py)) for full
-description of `REUSE_DB` and `--reusedb`.
+See `corehq.tests.pytest_plugins.reusedb` ([source](corehq/tests/pytest_plugins/reusedb.py))
+for full description of `REUSE_DB` and `--reusedb`.
 
 
 ### Accessing the test shell and database
@@ -1102,21 +1102,21 @@ ignore:unclosed:ResourceWarning'
 Personal whitelist items may also be added in localsettings.py.
 
 
-### Running tests by tag
+### Running tests by marker
 
-You can run all tests with a certain tag as follows:
+You can run all tests with a certain marker as follows:
 
 ```sh
-./manage.py test --attr=tag
+pytest -m MARKER
 ```
 
-Available tags:
+Available markers:
 
 - slow: especially slow tests
 - sharded: tests that should get run on the sharded test runner
 - es_test: Elasticsearch tests
 
-See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
+See https://docs.pytest.org/en/stable/example/markers.html for more details.
 
 
 ### Running on DB tests or Non-DB tests
@@ -1131,7 +1131,7 @@ See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
 
 ### Running only failed tests
 
-See https://github.com/nose-devs/nose/blob/master/nose/plugins/testid.py
+See https://docs.pytest.org/en/stable/how-to/cache.html
 
 
 ## Javascript tests
