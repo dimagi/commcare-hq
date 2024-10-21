@@ -1029,6 +1029,7 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
                         **response_kwargs):
         data['domain'] = request.domain
         data['api_path'] = request.path
+        data['api_version'] = self.api_name
         # Avoids storing these properties on the class instance which protects against the possibility of
         # concurrent requests making conflicting updates to properties
         data['config_id'] = request.resolver_match.kwargs['config_id']

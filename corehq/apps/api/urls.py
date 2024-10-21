@@ -122,8 +122,8 @@ def versioned_apis(api_list):
 
 
 urlpatterns = [
-    path('v0.5/odata/', include(odata_urlpatterns)),
-    path('odata/v1/', include(odata_urlpatterns)),
+    url(r'(?P<api_version>v0.5)/odata/', include(odata_urlpatterns)),
+    url(r'odata/(?P<api_version>v1)/', include(odata_urlpatterns)),
     url(r'(?P<api_version>v0.5)/messaging-event/$',
         messaging_events, name="api_messaging_event_list"),
     url(r'(?P<api_version>v0.5)/messaging-event/(?P<event_id>\d+)/$',
