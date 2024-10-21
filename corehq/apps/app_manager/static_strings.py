@@ -142,6 +142,8 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Only Flat Fixture'),
     gettext_noop('Only Hierarchical Fixture'),
     gettext_noop('Oops! This setting has been discontinued. We recommend you change this setting to Version 2, and it will no longer appear on your settings page.'),
+    gettext_noop('This setting has been discontinued. We recommend you change this setting to Version 2.'
+                 ' Upon doing so this setting will no longer appear on this page.'),
     gettext_noop('Practice Mobile Worker'),
     gettext_noop('Prevents mobile workers from using a CommCare app until the '
                  'Android apps that it needs have been installed on the '
