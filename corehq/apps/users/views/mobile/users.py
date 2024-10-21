@@ -30,6 +30,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
+from corehq.util.hmac_request import validate_request_hmac
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.web import json_response
@@ -1698,7 +1699,7 @@ def connectid_messaging_key(request, domain):
 
 @csrf_exempt
 @require_POST
-@login_or_basic_ex(allow_cc_users=True)
+@validate_request_hmac("CONNECTID_SECRET_KEY")
 def update_connectid_messaging_consent(request, domain):
     link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
     link.messaging_consent = request.POST.get("consent", False)
