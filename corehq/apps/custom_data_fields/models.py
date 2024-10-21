@@ -44,6 +44,7 @@ def is_system_key(slug):
 class Field(models.Model):
     slug = models.CharField(max_length=127)
     is_required = models.BooleanField(default=False)
+    required_for = models.JSONField(default=list)
     label = models.CharField(max_length=255)
     choices = models.JSONField(default=list, null=True)
     regex = models.CharField(max_length=127, null=True)
@@ -110,11 +111,18 @@ class CustomDataFieldsDefinition(models.Model):
             new.save()
             return new
 
+    class FieldFilterConfig:
+        def __init__(self, required_only=False, is_required_check_func=None):
+            self.required_only = required_only
+            self.is_required_check_func = is_required_check_func or (lambda field: field.is_required)
+
     # Gets ordered, and optionally filtered, fields
-    def get_fields(self, required_only=False, include_system=True):
+    def get_fields(self, field_filter_config: FieldFilterConfig = None, include_system=True):
         def _is_match(field):
             return not (
-                (required_only and not field.is_required)
+                (field_filter_config
+                 and field_filter_config.required_only
+                 and not field_filter_config.is_required_check_func(field))
                 or (not include_system and is_system_key(field.slug))
             )
         order = self.get_field_order()

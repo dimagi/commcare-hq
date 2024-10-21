@@ -167,7 +167,7 @@ from corehq.util.workbook_json.excel import (
 )
 
 from ..utils import log_user_groups_change
-from .custom_data_fields import UserFieldsView
+from .custom_data_fields import CommcareUserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -711,7 +711,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @memoized
     def custom_data(self):
         return CustomDataEditor(
-            field_view=UserFieldsView,
+            field_view=CommcareUserFieldsView,
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
@@ -1035,7 +1035,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     @memoized
     def custom_data(self):
         return CustomDataEditor(
-            field_view=UserFieldsView,
+            field_view=CommcareUserFieldsView,
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
             request_user=self.request.couch_user,
