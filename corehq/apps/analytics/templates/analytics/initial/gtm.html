@@ -1,5 +1,10 @@
 {% load hq_shared_tags %}
 {% initial_analytics_data 'gtm.apiId' ANALYTICS_IDS.GTM_ID %}
+{% if ANALYTICS_CONFIG.HQ_INSTANCE in 'www,india,staging' or ANALYTICS_CONFIG.DEBUG %}
+  {% initial_analytics_data 'gtm.isGTMEnabled' True %}
+{% else %}
+  {% initial_analytics_data 'gtm.isGTMEnabled' False %}
+{% endif %}
 {% if request.couch_user %}
   {% initial_analytics_data 'gtm.userId' request.couch_user.userID %}
   {% initial_analytics_data 'gtm.userIsDimagi' request.couch_user.is_dimagi %}
