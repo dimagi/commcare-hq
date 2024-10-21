@@ -54,7 +54,7 @@ from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
 )
-from corehq.apps.domain.auth import get_connectid_userinfo
+from corehq.apps.domain.auth import connectid_token_auth, get_connectid_userinfo
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -1689,11 +1689,13 @@ def link_connectid_user(request, domain):
 
 
 @csrf_exempt
-@login_or_basic_ex(allow_cc_users=True)
+@connectid_token_auth
 def connectid_messaging_key(request, domain):
     link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
     key = generate_aes_key().decode("utf-8")
-    messaging_key = ConnectIDMessagingKey.objects.create(connectid_user_link=link, domain=request.domain, key=key)
+    messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
+        connectid_user_link=link, domain=request.domain, active=True, defaults={"key": key}
+    )
     return JsonResponse({"key": messaging_key.key})
 
 
