@@ -377,7 +377,7 @@ markupsafe==2.1.2
     #   jinja2
     #   mako
     #   werkzeug
-msal==1.26.0
+msal==1.28.0
     # via -r sso-requirements.in
 msgpack==1.0.5
     # via cachecontrol

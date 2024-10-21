@@ -439,7 +439,7 @@ mdit-py-plugins==0.4.0
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
-msal==1.26.0
+msal==1.28.0
     # via -r sso-requirements.in
 msgpack==1.0.5
     # via cachecontrol
