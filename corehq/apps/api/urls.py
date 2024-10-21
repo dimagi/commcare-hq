@@ -124,10 +124,14 @@ def versioned_apis(api_list):
 urlpatterns = [
     path('v0.5/odata/', include(odata_urlpatterns)),
     path('odata/v1/', include(odata_urlpatterns)),
-    url(r'v0.5/messaging-event/$', messaging_events, name="api_messaging_event_list"),
-    url(r'v0.5/messaging-event/(?P<event_id>\d+)/$', messaging_events, name="api_messaging_event_detail"),
-    url(r'messaging-event/v1/$', messaging_events, name="api_messaging_event_list"),
-    url(r'messaging-event/v1/(?P<event_id>\d+)/$', messaging_events, name="api_messaging_event_detail"),
+    url(r'(?P<api_version>v0.5)/messaging-event/$',
+        messaging_events, name="api_messaging_event_list"),
+    url(r'(?P<api_version>v0.5)/messaging-event/(?P<event_id>\d+)/$',
+        messaging_events, name="api_messaging_event_detail"),
+    url(r'messaging-event/(?P<api_version>v1)/$',
+        messaging_events, name="api_messaging_event_list"),
+    url(r'messaging-event/(?P<api_version>v1)/(?P<event_id>\d+)/$',
+        messaging_events, name="api_messaging_event_detail"),
     url(r'v0\.6/case/bulk-fetch/$', case_api_bulk_fetch),
     url(r'case/v2/bulk-fetch/$', case_api_bulk_fetch, name='case_api_bulk_fetch'),
     # match v0.6/case/ AND v0.6/case/e0ad6c2e-514c-4c2b-85a7-da35bbeb1ff1/ trailing slash optional

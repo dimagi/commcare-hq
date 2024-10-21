@@ -22,7 +22,7 @@ from corehq.apps.sms.models import MessagingSubEvent, SMS, Email
 @require_can_edit_data
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
-def messaging_events(request, domain, event_id=None):
+def messaging_events(request, domain, api_version, event_id=None):
     """Despite it's name this API is backed by the MessagingSubEvent model
     which has a more direct relationship with who the messages are being sent to.
     Each event may have more than one actual message associated with it.
@@ -31,7 +31,7 @@ def messaging_events(request, domain, event_id=None):
         if request.method == 'GET' and event_id:
             return _get_individual(request, event_id)
         if request.method == 'GET' and not event_id:
-            return _get_list(request)
+            return _get_list(request, api_version)
         return JsonResponse({'error': "Request method not allowed"}, status=405)
     except BadRequest as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -46,12 +46,12 @@ def _get_individual(request, event_id):
     return JsonResponse(serialize_event(event))
 
 
-def _get_list(request):
+def _get_list(request, api_version):
     request_params = get_request_params(request)
     query = _get_base_query(request.domain)
     filtered_query = filter_query(query, request_params)
     sorted_query = sort_query(filtered_query, request_params)
-    data = get_paged_data(sorted_query, request_params)
+    data = get_paged_data(sorted_query, request_params, api_version)
     return JsonResponse(data)
 
 
