@@ -1393,14 +1393,14 @@ def get_datasource_data(request, config_id, domain):
     return JsonResponse(data)
 
 
-class CommCareAnalyticsUserRolesResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
 
     roles = fields.ListField()
     permissions = fields.DictField()
 
     class Meta(CustomResourceMeta):
         resource_name = 'analytics-roles'
-        list_allowed_methods = ['get']
+        list_allowed_methods = []
         detail_allowed_methods = ['get']
 
     def dehydrate_roles(self, bundle):
@@ -1411,7 +1411,7 @@ class CommCareAnalyticsUserRolesResource(CouchResourceMixin, HqBaseResource, Dom
         cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
         return cca_access['permissions']
 
-    def obj_get_list(self, bundle, **kwargs):
+    def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
         if not toggles.SUPERSET_ANALYTICS.enabled(domain):
             raise ImmediateHttpResponse(
@@ -1423,5 +1423,5 @@ class CommCareAnalyticsUserRolesResource(CouchResourceMixin, HqBaseResource, Dom
         user = CouchUser.get_by_username(bundle.request.user.username)
 
         if not (user and user.is_member_of(domain) and user.is_active):
-            user = None
-        return [user] if user else []
+            return None
+        return user

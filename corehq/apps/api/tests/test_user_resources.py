@@ -728,24 +728,29 @@ class TestUserDomainsResource(TestCase):
         self.assertEqual(0, len(resp))
 
 
-class TestCommCareAnalyticsUserRolesResource(APIResourceTest):
+class TestCommCareAnalyticsUserResource(APIResourceTest):
     resource = v0_5.CommCareAnalyticsUserRolesResource
     api_name = 'v0.5'
 
+    def single_endpoint(self, id, **kwargs):
+        endpoint = reverse('api_dispatch_detail', kwargs=dict(
+            domain=self.domain.name,
+            api_name=self.api_name,
+            resource_name=self.resource._meta.resource_name,
+            pk=id,
+        ))
+        return endpoint
+
     def test_flag_not_enabled(self):
-        response = self._assert_auth_get_resource(self.list_endpoint)
+        response = self._assert_auth_get_resource(self.single_endpoint(self.user.user_id))
         self.assertEqual(response.status_code, 403)
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_user_roles_returned(self):
-        response = self._assert_auth_get_resource(self.list_endpoint)
-
-        response_objs = response.json()['objects']
-        self.assertEqual(len(response_objs), 1)
-
+        response = self._assert_auth_get_resource(self.single_endpoint(self.user.user_id))
         expected_response_obj = {
             'permissions': {'can_edit': True, 'can_view': True},
             'resource_uri': '',
             'roles': ['gamma', 'sql_lab', 'dataset_editor']
         }
-        self.assertEqual(response_objs[0], expected_response_obj)
+        self.assertEqual(response.json(), expected_response_obj)
