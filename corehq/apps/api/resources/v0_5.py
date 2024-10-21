@@ -1360,7 +1360,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 @require_can_edit_data
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
-def get_ucr_data(request, domain):
+def get_ucr_data(request, domain, api_version):
     if not toggles.EXPORT_DATA_SOURCE_DATA.enabled(domain):
         return HttpResponseForbidden()
     try:
