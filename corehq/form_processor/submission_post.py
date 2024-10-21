@@ -398,7 +398,7 @@ class SubmissionPost(object):
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
         if (url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER)
-                and not BLOCK_SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), self.domain)):
+                and not BLOCK_SUMOLOGIC_LOGS.enabled(self.domain)):
             SumoLogicLog(self.domain, instance).send_data(url)
 
     def _invalidate_caches(self, xform):

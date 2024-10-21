@@ -264,10 +264,9 @@ class FilteredLocationDownload(BaseLocationView):
 
 class LocationOptionsController(EmwfOptionsController):
     namespace_locations = False
-    case_sharing_only = False
 
-    def __init__(self, *args, include_locations_with_no_users=True):
-        super().__init__(*args)
+    def __init__(self, *args, include_locations_with_no_users=True, **kwargs):
+        super().__init__(*args, **kwargs)
         self.include_locations_with_no_users = include_locations_with_no_users
 
     @property
@@ -720,6 +719,7 @@ def delete_location(request, domain, loc_id):
     })
 
 
+@can_edit_or_view_location
 @location_safe
 def location_lineage(request, domain, loc_id):
     lineage = SQLLocation.objects.get_locations([loc_id])[0].lineage

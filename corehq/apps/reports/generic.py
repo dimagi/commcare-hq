@@ -1,6 +1,5 @@
 import datetime
 import io
-import json
 import re
 from itertools import chain
 
@@ -37,6 +36,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.util import DatatablesParams
@@ -658,11 +658,11 @@ class GenericReportView(object):
         rendered_filters = render_to_string(
             self.template_filters, self.context, request=self.request
         )
-        return HttpResponse(json.dumps(dict(
+        return JsonResponse(dict(
             filters=rendered_filters,
             slug=self.slug,
             url_root=self.url_root
-        )))
+        ))
 
     @property
     @request_cache()
@@ -830,6 +830,7 @@ class GenericTabularReport(GenericReportView):
     statistics_rows = None
     force_page_size = False  # force page size to be as the default rows
     default_rows = 10
+    max_rows = 1000
     start_at_row = 0
     show_all_rows = False
     fix_left_col = False
@@ -922,6 +923,8 @@ class GenericTabularReport(GenericReportView):
             self._pagination = DatatablesParams.from_request_dict(
                 self.request.POST if self.request.method == 'POST' else self.request.GET
             )
+            if self._pagination.count > self.max_rows:
+                raise BadRequestError(gettext("Row count is too large"))
         return self._pagination
 
     @property

@@ -821,7 +821,11 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         }
         self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
+        # To remove meta in Elastic 6.x, we have to pass an empty _meta field
+        # but in Elastic 5.x, we have to remove it entirely from the object
         mapping["_meta"] = {}
+        if manager.elastic_major_version < 6:
+            del mapping["_meta"]
         self.adapter.index_put_mapping(self.index, type_, mapping)
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
 

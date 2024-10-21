@@ -213,6 +213,7 @@ class EnterpriseFormReport(EnterpriseReport):
     title = _('Mobile Form Submissions')
     MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
     MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
+    MAX_DATE_RANGE_DAYS = 90
 
     def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30, include_form_id=False):
         super().__init__(account, couch_user)
@@ -233,8 +234,10 @@ class EnterpriseFormReport(EnterpriseReport):
             self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
             self.subtitle = _("past {} days").format(num_days)
 
-        if self.datespan.enddate - self.datespan.startdate > timedelta(days=90):
-            raise ValueError(_('Date ranges with more than 90 days are not supported'))
+        if self.datespan.enddate - self.datespan.startdate > timedelta(days=self.MAX_DATE_RANGE_DAYS):
+            raise TooMuchRequestedDataError(
+                _('Date ranges with more than {} days are not supported').format(self.MAX_DATE_RANGE_DAYS)
+            )
 
         self.include_form_id = include_form_id
 

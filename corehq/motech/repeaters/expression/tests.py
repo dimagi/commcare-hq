@@ -1,28 +1,33 @@
 import dataclasses
+import doctest
 import json
 import uuid
 from datetime import datetime, timedelta
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.test import TestCase
 
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.mock import CaseBlock, CaseFactory
+
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.utils import REPEATER_RESPONSE_XMLNS
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.models import UCRExpression
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CaseTransaction, CommCareCase
+from corehq.form_processor.models.cases import FormSubmissionDetail
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.expression.repeaters import (
-    CaseExpressionRepeater,
+    MAX_REPEATER_CHAIN_LENGTH,
     ArcGISFormExpressionRepeater,
+    CaseExpressionRepeater,
     FormExpressionRepeater,
 )
 from corehq.motech.repeaters.models import RepeatRecord
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, generate_cases
 
 
 @dataclasses.dataclass
@@ -155,6 +160,13 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
             "a-constant": "foo",
         }))
 
+    def test_payload_empty_expression(self):
+        self.repeater.configured_expression = None
+        self.repeater.save()
+        self.factory.create_case(case_type='forward-me')
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.assertIsNone(repeat_record.get_payload())
+
     @flag_enabled("UCR_EXPRESSION_REGISTRY")
     def test_custom_url(self):
 
@@ -253,6 +265,41 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
         # case should be eligible to forward by a different repeater (one with a different id)
         self.repeater.id = "a different repeater"
         self.assertTrue(self.repeater.allowed_to_forward(case))
+
+    @generate_cases([
+        ([{"is_repeater": False, "this_repeater": False}], True),
+        ([{"is_repeater": True, "this_repeater": True}], False),
+        ([{"is_repeater": True, "this_repeater": False}], True),
+        # 1 below max chain length
+        ([{"is_repeater": True, "this_repeater": False}] * (MAX_REPEATER_CHAIN_LENGTH - 1), True),
+        # at max chain length
+        ([{"is_repeater": True, "this_repeater": False}] * MAX_REPEATER_CHAIN_LENGTH, False),
+        # transaction from this repeater
+        ([
+             {"is_repeater": True, "this_repeater": False},  # noqa
+             {"is_repeater": True, "this_repeater": False},
+             {"is_repeater": True, "this_repeater": True},
+        ], False),
+        # non-repeater transaction
+        ([
+             {"is_repeater": True, "this_repeater": False},  # noqa
+             {"is_repeater": True, "this_repeater": False},
+             {"is_repeater": False, "this_repeater": False},
+        ], True),
+    ])
+    def test_allowed_to_forward(self, transaction_details, can_forward):
+        case = self.factory.create_case(case_type='forward-me')
+        transactions = []
+        for transaction in transaction_details:
+            xmlns = REPEATER_RESPONSE_XMLNS if transaction["is_repeater"] else "another_xmlns"
+            device_id = self.repeater.device_id if transaction["this_repeater"] else "another_device_id"
+            detail = FormSubmissionDetail(xmlns=xmlns, device_id=device_id).to_json()
+            transactions.append(CaseTransaction(details=detail))
+        with patch(
+            'corehq.motech.repeaters.expression.repeaters.CaseTransaction.objects.get_last_n_recent_form_transaction',  # noqa
+            return_value=transactions
+        ):
+            self.assertEqual(self.repeater.allowed_to_forward(case), can_forward)
 
 
 class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
@@ -427,3 +474,87 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
             'f': 'json',
             'token': ''
         }
+
+    def test_send_request_error_handling(self):
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            uuid.uuid4().hex,
+            self._create_case_block(self.case_id),
+        )
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=MockResponse(429, 'Too many requests'),
+        ):
+            # The repeat record is first sent when the payload is registered
+            submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.assertEqual(repeat_record.state, State.Fail)
+
+        arcgis_error_response = MockResponse(200, json.dumps({
+            "error": {
+                "code": 403,
+                "details": [
+                    "You do not have permissions to access this resource or "
+                    "perform this operation."
+                ],
+                "message": "You do not have permissions to access this "
+                           "resource or perform this operation.",
+                "messageCode": "GWM_0003",
+            }
+        }))
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=arcgis_error_response,
+        ):
+            self.repeater.fire_for_record(repeat_record)
+
+        self.assertEqual(repeat_record.state, State.InvalidPayload)
+
+    def test_error_response_with_message_code(self):
+        error_json = {
+            "code": 403,
+            "details": [
+                "You do not have permissions to access this resource or "
+                "perform this operation."
+            ],
+            "message": "You do not have permissions to access this resource "
+                       "or perform this operation.",
+            "messageCode": "GWM_0003",
+        }
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(
+            resp.reason,
+            "You do not have permissions to access this resource or perform "
+            "this operation. (GWM_0003)"
+        )
+        self.assertEqual(
+            resp.text,
+            "You do not have permissions to access this resource or perform "
+            "this operation."
+        )
+
+    def test_error_response_without_message_code(self):
+        error_json = {
+            "code": 503,
+            "details": [],
+            "message": "An error occurred."
+        }
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 503)
+        self.assertEqual(resp.reason, "An error occurred.")
+        self.assertEqual(resp.text, "")
+
+    def test_error_response_with_empty_error(self):
+        error_json = {}
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 500)
+        self.assertEqual(resp.reason, "[No error message given by ArcGIS]")
+        self.assertEqual(resp.text, "")
+
+
+def test_doctests():
+    import corehq.motech.repeaters.expression.repeaters as module
+
+    results = doctest.testmod(module)
+    assert results.failed == 0

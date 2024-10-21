@@ -146,6 +146,7 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
+    'corehq.middleware.SecureCookiesMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -171,8 +172,6 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
-    # middleware that adds cookies must come before SecureCookiesMiddleware
-    'corehq.middleware.SecureCookiesMiddleware',
     'field_audit.middleware.FieldAuditMiddleware',
 ]
 
@@ -399,7 +398,6 @@ HQ_APPS = (
     'custom.champ',
     'custom.covid',
     'custom.inddex',
-    'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
     'custom.hmhb',
@@ -933,8 +931,6 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
-
-BOOTSTRAP_MIGRATION_LOGS_DIR = None
 
 USER_AGENTS_CACHE = 'default'
 
@@ -1965,7 +1961,7 @@ DOMAIN_MODULE_MAP = {
     'india-nutrition-project': 'custom.nutrition_project',
 
     'champ-cameroon': 'custom.champ',
-    'onse-iss': 'custom.onse',
+    'onse-iss': 'custom.onse',  # Required by self-hosted ONSE-ISS project
 
     # vectorlink domains
     'abtmali': 'custom.abt',

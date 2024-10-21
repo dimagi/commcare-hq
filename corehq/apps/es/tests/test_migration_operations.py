@@ -643,8 +643,9 @@ class TestUpdateIndexMapping(BaseCase):
             self.type,
             {"prop": {"type": "integer"}},
         ))
+        error_type = "RequestError" if manager.elastic_major_version >= 6 else "TransportError"
         literal = (
-            "RequestError(400, 'illegal_argument_exception', 'mapper [prop] "
+            f"{error_type}(400, 'illegal_argument_exception', 'mapper [prop] "
             "of different type, current_type [text], merged_type [integer]')"
         )
         with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
@@ -660,8 +661,9 @@ class TestUpdateIndexMapping(BaseCase):
             self.type,
             {"prop": {"type": "keyword"}},
         ))
+        error_type = "RequestError" if manager.elastic_major_version >= 6 else "TransportError"
         literal = (
-            "RequestError(400, 'illegal_argument_exception', "
+            f"{error_type}(400, 'illegal_argument_exception', "
             "'mapper [prop] of different type, current_type [text], merged_type [keyword]')"
         )
         with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):

@@ -417,10 +417,13 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
 
 
 def _duration_script():
-    # TODO : ES 5 returns long where as ES 6 returns a JodaCompatibleZonedDateTime
+    # ES 5 returns long where as ES 6 returns a JodaCompatibleZonedDateTime
     # This class can't use - operator directly
-    # Add back condition for ES 5
-    return "doc['form.meta.timeEnd'].value.getMillis() - doc['form.meta.timeStart'].value.getMillis()"
+    from corehq.apps.es.client import manager
+    script = "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
+    if manager.elastic_major_version >= 6:
+        script = "doc['form.meta.timeEnd'].value.getMillis() - doc['form.meta.timeStart'].value.getMillis()"
+    return script
 
 
 def get_form_duration_stats_by_user(

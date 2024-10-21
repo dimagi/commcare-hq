@@ -1,7 +1,7 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 {% requirejs_main %}
-{% webpack_main %}
+{% js_entry %}
 <!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
 <!--[if IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8"><![endif]-->
 <!--[if IE 8]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9"><![endif]-->
@@ -135,14 +135,6 @@
               rel="stylesheet"
               media="screen"
               href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
-      {% endcompress %}
-    {% endif %}
-
-
-    {% if request.use_maps %}
-      {% compress css %}
-        <link rel="stylesheet" href="{% static 'leaflet/dist/leaflet.css' %}" />
-        <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
       {% endcompress %}
     {% endif %}
 
@@ -410,21 +402,6 @@
     {% if request.use_timepicker and not use_js_bundler and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if not use_js_bundler %}
-      {% if request.use_maps %}
-        {% compress js %}
-          <script src="{% static 'jquery-color/dist/jquery.color.js' %}"></script>
-          <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-        {% endcompress %}
-      {% endif %}
-    {% endif %}
-
-    {% if request.use_maps and not use_js_bundler %}
-      {% compress js %}
-        <script src="{% static 'reports/js/bootstrap3/maps_utils.js' %}"></script>
       {% endcompress %}
     {% endif %}
 

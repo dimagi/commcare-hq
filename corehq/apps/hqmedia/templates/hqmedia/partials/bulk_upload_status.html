@@ -1,0 +1,106 @@
+{% extends "hqwebapp/partials/download_status.html" %}
+{% load i18n %}
+
+{% block results %}
+  {% if errors %}
+    <div class="alert alert-danger">
+      {% for e in errors %}
+        <p>{{ e }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if matched_files %}
+    <div class="alert alert-success">
+      {% blocktrans count matched_count=matched_count %}
+        One match found.
+      {% plural %}
+        {{ matched_count }} matches found.
+      {% endblocktrans %}
+    </div>
+  {% else %}
+    <div class="alert alert-danger">
+      {% trans 'No Matches Found' %}
+    </div>
+  {% endif %}
+
+  {% if unmatched_files %}
+    <h4>{% trans 'No Matches' %} <span class="badge badge-important">{{ unmatched_count}} </h4>
+    <ul>
+      {% for unmatched in unmatched_files %}
+        <li>
+          <p>
+            {{ unmatched.reason }}
+            <code>{{ unmatched.path }}</code>
+          </p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if matched_files.CommCareImage %}
+    <h4>{% trans 'Matched Images' %} <span class="badge badge-success">{{ image_count }}</span></h4>
+    <ul>
+      {% for image in matched_files.CommCareImage %}
+        <li>
+          <p>
+            <img src="{{ image.url }}?thumb=50" style="width: 50px; height: 50px;" alt="{{ image.path }}" />
+            {% if image.updated %}
+              <span class="label label-success">{% trans 'Updated' %}</span>
+            {% endif %}
+            <a href="{{ image.url }}"
+               target="_blank"
+               data-content="<img src='{{ image.url }}?thumb=220' width='220' alt='{{ image.path }}' />">
+              {% trans 'View Full Image' %}
+              <i class="fa fa-external-link"></i>
+            </a>
+          </p>
+          <p><code>{{ image.path }}</code></p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if matched_files.CommCareAudio %}
+    <h4>{% trans 'Matched Audio' %} <span class="badge badge-success">{{ audio_count }}</span></h4>
+    <ul>
+      {% for audio in matched_files.CommCareAudio %}
+        <li>
+          <p>
+            {% if audio.updated %}
+              <span class="label label-success">{% trans 'Updated' %}</span>
+            {% endif %}
+            <a href="{{ audio.url }}"
+                  target="_blank"
+                  data-content="{% trans 'Playing audio directly on this page is currently not supported.' %}">
+              {% trans 'Listen to Audio' %}</a>
+              <i class="fa fa-external-link"></i>
+          </p>
+          <p><code>{{ audio.path }}</code></p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if matched_files.CommCareVideo %}
+    <h4>{% trans 'Matched Video' %} <span class="badge badge-success">{{ video_count }}</span></h4>
+    <ul>
+      {% for video in matched_files.CommCareVideo %}
+        <li>
+          <p>
+            {% if video.updated %}
+              <span class="label label-success">{% trans 'Updated' %}</span>
+            {% endif %}
+            <a href="{{ video.url }}"
+                  target="_blank"
+                  data-content="{% trans 'Watching video directly on this page is not supported. Opens a new tab.' %}">
+              {% trans 'Watch Video' %}</a>
+              <i class="fa fa-external-link"></i>
+          </p>
+          <p><code>{{ video.path }}</code></p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+{% endblock results %}

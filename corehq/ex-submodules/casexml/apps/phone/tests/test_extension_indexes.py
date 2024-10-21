@@ -91,7 +91,7 @@ def assert_each_test_is_unique(tests_to_run):
         seen[sig] = test["name"]
 
 
-class TestSequenceMeta(type):
+class SequenceTestMeta(type):
 
     def __new__(mcs, name, bases, dict):
         tests_to_run = get_test_file_json('case_relationship_tests')
@@ -110,7 +110,7 @@ class TestSequenceMeta(type):
 
 
 @sharded
-class IndexTreeTest(BaseSyncTest, metaclass=TestSequenceMeta):
+class IndexTreeTest(BaseSyncTest, metaclass=SequenceTestMeta):
     """Fetch all testcases from data/case_relationship_tests.json and run them
 
     Each testcase is structured as follows:

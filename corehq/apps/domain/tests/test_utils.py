@@ -18,6 +18,7 @@ from corehq.apps.domain.utils import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.tests.tools import nottest
 from corehq.util.test_utils import generate_cases, unit_testing_only
 
 
@@ -126,6 +127,7 @@ class TestGetSerializableWireInvoiceItem(SimpleTestCase):
         self.assertTrue(serialized_items)
 
 
+@nottest
 @contextmanager
 def test_domain(name="domain", skip_full_delete=False):
     """Context manager for use in tests"""

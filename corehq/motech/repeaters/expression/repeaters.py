@@ -2,7 +2,10 @@ import logging
 from json import JSONDecodeError
 
 from django.utils.translation import gettext_lazy as _
+
 from memoized import memoized
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.case_helper import UserDuck
@@ -10,18 +13,27 @@ from corehq.apps.hqcase.utils import REPEATER_RESPONSE_XMLNS
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.form_processor.models import CaseTransaction, CommCareCase, XFormInstance
+from corehq.form_processor.models import (
+    CaseTransaction,
+    CommCareCase,
+    XFormInstance,
+)
+from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.expression.repeater_generators import (
     ArcGISFormExpressionPayloadGenerator,
+    ExpressionPayloadGenerator,
     FormExpressionPayloadGenerator,
 )
-from corehq.motech.repeaters.expression.repeater_generators import (
-    ExpressionPayloadGenerator,
+from corehq.motech.repeaters.models import (
+    OptionValue,
+    Repeater,
+    is_response,
+    is_success_response,
 )
-from corehq.motech.repeaters.models import OptionValue, Repeater
-from corehq.motech.repeaters.models import is_response, is_success_response
 from corehq.toggles import ARCGIS_INTEGRATION, EXPRESSION_REPEATER
-from dimagi.utils.logging import notify_exception
+
+# max number of repeater updates in a chain before we stop forwarding
+MAX_REPEATER_CHAIN_LENGTH = 5
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +88,9 @@ class BaseExpressionRepeater(Repeater):
 
     @memoized
     def get_payload(self, repeat_record):
+        if not self.configured_expression:
+            return None
+
         return self.generator.get_payload(
             repeat_record,
             self.payload_doc(repeat_record),
@@ -145,23 +160,24 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
 
     def allowed_to_forward(self, payload):
         allowed = super().allowed_to_forward(payload)
-        if allowed:
-            transactions = CaseTransaction.objects.get_last_n_recent_form_transaction(payload.case_id, 2)
-            # last 2 transactions were from repeater updates. This suggests a cycle.
-            possible_cycle = {t.xmlns for t in transactions} == {REPEATER_RESPONSE_XMLNS}
-            if possible_cycle:
-                logger.warning(
-                    f"Possible data forwarding loop detected for case {payload.case_id}. "
-                    f"Transactions: {[t.id for t in transactions]}"
-                )
+        if not allowed:
+            return False
+
+        transactions = CaseTransaction.objects.get_last_n_recent_form_transaction(
+            payload.case_id, MAX_REPEATER_CHAIN_LENGTH
+        )
+        for transaction in transactions:
+            if transaction.xmlns != REPEATER_RESPONSE_XMLNS:
+                # non-repeater update found, allow forwarding
+                return True
+
+            if transaction.device_id == self.device_id:
+                # all transactions to this point have been repeater updates
+                # and the last one was from this repeater, it's a cycle, don't forward
                 return False
-            last_transaction = transactions[0] if transactions else None
-            return last_transaction and not (
-                # last update was from this repeater, ignore
-                last_transaction.xmlns == REPEATER_RESPONSE_XMLNS
-                and last_transaction.device_id == self.device_id
-            )
-        return False
+
+        # Allow forwarding as long as we haven't hit the max chain length
+        return len(transactions) < MAX_REPEATER_CHAIN_LENGTH
 
 
 class FormExpressionRepeater(BaseExpressionRepeater):
@@ -203,6 +219,56 @@ class ArcGISFormExpressionRepeater(FormExpressionRepeater):
         return (
             super(ArcGISFormExpressionRepeater, cls).available_for_domain(domain)
             and ARCGIS_INTEGRATION.enabled(domain)
+        )
+
+    def send_request(self, repeat_record, payload):
+        response = super().send_request(repeat_record, payload)
+        if is_success_response(response) and 'error' in response.json():
+            # It _looks_ like a success response, but it's an error. :/
+            return self._error_response(response.json()['error'])
+        return response
+
+    @staticmethod
+    def _error_response(error_json):
+        """
+        The ArcGIS API returns error responses with status code 200.
+
+        This method extracts the details from the response JSON, and
+        returns a RepeaterResponse with the error details so that the
+        response will be handled correctly.
+
+        >>> error_json = {
+        ...     "code": 503,
+        ...     "details": [],
+        ...     "message": "An error occurred."
+        ... }
+        >>> resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        >>> resp.status_code
+        503
+        >>> resp.reason
+        'An error occurred.'
+
+        """
+        # The ArcGIS REST API documentation does not give the error
+        # response schema, so we have to guess based on what we've seen.
+
+        # `status_code` is required for us to make decisions about the
+        # repeat record.  If `error_json` does not include "code", then
+        # use 500 so that the repeat record will be sent again later.
+        status_code = error_json.get('code', 500)
+
+        # `reason` is what is shown in the Repeat Records Report under
+        # the "Responses" button. If `error_json` is missing "message",
+        # then set a value that is more useful to users than no message.
+        fallback_msg = _('[No error message given by ArcGIS]')
+        reason = error_json.get('message', fallback_msg)
+        if 'messageCode' in error_json:
+            reason += f' ({error_json["messageCode"]})'
+
+        return RepeaterResponse(
+            status_code=status_code,
+            reason=reason,
+            text='\n'.join(error_json.get('details', [])),
         )
 
 

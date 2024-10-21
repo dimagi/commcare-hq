@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+import pytest
 from django.test import TestCase
 
 from testil import eq
@@ -27,11 +28,11 @@ class TestSystemActions(TestCase):
             XFormInstance.objects.get_form(form_id, domain)
 
 
-def test_system_action_constants():
-    def test(actual, expected):
-        eq(actual, expected,
-            f"Changing the value of this constant will break all "
-            f"'{expected}' system action forms in existence.")
-
-    yield test, ARCHIVE_FORM, "archive_form"
-    yield test, HARD_DELETE_CASE_AND_FORMS, "hard_delete_case_and_forms"
+@pytest.mark.parametrize("actual, expected", [
+    (ARCHIVE_FORM, "archive_form"),
+    (HARD_DELETE_CASE_AND_FORMS, "hard_delete_case_and_forms"),
+])
+def test_system_action_constants(actual, expected):
+    eq(actual, expected,
+        f"Changing the value of this constant will break all "
+        f"'{expected}' system action forms in existence.")

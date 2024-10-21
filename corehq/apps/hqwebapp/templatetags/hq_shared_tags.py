@@ -1,5 +1,4 @@
 import json
-import warnings
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
@@ -655,7 +654,7 @@ def _bundler_main(parser, token, flag, node_class):
     # Some templates check for {% if requirejs_main %}
     tag_name = tag_name.rstrip("_b5")
 
-    # likewise with webpack_main_b3, treat identically to webpack_main
+    # likewise with js_entry_b3, treat identically to js_entry
     tag_name = tag_name.rstrip("_b3")
 
     if getattr(parser, flag, False):
@@ -699,27 +698,27 @@ def requirejs_main(parser, token):
 
 
 @register.tag
-def webpack_main(parser, token):
+def js_entry(parser, token):
     """
     Indicate that a page should be using Webpack, by naming the
     JavaScript module to be used as the page's main entry point.
 
-    The base template need not specify a value in its `{% webpack_main %}`
+    The base template need not specify a value in its `{% js_entry %}`
     tag, allowing it to be extended by templates that may or may not
-    use requirejs. In this case the `webpack_main` template variable
+    use requirejs. In this case the `js_entry` template variable
     will have a value of `None` unless an extending template has a
-    `{% webpack_main "..." %}` with a value.
+    `{% js_entry "..." %}` with a value.
     """
-    return _bundler_main(parser, token, "__saw_webpack_main", WebpackMainNode)
+    return _bundler_main(parser, token, "__saw_js_entry", WebpackMainNode)
 
 
 @register.tag
-def webpack_main_b3(parser, token):
+def js_entry_b3(parser, token):
     """
-    Alias for webpack_main. Use this to mark entry points that should be part of the
+    Alias for js_entry. Use this to mark entry points that should be part of the
     bootstrap 3 bundle of webpack.
     """
-    return webpack_main(parser, token)
+    return js_entry(parser, token)
 
 
 class RequireJSMainNode(template.Node):
@@ -745,38 +744,40 @@ class WebpackMainNode(RequireJSMainNode):
         return "<WebpackMain Node: %r>" % (self.value,)
 
 
-try:
-    from get_webpack_manifest import get_webpack_manifest
-    webpack_manifest = get_webpack_manifest()
-    webpack_manifest_b3 = get_webpack_manifest('webpack/_build/manifest_b3.json')
-except (ImportError, SyntaxError):
-    webpack_manifest = {}
-    webpack_manifest_b3 = {}
-
-
 @register.filter
 def webpack_bundles(entry_name):
+    from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
     from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
     bootstrap_version = get_bootstrap_version()
-    if bootstrap_version == BOOTSTRAP_5:
-        bundles = webpack_manifest.get(entry_name, [])
-        webpack_folder = 'webpack'
-    else:
-        bundles = webpack_manifest_b3.get(entry_name, [])
-        webpack_folder = 'webpack_b3'
+
+    try:
+        if bootstrap_version == BOOTSTRAP_5:
+            manifest = get_webpack_manifest()
+            webpack_folder = 'webpack'
+        else:
+            manifest = get_webpack_manifest('manifest_b3.json')
+            webpack_folder = 'webpack_b3'
+    except WebpackManifestNotFoundError:
+        raise TemplateSyntaxError(
+            f"No webpack manifest found!\n"
+            f"'{entry_name}' will not load correctly.\n\n"
+            f"Did you run `yarn dev` or `yarn build`?\n\n\n"
+        )
+
+    bundles = manifest.get(entry_name, [])
     if not bundles:
-        if not settings.UNIT_TESTING and settings.DEBUG:
-            warnings.warn(f"\x1b[33;20m"  # yellow color
-                          f"\n\n\nNo webpack manifest entry found for '{entry_name}'"
-                          f"\nPage may have javascript errors!"
-                          f"\nDid you try restarting `yarn dev` and `runserver`?\n\n"
-                          f"\x1b[0m")
-        if bootstrap_version == BOOTSTRAP_3 and not settings.UNIT_TESTING and settings.DEBUG:
-            warnings.warn("\x1b[33;20m"  # yellow color
-                          "Additionally, did you remember to use `webpack_main_b3` "
-                          "for this Bootstrap 3 module?\n\n"
-                          "\x1b[0m")
-        bundles = [f"{entry_name}.js"]
+        webpack_error = (
+            f"No webpack manifest entry found for '{entry_name}'.\n\n"
+            f"Is this a newly added entry point?\n"
+            f"Did you try restarting `yarn dev`?\n\n\n"
+        )
+        if bootstrap_version == BOOTSTRAP_3:
+            webpack_error = (
+                f"{webpack_error}"
+                f"Additionally, did you remember to use `js_entry_b3` "
+                f"on this Bootstrap 3 page?\n\n\n\n"
+            )
+        raise TemplateSyntaxError(webpack_error)
     return [
         f"{webpack_folder}/{bundle}" for bundle in bundles
     ]

@@ -19,6 +19,7 @@ WHITELIST = [
     # (module_path, message_substring_or_regex, optional_warning_class, override_action)
 
     # warnings that may be resolved with a library upgrade
+    ("bs4.builder", "option of HTMLParser() has never done anything"),
     ("couchdbkit.schema.properties", "'collections.abc'"),
     ("ddtrace.internal.module", "the imp module is deprecated"),
     ("eulxml", "pkg_resources is deprecated as an API"),
@@ -42,6 +43,13 @@ WHITELIST = [
         "corehq.apps.es.index.settings",
         re.compile(r"Invalid index settings key .+, expected one of \["),
         UserWarning,
+    ),
+    (
+        # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
+        "elasticsearch6.connection.http_urllib3",
+        # Should be removed if fixed after upgrading to ES 6.x
+        "elasticsearch5.connection.http_urllib3",
+        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
     (
         # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
