@@ -102,6 +102,7 @@
             <div class="row">
               <div class="panel-body" id="rule-criteria-panel">
                 {% crispy criteria_form %}
+                {% crispy recipient_filter_form %}
                 {% include 'scheduling/partials/conditional_alert_continue.html' with click_event="handleRuleNavContinue" enable_when="ruleTabValid" %}
               </div>
             </div>

@@ -68,6 +68,7 @@ from corehq.messaging.scheduling.forms import (
     ConditionalAlertCriteriaForm,
     ConditionalAlertForm,
     ConditionalAlertScheduleForm,
+    RecipientFilterForm,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -815,12 +816,14 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             },
             'basic_info_form': self.basic_info_form,
             'criteria_form': self.criteria_form,
+            'recipient_filter_form': self.recipient_filter_form,
             'help_text': self.help_text,
             'schedule_form': self.schedule_form,
             'read_only_mode': self.read_only_mode,
             'is_system_admin': self.is_system_admin,
             'criteria_form_active': False,
             'schedule_form_active': False,
+            'recipient_filter_form_active': False,
             'new_rule': not bool(self.rule),
             'rule_name': self.rule.name if self.rule else '',
         })
@@ -828,6 +831,8 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.request.method == 'POST':
             context.update({
                 'criteria_form_active': not self.criteria_form.is_valid() or self.schedule_form.is_valid(),
+                'recipient_filter_form_active': not self.recipient_filter_form.is_valid() or self.
+                schedule_form.is_valid(),
                 'schedule_form_active': not self.schedule_form.is_valid() and self.criteria_form.is_valid(),
                 'rule_name': self.basic_info_form.rule_name,
             })
@@ -842,6 +847,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             self.can_use_inbound_sms,
             self.rule,
             self.criteria_form,
+            self.recipient_filter_form,
         ]
 
         if self.request.method == 'POST':
@@ -879,12 +885,25 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
         return ConditionalAlertCriteriaForm(self.domain, **kwargs)
 
+    @cached_property
+    def recipient_filter_form(self):
+        kwargs = {
+            'rule': self.rule,
+            'is_system_admin': self.is_system_admin,
+        }
+
+        if self.request.method == 'POST':
+            return RecipientFilterForm(self.domain, self.request.POST, **kwargs)
+
+        return RecipientFilterForm(self.domain, **kwargs)
+
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
 
         basic_info_form_valid = self.basic_info_form.is_valid()
         criteria_form_valid = self.criteria_form.is_valid()
+        recipient_filter_form_valid = self.recipient_filter_form.is_valid()
         schedule_form_valid = self.schedule_form.is_valid()
 
         if self.read_only_mode:
@@ -892,7 +911,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             # criteria/actions unless the user has permission to
             return HttpResponseBadRequest()
 
-        if basic_info_form_valid and criteria_form_valid and schedule_form_valid:
+        if basic_info_form_valid and criteria_form_valid and recipient_filter_form_valid and schedule_form_valid:
             if not self.is_system_admin and (
                 self.criteria_form.requires_system_admin_to_save
                 or self.schedule_form.requires_system_admin_to_save
