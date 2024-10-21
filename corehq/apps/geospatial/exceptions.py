@@ -18,3 +18,7 @@ class InvalidDistributionParam(GeoSpatialException):
 
 class CaseReassignmentValidationError(Exception):
     pass
+
+
+class GeoPolygonValidationError(Exception):
+    pass
