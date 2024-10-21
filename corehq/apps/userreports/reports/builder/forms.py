@@ -514,7 +514,11 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
         raise NotImplementedError
 
     def construct_data_source(self, table_id, **kwargs):
-        return DataSourceConfiguration(domain=self.domain, table_id=table_id, **kwargs)
+        return DataSourceConfiguration(
+            domain=self.domain,
+            table_id=table_id,
+            **kwargs,
+        )
 
     def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
         if is_multiselect_chart_report:
@@ -1197,10 +1201,12 @@ class ConfigureNewReportBase(forms.Form):
     def _get_data_source_configuration_kwargs(self):
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
         ms_field = self._report_aggregation_cols[0] if self._is_multiselect_chart_report else None
-        return self.ds_builder.get_datasource_constructor_kwargs(self._configured_columns,
-                                                                 filters,
-                                                                 self._is_multiselect_chart_report,
-                                                                 ms_field)
+        return self.ds_builder.get_datasource_constructor_kwargs(
+            self._configured_columns,
+            filters,
+            self._is_multiselect_chart_report,
+            ms_field,
+        )
 
     def _build_data_source(self):
         data_source_config = self.ds_builder.construct_data_source(
@@ -1210,8 +1216,11 @@ class ConfigureNewReportBase(forms.Form):
         )
         data_source_config.validate()
         data_source_config.save()
-        tasks.rebuild_indicators.delay(data_source_config._id, source="report_builder",
-                                       domain=data_source_config.domain)
+        tasks.rebuild_indicators.delay(
+            data_source_config._id,
+            source="report_builder",
+            domain=data_source_config.domain,
+        )
         return data_source_config._id
 
     def update_report(self):
@@ -1249,8 +1258,10 @@ class ConfigureNewReportBase(forms.Form):
                     data_source.save()
                     now = datetime.datetime.utcnow()
                     tasks.rebuild_indicators.delay(
-                        data_source._id, source='report_builder_update',
-                        trigger_time=now, domain=data_source.domain
+                        data_source._id,
+                        source='report_builder_update',
+                        trigger_time=now,
+                        domain=data_source.domain
                     )
 
     def create_report(self):
@@ -1341,9 +1352,11 @@ class ConfigureNewReportBase(forms.Form):
         )
         settings.CELERY_TASK_ALWAYS_EAGER = always_eager
 
-        tasks.rebuild_indicators(data_source_config._id,
-                                 username,
-                                 limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        tasks.rebuild_indicators(  # Do synchronously
+            data_source_config._id,
+            username,
+            limit=SAMPLE_DATA_MAX_ROWS
+        )
         self._filter_data_source_changes(data_source_config._id)
         return data_source_config._id
 
@@ -1388,9 +1401,11 @@ class ConfigureNewReportBase(forms.Form):
             data_source_config.base_item_expression = temp_config["base_item_expression"]
             data_source_config.validate()
             data_source_config.save()
-            tasks.rebuild_indicators(data_source_config._id,
-                                     username,
-                                     limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+            tasks.rebuild_indicators(  # Do synchronously
+                data_source_config._id,
+                username,
+                limit=SAMPLE_DATA_MAX_ROWS
+            )
             self._filter_data_source_changes(data_source_config._id)
 
     @property
