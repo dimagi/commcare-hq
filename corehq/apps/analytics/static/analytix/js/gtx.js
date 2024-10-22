@@ -8,13 +8,11 @@ hqDefine('analytix/js/gtx', [
     'underscore',
     'analytix/js/initial',
     'analytix/js/logging',
-    'analytix/js/utils',
 ], function (
     $,
     _,
     initialAnalytics,
-    logging,
-    utils
+    logging
 ) {
     var _get = initialAnalytics.getFn('gtm'),
         _logger = logging.getLoggerForApi('Google Tag Manager'),
@@ -63,15 +61,58 @@ hqDefine('analytix/js/gtx', [
         });
     };
 
+    /**
+     * Modified version of utils.initApi to enable GTM on the India environment.
+     * This does not checks for `global.isEnabled` and instead directly checks for the environment.
+     * This is done to avoid enabling other analytics tooling on the India environment.
+     * See the PR description (https://github.com/dimagi/commcare-hq/pull/35238) for more details.
+    */
+    var initApi = function (ready, apiId, isGTMEnabled, scriptUrls, logger, initCallback) {
+        logger.verbose.log(apiId || "NOT SET", ["DATA", "API ID"]);
+
+        if (_.isString(scriptUrls)) {
+            scriptUrls = [scriptUrls];
+        }
+
+        if (!isGTMEnabled) {
+            logger.debug.log("Failed to initialize because analytics are disabled");
+            ready.reject();
+            return ready;
+        }
+
+        if (!apiId) {
+            logger.debug.log("Failed to initialize because apiId was not provided");
+            ready.reject();
+            return ready;
+        }
+
+        $.when.apply($, _.map(scriptUrls, function (url) { return $.getScript(url); }))
+            .done(function () {
+                if (_.isFunction(initCallback)) {
+                    initCallback();
+                }
+                logger.debug.log('Initialized');
+                ready.resolve();
+            }).fail(function () {
+                logger.debug.log("Failed to Load Script - Check Adblocker");
+                ready.reject();
+            });
+
+        return ready;
+    };
+
+
     $(function () {
         // userProperties are added to dataLayer at earliest to be readily available once GTM loads
         var apiId = _get('apiId');
-        if (apiId && initialAnalytics.getFn('global')(('isEnabled'))) {
+        var isGTMEnabled = _get('isGTMEnabled');
+
+        if (apiId && isGTMEnabled) {
             addUserPropertiesToDataLayer();
         }
 
         var scriptUrl = '//www.googletagmanager.com/gtm.js?id=' + apiId;
-        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function () {
+        _ready = initApi(_ready, apiId, isGTMEnabled, scriptUrl, _logger, function () {
             gtmSendEvent('gtm.js', {'gtm.start': new Date().getTime()});
         });
     });
