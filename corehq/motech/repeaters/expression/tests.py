@@ -221,7 +221,7 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
 
         response = MockResponse(201)
         message = self.repeater._process_response_as_case_update(response, repeat_record)
-        self.assertEqual(message, "Response generated form: fake_form_id")
+        self.assertEqual(message, "Response generated a form: fake_form_id")
         self.repeater._perform_case_update.assert_called()
 
     def test_process_response(self):
