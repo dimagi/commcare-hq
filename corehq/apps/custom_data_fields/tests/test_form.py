@@ -35,30 +35,34 @@ class FieldsViewMixin:
 
 
 class TestCustomDataEditorFormFields(SimpleTestCase, FieldsViewMixin):
-    def setUp(self):
-        self.domain = 'test-domain'
-
     @patch('corehq.apps.custom_data_fields.edit_entity.CustomDataEditor.init_form')
-    def test_field_is_required(self, mock_init_form):
-        web_user_editor = CustomDataEditor(WebUserFieldsView, self.domain)
-        commcare_user_editor = CustomDataEditor(CommcareUserFieldsView, self.domain)
+    def setUp(self, mock_init_form):
+        self.domain = 'test-domain'
+        self.web_user_editor = CustomDataEditor(WebUserFieldsView, self.domain)
+        self.commcare_user_editor = CustomDataEditor(CommcareUserFieldsView, self.domain)
+        self.location_editor = CustomDataEditor(LocationFieldsView, self.domain)
 
-        web_user_field = self._create_field(is_required=True, required_for=[UserFieldsView.WEB_USER])
-        commcare_user_field = self._create_field(is_required=True, required_for=[UserFieldsView.COMMCARE_USER])
+        self.web_user_field = self._create_field(is_required=True, required_for=[UserFieldsView.WEB_USER])
+        self.commcare_user_field = self._create_field(is_required=True,
+                                                    required_for=[UserFieldsView.COMMCARE_USER])
 
-        form_field = web_user_editor._make_field(web_user_field)
+    def test_web_user_field_required_for_web_user(self):
+        form_field = self.web_user_editor._make_field(self.web_user_field)
         self.assertTrue(form_field.required)
 
-        form_field = web_user_editor._make_field(commcare_user_field)
+    def test_commcare_user_field_not_required_for_web_user(self):
+        form_field = self.web_user_editor._make_field(self.commcare_user_field)
         self.assertFalse(form_field.required)
 
-        form_field = commcare_user_editor._make_field(web_user_field)
+    def test_web_user_field_not_required_for_commcare_user(self):
+        form_field = self.commcare_user_editor._make_field(self.web_user_field)
         self.assertFalse(form_field.required)
 
-        form_field = commcare_user_editor._make_field(commcare_user_field)
+    def test_commcare_user_field_required_for_commcare_user(self):
+        form_field = self.commcare_user_editor._make_field(self.commcare_user_field)
         self.assertTrue(form_field.required)
 
-        location_editor = CustomDataEditor(LocationFieldsView, self.domain)
+    def test_location_field_is_always_required(self):
         location_field = self._create_field(is_required=True)
-        form_field = location_editor._make_field(location_field)
+        form_field = self.location_editor._make_field(location_field)
         self.assertTrue(form_field.required)
