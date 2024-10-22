@@ -20,6 +20,38 @@
       Please avoid using <em>both</em> this configuration and Roles & Permissions to manage access.
       Please contact <a href="mailto:{{ SUPPORT_EMAIL }}">CommCare Support</a> if you need assistance
       setting up access via Roles & Permissions.
+      <br/><br/>
+      <h5>Transitioning from the Deprecated Feature to Roles & Permissions</h5>
+
+      <p>For the simplest case where each mobile worker belongs to only one group, follow these steps:</p>
+
+      <ol>
+        <li>
+          <strong>Set up a role for each group</strong><br/>
+          Create a corresponding role in the Roles & Permissions system for every existing group.
+        </li>
+        <li>
+          <strong>Configure permissions for each role</strong><br/>
+          Ensure that each role is granted the same permissions and access to apps that were previously available to the corresponding group.
+        </li>
+        <li>
+          <strong>Assign mobile workers to their new roles</strong><br/>
+          Map each mobile worker to the appropriate role that matches their previous group membership.
+        </li>
+        <li>
+          <strong>Enable Roles & Permissions for Web Apps access</strong><br/>
+          On the settings page, select the option to "Use Roles & Permissions to manage Web Apps access" and click <strong>Save</strong>.
+        </li>
+        <li>
+          <strong>Test access for mobile workers</strong><br/>
+          Verify that all mobile workers can access the apps as expected, based on their assigned roles.
+        </li>
+        <li>
+          <strong>(Optional) Deactivate the deprecated feature</strong><br/>
+          Although not required for the new setup to work, you can disable the deprecated feature for cleaner management.
+          Simply check the box to turn it off and click <strong>Save</strong>.
+        </li>
+      </ol>
     {% endblocktrans %}
   </div>
   <section id="cloudcare-app-settings" style="display: none">
