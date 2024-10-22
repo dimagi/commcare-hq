@@ -707,7 +707,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                         }
                     }
                 };
-                if (!_.isEmpty(element) && allChildren && allChildren.length > 0) {
+                if (element.hasOwnProperty('binding') && element.hasOwnProperty('ix') && allChildren &&
+                    allChildren.length > 0) {
                     findChildAndSetFilename(allChildren);
                 }
 
