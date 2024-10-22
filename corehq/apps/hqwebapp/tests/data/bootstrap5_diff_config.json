@@ -232,8 +232,8 @@
           "_panels.scss"
         ],
         [
-          "paused.less",
-          "_paused.scss"
+          "plan_notice.less",
+          "_plan_notice.scss"
         ],
         [
           "popovers.less",
