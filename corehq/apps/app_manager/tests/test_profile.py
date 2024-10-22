@@ -5,6 +5,7 @@ from itertools import combinations
 from django.conf import settings
 from django.test import SimpleTestCase, TestCase, override_settings
 
+from corehq import privileges
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
     get_custom_commcare_settings,
@@ -17,11 +18,11 @@ from corehq.apps.app_manager.tests.util import (
     patch_validate_xform,
 )
 from corehq.apps.builds.models import BuildSpec
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 @flag_enabled('CUSTOM_PROPERTIES')
-@flag_enabled('APP_DEPENDENCIES')
+@privilege_enabled(privileges.APP_DEPENDENCIES)
 class ProfileTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data',)
 

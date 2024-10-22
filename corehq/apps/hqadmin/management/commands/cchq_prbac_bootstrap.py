@@ -235,6 +235,9 @@ class Command(BaseCommand):
         Role(slug=privileges.CUSTOM_DOMAIN_ALERTS,
              name='Custom Domain Banners',
              description='Allow projects to add banners for their users on CommCare HQ'),
+        Role(slug=privileges.APP_DEPENDENCIES,
+             name='App Dependencies',
+             description='Set Android app dependencies that must be installed before using a CommCare app'),
     ]
 
     BOOTSTRAP_PLANS = [
