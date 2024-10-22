@@ -908,6 +908,8 @@ def deactivate_commcare_user(request, domain, user_id):
 
 def _modify_user_status(request, domain, user_id, is_active):
     user = CommCareUser.get_by_user_id(user_id, domain)
+    if not is_active:
+        user.set_user_profile(domain, '')
     try:
         verify_modify_user_conditions(request, user, is_active)
     except ModifyUserStatusException as e:

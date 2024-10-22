@@ -588,6 +588,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         """
         self.get_by_user_id.clear(self.__class__, self.user_id, domain)
         record = None
+        self.set_user_profile(domain, '')
 
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
@@ -1147,6 +1148,19 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def _save_user_data(self):
         for user_data in self._user_data_accessors.values():
             user_data.save()
+
+    def set_user_profile(self, domain, profile_id):
+        user_data = self.get_user_data(domain)
+        if user_data.profile:
+            data = user_data.to_dict()
+            old_profile_id = user_data.profile_id
+            if profile_id is None:
+                user_data.update(data, profile_id='')
+            else:
+                user_data.update(data, profile_id=profile_id)
+            user_data.save()
+            return old_profile_id
+        return ''
 
     def get_user_session_data(self, domain):
         from corehq.apps.custom_data_fields.models import (
