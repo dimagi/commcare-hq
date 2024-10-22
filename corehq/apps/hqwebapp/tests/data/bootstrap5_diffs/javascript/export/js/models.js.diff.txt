@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -4,7 +4,7 @@
+@@ -4,22 +4,24 @@
   *
   */
  
@@ -9,7 +9,10 @@
      'jquery',
      'knockout',
      'underscore',
-@@ -14,8 +14,8 @@
++    'es6!hqwebapp/js/bootstrap5_loader',
+     'hqwebapp/js/initial_page_data',
+     'hqwebapp/js/toggles',
+     'analytix/js/google',
      'analytix/js/kissmetrix',
      'export/js/const',
      'export/js/utils',
@@ -20,21 +23,26 @@
  ], function (
      $,
      ko,
-@@ -451,7 +451,7 @@
+     _,
++    bootstrap,
+     initialPageData,
+     toggles,
+     googleAnalytics,
+@@ -451,7 +453,7 @@
          table.showDeleted(!table.showDeleted());
  
          if (this.numberOfAppsToProcess > 0 && table.showDeleted()) {
 -            $('#export-process-deleted-applications').modal('show');
-+            $('#export-process-deleted-applications').modal('show');  /* todo B5: plugin:modal */
++            bootstrap.Modal.getOrCreateInstance('#export-process-deleted-applications').show();
          }
      };
  
-@@ -576,7 +576,7 @@
+@@ -576,7 +578,7 @@
          const queryString = window.location.search;
          const urlParams = new URLSearchParams(queryString);
          if (urlParams.get('load_deprecated') !== 'True' && table.showDeprecated()) {
 -            $('#export-process-deprecated-properties').modal('show');
-+            $('#export-process-deprecated-properties').modal('show');  /* todo B5: plugin:modal */
++            bootstrap.Modal.getOrCreateInstance('#export-process-deprecated-properties').show();
          }
      };
  
