@@ -8,7 +8,7 @@ hqDefine("groups/js/group_members", [
     "hqwebapp/js/bootstrap5/alert_user",
     "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list",
     "hqwebapp/js/select_2_ajax_widget",     // "Group Membership" select2
-    "hqwebapp/js/components.ko",            // select toggle for "Edit Setings" popup
+    "hqwebapp/js/components/select_toggle",            // select toggle for "Edit Setings" popup
 ], function (
     $,
     _,
@@ -109,7 +109,10 @@ hqDefine("groups/js/group_members", [
                     };
                 _showMembershipUpdating();
                 $(this).find(':button').prop('disabled', true);
-                $(this).ajaxSubmit({
+                $.ajax({
+                    url: $(this).attr("action"),
+                    method: "POST",
+                    data: Object.fromEntries(new FormData(this)),
                     success: outcome(true, "Group membership", "#edit_membership", "Edit Group Membership", _hideMembershipUpdating),
                     error: outcome(false, "Group membership", "#edit_membership", _hideMembershipUpdating),
                 });
@@ -117,7 +120,10 @@ hqDefine("groups/js/group_members", [
             });
             $('#edit-group-settings').submit(function () {
                 $(this).find('.modal-footer :button').disableButton();
-                $(this).ajaxSubmit({
+                $.ajax({
+                    url: $(this).attr("action"),
+                    method: "POST",
+                    data: Object.fromEntries(new FormData(this)),
                     success: outcome(true, "Group settings", "#edit-group-settings", "Edit Settings"),
                     error: outcome(false, "Group settings", "#edit-group-settings"),
                 });
@@ -132,7 +138,10 @@ hqDefine("groups/js/group_members", [
             });
             $('#group-data-form').submit(function () {
                 $(this).find(':button').prop('disabled', true);
-                $(this).ajaxSubmit({
+                $.ajax({
+                    url: $(this).attr("action"),
+                    method: "POST",
+                    data: Object.fromEntries(new FormData(this)),
                     success: outcome(true, "Group data", "#group-data-form", "Edit Group Data"),
                     error: outcome(false, "Group data", "#group-data-form"),
                 });

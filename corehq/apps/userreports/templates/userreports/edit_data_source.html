@@ -32,7 +32,9 @@
         <div class="btn-group">
           {% if data_source.disable_destructive_rebuild %}
             <div style="margin-right: 15px;">
-              <button class="btn btn-default" disabled>
+              <button id="gtm-rebuild-ds-disabled"
+                      class="btn btn-default"
+                      disabled>
                 {% if use_updated_ucr_naming %}
                   {% trans 'Rebuild Custom Web Report Source'%}
                 {% else %}
@@ -47,7 +49,10 @@
             </div>
           {% else %}
             <div>
-              <a href="#confirm_rebuild" class="btn btn-default" data-toggle="modal">
+              <a id="gtm-rebuild-ds-btn"
+                 class="btn btn-default"
+                 href="#confirm_rebuild"
+                 data-toggle="modal">
                 {% if use_updated_ucr_naming %}
                   {% trans 'Rebuild Custom Web Report Source'%}
                 {% else %}
@@ -85,7 +90,8 @@
               </a>
             </li>
             <li>
-              <a class="submit-dropdown-form"
+              <a id="gtm-rebuild-in-place-btn"
+                 class="submit-dropdown-form"
                  href=""
                  data-action="{% url 'build_in_place' domain data_source.get_id %}">
                 {% trans 'Rebuild Table in Place' %}
@@ -226,7 +232,11 @@
               <button type="button" class="btn btn-default" data-dismiss="modal">
                 {% trans "Cancel" %}
               </button>
-              <button type="submit" value="{% trans 'Confirm'%}" class="disable-on-submit btn btn-danger">{% trans 'Confirm'%}</button>
+              <button id="gtm-rebuild-ds-confirm"
+                      class="disable-on-submit btn btn-danger"
+                      type="submit">
+                  {% trans 'Confirm'%}
+              </button>
             </div>
           </form>
         </div>

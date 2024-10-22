@@ -1011,7 +1011,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
@@ -2877,7 +2876,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
 #: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
@@ -10457,36 +10455,6 @@ msgstr "Sincronizar"
 msgid "This application currently does not contain any multimedia references."
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "Set Password"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "The passwords don't match. Please try again."
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "Please enter a password or cancel."
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
-#: corehq/apps/hqwebapp/forms.py
-#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
-#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-#: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
-#: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
-#: corehq/messaging/smsbackends/mach/forms.py
-#: corehq/messaging/smsbackends/push/forms.py
-#: corehq/messaging/smsbackends/start_enterprise/forms.py
-#: corehq/motech/forms.py corehq/motech/openmrs/forms.py
-msgid "Password"
-msgstr "Palavra-passe"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "Repeat Password"
-msgstr ""
-
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/supported_languages.html
 msgid "Set as default"
 msgstr ""
@@ -13302,6 +13270,19 @@ msgstr ""
 msgid "GPS"
 msgstr ""
 
+#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
+#: corehq/apps/hqwebapp/forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
+#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+#: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
+#: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
+#: corehq/messaging/smsbackends/mach/forms.py
+#: corehq/messaging/smsbackends/push/forms.py
+#: corehq/messaging/smsbackends/start_enterprise/forms.py
+#: corehq/motech/forms.py corehq/motech/openmrs/forms.py
+msgid "Password"
+msgstr "Palavra-passe"
+
 #: corehq/apps/data_dictionary/models.py
 msgid "No Type Currently Selected"
 msgstr ""
@@ -15400,6 +15381,18 @@ msgid ""
 "moving\n"
 "            the only assigned mobile worker out of the location owning that "
 "cases.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Use elasticsearch when fetching apps for exports"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            (Internal) Fetches apps using elasticsearch instead of couch in "
+"exports\n"
 "            "
 msgstr ""
 
@@ -21457,10 +21450,6 @@ msgid "Export Case Data"
 msgstr "Exportar Dados do Caso"
 
 #: corehq/apps/export/views/list.py
-msgid "Export De-Identified Cases"
-msgstr ""
-
-#: corehq/apps/export/views/list.py
 msgid "Populating tables for <strong>{}</strong>. ({}%)"
 msgstr ""
 
@@ -21504,6 +21493,12 @@ msgstr ""
 #: corehq/apps/export/views/list.py
 msgid "Export De-Identified Form Data"
 msgstr ""
+
+#: corehq/apps/export/views/list.py
+#, fuzzy
+#| msgid "De-Identified Data"
+msgid "Export De-Identified Case Data"
+msgstr "Dados sem identificação"
 
 #: corehq/apps/export/views/list.py
 msgid "Export De-Identified Daily Saved Exports"
@@ -22412,6 +22407,18 @@ msgstr ""
 msgid ""
 "Enter your Mapbox API token here. Make sure your token has the correct scope "
 "configured for use of the Mapbox Matrix API."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Reassign Cases"
+msgid "Flag assigned cases"
+msgstr "Reatribuir Casos"
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"When enabled, cases that are assigned through disbursement from the Case "
+"Management page will include a case property '{}' with value as True."
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
@@ -24056,16 +24063,12 @@ msgid "Upload Audio"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Upload Tables"
 msgid "Upload Video"
-msgstr "Carregar Tabelas"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Upload Tables"
 msgid "Upload File"
-msgstr "Carregar Tabelas"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Select Icon Image"
@@ -24076,16 +24079,12 @@ msgid "Select Menu Audio"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Select None"
 msgid "Select Video"
-msgstr "Selecionar Nenhum"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Select None"
 msgid "Select Logo"
-msgstr "Selecionar Nenhum"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Select File"
@@ -24100,22 +24099,16 @@ msgid "Current Audio"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Current Users"
 msgid "Current Video"
-msgstr "Usuários Atuais"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Current Users"
 msgid "Current Logo"
-msgstr "Usuários Atuais"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Current Users"
 msgid "Current File"
-msgstr "Usuários Atuais"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
 msgid ""
@@ -42784,7 +42777,11 @@ msgid "The Case's Child Cases"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-msgid "User Specified via Case Property"
+msgid "Username Specified via Case Property"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "User ID Specified via Case Property"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -42814,6 +42811,12 @@ msgstr ""
 #: corehq/messaging/scheduling/forms.py
 msgid "Username Case Property"
 msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+#, fuzzy
+#| msgid "Case property"
+msgid "User ID Case Property"
+msgstr "Propriedade do Caso"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Email Case Property"
