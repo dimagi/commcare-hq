@@ -288,7 +288,7 @@ class Repeater(RepeaterSuperProxy):
     max_workers = models.IntegerField(default=0)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
-    is_deleted = models.BooleanField(default=False, db_index=True)
+    is_deleted = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
@@ -299,9 +299,9 @@ class Repeater(RepeaterSuperProxy):
         db_table = 'repeaters_repeater'
         indexes = [
             models.Index(
-                fields=['next_attempt_at'],
-                condition=models.Q(("is_deleted", False), ("is_paused", False)),
-                name='next_attempt_at_partial_idx',
+                name='is_deleted_partial_idx',
+                fields=['id'],
+                condition=models.Q(is_deleted=False),
             ),
         ]
 
@@ -1037,7 +1037,6 @@ class RepeatRecord(models.Model):
     state = models.PositiveSmallIntegerField(
         choices=State.choices,
         default=State.Pending,
-        db_index=True,
     )
     registered_at = models.DateTimeField()
     next_check = models.DateTimeField(null=True, default=None)
@@ -1053,7 +1052,12 @@ class RepeatRecord(models.Model):
                 name="next_check_not_null",
                 fields=["next_check"],
                 condition=models.Q(next_check__isnull=False),
-            )
+            ),
+            models.Index(
+                name="state_partial_idx",
+                fields=["repeater_id"],
+                condition=models.Q(state__in=(State.Pending, State.Fail)),
+            ),
         ]
         constraints = [
             models.CheckConstraint(
