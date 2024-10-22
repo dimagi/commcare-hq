@@ -190,7 +190,8 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         self.assertEqual(actual, {value})
 
     def test_case_rule(self):
-        rule, event, sms = make_case_rule_sms_for_test(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
+        rule, event, sms = make_case_rule_sms_for_test(
+            self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
         self.addCleanup(rule.delete)
         self.addCleanup(event.delete)  # cascades to subevent
         self.addCleanup(sms.delete)

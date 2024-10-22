@@ -1,7 +1,6 @@
-from django.db.models import OuterRef, Subquery
-from django.db.models.functions import Greatest
-from django.http import JsonResponse, HttpResponseNotFound
+from django.http import HttpResponseNotFound, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
 from tastypie.exceptions import BadRequest
 
 from corehq import privileges
@@ -9,11 +8,16 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.api.resources.messaging_event.filters import filter_query
 from corehq.apps.api.resources.messaging_event.pagination import get_paged_data
-from corehq.apps.api.resources.messaging_event.serializers import serialize_event
-from corehq.apps.api.resources.messaging_event.utils import sort_query, get_request_params
+from corehq.apps.api.resources.messaging_event.serializers import (
+    serialize_event,
+)
+from corehq.apps.api.resources.messaging_event.utils import (
+    get_request_params,
+    sort_query,
+)
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.domain.decorators import api_auth
-from corehq.apps.sms.models import MessagingSubEvent, SMS, Email
+from corehq.apps.sms.models import MessagingSubEvent
 
 
 @csrf_exempt
