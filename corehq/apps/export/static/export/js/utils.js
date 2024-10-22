@@ -10,11 +10,11 @@ hqDefine('export/js/utils', [
     constants
 ) {
     var getTagCSSClass = function (tag) {
-        var cls = window.USE_BOOTRAP5 ? 'badge' : 'label';
+        var cls = window.USE_BOOTSTRAP5 ? 'badge' : 'label';
         if (tag === constants.TAG_DELETED) {
-            return cls + (window.USE_BOOTRAP5 ? ' text-bg-warning' : ' label-warning');
+            return cls + (window.USE_BOOTSTRAP5 ? ' text-bg-warning' : ' label-warning');
         } else {
-            return cls + (window.USE_BOOTRAP5 ? ' text-bg-secondary' : ' label-default');
+            return cls + (window.USE_BOOTSTRAP5 ? ' text-bg-secondary' : ' label-default');
         }
     };
 
