@@ -35,7 +35,7 @@ Step 0: Decide What to Migrate
 How do you know what areas have and have not been migrated? Because all pages that bundle javascript use a template
 tag to specify the entry point, this template tag is an easy way to tell if a page uses Webpack or RequireJS.
 
-If looking for areas that **need** to be mgirated, grepping for ``requirejs_main`` will identify all unmigrated
+If looking for areas that **need** to be migrated, grepping for ``requirejs_main`` will identify all unmigrated
 pages.
 
 
