@@ -576,8 +576,8 @@
 </div>
 
 <script type="text/html" id="permission_all_selected_none">
-  <div class="form-group">
-    <div class="col-sm-4 control-label" data-bind="css: { 'has-warning': id === 'access_web_apps' && hasRestrictedApplicationAccess}">
+  <div class="form-group" data-bind="css: {'has-warning': id === 'access_web_apps' && hasRestrictedApplicationAccess}">
+    <div class="col-sm-4 control-label">
       <label data-bind="text: text"></label>
       <!-- ko if: id === 'access_web_apps' && hasRestrictedApplicationAccess -->
         <span class='help-block'>
