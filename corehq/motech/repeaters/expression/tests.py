@@ -315,8 +315,6 @@ class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
         </data>
         """
 
-    case_id = uuid.uuid4().hex
-
     def _create_repeater(self):
         self.repeater = FormExpressionRepeater(
             domain=self.domain,
@@ -351,10 +349,9 @@ class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
         )
         self.repeater.save()
 
-    @property
-    def expected_payload(self):
+    def expected_payload(self, case_id):
         return json.dumps({
-            'case_id': self.case_id,
+            'case_id': case_id,
             'properties': {
                 'meta_gps_point': '1.1 2.2 3.3 4.4'
             }
@@ -369,14 +366,59 @@ class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
 
     def test_payload(self):
         instance_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
         xform_xml = self.xform_xml_template.format(
             self.xmlns,
             instance_id,
-            self._create_case_block(self.case_id),
+            self._create_case_block(case_id),
         )
         submit_form_locally(xform_xml, self.domain)
         repeat_record = self.repeat_records(self.domain).all()[0]
-        self.assertEqual(repeat_record.get_payload(), self.expected_payload)
+        self.assertEqual(repeat_record.get_payload(), self.expected_payload(case_id))
+
+    def test_process_response(self):
+        instance_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            instance_id,
+            self._create_case_block(case_id),
+        )
+        submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.repeater.case_action_filter_expression = {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "jsonpath",
+                "jsonpath": "response.status_code",
+            },
+            "operator": "eq",
+            "property_value": 200,
+        }
+        self.repeater.case_action_expression = {
+            'type': 'dict',
+            'properties': {
+                'create': False,
+                'case_id': {
+                    'type': 'jsonpath',
+                    'jsonpath': 'payload.doc.form.case.@case_id',
+                },
+                'properties': {
+                    'type': 'dict',
+                    'properties': {
+                        'type': 'dict',
+                        'prop_from_response': {
+                            'type': 'jsonpath',
+                            'jsonpath': 'response.body.aValue',
+                        }
+                    }
+                }
+            }
+        }
+        response = MockResponse(200, '{"aValue": "aResponseValue"}')
+        self.repeater.handle_response(response, repeat_record)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        self.assertEqual(case.get_case_property('prop_from_response'), 'aResponseValue')
 
 
 class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
@@ -456,8 +498,7 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
         )
         self.repeater.save()
 
-    @property
-    def expected_payload(self):
+    def expected_payload(self, case_id):
         return {
             'features': json.dumps([{
                 'attributes': {
@@ -476,10 +517,11 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
         }
 
     def test_send_request_error_handling(self):
+        case_id = uuid.uuid4().hex
         xform_xml = self.xform_xml_template.format(
             self.xmlns,
             uuid.uuid4().hex,
-            self._create_case_block(self.case_id),
+            self._create_case_block(case_id),
         )
         with patch(
             'corehq.motech.repeaters.models.simple_request',

@@ -16,15 +16,20 @@ class ExpressionPayloadGenerator(BasePayloadGenerator):
         return 'application/json'
 
     def get_payload(self, repeat_record, payload_doc, parsed_expression):
-        result = parsed_expression(payload_doc, EvaluationContext(payload_doc))
+        result = self._parse_payload(payload_doc, parsed_expression)
         return json.dumps(result, cls=DjangoJSONEncoder)
+
+    def _parse_payload(self, payload_doc, parsed_expression):
+        payload_doc_json = payload_doc.to_json()
+        return parsed_expression(payload_doc_json, EvaluationContext(payload_doc_json))
 
     def get_url(self, repeat_record, url_template, payload_doc):
         if not toggles.UCR_EXPRESSION_REGISTRY.enabled(repeat_record.domain):
             return ""
 
         required_template_vars = [fn for _, fn, _, _ in Formatter().parse(url_template) if fn is not None]
-        context = EvaluationContext(payload_doc)
+        payload_doc_json = payload_doc.to_json()
+        context = EvaluationContext(payload_doc_json)
         expressions = {
             expression.name: expression.wrapped_definition(context)
             for expression in UCRExpression.objects.filter(
@@ -35,23 +40,13 @@ class ExpressionPayloadGenerator(BasePayloadGenerator):
         }
         return url_template.format(
             **{
-                template_var: expressions[template_var](payload_doc) if template_var in expressions else ""
+                template_var: expressions[template_var](payload_doc_json) if template_var in expressions else ""
                 for template_var in required_template_vars
             }
         )
 
 
-class FormExpressionPayloadGenerator(ExpressionPayloadGenerator):
-    def get_payload(self, repeat_record, payload_doc, parsed_expression):
-        result = self._parse_payload(payload_doc, parsed_expression)
-        return json.dumps(result, cls=DjangoJSONEncoder)
-
-    def _parse_payload(self, payload_doc, parsed_expression):
-        payload_doc_json = payload_doc.to_json()
-        return parsed_expression(payload_doc_json, EvaluationContext(payload_doc_json))
-
-
-class ArcGISFormExpressionPayloadGenerator(FormExpressionPayloadGenerator):
+class ArcGISFormExpressionPayloadGenerator(ExpressionPayloadGenerator):
 
     def get_url(self, repeat_record, url_template, payload_doc):
         if not (

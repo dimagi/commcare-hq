@@ -22,7 +22,6 @@ from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.expression.repeater_generators import (
     ArcGISFormExpressionPayloadGenerator,
     ExpressionPayloadGenerator,
-    FormExpressionPayloadGenerator,
 )
 from corehq.motech.repeaters.models import (
     OptionValue,
@@ -156,7 +155,7 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain).to_json()
+        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
 
     def allowed_to_forward(self, payload):
         allowed = super().allowed_to_forward(payload)
@@ -183,7 +182,6 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
 class FormExpressionRepeater(BaseExpressionRepeater):
 
     friendly_name = _("Configurable Form Repeater")
-    payload_generator_classes = (FormExpressionPayloadGenerator,)
 
     class Meta:
         app_label = 'repeaters'
@@ -282,7 +280,7 @@ def get_evaluation_context(domain, repeat_record, payload_doc, response):
         'success': is_success_response(response),
         'payload': {
             'id': repeat_record.payload_id,
-            'doc': payload_doc,
+            'doc': payload_doc.to_json(),
         },
         'response': {
             'status_code': response.status_code,
