@@ -103,7 +103,7 @@ from corehq.form_processor.models import (
 )
 from corehq.motech.const import (
     MAX_REQUEST_LOG_LENGTH,
-    REQUEST_METHODS,
+    ALL_REQUEST_METHODS,
     REQUEST_POST,
 )
 from corehq.motech.models import ConnectionSettings
@@ -141,6 +141,21 @@ from .repeater_generators import (
     ReferCasePayloadGenerator,
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
+)
+
+# Retry responses with these status codes. All other 4XX status codes
+# are treated as InvalidPayload errors.
+HTTP_STATUS_4XX_RETRY = (
+    HTTPStatus.BAD_REQUEST,
+    HTTPStatus.REQUEST_TIMEOUT,
+    HTTPStatus.CONFLICT,
+    HTTPStatus.PRECONDITION_FAILED,
+    HTTPStatus.LOCKED,
+    HTTPStatus.FAILED_DEPENDENCY,
+    HTTPStatus.TOO_EARLY,
+    HTTPStatus.UPGRADE_REQUIRED,
+    HTTPStatus.PRECONDITION_REQUIRED,
+    HTTPStatus.TOO_MANY_REQUESTS,
 )
 
 
@@ -253,7 +268,7 @@ class Repeater(RepeaterSuperProxy):
     name = models.CharField(max_length=255, null=True)
     format = models.CharField(max_length=64, null=True)
     request_method = models.CharField(
-        choices=list(zip(REQUEST_METHODS, REQUEST_METHODS)),
+        choices=list(zip(ALL_REQUEST_METHODS, ALL_REQUEST_METHODS)),
         default=REQUEST_POST,
         max_length=16,
     )
@@ -461,32 +476,20 @@ class Repeater(RepeaterSuperProxy):
 
         result may be either a response object or an exception
         """
-        _4XX_retry_codes = (
-            HTTPStatus.REQUEST_TIMEOUT,
-            HTTPStatus.CONFLICT,
-            HTTPStatus.PRECONDITION_FAILED,
-            HTTPStatus.LOCKED,
-            HTTPStatus.FAILED_DEPENDENCY,
-            HTTPStatus.TOO_EARLY,
-            HTTPStatus.UPGRADE_REQUIRED,
-            HTTPStatus.PRECONDITION_REQUIRED,
-            HTTPStatus.TOO_MANY_REQUESTS,
-        )
-
         if isinstance(result, RequestConnectionError):
-            repeat_record.handle_timeout(result)
+            return repeat_record.handle_timeout(result)
         elif isinstance(result, Exception):
-            repeat_record.handle_exception(result)
+            return repeat_record.handle_exception(result)
         elif is_success_response(result):
-            repeat_record.handle_success(result)
+            return repeat_record.handle_success(result)
         elif not is_response(result) or (
             500 <= result.status_code < 600
-            or result.status_code in _4XX_retry_codes
+            or result.status_code in HTTP_STATUS_4XX_RETRY
         ):
-            repeat_record.handle_failure(result)
+            return repeat_record.handle_failure(result)
         else:
             message = format_response(result)
-            repeat_record.handle_payload_error(message)
+            return repeat_record.handle_payload_error(message)
 
     def get_headers(self, repeat_record):
         # to be overridden
@@ -1046,10 +1049,11 @@ class RepeatRecord(models.Model):
         # although the Couch RepeatRecord did the same.
         code = getattr(response, "status_code", None)
         state = State.Empty if code == 204 else State.Success
-        self.attempt_set.create(state=state, message=format_response(response) or '')
+        attempt = self.attempt_set.create(state=state, message=format_response(response) or '')
         self.state = state
         self.next_check = None
         self.save()
+        return attempt
 
     def add_client_failure_attempt(self, message, retry=True):
         """
@@ -1057,7 +1061,7 @@ class RepeatRecord(models.Model):
         service is assumed to be in a good state, so do not back off, so
         that this repeat record does not hold up the rest.
         """
-        self._add_failure_attempt(message, MAX_ATTEMPTS, retry)
+        return self._add_failure_attempt(message, MAX_ATTEMPTS, retry)
 
     def add_server_failure_attempt(self, message):
         """
@@ -1070,7 +1074,7 @@ class RepeatRecord(models.Model):
            days and will hold up all other payloads.
 
         """
-        self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
+        return self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
 
     def _add_failure_attempt(self, message, max_attempts, retry=True):
         if retry and self.num_attempts < max_attempts:
@@ -1082,9 +1086,10 @@ class RepeatRecord(models.Model):
         self.state = state
         self.next_check = (attempt.created_at + wait) if state == State.Fail else None
         self.save()
+        return attempt
 
     def add_payload_error_attempt(self, message, traceback_str):
-        self.attempt_set.create(
+        attempt = self.attempt_set.create(
             state=State.InvalidPayload,
             message=message,
             traceback=traceback_str,
@@ -1092,6 +1097,7 @@ class RepeatRecord(models.Model):
         self.state = State.InvalidPayload
         self.next_check = None
         self.save()
+        return attempt
 
     @property
     def attempts(self):
@@ -1221,23 +1227,23 @@ class RepeatRecord(models.Model):
                 response.status_code,
                 self.repeater_type
             )
-        self.add_success_attempt(response)
+        return self.add_success_attempt(response)
 
     def handle_failure(self, response):
         log_repeater_error_in_datadog(self.domain, response.status_code, self.repeater_type)
-        self.add_server_failure_attempt(format_response(response))
+        return self.add_server_failure_attempt(format_response(response))
 
     def handle_exception(self, exception):
         log_repeater_error_in_datadog(self.domain, None, self.repeater_type)
-        self.add_client_failure_attempt(str(exception))
+        return self.add_client_failure_attempt(str(exception))
 
     def handle_timeout(self, exception):
         log_repeater_timeout_in_datadog(self.domain)
-        self.add_server_failure_attempt(str(exception))
+        return self.add_server_failure_attempt(str(exception))
 
     def handle_payload_error(self, message, traceback_str=''):
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
-        self.add_payload_error_attempt(message, traceback_str)
+        return self.add_payload_error_attempt(message, traceback_str)
 
     def cancel(self):
         self.state = State.Cancelled

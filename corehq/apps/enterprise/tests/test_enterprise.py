@@ -3,6 +3,7 @@ from datetime import datetime
 from freezegun import freeze_time
 from unittest.mock import patch, MagicMock
 
+from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
 from corehq.apps.export.models.new import FormExportInstance
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.domain.models import Domain
@@ -172,7 +173,7 @@ class EnterpriseFormReportTests(SimpleTestCase):
 
     def test_specifying_timespan_greater_than_90_days_throws_error(self):
         end_date = datetime(month=10, day=1, year=2020)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TooMuchRequestedDataError):
             EnterpriseFormReport(self.billing_account, None, end_date=end_date, num_days=91)
 
     def test_specifying_timespans_up_to_90_days_works(self):

@@ -17,7 +17,7 @@ from corehq.apps.reports.standard.cases.case_data import (
     resave_case_view,
     undo_close_case_view,
 )
-from corehq.apps.reports.standard.tableau import TableauView, tableau_visualization_ajax
+from corehq.apps.reports.standard.tableau import TableauView, get_tableau_server_ticket
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
@@ -157,7 +157,7 @@ urlpatterns = [
     url(r'^v2/', include('corehq.apps.reports.v2.urls')),
 
     url(r'^tableau/(?P<viz_id>[\d]+)/$', TableauView.as_view(), name=TableauView.urlname),
-    url(r'^tableau/visualization/$', tableau_visualization_ajax, name='tableau_visualization_ajax'),
+    url(r'^tableau/ticket/$', get_tableau_server_ticket, name='get_tableau_server_ticket'),
 
     # Internal Use
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
