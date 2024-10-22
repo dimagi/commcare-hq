@@ -908,6 +908,7 @@ def deactivate_commcare_user(request, domain, user_id):
 
 def _modify_user_status(request, domain, user_id, is_active):
     user = CommCareUser.get_by_user_id(user_id, domain)
+    remove_profile(user, domain)
     try:
         verify_modify_user_conditions(request, user, is_active)
     except ModifyUserStatusException as e:
@@ -922,6 +923,14 @@ def _modify_user_status(request, domain, user_id, is_active):
     return JsonResponse({
         'success': True,
     })
+
+
+def remove_profile(user, domain):
+    user_data = user.get_user_data(domain)
+    if user_data.profile:
+        data = user_data.to_dict()
+        user_data.update(data, profile_id='')
+        user_data.save()
 
 
 @require_can_edit_commcare_users
