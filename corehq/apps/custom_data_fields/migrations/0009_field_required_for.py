@@ -17,7 +17,7 @@ def update_user_fields_required_for(apps, schema_editor):
     user_fields_definitions = CustomDataFieldsDefinition.objects.filter(field_type=CUSTOM_USER_DATA_FIELD_TYPE)
 
     for definition in user_fields_definitions:
-        fields = Field.objects.filter(definition=definition)
+        fields = Field.objects.filter(definition=definition, required_for=[])
         for field in fields:
             if field.is_required:
                 field.required_for = EXISTING_REQUIRED_FOR
