@@ -18,7 +18,7 @@
        </div>
        <div class="modal-body">
          <p>
-@@ -34,7 +32,7 @@
+@@ -34,8 +32,8 @@
            {% trans "Unable to process applications. Please report an issue if this persists" %}
          </p>
          <div class="spacer"></div>
@@ -28,6 +28,7 @@
 +          <div class="progress-bar" data-bind="
                style: {
                    width: buildSchemaProgress() + '%'
+               }
 @@ -43,7 +41,7 @@
          </div>
        </div>
