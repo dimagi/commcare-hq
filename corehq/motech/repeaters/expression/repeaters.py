@@ -107,27 +107,30 @@ class BaseExpressionRepeater(Repeater):
         return base_url
 
     def handle_response(self, response, repeat_record):
-        super().handle_response(response, repeat_record)
+        attempt = super().handle_response(response, repeat_record)
         if self.case_action_filter_expression and is_response(response):
             try:
-                self._process_response_as_case_update(response, repeat_record)
+                message = self._process_response_as_case_update(response, repeat_record)
             except Exception as e:
                 notify_exception(None, "Error processing response from Repeater request", e)
+            else:
+                attempt.message += f"\n\n{message}"
+                attempt.save()
 
     def _process_response_as_case_update(self, response, repeat_record):
         domain = repeat_record.domain
         context = get_evaluation_context(domain, repeat_record, self.payload_doc(repeat_record), response)
         if not self.parsed_case_action_filter(context.root_doc, context):
-            return False
+            return "Response did not match filter"
 
-        self._perform_case_update(domain, context)
-        return True
+        form_id = self._perform_case_update(domain, context)
+        return f"Response generated a form: {form_id}"
 
     def _perform_case_update(self, domain, context):
         data = self.parsed_case_action_expression(context.root_doc, context)
         if data:
             data = data if isinstance(data, list) else [data]
-            handle_case_update(
+            form, _ = handle_case_update(
                 domain=domain,
                 data=data,
                 user=UserDuck('system', ''),
@@ -135,6 +138,7 @@ class BaseExpressionRepeater(Repeater):
                 is_creation=False,
                 xmlns=REPEATER_RESPONSE_XMLNS,
             )
+            return form.form_id
 
     @property
     def device_id(self):

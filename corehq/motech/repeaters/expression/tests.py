@@ -213,13 +213,15 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
             "operator": "eq",
             "property_value": 201,
         }
-        self.repeater._perform_case_update = Mock()
+        self.repeater._perform_case_update = Mock(return_value="fake_form_id")
         response = MockResponse(200)
-        self.assertFalse(self.repeater._process_response_as_case_update(response, repeat_record))
+        message = self.repeater._process_response_as_case_update(response, repeat_record)
+        self.assertEqual(message, "Response did not match filter")
         self.repeater._perform_case_update.assert_not_called()
 
         response = MockResponse(201)
-        self.assertTrue(self.repeater._process_response_as_case_update(response, repeat_record))
+        message = self.repeater._process_response_as_case_update(response, repeat_record)
+        self.assertEqual(message, "Response generated form: fake_form_id")
         self.repeater._perform_case_update.assert_called()
 
     def test_process_response(self):
