@@ -133,43 +133,7 @@
     "is_complete": true
   },
   "export": {
-    "in_progress": true,
-    "templates": [
-      "download_data_files.html",
-      "paywall.html",
-      "datasource_export_view.html",
-      "customize_export_new.html",
-      "export_list.html",
-      "partials/export_list_controller.html",
-      "download_export.html",
-      "customize_export_new.html",
-      "partials/feed_filter_modal.html",
-      "partials/new_customize_export_templates.html",
-      "partials/export_download_progress.html",
-      "partials/export_list_create_export_modal.html",
-      "partials/delete_bulk_notice.html",
-      "partials/export_download_prepare.html",
-      "partials/odata_feed_limit_reached_modal.html",
-      "partials/table.html",
-      "partials/export_bulk_notice.html",
-      "dialogs/bulk_delete_custom_export_dialog.html",
-      "dialogs/process_deprecated_properties.html",
-      "dialogs/delete_custom_export_dialog.html",
-      "dialogs/process_deleted_questions.html",
-      "spec/ko/mocha.html"
-    ],
-    "javascript": [
-      "js/download_data_files.js",
-      "spec/ExportInstance.spec.js",
-      "spec/ExportColumn.spec.js",
-      "spec/Exports.Utils.spec.js",
-      "js/customize_export_new.js",
-      "js/incremental_export.js",
-      "js/download_export.js",
-      "js/models.js",
-      "js/export_list_main.js",
-      "js/export_list.js"
-    ]
+    "is_complete": true
   },
   "integration": {
     "is_complete": true
