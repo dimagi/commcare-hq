@@ -594,6 +594,46 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
         self.assertEqual(resp.reason, "[No error message given by ArcGIS]")
         self.assertEqual(resp.text, "")
 
+    @flag_enabled("UCR_EXPRESSION_REGISTRY")
+    @flag_enabled("ARCGIS_INTEGRATION")
+    def test_custom_url(self):
+        self.repeater.url_template = "/{variable1}/a_thing/delete?case_id={case_id}&{missing_variable}='foo'"
+
+        UCRExpression.objects.create(
+            name='variable1',
+            domain=self.domain,
+            expression_type="named_expression",
+            definition={
+                "type": "jsonpath",
+                "jsonpath": "form.person_name"
+            },
+        )
+        UCRExpression.objects.create(
+            name='case_id',
+            domain=self.domain,
+            expression_type="named_expression",
+            definition={
+                "type": "jsonpath",
+                "jsonpath": "form.case.@case_id"
+            },
+        )
+
+        case_id = uuid.uuid4().hex
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            uuid.uuid4().hex,
+            self._create_case_block(case_id),
+        )
+        submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+
+        expected_url = self.connection.url + f"/Timmy/a_thing/delete?case_id={case_id}&='foo'"
+
+        self.assertEqual(
+            self.repeater.get_url(repeat_record),
+            expected_url
+        )
+
 
 def test_doctests():
     import corehq.motech.repeaters.expression.repeaters as module

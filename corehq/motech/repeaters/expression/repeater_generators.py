@@ -49,11 +49,9 @@ class ExpressionPayloadGenerator(BasePayloadGenerator):
 class ArcGISFormExpressionPayloadGenerator(ExpressionPayloadGenerator):
 
     def get_url(self, repeat_record, url_template, payload_doc):
-        if not (
-            toggles.UCR_EXPRESSION_REGISTRY.enabled(repeat_record.domain)
-            and toggles.ARCGIS_INTEGRATION.enabled(repeat_record.domain)
-        ):
+        if not toggles.ARCGIS_INTEGRATION.enabled(repeat_record.domain):
             return ""
+        return super().get_url(repeat_record, url_template, payload_doc)
 
     @property
     def content_type(self):
