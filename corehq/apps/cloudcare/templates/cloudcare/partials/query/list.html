@@ -1,18 +1,17 @@
 {% load i18n %}
 
 <script type="text/template" id="query-view-list-template">
+  <div id="query-list-contents">
   <form>
     <% if (sidebarEnabled) { %>
-      <button type="button" class="btn-close d-block d-lg-none float-end" aria-label="{% trans "Close" %}"
-        data-bs-toggle="collapse" data-bs-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
-      </button>
-      <div class="query-button-container">
-        <button class="btn btn-outline-primary" type="button" id="query-clear-button">
-          <div>{% trans "Clear" %}</div>
-        </button>
-        <button class="btn btn-primary" type="submit" id="query-submit-button">
-          <div>{% trans "Search" %}</div>
-        </button>
+      <div class="query-button-container border bg-white p-2 sticky-top shadow-sm">
+        <div class="d-flex flex-row-reverse d-block d-lg-none">
+          <button type="button" class="btn-close" aria-label="{% trans "Close" %}"
+            data-bs-toggle="collapse" data-bs-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
+          </button>
+        </div>
+        <button class="btn btn-outline-primary" type="button" id="query-clear-button">{% trans "Clear" %}</button>
+        <button class="btn btn-primary" type="submit" id="query-submit-button">{% trans "Search" %}</button>
       </div>
     <% } %>
     <% if (title.length > 0 && !sidebarEnabled) { %>
@@ -36,4 +35,5 @@
       </button>
     <% } %>
   </form>
+  </div>
 </script>
