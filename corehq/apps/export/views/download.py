@@ -149,7 +149,7 @@ class SMSDownloadExportViewHelper(DownloadExportViewHelper):
 
 
 class BaseDownloadExportView(BaseProjectDataView):
-    template_name = 'export/bootstrap5/download_export.html'
+    template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_date_range = False
     check_for_multimedia = False
