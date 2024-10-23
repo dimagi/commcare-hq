@@ -1,4 +1,4 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -8,7 +8,7 @@
   {{ block.super }}
 {% endblock title %}
 
-{% requirejs_main 'locations/js/location' %}
+{% requirejs_main_b5 'locations/js/location' %}
 
 {% block page_content %}
   {% initial_page_data 'api_root' api_root %}
@@ -34,10 +34,10 @@
 
       <p class="lead">
         {{ location.name }}
-        <span class="text-muted">({{ location.location_type_name }})</span>
+        <span class="text-body-secondary">({{ location.location_type_name }})</span>
       </p>
 
-      <div class="btn-toolbar" style="margin-bottom: 20px;">
+      <div class="btn-toolbar" style="margin-bottom: 20px;">  {# todo B5: inline-style #}
 
         {% if location.get_id and location.location_type.can_have_children and not request.is_view_only %}
           <a class="btn btn-primary" href="{% url "create_location" domain %}?parent={{ location.get_id }}">
@@ -46,36 +46,36 @@
         {% endif %}
 
         {% if location.user_id %}
-          <a class="btn btn-default" href="{% url "edit_commcare_user" domain location.user_id %}">
+          <a class="btn btn-outline-primary" href="{% url "edit_commcare_user" domain location.user_id %}">
             <i class="fa-solid fa-up-right-from-square"></i> {% trans "Location User" %}
           </a>
         {% endif %}
 
         {% if location.supply_point_id %}
-          <a class="btn btn-default" href="{% url "case_data" domain location.supply_point_id %}">
+          <a class="btn btn-outline-primary" href="{% url "case_data" domain location.supply_point_id %}">
             <i class="fa-solid fa-up-right-from-square"></i> {% trans "View Location Case" %}
           </a>
         {% endif %}
 
       </div>
 
-      <ul class="nav nav-tabs">
+      <ul class="nav nav-tabs">  {# todo B5: css-nav #}
         <li class="{% if form_tab == "basic" %}active{% endif %}">
-          <a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a>
+          <a href="#basic-info" data-bs-toggle="tab">{% trans "Basic" %}</a>
         </li>
 
         <li class="{% if form_tab == "descendants" %}active{% endif %}">
-          <a href="#descendants-info" data-toggle="tab">{% trans "Child Locations" %}</a>
+          <a href="#descendants-info" data-bs-toggle="tab">{% trans "Child Locations" %}</a>
         </li>
 
         {% if users_per_location_form %}
           <li class="{% if form_tab == "users" %}active{% endif %}">
-            <a href="#users" data-toggle="tab">{% trans "Users" %}</a>
+            <a href="#users" data-bs-toggle="tab">{% trans "Users" %}</a>
           </li>
         {% endif %}
 
         {% if products_per_location_form %}
-          <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
+          <li><a href="#products" data-bs-toggle="tab">{% trans "Products" %}</a></li>
         {% endif %}
 
       </ul>
@@ -97,22 +97,22 @@
     <div class="tab-content">
       <div class="tab-pane {% if form_tab == "basic" %}active{% endif %}" id="basic-info">
 
-        <div class="panel panel-modern-gray panel-form-only">
-          <div class="panel-body">
+        <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
+          <div class="card-body">
             <form id="loc_form" class="form form-horizontal" name="product" method="post">
               {% bootstrap_form_errors form %}
-              {% crispy form.location_form %}
+              {% crispy form.location_form %}  {# todo B5: crispy #}
 
-              {% crispy form.custom_location_data.form %}
+              {% crispy form.custom_location_data.form %}  {# todo B5: crispy #}
 
               <input type="hidden" name="form_type" value="location-settings" />
 
               {% if consumption %}
                 <legend>{% trans "Default monthly consumption values" %}</legend>
                 {% for code, amount in consumption %}
-                  <div class="form-group">
-                    <label class="col-sm-3 col-md-4 col-lg-2 control-label">{{ code }}</label>
-                    <div class="col-sm-4 col-md-5 col-lg-3 controls">
+                  <div class="form-group">  {# todo B5: css-form-group #}
+                    <label class="col-md-3 col-lg-4 col-xl-2 form-label">{{ code }}</label>
+                    <div class="col-md-4 col-lg-5 col-xl-3 controls">
                         <span class="form-control uneditable-input">
                           {{ amount }}
                         </span>
@@ -123,7 +123,7 @@
 
               {% if not request.is_view_only %}
                 <div class="form-actions">
-                  <div class="col-sm-offset-3 col-md-offset-4 col-lg-offset-2">
+                  <div class="offset-md-3 offset-lg-4 offset-xl-2">
                     <button type="submit" class="btn btn-primary">
                       {% if location.get_id %}
                         {% trans 'Update' %}
@@ -145,8 +145,8 @@
         {% initial_page_data 'location' location %}
 
         <div class="tab-pane {% if form_tab == "descendants" %}active{% endif %}" id="descendants-info">
-          <div class="panel panel-modern-gray panel-form-only">
-            <div class="panel-body">
+          <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
+            <div class="card-body">
               {% include 'locations/manage/location_template.html' with view_only=request.is_view_only %}
             </div>
           </div>
@@ -156,12 +156,12 @@
       {% if users_per_location_form %}
         <div class="tab-pane {% if form_tab == "users" %}active{% endif %}" id="users">
           <div class="row">
-            <div class="col-sm-12">
+            <div class="col-md-12">
 
               <div class="panel panel-modern-gray panel-form-only">
                 <div class="panel-body">
                   <form class="form-horizontal disable-on-submit{% if not can_edit_users_in_location or request.is_view_only %} form-hide-actions{% endif %}" id="edit_users" action="" method='post'>
-                    {% crispy users_per_location_form %}
+                    {% crispy users_per_location_form %}  {# todo B5: crispy #}
                     <input type="hidden" name="form_type" value="location-users" />
                   </form>
                 </div>
@@ -184,12 +184,12 @@
       {% if products_per_location_form %}
         <div class="tab-pane" id="products">
           <div class="row">
-            <div class="col-sm-12">
-              <div class="panel panel-modern-gray panel-form-only">
-                <div class="panel-body">
+            <div class="col-md-12">
+              <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
+                <div class="card-body">
                   <form class="form-horizontal disable-on-submit{% if request.is_view_only %} form-hide-actions{% endif %}" id="edit_products" action="" method='post'>
                     <input type="hidden" name="form_type" value="location-products" />
-                    {% crispy products_per_location_form %}
+                    {% crispy products_per_location_form %}  {# todo B5: crispy #}
                   </form>
                 </div>
               </div>
