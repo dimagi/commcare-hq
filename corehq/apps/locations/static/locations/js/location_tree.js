@@ -3,7 +3,7 @@ hqDefine('locations/js/location_tree', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap5/alert_user',
     'analytix/js/google',
     'locations/js/search',
 ], function (
@@ -350,7 +350,7 @@ hqDefine('locations/js/location_tree', [
                         locationUtils.reloadLocationSearchSelect();
                     },
                 });
-                $(archive_location_modal).modal('hide');
+                $(archive_location_modal).modal('hide');  /* todo B5: js-modal */
                 googleAnalytics.track.event('Organization Structure', 'Archive');
             }
 
@@ -361,7 +361,7 @@ hqDefine('locations/js/location_tree', [
             };
             ko.cleanNode(archive_location_modal);
             $(archive_location_modal).koApplyBindings(modal_context);
-            $(archive_location_modal).modal('show');
+            $(archive_location_modal).modal('show');  /* todo B5: js-modal */
         };
 
         self.unarchive_loc = function (button, loc_id) {
@@ -407,7 +407,7 @@ hqDefine('locations/js/location_tree', [
                             }
                         },
                     });
-                    $(delete_location_modal).modal('hide');
+                    $(delete_location_modal).modal('hide');  /* todo B5: js-modal */
                     googleAnalytics.track.event('Organization Structure', 'Delete');
                 }
             }
@@ -426,7 +426,7 @@ hqDefine('locations/js/location_tree', [
                     };
                     ko.cleanNode(delete_location_modal);
                     ko.applyBindings(modal_context, delete_location_modal);
-                    $(delete_location_modal).modal('show');
+                    $(delete_location_modal).modal('show');  /* todo B5: js-modal */
                 },
             });
         };
