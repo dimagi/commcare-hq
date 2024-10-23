@@ -11,6 +11,7 @@ from corehq.apps.groups.models import Group
 from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
 
+from corehq.apps.es.filters import domain
 from .exceptions import FixtureVersionError
 
 FIXTURE_BUCKET = 'domain-fixtures'
@@ -306,3 +307,19 @@ class UserLookupTableStatus(models.Model):
         app_label = 'fixtures'
         db_table = 'fixtures_userfixturestatus'
         unique_together = ("user_id", "fixture_type")
+
+
+class ModuleBadgeConfiguration(models.Model):
+    domain = models.CharField(max_length=64, default='', unique=True)
+    name = models.CharField(max_length=64, default='')
+    csql = models.CharField(max_length=2000, default='')
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    deleted = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('domain', 'name')
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.objects.filter(domain=domain, deleted=False)
