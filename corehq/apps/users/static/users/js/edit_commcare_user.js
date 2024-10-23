@@ -38,11 +38,10 @@ hqDefine('users/js/edit_commcare_user', [
     });
 
     $('#reset-password-form').submit(function () {
-        $.ajax({
+        $(this).ajaxSubmit({
             url: $(this).attr('action'),
-            method: $(this).attr('method'),
+            type: 'POST',
             dataType: 'json',
-            data: Object.fromEntries(new FormData(this)),
             success: function (response) {
                 if (response.status === "OK") {
                     alertUser.alert_user(gettext("Password changed successfully."), 'success');

@@ -59,7 +59,7 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
         });
 
         self.isPaginatedListEmpty = ko.computed(function () {
-            return self.paginatedList().length === 0;
+            return self.paginatedList().length == 0;
         });
 
         self.isNewListVisible = ko.computed(function () {
@@ -90,14 +90,12 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
         });
 
         self.allPages = ko.computed(function () {
-            var lastIndex = self.maxPage() + 1;
-            if (self.maxPage() <= 5 || self.currentPage() <= 3) {
-                return _.range(1, Math.min(lastIndex, 6));
-            }
-            if (self.currentPage() >= self.maxPage() - 2) {
-                return _.range(self.maxPage() - 4, lastIndex);
-            }
-            return _.range(self.currentPage() - 2, Math.min(lastIndex, self.currentPage() + 3));
+            var last_ind = self.maxPage() + 1;
+            if (self.maxPage() <= 5 || self.currentPage() <= 3)
+                return _.range(1, Math.min(last_ind, 6));
+            if (self.currentPage() >= self.maxPage() - 2)
+                return _.range(self.maxPage() - 4, last_ind);
+            return _.range(self.currentPage() - 2, Math.min(last_ind, self.currentPage() + 3));
         });
 
         self.utils = {
@@ -147,15 +145,16 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
         };
 
         self.initCreateForm = function () {
-            const $createForm = $("#create-item-form");
+            var $createForm = $("#create-item-form");
             $createForm.submit(function (e) {
                 e.preventDefault();
-                let formData = new FormData($createForm.get(0));
-                formData.set("action", "create");
-                $.ajax({
-                    method: 'POST',
+                $createForm.ajaxSubmit({
+                    url: "",
+                    type: 'post',
                     dataType: 'json',
-                    data: Object.fromEntries(formData),
+                    data: {
+                        'action': 'create',
+                    },
                     statusCode: self.handleStatusCode,
                     success: function (data) {
                         $createForm[0].reset();
@@ -251,10 +250,9 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             return null;
         };
 
-        self.initRow = function () {
+        self.initRow = function (rowElems, paginatedItem) {
             // Intended to be overridden with additional initialization for
             // each row in the paginated list.
-            // Arguments: rowElems, paginatedItem
         };
 
         return self;
@@ -296,12 +294,14 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             var $updateForm = $(elems).find('.update-item-form');
             if ($updateForm) {
                 $updateForm.submit(function (e) {
-                    let formData = new FormData($updateForm.get(0));
-                    formData.set("action", "update");
                     e.preventDefault();
-                    $.ajax({
-                        method: 'POST',
-                        data: Object.fromEntries(formData),
+                    $updateForm.ajaxSubmit({
+                        url: "",
+                        type: 'post',
+                        dataType: 'json',
+                        data: {
+                            action: 'update',
+                        },
                         success: function (data) {
                             if (data.updatedItem) {
                                 self.dismissModals();

@@ -1,6 +1,7 @@
 hqDefine('hqwebapp/js/bootstrap3/email-request', [
     "jquery",
     "knockout",
+    "jquery-form/dist/jquery.form.min",
     "hqwebapp/js/bootstrap3/hq.helpers",
 ], function ($, ko) {
 
@@ -65,15 +66,11 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
             } else if (!self.isRequestReportSubmitting) {
                 self.$submitBtn.button('loading');
                 self.cancelBtnEnabled(false);
-                self.reportUrl(location.href);
-                self.isRequestReportSubmitting = true;
-                $.ajax({
-                    method: "POST",
+                self.$formElement.ajaxSubmit({
+                    type: "POST",
                     url: self.$formElement.attr('action'),
-                    data: new FormData(self.$formElement.get(0)),
-                    contentType: false,
-                    processData: false,
-                    enctype: 'multipart/form-data',
+                    beforeSerialize: hqwebappRequestReportBeforeSerialize,
+                    beforeSubmit: hqwebappRequestReportBeforeSubmit,
                     success: hqwebappRequestReportSucccess,
                     error: hqwebappRequestReportError,
                 });
@@ -87,7 +84,7 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
 
         self.resetForm = function () {
             self.$formElement.find("button[type='submit']").button('reset');
-            self.$formElement.get(0).reset();
+            self.$formElement.resetForm();
             self.cancelBtnEnabled(true);
             self.$submitBtn.button('reset');
             resetErrors();
@@ -107,6 +104,14 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
             self.hasSubjectError(false);
             self.hasEmailInputError(false);
             self.recipientsErrorMessage(null);
+        }
+
+        function hqwebappRequestReportBeforeSerialize() {
+            self.reportUrl(location.href);
+        }
+
+        function hqwebappRequestReportBeforeSubmit() {
+            self.isRequestReportSubmitting = true;
         }
 
         function hqwebappRequestReportSucccess() {
