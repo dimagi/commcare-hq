@@ -1,9 +1,9 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
 {% block page_content %}
-  <div class="col-sm-6">
+  <div class="col-md-6">
     <h2>{% trans "Organizations" %}</h2>
 
     <p>
@@ -27,7 +27,7 @@
       {% csrf_token %}
       <input type="hidden" name="redirect" value="{{ request.path }}">
       <input value="{% trans "Remove Mobile Workers From Organizations" %}"
-             type="submit" class="btn btn-danger"></input>
+             type="submit" class="btn btn-outline-danger"></input>
     </form>
     </p>
 
