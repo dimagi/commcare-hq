@@ -1,15 +1,13 @@
-hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
+hqDefine("hqwebapp/js/hq.helpers", [
     'jquery',
     'knockout',
     'underscore',
     'analytix/js/google',
-    'es6!hqwebapp/js/bootstrap5_loader',
 ], function (
     $,
     ko,
     _,
-    googleAnalytics,
-    bootstrap
+    googleAnalytics
 ) {
     // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
     $(document).on('submit', 'form', function (ev) {
@@ -72,7 +70,21 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
             if (opts) {
                 options = _.extend(options, opts);
             }
-            new bootstrap.Popover($link, options);
+            if (window.USE_BOOTSTRAP5) {
+                hqRequire(['es6!hqwebapp/js/bootstrap5_loader'], function (bootstrap) {
+                    new bootstrap.Popover($link, options);
+                });
+            } else {
+                if (!$link.data('content')) {
+                    options.content = function () {
+                        return $('#popover_content_wrapper').html();
+                    };
+                }
+                if (!$link.data("title")) {
+                    options.template = '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>';
+                }
+                $link.popover(options);
+            }
 
             // Prevent jumping to the top of the page when link is clicked
             $link.click(function (event) {

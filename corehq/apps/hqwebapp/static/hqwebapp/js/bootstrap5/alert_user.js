@@ -17,11 +17,12 @@
 hqDefine("hqwebapp/js/bootstrap5/alert_user", [
     "jquery",
     "knockout",
-    "hqwebapp/js/bootstrap5/hq.helpers",
+    "hqwebapp/js/hq.helpers",
 ],
 function (
     $,
-    ko
+    ko,
+    stuff
 ) {
     var MessageAlert = function (message, tags, fadeOut) {
         var self = {
