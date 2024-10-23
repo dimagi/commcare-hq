@@ -1,6 +1,6 @@
 {% load hq_shared_tags %}
 
-<select class="locations-widget-primary form-control" id="{{ css_id }}" name="{{ name }}" style="width: 30em;"
+<select class="locations-widget-primary form-select" id="{{ css_id }}" name="{{ name }}" style="width: 30em;"  {# todo B5: inline-style #}
   {% if attrs.disabled %}
         disabled="disabled"
   {% endif %}
