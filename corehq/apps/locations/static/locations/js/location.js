@@ -4,12 +4,12 @@ hqDefine("locations/js/location", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap5/alert_user',
     'analytix/js/google',
     'locations/js/location_drilldown',
     'locations/js/location_tree',
     'hqwebapp/js/select_2_ajax_widget',
-    'hqwebapp/js/bootstrap3/widgets',       // custom data fields use a .hqwebapp-select2
+    'hqwebapp/js/bootstrap5/widgets',       // custom data fields use a .hqwebapp-select2
     'locations/js/widgets',
 ], function (
     $,
@@ -58,7 +58,7 @@ hqDefine("locations/js/location", [
                             TEMPLATE_STRINGS.new_user_success({name: data.user.text}),
                             'success'
                         );
-                        $('#new_user').modal('hide');
+                        $('#new_user').modal('hide');  /* todo B5: js-modal */
                     } else {
                         form_node.html(data.form_html);
                     }
