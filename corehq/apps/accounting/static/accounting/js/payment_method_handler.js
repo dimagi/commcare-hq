@@ -63,11 +63,7 @@ hqDefine('accounting/js/payment_method_handler', [
         self.paymentMethod = ko.observable();
 
         self.submitForm = function () {
-            const $form = $('#' + self.formId);
-            $.ajax({
-                url: $form.attr("action"),
-                data: Object.fromEntries(new FormData($form.get(0))),
-                method: 'POST',
+            $('#' + self.formId).ajaxSubmit({
                 success: self.handleSuccess,
                 error: self.handleGeneralError,
             });
@@ -204,13 +200,10 @@ hqDefine('accounting/js/payment_method_handler', [
         self.removeSavedCard = function () {
             self.isRemovingCard(true);
             self.showConfirmRemoveCard(false);
-            const $form = $('#' + self.formId);
-            let formData = new FormData($form.get(0));
-            formData.set("removeCard", true);
-            $.ajax({
-                url: $form.attr("action"),
-                method: "POST",
-                data: Object.fromEntries(formData),
+            $('#' + self.formId).ajaxSubmit({
+                data: {
+                    removeCard: true,
+                },
                 success: function (response) {
                     self.handleProcessingErrors(response);
                     for (var i = 0; i < self.handlers.length; i++) {
