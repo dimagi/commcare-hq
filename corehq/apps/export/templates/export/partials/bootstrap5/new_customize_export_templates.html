@@ -7,7 +7,7 @@
     <legend data-bind="visible: table.isVisible(),
                        visible: table.label() !== 'Case History'">
       <span>
-        <input type="checkbox"  {# todo B5: css:checkbox #}
+        <input type="checkbox"
                data-bind="checked: table.selected, attr: { disabled: {{ disable_table_checkbox|JSON }} }" />
       </span>
       <span>
@@ -34,43 +34,36 @@
     <div class="col-md-12"
          data-bind="slideVisible: table.selected">
       {% if not export_instance.is_odata_config %}
-        <div class="form-group">  {# todo B5: css:form-group #}
-          <label class="col-md-4 col-lg-3 col-xl-2 form-label">
+        <div class="mb-3">
+          <label class="form-label">
             {% trans "Sheet Name" %}
           </label>
-          <div class="col-md-9 col-lg-8 col-xl-6">
-            <input type="text"
-                   class="form-control"
-                   data-bind="value: table.label" />
-          </div>
+          <input type="text"
+                 class="form-control"
+                 data-bind="value: table.label" />
         </div>
       {% endif %}
       <!-- ko if: table.is_user_defined -->
-      <div class="form-group">  {# todo B5: css:form-group #}
-        <label class="col-md-4 col-lg-3 col-xl-2 form-label">
+      <div class="mb-3">
+        <label class="form-label">
           {% trans "Custom Path" %}
         </label>
-        <div class="col-md-4 col-lg-3 col-xl-2">
-          <input type="text"
-                 class="form-control"
-                 data-bind="value: table.customPathString" />
-        </div>
+        <input type="text"
+               class="form-control"
+               data-bind="value: table.customPathString" />
       </div>
       <!-- /ko -->
 
       {% if request|toggle_enabled:"SUPPORT_GEO_JSON_EXPORT" %}
-      <div id="select-geo-property" class="form-group" hidden>  {# todo B5: css:form-group #}
-        <label class="col-md-4 col-lg-3 col-xl-2 form-label" for="geo-property-select">
+      <div id="select-geo-property" class="mb-3" hidden>
+        <label class="form-label" for="geo-property-select">
           {% trans 'Select geo property' %}
         </label>
-        <div class="col-md-9 col-lg-8 col-xl-6">
-          <select
-            id="geo-property-select"
-            class="control form-control"
-            data-bind="options: $parent.geoProperties,
-              value: table.selected_geo_property">
-          </select>
-        </div>
+        <select
+          id="geo-property-select"
+          class="control form-control"
+          data-bind="options: $parent.geoProperties, value: table.selected_geo_property">
+        </select>
       </div>
       {% endif %}
 
@@ -277,25 +270,25 @@
                            success: column.selectedForSort,
                            'selected-for-sort': column.selectedForSort
                          }"
-              {% if request|request_has_privilege:"EXPORT_MULTISORT" %}style="cursor:pointer"{% endif %}>  {# todo B5: inline style #}
+              {% if request|request_has_privilege:"EXPORT_MULTISORT" %}class="clickable"{% endif %}>
             <td class="text-center">
               <span class="sortable-handle">
                 <i class="fa-solid fa-up-down"></i>
               </span>
               &nbsp;&nbsp;&nbsp;
               <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
-              <input type="checkbox"  {# todo B5: css:checkbox #}
+              <input type="checkbox"
                      class="field-include"
-                     disabled="disabled" />
+                     disabled="disabled" />aaa
               <!--/ko-->
               <!--ko if: $root.isReservedOdataColumn(column, $parentContext.$index()) -->
-              <input type="checkbox"  {# todo B5: css:checkbox #}
+              <input type="checkbox"
                      class="field-include"
                      checked="checked"
-                     disabled="disabled" />
+                     disabled="disabled" />bbb
               <!--/ko-->
               <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) || $root.isReservedOdataColumn(column, $parentContext.$index()) -->
-              <input type="checkbox"  {# todo B5: css:checkbox #}
+              <input type="checkbox"
                      class="field-include export-table-checkbox"
                      data-bind="checked: column.selected" />
               <!--/ko-->
@@ -337,11 +330,11 @@
               <span
                 data-bind="text: column.item.case_property_group_name"
                 class="badge text-bg-secondary"
-                style="background-color: #495057"  {# todo B5: inline style #}
               ></span>
               <!-- ko if: !column.isEditable() -->
-              <code data-bs-toggle="tooltip"
+              <span data-bs-toggle="tooltip"
                     data-placement="top"
+                    class="font-monospace"
                     data-bind="text: column.formatProperty(),
                                attr: {
                                  'data-original-title': column.help_text,
@@ -350,7 +343,7 @@
                                css: {
                                  'export-tooltip': column.translatedHelp(),
                                  'break-all-words': 1,
-                               }"></code>
+                               }"></span>
               <!-- /ko -->
               <!-- ko if: column.isEditable() -->
               <input type="text"
@@ -374,54 +367,45 @@
               <div class="form-horizontal col-sm-12"
                     data-bind="if: column.doc_type() === 'SplitUserDefinedExportColumn',
                                submit: column.addUserDefinedOption">
-                <div class="form-group">  {# todo B5: css:form-group #}
-                  <select style="width:200px"  {# todo B5: inline style #}
-                          class="form-control"
-                          data-bind="options: $root.splitTypes.userDefined,
-                                     value: column.split_type"></select>
-                </div>
+                <select style="width:200px"
+                        class="form-select"
+                        data-bind="options: $root.splitTypes.userDefined,
+                                   value: column.split_type"></select>
                 <!-- ko if: column.split_type() === $root.splitTypes.multiselect -->
-                <div class="form-group">  {# todo B5: css:form-group #}
-                  <button class="btn btn-outline-primary btn-sm"
-                          data-bind="visible: !column.showOptions(),
-                                     click: function() {
-                                       column.showOptions(true);
-                                     }">
-                    {% trans "Show Options" %}
-                  </button>
+                <button class="btn btn-outline-primary btn-sm my-2"
+                        data-bind="visible: !column.showOptions(),
+                                   click: function() {
+                                     column.showOptions(true);
+                                   }">
+                  {% trans "Show Options" %}
+                </button>
 
-                  <button class="btn btn-outline-primary btn-sm"
-                          data-bind="visible: column.showOptions(),
-                                     click: function() {
-                                       column.showOptions(false);
-                                     }">
-                    {% trans "Hide Options" %}
-                  </button>
-                </div>
+                <button class="btn btn-outline-primary btn-sm"
+                        data-bind="visible: column.showOptions(),
+                                   click: function() {
+                                     column.showOptions(false);
+                                   }">
+                  {% trans "Hide Options" %}
+                </button>
                 <div data-bind="visible: column.showOptions()">
                   <ul class="list-group"
                       data-bind="foreach: column.user_defined_options">
                     <li class="list-group-item">
                       <span data-bind="text: $data"></span>
-                      <i style="cursor: pointer"  {# todo B5: inline style #}
-                         class="text-danger fa-regular fa-trash-can float-end"
+                      <i class="clickable text-danger fa-regular fa-trash-can float-end"
                          data-bind="click: column.removeUserDefinedOption.bind(column)"></i>
                     </li>
                   </ul>
-                  <div class="form-group">  {# todo B5: css:form-group #}
-                    <div style="max-width: 200px"  {# todo B5: inline style #}
-                         class="input-group">
-                      <input class="form-control input-sm"
-                             type="text"
-                             data-bind="value: column.userDefinedOptionToAdd"/>
-                      <span class="input-group-btn">  {# todo B5: css:input-group-btn #}
-                        <button type="submit"
-                                class="btn btn-outline-primary btn-sm"
-                                data-bind="click: column.addUserDefinedOption">
-                          {% trans "Add" %}
-                        </button>
-                      </span>
-                    </div>
+                  <div style="max-width: 200px"
+                       class="input-group">
+                    <input class="form-control input-sm"
+                           type="text"
+                           data-bind="value: column.userDefinedOptionToAdd"/>
+                    <button type="submit"
+                            class="btn btn-outline-primary btn-sm"
+                            data-bind="click: column.addUserDefinedOption">
+                      {% trans "Add" %}
+                    </button>
                   </div>
                 </div>
                 <!-- /ko -->
