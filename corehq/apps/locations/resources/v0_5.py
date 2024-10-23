@@ -9,10 +9,7 @@ from tastypie.resources import ModelResource
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.resources import HqBaseResource
-from corehq.apps.api.resources.auth import (
-    DomainAdminAuthentication,
-    RequirePermissionAuthentication,
-)
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import absolute_reverse
 
@@ -58,7 +55,7 @@ class LocationTypeResource(BaseLocationsResource):
         return absolute_reverse('api_dispatch_detail', kwargs={
             'resource_name': self._meta.resource_name,
             'domain': obj.domain,
-            'api_name': self._meta.api_name,
+            'api_name': self.api_name,
             'pk': obj.pk
         })
 
@@ -107,6 +104,6 @@ class LocationResource(BaseLocationsResource):
         return absolute_reverse('api_dispatch_detail', kwargs={
             'resource_name': self._meta.resource_name,
             'domain': obj.domain,
-            'api_name': self._meta.api_name,
+            'api_name': self.api_name,
             'location_id': obj.location_id
         })
