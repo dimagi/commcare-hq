@@ -1420,9 +1420,7 @@ class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSp
             return None
         return user
 
-    def _get_urls(self):
-        from django.urls import re_path
-        return self.prepend_urls() + [
-            re_path(r"^$", self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
-            re_path(r"^schema/$", self.wrap_view('get_schema'), name="api_get_schema"),
+    def prepend_urls(self):
+        return [
+            url(r"^$", self.wrap_view('dispatch_detail'), name='api_dispatch_detail'),
         ]
