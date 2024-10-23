@@ -8,7 +8,7 @@ hqDefine("locations/js/location", [
     'locations/js/location_drilldown',
     'locations/js/location_tree',
     'hqwebapp/js/select_2_ajax_widget',
-    'hqwebapp/js/bootstrap3/widgets',       // custom data fields use a .hqwebapp-select2
+    'hqwebapp/js/bootstrap5/widgets',       // custom data fields use a .hqwebapp-select2
     'locations/js/widgets',
 ], function (
     $,
@@ -29,7 +29,6 @@ hqDefine("locations/js/location", [
     };
 
     $(function () {
-
         var location_url = initialPageData.get('api_root');
         var loc_id = initialPageData.get('location_id');
         var loc_type = initialPageData.get('location_type');
