@@ -63,7 +63,7 @@ hqDefine('analytix/js/gtx', [
 
     /**
      * Modified version of utils.initApi to enable GTM on the India environment.
-     * This does not checks for `global.isEnabled` and instead directly checks for the environment.
+     * This does not checks for `global.isEnabled` and instead directly checks for the environment See 'gtm.html'.
      * This is done to avoid enabling other analytics tooling on the India environment.
      * See the PR description (https://github.com/dimagi/commcare-hq/pull/35238) for more details.
     */
@@ -73,7 +73,8 @@ hqDefine('analytix/js/gtx', [
         if (_.isString(scriptUrls)) {
             scriptUrls = [scriptUrls];
         }
-
+        
+        // This check 'isGTMEnabled' is different from the original function and its value is set in 'gtm.html'
         if (!isGTMEnabled) {
             logger.debug.log("Failed to initialize because analytics are disabled");
             ready.reject();
