@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http.response import Http404
 from django.urls import reverse
@@ -290,5 +291,6 @@ def dismiss_self_signup(request, domain):
     self_signup = SelfSignupWorkflow.get_in_progress_for_domain(domain)
     if self_signup is not None:
         self_signup.complete_workflow(SoftwarePlanEdition.COMMUNITY)
+        messages.success(request, _("Subscribed to Community Edition."))
 
     return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))

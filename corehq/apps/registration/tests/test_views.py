@@ -31,7 +31,7 @@ class TestConfirmDomainView(TestCase):
         self.client.defaults.update({'plan': DefaultProductPlan.get_default_plan_version()})
 
     def tearDown(self):
-        SelfSignupWorkflow.get_in_progress_for_domain.reset_cache(self.domain.name)
+        SelfSignupWorkflow.get_in_progress_for_domain.clear(SelfSignupWorkflow, self.domain.name)
         super().tearDown()
 
     def create_registration_request(self, guid):

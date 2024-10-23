@@ -26,10 +26,10 @@
       <form action="{% url 'dismiss_self_signup' domain %}" method="POST">
         {% csrf_token %}
         <p class="small">
-          {% blocktrans %}
-            Prefer to stay with Community Edition instead?
-            <button class="btn btn-sm btn-link p-0" type="submit">Don't show this banner again.</button>
-          {% endblocktrans %}
+          {% trans "Prefer to stay with Community Edition instead?" %}
+          <button class="btn btn-sm btn-link p-0" type="submit">
+            {% trans "Don't show this banner again." %}
+          </button>
         </p>
       </form>
     </div>

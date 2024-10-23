@@ -8,6 +8,7 @@ from memoized import memoized
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.domain.models import Domain
+from corehq.util.quickcache import quickcache
 
 log = logging.getLogger(__name__)
 
@@ -170,7 +171,7 @@ class SelfSignupWorkflow(models.Model):
     )
 
     @classmethod
-    @memoized
+    @quickcache(['domain'], timeout=24 * 60 * 60)
     def get_in_progress_for_domain(cls, domain):
         try:
             workflow = cls.objects.get(
@@ -185,4 +186,4 @@ class SelfSignupWorkflow(models.Model):
         self.completed_on = datetime.datetime.now()
         self.subscribed_edition = edition
         self.save()
-        self.get_in_progress_for_domain.reset_cache(self.domain)
+        self.get_in_progress_for_domain.clear(self.__class__, self.domain)
