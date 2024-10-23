@@ -6,7 +6,7 @@
 {% endblock %}
 
 <div class="row">
-  <div class="col-lg-12" style="clear: both">
+  <div class="col-xl-12" style="clear: both">  {# todo B5: inline-style #}
     <div id="location_tree">
       <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
     </div>
@@ -17,7 +17,7 @@
   <div class="loc_section">
     <!-- header bar -->
     <div class="loc_header clearfix" data-bind="if: name() != '_root'">
-      <div style="float:right;" data-bind="if: can_edit()" id="button-template">
+      <div style="float:right;" data-bind="if: can_edit()" id="button-template">  {# todo B5: inline-style #}
         {% if not show_inactive %}
           <a class="btn btn-primary"
              data-bind="attr: { href: loc_edit_url(uuid()) }">
@@ -32,19 +32,19 @@
         {% endif %}
         {% if not view_only %}
           {% if show_inactive %}
-            <button class="btn btn-default"
+            <button class="btn btn-outline-primary"
                     data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
               <i class="fa fa-archive"></i>
               {% trans "Unarchive" %}
             </button>
           {% else %}
-            <button class="btn btn-default"
+            <button class="btn btn-outline-primary"
                     data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
               <i class="fa fa-archive"></i>
               {% trans "Archive" %}
             </button>
           {% endif %}
-          <button class="btn btn-danger"
+          <button class="btn btn-outline-danger"
                   data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
             <i class="fa-regular fa-trash-can"></i>
             {% trans "Delete" %}
@@ -68,8 +68,8 @@
         <span class="loc_name" data-bind="text: name"></span>
         <span class="loc_type">(<span data-bind="text: type"></span>)</span>
       </div>
-      <div style="clear: both;"></div>
-      <hr style="margin: 0px;"/>
+      <div style="clear: both;"></div>  {# todo B5: inline-style #}
+      <hr style="margin: 0px;"/>  {# todo B5: inline-style #}
     </div>
 
     <!-- child content -->
@@ -112,8 +112,8 @@
     <div class="modal fade" id="delete-location-modal">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+          <div class="modal-header">  {# todo B5: css-modal-header #}
+            <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
             <h4 class="modal-title">{% trans "Delete Location:" %} <span data-bind="text: name" /></h4>
           </div>
           <div class="modal-body">
@@ -128,8 +128,8 @@
             <input data-bind="value: signOff, valueUpdate: 'input'" />
           </div>
           <div class="modal-footer">
-            <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
-            <button data-bind="click: delete_fn, css: {disabled: !(signOff() == count)}" class="btn btn-danger">{% trans "Delete" %}</button>
+            <button data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Cancel" %}</button>
+            <button data-bind="click: delete_fn, css: {disabled: !(signOff() == count)}" class="btn btn-outline-danger">{% trans "Delete" %}</button>
           </div>
         </div>
       </div>
@@ -138,8 +138,8 @@
     <div class="modal fade" id="archive-location-modal">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+          <div class="modal-header">  {# todo B5: css-modal-header #}
+            <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
             <h4 class="modal-title">{% trans "Archive Location:" %} <span data-bind="text: name" /></h4>
           </div>
           <div class="modal-body">
@@ -153,8 +153,8 @@
             </p>
           </div>
           <div class="modal-footer">
-            <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
-            <button data-bind="click: archive_fn" class="btn btn-danger">{% trans "Archive" %}</button>
+            <button data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Cancel" %}</button>
+            <button data-bind="click: archive_fn" class="btn btn-outline-danger">{% trans "Archive" %}</button>
           </div>
         </div>
       </div>
