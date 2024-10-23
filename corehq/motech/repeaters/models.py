@@ -289,9 +289,14 @@ class Repeater(RepeaterSuperProxy):
         db_table = 'repeaters_repeater'
         indexes = [
             models.Index(
-                name='is_deleted_partial_idx',
+                name='deleted_partial_idx',
                 fields=['id'],
                 condition=models.Q(is_deleted=False),
+            ),
+            models.Index(
+                name="deleted_paused_partial_idx",
+                fields=["id"],
+                condition=models.Q(("is_deleted", False), ("is_paused", False)),
             ),
         ]
 
