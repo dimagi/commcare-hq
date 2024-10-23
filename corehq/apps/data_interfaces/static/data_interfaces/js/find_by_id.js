@@ -5,6 +5,7 @@ hqDefine("data_interfaces/js/find_by_id", [
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'analytix/js/kissmetrix',
+    'commcarehq_b3',
 ], function (
     $,
     _,

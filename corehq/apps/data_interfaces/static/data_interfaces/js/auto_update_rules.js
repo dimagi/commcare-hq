@@ -6,6 +6,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
     'analytix/js/google',
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/search_box',
+    'commcarehq_b3',
 ], function (
     $,
     ko,
