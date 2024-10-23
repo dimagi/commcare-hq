@@ -238,27 +238,43 @@ class RepeaterManager(models.Manager):
         """
         Return all Repeaters ready to be forwarded.
         """
-        not_paused = models.Q(is_paused=False)
-        next_attempt_not_in_the_future = (
-            models.Q(next_attempt_at__isnull=True)
-            | models.Q(next_attempt_at__lte=timezone.now())
-        )
-        repeat_records_ready_to_send = models.Q(
-            repeat_records__state__in=(State.Pending, State.Fail)
-        )
-        return (
-            self.get_queryset()
-            .filter(not_paused)
-            .filter(next_attempt_not_in_the_future)
-            .filter(repeat_records_ready_to_send)
+        return self._all_ready_next_attempt_null().union(
+            self._all_ready_next_attempt_now(),
+            all=True,
         )
 
     def get_all_ready_ids_by_domain(self):
+        next_attempt_null = self._all_ready_next_attempt_null().values_list('domain', 'id')
+        next_attempt_now = self._all_ready_next_attempt_now().values_list('domain', 'id')
+        query = next_attempt_null.union(next_attempt_now, all=True)
         results = defaultdict(list)
-        query = self.all_ready().values_list('domain', 'id')
         for (domain, id_uuid) in query.all():
             results[domain].append(id_uuid.hex)
         return results
+
+    def all_ready_count(self):
+        return (
+            self._all_ready_next_attempt_null().count()
+            + self._all_ready_next_attempt_now().count()
+        )
+
+    def _all_ready_next_attempt_null(self):
+        # Slower query. Uses deleted_partial_idx
+        return (
+            self.get_queryset()
+            .filter(is_paused=False)
+            .filter(next_attempt_at__isnull=True)
+            .filter(repeat_records__state__in=(State.Pending, State.Fail))
+        )
+
+    def _all_ready_next_attempt_now(self):
+        # Fast query. Uses deleted_paused_partial_idx and state_partial_idx
+        return (
+            self.get_queryset()
+            .filter(is_paused=False)
+            .filter(next_attempt_at__lte=timezone.now())
+            .filter(repeat_records__state__in=(State.Pending, State.Fail))
+        )
 
     def get_queryset(self):
         repeater_obj = self.model()
@@ -299,9 +315,14 @@ class Repeater(RepeaterSuperProxy):
         db_table = 'repeaters_repeater'
         indexes = [
             models.Index(
-                name='is_deleted_partial_idx',
+                name='deleted_partial_idx',
                 fields=['id'],
                 condition=models.Q(is_deleted=False),
+            ),
+            models.Index(
+                name="deleted_paused_partial_idx",
+                fields=["id"],
+                condition=models.Q(("is_deleted", False), ("is_paused", False)),
             ),
         ]
 

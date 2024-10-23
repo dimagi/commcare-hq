@@ -21,7 +21,18 @@ class Migration(migrations.Migration):
                     index=models.Index(
                         condition=models.Q(("is_deleted", False)),
                         fields=["id"],
-                        name="is_deleted_partial_idx",
+                        name="deleted_partial_idx",
+                    ),
+                ),
+                migrations.AddIndex(
+                    model_name="repeater",
+                    index=models.Index(
+                        condition=models.Q(
+                            ("is_deleted", False),
+                            ("is_paused", False),
+                        ),
+                        fields=["id"],
+                        name="deleted_paused_partial_idx",
                     ),
                 ),
                 migrations.AddIndex(
@@ -46,19 +57,34 @@ class Migration(migrations.Migration):
                     """
                 ),
 
-                # Replace with a partial index on `id_` column
+                # Replace with a partial index on `id_` column. Used
+                # when next_attempt_at is null
                 migrations.RunSQL(
                     sql="""
-                    CREATE INDEX CONCURRENTLY "is_deleted_partial_idx"
+                    CREATE INDEX CONCURRENTLY "deleted_partial_idx"
                         ON "repeaters_repeater" ("id_")
                         WHERE NOT "is_deleted";
                     """,
                     reverse_sql="""
-                    DROP INDEX CONCURRENTLY "is_deleted_partial_idx";
+                    DROP INDEX CONCURRENTLY "deleted_partial_idx";
+                    """
+                ),
+
+                # Add partial index for is_deleted and is_paused on `id_`
+                # column. Used when next_attempt_at is not null
+                migrations.RunSQL(
+                    sql="""
+                    CREATE INDEX CONCURRENTLY "deleted_paused_partial_idx"
+                        ON "repeaters_repeater" ("id_")
+                        WHERE (NOT "is_deleted" AND NOT "is_paused");
+                    """,
+                    reverse_sql="""
+                    DROP INDEX CONCURRENTLY "deleted_paused_partial_idx";
                     """
                 ),
 
                 # Add partial index for RepeatRecord.state on `repeater_id`
+                # column. Used when next_attempt_at is not null
                 migrations.RunSQL(
                     sql="""
                     CREATE INDEX CONCURRENTLY "state_partial_idx"

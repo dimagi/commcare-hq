@@ -977,3 +977,8 @@ class TestIsSuccessResponse(SimpleTestCase):
 
     def test_none_response(self):
         self.assertFalse(is_success_response(None))
+
+
+def test_repeater_all_ready_union_all_sql():
+    sql_str = str(Repeater.objects.all_ready().query)
+    assert_in('UNION ALL', sql_str)
