@@ -6,6 +6,7 @@ hqDefine("cloudcare/js/form_entry/utils", [
     '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
+    'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/errors',
     'cloudcare/js/formplayer/constants',
@@ -16,6 +17,7 @@ hqDefine("cloudcare/js/form_entry/utils", [
     MapboxGeocoder,
     initialPageData,
     toggles,
+    cloudcareUtils,
     formEntryConst,
     errors
 ) {
@@ -65,7 +67,7 @@ hqDefine("cloudcare/js/form_entry/utils", [
             ko.cleanNode($div[0]);
             $div.koApplyBindings(form);
 
-            if ($debug.length) {
+            if ($debug.length && !cloudcareUtils.smallScreenIsEnabled()) {
                 cloudCareDebugger = new CloudCareDebugger({
                     baseUrl: formJSON.xform_url,
                     formSessionId: formJSON.session_id,

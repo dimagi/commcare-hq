@@ -1,12 +1,11 @@
 body {
-  overflow-x: hidden;
+  overflow: hidden;
   background-color: $cc-bg;
 }
 
-.cloudcare-home-content {
-  padding: 0 0 2rem;
+#cloudcare-main, #main-container {
+  height: 100vh;
 }
-
 
 #hq-footer {
   display: none;
@@ -35,8 +34,23 @@ body {
   padding: 14px 8px 7px;
 }
 
+#content-plus-persistent-menu-container {
+  height: calc(100vh - #{$cloudcare-nav-height});
+}
+
+.has-breadcrumbs #content-plus-persistent-menu-container {
+  height: calc(100vh - #{$cloudcare-nav-height} - $breadcrumb-height);
+}
+
+#sidebar-and-content.remove-margins-on-mobile {
+  @include media-breakpoint-down(sm) {
+    margin: 0 !important;
+  }
+}
+
 #content-container {
   background: transparent;
+  max-width: 1000px;
 }
 
 @media print {
@@ -50,10 +64,6 @@ body {
 
   .noprint-sub-container {
     display: none !important;
-  }
-
-  #cloudcare-main {
-    padding: 0px;
   }
 
   video {

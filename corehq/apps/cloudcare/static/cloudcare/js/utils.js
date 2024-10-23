@@ -130,7 +130,7 @@ hqDefine('cloudcare/js/utils', [
 
     var getRegionContainer = function () {
         const RegionContainer = Marionette.View.extend({
-            el: "#menu-container",
+            el: "#main-container",
 
             regions: {
                 main: "#menu-region",
