@@ -233,7 +233,7 @@ class TestDoesAppHaveMobileUCRV1Refs(TestCase, SuiteMixin):
         return app
 
     def test_does_app_have_mobile_ucr_v1_refs(self):
-        app_with_refs = self._create_app_with_form('reports_module_data_entry')
+        app_with_refs = self._create_app_with_form('reports_module_data_entry_mobile_ucr_v1')
         self.assertTrue(does_app_have_mobile_ucr_v1_refs(app_with_refs))
         app_without_refs = self._create_app_with_form('normal-suite')
         self.assertFalse(does_app_have_mobile_ucr_v1_refs(app_without_refs))
