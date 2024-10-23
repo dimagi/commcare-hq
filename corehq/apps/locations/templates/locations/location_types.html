@@ -1,8 +1,8 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'locations/js/location_types' %}
+{% requirejs_main_b5 'locations/js/location_types' %}
 
 {% block page_content %}
   {% initial_page_data 'location_types' location_types %}
@@ -10,7 +10,7 @@
   {% initial_page_data 'suggest_orphan_case_alerts_setting' suggest_orphan_case_alerts_setting %}
   {% initial_page_data 'project_settings_url' project_settings_url %}
   <div class="row">
-    <div class="col-sm-8">
+    <div class="col-md-8">
       <h2>{% trans "Organization Levels" %}</h2>
       <p>
         {% blocktrans %}
@@ -38,22 +38,22 @@
   <form id="settings" class="form form-horizontal" method="post">
     {% csrf_token %}
     <fieldset>
-      <div class="col-sm-12">
-        <div class="form-group">
-          <button type="submit" class="btn btn-primary pull-right" disabled>
+      <div class="col-md-12">
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <button type="submit" class="btn btn-primary float-end" disabled>
             {% trans "Save" %}
           </button>
-          <button type="button" class="btn btn-default" data-bind="click: new_loctype">
+          <button type="button" class="btn btn-outline-primary" data-bind="click: new_loctype">
             <i class="fa fa-plus"></i> {% trans "New Organization Level" %}
           </button>
           <hr />
-          <div class="pull-right">
+          <div class="float-end">
             <label>
-              <input type="checkbox" data-bind="checked:advanced_mode"/>
+              <input type="checkbox" data-bind="checked:advanced_mode"/>  {# todo B5: css-checkbox #}
               {% trans "Advanced mode" %}
             </label>
           </div>
-          <div class="alert alert-danger" style="display: none"
+          <div class="alert alert-danger" style="display: none"  {# todo B5: inline-style #}
                data-bind="visible: loc_types_error">
             {% trans "Organization Levels cannot be their own ancestors." %}
           </div>
@@ -183,7 +183,7 @@
             </thead>
             <tbody data-bind="foreach: loc_types">
             <tr data-bind="bind_element: Object()">
-              <td class="form-group" data-bind="css: { 'has-error': name_error() || duplicate_name_error() }">
+              <td class="form-group" data-bind="css: { 'has-error': name_error() || duplicate_name_error() }">  {# todo B5: css-form-group, css-has-error #}
                 <input class="loctype_name form-control" data-bind="value: name" type="text" />
                 <div class="help-block" data-bind="visible: name_error">
                   {% trans "Required" %}
@@ -192,8 +192,8 @@
                   {% trans "This field must be unique" %}
                 </div>
               </td>
-              <td class="form-group">
-                <select class="form-control"
+              <td class="form-group">  {# todo B5: css-form-group #}
+                <select class="form-select"
                         data-bind="options: $root.loc_type_options($data),
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
@@ -201,15 +201,15 @@
                                                    optionsCaption: '\u2013top level\u2013'">
                 </select>
               </td>
-              <td class="form-group" data-bind="visible: $parent.advanced_mode,
-                                                              css: { 'has-error': duplicate_code_error }">
+              <td class="form-group" data-bind="visible: $parent.advanced_mode,  {# todo B5: css-form-group #}
+                                                              css: { 'has-error': duplicate_code_error }">  {# todo B5: css-has-error #}
                 <input class="form-control typecode" data-bind="value: code" type="text" />
                 <div class="help-block" data-bind="visible: duplicate_code_error">
                   {% trans "This field must be unique" %}
                 </div>
               </td>
-              <td class="form-group" data-bind="visible: $parent.advanced_mode">
-                <select class="form-control"
+              <td class="form-group" data-bind="visible: $parent.advanced_mode">  {# todo B5: css-form-group #}
+                <select class="form-select"
                         data-bind="options: $data.expand_from_options(),
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
@@ -217,8 +217,8 @@
                                                    optionsCaption: '\u2013{%trans 'default'%} (' + name() + ')\u2013'">
                 </select>
               </td>
-              <td class="form-group" data-bind="visible: $parent.advanced_mode">
-                <select class="form-control"
+              <td class="form-group" data-bind="visible: $parent.advanced_mode">  {# todo B5: css-form-group #}
+                <select class="form-select"
                         data-bind="options: $data.expand_to_options().children,
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
@@ -226,8 +226,8 @@
                                                    optionsCaption: '\u2013{%trans 'default'%} (' + $data.expand_to_options().leaf.name() + ')\u2013'">
                 </select>
               </td>
-              <td class="form-group" data-bind="visible: $parent.advanced_mode">
-                <select class="form-control"
+              <td class="form-group" data-bind="visible: $parent.advanced_mode">  {# todo B5: css-form-group #}
+                <select class="form-select"
                         data-bind="options: $data.include_without_expanding_options(),
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
@@ -235,8 +235,8 @@
                                                    optionsCaption: '\u2013{%trans 'none' %}\u2013'">
                 </select>
               </td>
-              <td class="form-group" data-bind="visible: $parent.advanced_mode">
-                <select multiple="true" class="include-only form-control"
+              <td class="form-group" data-bind="visible: $parent.advanced_mode">  {# todo B5: css-form-group #}
+                <select multiple="true" class="include-only form-select"
                         data-bind="options: $data.include_only_options(),
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
@@ -246,18 +246,18 @@
               </td>
               {% if commtrack_enabled %}
                 <td>
-                  <input data-bind="checked: tracks_stock" type="checkbox" />
+                  <input data-bind="checked: tracks_stock" type="checkbox" />  {# todo B5: css-checkbox #}
                 </td>
               {% endif %}
               <td>
-                <input data-bind="checked: shares_cases" type="checkbox" />
+                <input data-bind="checked: shares_cases" type="checkbox" />  {# todo B5: css-checkbox #}
               </td>
               <td>
-                <input data-bind="checked: view_descendants" type="checkbox" />
+                <input data-bind="checked: view_descendants" type="checkbox" />  {# todo B5: css-checkbox #}
               </td>
               {% if request|toggle_enabled:"USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION" %}
                 <td data-bind="visible: $parent.advanced_mode">
-                  <select class="form-control"
+                  <select class="form-select"
                           data-bind="options: $data.child_loc_types(),
                                     optionsText: 'name',
                                     optionsValue: 'pk',
@@ -267,11 +267,11 @@
                   </select>
                 </td>
                 <td data-bind="visible: $parent.advanced_mode">
-                  <input data-bind="checked: has_users_setting, disable: has_users_setting() && actually_has_users()" type="checkbox" />
+                  <input data-bind="checked: has_users_setting, disable: has_users_setting() && actually_has_users()" type="checkbox" />  {# todo B5: css-checkbox #}
                 </td>
               {% endif %}
               <td>
-                <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
+                <button type="button" class="btn btn-outline-danger" data-bind="click: $root.remove_loctype">
                   <i class="fa-regular fa-trash-can"></i> {% trans "Remove" %}
                 </button>
               </td>
