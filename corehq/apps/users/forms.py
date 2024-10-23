@@ -1039,6 +1039,7 @@ class MultipleSelectionForm(forms.Form):
         )
 
 
+# TODO: self.template is now using B5. Might need to split it, as this is used in 2 places (users and locations).
 class PrimaryLocationWidget(forms.Widget):
     """
     Options for this field are dynamically set in JS depending on what options are selected
