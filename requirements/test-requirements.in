@@ -13,5 +13,6 @@ radon>=5.0  # v5 no longer depends on flake8-polyfill
 # `minversion = 8.4` should also be set in .pytest.ini at that time.
 pytest @ git+https://github.com/pytest-dev/pytest.git@85760bff2776989b365167c7aeb35c86308ab76b
 pytest-django
+pytest-unmagic
 coverage
 uWSGI

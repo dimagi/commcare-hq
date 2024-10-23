@@ -1,8 +1,11 @@
 import os
+from pathlib import Path
 
 import pytest
+from unmagic import fence
 
 pytest_plugins = [
+    'unmagic',
     'corehq.tests.pytest_plugins.patches',
     'corehq.tests.pytest_plugins.redislocks',
 ]
@@ -44,3 +47,21 @@ def _get_wrapped(obj):
     while hasattr(obj, "__wrapped__"):
         obj = obj.__wrapped__
     return obj
+
+
+def _dirset(path):
+    return {p.name for p in path.iterdir() if p.is_dir()}
+
+
+_ROOT = Path(__file__).parent.parent.parent
+fence.install({
+    "corehq",
+    "couchdbkit_aggregate",
+    "django_digest",
+    "langcodes",
+    "no_exceptions",
+    "python_digest",
+    "test",
+    "testapps",
+    "xml2json",
+} | _dirset(_ROOT / "custom") | _dirset(_ROOT / "corehq/ex-submodules"))
