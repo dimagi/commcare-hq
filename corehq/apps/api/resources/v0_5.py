@@ -33,7 +33,7 @@ from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
-from tastypie.http import HttpForbidden, HttpUnauthorized
+from tastypie.http import HttpForbidden, HttpUnauthorized, HttpNotFound
 from tastypie.resources import ModelResource, Resource
 
 
@@ -131,6 +131,7 @@ from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
+from corehq.apps.users.role_utils import get_commcare_analytics_access_for_user_domain
 
 from ..exceptions import UpdateUserException
 from ..user_updates import update
@@ -1390,3 +1391,40 @@ def get_datasource_data(request, config_id, domain):
     query = cursor_based_query_for_datasource(request_params, datasource_adapter)
     data = response_for_cursor_based_pagination(request, query, request_params, datasource_adapter)
     return JsonResponse(data)
+
+
+class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+
+    roles = fields.ListField()
+    permissions = fields.DictField()
+
+    class Meta(CustomResourceMeta):
+        resource_name = 'analytics-roles'
+        list_allowed_methods = []
+        detail_allowed_methods = ['get']
+
+    def dehydrate_roles(self, bundle):
+        cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
+        return cca_access['roles']
+
+    def dehydrate_permissions(self, bundle):
+        cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
+        return cca_access['permissions']
+
+    def obj_get(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        if not toggles.SUPERSET_ANALYTICS.enabled(domain):
+            raise ImmediateHttpResponse(
+                HttpNotFound()
+            )
+
+        user = CouchUser.get_by_username(bundle.request.user.username)
+
+        if not (user and user.is_member_of(domain) and user.is_active):
+            return None
+        return user
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail')),
+        ]
