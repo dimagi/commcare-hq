@@ -4,11 +4,6 @@
 
 {% requirejs_main_b5 'locations/js/locations' %}
 
-{% block stylesheets %}{{ block.super }}
-  <link rel="stylesheet" href="{% static 'locations/css/manage.css' %}">
-{% endblock %}
-
-
 {% block page_content %}
   {% registerurl 'archive_location' domain '---' %}
   {% registerurl 'unarchive_location' domain '---' %}
@@ -141,7 +136,7 @@
   </div>
 
   {% if not has_location_types %}
-    <div class="loc_child no_children alert alert-info">
+    <div class="loc_child alert alert-info">
       {% url "location_types" domain as location_types_url %}
       {% blocktrans %}
         Please define the organization levels
@@ -151,8 +146,6 @@
     </div>
   {% endif %}
 
-  <div style="margin-left:-2em;">  {# todo B5: inline-style #}
-    {% include 'locations/manage/location_template.html' with view_only=request.is_view_only %}
-  </div>
+  {% include 'locations/manage/location_template.html' with view_only=request.is_view_only %}
 
 {% endblock %}
