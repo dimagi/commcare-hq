@@ -15,6 +15,7 @@ The `REUSE_DB` environment variable may be overridden with
 import logging
 import os
 import sys
+import warnings
 from contextlib import ExitStack, contextmanager, nullcontext
 from functools import partial
 from unittest.mock import Mock, patch
@@ -42,6 +43,8 @@ from .util import override_fixture
 from ..tools import nottest
 
 log = logging.getLogger(__name__)
+_test_sorting_key = pytest.StashKey()
+_premature_db_did_warn = pytest.StashKey()
 
 REUSE_DB_HELP = """
 To be used in conjunction with the environment variable REUSE_DB=1.
@@ -114,11 +117,21 @@ def pytest_collection_modifyitems(session, items):
         "setup may not be done at the correct point in the test run."
 
 
+@pytest.hookimpl(trylast=True)
+def pytest_runtest_teardown(item):
+    """Check for premature database setup"""
+    if not item.session.stash.get(_premature_db_did_warn, False):
+        sortkey = item.session.stash[_test_sorting_key]
+        if _db_context.is_setup and sortkey(item) == 0:
+            item.session.stash[_premature_db_did_warn] = True  # warn only once
+            warnings.warn(f"non-database test {item.nodeid} triggered database setup")
+
+
 def filter_and_sort(items, key, session):
     def is_db_test(item):
         return bool(new_key(item))
 
-    new_key = reorder(key)
+    new_key = session.stash[_test_sorting_key] = reorder(key)
     if session.config.should_run_database_tests == "only":
         should_run = is_db_test
     elif session.config.should_run_database_tests == "skip":
@@ -194,6 +207,10 @@ def _django_setup_unittest():
 
 class DeferredDatabaseContext:
 
+    @property
+    def is_setup(self):
+        return "setup_databases" in self.__dict__
+
     @timelimit(480)
     def setup_databases(self, db_blocker):
         """Setup databases for tests"""
@@ -213,9 +230,9 @@ class DeferredDatabaseContext:
             with db_blocker.unblock():
                 do_teardown()
 
-        assert "teardown_databases" not in self.__dict__, "already set up"
-        db_blocker = get_request().getfixturevalue("django_db_blocker")
+        assert not self.is_setup, "already set up"
         self.setup_databases = lambda b: None  # do not set up more than once
+        db_blocker = get_request().getfixturevalue("django_db_blocker")
         session = get_request().session
         with ExitStack() as stack:
             try:
