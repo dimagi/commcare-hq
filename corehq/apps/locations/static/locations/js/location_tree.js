@@ -2,6 +2,7 @@ hqDefine('locations/js/location_tree', [
     'jquery',
     'knockout',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap5/alert_user',
     'analytix/js/google',
@@ -10,6 +11,7 @@ hqDefine('locations/js/location_tree', [
     $,
     ko,
     _,
+    bootstrap,
     initialPageData,
     alertUser,
     googleAnalytics,
@@ -333,7 +335,8 @@ hqDefine('locations/js/location_tree', [
         };
 
         self.archive_loc = function (button, name, loc_id) {
-            var archive_location_modal = $('#archive-location-modal')[0];
+            const modalNode = $('#archive-location-modal')[0],
+                modal = bootstrap.Modal.getOrCreateInstance(modalNode);
 
             function archive_fn() {
                 $(button).disableButton();
@@ -350,18 +353,18 @@ hqDefine('locations/js/location_tree', [
                         locationUtils.reloadLocationSearchSelect();
                     },
                 });
-                $(archive_location_modal).modal('hide');  /* todo B5: js-modal */
+                modal.hide()
                 googleAnalytics.track.event('Organization Structure', 'Archive');
             }
 
-            var modal_context = {
+            const modalContext = {
                 "name": name,
                 "loc_id": loc_id,
                 "archive_fn": archive_fn,
             };
-            ko.cleanNode(archive_location_modal);
-            $(archive_location_modal).koApplyBindings(modal_context);
-            $(archive_location_modal).modal('show');  /* todo B5: js-modal */
+            ko.cleanNode(modalNode);
+            $(modalNode).koApplyBindings(modalContext);
+            modal.show();
         };
 
         self.unarchive_loc = function (button, loc_id) {
@@ -379,11 +382,12 @@ hqDefine('locations/js/location_tree', [
         };
 
         self.delete_loc = function (button, name, loc_id) {
-            var delete_location_modal = $('#delete-location-modal')[0];
-            var modal_context;
+            const modalNode = $('#delete-location-modal')[0],
+                modal = bootstrap.Modal.getOrCreateInstance(modalNode);
+            let modalContext;
 
             function delete_fn() {
-                if (modal_context.count === parseInt(modal_context.signOff())) {
+                if (modalContext.count === parseInt(modalContext.signOff())) {
                     $(button).disableButton();
 
                     $.ajax({
@@ -407,7 +411,7 @@ hqDefine('locations/js/location_tree', [
                             }
                         },
                     });
-                    $(delete_location_modal).modal('hide');  /* todo B5: js-modal */
+                    modal.hide();
                     googleAnalytics.track.event('Organization Structure', 'Delete');
                 }
             }
@@ -417,16 +421,16 @@ hqDefine('locations/js/location_tree', [
                 url: self.loc_descendant_url(loc_id),
                 dataType: 'json',
                 success: function (response) {
-                    modal_context = {
+                    modalContext = {
                         "name": name,
                         "loc_id": loc_id,
                         "delete_fn": delete_fn,
                         "count": response.count,
                         "signOff": ko.observable(''),
                     };
-                    ko.cleanNode(delete_location_modal);
-                    ko.applyBindings(modal_context, delete_location_modal);
-                    $(delete_location_modal).modal('show');  /* todo B5: js-modal */
+                    ko.cleanNode(modalNode);
+                    ko.applyBindings(modalContext, modalNode);
+                    modal.show();
                 },
             });
         };
