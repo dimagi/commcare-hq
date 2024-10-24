@@ -84,7 +84,7 @@ from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import get_complete_username
-from corehq.apps.users.views import BaseUserSettingsView
+from corehq.apps.users.views import BaseUserSettingsView, ListRolesView
 from corehq.util.metrics import metrics_counter, metrics_histogram
 
 
@@ -420,7 +420,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         if disable_ff and not access.restrict:
             toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.set(self.domain, False, namespace=toggles.NAMESPACE_DOMAIN)
             # This view is not accessible after the FF is disabled
-            redirect_url = reverse('users_default', args=[self.domain])
+            redirect_url = reverse(ListRolesView.urlname, args=[self.domain])
             return JsonResponse({
                 'success': 1,
                 'redirect_url': redirect_url,
