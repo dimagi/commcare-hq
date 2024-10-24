@@ -4,12 +4,12 @@
 {% block download_file %}
 
   {% if manage_consumption %}
-    <div class="controls">
-      <label for="include_consumption" class="checkbox">  {# todo B5: css-checkbox #}
-        <input class="checkboxinput"
-               id="include_consumption"
-               type="checkbox"  {# todo B5: css-checkbox #}
-               data-bind="checked: include_consumption">
+    <div class="form-check">
+      <input class="form-check-input"
+             id="include_consumption"
+             type="checkbox"
+             data-bind="checked: include_consumption">
+      <label for="include_consumption" class="form-check-label">
         {% trans "Include consumption data (this can cause the download to take several minutes)." %}
       </label>
     </div>
