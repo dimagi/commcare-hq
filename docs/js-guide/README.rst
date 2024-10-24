@@ -15,6 +15,7 @@ Table of contents
     :maxdepth: 1
 
     code-organization
+    static-files
 
 .. toctree::
     :caption: Dependencies
@@ -22,9 +23,16 @@ Table of contents
 
     dependencies
     module-history
-    migrating
     libraries
     external-packages
+
+.. toctree::
+    :caption: Migrations
+    :maxdepth: 1
+
+    migrating
+    requirejs-to-webpack
+    amd-to-esm
 
 .. toctree::
     :caption: Best practices
@@ -32,7 +40,6 @@ Table of contents
 
     integration-patterns
     security
-    static-files
     inheritance
     code-review
 

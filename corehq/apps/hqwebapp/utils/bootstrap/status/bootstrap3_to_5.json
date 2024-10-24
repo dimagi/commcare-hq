@@ -131,5 +131,11 @@
   },
   "motech.dhis2": {
     "is_complete": true
+  },
+  "export": {
+    "is_complete": true
+  },
+  "integration": {
+    "is_complete": true
   }
 }

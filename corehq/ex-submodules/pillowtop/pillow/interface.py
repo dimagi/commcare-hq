@@ -374,13 +374,26 @@ class PillowBase(metaclass=ABCMeta):
             metrics_counter(metric, tags=metric_tags)
 
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).total_seconds()
-            metrics_gauge('commcare.change_feed.change_lag', change_lag, tags={
-                'pillow_name': self.get_name(),
-                'topic': _topic_for_ddog(
-                    TopicPartition(change.topic, change.partition)
-                    if change.partition is not None else change.topic
-                ),
-            }, multiprocess_mode=MPM_MAX)
+            dd_topic = _topic_for_ddog(
+                TopicPartition(change.topic, change.partition)
+                if change.partition is not None else change.topic)
+            metrics_gauge(
+                'commcare.change_feed.change_lag',
+                change_lag,
+                tags={
+                    'pillow_name': self.get_name(),
+                    'topic': dd_topic
+                },
+                multiprocess_mode=MPM_MAX
+            )
+            if change.partition is not None:
+                # adding check for partition as dd_topic may or
+                # may not contain partition name.
+                # and for the pillows that we are interested in
+                # we would be needing both topic and partition.
+                from corehq.project_limits.gauge import case_pillow_lag_gauge
+                if case_pillow_lag_gauge.feature_key == change.topic:
+                    case_pillow_lag_gauge.report(dd_topic, change_lag)
 
             if processing_time:
                 tags = {'pillow_name': self.get_name()}

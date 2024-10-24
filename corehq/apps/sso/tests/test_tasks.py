@@ -253,8 +253,8 @@ class EnforceKeyExpirationTaskTests(TestCase):
         with freeze_time(current_time):
             num_updates = enforce_key_expiration_for_idp(idp)
 
-        updated_key = HQApiKey.objects.get(id=key.id)
-        self.assertEqual(updated_key.expiration_date, current_time + datetime.timedelta(days=30))
+        key.refresh_from_db()
+        self.assertEqual(key.expiration_date, current_time + datetime.timedelta(days=30))
         self.assertEqual(num_updates, 1)
 
     def test_exits_when_no_maximum_date_exists(self):
@@ -288,8 +288,8 @@ class EnforceKeyExpirationTaskTests(TestCase):
         with freeze_time(current_time):
             update_sso_user_api_key_expiration_dates(idp.id)
 
-        updated_key = HQApiKey.objects.get(id=key.id)
-        self.assertEqual(updated_key.expiration_date, current_time + datetime.timedelta(days=30))
+        key.refresh_from_db()
+        self.assertEqual(key.expiration_date, current_time + datetime.timedelta(days=30))
 
     def _create_idp_for_domains(self, domains, max_days_until_user_api_key_expiration=30):
         idp = generator.create_idp('test-idp', account=self.account)

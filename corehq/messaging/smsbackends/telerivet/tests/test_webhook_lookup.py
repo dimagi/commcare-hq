@@ -25,9 +25,10 @@ class TelerivetWebhookLookupTestCase(TestCase):
         )
         self.backend2.save()
 
-    def tearDown(self):
-        self.backend1.delete()
-        self.backend2.delete()
+        clear_cache = SQLTelerivetBackend.by_webhook_secret.clear
+        self.addCleanup(clear_cache, SQLTelerivetBackend, 'abc')
+        self.addCleanup(clear_cache, SQLTelerivetBackend, 'def')
+        self.addCleanup(clear_cache, SQLTelerivetBackend, 'ghi')
 
     def test_webhook_lookup(self):
         self.assertEqual(

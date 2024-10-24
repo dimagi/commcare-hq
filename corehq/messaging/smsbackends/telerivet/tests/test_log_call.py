@@ -16,9 +16,8 @@ class TelerivetLogCallTestCase(util.LogCallTestCase):
         self.backend.set_extra_fields(webhook_secret='abc')
         self.backend.save()
 
-    def tearDown(self):
-        self.backend.delete()
-        super(TelerivetLogCallTestCase, self).tearDown()
+        clear_cache = SQLTelerivetBackend.by_webhook_secret.clear
+        self.addCleanup(clear_cache, SQLTelerivetBackend, 'abc')
 
     def simulate_inbound_call(self, phone_number):
         return Client().post('/telerivet/in/', {

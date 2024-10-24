@@ -4,18 +4,15 @@ hqDefine("registry/js/registry_logs", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'registry/js/registry_actions',
-    'hqwebapp/js/components/pagination',
     'hqwebapp/js/tempus_dominus',
+    'hqwebapp/js/components/pagination',
 ], function (
     moment,
     ko,
     initialPageData,
     actions,
-    pagination,
     hqTempusDominus
 ) {
-    ko.components.register('pagination', pagination);
-
     const allDatesText = gettext("Show All Dates"),
         allDomainsText = gettext("All Project Spaces"),
         allActionsText = gettext("All Actions");

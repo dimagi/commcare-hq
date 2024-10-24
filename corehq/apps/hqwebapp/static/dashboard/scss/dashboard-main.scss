@@ -31,7 +31,7 @@ $card-dashboard-header-bg: $navbar-default-bg;
 
 .dashboard-icon-bg {
   position: absolute;
-  top: 57px;
+  top: 4.75 * $font-size-base;
   left: 0;
   width: 100%;
   text-align: center;
@@ -58,7 +58,7 @@ $card-dashboard-header-bg: $navbar-default-bg;
 }
 
 .card-dashboard-medium {
-  height: 275px;
+  height: 22.9167 * $font-size-base;
   position: relative;
 
   .list-group {

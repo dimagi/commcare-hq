@@ -7,7 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
-from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.controllers import paginate_options
@@ -165,7 +165,7 @@ class TestLocationRestrictedMobileWorkerFilter(TestCase):
         self.user_assigned_locations = [
             make_loc('root', domain=self.domain.name, type=self.location_type.code).sql_location
         ]
-        self.request = RequestFactory()
+        self.request = RequestFactory().get('/a/{self.domain}/')
         self.request.couch_user = WebUser()
         self.request.domain = self.domain
 
@@ -188,6 +188,36 @@ class TestLocationRestrictedMobileWorkerFilter(TestCase):
         emwf = ExpandedMobileWorkerFilter(self.request)
         emwf.get_default_selections()
         assert assigned_locations_patch.called
+
+    @patch('corehq.apps.users.models.WebUser.get_sql_locations')
+    def test_selections_for_restricted_access(self, assigned_locations_patch):
+        self.request.can_access_all_locations = False
+        self.request.project = self.domain
+        emwf = ExpandedMobileWorkerFilter(self.request)
+        usa = SQLLocation(
+            domain=self.domain.name,
+            name='The United States of America',
+            site_code='usa',
+            location_type=self.location_type,
+            location_id='1',
+        )
+        usa.save()
+        india = SQLLocation(
+            domain=self.domain.name,
+            name='India',
+            site_code='in',
+            location_type=self.location_type,
+            location_id='2',
+        )
+        india.save()
+        assigned_locations_patch.return_value = [usa, india]
+        self.assertEqual(
+            emwf.selected,
+            [
+                {'id': 'l__1', 'text': 'The United States of America [location]'},
+                {'id': 'l__2', 'text': 'India [location]'}
+            ]
+        )
 
 
 class TestCaseListFilter(TestCase):

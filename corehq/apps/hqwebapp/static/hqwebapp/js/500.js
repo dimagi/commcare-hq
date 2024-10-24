@@ -1,6 +1,7 @@
 hqDefine("hqwebapp/js/500",[
     'jquery',
     'es6!hqwebapp/js/bootstrap5_loader',
+    'commcarehq',
 ], function ($, bootstrap) {
     $(function () {
         new bootstrap.Popover('#sad-danny', {

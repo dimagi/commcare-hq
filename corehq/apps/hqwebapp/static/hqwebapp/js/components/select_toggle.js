@@ -22,12 +22,14 @@ hqDefine('hqwebapp/js/components/select_toggle', [
     'jquery',
     'knockout',
     'underscore',
+    'hqwebapp/js/components.ko',
 ], function (
     $,
     ko,
-    _
+    _,
+    koComponents,
 ) {
-    return {
+    const component = {
         viewModel: function (params) {
             var self = this;
 
@@ -73,4 +75,8 @@ hqDefine('hqwebapp/js/components/select_toggle', [
         },
         template: '<div data-bind="template: { name: \'ko-select-toggle\' }"></div>',
     };
+
+    koComponents.register('select-toggle', component);
+
+    return component;
 });

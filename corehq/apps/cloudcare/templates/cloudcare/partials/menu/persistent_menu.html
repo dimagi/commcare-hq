@@ -1,0 +1,52 @@
+{% load i18n %}
+
+<script type="text/template" id="persistent-menu-template">
+  <a type="button"
+     href="#"
+     tabindex="1"
+     data-bs-toggle="offcanvas"
+     data-bs-target="#persistent-menu-container"
+     aria-expanded="false"
+     aria-controls="persistent-menu-container"
+     class="position-fixed top-50 start-0 rounded-end persistent-menu-toggle">
+    <i class="fa fa-chevron-right"></i>
+  </a>
+  <div id="persistent-menu-container" class="offcanvas offcanvas-start w-auto" tabindex="-1" aria-labelledby="persistent-menu-label">
+    <div class="offcanvas-header persistent-menu-max-width d-flex align-items-center justify-content-between">
+      <% if (imageUri) { %>
+        <i class="fcc persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"
+           style="background-image: url('<%- imageUri %>');"></i>
+      <% } else { %>
+        <i class="fcc fcc-flower persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"></i>
+      <% } %>
+      <h5 class="offcanvas-title position-relative mx-2 flex-grow-1" id="persistent-menu-label">
+        <a id="app-main" class="stretched-link text-reset d-block" href="#"
+           data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
+          <%- appName %>
+        </a>
+      </h5>
+      <button type="button" class="btn-close text-reset p-3" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body persistent-menu-max-width">
+      <div id="persistent-menu-content" class="persistent-menu"></div>
+    </div>
+  </div>
+</script>
+
+<script type="text/template" id="persistent-menu-item">
+  <div class="position-relative persistent-menu-item rounded d-flex align-items-center">
+    <% if (imageUri) { %>
+      <i class="fcc persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"
+         style="background-image: url('<%- imageUri %>');"></i>
+    <% } else { %>
+      <i class="fa <%- iconClass %> persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"></i>
+    <% } %>
+    <div class="mx-3 flex-grow-1">
+      <a class="d-block stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#"
+         data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
+        <%- displayText %>
+      </a>
+    </div>
+  </div>
+  <ul></ul>
+</script>

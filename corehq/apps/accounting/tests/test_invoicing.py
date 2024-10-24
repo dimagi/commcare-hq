@@ -15,7 +15,11 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     BillingRecord,
     DefaultProductPlan,
+    DomainUserHistory,
+    Feature,
+    FeatureRate,
     FeatureType,
+    FormSubmittingMobileWorkerHistory,
     Invoice,
     SoftwarePlanEdition,
     Subscriber,
@@ -59,17 +63,17 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         cls.domain = generator.arbitrary_domain()
 
         cls.subscription_length = 15  # months
-        subscription_start_date = datetime.date(2016, 2, 23)
+        cls.subscription_start_date = datetime.date(2016, 2, 23)
         cls.subscription_is_active = False
         if cls.is_testing_web_user_feature:
             # make sure the subscription is still active when we count web users
             cls.subscription_is_active = True
-        subscription_end_date = add_months_to_date(subscription_start_date, cls.subscription_length)
+        cls.subscription_end_date = add_months_to_date(cls.subscription_start_date, cls.subscription_length)
         cls.subscription = generator.generate_domain_subscription(
             cls.account,
             cls.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
+            date_start=cls.subscription_start_date,
+            date_end=cls.subscription_end_date,
             is_active=cls.subscription_is_active
         )
 
@@ -448,6 +452,82 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)
         self.assertEqual(user_line_item.subtotal, num_to_charge * self.user_rate.per_excess_fee)
         self.assertEqual(user_line_item.total, num_to_charge * self.user_rate.per_excess_fee)
+
+
+class TestFormSubmittingMobileWorkerLineItem(BaseInvoiceTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.feature_rate = FeatureRate.objects.create(
+            feature=Feature.objects.get(name=FeatureType.FORM_SUBMITTING_MOBILE_WORKER),
+            monthly_limit=10,
+            per_excess_fee=Decimal('3.00')
+        )
+        plan_feature_rates = generator.default_feature_rates() + [cls.feature_rate]
+        plan_version = generator.custom_plan_version(feature_rates=plan_feature_rates)
+        cls.subscription = generator.generate_domain_subscription(
+            cls.account,
+            cls.domain,
+            date_start=cls.subscription_start_date,
+            date_end=cls.subscription_end_date,
+            is_active=cls.subscription_is_active,
+            plan_version=plan_version
+        )
+
+    def setup_invoice(self, num_form_submitting_workers):
+        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_form_submitting_workers)
+
+        invoice_date = utils.months_from_date(self.subscription.date_start, 2)
+        record_date = invoice_date - datetime.timedelta(days=1)
+        self._create_worker_history(DomainUserHistory, record_date)
+        self._create_worker_history(FormSubmittingMobileWorkerHistory,
+                                    record_date, num_workers=num_form_submitting_workers)
+
+        tasks.generate_invoices_based_on_date(invoice_date)
+        return self.subscription.invoice_set.latest('date_created')
+
+    def _create_worker_history(self, history_cls, record_date, num_workers=0):
+        history_cls.objects.create(
+            domain=self.domain,
+            record_date=record_date,
+            num_users=num_workers
+        )
+
+    def test_under_limit(self):
+        """
+        When usage is not chargeable, the Form-Submitting Mobile Worker line item produced:
+        - base_cost and unit_cost match FeatureRate defined on this test class
+        - quantity is 0, because there were no excess users
+        - unit_description is None, because its line item will not appear on invoice
+        """
+        num_form_submitting_workers = self.feature_rate.monthly_limit
+        invoice = self.setup_invoice(num_form_submitting_workers)
+        worker_line_item = invoice.lineitem_set.get_feature_by_type(
+            FeatureType.FORM_SUBMITTING_MOBILE_WORKER).get()
+
+        self.assertIsNone(worker_line_item.unit_description)
+        self.assertEqual(worker_line_item.base_cost, self.feature_rate.monthly_fee)
+        self.assertEqual(worker_line_item.unit_cost, self.feature_rate.per_excess_fee)
+        self.assertEqual(worker_line_item.quantity, 0)
+
+    def test_over_limit(self):
+        """
+        When usage is chargeable, the Form-Submitting Mobile Worker line item produced:
+        - base_cost and unit_cost match the FeatureRate defined on this test class
+        - quantity is the number of workers in excess of the FeatureRate's monthly_limit
+        - unit_description includes 'form-submitting mobile worker'
+        """
+        num_excess = 3
+        num_form_submitting_workers = self.feature_rate.monthly_limit + num_excess
+        invoice = self.setup_invoice(num_form_submitting_workers)
+        worker_line_item = invoice.lineitem_set.get_feature_by_type(
+            FeatureType.FORM_SUBMITTING_MOBILE_WORKER).get()
+
+        self.assertIn('form-submitting mobile worker', worker_line_item.unit_description)
+        self.assertEqual(worker_line_item.quantity, num_excess)
+        self.assertEqual(worker_line_item.base_cost, self.feature_rate.monthly_fee)
+        self.assertEqual(worker_line_item.unit_cost, self.feature_rate.per_excess_fee)
 
 
 class TestWebUserLineItem(BaseInvoiceTestCase):

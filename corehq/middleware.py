@@ -340,6 +340,10 @@ def get_view_func(view_fn, view_kwargs):
 
 
 class SecureCookiesMiddleware(MiddlewareMixin):
+    """Sets `secure` flag for cookies on the response object.
+    Must be come before middleware that adds cookies, because of order and layering.
+    https://docs.djangoproject.com/en/4.2/topics/http/middleware/#middleware-order-and-layering
+    """
 
     def process_response(self, request, response):
         if hasattr(response, 'cookies') and response.cookies:

@@ -22,16 +22,10 @@
 
 .form-container .gr {
   background-color: desaturate(lighten($cc-brand-hi, 8), 40);
-  margin-left: -10px;
-  margin-right: -10px;
   padding: 10px;
   margin-bottom: 10px;
   border-bottom: 3px solid desaturate($cc-brand-hi, 30);
   border-top: 3px solid desaturate($cc-brand-hi, 30);
-}
-
-.form-container .gr-has-no-nested-questions {
-  display: none;
 }
 
 .form-container .gr.gr-no-children {

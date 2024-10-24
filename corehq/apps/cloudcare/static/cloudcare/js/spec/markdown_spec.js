@@ -17,10 +17,12 @@ hqDefine("cloudcare/js/spec/markdown_spec", [
         let sandbox;
         beforeEach(function () {
             initialPageData.clear();
+            initialPageData.register("toggles_dict", { CASE_LIST_TILE_CUSTOM: false });
             sandbox = sinon.sandbox.create();
         });
 
         afterEach(function () {
+            initialPageData.unregister("toggles_dict");
             sandbox.restore();
         });
 

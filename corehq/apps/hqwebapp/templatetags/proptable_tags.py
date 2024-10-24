@@ -10,7 +10,6 @@ Supports psuedo-tables using dls and real tables.
 
 import collections
 import datetime
-from itertools import zip_longest
 
 import attr
 from django import template
@@ -23,7 +22,6 @@ import pytz
 from jsonobject.exceptions import BadValueError
 
 from dimagi.ext.jsonobject import DateProperty
-from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import safe_strftime
 
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
@@ -88,12 +86,13 @@ def _format_slug_string_for_display(key):
     return key.replace('_', ' ').replace('-', ' ')
 
 
-def _to_html(val, key=None, level=0, timeago=False):
+def _to_html(val, key=None, level=0):
     """
     Recursively convert a value to its HTML representation using <dl>s for
     dictionaries and <ul>s for lists.
     """
-    recurse = lambda k, v: _to_html(v, key=k, level=level + 1, timeago=timeago)
+    def _recurse(k, v):
+        return _to_html(v, key=k, level=level + 1)
 
     def _key_format(k, v):
         if not _is_list_like(v):
@@ -108,14 +107,14 @@ def _to_html(val, key=None, level=0, timeago=False):
             format_html_join(
                 "",
                 "<dt>{}</dt><dd>{}</dd>",
-                [(_key_format(k, v), recurse(k, v)) for k, v in val.items()]
+                [(_key_format(k, v), _recurse(k, v)) for k, v in val.items()]
             )
         )
 
     elif _is_list_like(val):
         ret = format_html(
             "<dl>{}</dl>",
-            format_html_join("", "<dt>{}</dt><dd>{}</dd>", [(key, recurse(None, v)) for v in val])
+            format_html_join("", "<dt>{}</dt><dd>{}</dd>", [(key, _recurse(None, v)) for v in val])
         )
 
     elif isinstance(val, datetime.date):
@@ -125,8 +124,7 @@ def _to_html(val, key=None, level=0, timeago=False):
             fmt = USER_DATE_FORMAT
 
         iso = val.isoformat()
-        ret = format_html("<time{timeago} title='{title}' datetime='{iso}'>{display}</time>".format(
-            timeago=mark_safe(" class='timeago'") if timeago else "",  # nosec: no user input
+        ret = format_html("<time title='{title}' datetime='{iso}'>{display}</time>".format(
             title=iso,
             iso=iso,
             display=safe_strftime(val, fmt)
@@ -158,9 +156,6 @@ class DisplayConfig:
 
     # String to use as the output format e.g. "<b>{}</b>"
     format = attr.ib(default=None)
-
-    # add 'timeago' class to <time/> elements
-    timeago = attr.ib(default=False)
 
     # property that is passed through in the return result
     has_history = attr.ib(default=False)
@@ -195,7 +190,7 @@ def get_display_data(data: dict, prop_def: DisplayConfig, timezone=pytz.utc):
             val = PhoneTime(val, timezone).user_time(timezone).done()
 
     if not processor or not processor.returns_html:
-        val = _to_html(val, timeago=prop_def.timeago)
+        val = _to_html(val)
 
     if prop_def.format:
         val = format_html(prop_def.format, val)

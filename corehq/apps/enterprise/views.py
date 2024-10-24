@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from django.conf import settings
 from django.contrib import messages
@@ -23,11 +24,13 @@ import codecs
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.decorators import require_enterprise_admin
+from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
 from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.enterprise.tasks import clear_enterprise_permissions_cache_for_all_users
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 from corehq import privileges
 from corehq.apps.accounting.models import (
@@ -44,20 +47,21 @@ from corehq.apps.domain.views import DomainAccountingSettings, BaseDomainView
 from corehq.apps.domain.views.accounting import PAYMENT_ERROR_MESSAGES, InvoiceStripePaymentView, \
     BulkStripePaymentView, WireInvoiceView, BillingStatementPdfView
 
-from corehq.apps.enterprise.enterprise import EnterpriseReport
+from corehq.apps.enterprise.enterprise import EnterpriseReport, EnterpriseFormReport
 
 from corehq.apps.enterprise.forms import EnterpriseSettingsForm
 from corehq.apps.enterprise.tasks import email_enterprise_report
 
 from corehq.apps.export.utils import get_default_export_settings_if_available
 
-from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 
 from corehq.const import USER_DATE_FORMAT
 
 
+@use_tempusdominus
 @use_bootstrap5
 @always_allow_project_access
 @require_enterprise_admin
@@ -69,6 +73,7 @@ def enterprise_dashboard(request, domain):
     context = {
         'account': request.account,
         'domain': domain,
+        'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
         'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
             EnterpriseReport.DOMAINS,
             EnterpriseReport.WEB_USERS,
@@ -87,7 +92,16 @@ def enterprise_dashboard(request, domain):
 @require_enterprise_admin
 @login_and_domain_required
 def enterprise_dashboard_total(request, domain, slug):
-    report = EnterpriseReport.create(slug, request.account.id, request.couch_user)
+    kwargs = {}
+    if slug == EnterpriseReport.FORM_SUBMISSIONS:
+        kwargs = get_form_submission_report_kwargs(request)
+    try:
+        report = EnterpriseReport.create(slug, request.account.id, request.couch_user, **kwargs)
+    except TooMuchRequestedDataError as e:
+        response = JsonResponse({'message': str(e)})
+        response.status_code = 400
+        return response
+
     return JsonResponse({'total': report.total})
 
 
@@ -126,13 +140,33 @@ def _get_export_filename(request, slug):
 @require_enterprise_admin
 @login_and_domain_required
 def enterprise_dashboard_email(request, domain, slug):
-    report = EnterpriseReport.create(slug, request.account.id, request.couch_user)
-    email_enterprise_report.delay(domain, slug, request.couch_user)
+    kwargs = {}
+    if slug == EnterpriseReport.FORM_SUBMISSIONS:
+        kwargs = get_form_submission_report_kwargs(request)
+    try:
+        report = EnterpriseReport.create(slug, request.account.id, request.couch_user, **kwargs)
+    except TooMuchRequestedDataError as e:
+        response = JsonResponse({'message': str(e)})
+        response.status_code = 400
+        return response
+
+    email_enterprise_report.delay(domain, slug, request.couch_user, **kwargs)
     message = _("Generating {title} report, will email to {email} when complete.").format(**{
         'title': report.title,
         'email': request.couch_user.username,
     })
     return JsonResponse({'message': message})
+
+
+def get_form_submission_report_kwargs(request):
+    kwargs = {}
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    if start_date and end_date:
+        kwargs['start_date'] = datetime.strptime(start_date, ISO_DATETIME_FORMAT)
+        kwargs['end_date'] = datetime.strptime(end_date, ISO_DATETIME_FORMAT)
+
+    return kwargs
 
 
 @use_bootstrap5

@@ -1,7 +1,9 @@
-import json
-
 from django.contrib import messages
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -68,10 +70,10 @@ class FetchProgramListView(ProgramListView):
         return data
 
     def get(self, request, *args, **kwargs):
-        return HttpResponse(json.dumps({
+        return JsonResponse({
             'success': True,
             'data_list': self.program_data,
-        }), 'text/json')
+        })
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -186,8 +188,8 @@ class FetchProductForProgramListView(EditProgramView):
             }
 
     def get(self, request, *args, **kwargs):
-        return HttpResponse(json.dumps({
+        return JsonResponse({
             'success': True,
             'current_page': self.page,
             'data_list': list(self.get_product_data()),
-        }), 'text/json')
+        })

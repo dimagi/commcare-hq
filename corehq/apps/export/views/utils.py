@@ -38,6 +38,7 @@ from corehq.apps.export.models import (
 )
 from corehq.apps.export.models.new import DataFile, DatePeriod, CaseExportInstance
 from corehq.apps.export.tasks import generate_schema_for_all_builds, process_populate_export_tables
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.util import datespan_from_beginning
@@ -298,11 +299,13 @@ class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
         })
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class DailySavedExportPaywall(BaseProjectDataView):
     urlname = 'daily_saved_paywall'
     template_name = 'export/paywall.html'
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class DashboardFeedPaywall(BaseProjectDataView):
     urlname = 'dashboard_feeds_paywall'
     template_name = 'export/paywall.html'
@@ -310,6 +313,7 @@ class DashboardFeedPaywall(BaseProjectDataView):
 
 @location_safe
 @method_decorator(login_and_domain_required, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class DataFileDownloadList(BaseProjectDataView):
     urlname = 'download_data_files'
     template_name = 'export/download_data_files.html'

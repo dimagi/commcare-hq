@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 
 import requests
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pp_json
 from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
@@ -80,6 +80,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             response_body=as_text(self.content_json),
             response_status=self.status_code,
             response_headers=self.response_headers,
+            duration=ANY,
         )
 
     def test_post_with_no_args(self):
@@ -278,4 +279,5 @@ class TestRequestLogFormatting(TestCase):
             response_status=200,
             response_headers={},
             response_body='OK',
+            duration=0,
         )

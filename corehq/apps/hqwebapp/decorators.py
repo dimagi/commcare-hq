@@ -75,20 +75,6 @@ def use_nvd3_v3(view_func):
     return set_request_flag(view_func, 'use_nvd3_v3')
 
 
-def use_timeago(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the timeago library at the base template
-    level.
-
-    Example:
-
-    @use_timeago
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_timeago')
-
-
 def use_datatables(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the datatables library at the base template
@@ -129,20 +115,6 @@ def use_timepicker(view_func):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     return set_request_flag(view_func, 'use_timepicker')
-
-
-def use_maps(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the maps (with sync utils) library at the base
-    template level.
-
-    Example:
-
-    @use_maps
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_maps')
 
 
 def use_ko_validation(view_func):

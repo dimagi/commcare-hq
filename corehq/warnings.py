@@ -19,7 +19,10 @@ WHITELIST = [
     # (module_path, message_substring_or_regex, optional_warning_class, override_action)
 
     # warnings that may be resolved with a library upgrade
+    ("bs4.builder", "option of HTMLParser() has never done anything"),
     ("couchdbkit.schema.properties", "'collections.abc'"),
+    ("ddtrace.internal.module", "the imp module is deprecated"),
+    ("eulxml", "pkg_resources is deprecated as an API"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
@@ -42,8 +45,13 @@ WHITELIST = [
         UserWarning,
     ),
     (
-        # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
+        # Should be removed if fixed after upgrading to ES 6.x
         "elasticsearch5.connection.http_urllib3",
+        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
+    ),
+    (
+        # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
+        "elasticsearch6.connection.http_urllib3",
         "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
     # Should be removed when Nose is updated

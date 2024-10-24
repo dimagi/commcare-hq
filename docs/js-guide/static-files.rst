@@ -1,19 +1,103 @@
-Static Files
-============
+Overview of Static Files and JavaScript Bundlers
+================================================
+
+What are Static Files?
+----------------------
 
 Static files include any ``css``, ``js``, and image files that are not
 dynamically generated during runtime. ``css`` is typically compiled from
-``less`` and minified prior to server runtime. ``js`` files are
-collected, combined, and minified prior to server runtime. As of this
-writing we don’t compile our JavaScript from a higher level scripting
-language. Image files generally stay as-is. The only ‘dynamic’ images
+``scss`` (or ``less`` on Bootstrap 3 pages) and minified before server
+runtime.
+
+``js`` files are collected, combined, and minified using Webpack
+or RequireJS, called JavaScript bundlers. We are currently
+transitioning from RequireJS (deprecated) to Webpack. Some pages do
+not use a bundler or any structured JavaScript module format,
+referred to as No-Bundler Pages. No-Bundler Pages are rare and are being transitioned
+to using Webpack as part of the `JS Bundler Migration
+<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.rst>`__.`
+
+Image files generally stay as-is. The only "dynamic" images
 come from file attachments in our database.
 
-Due to their static natures, the primary objective for static files is
-to make as few requests to them during page load, meaning that our goal
-is to combine static files into one larger, minified file when possible.
-An additional goal is to ensure that the browser caches the static files
-it is served to make subsequent page loads faster.
+Due to their static natures, the primary objective when working with static files is
+to make as few requests as possible to them during page load. We aim to combine
+static files into one larger, minified file whenever possible.
+Another goal is to ensure that the browser caches the static files when possible
+to make subsequent page loads faster.
+
+
+Why use a javascript bundler?
+-----------------------------
+
+We use a bundler for our javascript files to reduce the amount of separate
+network requests tags needed for any page load. A bundler, like Webpack,
+not only combines the necessary javascript, it minifies the javascript to reduce
+its overall size. Additionally, Webpack employs code splitting to split commonly referenced
+"chunks" of code into separate collective bundles:
+
+    - ``vendor``: common code that comes ``yarn`` dependencies
+    - ``common``: native HQ javascript that is referenced across the whole site
+    - "app" bundles: shared code across entry points inside a specific app, e.g. ``hqwebapp``, ``domain``, etc.
+
+This code splitting allows chunks of code shared across entry points to be cached in the browser
+once, making subsequent page loads much faster.
+
+What is an entry point?
+~~~~~~~~~~~~~~~~~~~~~~~
+
+An "entry point" is the starting point or root file for a given page that Webpack (or RequireJS) uses to
+build the dependency graph and generate the output bundle(s).
+
+There is only **one** entry point per page. Multiple pages may share the same entry points; however, there
+should never be more than one entry point on a single page.
+
+
+How do I develop with a JavaScript bundler?
+-------------------------------------------
+
+To build Webpack locally for continuous development, run the ``yarn dev`` command.
+
+This command first runs
+``webpack/generateDetails.js`` to scan all template files for ``js_entry`` template tags,
+identifying Webpack entry points. It then builds Webpack bundles based on the ``webpack/webpack.dev.js``
+configuration.
+
+``yarn dev`` can be left running, as it will watch existing entry points for any changes and rebuild
+Webpack bundles as needed.
+
+When adding new entry points, please remember to restart ``yarn dev``.
+
+When deploying CommCare HQ, ``yarn build`` is used instead of ``yarn dev``. The primary differences are:
+
+- minification of bundles
+- a different algorithm for source maps that is better with minified files but takes longer to generate
+- appending filenames with content hashes of files for cache busting purposes
+
+To troubleshoot production-related Webpack issues, you can run ``yarn build`` locally.
+
+Developing on No-Bundle pages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are still some very old sections of the codebase that are not under the jurisdiction of a JavaScript bundler.
+These pages can be developed without needing ``yarn dev`` to run in the background. However, you should pay special
+attention to your ``localsettings`` setup for Django Compressor, which is explained in the `Compression
+<#compression>`__
+section below.
+
+Developing with RequireJS page
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are developing a RequireJS page, consider `migrating it to Webpack first
+<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/requirejs-to-webpack.rst>`__.
+The majority of migrations are relatively quick and straightforward.
+
+Otherwise, these pages can be developed without running ``yarn dev`` in the background.
+
+When a production deploy happens, RequireJS production bundles are built using the ``build_requirejs`` management
+command. This build step is often the point where people see build failures due to using unsupported es6 syntax in
+RequireJS bundles. If you see that, consider it a sign that the module throwing that error should be moved to Webpack.
+
 
 Collectstatic
 -------------
@@ -49,13 +133,14 @@ static files. First run:
    manage.py fix_less_imports_collectstatic
    manage.py compilejsi18n
 
+
 Compression
 -----------
 
 `Django
 Compressor <https://django-compressor.readthedocs.org/en/latest/>`__ is
-the library we use to handle compilation of ``less`` files and the
-minification of ``js`` and compiled ``css`` files.
+the library we use to handle compilation of ``scss`` (and ``less``) files and the
+minification of no-bundler ``js`` and compiled ``css`` files.
 
 Compressor blocks are defined inside the
 ``{% compress css %}{% endcompress %}`` or
@@ -69,7 +154,7 @@ requests made per page.
 
 There are three ways of utilizing Django Compressor’s features:
 
-1. Dev Setup: Server-side on the fly ``less`` compilation
+1. Dev Setup: Server-side on the fly ``scss`` compilation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This does not combine any files in compress blocks, and as no effect on
@@ -182,3 +267,14 @@ Note that this cache busting is irrelevant to files that are contained
 within a ``compress`` block. Each compressed block generated a file that
 contains a hash in the filename, so there’s no need for the URL
 parameter.
+
+A Note on Webpack and Cache Busting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Webpack has its own built-in Cache Busting capabilities which are activated
+with the ``webapck/webpack.prod.js`` configuration. This is run during
+``yarn build``. Bundles generated by Webpack are then appended with that file's
+content cache in order to bust the cache.
+
+In order to run build Webpack locally in the same way as you would in a production
+environment, you can run ``yarn build`` instead of ``yarn dev``.

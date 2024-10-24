@@ -10,6 +10,7 @@ on:
   schedule:
     # see corehq/apps/hqadmin/management/commands/static_analysis.py
     - cron: '47 12 * * *'
+  workflow_dispatch:
 jobs:
   tests:
     runs-on: ubuntu-22.04

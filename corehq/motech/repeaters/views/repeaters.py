@@ -53,6 +53,10 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
             for repeater in repeaters:
                 assert not hasattr(repeater, "count_State"), repeater.count_State
                 repeater.count_State = {s.name: state_counts[repeater.id][s] for s in State}
+                repeater.count_State['EmptyOrSuccess'] = (
+                    repeater.count_State[State.Empty.name]
+                    + repeater.count_State[State.Success.name]
+                )
             return repeaters
 
         return [

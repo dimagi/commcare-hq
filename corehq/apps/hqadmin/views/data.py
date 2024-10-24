@@ -1,6 +1,6 @@
 import json
 
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.translation import gettext as _
 
@@ -66,8 +66,8 @@ def raw_doc(request):
         if 'doc' in context:
             return HttpResponse(context['doc'], content_type="application/json")
         else:
-            return HttpResponse(json.dumps({"status": "missing"}),
-                                content_type="application/json", status=404)
+            return JsonResponse({"status": "missing"},
+                                status=404)
 
     context['all_databases'] = [db for db in get_databases()]
     return render(request, "hqadmin/raw_doc.html", context)

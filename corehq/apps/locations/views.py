@@ -264,11 +264,10 @@ class FilteredLocationDownload(BaseLocationView):
 
 class LocationOptionsController(EmwfOptionsController):
     namespace_locations = False
-    case_sharing_only = False
 
-    def __init__(self, *args, include_locations_with_no_users_allowed=True):
-        self.include_locations_with_no_users_allowed = include_locations_with_no_users_allowed
-        super().__init__(*args)
+    def __init__(self, *args, include_locations_with_no_users=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.include_locations_with_no_users = include_locations_with_no_users
 
     @property
     def data_sources(self):
@@ -280,13 +279,13 @@ class LocationOptionsController(EmwfOptionsController):
 @method_decorator(locations_access_required, name='dispatch')
 @location_safe
 class LocationsSearchView(EmwfOptionsView):
-    include_locations_with_no_users_allowed = True
+    include_locations_with_no_users = True
 
     @property
     @memoized
     def options_controller(self):
         return LocationOptionsController(self.request, self.domain, self.search,
-            include_locations_with_no_users_allowed=self.include_locations_with_no_users_allowed)
+            include_locations_with_no_users=self.include_locations_with_no_users)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -434,7 +433,7 @@ class LocationTypesView(BaseDomainView):
             payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
             if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
-            if toggles.LOCATION_HAS_USERS.enabled(self.domain):
+            if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
                 _validate_has_users_config(loc_type, pk)
         names = list(payload_loc_type_name_by_pk.values())
         names_are_unique = len(names) == len(set(names))
@@ -720,6 +719,7 @@ def delete_location(request, domain, loc_id):
     })
 
 
+@can_edit_or_view_location
 @location_safe
 def location_lineage(request, domain, loc_id):
     lineage = SQLLocation.objects.get_locations([loc_id])[0].lineage
@@ -819,7 +819,7 @@ class EditLocationView(BaseEditLocationView):
     def users_form(self):
         if not (self.can_edit_commcare_users or self.can_access_all_locations):
             return None
-        if toggles.LOCATION_HAS_USERS.enabled(self.domain) and not self.location.location_type.has_users:
+        if not self.location.location_type.has_users:
             return None
         form = UsersAtLocationForm(
             request=self.request,

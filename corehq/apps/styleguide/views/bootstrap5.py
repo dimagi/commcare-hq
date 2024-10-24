@@ -58,6 +58,56 @@ def styleguide_javascript_guide(request):
 
 
 @use_bootstrap5
+def styleguide_htmx_and_alpine(request):
+    context = get_navigation_context("styleguide_htmx_and_alpine_b5")
+    context.update({
+        "examples": {
+            'htmx_get_started': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_get_started.html'),
+                language="Django",
+            ),
+            'htmx_alpine_form_views': CodeForDisplay(
+                code=get_python_example_context('htmx_alpine_form_views.py'),
+                language="Python",
+            ),
+            'form_main_template': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_alpine_crispy/main.html'),
+                language="Django",
+            ),
+            'form_partial_template': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_alpine_crispy/partial_form.html'),
+                language="Django",
+            ),
+            'htmx_alpine_form': CodeForDisplay(
+                code=get_python_example_context('htmx_alpine_form_demo.py'),
+                language="Python",
+            ),
+            'htmx_hq_hx_action': CodeForDisplay(
+                code=get_python_example_context('htmx_hq_hx_action.py'),
+                language="Python",
+            ),
+            'htmx_todo_main': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_todo/main.html'),
+                language="Django",
+            ),
+            'htmx_todo_item': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_todo/item.html'),
+                language="Django",
+            ),
+            'htmx_todo_item_done_swap': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_todo/item_done_oob_swap.html'),
+                language="Django",
+            ),
+            'htmx_todo_item_done': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_todo/item_done.html'),
+                language="Django",
+            ),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/htmx_and_alpine.html', context)
+
+
+@use_bootstrap5
 def styleguide_atoms_accessibility(request):
     return render(request, 'styleguide/bootstrap5/atoms/accessibility.html',
                   get_navigation_context("styleguide_atoms_accessibility_b5"))

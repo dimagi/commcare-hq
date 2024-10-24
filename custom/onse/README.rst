@@ -1,3 +1,30 @@
+How to enable this module
+=========================
+
+The ``custom.onse`` module is a custom Django app for the self-hosted
+ONSE ISS project.
+
+Follow these steps to enable this module for the ONSE ISS project:
+
+1. In CommCare Cloud, edit the **public.yml** file for your environment.
+   You will find an entry named "localsettings" in the file. Inside the
+   "localsettings" entry, add a key named "LOCAL_APPS" and set its value
+   as follows:
+
+   .. code-block:: yaml
+
+      localsettings:
+        LOCAL_APPS:
+          - host: "all"
+            name: "custom.onse"
+
+2. Deploy the updated configuration to your environment:
+
+   .. code-block:: bash
+
+      $ commcare-cloud <env> update-config
+
+
 Importing aggregated data from DHIS2
 ====================================
 

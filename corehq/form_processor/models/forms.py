@@ -637,6 +637,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return operations
 
     @property
+    @memoized
     def metadata(self):
         from ..utils import clean_metadata
         if const.TAG_META in self.form_data:
@@ -649,6 +650,13 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     def name(self):
         return self.form_data.get(const.TAG_NAME, "")
+
+    @property
+    def device_id(self):
+        try:
+            return self.metadata and self.metadata.deviceID
+        except MissingFormXml:
+            pass
 
     @memoized
     def get_sync_token(self):

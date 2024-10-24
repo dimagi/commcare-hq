@@ -122,6 +122,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.description = ko.observable(description);
         self.caseType = caseType;
         self.properties = ko.observableArray();
+        self.newPropertyName = ko.observable();
         self.expanded = ko.observable(true);
         self.toggleExpanded = () => self.expanded(!self.expanded());
         self.deprecated = deprecated;
@@ -138,6 +139,27 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.showGroupPropertyTransferWarning = ko.computed(function () {
             return self.toBeDeprecated() && !deprecated && self.properties().length > 0;
         });
+
+        self.newCaseProperty = function () {
+            if (self.newPropertyName().trim()) {
+                const prop = {
+                    'name': self.newPropertyName(),
+                    'label': self.newPropertyName(),
+                    'allowedValues': {},
+                };
+                let propObj = propertyListItem(
+                    prop,
+                    false,
+                    self.name(),
+                    self.caseType,
+                    false,
+                    self.name(),
+                    changeSaveButton
+                );
+                self.newPropertyName(undefined);
+                self.properties.push(propObj);
+            }
+        };
 
         self.name.subscribe(changeSaveButton);
         self.description.subscribe(changeSaveButton);
@@ -521,19 +543,19 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return pattern.test(nameStr);
         }
 
-        self.newPropertyNameValid = ko.computed(function () {
-            if (!self.newPropertyName()) {
+        self.newPropertyNameValid = function (name) {
+            if (!name) {
                 return true;
             }
-            return isNameValid(self.newPropertyName());
-        });
+            return isNameValid(name);
+        };
 
-        self.newPropertyNameUnique = ko.computed(function () {
-            if (!self.newPropertyName()) {
+        self.newPropertyNameUnique = function (name) {
+            if (!name) {
                 return true;
             }
 
-            const propertyNameFormatted = self.newPropertyName().toLowerCase().trim();
+            const propertyNameFormatted = name.toLowerCase().trim();
             const activeCaseTypeData = self.activeCaseTypeData();
             for (const group of activeCaseTypeData) {
                 if (group.properties().find(v => v.name.toLowerCase() === propertyNameFormatted)) {
@@ -541,7 +563,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 }
             }
             return true;
-        });
+        };
 
         self.newGroupNameValid = ko.computed(function () {
             if (!self.newGroupName()) {
@@ -564,28 +586,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
             }
             return true;
         });
-
-        self.newCaseProperty = function () {
-            if (_.isString(self.newPropertyName()) && self.newPropertyName().trim()) {
-                let lastGroup = self.activeCaseTypeData()[self.activeCaseTypeData().length - 1];
-                const prop = {
-                    'name': self.newPropertyName(),
-                    'label': self.newPropertyName(),
-                    'allowedValues': {},
-                };
-                let propObj = propertyListItem(
-                    prop,
-                    false,
-                    lastGroup.name(),
-                    self.activeCaseType(),
-                    false,
-                    lastGroup.name(),
-                    changeSaveButton
-                );
-                self.newPropertyName(undefined);
-                lastGroup.properties.push(propObj);
-            }
-        };
 
         self.newGroup = function () {
             if (_.isString(self.newGroupName()) && self.newGroupName().trim()) {

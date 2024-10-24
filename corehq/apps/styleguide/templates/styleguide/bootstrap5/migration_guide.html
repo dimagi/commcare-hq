@@ -104,7 +104,7 @@
     To support this approach, we have tooling that facilitates "splitting" and "unsplitting" files:
     copying files, moving them, and updating references to them. This tooling also performs the simpler migration
     updates, such as renaming CSS classes. For updates that it cannot handle automatically, it adds a TODO comment
-    to the relevant code and writes out a changelog.
+    to the relevant code.
   </p>
   <p>
     Once the entire platform is fully migrated to Bootstrap 5, any remaining Bootstrap 3 code can be removed:
@@ -120,10 +120,6 @@
     If you haven't done so, you will need to install Dart Sass to compile
     <code>scss</code> files. The recommended method is with homebrew <code>brew install sass/sass/sass</code>,
     as described in <code>DEV_SETUP.md</code>.
-  </p>
-  <p>
-    Next, you will need to specify <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code> in <code>localsettings.py</code>. This
-    will be where the migration management command will leave longer notes for each migrated file.
   </p>
 
   <h2 id="announce-migration" class="pt-3">
@@ -281,10 +277,6 @@
     attention and could not automatically be updated.  These comments reference helper documents in the
     <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide"
     target="_blank">changes_guide</a> directory.
-  </p>
-  <p>
-    In addition, a changelog for each file will be saved to a markdown file in
-    <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code> (ouside of repository).
   </p>
   <div class="alert alert-primary">
     <p>
@@ -522,16 +514,20 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
   </p>
   <p>
     The migration process begins by either applying <code>@use_bootstrap5</code> decorator the view function or
-    <code>@method_decorator(use_bootstrap5, name='dispatch')</code> to the view class.
+    <code>@method_decorator(use_bootstrap5, name='dispatch')</code> to the view class. Also update the template's
+    name in the view from <code>bootstrap3/foo.html</code> to <code>bootstrap5/foo.html</code>.
   </p>
   <p>
-    Next, you should go into the view template and ensure that this template inherits from <code>bootstrap5</code>
-    base templates.
-  </p>
-  <p>
-    Finally, you should make sure any javascript files needed to render that view also inherit from <code>bootstrap5</code>
-    dependencies. The migration tool should have handled updating any <code>bootstrap3</code> dependencies to their
+    The automation should have updated the view template so that it inherits from <code>bootstrap5</code>
+    base templates. It should also have updated any <code>bootstrap3</code> javascript dependencies to their
     <code>bootstrap5</code> versions.
+  </p>
+  <p>
+    The automation will have added comments to the template and javascript files noting what changes need to be
+    made. Each comment will be marked with <code>todo B5</code> and the type of change that needs to be made.
+    Each type of change has a corresponding document in the
+    <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide"
+    target="_blank">changes_guide</a> directory explaining what needs to be done.
   </p>
   <p>
     Once a view's template and javascript files are updated, it is now time to load that view and test for
@@ -548,12 +544,6 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
     The most important part of the migration is ensuring that the page is functionally similar to the user and that no
     errors are present on the page that were not previously present in the Bootstrap 3 version.
   </div>
-  <p>
-    There is a chance you might have to introduce changes to the stylesheet if you come across a custom component that
-    has not yet been migrated to Bootstrap 5. If this is the case, please flag this component with the lead developer
-    of the Bootstrap migration. They can assist with updating the stylesheet (if necessary) or updating guidance
-    for replacing this component with Bootstrap 5 best practices.
-  </p>
 
   <h3 id="un-split-view-files" class="pt-3">
     Un-Split View Files

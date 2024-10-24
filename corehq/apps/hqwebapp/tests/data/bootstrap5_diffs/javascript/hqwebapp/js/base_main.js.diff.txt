@@ -25,7 +25,7 @@
      'analytix/js/google',
      'analytix/js/hubspot',
      'analytix/js/kissmetrix',
-     'analytix/js/gtm',
+     'analytix/js/gtx',
 -    'hqwebapp/js/bootstrap3/mobile_experience_warning',
 +    'hqwebapp/js/bootstrap5/mobile_experience_warning',
  ], function () {

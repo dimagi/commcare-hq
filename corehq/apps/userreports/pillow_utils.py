@@ -24,6 +24,11 @@ def _is_datasource_active(adapter):
 
 
 def rebuild_sql_tables(adapters):
+
+    def _notify_rebuild(msg, obj):
+        assert_ = soft_assert(notify_admins=True)
+        assert_(False, msg, obj)
+
     tables_by_engine = defaultdict(dict)
     all_adapters = []
     for adapter in adapters:
@@ -41,10 +46,6 @@ def rebuild_sql_tables(adapters):
                 Domain {adapter.config.domain}.
                 Skipping."""
             )
-
-    _assert = soft_assert(notify_admins=True)
-    _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
-
     for engine_id, table_map in tables_by_engine.items():
         table_names = list(table_map)
         engine = connection_manager.get_engine(engine_id)
@@ -102,5 +103,10 @@ def rebuild_table(adapter, diffs=None):
         adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
         return
 
-    rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id,
-                             diffs=diff_dicts, domain=config.domain)
+    rebuild_indicators.delay(
+        adapter.config.get_id,
+        source='pillowtop',
+        engine_id=adapter.engine_id,
+        diffs=diff_dicts,
+        domain=config.domain,
+    )

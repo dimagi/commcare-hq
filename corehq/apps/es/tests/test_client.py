@@ -11,6 +11,7 @@ from nose.tools import nottest
 
 from corehq.apps.es import const
 from corehq.apps.es.utils import check_task_progress, get_es_reindex_setting_value
+from corehq.apps.users.models import CommCareUser
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
     Elasticsearch,
@@ -268,21 +269,14 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         a transient setting once its set without restarting the cluster, so we
         explicitly set the default value (`all`) instead.
         """
-        self.adapter.cluster_routing(enabled=True)  # default value
+        try:
+            self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
+        except TransportError:
+            # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
+            pass
         if verify:
             settings = self.adapter._es.cluster.get_settings(flat_settings=True)
-            self.assertEqual(settings["transient"]["cluster.routing.allocation.enable"], "all")
-        #
-        # The code below is better. Use it instead when able Elastic v5+
-        #
-        #try:
-        #    self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
-        #except TransportError:
-        #    # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
-        #    pass
-        #if verify:
-        #    settings = self.adapter._es.cluster.get_settings(flat_settings=True)
-        #    self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
+            self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
 
     def test_get_node_info(self):
         info = self.adapter._es.nodes.info()
@@ -584,6 +578,59 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
                 self.assertEqual(list(self._get_all_doc_ids_in_index(SUBINDEX)), ['7'])
 
+    def test_reindex_for_users_index(self):
+        from corehq.apps.es.users import user_adapter
+
+        SECONDARY_INDEX = 'secondary_user_index'
+        domain = 'es_reindex_users_index'
+
+        # Setup Indices
+        with temporary_index(user_adapter.index_name, user_adapter.type, user_adapter.mapping):
+            with temporary_index(SECONDARY_INDEX, user_adapter.type, user_adapter.mapping):
+
+                mobile_user = CommCareUser(
+                    _id='1', username="amazing_user", domain=domain, password='**************',
+                    created_by=None, created_via=None
+                )
+
+                # Save user to the source index
+                with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]), \
+                     patch.object(user_adapter.model_cls, 'get_user_data', return_value={}):
+
+                    id, source = user_adapter.from_python(mobile_user)
+                    # Manually set password field because now it is removed in from_python
+                    source['password'] = '12345678'
+                    manager._es.index(
+                        user_adapter.index_name,
+                        user_adapter.type,
+                        source,
+                        id,
+                        refresh=True
+                    )
+
+                # Get the saved user from ES
+                user_es = user_adapter.get(mobile_user._id)
+
+                # Ensure that password field exists in the user dict
+                assert 'password' in user_es, "password does not exist in source index"
+                self.assertEqual(user_es['password'], '12345678')
+
+                # Reindex the user index to the secondary index
+                with patch.object(const, 'HQ_USERS_INDEX_NAME', user_adapter.index_name):
+                    manager.reindex(
+                        user_adapter.index_name, SECONDARY_INDEX,
+                        wait_for_completion=True,
+                        refresh=True,
+                        requests_per_second=2,
+                    )
+
+                # Get the saved user from the secondary index
+                user = manager._es.search(index=SECONDARY_INDEX, body={})['hits']['hits'][0]['_source']
+                # Ensure that password field does not exist in the user dict
+                print(user)
+                self.assertEqual(user['doc_id'], '1')
+                assert 'password' not in user, "password exists in source index"
+
     def _index_test_docs_for_reindex(self):
         all_ids = set([str(i) for i in range(1, 10)])
 
@@ -643,7 +690,10 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             self.adapter.index_close(test_adapter.index_name)
             with self.assertRaises(TransportError) as test:
                 test_adapter.index(TestDoc("2", "test"))
-            self.assertEqual(test.exception.status_code, 403)
+            if test_adapter.elastic_major_version <= 5:
+                self.assertEqual(test.exception.status_code, 403)
+            else:
+                self.assertEqual(test.exception.status_code, 400)
             self.assertEqual(test.exception.error, "index_closed_exception")
 
     def test_index_put_alias(self):
@@ -771,7 +821,11 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         }
         self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
-        del mapping["_meta"]
+        # To remove meta in Elastic 6.x, we have to pass an empty _meta field
+        # but in Elastic 5.x, we have to remove it entirely from the object
+        mapping["_meta"] = {}
+        if manager.elastic_major_version < 6:
+            del mapping["_meta"]
         self.adapter.index_put_mapping(self.index, type_, mapping)
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
 

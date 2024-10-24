@@ -212,7 +212,6 @@ def api_setting_matches_preset(connection):
             return url.split(connection.url.rstrip('/'))[1]
         except IndexError:
             return None
-
     for preset_slug, preset in AUTH_PRESETS.items():
         if (
             split_url(connection.token_url) == preset.token_endpoint

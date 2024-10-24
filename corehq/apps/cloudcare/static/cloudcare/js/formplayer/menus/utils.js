@@ -11,6 +11,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/menus/views',
+    'analytix/js/gtx',
 ], function (
     _,
     Backbone,
@@ -22,7 +23,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
     view,
     UsersModels,
     utils,
-    views
+    views,
+    gtx
 ) {
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
@@ -108,7 +110,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
-            breadcrumbMenuDropdown: "#breadcrumb__menu-dropdown",
+            breadcrumbMenuDropdown: "#navbar-menu-region",
         });
 
         if (langs && langs.length > 1) {
@@ -205,23 +207,26 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             });
             return view.queryListView(menuData);
         } else if (menuResponse.type === constants.ENTITIES) {
-            var searchText = urlObject.search;
-            var event = "Viewed Case List";
-            if (searchText) {
-                event = "Searched Case List";
-            }
+
             if (isSidebarEnabled(menuResponse)) {
                 menuData.sidebarEnabled = true;
             }
-            var eventData = {
-                domain: UsersModels.getCurrentUser().domain,
-                name: menuResponse.title,
-            };
+            var eventData = {};
             var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
             if (!_.isEmpty(fields)) {
                 eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
             }
-            kissmetrics.track.event(event, eventData);
+
+            var kissmetricsEventData = _.extend(eventData, {
+                domain: UsersModels.getCurrentUser().domain,
+                name: menuResponse.title,
+            });
+            var gtxEventData = _.extend(eventData, {
+                moduleName: menuResponse.title,
+            });
+            kissmetrics.track.event("Viewed Case List", kissmetricsEventData);
+            gtx.sendEvent("web_apps_viewed_case_list", gtxEventData);
+
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
                 kissmetrics.track.event('Started Case Search', {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),

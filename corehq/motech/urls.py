@@ -24,6 +24,8 @@ from corehq.motech.openmrs.views import (
 from corehq.motech.repeaters.expression.views import (
     AddCaseExpressionRepeaterView,
     EditCaseExpressionRepeaterView,
+    AddFormExpressionRepeaterView,
+    EditFormExpressionRepeaterView,
     AddArcGISFormExpressionRepeaterView,
     EditArcGISFormExpressionRepeaterView,
 )
@@ -80,6 +82,8 @@ urlpatterns = [
         {'repeater_type': 'DataRegistryCaseUpdateRepeater'}, name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/CaseExpressionRepeater/$', AddCaseExpressionRepeaterView.as_view(),
         {'repeater_type': 'CaseExpressionRepeater'}, name=AddCaseExpressionRepeaterView.urlname),
+    url(r'^forwarding/new/FormExpressionRepeater/$', AddFormExpressionRepeaterView.as_view(),
+        {'repeater_type': 'FormExpressionRepeater'}, name=AddFormExpressionRepeaterView.urlname),
     url(r'^forwarding/new/ArcGISFormExpressionRepeater/$', AddArcGISFormExpressionRepeaterView.as_view(),
         {'repeater_type': 'ArcGISFormExpressionRepeater'}, name=AddArcGISFormExpressionRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
@@ -108,6 +112,12 @@ urlpatterns = [
         EditCaseExpressionRepeaterView.as_view(),
         {'repeater_type': 'CaseExpressionRepeater'},
         name=EditCaseExpressionRepeaterView.urlname
+    ),
+    url(
+        r'^forwarding/edit/FormExpressionRepeater/(?P<repeater_id>\w+)/$',
+        EditFormExpressionRepeaterView.as_view(),
+        {'repeater_type': 'FormExpressionRepeater'},
+        name=EditFormExpressionRepeaterView.urlname
     ),
     url(
         r'^forwarding/edit/ArcGISFormExpressionRepeater/(?P<repeater_id>\w+)/$',

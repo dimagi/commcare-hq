@@ -57,12 +57,6 @@ tests will be in
 defined in ``Gruntfile.js`` as ``<app_name>/<config_name>``, e.g.,
 ``cloudcare/form_entry``.
 
-Dependency Management
----------------------
-
-Tests are one of the few areas of HQ’s JavaScript that do not use
-RequireJS. Instead, dependencies are included in the relevant HTML
-template as script tags.
 
 Running tests from the command line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -102,6 +102,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", [
                     "type": "sub-group",
                     "exists": true,
                     "ix": "1,2",
+                    "caption": "Sub Group",
                     "children": [
                         {
                             "type": "question",

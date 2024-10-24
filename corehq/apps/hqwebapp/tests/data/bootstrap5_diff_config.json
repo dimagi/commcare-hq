@@ -583,6 +583,26 @@
       "compare_all_files": true
     }
   ],
+  "apps/reports/static/reports/v2/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/reports/v2/js",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "views/bootstrap3",
+        "views/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/reports/v2/js/views",
+      "compare_all_files": true
+    }
+  ],
   "apps/reports/static/reports/spec": [
     {
       "directories": [

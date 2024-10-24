@@ -470,7 +470,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     app.save(resp)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     if ajax:
-        return HttpResponse(json.dumps(resp))
+        return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
 
@@ -588,8 +588,7 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     source = form.source
-    response = HttpResponse(source)
-    response['Content-Type'] = "application/xml"
+    response = HttpResponse(source, content_type='application/xml')
     filename = form.default_name()
     for lc in [lang] + app.langs:
         if lc in form.name:

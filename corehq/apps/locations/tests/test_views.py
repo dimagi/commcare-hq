@@ -146,7 +146,7 @@ class LocationTypesViewTest(TestCase):
         with self.assertRaises(LocationConsistencyError):
             self.send_request(data)
 
-    @flag_enabled('LOCATION_HAS_USERS')
+    @flag_enabled('USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION')
     @mock.patch('corehq.apps.locations.views.does_location_type_have_users', return_value=True)
     def test_invalid_remove_has_users(self, _):
         loc_type1 = OTHER_DETAILS.copy()
@@ -200,10 +200,10 @@ class LocationsSearchViewTest(TestCase):
         response = self.send_request(url, data)
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)['results']
-        self.assertEqual(results[0]['id'], self.loc1.location_id)
-        self.assertEqual(results[1]['id'], self.loc2.location_id)
+        expected = {self.loc1.location_id, self.loc2.location_id}
+        self.assertEqual({r['id'] for r in results}, expected)
 
-    @flag_enabled('LOCATION_HAS_USERS')
+    @flag_enabled('USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION')
     def test_search_view_has_users_only(self):
         loc_type2 = LocationType(domain=self.domain, name='type2', code='code2')
         loc_type2.has_users = False
@@ -219,9 +219,8 @@ class LocationsSearchViewTest(TestCase):
         response = self.send_request(url, data)
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)['results']
-        self.assertEqual(len(results), 2)
-        self.assertEqual(results[0]['id'], self.loc1.location_id)
-        self.assertEqual(results[1]['id'], self.loc2.location_id)
+        expected = {self.loc1.location_id, self.loc2.location_id}
+        self.assertEqual({r['id'] for r in results}, expected)
 
 
 class BulkLocationUploadAPITest(TestCase):

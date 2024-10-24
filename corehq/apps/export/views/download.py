@@ -61,7 +61,7 @@ from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     case_type_or_app_limit_exceeded
 )
-from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
@@ -157,7 +157,8 @@ class BaseDownloadExportView(BaseProjectDataView):
     # To serve filters for export from mobile_user_and_group_slugs
     export_filter_class = None
 
-    @use_daterangepicker
+    @use_bootstrap5
+    @use_tempusdominus
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
@@ -530,6 +531,7 @@ class DownloadNewDatasourceExportView(BaseProjectDataView):
     page_title = gettext_noop("Export Data Source Data")
     template_name = 'export/datasource_export_view.html'
 
+    @use_bootstrap5
     def dispatch(self, *args, **kwargs):
         if not EXPORT_DATA_SOURCE_DATA.enabled(self.domain):
             raise Http404()
