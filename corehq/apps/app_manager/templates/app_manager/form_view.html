@@ -14,10 +14,6 @@
   </style>
 {% endblock %}
 
-{% block head %}{{ block.super }}
-  {% include 'analytics/fullstory.html' %}
-{% endblock %}
-
 {% block js %}{{ block.super }}
   {% compress js %}
     <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
