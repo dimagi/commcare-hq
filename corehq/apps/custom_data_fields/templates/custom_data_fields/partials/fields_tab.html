@@ -11,7 +11,7 @@
 <table class="table table-striped table-bordered">
   <thead>
   <tr>
-    <th class="col-md-1"></th>
+    <th class="col-md-auto"></th>
     <th class="col-md-3">
       {% blocktrans with entity_string=view.entity_string %}
         {{ entity_string }} Property
@@ -35,7 +35,7 @@
                           {% endblocktrans %}">
       </span>
     </th>
-    <th class="col-md-1">
+    <th class="col-md-auto">
       {% trans "Required" %}
       <span class="hq-help-template"
             data-title="{% trans "Required" %}"
@@ -88,8 +88,16 @@
       <input class="form-control" type="text" data-bind="value: label, attr: { 'readonly': !isEditable() }"/>
     </td>
     <td>
-      <div class="form-check mt-2">
+      <div class="form-check mt-2 d-flex align-items-center">
         <input class="form-check-input" type="checkbox" data-bind="checked: is_required, attr: { 'disabled': !isEditable() }"/>
+        <!-- ko if: is_required() && $root.requiredForOptions.length > 0 -->
+          <select class="form-select ms-2" data-bind="options: $root.requiredForOptions,
+                                                      optionsText: 'text',
+                                                      optionsValue: 'value',
+                                                      value: required_for,
+                                                      attr: { disabled: !isEditable() }">
+          </select>
+        <!-- /ko -->
       </div>
     </td>
     <td>
