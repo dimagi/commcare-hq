@@ -695,6 +695,15 @@ hqDefine('geospatial/js/models', [
         };
 
         self.deleteSelectedPolygonFilter = function () {
+            if (self.mapObj.hasDisbursementLayers()) {
+                if (confirmForClearingDisbursement()) {
+                    self.mapObj.removeDisbursementLayers();
+                    $('#disbursement-clear-message').show();
+                } else {
+                    return;
+                }
+            }
+
             const deleteGeoJSONUrl = initialPageData.reverse('geo_polygon', self.selectedSavedPolygonId());
             $.ajax({
                 type: 'DELETE',
