@@ -41,12 +41,8 @@ module.exports = function (grunt) {
         'case_importer',
     ];
 
-    var custom = [
-        'champ',
-    ];
-
     var extensions = _.split(process.env.JS_TEST_EXTENSIONS || '', ','),
-        testPaths = _.filter(_.concat(apps, custom, extensions), function (path) { return path !== ''; });
+        testPaths = _.filter(_.concat(apps, extensions), function (path) { return path !== ''; });
 
     var runTest = function (queuedTests, taskPromise, finishedTests, failures) {
         if (finishedTests === undefined) {
