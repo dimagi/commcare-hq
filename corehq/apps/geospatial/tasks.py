@@ -1,3 +1,5 @@
+from dimagi.utils.logging import notify_exception
+
 from corehq.util.decorators import serial_task
 
 from corehq.apps.celery import task
@@ -55,7 +57,12 @@ def index_es_docs_with_location_props(domain):
                 chunk_size=DEFAULT_CHUNK_SIZE,
             )
             celery_task_tracker.update_progress(current=i + 1, total=batch_count)
-    except Exception:
+    except Exception as e:
         celery_task_tracker.mark_as_error(error_slug='CELERY')
+        notify_exception(
+            None,
+            'Something went wrong with index_es_docs_with_location_props()',
+            details={'error': str(e)}
+        )
     else:
         celery_task_tracker.mark_completed()
