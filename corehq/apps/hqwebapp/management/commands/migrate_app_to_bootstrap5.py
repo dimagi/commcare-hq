@@ -189,11 +189,12 @@ class Command(BaseCommand):
             "time in the event of nested dependencies / inheritance "
             "in split files.\n\n"
         ))
-        self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
-                          "using the command below and follow the next steps after.\n\n")
-        self.stdout.write(self.style.MIGRATE_HEADING(
-            f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n"
-        ))
+        if not self.no_split:
+            self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
+                              "using the command below and follow the next steps after.\n\n")
+            self.stdout.write(self.style.MIGRATE_HEADING(
+                f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n"
+            ))
         self.stdout.write("Thank you for your dedication to this migration! <3\n\n")
         self.stdout.write("You may review the full migration guide here:")
         self.stdout.write(self.style.MIGRATE_HEADING(

@@ -473,6 +473,24 @@ def get_paused_plan_context(request, domain):
     }
 
 
+def get_pending_plan_context(request, domain):
+    from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+    from corehq.apps.domain.views import SelectPlanView
+    from corehq.apps.registration.models import SelfSignupWorkflow
+
+    current_sub = Subscription.get_active_subscription_by_domain(domain)
+    if (not current_sub
+            or not current_sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+            or not request.couch_user.can_edit_billing()
+            or not SelfSignupWorkflow.get_in_progress_for_domain(domain)):
+        return {}
+
+    return {
+        'should_show_pending_notice': True,
+        'change_plan_url': reverse(SelectPlanView.urlname, args=[domain]),
+    }
+
+
 def count_form_submitting_mobile_workers(domain, start, end):
     """
     Returns the count of mobile workers who have submitted a form in the time specified.
