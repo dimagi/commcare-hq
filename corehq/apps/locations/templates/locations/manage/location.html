@@ -105,7 +105,7 @@
     <div class="tab-content">
       <div class="tab-pane {% if form_tab == "basic" %}active{% endif %}" id="basic-info">
 
-        <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
+        <div class="card panel-modern-gray panel-form-only">
           <div class="card-body">
             <form id="loc_form" class="form form-horizontal" name="product" method="post">
               {% bootstrap_form_errors form %}
@@ -118,7 +118,7 @@
               {% if consumption %}
                 <legend>{% trans "Default monthly consumption values" %}</legend>
                 {% for code, amount in consumption %}
-                  <div class="form-group">  {# todo B5: css-form-group #}
+                  <div class="mb-3">
                     <label class="col-md-3 col-lg-4 col-xl-2 form-label">{{ code }}</label>
                     <div class="col-md-4 col-lg-5 col-xl-3 controls">
                         <span class="form-control uneditable-input">
@@ -130,18 +130,14 @@
               {% endif %}
 
               {% if not request.is_view_only %}
-                <div class="form-actions">
-                  <div class="offset-md-3 offset-lg-4 offset-xl-2">
-                    <button type="submit" class="btn btn-primary">
-                      {% if location.get_id %}
-                        {% trans 'Update' %}
-                      {% else %}
-                        {% trans 'Create' %}
-                      {% endif %}
-                      {% trans 'Location' %}
-                    </button>
-                  </div>
-                </div>
+                <button type="submit" class="btn btn-primary">
+                  {% if location.get_id %}
+                    {% trans 'Update' %}
+                  {% else %}
+                    {% trans 'Create' %}
+                  {% endif %}
+                  {% trans 'Location' %}
+                </button>
               {% endif %}
             </form>
           </div>
@@ -153,7 +149,7 @@
         {% initial_page_data 'location' location %}
 
         <div class="tab-pane {% if form_tab == "descendants" %}active{% endif %}" id="descendants-info">
-          <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
+          <div class="card panel-modern-gray panel-form-only">
             <div class="card-body">
               {% include 'locations/manage/location_template.html' with view_only=request.is_view_only %}
             </div>
@@ -166,8 +162,8 @@
           <div class="row">
             <div class="col-md-12">
 
-              <div class="panel panel-modern-gray panel-form-only">
-                <div class="panel-body">
+              <div class="card panel-modern-gray panel-form-only">
+                <div class="card-body">
                   <form class="form-horizontal disable-on-submit{% if not can_edit_users_in_location or request.is_view_only %} form-hide-actions{% endif %}" id="edit_users" action="" method='post'>
                     {% crispy users_per_location_form %}  {# todo B5: crispy #}
                     <input type="hidden" name="form_type" value="location-users" />
@@ -193,7 +189,7 @@
         <div class="tab-pane" id="products">
           <div class="row">
             <div class="col-md-12">
-              <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
+              <div class="card panel-modern-gray panel-form-only">
                 <div class="card-body">
                   <form class="form-horizontal disable-on-submit{% if request.is_view_only %} form-hide-actions{% endif %}" id="edit_products" action="" method='post'>
                     <input type="hidden" name="form_type" value="location-products" />
