@@ -97,6 +97,15 @@ def inddex_domain():
         yield
 
 
+def setup_module():
+    """Make dividedwerun run all tests in this module on the same node
+
+    This could be eliminated if dividedwerun had a way to determine that
+    tests in this module use a fixture (inddex_domain) that uses the
+    database.
+    """
+
+
 @memoized
 def get_food_data(*args, **kwargs):
     # This class takes a while to run.  Memoizing lets me share between tests
