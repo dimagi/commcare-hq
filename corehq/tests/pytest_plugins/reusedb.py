@@ -91,7 +91,6 @@ def pytest_configure(config):
 @pytest.hookimpl(wrapper=True)
 def pytest_collection_modifyitems(session, items):
     """Sort and filter tests, inject database setup"""
-    import pytest_django.plugin as mod
     django_key = None
 
     class items_for_django:
@@ -104,10 +103,10 @@ def pytest_collection_modifyitems(session, items):
         called.append(1)
         return False
 
-    mod.pytest_collection_modifyitems(items_for_django)
+    django_plugin.pytest_collection_modifyitems(items_for_django)
     called = []
     # use patch to skip django-pytest pytest_collection_modifyitems
-    with patch.object(mod, "django_settings_is_configured", skip_django_modifyitems):
+    with patch.object(django_plugin, "django_settings_is_configured", skip_django_modifyitems):
         yield
     assert called, "django_settings_is_configured patch was ineffective. " \
         "HQ-speicific test filtering and sorting may not have happened."
