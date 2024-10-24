@@ -680,6 +680,7 @@ hqDefine('geospatial/js/models', [
                 if (confirmForClearingDisbursement()) {
                     self.mapObj.removeDisbursementLayers();
                     $('#disbursement-clear-message').show();
+                    $('#disbursement-params').hide();
                     proceedFurther = true;
                 } else {
                     proceedFurther = false;
