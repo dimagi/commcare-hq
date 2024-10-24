@@ -714,7 +714,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             field_view=CommcareUserFieldsView,
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
-            required_only=True,
             ko_model="custom_fields",
             request_user=self.couch_user,
         )
