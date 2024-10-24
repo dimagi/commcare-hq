@@ -3,6 +3,7 @@ hqDefine("locations/js/location", [
     'jquery',
     'knockout',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap5/alert_user',
     'analytix/js/google',
@@ -15,6 +16,7 @@ hqDefine("locations/js/location", [
     $,
     ko,
     _,
+    bootstrap,
     initialPageData,
     alertUser,
     googleAnalytics,
@@ -58,7 +60,7 @@ hqDefine("locations/js/location", [
                             TEMPLATE_STRINGS.new_user_success({name: data.user.text}),
                             'success'
                         );
-                        $('#new_user').modal('hide');  /* todo B5: js-modal */
+                        bootstrap.Modal.getInstance('#new_user').hide();
                     } else {
                         form_node.html(data.form_html);
                     }
