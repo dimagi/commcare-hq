@@ -13,6 +13,7 @@
   <h2>{% trans 'Manage Web Apps Permissions' %}</h2>
   <div class="alert alert-danger">
     {% url "roles_and_permissions" domain as roles_url %}
+    {% url "mobile_workers" domain as mobile_workers_url %}
     {% blocktrans %}
       This feature is deprecated. Access to specific web apps can now be managed via
       <a target="_blank" href="{{ roles_url }}">Roles & Permissions</a>.
@@ -38,7 +39,7 @@
         </li>
         <li>
           <strong>Assign mobile workers to their new roles</strong><br/>
-          Map each mobile worker to the appropriate role that matches their previous group membership.
+          Map each <a target="_blank" href="{{ mobile_workers_url }}">mobile worker</a> to the appropriate role that matches their previous group membership.
         </li>
         <li>
           <strong>Enable Roles & Permissions for Web Apps access</strong><br/>
