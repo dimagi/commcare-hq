@@ -22,10 +22,11 @@ class ConnectBackend:
         requests.post(
             settings.CONNECTID_MESSAGE_URL,
             data={
-                "channel_id": user_link.channel_id,
-                "text": content,
+                "channel": user_link.channel_id,
+                "content": content,
                 "message_id": uuid4(),
-            }
+            },
+            headers={"Authorization": f"Basic {settings.CONNECTID_CLIENT_ID}:{settings.CONNECTID_SECRET_KEY}"}
         )
 
     def create_channel(self, user):
@@ -35,7 +36,8 @@ class ConnectBackend:
             data={
                 "connectid": connectid_username
                 "channel_source": user_link.domain,
-            }
+            },
+            headers={"Authorization": f"Basic {settings.CONNECTID_CLIENT_ID}:{settings.CONNECTID_SECRET_KEY}"}
         )
         user_link.channel_id = response.json()["channel_id"]
         user_link.save()
