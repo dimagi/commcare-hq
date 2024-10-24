@@ -56,35 +56,40 @@
     <div class="row">
       <div class="col-md-12">
         <div class="btn-toolbar">
-
-          <a class="btn btn-info"
-            {% if not has_location_types %}
-             disabled
-            {% else %}
-             href="{{ bulk_download_url }}"
-            {% endif %}
-          >
-            <i class="fa-solid fa-cloud-arrow-down"></i> {% trans 'Download Organization Structure' %}
-          </a>
-
-          {% if not request.is_view_only %}
-            <a class="btn btn-outline-primary"
+          <div class="btn-group me-2">
+            <a class="btn btn-info"
               {% if not has_location_types %}
                disabled
               {% else %}
-               href="{% url "location_import" domain %}"
+               href="{{ bulk_download_url }}"
               {% endif %}
             >
-              <i class="fa-solid fa-cloud-arrow-up"></i> {% trans 'Bulk Upload' %}
+              <i class="fa-solid fa-cloud-arrow-down"></i> {% trans 'Download Organization Structure' %}
             </a>
+          </div>
+
+          {% if not request.is_view_only %}
+            <div class="btn-group me-2">
+              <a class="btn btn-outline-primary"
+                {% if not has_location_types %}
+                 disabled
+                {% else %}
+                 href="{% url "location_import" domain %}"
+                {% endif %}
+              >
+                <i class="fa-solid fa-cloud-arrow-up"></i> {% trans 'Bulk Upload' %}
+              </a>
+            </div>
           {% endif %}
 
           {% if user_is_domain_admin %}
-            <a class="btn btn-outline-primary track-usage-link" href="{% url "location_fields_view" domain %}"
-               data-category="Organization Structure" data-action="Edit Location Fields">
-              <i class="fa fa-edit"></i>
-              {% trans "Edit Location Fields" %}
-            </a>
+            <div class="btn-group me-2">
+              <a class="btn btn-outline-primary track-usage-link" href="{% url "location_fields_view" domain %}"
+                 data-category="Organization Structure" data-action="Edit Location Fields">
+                <i class="fa fa-edit"></i>
+                {% trans "Edit Location Fields" %}
+              </a>
+            </div>
           {% endif %}
 
         </div>
@@ -96,36 +101,39 @@
 
   <div class="row">
     <div class="col-sm-8 col-lg-8 col-xl-8 loc_search" id="location_search">
-      <label for="location_search" class="col-sm-2 col-lg-1 col-xl-1 form-label">{% trans "Location" %}</label>
+      <label for="location_search" class="form-label">{% trans "Location" %}</label>
 
-      <div class="col-sm-7 col-lg-7 col-xl-8">
+      <div class="row">
+        <div class="col-sm-6 col-lg-6 col-xl-7">
+          <select type="text"
+                  id="location_search_select"
+                  data-bind="value: selected_location_id"
+                  class="form-select float-start"
+                  placeholder="{% trans_html_attr "Specify location" %}"
+                  name="location_search"></select>
 
-        <select type="text"  {# todo B5: css-select-form-control #}
-                id="location_search_select"
-                data-bind="value: selected_location_id"
-                class="span4 form-control"
-                placeholder="Specify location"
-                name="location_search"
-                style="max-width:80%;"></select>  {# todo B5: inline-style #}
+          <span class="help-block">
+            {{ location_search_help }}
+          </span>
+        </div>
 
-        <button type="button" class="btn btn-outline-primary" style="display:inline; cursor:pointer;" aria-label="{% trans 'Clear location selection' %}" data-bind="visible: selected_location_id(), click: clearLocationSelection">  {# todo B5: inline-style #}
-          <i class="fa fa-times" aria-hidden="true"></i>
-        </button>
-
-        <span class="help-block">
-          {{ location_search_help }}
-        </span>
-
+        <div class="col-sm-1 col-lg-1 col-xl-1">
+          <button type="button" class="btn btn-outline-primary"
+                   aria-label="{% trans_html_attr 'Clear location selection' %}"
+                   data-bind="visible: selected_location_id(), click: clearLocationSelection">
+            <i class="fa fa-times" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
-
     </div>
+
     <div class="col-md-4">
       {% if not show_inactive %}
-        <a class="btn btn-outline-primary float-end" href="?show_inactive=true" style="margin-right: 2.5em;">  {# todo B5: inline-style #}
+        <a class="btn btn-outline-primary float-end" href="?show_inactive=true">
           {% trans "Show Archived Locations" %}
         </a>
       {% else %}
-        <a class="btn btn-outline-primary float-end" href="?" style="margin-right: 2.5em;">  {# todo B5: inline-style #}
+        <a class="btn btn-outline-primary float-end" href="?">
           {% trans "Show Active Locations" %}
         </a>
       {% endif %}
