@@ -887,6 +887,7 @@ scheduling
  0025_schedule_and_broadcast_deleted_on
  0026_add_model_fcm_notification_content
  0027_emailcontent_html_message
+ 0028_connectmessagecontent_connectmessagesurveycontent_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -961,6 +962,7 @@ sms
  0057_fcm_content_type_messaging_events
  0058_email_html_body
  0059_remove_unicel_backend
+ 0060_alter_messagingevent_content_type_and_more
 smsbillables
  0001_initial
  0002_bootstrap

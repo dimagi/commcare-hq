@@ -606,18 +606,26 @@ class AbstractNumber(ABC):
     def backend(self):
         pass
 
+    @property
+    @abstractmethod
+    def is_sms(self):
+        pass
 
 
 class ConnectMessagingNumber(AbstractNumber):
     owner_doc_type = "CommCareUser"
     is_two_way = True
 
-    def __init__(self, user_link):
-        self.user_link = user_link
+    def __init__(self, user):
+        self.user = user
 
-    #must be implemented
-    phone_number = None
+    @property
+    def phone_number(self):
+        return self.user_link.channel_id
 
+    @property
+    def user_link(self):
+        return ConnectIDUserLink.objects.get(commcare_username=self.user.username)
 
     @property
     def backend(self):
@@ -625,11 +633,15 @@ class ConnectMessagingNumber(AbstractNumber):
 
     @property
     def owner_id(self):
-        return CouchUser.get_by_username(self.user_link.commcare_user.username)._id
+        return self.user._id
 
     @property
     def domain(self):
         self.user_link.domain
+
+    @property
+    def is_sms(self):
+        return False
 
     
 
@@ -676,6 +688,10 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             phone=self.phone_number, domain=self.domain,
             owner=self.owner_id
         )
+
+    @property
+    def is_sms(self):
+        return True
 
     @property
     def backend(self):

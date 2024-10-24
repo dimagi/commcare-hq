@@ -348,6 +348,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
     'corehq.messaging.smsbackends.airtel_tcl',
+    'corehq.messaging.smsbackends.connectid',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.saved_reports',
@@ -1145,6 +1146,8 @@ FCM_CREDS = None
 
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 CONNECTID_SECRET_KEY = ''
+CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
+CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR

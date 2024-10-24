@@ -791,8 +791,9 @@ class ConnectMessageContent(Content):
             self.message,
             recipient.get_language_code()
         )
+        connect_number = ConnectMessagingNumber(recipient)
 
-        send_connect_message()
+        send_message_to_verified_number(recipient, message, logged_subevent=logged_subevent)
 
 class ConnectMessageSurveyContent(Content):
     message = None
@@ -817,4 +818,4 @@ class ConnectMessageSurveyContent(Content):
             recipient.get_language_code()
         )
 
-        send_connect_message()
+        send_connect_message(message)

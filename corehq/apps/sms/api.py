@@ -191,8 +191,6 @@ def send_message_to_verified_number(verified_number, text, metadata=None, logged
 
     return  True on success, False on failure
     """
-    __import__("pdb").set_trace()
-
     try:
         backend = verified_number.backend
     except BadSMSConfigException as e:
@@ -397,6 +395,15 @@ def should_log_exception_for_backend(backend, exception):
         client.set(key, 1)
         client.expire(key, 60 * 60)
         return True
+
+
+def send_connect_message(message):
+    try:
+        ConnectBackend.send(message)
+        return True
+    except Exception:
+        return False
+    
 
 
 def register_sms_user(
@@ -698,9 +705,9 @@ def get_inbound_phone_entry(phone_number, backend_id=None):
     )
 
 
-def process_incoming(msg):
+def process_incoming(msg, phone=None):
     try:
-        _process_incoming(msg)
+        _process_incoming(msg, phone)
         status = 'ok'
     except Exception:
         status = 'error'
@@ -728,9 +735,12 @@ def _domain_accepts_inbound(msg):
     return msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
 
 
-def _process_incoming(msg):
+def _process_incoming(msg, phone=None):
     sms_load_counter("inbound", msg.domain)()
-    verified_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(msg)
+    if phone is None:
+        verified_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(msg)
+    else:
+        verified_number = phone
     is_two_way = verified_number is not None and verified_number.is_two_way
 
     if verified_number:
@@ -759,7 +769,7 @@ def _process_incoming(msg):
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, verified_number, context=(opt_in_keywords[0],))
             if verified_number:
-                send_sms_to_verified_number(verified_number, text, metadata=metadata)
+                send_message_to_verified_number(verified_number, text, metadata=metadata)
             elif msg.backend_id:
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
@@ -769,7 +779,7 @@ def _process_incoming(msg):
         if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
             text = get_message(MSG_OPTED_IN, verified_number, context=(opt_out_keywords[0],))
             if verified_number:
-                send_sms_to_verified_number(verified_number, text)
+                send_message_to_verified_number(verified_number, text)
             elif msg.backend_id:
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id)
             else:
