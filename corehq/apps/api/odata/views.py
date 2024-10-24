@@ -71,13 +71,13 @@ class ODataCaseServiceView(BaseODataView):
     urlname = 'odata_case_service_from_export_instance'
     table_urlname = 'odata_case_service_from_export_instance_table'
 
-    def get(self, request, domain, config_id, **kwargs):
+    def get(self, request, domain, api_version, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
         config = get_document_or_404(CaseExportInstance, domain, config_id)
         if raise_odata_permissions_issues(request.couch_user, domain, config):
             raise Http404()
         urlname = ODataCaseMetadataView.urlname
-        url_args = [domain, config_id]
+        url_args = [domain, api_version, config_id]
         if table_id > 0:
             urlname = ODataCaseMetadataView.table_urlname
             url_args.append(table_id)
@@ -126,13 +126,13 @@ class ODataFormServiceView(BaseODataView):
     urlname = 'odata_form_service_from_export_instance'
     table_urlname = 'odata_form_service_from_export_instance_table'
 
-    def get(self, request, domain, config_id, **kwargs):
+    def get(self, request, domain, api_version, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
         config = get_document_or_404(FormExportInstance, domain, config_id)
         if raise_odata_permissions_issues(request.couch_user, domain, config):
             raise Http404()
         urlname = ODataFormMetadataView.urlname
-        url_args = [domain, config_id]
+        url_args = [domain, api_version, config_id]
         if table_id > 0:
             urlname = ODataFormMetadataView.table_urlname
             url_args.append(table_id)

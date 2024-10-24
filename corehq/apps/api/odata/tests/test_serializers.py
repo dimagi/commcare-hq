@@ -204,15 +204,15 @@ class TestODataCaseSerializer(SimpleTestCase):
 
     def test_next_link_present(self):
         meta = {'next': '?limit=1&offset=1'}
-        api_path = '/a/odata-test/api/v0.5/odata/cases/config_id'
+        api_path = '/a/odata-test/api/odata/v1/cases/config_id'
         self.assertEqual(
             ODataCaseSerializer.get_next_url(meta, api_path),
-            'http://localhost:8000/a/odata-test/api/v0.5/odata/cases/config_id?limit=1&offset=1'
+            'http://localhost:8000/a/odata-test/api/odata/v1/cases/config_id?limit=1&offset=1'
         )
 
     def test_next_link_absent(self):
         meta = {'next': None}
-        api_path = '/a/odata-test/api/v0.5/odata/cases/config_id'
+        api_path = '/a/odata-test/api/odata/v1/cases/config_id'
         self.assertEqual(
             ODataCaseSerializer.get_next_url(meta, api_path),
             None
@@ -315,15 +315,15 @@ class TestODataFormSerializer(SimpleTestCase):
 
     def test_next_link_present(self):
         meta = {'next': '?limit=1&offset=1'}
-        api_path = '/a/odata-test/api/v0.5/odata/forms/config_id'
+        api_path = '/a/odata-test/api/odata/v1/forms/config_id'
         self.assertEqual(
             ODataFormSerializer.get_next_url(meta, api_path),
-            'http://localhost:8000/a/odata-test/api/v0.5/odata/forms/config_id?limit=1&offset=1'
+            'http://localhost:8000/a/odata-test/api/odata/v1/forms/config_id?limit=1&offset=1'
         )
 
     def test_next_link_absent(self):
         meta = {'next': None}
-        api_path = '/a/odata-test/api/v0.5/odata/forms/config_id'
+        api_path = '/a/odata-test/api/odata/v1/forms/config_id'
         self.assertEqual(
             ODataFormSerializer.get_next_url(meta, api_path),
             None

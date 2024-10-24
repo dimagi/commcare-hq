@@ -54,7 +54,11 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
 
         correct_credentials = self._get_correct_credentials()
         response = self.client.get(
-            reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'config_id': 'my_config_id'}),
+            reverse(self.view_urlname, kwargs={
+                'domain': other_domain.name,
+                'config_id': 'my_config_id',
+                'api_version': 'v1',
+            }),
             HTTP_AUTHORIZATION='Basic ' + correct_credentials,
         )
         self.assertEqual(response.status_code, 403)
