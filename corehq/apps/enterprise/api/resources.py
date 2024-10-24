@@ -19,9 +19,9 @@ from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.api.resources.meta import get_hq_throttle
-from corehq.apps.enterprise.enterprise import (
-    EnterpriseReport,
-)
+from corehq.apps.enterprise.api.keyset_paginator import KeysetPaginator
+from corehq.apps.enterprise.enterprise import EnterpriseReport
+from corehq.apps.enterprise.iterators import get_enterprise_form_iterator
 
 from corehq.apps.enterprise.tasks import generate_enterprise_report, ReportTaskProgress
 
@@ -351,6 +351,7 @@ class ODataFeedResource(ODataEnterpriseReportResource):
 
 class FormSubmissionResource(ODataEnterpriseReportResource):
     class Meta(ODataEnterpriseReportResource.Meta):
+        paginator_class = KeysetPaginator
         limit = 10000
         max_limit = 20000
 
@@ -363,26 +364,25 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.FORM_SUBMISSIONS
 
-    def get_report_task(self, request):
-        enddate = datetime.strptime(request.GET['enddate'], '%Y-%m-%d') if 'enddate' in request.GET else None
-        startdate = datetime.strptime(request.GET['startdate'], '%Y-%m-%d') if 'startdate' in request.GET else None
+    def get_object_list(self, request):
+        # TODO: logic to handle when the start/end date are null or last 30 days
+        start_date = request.GET.get('start_date', None)
+        end_date = request.GET.get('end_date', None)
+        last_domain = request.GET.get('last_domain', None)
+        last_time = request.GET.get('last_time', None)
+        last_id = request.GET.get('last_id', None)
+
         account = BillingAccount.get_account_by_domain(request.domain)
-        return generate_enterprise_report.s(
-            self.REPORT_SLUG,
-            account.id,
-            request.couch_user.username,
-            start_date=startdate,
-            end_date=enddate,
-            include_form_id=True,
-        )
+
+        return get_enterprise_form_iterator(account, start_date, end_date, last_domain, last_time, last_id)
 
     def dehydrate(self, bundle):
-        bundle.data['form_id'] = bundle.obj[0]
-        bundle.data['form_name'] = bundle.obj[1]
-        bundle.data['submitted'] = self.convert_datetime(bundle.obj[2])
-        bundle.data['app_name'] = bundle.obj[3]
-        bundle.data['mobile_user'] = bundle.obj[4]
-        bundle.data['domain'] = bundle.obj[6]
+        bundle.data['form_id'] = bundle.obj['form']['meta']['instanceID']
+        bundle.data['form_name'] = bundle.obj['@name']
+        bundle.data['submitted'] = self.convert_datetime(bundle.obj['received_on'])
+        bundle.data['app_name'] = 'App Name'  # TODO bundle.obj[3]
+        bundle.data['mobile_user'] = bundle.obj['form']['meta']['username']
+        bundle.data['domain'] = bundle.obj['domain']
 
         return bundle
 
