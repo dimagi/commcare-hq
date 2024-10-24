@@ -675,6 +675,8 @@ hqDefine('geospatial/js/models', [
         function clearDisbursementBeforeProceeding() {
             let proceedFurther = true;
             if (self.mapObj.hasDisbursementLayers()) {
+                // hide it by default and show it only if necessary
+                $('#disbursement-clear-message').hide();
                 if (confirmForClearingDisbursement()) {
                     self.mapObj.removeDisbursementLayers();
                     $('#disbursement-clear-message').show();
@@ -749,8 +751,6 @@ hqDefine('geospatial/js/models', [
                 return;
             }
 
-            // hide it by default and show it only if necessary
-            $('#disbursement-clear-message').hide();
             if (!clearDisbursementBeforeProceeding()) {
                 // set flag
                 self.resettingSavedPolygon = true;
