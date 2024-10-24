@@ -796,6 +796,16 @@ hqDefine('geospatial/js/models', [
                 if (!validateSavedPolygonName(name)) {
                     return;
                 }
+
+                if (self.mapObj.hasDisbursementLayers()) {
+                    if (confirmForClearingDisbursement()) {
+                        self.mapObj.removeDisbursementLayers();
+                        $('#disbursement-clear-message').show();
+                    } else {
+                        return;
+                    }
+                }
+
                 data['name'] = name;
                 $.ajax({
                     type: 'post',
