@@ -45,7 +45,6 @@ from .signals import location_edited
 from crispy_forms.utils import flatatt
 
 
-# TODO: split this? Used in both B3 and B5 contexts
 class LocationSelectWidget(forms.Widget):
     def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None,
                  for_user_location_selection=False):
