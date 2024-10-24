@@ -734,7 +734,7 @@ class TestCommCareAnalyticsUserResource(APIResourceTest):
 
     def test_flag_not_enabled(self):
         response = self._assert_auth_get_resource(self.list_endpoint)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_user_roles_returned(self):

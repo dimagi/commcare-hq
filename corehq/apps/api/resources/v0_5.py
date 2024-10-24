@@ -33,7 +33,7 @@ from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
-from tastypie.http import HttpForbidden, HttpUnauthorized
+from tastypie.http import HttpForbidden, HttpUnauthorized, HttpNotFound
 from tastypie.resources import ModelResource, Resource
 
 
@@ -1415,7 +1415,7 @@ class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSp
         domain = kwargs['domain']
         if not toggles.SUPERSET_ANALYTICS.enabled(domain):
             raise ImmediateHttpResponse(
-                HttpForbidden()
+                HttpNotFound()
             )
 
         user = CouchUser.get_by_username(bundle.request.user.username)
