@@ -32,6 +32,7 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import (
+    send_self_start_subscription_alert,
     send_subscription_change_alert,
     send_subscription_renewal_alert,
 )
@@ -69,6 +70,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.registration.models import SelfSignupWorkflow
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
@@ -1131,7 +1133,10 @@ class Subscriber(models.Model):
             Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version)
 
         if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
-            send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
+            if SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
+                send_self_start_subscription_alert(self.domain, new_subscription, old_subscription)
+            else:
+                send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
 
         subscription_upgrade_or_downgrade.send_robust(None, domain=self.domain)
 
