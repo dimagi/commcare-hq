@@ -668,6 +668,13 @@ hqDefine('geospatial/js/models', [
             updateSelectedSavedPolygonParam();
         };
 
+        function confirmForClearingDisbursement() {
+            return confirm(
+                gettext("Warning! This action will clear the current disbursement. " +
+                        "Please confirm if you want to proceed.")
+            );
+        }
+
         self.exportSelectedPolygonGeoJson = function (data, event) {
             if (self.activeSavedPolygon()) {
                 const convertedData = 'application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(self.activeSavedPolygon().geoJson));
@@ -723,11 +730,7 @@ hqDefine('geospatial/js/models', [
             // hide it by default and show it only if necessary
             $('#disbursement-clear-message').hide();
             if (mapObj.hasDisbursementLayers()) {
-                let confirmation = confirm(
-                    gettext("Warning! This action will clear the current disbursement. " +
-                            "Please confirm if you want to proceed.")
-                );
-                if (confirmation) {
+                if (confirmForClearingDisbursement()) {
                     if (mapObj.removeDisbursementLayers()) {
                         $('#disbursement-clear-message').show();
                     }
