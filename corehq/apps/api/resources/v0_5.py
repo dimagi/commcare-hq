@@ -1424,5 +1424,5 @@ class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSp
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail')),
+            url(r"^$", self.wrap_view('dispatch_detail'), name='api_dispatch_detail'),
         ]
