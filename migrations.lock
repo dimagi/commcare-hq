@@ -890,6 +890,7 @@ scheduling
  0025_schedule_and_broadcast_deleted_on
  0026_add_model_fcm_notification_content
  0027_emailcontent_html_message
+ 0028_alertschedule_user_case_filter_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances

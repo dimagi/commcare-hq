@@ -1,10 +1,12 @@
 import json
 import re
 from datetime import datetime, timedelta
+from json import JSONDecodeError
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django import forms
 from django.forms.fields import (
     BooleanField,
     CharField,
@@ -1344,6 +1346,12 @@ class ScheduleForm(Form):
         required=False,
     )
 
+    user_case_filter = CharField(
+        label=gettext_lazy("User case filter"),
+        required=False,
+        widget=forms.Textarea,
+    )
+
     user_data_property_name = TrimmedCharField(
         label=gettext_lazy("User data filter: property name"),
         required=False,
@@ -1569,6 +1577,9 @@ class ScheduleForm(Form):
                 result['use_user_data_filter'] = choice
                 result['user_data_property_name'] = name
                 result['user_data_property_value'] = value
+
+            if schedule.user_case_filter:
+                result['user_case_filter'] = json.dumps(schedule.user_case_filter, indent=4)
 
             result['use_utc_as_default_timezone'] = schedule.use_utc_as_default_timezone
             if isinstance(schedule, AlertSchedule):
@@ -2085,6 +2096,7 @@ class ScheduleForm(Form):
                         css_class='col-sm-4',
                     ),
                 ),
+                crispy.Field('user_case_filter'),
                 crispy.Div(
                     crispy.Field('user_data_property_name'),
                     crispy.Field('user_data_property_value'),
@@ -2487,6 +2499,16 @@ class ScheduleForm(Form):
 
         return validate_int(self.cleaned_data.get('occurrences'), 2)
 
+    def clean_user_case_filter(self):
+        try:
+            filter_json = json.loads(self.cleaned_data.get('user_case_filter'))
+        except JSONDecodeError as error:
+            raise ValidationError(f"{_('This field has to be valid JSON')}: {str(error)}")
+
+        # TODO: operators and properties are valid
+
+        return filter_json
+
     def clean_user_data_property_name(self):
         if self.cleaned_data.get('use_user_data_filter') == self.NO:
             return None
@@ -2567,6 +2589,7 @@ class ScheduleForm(Form):
             'location_type_filter': form_data['location_types'],
             'use_utc_as_default_timezone': form_data['use_utc_as_default_timezone'],
             'user_data_filter': self.distill_user_data_filter(),
+            'user_case_filter': self.cleaned_data['user_case_filter'],
         }
 
     def distill_user_data_filter(self):
