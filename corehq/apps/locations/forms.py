@@ -535,7 +535,7 @@ class LocationFilterForm(forms.Form):
         initial=False,
     )
     location_status_active = forms.ChoiceField(
-        label=_('Active / Archived'),
+        label="",
         choices=LOCATION_ACTIVE_STATUS,
         required=False,
         widget=SelectToggle(choices=LOCATION_ACTIVE_STATUS, attrs={"ko_value": "location_status_active"}),
@@ -570,13 +570,11 @@ class LocationFilterForm(forms.Form):
                 ),
                 crispy.Field('location_status_active',),
             ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Download Locations"),
-                    type="submit",
-                    css_class="btn btn-primary",
-                    data_bind="html: buttonHTML",
-                ),
+            StrictButton(
+                _("Download Locations"),
+                type="submit",
+                css_class="btn btn-primary",
+                data_bind="html: buttonHTML",
             ),
         )
 
