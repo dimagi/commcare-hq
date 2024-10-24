@@ -109,9 +109,9 @@
           <div class="card-body">
             <form id="loc_form" class="form form-horizontal" name="product" method="post">
               {% bootstrap_form_errors form %}
-              {% crispy form.location_form %}  {# todo B5: crispy #}
+              {% crispy form.location_form %}
 
-              {% crispy form.custom_location_data.form %}  {# todo B5: crispy #}
+              {% crispy form.custom_location_data.form %}
 
               <input type="hidden" name="form_type" value="location-settings" />
 
@@ -165,7 +165,7 @@
               <div class="card panel-modern-gray panel-form-only">
                 <div class="card-body">
                   <form class="form-horizontal disable-on-submit{% if not can_edit_users_in_location or request.is_view_only %} form-hide-actions{% endif %}" id="edit_users" action="" method='post'>
-                    {% crispy users_per_location_form %}  {# todo B5: crispy #}
+                    {% crispy users_per_location_form %}
                     <input type="hidden" name="form_type" value="location-users" />
                   </form>
                 </div>
@@ -193,7 +193,7 @@
                 <div class="card-body">
                   <form class="form-horizontal disable-on-submit{% if request.is_view_only %} form-hide-actions{% endif %}" id="edit_products" action="" method='post'>
                     <input type="hidden" name="form_type" value="location-products" />
-                    {% crispy products_per_location_form %}  {# todo B5: crispy #}
+                    {% crispy products_per_location_form %}
                   </form>
                 </div>
               </div>
