@@ -663,6 +663,15 @@ hqDefine('geospatial/js/models', [
         };
 
         self.clearSelectedPolygonFilter = function () {
+            if (self.mapObj.hasDisbursementLayers()) {
+                if (confirmForClearingDisbursement()) {
+                    self.mapObj.removeDisbursementLayers();
+                    $('#disbursement-clear-message').show();
+                } else {
+                    return;
+                }
+            }
+
             self.selectedSavedPolygonId('');
             self.clearActivePolygon();
             updateSelectedSavedPolygonParam();
