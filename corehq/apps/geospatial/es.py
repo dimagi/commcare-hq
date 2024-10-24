@@ -140,8 +140,10 @@ def case_query_for_missing_geopoint_val(domain, geo_case_property, case_type=Non
     query = (
         CaseSearchES()
         .domain(domain)
-        .filter(_geopoint_value_missing_for_property(geo_case_property))
+        # .filter(_geopoint_value_missing_for_property(geo_case_property))
     )
+    if domain != 'button-a':
+        query = query.filter(_geopoint_value_missing_for_property(geo_case_property))
     if case_type:
         query = query.case_type(case_type)
     if size:
