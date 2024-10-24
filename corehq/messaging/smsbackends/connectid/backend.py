@@ -34,7 +34,7 @@ class ConnectBackend:
         response = requests.post(
             settings.CONNECTID_CHANNEL_URL,
             data={
-                "connectid": connectid_username
+                "connectid": connectid_username,
                 "channel_source": user_link.domain,
             },
             headers={"Authorization": f"Basic {settings.CONNECTID_CLIENT_ID}:{settings.CONNECTID_SECRET_KEY}"}
