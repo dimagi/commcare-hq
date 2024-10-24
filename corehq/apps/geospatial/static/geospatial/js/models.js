@@ -662,11 +662,39 @@ hqDefine('geospatial/js/models', [
             }
         };
 
-        self.clearSelectedPolygonFilter = function clearSelectedPolygonFilter() {
+        self.clearSelectedPolygonFilter = function () {
+            if (!clearDisbursementBeforeProceeding()) {
+                return;
+            }
+
             self.selectedSavedPolygonId('');
             self.clearActivePolygon();
             updateSelectedSavedPolygonParam();
         };
+
+        function clearDisbursementBeforeProceeding() {
+            let proceedFurther = true;
+            if (self.mapObj.hasDisbursementLayers()) {
+                // hide it by default and show it only if necessary
+                $('#disbursement-clear-message').hide();
+                if (confirmForClearingDisbursement()) {
+                    self.mapObj.removeDisbursementLayers();
+                    $('#disbursement-clear-message').show();
+                    $('#disbursement-params').hide();
+                    proceedFurther = true;
+                } else {
+                    proceedFurther = false;
+                }
+            }
+            return proceedFurther;
+        }
+
+        function confirmForClearingDisbursement() {
+            return confirm(
+                gettext("Warning! This action will clear the current disbursement. " +
+                        "Please confirm if you want to proceed.")
+            );
+        }
 
         self.exportSelectedPolygonGeoJson = function (data, event) {
             if (self.activeSavedPolygon()) {
@@ -679,6 +707,10 @@ hqDefine('geospatial/js/models', [
         };
 
         self.deleteSelectedPolygonFilter = function () {
+            if (!clearDisbursementBeforeProceeding()) {
+                return;
+            }
+
             const deleteGeoJSONUrl = initialPageData.reverse('geo_polygon', self.selectedSavedPolygonId());
             $.ajax({
                 type: 'DELETE',
@@ -720,24 +752,13 @@ hqDefine('geospatial/js/models', [
                 return;
             }
 
-            // hide it by default and show it only if necessary
-            $('#disbursement-clear-message').hide();
-            if (mapObj.hasDisbursementLayers()) {
-                let confirmation = confirm(
-                    gettext("Warning! This action will clear the current disbursement. " +
-                            "Please confirm if you want to proceed.")
-                );
-                if (confirmation) {
-                    if (mapObj.removeDisbursementLayers()) {
-                        $('#disbursement-clear-message').show();
-                    }
-                } else {
-                    // set flag
-                    self.resettingSavedPolygon = true;
-                    self.selectedSavedPolygonId(self.oldSelectedSavedPolygonId());
-                    return;
-                }
+            if (!clearDisbursementBeforeProceeding()) {
+                // set flag
+                self.resettingSavedPolygon = true;
+                self.selectedSavedPolygonId(self.oldSelectedSavedPolygonId());
+                return;
             }
+
             self.clearActivePolygon();
 
             createActivePolygonLayer(polygonObj);
@@ -775,6 +796,11 @@ hqDefine('geospatial/js/models', [
                 if (!validateSavedPolygonName(name)) {
                     return;
                 }
+
+                if (!clearDisbursementBeforeProceeding()) {
+                    return;
+                }
+
                 data['name'] = name;
                 $.ajax({
                     type: 'post',
