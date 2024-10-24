@@ -109,10 +109,16 @@ hqDefine("groups/js/group_members", [
                     };
                 _showMembershipUpdating();
                 $(this).find(':button').prop('disabled', true);
+
+                const formData = new FormData(this);
+                let ajaxData = Object.fromEntries(formData);
+                // Object.fromEntries uses get, but selected_ids has multiple values and needs getAll
+                ajaxData.selected_ids = formData.getAll("selected_ids");
+
                 $.ajax({
                     url: $(this).attr("action"),
                     method: "POST",
-                    data: Object.fromEntries(new FormData(this)),
+                    data: ajaxData,
                     success: outcome(true, "Group membership", "#edit_membership", "Edit Group Membership", _hideMembershipUpdating),
                     error: outcome(false, "Group membership", "#edit_membership", _hideMembershipUpdating),
                 });

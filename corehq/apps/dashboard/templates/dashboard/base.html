@@ -25,6 +25,8 @@
     </h1>
     {% if is_paused %}
       {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
+    {% elif should_show_pending_notice %}
+      {% include 'hqwebapp/partials/pending_plan_notice.html' %}
     {% endif %}
     <div id="dashboard-tiles">
       <div class="row" data-bind="foreach: tiles">
