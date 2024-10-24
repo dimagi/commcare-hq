@@ -47,9 +47,9 @@
             <i class="fa fa-plus"></i> {% trans "New Organization Level" %}
           </button>
           <hr />
-          <div class="float-end">
-            <label>
-              <input type="checkbox" data-bind="checked:advanced_mode"/>  {# todo B5: css-checkbox #}
+          <div class="float-end form-check">
+            <input type="checkbox" class="form-check-input" id="advanced-mode" data-bind="checked:advanced_mode"/>
+            <label class="form-check-label" for="advanced-mode">
               {% trans "Advanced mode" %}
             </label>
           </div>
@@ -246,14 +246,14 @@
               </td>
               {% if commtrack_enabled %}
                 <td>
-                  <input data-bind="checked: tracks_stock" type="checkbox" />  {# todo B5: css-checkbox #}
+                  <input data-bind="checked: tracks_stock" type="checkbox" class="form-check-input" />
                 </td>
               {% endif %}
               <td>
-                <input data-bind="checked: shares_cases" type="checkbox" />  {# todo B5: css-checkbox #}
+                <input data-bind="checked: shares_cases" type="checkbox" class="form-check-input" />
               </td>
               <td>
-                <input data-bind="checked: view_descendants" type="checkbox" />  {# todo B5: css-checkbox #}
+                <input data-bind="checked: view_descendants" type="checkbox" class="form-check-input" />
               </td>
               {% if request|toggle_enabled:"USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION" %}
                 <td data-bind="visible: $parent.advanced_mode">
@@ -267,7 +267,8 @@
                   </select>
                 </td>
                 <td data-bind="visible: $parent.advanced_mode">
-                  <input data-bind="checked: has_users_setting, disable: has_users_setting() && actually_has_users()" type="checkbox" />  {# todo B5: css-checkbox #}
+                  <input data-bind="checked: has_users_setting, disable: has_users_setting() && actually_has_users()"
+                         type="checkbox" class="form-check-input" />
                 </td>
               {% endif %}
               <td>
