@@ -3,6 +3,8 @@
 However, `&times;` in the HTML is no longer needed, as an embedded SVG is now used instead.
 You can remove this.
 
+In modal headers, `close` now comes *after* the `modal-title` instead of before it.
+
 An EXAMPLE for how to apply this change is provided below.
 
 Previously:
