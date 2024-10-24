@@ -1771,6 +1771,7 @@ class ExportDataSchema(Document):
         only_process_current_builds=False,
         task=None,
         for_new_export_instance=False,
+        is_identifier_case_type=False,
     ):
         """
         Builds a schema from Application builds for a given identifier
@@ -1787,6 +1788,7 @@ class ExportDataSchema(Document):
             processed.
         :param task: A celery task to update the progress of the build
         :param for_new_export_instance: Flag to be set if generating schema for a new export instance
+        :param is_identifier_case_type: boolean, if True, some optimizations are applied specific to case type
         :returns: Returns a ExportDataSchema instance
         """
 
@@ -1809,7 +1811,8 @@ class ExportDataSchema(Document):
             )
         app_build_ids.extend(app_ids_for_domain)
         current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task,
-                                                      for_new_export_instance=for_new_export_instance)
+                                                      for_new_export_instance=for_new_export_instance,
+                                                      is_identifier_case_type=is_identifier_case_type)
 
         inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
@@ -1955,7 +1958,7 @@ class ExportDataSchema(Document):
 
     @classmethod
     def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
+                                 for_new_export_instance=False, is_identifier_case_type=False):
         apps_processed = 0
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')
@@ -1972,6 +1975,9 @@ class ExportDataSchema(Document):
                     f"Bad definition for Application {app_doc['_id']}",
                     exc_info=err,
                 )
+                continue
+
+            if is_identifier_case_type and not app.case_type_exists(identifier):
                 continue
 
             try:
@@ -2313,18 +2319,6 @@ class FormExportDataSchema(ExportDataSchema):
 
         return items
 
-    @classmethod
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
-        return super(FormExportDataSchema, cls)._process_apps_for_export(
-            domain,
-            schema,
-            identifier,
-            app_build_ids,
-            task,
-            for_new_export_instance=for_new_export_instance
-        )
-
 
 class CaseExportDataSchema(ExportDataSchema):
 
@@ -2544,7 +2538,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
+                                 for_new_export_instance=False, is_identifier_case_type=False):
         if identifier == ALL_CASE_TYPE_EXPORT:
             return cls._process_apps_for_bulk_export(domain, schema, app_build_ids, task)
         else:
@@ -2554,7 +2548,8 @@ class CaseExportDataSchema(ExportDataSchema):
                 identifier,
                 app_build_ids,
                 task,
-                for_new_export_instance=for_new_export_instance
+                for_new_export_instance=for_new_export_instance,
+                is_identifier_case_type=is_identifier_case_type
             )
 
     @classmethod
@@ -2622,17 +2617,6 @@ class SMSExportDataSchema(ExportDataSchema):
     @staticmethod
     def get_latest_export_schema(domain, include_metadata, identifier=None):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
-
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
-        return super(SMSExportDataSchema, cls)._process_apps_for_export(
-            domain,
-            schema,
-            identifier,
-            app_build_ids,
-            task,
-            for_new_export_instance=for_new_export_instance
-        )
 
 
 def _string_path_to_list(path):

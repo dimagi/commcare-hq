@@ -1,11 +1,13 @@
 import uuid
+from collections import namedtuple
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.utils import submit_case_blocks
 
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
@@ -15,6 +17,9 @@ DOMAIN = 'zapier-case-forwarding-tests'
 ZAPIER_CASE_TYPE = 'animal'
 
 
+ResponseMock = namedtuple('ResponseMock', ['status_code', 'reason'])
+
+
 class TestZapierCaseForwarding(TestCase):
 
     @classmethod
@@ -22,12 +27,16 @@ class TestZapierCaseForwarding(TestCase):
         super(TestZapierCaseForwarding, cls).setUpClass()
         cls.domain = DOMAIN
         cls.domain_object, cls.web_user, cls.api_key = bootrap_domain_for_zapier(cls.domain)
+        cls.addClassCleanup(cls.domain_object.delete)
+        cls.addClassCleanup(cls.web_user.delete, cls.domain, deleted_by=None)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.web_user.delete(cls.domain, deleted_by=None)
-        cls.domain_object.delete()
-        super(TestZapierCaseForwarding, cls).tearDownClass()
+        simple_request_patch = patch('corehq.motech.repeaters.models.simple_request')
+        simple_request_func = simple_request_patch.start()
+        simple_request_func.return_value = ResponseMock(
+            status_code=503,
+            reason='Service Unavailable',
+        )
+        cls.addClassCleanup(simple_request_patch.stop)
 
     def tearDown(self):
         ZapierSubscription.objects.all().delete()

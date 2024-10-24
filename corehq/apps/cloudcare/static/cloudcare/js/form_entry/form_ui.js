@@ -420,12 +420,32 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
         }
         const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
-        const lastPart = ixParts[ixParts.length - 1];
-        const lastPartPrefix = lastPart.substr(0, lastPart.lastIndexOf("_") + 1);
+
+        const getIxPrefix = (ix) => ix.substr(0, ix.lastIndexOf("_") + 1);
+        const getIxNestedPosition = (ix) => ix.substr(ix.lastIndexOf("_") + 1, ix.lastIndexOf("_") + 2);
+
+        const deletedGroupIxPrefix = getIxPrefix(deletedGroupIx);
         parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function (c) {
-            const childIxParts = c.ix.split(",");
-            return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
+            return !c.ix.startsWith(deletedGroupIxPrefix);
         });
+
+        // Preserve the 'collapsed' state of the group upon rerendering.
+        // This is done by decrementing the ix of siblings that come after the deleted group.
+        let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
+        collapsedIx = collapsedIx
+            .filter(ix => !ix.startsWith(deletedGroupIx) && ix !== deletedGroupIx);
+        collapsedIx = collapsedIx.map(ix => {
+            if (ix.startsWith(deletedGroupIxPrefix)) {
+                let IxNestedPosition = getIxNestedPosition(ix);
+                if (IxNestedPosition > getIxNestedPosition(deletedGroupIx)) {
+                    IxNestedPosition--;
+                }
+                return getIxPrefix(ix) + IxNestedPosition;
+            }
+            return ix;
+        });
+        sessionStorage.setItem('collapsedIx', JSON.stringify(collapsedIx));
+
     }
 
     /**
@@ -671,6 +691,24 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     element.serverError(null);
                 }
 
+                const inputControl = [constants.CONTROL_IMAGE_CHOOSE, constants.CONTROL_LABEL,
+                    constants.CONTROL_AUDIO_CAPTURE, constants.CONTROL_VIDEO_CAPTURE];
+
+                let findChildAndSetFilename = function (children) {
+                    for (let child of children) {
+                        if (child.children && child.children.length > 0) {
+                            findChildAndSetFilename(child.children);
+                        } else if (inputControl.includes(child.control) && element.binding() === child.binding &&
+                            element.ix() === child.ix && element.answer()) {
+                            child.filename = element.answer();
+                            return;
+                        }
+                    }
+                };
+                if (!_.isEmpty(element) && allChildren && allChildren.length > 0) {
+                    findChildAndSetFilename(allChildren);
+                }
+
                 response.children = allChildren;
                 self.fromJS(response);
             }
@@ -704,6 +742,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         } else {
             self.showDelete = false;
         }
+        const isRepeatable = ko.utils.unwrapObservable(self.repeatable) === "true";
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
 
@@ -712,7 +751,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         });
 
         // Header and captions
-        self.showHeader = oneQuestionPerScreen || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
+        self.showHeader = oneQuestionPerScreen || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown) || self.showDelete;
 
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);
@@ -725,16 +764,22 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             }
         };
 
+        let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
-        self.stripeRepeats = _.contains(styles, constants.STRIPE_REPEATS);
-        self.collapsible = _.contains(styles, constants.COLLAPSIBLE);
+        self.collapsible = (_.contains(styles, constants.COLLAPSIBLE) || isRepeatable) && self.showHeader;
         self.groupBorder = _.contains(styles, constants.GROUP_BORDER);
-        self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN));
+        self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN) || (isRepeatable && !collapsedIx.includes(self.rel_ix())));
         self.toggleChildren = function () {
             if (self.collapsible) {
                 if (self.showChildren()) {
+                    let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
+                    collapsedIx.push(self.rel_ix());
+                    sessionStorage.setItem('collapsedIx', JSON.stringify(collapsedIx));
                     self.showChildren(false);
                 } else {
+                    let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
+                    collapsedIx = collapsedIx.filter(e => e !== self.rel_ix());
+                    sessionStorage.setItem('collapsedIx', JSON.stringify(collapsedIx));
                     self.showChildren(true);
                 }
             }
@@ -1032,7 +1077,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         } else {
             if (self.isLabel) {
                 self.controlWidth = "";
-                self.labelWidth = "";
+                self.labelWidth = constants.FULL_WIDTH;
             } else {
                 self.controlWidth = constants.CONTROL_WIDTH;
                 self.labelWidth = constants.LABEL_WIDTH;

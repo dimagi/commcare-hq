@@ -18,15 +18,17 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
         self.received_on = datetime.utcnow()
 
     def _get_xform(self, filename):
-        xform = FormProcessorInterface(self.domain).new_xform(convert_xform_to_json(self.get_xml(filename)))
+        xml = self.get_xml(filename)
+        xform = FormProcessorInterface(self.domain).new_xform(convert_xform_to_json(xml))
         xform.received_on = self.received_on
+        xform.get_xml = lambda: xml
         return xform
 
     def test_log_error(self):
         xform = self._get_xform('log_subreport')
         compiled_log = SumoLogicLog(self.domain, xform).log_subreport()
         expected_log = (
-            "[log_date=2018-02-13T15:19:30.622-05] [log_submission_date={received}] [log_type=maintenance] "
+            "[log_date=2018-02-13T20:19:30.622000Z] [log_submission_date={received}] [log_type=maintenance] "
             "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
             "[cc_version=2.43] [msg=Succesfully submitted 1 device reports to server.]"
         ).format(domain=self.domain, received=self.received_on)
@@ -37,7 +39,7 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
         xform = self._get_xform('usererror_subreport')
         compiled_log = SumoLogicLog(self.domain, xform).user_error_subreport()
         expected_log = (
-            "[log_date=2018-02-22T17:21:21.201-05] [log_submission_date={received}] [log_type=error-config] "
+            "[log_date=2018-02-22T22:21:21.201000Z] [log_submission_date={received}] [log_type=error-config] "
             "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
             "[cc_version=2.43] [msg=This is a test user error] [app_id=73d5f08b9d55fe48602906a89672c214] "
             "[user_id=37cc2dcdb1abf5c16bab0763f435e6b7] [session=session] [expr=an expression]"
@@ -49,10 +51,12 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
         xform = self._get_xform('forceclose_subreport')
         compiled_log = SumoLogicLog(self.domain, xform).force_close_subreport()
         expected_log = (
-            "[log_date=2018-02-22T17:21:21.232-05] [log_submission_date={received}] [log_type=forceclose] "
+            "[log_date=2018-02-22T22:21:21.232000Z] [log_submission_date={received}] [log_type=forceclose] "
             "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
             "[cc_version=2.43] "
-            """[msg=java.lang.RuntimeException: Unable to start activity ComponentInfo{{org.commcare.dalvik.debug/org.commcare.activities.MenuActivity}}: java.lang.RuntimeException
+            "[msg=java.lang.RuntimeException: Unable to start activity "
+            "ComponentInfo{{org.commcare.dalvik.debug/org.commcare.activities.MenuActivity}}: "
+            """java.lang.RuntimeException
         at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2416)
         at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2476)
         at android.app.ActivityThread.-wrap11(ActivityThread.java)

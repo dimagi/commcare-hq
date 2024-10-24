@@ -36,50 +36,85 @@ class TestGenericInboundAPI(SimpleTestCase):
     domain_name = 'ucr-api-test'
 
     def test_spec_error(self):
-        api_model = ConfigurableAPI(
+        configurable_api = ConfigurableAPI(
             domain=self.domain_name,
             transform_expression=UCRExpression(definition={})
         )
         # mock 'get_validations' to prevent reverse foreign key lookup on unsaved obj
-        api_model.get_validations = lambda: []
+        configurable_api.get_validations = lambda: []
         user = MockUser()
-        context = get_evaluation_context(user, 'post', {}, {}, {})
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={}
+        )
         with self.assertRaises(BadSpecError):
-            _execute_generic_api(self.domain_name, user, "device_id", context, api_model)
+            _execute_generic_api(self.domain_name, user, "device_id", context, configurable_api)
 
     def test_no_filter(self):
-        api_model = ConfigurableAPI(
+        configurable_api = ConfigurableAPI(
             domain=self.domain_name,
             transform_expression=UCRExpression(definition={
                 'type': 'dict', 'properties': {'case_type': 'patient'}
             }),
         )
         user = MockUser()
-        context = get_evaluation_context(user, 'post', {}, {}, {"resource": {"type": "patient"}})
-        self.assertFalse(_apply_api_filter(api_model, context))
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={"resource": {"type": "patient"}}
+        )
+        self.assertFalse(_apply_api_filter(configurable_api, context))
 
     def test_filter_pass(self):
-        api_model = _get_api_with_filter(self.domain_name)
+        configurable_api = _get_api_with_filter(self.domain_name)
         user = MockUser()
-        context = get_evaluation_context(user, 'post', {}, {}, {"resource": {"type": "patient"}})
-        self.assertTrue(_apply_api_filter(api_model, context))
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={"resource": {"type": "patient"}}
+        )
+        self.assertTrue(_apply_api_filter(configurable_api, context))
 
     def test_filter_fail(self):
-        api_model = _get_api_with_filter(self.domain_name)
+        configurable_api = _get_api_with_filter(self.domain_name)
         user = MockUser()
-        context = get_evaluation_context(user, 'post', {}, {}, {"resource": {"type": "client"}})
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={"resource": {"type": "client"}}
+        )
         with self.assertRaises(GenericInboundRequestFiltered):
-            _apply_api_filter(api_model, context)
+            _apply_api_filter(configurable_api, context)
 
     def test_validation_pass(self):
-        api_model = _get_api_with_validation(self.domain_name)
+        configurable_api = _get_api_with_validation(self.domain_name)
         user = MockUser()
-        context = get_evaluation_context(user, 'post', {}, {}, {"resource": {"type": "patient"}})
-        self.assertTrue(_validate_api_request(api_model, context))
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={"resource": {"type": "patient"}}
+        )
+        self.assertTrue(_validate_api_request(configurable_api, context))
 
     def test_validation_errors(self):
-        api_model = _get_api_with_validation(self.domain_name)
-        validations = api_model.get_validations()
+        configurable_api = _get_api_with_validation(self.domain_name)
+        validations = configurable_api.get_validations()
         client_validation_expression = UCRExpression(
             expression_type=UCR_NAMED_FILTER,
             definition={
@@ -89,16 +124,23 @@ class TestGenericInboundAPI(SimpleTestCase):
                 "property_value": "client"
             })
         validations.append(ConfigurableApiValidation(
-            api=api_model,
+            api=configurable_api,
             name="is also patient",
             message="must be patient again",
             expression=client_validation_expression,
         ))
         user = MockUser()
         # 1st validation should fail, 2nd should succeed
-        context = get_evaluation_context(user, 'post', {}, {}, {"resource": {"type": "employee"}})
+        context = get_evaluation_context(
+            domain=self.domain_name,
+            restore_user=user,
+            method='post',
+            query={},
+            headers={},
+            body={"resource": {"type": "employee"}}
+        )
         with self.assertRaises(GenericInboundValidationError) as cm:
-            _execute_generic_api(self.domain_name, user, "device_id", context, api_model)
+            _execute_generic_api(self.domain_name, user, "device_id", context, configurable_api)
 
         self.assertEqual(cm.exception.errors, [
             {"name": "is patient", "message": "must be patient"},
@@ -132,7 +174,7 @@ class TestGenericInboundAPINamedExpression(TestCase):
         )
 
     def test_named_filter(self):
-        api_model = ConfigurableAPI(
+        configurable_api = ConfigurableAPI(
             domain=self.domain_name,
             filter_expression=UCRExpression(
                 expression_type=UCR_NAMED_FILTER,
@@ -140,10 +182,10 @@ class TestGenericInboundAPINamedExpression(TestCase):
             ),
         )
         # this also tests that an exception isn't raised
-        self.assertIsNotNone(api_model.parsed_filter)
+        self.assertIsNotNone(configurable_api.parsed_filter)
 
     def test_named_expression(self):
-        api_model = ConfigurableAPI(
+        configurable_api = ConfigurableAPI(
             domain=self.domain_name,
             transform_expression=UCRExpression(
                 expression_type=UCR_NAMED_EXPRESSION,
@@ -151,7 +193,7 @@ class TestGenericInboundAPINamedExpression(TestCase):
             ),
         )
         # this also tests that an exception isn't raised
-        self.assertIsNotNone(api_model.parsed_expression)
+        self.assertIsNotNone(configurable_api.parsed_expression)
 
     def test_named_expression_in_validation(self):
         validation_expression = UCRExpression.objects.create(
@@ -159,16 +201,17 @@ class TestGenericInboundAPINamedExpression(TestCase):
             definition={"type": "named", "name": "patient_case_filter"}
         )
 
-        api_model = ConfigurableAPI.objects.create(domain=self.domain_name, transform_expression=self.expression)
+        configurable_api = ConfigurableAPI.objects.create(domain=self.domain_name,
+                                                          transform_expression=self.expression)
         ConfigurableApiValidation.objects.create(
-            api=api_model, name="is patient", message="must be patient", expression=validation_expression
+            api=configurable_api, name="is patient", message="must be patient", expression=validation_expression
         )
         # this also tests that an exception isn't raised
-        self.assertIsNotNone(api_model.get_validations()[0].parsed_expression)
+        self.assertIsNotNone(configurable_api.get_validations()[0].parsed_expression)
 
 
 def _get_api_with_validation(domain_name, expression=None):
-    api_model = ConfigurableAPI(
+    configurable_api = ConfigurableAPI(
         domain=domain_name,
         transform_expression=UCRExpression(definition={
             'type': 'dict', 'properties': {'case_type': 'patient'}
@@ -184,15 +227,15 @@ def _get_api_with_validation(domain_name, expression=None):
         })
     validations = [
         ConfigurableApiValidation(
-            api=api_model,
+            api=configurable_api,
             name="is patient",
             message="must be patient",
             expression=validation_expression,
         )
     ]
     # mock 'get_validations'
-    api_model.get_validations = lambda: validations
-    return api_model
+    configurable_api.get_validations = lambda: validations
+    return configurable_api
 
 
 def _get_api_with_filter(domain_name):
@@ -204,11 +247,11 @@ def _get_api_with_filter(domain_name):
             "operator": "eq",
             "property_value": "patient"
         })
-    api_model = ConfigurableAPI(
+    configurable_api = ConfigurableAPI(
         domain=domain_name,
         filter_expression=filter_expression,
         transform_expression=UCRExpression(definition={
             'type': 'dict', 'properties': {'case_type': 'patient'}
         }),
     )
-    return api_model
+    return configurable_api

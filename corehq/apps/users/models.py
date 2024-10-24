@@ -481,9 +481,9 @@ class IsMemberOfMixin(DocumentSchema):
 
         if allow_enterprise:
             from corehq.apps.enterprise.models import EnterprisePermissions
-            config = EnterprisePermissions.get_by_domain(domain)
-            if config.is_enabled and domain in config.domains:
-                return self.is_member_of(config.source_domain, allow_enterprise=False)
+            source_domain = EnterprisePermissions.get_source_domain(domain)
+            if source_domain:
+                return self.is_member_of(source_domain, allow_enterprise=False)
 
         return False
 
@@ -520,9 +520,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 if domain in self.domains:
                     raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
                 from corehq.apps.enterprise.models import EnterprisePermissions
-                config = EnterprisePermissions.get_by_domain(domain)
-                if allow_enterprise and config.is_enabled and domain in config.domains:
-                    return self.get_domain_membership(config.source_domain, allow_enterprise=False)
+                source_domain = EnterprisePermissions.get_source_domain(domain)
+                if allow_enterprise and source_domain:
+                    return self.get_domain_membership(source_domain, allow_enterprise=False)
         except self.Inconsistent as e:
             logging.warning(e)
             self.domains = [d.domain for d in self.domain_memberships]
@@ -552,7 +552,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
     def add_as_web_user(self, domain, role, primary_location_id=None,
                         assigned_location_ids=None, program_id=None, profile=None,
-                        tableau_role=None, tableau_group_ids=None):
+                        tableau_role=None, tableau_group_ids=None, custom_user_data=None):
         if assigned_location_ids is None:
             assigned_location_ids = []
         domain_obj = Domain.get_by_name(domain)
@@ -564,9 +564,11 @@ class _AuthorizableMixin(IsMemberOfMixin):
             if primary_location_id:
                 self.set_location(domain, primary_location_id, commit=False)
             self.reset_locations(domain, assigned_location_ids, commit=False)
+        user_data = self.get_user_data(domain_obj.name)
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
-            user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
+        if custom_user_data:
+            user_data.update(custom_user_data)
         if TABLEAU_USER_SYNCING.enabled(domain) and (tableau_role or tableau_group_ids):
             if tableau_group_ids is None:
                 tableau_group_ids = []
@@ -1645,11 +1647,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return False
 
     def can_view_some_tableau_viz(self, domain):
-        if not self.can_access_all_locations(domain):
-            return False
-
         from corehq.apps.reports.models import TableauVisualization
-        return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
+        return bool(TableauVisualization.for_user(domain, self))
 
     def can_login_as(self, domain):
         return (
@@ -2063,7 +2062,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         touched = []
         faulty_groups = []
         for to_add in desired - current:
-            group = Group.get(to_add)
+            try:
+                group = Group.get(to_add)
+            except ResourceNotFound:
+                faulty_groups.append(to_add)
+                continue
             if group.domain != self.domain:
                 faulty_groups.append(to_add)
                 continue
@@ -2443,6 +2446,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         super().add_domain_membership(domain, timezone, **kwargs)
 
     def delete_domain_membership(self, domain, create_record=False):
+        self._leaving_domains = getattr(self, '_leaving_domains', []) + [domain]
+
         if TABLEAU_USER_SYNCING.enabled(domain):
             from corehq.apps.reports.util import delete_tableau_user
             delete_tableau_user(domain, self.username)
@@ -2521,8 +2526,10 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         super().save(fire_signals=fire_signals, **params)
         if fire_signals and not self.to_be_deleted():
             from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
-            for domain in self.get_domains():
+            # We need to sync to all domains, even those the user is leaving
+            for domain in self.get_domains() + getattr(self, '_leaving_domains', []):
                 sync_web_user_usercases_if_applicable(self, domain)
+        self._leaving_domains = []
 
     def add_to_assigned_locations(self, domain, location):
         membership = self.get_domain_membership(domain)
@@ -2735,9 +2742,8 @@ class Invitation(models.Model):
     domain = models.CharField(max_length=255)
     role = models.CharField(max_length=100, null=True, blank=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True, blank=True)   # couch id of a Program
-    supply_point = models.CharField(max_length=126, null=True, blank=True)  # couch id of a Location
     primary_location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
-                                 to_field='location_id', null=True, blank=True)  # to replace supply_point
+                                 to_field='location_id', null=True, blank=True)
     assigned_locations = models.ManyToManyField("locations.SQLLocation", symmetrical=False,
                                                 related_name='invitations')
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
@@ -2852,6 +2858,7 @@ class Invitation(models.Model):
             assigned_location_ids=list(self.assigned_locations.all().values_list('location_id', flat=True)),
             program_id=self.program,
             profile=self.profile,
+            custom_user_data=self.custom_user_data,
             tableau_role=self.tableau_role,
             tableau_group_ids=self.tableau_group_ids
         )

@@ -14,3 +14,11 @@ class InvalidCoordinate(GeoSpatialException):
 
 class InvalidDistributionParam(GeoSpatialException):
     pass
+
+
+class CaseReassignmentValidationError(Exception):
+    pass
+
+
+class GeoPolygonValidationError(Exception):
+    pass

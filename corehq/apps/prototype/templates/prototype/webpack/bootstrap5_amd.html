@@ -1,0 +1,21 @@
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% js_entry "prototype/js/webpack/bootstrap5_amd" %}
+
+{% block content %}
+  {% initial_page_data 'test_initial' 'successfully retrieved initial page data' %}
+  <div class="container my-5">
+    <h2>
+      Testing an (HQ)AMD-formatted module loaded with Webpack
+    </h2>
+    <div class="alert alert-info">
+      FYI: This page uses Bootstrap 5.
+    </div>
+    <p>
+      Please open the js console for troubleshooting and see
+      "prototype/js/webpack/bootstrap5_amd.js" for additional information.
+    </p>
+  </div>
+{% endblock content %}

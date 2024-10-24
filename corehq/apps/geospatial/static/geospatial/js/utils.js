@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('geospatial/js/utils', [], function () {
 
     const DEFAULT_MARKER_OPACITY = 1.0;
@@ -58,6 +59,29 @@ hqDefine('geospatial/js/utils', [], function () {
         return true;
     }
 
+    function downloadCsv(items, headers, cols, fileName) {
+        let csvStr = "";
+        csvStr = (headers).join(',');
+        csvStr += '\n';
+
+        _.forEach(items, function (itemToExport) {
+            let dataToExport = [];
+            for (const col of cols) {
+                dataToExport.push(itemToExport[col]);
+            }
+            csvStr += dataToExport.join(',');
+            csvStr += '\n';
+        });
+
+        // Download CSV file
+        const hiddenElement = document.createElement('a');
+        hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvStr);
+        hiddenElement.target = '_blank';
+        hiddenElement.download = `${fileName} (${getTodayDate()}).csv`;
+        hiddenElement.click();
+        hiddenElement.remove();
+    }
+
     return {
         getRandomRGBColor: getRandomRGBColor,
         uuidv4: uuidv4,
@@ -66,5 +90,6 @@ hqDefine('geospatial/js/utils', [], function () {
         setQueryParam: setQueryParam,
         clearQueryParam: clearQueryParam,
         fetchQueryParam: fetchQueryParam,
+        downloadCsv: downloadCsv,
     };
 });

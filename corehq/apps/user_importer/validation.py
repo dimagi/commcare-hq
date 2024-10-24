@@ -511,7 +511,7 @@ class LocationValidator(ImportValidator):
     def validate_spec(self, spec):
         user_access_error = self._validate_uploading_user_access(spec)
         location_cannot_have_users_error = None
-        if toggles.LOCATION_HAS_USERS.enabled(self.domain):
+        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
             location_cannot_have_users_error = self._validate_location_has_users(spec)
         return user_access_error or location_cannot_have_users_error
 

@@ -1,4 +1,5 @@
 import re
+from corehq import toggles
 from typing import TYPE_CHECKING, Optional
 from urllib.parse import urljoin
 
@@ -6,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 import attr
 import requests
+import time
 from oauthlib.oauth2 import LegacyApplicationClient, BackendApplicationClient
 from requests import Session
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
@@ -185,6 +187,8 @@ class OAuth2ClientGrantManager(AuthManager):
         token_url: str,
         refresh_url: str,
         pass_credentials_in_header: bool,
+        include_client_id: bool,
+        scope: str,
         connection_settings: 'ConnectionSettings',
     ):
         self.base_url = base_url
@@ -193,6 +197,8 @@ class OAuth2ClientGrantManager(AuthManager):
         self.token_url = token_url
         self.refresh_url = refresh_url
         self.pass_credentials_in_header = pass_credentials_in_header
+        self.include_client_id = include_client_id
+        self.scope = scope
         self.connection_settings = connection_settings
 
     @property
@@ -215,20 +221,32 @@ class OAuth2ClientGrantManager(AuthManager):
             # Used by OAuth2Session
             self.last_token = token
 
-        if not self.last_token or self.last_token.get('refresh_token') is None:
-            client = BackendApplicationClient(client_id=self.client_id)
+        request_fresh_token = not self.last_token or self.last_token.get('refresh_token') is None
+
+        if toggles.SUPERSET_ANALYTICS.enabled(domain_name):
+            if (
+                self.last_token
+                and self.last_token.get('expires_at')
+                and self.last_token.get('expires_at') > (time.time() + 10)  # 10 seconds buffer for delays
+            ):
+                request_fresh_token = False
+
+        if request_fresh_token:
+            client = BackendApplicationClient(client_id=self.client_id, scope=self.scope)
             session = OAuth2Session(client=client)
             if self.pass_credentials_in_header:
                 auth = HTTPBasicAuth(self.client_id, self.client_secret)
                 self.last_token = session.fetch_token(
                     token_url=self.token_url,
                     auth=auth,
+                    include_client_id=self.include_client_id,
                 )
             else:
                 self.last_token = session.fetch_token(
                     token_url=self.token_url,
                     client_id=self.client_id,
                     client_secret=self.client_secret,
+                    include_client_id=self.include_client_id,
                 )
 
         refresh_kwargs = {
@@ -266,6 +284,8 @@ class OAuth2PasswordGrantManager(AuthManager):
         token_url: str,
         refresh_url: str,
         pass_credentials_in_header: bool,
+        include_client_id: bool,
+        scope: str,
         connection_settings: 'ConnectionSettings',
     ):
         self.base_url = base_url
@@ -276,6 +296,8 @@ class OAuth2PasswordGrantManager(AuthManager):
         self.token_url = token_url
         self.refresh_url = refresh_url
         self.pass_credentials_in_header = pass_credentials_in_header
+        self.include_client_id = include_client_id
+        self.scope = scope
         self.connection_settings = connection_settings
 
     @property
@@ -303,7 +325,7 @@ class OAuth2PasswordGrantManager(AuthManager):
         # without error, or refactoring the way sessions are used across
         # all repeaters.
         if not self.last_token or self.last_token.get('refresh_token') is None:
-            client = LegacyApplicationClient(client_id=self.client_id)
+            client = LegacyApplicationClient(client_id=self.client_id, scope=self.scope)
             session = OAuth2Session(client=client)
             if self.pass_credentials_in_header:
                 auth = HTTPBasicAuth(self.client_id, self.client_secret)
@@ -312,6 +334,7 @@ class OAuth2PasswordGrantManager(AuthManager):
                     username=self.username,
                     password=self.password,
                     auth=auth,
+                    include_client_id=self.include_client_id,
                 )
             else:
                 self.last_token = session.fetch_token(
@@ -320,6 +343,7 @@ class OAuth2PasswordGrantManager(AuthManager):
                     password=self.password,
                     client_id=self.client_id,
                     client_secret=self.client_secret,
+                    include_client_id=self.include_client_id,
                 )
 
         # Return session that refreshes token automatically

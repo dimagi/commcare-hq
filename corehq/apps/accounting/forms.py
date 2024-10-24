@@ -13,8 +13,8 @@ from django.forms.utils import ErrorList
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.dates import MONTHS
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -50,10 +50,12 @@ from corehq.apps.accounting.models import (
     CustomerBillingRecord,
     CustomerInvoice,
     DefaultProductPlan,
+    DomainUserHistory,
     EntryPoint,
     Feature,
     FeatureRate,
     FeatureType,
+    FormSubmittingMobileWorkerHistory,
     FundingSource,
     Invoice,
     InvoicingPlan,
@@ -68,7 +70,6 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionType,
     WireBillingRecord,
-    DomainUserHistory,
 )
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.accounting.utils import (
@@ -593,9 +594,12 @@ class SubscriptionForm(forms.Form):
         if is_existing:
             # circular import
             from corehq.apps.accounting.views import (
-                SoftwarePlanVersionView, ManageBillingAccountView
+                ManageBillingAccountView,
+                SoftwarePlanVersionView,
             )
-            from corehq.apps.domain.views.settings import DefaultProjectSettingsView
+            from corehq.apps.domain.views.settings import (
+                DefaultProjectSettingsView,
+            )
             self.fields['account'].initial = subscription.account.id
             account_field = hqcrispy.B3TextField(
                 'account',
@@ -846,7 +850,9 @@ class SubscriptionForm(forms.Form):
                     or not account.billingcontactinfo.email_list
                 )
             ):
-                from corehq.apps.accounting.views import ManageBillingAccountView
+                from corehq.apps.accounting.views import (
+                    ManageBillingAccountView,
+                )
                 raise forms.ValidationError(format_html(_(
                     "Please update 'Client Contact Emails' "
                     '<strong><a href={link} target="_blank">here</a></strong> '
@@ -1923,7 +1929,7 @@ class ProductRateForm(forms.ModelForm):
         return self.save(commit=False)
 
 
-class EnterprisePlanContactForm(forms.Form):
+class PlanContactForm(forms.Form):
     name = forms.CharField(
         label=gettext_noop("Name")
     )
@@ -1937,11 +1943,11 @@ class EnterprisePlanContactForm(forms.Form):
         widget=forms.Textarea(attrs={"class": "vertical-resize"})
     )
 
-    def __init__(self, domain, web_user, data=None, *args, **kwargs):
+    def __init__(self, domain, web_user, back_button=('Back', None), data=None, *args, **kwargs):
+        super().__init__(data, *args, **kwargs)
+
         self.domain = domain
         self.web_user = web_user
-        super(EnterprisePlanContactForm, self).__init__(data, *args, **kwargs)
-        from corehq.apps.domain.views.accounting import SelectPlanView
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -1952,90 +1958,19 @@ class EnterprisePlanContactForm(forms.Form):
             'message',
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
-                    _("Select different plan"),
-                    reverse(SelectPlanView.urlname, args=[self.domain]),
+                    *back_button,
                     css_class="btn btn-default"
                 ),
                 StrictButton(
-                    _("Request Quote"),
+                    _("Submit Request"),
                     type="submit",
                     css_class="btn-primary",
                 ),
             )
         )
 
-    def send_message(self):
-        subject = "[Enterprise Plan Request] %s" % self.domain
-        context = {
-            'name': self.cleaned_data['name'],
-            'company': self.cleaned_data['company_name'],
-            'message': self.cleaned_data['message'],
-            'domain': self.domain,
-            'email': self.web_user.email
-        }
-        html_content = render_to_string('accounting/email/sales_request.html', context)
-        text_content = """
-        Email: %(email)s
-        Name: %(name)s
-        Company: %(company)s
-        Domain: %(domain)s
-        Message:
-        %(message)s
-        """ % context
-        send_html_email_async.delay(subject, settings.BILLING_EMAIL,
-                                    html_content, text_content,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
-
-
-class AnnualPlanContactForm(forms.Form):
-    name = forms.CharField(
-        label=gettext_noop("Name")
-    )
-    company_name = forms.CharField(
-        required=False,
-        label=gettext_noop("Company / Organization")
-    )
-    message = forms.CharField(
-        required=False,
-        label=gettext_noop("Message"),
-        widget=forms.Textarea(attrs={"class": "vertical-resize"})
-    )
-
-    def __init__(self, domain, web_user, on_annual_plan, data=None, *args, **kwargs):
-        self.domain = domain
-        self.web_user = web_user
-        super(AnnualPlanContactForm, self).__init__(data, *args, **kwargs)
-        from corehq.apps.domain.views.accounting import SelectPlanView, DomainSubscriptionView
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.form_class = "form-horizontal"
-        if on_annual_plan:
-            back_button_text = "Back to my Subscription"
-            urlname = DomainSubscriptionView.urlname
-        else:
-            back_button_text = "Select different plan"
-            urlname = SelectPlanView.urlname
-        self.helper.layout = crispy.Layout(
-            'name',
-            'company_name',
-            'message',
-            hqcrispy.FormActions(
-                hqcrispy.LinkButton(
-                    _(back_button_text),
-                    reverse(urlname, args=[self.domain]),
-                    css_class="btn btn-default"
-                ),
-                StrictButton(
-                    _("Submit"),
-                    type="submit",
-                    css_class="btn-primary",
-                ),
-            )
-        )
-
-    def send_message(self):
-        subject = "[Annual Plan Request] %s" % self.domain
+    def send_message(self, request_type):
+        subject = f"[{request_type}] {self.domain}"
         context = {
             'name': self.cleaned_data['name'],
             'company': self.cleaned_data['company_name'],
@@ -2061,12 +1996,17 @@ class TriggerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
     domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
-    num_users = forms.IntegerField(
-        label="Number of Users",
+    num_mobile_workers = forms.IntegerField(
+        label="Number of Mobile Workers",
         required=False,
-        help_text="This is part of accounting tests and overwrites the "
-                  "DomainUserHistory recorded for this month. Please leave "
-                  "this blank to use what is already in the system."
+        help_text="This will overwrite the DomainUserHistory recorded for this month. "
+                  "Please leave this blank to use what is already in the system."
+    )
+    num_form_submitting_workers = forms.IntegerField(
+        label="Number of Form-Submitting Mobile Workers",
+        required=False,
+        help_text="This will overwrite the FormSubmittingMobileWorkerHistory recorded for this month. "
+                  "Please leave this blank to use what is already in the system."
     )
 
     def __init__(self, *args, **kwargs):
@@ -2097,13 +2037,24 @@ class TriggerInvoiceForm(forms.Form):
                 placeholder="Search for Project"
             )
         ]
-        if self.show_testing_options:
-            details.append(crispy.Field('num_users', css_class='input_large'))
-        else:
-            del self.fields['num_users']
-
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(*details),
+            crispy.Fieldset(*details)
+        )
+
+        if self.show_testing_options:
+            testing_options = [
+                'Testing Options',
+                crispy.Field('num_mobile_workers', css_class='input_large'),
+                crispy.Field('num_form_submitting_workers', css_class='input_large'),
+            ]
+            self.helper.layout.append(
+                crispy.Fieldset(*testing_options)
+            )
+        else:
+            del self.fields['num_mobile_workers']
+            del self.fields['num_form_submitting_workers']
+
+        self.helper.layout.append(
             hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Invoice",
@@ -2122,20 +2073,18 @@ class TriggerInvoiceForm(forms.Form):
 
         self.clean_previous_invoices(invoice_start, invoice_end, domain_obj.name)
 
-        if self.show_testing_options and self.cleaned_data['num_users']:
-            num_users = int(self.cleaned_data['num_users'])
-            existing_histories = DomainUserHistory.objects.filter(
-                domain=domain_obj.name,
-                record_date__gte=invoice_start,
-                record_date__lte=invoice_end,
-            )
-            if existing_histories.exists():
-                existing_histories.all().delete()
-            DomainUserHistory.objects.create(
-                domain=domain_obj.name,
-                record_date=invoice_end,
-                num_users=num_users
-            )
+        if self.show_testing_options:
+            if self.cleaned_data['num_mobile_workers']:
+                num_users = int(self.cleaned_data['num_mobile_workers'])
+                self._overwrite_user_history(
+                    DomainUserHistory, domain_obj.name, num_users, invoice_start, invoice_end
+                )
+            if self.cleaned_data['num_form_submitting_workers']:
+                num_users = int(self.cleaned_data['num_form_submitting_workers'])
+                self._overwrite_user_history(
+                    FormSubmittingMobileWorkerHistory,
+                    domain_obj.name, num_users, invoice_start, invoice_end
+                )
 
         invoice_factory = DomainInvoiceFactory(
             invoice_start, invoice_end, domain_obj, recipients=[settings.ACCOUNTS_EMAIL]
@@ -2162,6 +2111,21 @@ class TriggerInvoiceForm(forms.Form):
                     ),
                 )
             )
+
+    @staticmethod
+    def _overwrite_user_history(history_cls, domain, num_users, invoice_start, invoice_end):
+        existing_histories = history_cls.objects.filter(
+            domain=domain,
+            record_date__gte=invoice_start,
+            record_date__lte=invoice_end,
+        )
+        if existing_histories.exists():
+            existing_histories.all().delete()
+        history_cls.objects.create(
+            domain=domain,
+            record_date=invoice_end,
+            num_users=num_users
+        )
 
     def clean(self):
         today = datetime.date.today()

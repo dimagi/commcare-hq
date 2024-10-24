@@ -4,7 +4,6 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         <h4 class="modal-title">
           <!-- ko if: isOData() -->
             {% blocktrans %}
@@ -17,6 +16,7 @@
             {% endblocktrans %}
           <!-- /ko -->
         </h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
       </div>
       <form name="drop_report" data-bind="attr: {action: deleteUrl}" method="post">
         {% csrf_token %}
@@ -35,12 +35,12 @@
           </p>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-danger"
+          <button class="btn btn-outline-danger"
                   data-bind="click: deleteExport">
             <i class="fa fa-remove"></i>
             {% trans "Delete" %}
           </button>
-          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</a>
         </div>
       </form>
     </div>

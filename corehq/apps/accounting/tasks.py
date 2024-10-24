@@ -5,7 +5,7 @@ import json
 from datetime import date
 
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import F, Q
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
@@ -44,6 +44,7 @@ from corehq.apps.accounting.models import (
     Currency,
     DomainUserHistory,
     FeatureType,
+    FormSubmittingMobileWorkerHistory,
     InvoicingPlan,
     Subscription,
     SubscriptionAdjustment,
@@ -61,6 +62,7 @@ from corehq.apps.accounting.task_utils import (
     get_context_to_send_purchase_receipt,
 )
 from corehq.apps.accounting.utils import (
+    count_form_submitting_mobile_workers,
     get_change_status,
     log_accounting_error,
     log_accounting_info,
@@ -808,6 +810,27 @@ def calculate_users_in_all_domains(today=None):
     # to get around our billing system.
     from corehq.apps.enterprise.tasks import auto_deactivate_mobile_workers
     auto_deactivate_mobile_workers.delay()
+
+
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+def calculate_form_submitting_mobile_workers_in_all_domains(today=None):
+    today = today or datetime.date.today()
+    date_start = today - relativedelta(months=1)
+    for domain in Domain.get_all_names():
+        num_workers = count_form_submitting_mobile_workers(domain, date_start, today)
+        record_date = today - relativedelta(days=1)
+        try:
+            FormSubmittingMobileWorkerHistory.objects.create(
+                domain=domain,
+                num_users=num_workers,
+                record_date=record_date
+            )
+        except IntegrityError as e:
+            log_accounting_error(
+                f"""Something went wrong while creating FormSubmittingMobileWorkerHistory
+                  for domain {domain}: {e}""",
+                show_stack_trace=True,
+            )
 
 
 @periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)

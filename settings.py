@@ -146,6 +146,7 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
+    'corehq.middleware.SecureCookiesMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -171,8 +172,6 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
-    # middleware that adds cookies must come before SecureCookiesMiddleware
-    'corehq.middleware.SecureCookiesMiddleware',
     'field_audit.middleware.FieldAuditMiddleware',
 ]
 
@@ -399,7 +398,6 @@ HQ_APPS = (
     'custom.champ',
     'custom.covid',
     'custom.inddex',
-    'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
     'custom.hmhb',
@@ -495,6 +493,7 @@ SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 SAAS_REPORTING_EMAIL = None
+SOLUTIONS_AES_EMAIL = None
 
 # Return-Path is the email used to forward BOUNCE & COMPLAINT notifications
 # This email must be a REAL email address, not a mailing list, otherwise
@@ -583,6 +582,7 @@ CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
 CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
 CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE = 'reminder_rule_queue'  # override in localsettings
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
+CELERY_REPEAT_RECORD_DATASOURCE_QUEUE = 'repeat_record_queue'  # override in localsettings
 CELERY_LOCATION_REASSIGNMENT_QUEUE = 'celery'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
@@ -833,6 +833,7 @@ REPEATER_CLASSES = [
     'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
     'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
     'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
+    'corehq.motech.repeaters.expression.repeaters.FormExpressionRepeater',
     'corehq.motech.repeaters.expression.repeaters.ArcGISFormExpressionRepeater',
 ]
 
@@ -851,7 +852,7 @@ CHECK_REPEATERS_PARTITION_COUNT = 1
 ENABLE_PRELOGIN_SITE = False
 
 # dimagi.com urls
-PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
+PRICING_PAGE_URL = "https://www.dimagi.com/commcare-pricing/"
 
 # Sumologic log aggregator
 SUMOLOGIC_URL = None
@@ -930,8 +931,6 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
-
-BOOTSTRAP_MIGRATION_LOGS_DIR = None
 
 USER_AGENTS_CACHE = 'default'
 
@@ -1962,7 +1961,7 @@ DOMAIN_MODULE_MAP = {
     'india-nutrition-project': 'custom.nutrition_project',
 
     'champ-cameroon': 'custom.champ',
-    'onse-iss': 'custom.onse',
+    'onse-iss': 'custom.onse',  # Required by self-hosted ONSE-ISS project
 
     # vectorlink domains
     'abtmali': 'custom.abt',

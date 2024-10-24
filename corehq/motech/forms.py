@@ -59,6 +59,16 @@ class ConnectionSettingsForm(forms.ModelForm):
         help_text=_('Pass credentials in Basic Auth header when requesting a token'),
         required=False,
     )
+    include_client_id = forms.BooleanField(
+        label=_('Include client ID'),
+        help_text=_('Send the client ID in the body of the token request'),
+        required=False,
+    )
+    scope = forms.CharField(
+        label=_('Scope'),
+        help_text=_('Space-separated list of scopes e.g. "read write"'),
+        required=False,
+    )
     skip_cert_verify = forms.BooleanField(
         label="",
         help_text=_('Do not use in a production environment'),
@@ -92,6 +102,8 @@ class ConnectionSettingsForm(forms.ModelForm):
             'plaintext_password',
             'client_id',
             'plaintext_client_secret',
+            'include_client_id',
+            'scope',
             'skip_cert_verify',
             'notify_addresses_str',
             'token_url',
@@ -132,6 +144,7 @@ class ConnectionSettingsForm(forms.ModelForm):
         from corehq.motech.views import ConnectionSettingsListView
 
         helper = hqcrispy.HQFormHelper()
+        helper.form_class = "form-horizontal"
         helper.layout = crispy.Layout(
             crispy.Field('name'),
             crispy.Field('notify_addresses_str'),
@@ -147,11 +160,13 @@ class ConnectionSettingsForm(forms.ModelForm):
                     crispy.Field('auth_preset'),
                     crispy.Field('token_url'),
                     crispy.Field('refresh_url'),
-                    twbscrispy.PrependedText('pass_credentials_in_header', ''),
+                    crispy.Field('pass_credentials_in_header'),
+                    crispy.Field('include_client_id'),
+                    crispy.Field('scope'),
                 ),
                 id="div_id_oauth_settings",
             ),
-            twbscrispy.PrependedText('skip_cert_verify', ''),
+            crispy.Field('skip_cert_verify'),
             self.test_connection_button,
 
             twbscrispy.StrictButton(

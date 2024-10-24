@@ -127,6 +127,7 @@ def _set_source_root(source_root):
 
 def run_patches():
     patch_jsonfield()
+    unpatch_sys_modules()
 
 
 def patch_jsonfield():
@@ -147,6 +148,14 @@ def patch_jsonfield():
         return value
 
     JSONField.to_python = to_python
+
+
+def unpatch_sys_modules():
+    # until https://github.com/DataDog/dd-trace-py/issues/9143 is implemented
+    if os.environ.get("DD_TRACE_ENABLED") == "false":
+        from ddtrace import ModuleWatchdog
+        if isinstance(sys.modules, ModuleWatchdog):
+            sys.modules.uninstall()
 
 
 def set_default_settings_path(argv):

@@ -138,7 +138,9 @@ hqDefine('cloudcare/js/utils', [
                 breadcrumb: "#breadcrumb-region",
                 persistentCaseTile: "#persistent-case-tile",
                 restoreAsBanner: '#restore-as-region',
+                mobileRestoreAsBanner: '#mobile-restore-as-region',
                 sidebar: '#sidebar-region',
+                persistentMenu: "#persistent-menu-region",
             },
         });
 
@@ -344,7 +346,7 @@ hqDefine('cloudcare/js/utils', [
     // TD does have a plugin to integrate with moment, but since other usages of TD in HQ
     // don't need it, instead of enabling that, hack around this.
     const _momentFormatToTempusFormat = function (momentFormat) {
-        return momentFormat.replaceAll("D", "d").replaceAll("Y", "y");
+        return momentFormat.replaceAll("D", "d").replaceAll("Y", "y").replaceAll("A", "T");
     };
 
     /** Coerce an input date string to a moment object */
@@ -391,6 +393,7 @@ hqDefine('cloudcare/js/utils', [
         }
 
         let date = moment(selectedTime, timeFormat);
+        const tempusTimeFormat = _momentFormatToTempusFormat(timeFormat);
         let options = {
             display: {
                 buttons: {
@@ -399,8 +402,8 @@ hqDefine('cloudcare/js/utils', [
                 },
             },
             localization: {
-                format: timeFormat,
-                hourCycle: timeFormat.indexOf('T') === -1 ? 'h23' : 'h12',
+                format: tempusTimeFormat,
+                hourCycle: tempusTimeFormat.indexOf('T') === -1 ? 'h23' : 'h12',
             },
             useCurrent: true,
         };

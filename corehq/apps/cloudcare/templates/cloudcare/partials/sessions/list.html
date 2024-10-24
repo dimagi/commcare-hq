@@ -1,7 +1,7 @@
 {% load i18n %}
 
 <script type="text/template" id="session-view-list-template">
-  <% if(isPreviewEnv) { %>
+  <% if(isAppPreview) { %>
   <div class="breadcrumb-form-container">
     <ol class="breadcrumb breadcrumb-form">
       <li class="breadcrumb-item">
@@ -10,7 +10,7 @@
     </ol>
   </div>
   <% } else { %>
-  <div class="module-banner alert alert-info">
+  <div class="alert alert-warning">
     <span>
         {% blocktrans %}
           Web Apps deletes any Incomplete Forms that are more than 7 days old.
@@ -20,7 +20,7 @@
   </div>
   <% } %>
   <div class="module-menu-container module-menu-bar-offset">
-    <% if (!isPreviewEnv) { %>
+    <% if (!isAppPreview) { %>
     <div class="page-header menu-header d-none d-md-block">
       <h1 class="page-title">{% trans "Incomplete Forms" %}</h1>
     </div>

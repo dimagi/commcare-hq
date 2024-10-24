@@ -5,10 +5,6 @@
 {% load i18n %}
 {% load xforms_extras %}
 
-{% block head %}{{ block.super }}
-  {% include 'analytics/fullstory.html' %}
-{% endblock %}
-
 {% block title %}{{ module.name|clean_trans:langs }} - {% trans 'Menu Settings' %}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
@@ -197,10 +193,11 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-  {% include "app_manager/partials/nav_menu_media_modals.html" %}
+  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
+  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
   {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
     {% with print_uploader as uploader %}
-      {% include 'hqmedia/partials/multimedia_uploader.html' %}
+      {% include 'hqmedia/partials/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
     {% endwith %}
   {% endif %}
 {% endblock modals %}

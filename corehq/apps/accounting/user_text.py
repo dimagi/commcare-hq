@@ -54,17 +54,14 @@ FEATURE_TYPE_TO_NAME = {
     FeatureType.SMS: _("SMS Messages"),
     FeatureType.USER: _("Mobile Workers"),
     FeatureType.WEB_USER: _("Web Users"),
+    FeatureType.FORM_SUBMITTING_MOBILE_WORKER: _("Form-Submitting Mobile Workers"),
 }
 
 
 def get_feature_name(feature_type):
     if feature_type not in [f[0] for f in FeatureType.CHOICES]:
         raise ValueError("Unsupported Feature")
-    return {
-        FeatureType.USER: _("Mobile Users"),
-        FeatureType.SMS: _("SMS"),
-        FeatureType.WEB_USER: _("Web Users")
-    }[feature_type]
+    return FEATURE_TYPE_TO_NAME[feature_type]
 
 
 def get_feature_recurring_interval(feature_type):

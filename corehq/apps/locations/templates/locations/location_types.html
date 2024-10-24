@@ -167,8 +167,6 @@
                         {% endblocktrans %}">
                   </span>
                 </th>
-              {% endif %}
-              {% if request|toggle_enabled:"LOCATION_HAS_USERS" %}
                 <th data-bind="visible: advanced_mode">
                   {% trans "Has Users" %}
                   <span class="hq-help-template"
@@ -268,8 +266,6 @@
                                     enable: view_descendants">
                   </select>
                 </td>
-              {% endif %}
-              {% if request|toggle_enabled:"LOCATION_HAS_USERS" %}
                 <td data-bind="visible: $parent.advanced_mode">
                   <input data-bind="checked: has_users_setting, disable: has_users_setting() && actually_has_users()" type="checkbox" />
                 </td>

@@ -2,10 +2,11 @@ import datetime
 import logging
 
 from django.conf import settings
-from memoized import memoized
-
 from django.db import models
 
+from memoized import memoized
+
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.domain.models import Domain
 
 log = logging.getLogger(__name__)
@@ -155,3 +156,31 @@ class AsyncSignupRequest(models.Model):
         :param username: string
         """
         cls.objects.filter(username=username).delete()
+
+
+class SelfSignupWorkflow(models.Model):
+    domain = models.CharField(max_length=255, db_index=True)
+    initiating_user = models.CharField(max_length=80)
+    created_on = models.DateTimeField(auto_now_add=True)
+    completed_on = models.DateTimeField(null=True)
+    subscribed_edition = models.CharField(
+        choices=SoftwarePlanEdition.CHOICES,
+        max_length=25,
+        null=True
+    )
+
+    @classmethod
+    def get_in_progress_for_domain(cls, domain):
+        try:
+            workflow = cls.objects.get(
+                domain=domain,
+                completed_on__isnull=True
+            )
+            return workflow
+        except cls.DoesNotExist:
+            return None
+
+    def complete_workflow(self, edition):
+        self.completed_on = datetime.datetime.now()
+        self.subscribed_edition = edition
+        self.save()

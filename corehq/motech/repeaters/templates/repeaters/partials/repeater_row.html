@@ -17,13 +17,18 @@
         </a>
     </td>
     <td>
+        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=INVALIDPAYLOAD">
+            {{ repeater.count_State.InvalidPayload }}
+        </a>
+    </td>
+    <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=CANCELLED">
             {{ repeater.count_State.Cancelled }}
         </a>
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=SUCCESS">
-            {{ repeater.count_State.Success }}
+            {{ repeater.count_State.EmptyOrSuccess }}
         </a>
     </td>
     <td>

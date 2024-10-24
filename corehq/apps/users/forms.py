@@ -57,12 +57,13 @@ from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
+from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.toggles import (
     COMMCARE_CONNECT,
-    LOCATION_HAS_USERS,
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
+from corehq.util.global_request import get_request_domain
 
 from ..hqwebapp.signals import clear_login_attempts
 from .audit.change_messages import UserChangeMessage
@@ -793,7 +794,7 @@ class NewMobileWorkerForm(forms.Form):
             location_field = crispy.Field(
                 'location_id',
                 data_bind='value: location_id',
-                data_query_url=reverse('location_search', args=[self.domain]),
+                data_query_url=reverse('location_search_has_users_only', args=[self.domain]),
             )
         else:
             location_field = crispy.Hidden(
@@ -1147,9 +1148,11 @@ class PrimaryLocationWidget(forms.Widget):
         if value:
             try:
                 loc = SQLLocation.objects.get(location_id=value)
+                use_location_display_name = USE_LOCATION_DISPLAY_NAME.enabled(get_request_domain())
                 initial_data = {
                     'id': loc.location_id,
-                    'text': loc.get_path_display(),
+                    'text': loc.display_name if use_location_display_name else loc.get_path_display(),
+                    'title': loc.get_path_display() if use_location_display_name else loc.display_name,
                 }
             except SQLLocation.DoesNotExist:
                 pass
@@ -1183,7 +1186,7 @@ class SelectUserLocationForm(forms.Form):
         self.domain = domain
         self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations',
-            include_locations_with_no_users_allowed=False
+            for_user_location_selection=True
         )
         self.fields['assigned_locations'].help_text = ExpandedMobileWorkerFilter.location_search_help
         self.fields['primary_location'].widget = PrimaryLocationWidget(
@@ -1200,7 +1203,7 @@ class SelectUserLocationForm(forms.Form):
             locations = get_locations_from_ids(location_ids, self.domain)
         except SQLLocation.DoesNotExist:
             raise forms.ValidationError(_('One or more of the locations was not found.'))
-        if LOCATION_HAS_USERS.enabled(self.domain) and locations.filter(location_type__has_users=False).exists():
+        if locations.filter(location_type__has_users=False).exists():
             raise forms.ValidationError(
                 _('One or more of the locations you specified cannot have users assigned.'))
         return [location.location_id for location in locations]
@@ -1657,7 +1660,7 @@ class UserFilterForm(forms.Form):
             id='id_location_id',
             placeholder=_("All Locations"),
             attrs={'data-bind': 'value: location_id'},
-            include_locations_with_no_users_allowed=False
+            for_user_location_selection=True
         )
         self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
             url=self.fields['location_id'].widget.query_url

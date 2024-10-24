@@ -206,6 +206,21 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             case_property_query("name", "jimmy", fuzzy=True)
         )
 
+    def test_fuzzy_date(self):
+        self._test_xpath_query(
+            "fuzzy-date(dob, '2024-12-03')",
+            case_property_query("dob", [
+                "2024-12-03",
+                "2024-03-12",
+                "2024-03-21",
+                "2024-12-30",
+                "2042-12-03",
+                "2042-03-12",
+                "2042-03-21",
+                "2042-12-30"
+            ], boost_first=True)
+        )
+
     def _test_xpath_query(self, query_string, expected_filter):
         helper = QueryHelper("domain")
         helper.config = CaseSearchConfig(domain="domain")

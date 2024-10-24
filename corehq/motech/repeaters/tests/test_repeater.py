@@ -207,9 +207,9 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertTrue(form.is_duplicate)
         self.assertEqual(len(self.repeat_records()), 2)
 
-    def test_repeater_failed_sends(self):
+    def test_server_failure_resends(self):
         """
-        This tests records that fail are requeued later
+        This tests records that encounter server errors are requeued later
         """
         def now():
             return datetime.utcnow()
@@ -219,8 +219,9 @@ class RepeaterTest(BaseRepeaterTest):
 
         for repeat_record in repeat_records:
             with patch(
-                    'corehq.motech.repeaters.models.simple_request',
-                    return_value=MockResponse(status_code=404, reason='Not Found')) as mock_request:
+                'corehq.motech.repeaters.models.simple_request',
+                return_value=MockResponse(status_code=503, reason='Service Unavailable')
+            ) as mock_request:
                 repeat_record.fire()
                 self.assertEqual(mock_request.call_count, 1)
 
@@ -238,6 +239,28 @@ class RepeaterTest(BaseRepeaterTest):
             next_check__lt=next_check_time,
         )
         self.assertEqual(len(repeat_records), 2)
+
+    def test_bad_payload_invalid(self):
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=MockResponse(status_code=401, reason='Unauthorized')
+        ):
+            for repeat_record in self.repeat_records():
+                repeat_record.fire()
+
+        for repeat_record in self.repeat_records():
+            self.assertEqual(repeat_record.state, State.InvalidPayload)
+
+    def test_bad_request_fail(self):
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=MockResponse(status_code=400, reason='Bad Request')
+        ):
+            for repeat_record in self.repeat_records():
+                repeat_record.fire()
+
+        for repeat_record in self.repeat_records():
+            self.assertEqual(repeat_record.state, State.Fail)
 
     def test_update_failure_next_check(self):
         now = datetime.utcnow()
@@ -670,22 +693,26 @@ class RepeaterFailureTest(BaseRepeaterTest):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super().tearDown()
 
-    def test_get_payload_exception(self):
-        repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+    def test_payload_exception_on_fire(self):
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
+            mock_simple_post.return_value.status_code = 503  # Fail and retry
+            rr = self.repeater.register(case)
         with self.assertRaises(Exception):
             with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
-                repeat_record.fire()
+                rr.fire()
 
+        repeat_record = RepeatRecord.objects.get(id=rr.id)
+        self.assertEqual(repeat_record.state, State.InvalidPayload)
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
-        self.assertEqual(repeat_record.state, State.Cancelled)
 
-    def test_payload_exception(self):
+    def test_payload_exception_on_register(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch.object(Repeater, "get_payload", side_effect=Exception('Payload error')):
             rr = self.repeater.register(case)
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
-        self.assertEqual(repeat_record.state, State.Cancelled)
+        self.assertEqual(repeat_record.state, State.InvalidPayload)
         self.assertEqual(repeat_record.failure_reason, "Payload error")
 
     def test_failure(self):
@@ -928,6 +955,8 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'email': '',
                 'eulas': '[]',
                 'resource_uri': '/a/user-repeater/api/v0.5/user/{}/'.format(user._id),
+                'locations': [],
+                'primary_location': None,
             }
         )
 
@@ -1243,8 +1272,10 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         super().setUp()
         self.config = get_sample_data_source()
         self.config.save()
+        self.addCleanup(self.config.delete)
         self.adapter = get_indicator_adapter(self.config)
         self.adapter.build_table()
+        self.addCleanup(self.adapter.drop_table)
         self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
         self.pillow = _get_pillow([self.config], processor_chunk_size=100)
 
