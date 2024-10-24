@@ -5,19 +5,15 @@
   <link rel="stylesheet" href="{% static 'locations/css/manage.css' %}">
 {% endblock %}
 
-<div class="row">
-  <div class="col-xl-12" style="clear: both">  {# todo B5: inline-style #}
-    <div id="location_tree">
-      <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
-    </div>
-  </div>
+<div id="location_tree">
+  <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
 </div>
 
 <script type="text/html" id="location-template">
   <div class="loc_section">
     <!-- header bar -->
     <div class="loc_header clearfix" data-bind="if: name() != '_root'">
-      <div style="float:right;" data-bind="if: can_edit()" id="button-template">  {# todo B5: inline-style #}
+      <div class="float-end" data-bind="if: can_edit()" id="button-template">
         {% if not show_inactive %}
           <a class="btn btn-primary"
              data-bind="attr: { href: loc_edit_url(uuid()) }">
@@ -53,7 +49,7 @@
       </div>
 
       <!-- want to make entire row clickable, but overrides click on 'edit' button -->
-      <div data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
+      <div class="mt-1" data-bind="click: toggle, css: { clickable: can_have_children() }">
           <!-- ko if: can_have_children -->
               <!-- ko if: !expanded() -->
                 <i class="fa-solid fa-square-plus fa-lg"></i>
@@ -68,8 +64,6 @@
         <span class="loc_name" data-bind="text: name"></span>
         <span class="loc_type">(<span data-bind="text: type"></span>)</span>
       </div>
-      <div style="clear: both;"></div>  {# todo B5: inline-style #}
-      <hr style="margin: 0px;"/>  {# todo B5: inline-style #}
     </div>
 
     <!-- child content -->
@@ -112,9 +106,9 @@
     <div class="modal fade" id="delete-location-modal">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">  {# todo B5: css-modal-header #}
-            <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
+          <div class="modal-header">
             <h4 class="modal-title">{% trans "Delete Location:" %} <span data-bind="text: name" /></h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
           </div>
           <div class="modal-body">
             <p>
@@ -138,9 +132,9 @@
     <div class="modal fade" id="archive-location-modal">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">  {# todo B5: css-modal-header #}
-            <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
+          <div class="modal-header">
             <h4 class="modal-title">{% trans "Archive Location:" %} <span data-bind="text: name" /></h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
           </div>
           <div class="modal-body">
             <p>
