@@ -413,10 +413,8 @@ class UsersAtLocationForm(forms.Form):
                 _("Specify Workers at this Location"),
                 crispy.Field('selected_ids'),
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', gettext_lazy("Update Location Membership"))
-                )
+            crispy.ButtonHolder(
+                Submit('submit', gettext_lazy("Update Location Membership"))
             )
         )
 
