@@ -785,10 +785,6 @@ class ListRolesView(BaseRoleAccessView):
 def _commcare_analytics_roles_options():
     return [
         {
-            'slug': 'gamma',
-            'name': 'Gamma'
-        },
-        {
             'slug': 'sql_lab',
             'name': 'SQL Lab'
         },
