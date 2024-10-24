@@ -136,6 +136,7 @@ urlpatterns = [
     url(r'^yo/', include('corehq.messaging.smsbackends.yo.urls')),
     url(r'^gvi/', include('corehq.messaging.smsbackends.grapevine.urls')),
     url(r'^sislog/', include('corehq.messaging.smsbackends.sislog.urls')),
+    url(r'^connectid/', include('corehq.messaging.smsbackends.connectid.urls')),
     url(r'^langcodes/', include('langcodes.urls')),
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
