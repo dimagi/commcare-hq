@@ -24,6 +24,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     user_type = None
     WEB_USER = "web_user"
     COMMCARE_USER = "commcare_user"
+    NEITHER = "neither"
     required_for_options = [
         {
             "text": _("Web Users"),
@@ -40,12 +41,39 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         }
     ]
 
+    profile_required_for_options = [
+        {
+            "text": _("Web Users"),
+            "value": [WEB_USER],
+        },
+        {
+            "text": _("Mobile Workers"),
+            "value": [COMMCARE_USER],
+        },
+        {
+            "text": _("Both"),
+            "value": [WEB_USER, COMMCARE_USER],
+        },
+        {
+            "text": _("Neither"),
+            "value": [NEITHER],
+            "isDefault": True
+        }
+    ]
+
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(UserFieldsView, self).dispatch(request, *args, **kwargs)
 
     def update_existing_models(self):
         remove_unused_custom_fields_from_users_task.delay(self.domain)
+
+    def update_profile_required(self, profile_required_for_user_type):
+        fields_definition = self.get_definition()
+        current_require_for = fields_definition.profile_required_for_user_type
+        if current_require_for != profile_required_for_user_type:
+            fields_definition.profile_required_for_user_type = profile_required_for_user_type
+            fields_definition.save()
 
     @classmethod
     def get_user_accessible_profiles(cls, domain, couch_user):

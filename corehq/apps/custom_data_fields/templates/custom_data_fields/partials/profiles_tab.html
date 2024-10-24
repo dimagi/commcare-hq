@@ -1,5 +1,11 @@
 {% load i18n %}
 
+<label class="form-label" for="require-for-user-type">Make a profile selection required for user type</label>
+<select class="form-select mb-3" id="require-for-user-type" data-bind="options: $root.profileRequiredForOptions,
+                                        optionsText: 'text',
+                                        optionsValue: 'value',
+                                        value: profile_required_for">
+</select>
 <p>
   <button class="btn btn-outline-primary" data-bind="click: addProfile" type="button">
     <i class="fa fa-plus"></i>
