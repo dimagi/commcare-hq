@@ -102,8 +102,6 @@ hqDefine("users/js/mobile_workers",[
             self.force_account_confirmation_by_sms() || self.force_account_confirmation() || self.account_invite_by_cid())
         );
 
-        self.passwordEnabled = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
-
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
         self.edit_url = ko.computed(function () {
@@ -331,7 +329,7 @@ hqDefine("users/js/mobile_workers",[
                 return self.STATUS.DISABLED;
             }
 
-            if (self.stagedUser().force_account_confirmation_by_sms()) {
+            if (self.stagedUser().force_account_confirmation_by_sms() || self.stagedUser().account_invite_by_cid()) {
                 return self.STATUS.DISABLED;
             }
 

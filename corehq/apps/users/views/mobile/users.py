@@ -802,10 +802,15 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
+
         if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
+        if self.new_mobile_worker_form.cleaned_data['account_invite_by_cid']:
+            phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
+            couch_user.set_default_phone_number(phone_number)
+            send_connectid_invite_sms(couch_user)
 
         plan_limit, user_count = Subscription.get_plan_and_user_count_by_domain(self.domain)
         check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
@@ -827,14 +832,19 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
-        password = self.new_mobile_worker_form.cleaned_data['new_password']
+        if self.new_mobile_worker_form.cleaned_data['account_invite_by_cid']:
+            # Passwordless login using ConnectID
+            password = ''
+        else:
+            password = self.new_mobile_worker_form.cleaned_data['new_password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
         email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
         is_account_confirmed = not (
             self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
-            or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
+            or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']
+            or self.new_mobile_worker_form.cleaned_data['account_invite_by_cid'])
 
         role_id = UserRole.commcare_user_default(self.domain).get_id
         commcare_user = CommCareUser.create(
@@ -884,6 +894,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
                 'force_account_confirmation_by_sms': user_data.get('force_account_confirmation_by_sms'),
+                'account_invite_by_cid': user_data.get('account_invite_by_cid'),
                 'phone_number': user_data.get('phone_number'),
                 'deactivate_after_date': user_data.get('deactivate_after_date'),
                 'domain': self.domain,
@@ -1737,21 +1748,40 @@ def link_connectid_user(request, domain):
 def send_connectid_invite(request, domain, user_id):
     # Currently same as what send_confirmation_sms does
     user = CommCareUser.get_by_user_id(user_id, domain)
-    if user.is_account_confirmed or not user.is_commcare_user() or user.domain != domain:
-        messages.error(request, "The user is already confirmed or is not a mobile user")
+    if user.domain != domain:
         return HttpResponse(status=400)
+    is_sent = send_connectid_invite_sms(user)
+    if not is_sent:
+        return HttpResponse(status=400)
+    return HttpResponse(status=200)
+
+
+def send_connectid_invite_sms(user):
+    if user.is_account_confirmed or not user.is_commcare_user():
+        messages.error(request, "The user is already confirmed or is not a mobile user")
+        return False
 
     invite_code = encrypt_account_confirmation_info(user)
-    deeplink = f"connect://hq_invite/{get_site_domain()}/a/{quote_plus(domain)}/{quote_plus(invite_code)}/{quote_plus(user.username)}/"
+    deeplink = f"connect://hq_invite/{get_site_domain()}/a/{quote_plus(user.domain)}/{quote_plus(invite_code)}/{quote_plus(user.raw_username)}/"
     text_content = f"""
-    You are invited to join a CommCare project (domain)
-    Please click on {deeplink} to accept.
+    You are invited to join a CommCare project ({user.domain})
+    Please click on {deeplink} to join using your ConnectID
+    account.
+
+    Once you confirm, you will be able to login using your
+    ConnectID account. Your username is {(user.raw_username)}
+
+    Thanks.
+    -The CommCare HQ team.
     """
-    return send_sms(
-        domain=domain,
+
+    send_sms(
+        domain=user.domain,
         contact=None,
         phone_number=user.default_phone_number,
-        text=text_content)
+        text=text_content
+    )
+    return True
 
 
 @csrf_exempt
