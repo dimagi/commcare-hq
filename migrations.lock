@@ -963,6 +963,7 @@ sms
  0058_email_html_body
  0059_remove_unicel_backend
  0060_alter_messagingevent_content_type_and_more
+ 0061_connectmessage_message_id_connectmessage_received_on
 smsbillables
  0001_initial
  0002_bootstrap
