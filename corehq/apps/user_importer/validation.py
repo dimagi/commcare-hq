@@ -40,7 +40,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
         UsernameTypeValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
         UsernameLengthValidator(domain),
-        CustomDataValidator(domain, all_user_profiles_by_name),
+        CustomDataValidator(domain, all_user_profiles_by_name, is_web_user_import),
         EmailValidator(domain, 'email'),
         RoleValidator(domain, allowed_roles),
         ExistingUserValidator(domain, all_specs),
@@ -268,10 +268,14 @@ class PasswordValidator(ImportValidator):
 
 
 class CustomDataValidator(ImportValidator):
-    def __init__(self, domain, all_user_profiles_by_name):
+    def __init__(self, domain, all_user_profiles_by_name, is_web_user_import):
         super().__init__(domain)
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        self.custom_data_validator = UserFieldsView.get_validator(domain)
+        if is_web_user_import:
+            from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
+            self.custom_data_validator = WebUserFieldsView.get_validator(domain)
+        else:
+            from corehq.apps.users.views.mobile.custom_data_fields import CommcareUserFieldsView
+            self.custom_data_validator = CommcareUserFieldsView.get_validator(domain)
         self.all_user_profiles_by_name = all_user_profiles_by_name
 
     def validate_spec(self, spec):
