@@ -83,11 +83,8 @@
     <div class="tab-pane" id="user-password">
       <div class="panel-body">
         {% if not request.is_view_only %}
-          <form id="reset-password-form" class="form-horizontal" action="{% url "change_password" domain couch_user.user_id %}" method="post">
-            {% csrf_token %}
-            <div id="reset-password-form-container">
-              {% crispy reset_password_form %}
-            </div>
+          <form id="reset-password-form" class="form-horizontal" action="{% url "change_password" domain couch_user.user_id %}" method="POST">
+            {% crispy reset_password_form %}
           </form>
         {% endif %}
       </div>

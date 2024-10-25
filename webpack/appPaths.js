@@ -21,7 +21,6 @@ const nonStandardAppPaths = {
     "openmrs": path.resolve(MOTECH_PATH, 'openmrs'),
     "repeaters": path.resolve(MOTECH_PATH, 'repeaters'),
     // custom apps:
-    "champ": path.resolve(CUSTOM_PATH, 'champ'),
     "inddex": path.resolve(CUSTOM_PATH, 'inddex'),
     "mc": path.resolve(CUSTOM_PATH, 'reports', 'mc'),
     "up_nrhm": path.resolve(CUSTOM_PATH, 'up_nrhm'),

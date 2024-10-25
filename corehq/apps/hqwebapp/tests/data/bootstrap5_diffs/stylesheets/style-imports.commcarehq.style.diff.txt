@@ -33,7 +33,7 @@
 -@import "_hq/notifications.less";
 -@import "_hq/pagination.less";
 -@import "_hq/panels.less";
--@import "_hq/paused.less";
+-@import "_hq/plan_notice.less";
 -@import "_hq/popovers.less";
 -@import "_hq/report.less";
 -@import "_hq/radio_select.less";
@@ -132,7 +132,7 @@
 +@import "commcarehq/notifications";
 +@import "commcarehq/pagination";
 +@import "commcarehq/panels";
-+@import "commcarehq/paused";
++@import "commcarehq/plan_notice";
 +@import "commcarehq/radio_select";
 +@import "commcarehq/readable_forms";
 +@import "commcarehq/report";
