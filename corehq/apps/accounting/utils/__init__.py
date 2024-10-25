@@ -506,3 +506,8 @@ def count_form_submitting_mobile_workers(domain, start, end):
         .aggregations.user.normalized_buckets
     )
     return len(form_counts_by_worker)
+
+
+def self_signup_workflow_in_progress(domain):
+    from corehq.apps.registration.models import SelfSignupWorkflow
+    return SelfSignupWorkflow.get_in_progress_for_domain(domain)
