@@ -1,7 +1,7 @@
 from Crypto.Cipher import AES
 import base64
 
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -50,7 +50,11 @@ def connectid_messaging_key(request, domain):
 @require_POST
 @validate_request_hmac("CONNECTID_SECRET_KEY")
 def update_connectid_messaging_consent(request, domain):
-    link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
-    link.messaging_consent = request.POST.get("consent", False)
+    username = request.POST.get("username")
+    consent = request.POST.get("consent", False)
+    if username is None:
+        return HttpResponseBadRequest("ConnectId Username is required.")
+    link = get_object_or_404(ConnectIDUserLink, connectid_username=username, domain=request.domain)
+    link.messaging_consent = consent
     link.save()
     return HttpResponse(status=200)
