@@ -13,7 +13,7 @@ from django.http import (
     HttpResponseRedirect,
 )
 from django.http.response import HttpResponseServerError, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -30,7 +30,6 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
-from corehq.util.hmac_request import validate_request_hmac
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.web import json_response
@@ -54,7 +53,7 @@ from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
 )
-from corehq.apps.domain.auth import connectid_token_auth, get_connectid_userinfo
+from corehq.apps.domain.auth import get_connectid_userinfo
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -82,7 +81,6 @@ from corehq.apps.locations.permissions import (
     can_edit_workers_location,
     location_safe
 )
-from corehq.apps.mobile_auth.utils import generate_aes_key
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import (
     MobileWorkerAccountConfirmationBySMSForm,
@@ -121,7 +119,6 @@ from corehq.apps.users.forms import (
 )
 from corehq.apps.users.models import (
     CommCareUser,
-    ConnectIDMessagingKey,
     CouchUser,
     DeactivateMobileWorkerTrigger,
     check_and_send_limit_email,
@@ -1687,26 +1684,6 @@ def link_connectid_user(request, domain):
     else:
         return HttpResponse()
 
-
-@csrf_exempt
-@connectid_token_auth
-def connectid_messaging_key(request, domain):
-    link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
-    key = generate_aes_key().decode("utf-8")
-    messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
-        connectid_user_link=link, domain=request.domain, active=True, defaults={"key": key}
-    )
-    return JsonResponse({"key": messaging_key.key})
-
-
-@csrf_exempt
-@require_POST
-@validate_request_hmac("CONNECTID_SECRET_KEY")
-def update_connectid_messaging_consent(request, domain):
-    link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
-    link.messaging_consent = request.POST.get("consent", False)
-    link.save()
-    return HttpResponse(status=200)
 
 
 @waf_allow('XSS_BODY')
