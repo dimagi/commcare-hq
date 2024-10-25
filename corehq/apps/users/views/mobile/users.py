@@ -2,6 +2,7 @@ import io
 import json
 import re
 import time
+from urllib.parse import quote_plus, unquote_plus
 
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -33,7 +34,7 @@ from memoized import memoized
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_site_domain
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -1741,14 +1742,10 @@ def send_connectid_invite(request, domain, user_id):
         return HttpResponse(status=400)
 
     invite_code = encrypt_account_confirmation_info(user)
-    url = absolute_reverse("confirm_connectid_user", args=[user.domain])
+    deeplink = f"connect://hq_invite/{get_site_domain()}/a/{quote_plus(domain)}/{quote_plus(invite_code)}/{quote_plus(user.username)}/"
     text_content = f"""
-    Link your ConnectID account to CommCare
-    username: {user.username}
-    domain: {domain}
-    invite_code: {invite_code}
-    url: {url}
-    Make a POST call to above url with invite_code and your ConnectID token
+    You are invited to join a CommCare project (domain)
+    Please click on {deeplink} to accept.
     """
     return send_sms(
         domain=domain,
@@ -1763,7 +1760,7 @@ def confirm_connectid_user(request, domain):
     try:
         token = request.POST["token"]
         invite_code = request.POST["invite_code"]
-        invite = json.loads(b64_aes_decrypt(invite_code))
+        invite = json.loads(b64_aes_decrypt(unquote_plus(invite_code)))
         user_id = invite['user_id']
         expiry_time = invite['time']
     except ValueError:
