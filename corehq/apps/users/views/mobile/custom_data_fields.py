@@ -92,6 +92,9 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         return {
             'can_edit_original_profile': can_edit_original_profile,
             'custom_fields_slugs': [f.slug for f in custom_data_editor.fields],
+            'required_custom_fields_slugs': [
+                f.slug for f in custom_data_editor.fields if cls.is_field_required(f)
+            ],
             'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
             'custom_fields_profile_slug': PROFILE_SLUG,
         }
