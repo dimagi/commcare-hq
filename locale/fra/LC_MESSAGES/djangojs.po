@@ -3282,17 +3282,14 @@ msgid "Download Requested"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/bootstrap3/export_list.js
-#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
 msgid "All of the selected feeds will be deleted."
 msgstr ""
 
 #: corehq/apps/export/static/export/js/bootstrap3/export_list.js
-#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
 msgid "All of the selected exports will be deleted."
 msgstr ""
 
 #: corehq/apps/export/static/export/js/bootstrap3/export_list.js
-#: corehq/apps/export/static/export/js/bootstrap5/export_list.js
 msgid ""
 "All of the selected exports will be collected for download to a single Excel "
 "file, with each export as a separate sheet."
@@ -3499,6 +3496,7 @@ msgid "All locations"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid ""
 "Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr ""
@@ -3686,6 +3684,14 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
 msgid "Clear"
 msgstr "Effacer"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
+msgid "Gateway Timeout Error. Max retries exceeded."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
+msgid "Request timed out. Max retries exceeded."
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
 msgid "Items"
@@ -5371,6 +5377,3 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Reset"
-#~ msgstr "Réinitialiser"
