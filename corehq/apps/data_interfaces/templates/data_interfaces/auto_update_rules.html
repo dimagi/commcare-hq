@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'data_interfaces/js/auto_update_rules' %}
+{% js_entry_b3 'data_interfaces/js/auto_update_rules' %}
 
 {% block page_content %}
   {% initial_page_data 'rules' rules %}
