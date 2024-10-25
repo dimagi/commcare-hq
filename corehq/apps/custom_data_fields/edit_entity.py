@@ -143,8 +143,8 @@ class CustomDataEditor(object):
                 data_bind_field_name = (
                     without_prefix(field_name, self.prefix) if field_name_includes_prefix else field_name)
                 data_binds = [
-                    f"value: {self.ko_model}.{data_bind_field_name}.value",
-                    f"disable: {self.ko_model}.{data_bind_field_name}.disable",
+                    f"value: {self.ko_model}['{data_bind_field_name}'].value",
+                    f"disable: {self.ko_model}['{data_bind_field_name}'].disable",
                 ]
                 if hasattr(field, 'choices') or without_prefix(field_name, self.prefix) == PROFILE_SLUG:
                     data_binds.append("select2: " + json.dumps([
