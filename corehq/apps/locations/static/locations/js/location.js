@@ -23,7 +23,7 @@ hqDefine("locations/js/location", [
     locationModels,
     locationTreeModel
 ) {
-    var insert_new_user = function (user) {
+    var insertNewUser = function (user) {
         var $select = $('#id_users-selected_ids');
         // Add the newly created user to the users that are already at the location.
         var currentUsers = $select.select2('data');
@@ -37,32 +37,32 @@ hqDefine("locations/js/location", [
     };
 
     $(function () {
-        var form_node = $('#add_commcare_account_form');
-        var url = form_node.prop('action');
+        var $formNode = $('#add_commcare_account_form'),
+            url = $formNode.prop('action');
 
         $('#new_user').on('show.bs.modal', function () {
-            form_node.html('<i class="fa fa-refresh fa-spin"></i>');
+            $formNode.html('<i class="fa fa-refresh fa-spin"></i>');
             $.get(url, function (data) {
-                form_node.html(data.form_html);
+                $formNode.html(data.form_html);
             });
         });
 
-        form_node.submit(function (event) {
+        $formNode.submit(function (event) {
             event.preventDefault();
             $.ajax({
                 type: 'POST',
                 url: url,
-                data: form_node.serialize(),
+                data: $formNode.serialize(),
                 success: function (data) {
                     if (data.status === 'success') {
-                        insert_new_user(data.user);
+                        insertNewUser(data.user);
                         alertUser.alert_user(
                             TEMPLATE_STRINGS.new_user_success({name: data.user.text}),
                             'success'
                         );
                         bootstrap.Modal.getInstance('#new_user').hide();
                     } else {
-                        form_node.html(data.form_html);
+                        $formNode.html(data.form_html);
                     }
                 },
                 error: function () {
@@ -74,9 +74,9 @@ hqDefine("locations/js/location", [
     });
     $(function () {
 
-        var location_url = initialPageData.get('api_root');
-        var loc_id = initialPageData.get('location_id');
-        var loc_type = initialPageData.get('location_type');
+        var locationUrl = initialPageData.get('api_root');
+        var locId = initialPageData.get('location_id');
+        var locType = initialPageData.get('location_type');
         var hierarchy = initialPageData.get('hierarchy');
 
         var model = locationModels.locationSelectViewModel({
@@ -84,20 +84,20 @@ hqDefine("locations/js/location", [
             "default_caption": "\u2026",
             "auto_drill": false,
             "loc_filter": function (loc) {
-                return loc.uuid() !== loc_id && loc.can_have_children();
+                return loc.uuid() !== locId && loc.can_have_children();
             },
-            "loc_url": location_url,
+            "loc_url": locationUrl,
         });
         model.editing = ko.observable(false);
         model.allowed_child_types = ko.computed(function () {
-            var active_loc = (this.selected_location() || this.root());
-            return (active_loc ? active_loc.allowed_child_types() : []);
+            var activeLoc = (this.selected_location() || this.root());
+            return (activeLoc ? activeLoc.allowed_child_types() : []);
         }, model);
-        model.loc_type = ko.observable(loc_type);
+        model.loc_type = ko.observable(locType);
 
         var locs = initialPageData.get('locations');
-        var selected_parent = initialPageData.get('location_parent_get_id');
-        model.load(locs, selected_parent);
+        var selectedParent = initialPageData.get('location_parent_get_id');
+        model.load(locs, selectedParent);
         model.orig_parent_id = model.selected_locid();
 
         $("#loc_form :button[type='submit']").click(function () {
@@ -122,7 +122,7 @@ hqDefine("locations/js/location", [
             var locData = {
                 name: location.name,
                 location_type: location.location_type,
-                uuid: loc_id,
+                uuid: locId,
                 is_archived: location.is_archived,
                 can_edit: options.can_edit_root,
             };
