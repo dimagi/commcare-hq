@@ -1314,11 +1314,12 @@ def format_response(response):
     if not is_response(response):
         return ''
     request_url = getattr(response, "url", "")
-    ret = f'{request_url}\n{response.status_code}: {response.reason}'
+    request_url = request_url + "\n" if request_url else ""
+    formatted_response = f'{request_url}{response.status_code}: {response.reason}'
     response_text = getattr(response, "text", "")[:MAX_REQUEST_LOG_LENGTH]
     if response_text:
-        return ret + f'\n{response_text}'
-    return ret
+        return formatted_response + f'\n{response_text}'
+    return formatted_response
 
 
 def is_success_response(response):

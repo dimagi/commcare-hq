@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
+from requests import JSONDecodeError as RequestsJSONDecodeError
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 
@@ -38,7 +39,10 @@ class MockResponse:
     reason: str = "success"
 
     def json(self):
-        return json.loads(self.text)
+        try:
+            return json.loads(self.text)
+        except json.JSONDecodeError as e:
+            raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
 
 
 class BaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
