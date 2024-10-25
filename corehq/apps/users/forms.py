@@ -847,9 +847,10 @@ class NewMobileWorkerForm(forms.Form):
         provision_by_sms = TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
 
         if provision_by_sms or provision_by_cid:
+            varname = 'account_invite_by_cid' if provision_by_cid else 'force_account_confirmation_by_sms'
             confirm_account_by_sms_field = crispy.Field(
-                'force_account_confirmation_by_sms' if provision_by_sms else 'account_invite_by_cid',
-                data_bind='checked: force_account_confirmation_by_sms || account_invite_by_cid',
+                varname,
+                data_bind=f'checked: {varname}',
             )
             phone_number_field = crispy.Div(
                 crispy.Field(
@@ -945,7 +946,8 @@ class NewMobileWorkerForm(forms.Form):
                                         <i class="fa fa-warning"></i> {disabled_email}
                                     <!-- /ko -->
                                     <!-- ko if: !($root.stagedUser().force_account_confirmation())
-                                    && $root.stagedUser().force_account_confirmation_by_sms() -->
+                                    && ($root.stagedUser().force_account_confirmation_by_sms()
+                                    || $root.stagedUser().account_invite_by_cid) -->
                                         <i class="fa fa-warning"></i> {disabled_phone}
                                     <!-- /ko -->
                                     <!-- ko if: !($root.stagedUser().force_account_confirmation())
