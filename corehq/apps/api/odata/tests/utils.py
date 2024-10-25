@@ -79,7 +79,8 @@ class OdataTestMixin(object):
 
     @property
     def view_url(self):
-        return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': self.instance._id})
+        return reverse(self.view_urlname, kwargs={
+            'domain': self.domain.name, 'config_id': self.instance._id, 'api_version': 'v1'})
 
 
 @es_test
