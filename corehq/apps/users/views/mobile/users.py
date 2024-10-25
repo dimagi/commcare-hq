@@ -1802,8 +1802,9 @@ def send_connectid_invite_sms(user):
 @require_POST
 @validate_request_hmac("CONNECTID_SECRET_KEY")
 def update_connectid_messaging_consent(request, domain):
-    link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
-    link.messaging_consent = request.POST.get("consent", False)
+    channel_id = request.POST["channel_id"]
+    link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
+    link.messaging_consent = request.POST["consent"]
     link.save()
     return HttpResponse(status=200)
 
