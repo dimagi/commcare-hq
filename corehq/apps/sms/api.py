@@ -28,6 +28,7 @@ from corehq.apps.sms.messages import (
 )
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (
+    ConnectMessage,
     INCOMING,
     OUTGOING,
     SMS,
@@ -131,6 +132,13 @@ def get_sms_class():
     return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
 
 
+def get_message_class(phone_number):
+    if phone_number.is_sms:
+        return get_sms_class()
+    else:
+        return ConnectMessage
+
+
 def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent=None):
     """
     Sends an outbound SMS. Returns false if it fails.
@@ -174,7 +182,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     return queue_outgoing_sms(msg)
 
 
-def send_sms_to_verified_number(verified_number, text, metadata=None, logged_subevent=None, events=None):
+def send_message_to_verified_number(verified_number, text, metadata=None, logged_subevent=None, events=None):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -192,7 +200,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None, logged_sub
             return False
         raise
 
-    msg = get_sms_class()(
+    msg = get_message_class(verified_number)(
         couch_recipient_doc_type=verified_number.owner_doc_type,
         couch_recipient=verified_number.owner_id,
         phone_number="+" + str(verified_number.phone_number),
@@ -215,7 +223,10 @@ def send_sms_to_verified_number(verified_number, text, metadata=None, logged_sub
                 msg.custom_metadata[field] = value
     msg.save()
 
-    return queue_outgoing_sms(msg)
+    if phone_number.is_sms:
+        return queue_outgoing_sms(msg)
+    else:
+        return send_connect_message(msg)
 
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):
@@ -384,6 +395,15 @@ def should_log_exception_for_backend(backend, exception):
         client.set(key, 1)
         client.expire(key, 60 * 60)
         return True
+
+
+def send_connect_message(message):
+    try:
+        ConnectBackend.send(message)
+        return True
+    except Exception:
+        return False
+    
 
 
 def register_sms_user(
@@ -685,9 +705,9 @@ def get_inbound_phone_entry(phone_number, backend_id=None):
     )
 
 
-def process_incoming(msg):
+def process_incoming(msg, phone=None):
     try:
-        _process_incoming(msg)
+        _process_incoming(msg, phone)
         status = 'ok'
     except Exception:
         status = 'error'
@@ -715,9 +735,12 @@ def _domain_accepts_inbound(msg):
     return msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
 
 
-def _process_incoming(msg):
+def _process_incoming(msg, phone=None):
     sms_load_counter("inbound", msg.domain)()
-    verified_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(msg)
+    if phone is None:
+        verified_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(msg)
+    else:
+        verified_number = phone
     is_two_way = verified_number is not None and verified_number.is_two_way
 
     if verified_number:
@@ -746,7 +769,7 @@ def _process_incoming(msg):
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, verified_number, context=(opt_in_keywords[0],))
             if verified_number:
-                send_sms_to_verified_number(verified_number, text, metadata=metadata)
+                send_message_to_verified_number(verified_number, text, metadata=metadata)
             elif msg.backend_id:
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
@@ -756,7 +779,7 @@ def _process_incoming(msg):
         if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
             text = get_message(MSG_OPTED_IN, verified_number, context=(opt_out_keywords[0],))
             if verified_number:
-                send_sms_to_verified_number(verified_number, text)
+                send_message_to_verified_number(verified_number, text)
             elif msg.backend_id:
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id)
             else:
