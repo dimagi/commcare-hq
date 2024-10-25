@@ -64,6 +64,18 @@ class TestCaseSearchFixtures(TestCase):
         res = self.render("@owner_id = '{user.uuid}'")
         self.assertEqual(res, f"@owner_id = '{self.user.user_id}'")
 
+    @patch('custom.bha.commcare_extensions._get_user_clinic_ids')
+    def test_bha_custom_csql_fixture_context(self, get_user_clinic_ids):
+        self.restore_user.domain = 'co-carecoordination'
+
+        def reset_domain():
+            self.restore_user.domain = self.domain_name
+        self.addCleanup(reset_domain)
+
+        get_user_clinic_ids.return_value = "abc123 def456"
+        res = self.render("selected(@owner_id, '{bha.user_clinic_ids}')")
+        self.assertEqual(res, "selected(@owner_id, 'abc123 def456')")
+
     @patch('corehq.apps.case_search.fixtures._get_indicators')
     @patch('corehq.apps.case_search.fixtures._run_query')
     def test_fixture_generator(self, run_query, get_indicators):

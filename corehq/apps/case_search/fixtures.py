@@ -10,19 +10,29 @@ from corehq.messaging.templating import (
     NestedDictTemplateParam,
 )
 
+from corehq import extensions
+
 
 def _get_user_template_info(restore_user):
     return {
         "username": restore_user.username,
         "uuid": restore_user.user_id,
-        "user_data": restore_user.user_session_data
+        "user_data": restore_user.user_session_data,
+        "location_ids": restore_user.get_location_ids(restore_user.domain),
     }
 
 
 def _get_template_renderer(restore_user):
     renderer = MessagingTemplateRenderer()
     renderer.set_context_param('user', NestedDictTemplateParam(_get_user_template_info(restore_user)))
+    for name, param in custom_csql_fixture_context(restore_user.domain, restore_user):
+        renderer.set_context_param(name, param)
     return renderer
+
+
+@extensions.extension_point
+def custom_csql_fixture_context(domain, restore_user):
+    '''Register custom template params to be available in CSQL templates'''
 
 
 def _run_query(domain, csql):
