@@ -241,6 +241,22 @@ class ScheduleInstance(PartitionedModel):
 
         return set([value])
 
+    def passes_user_case_filter(self, user_case):
+        if not self.memoized_schedule.user_case_filter:
+            return True
+        mode = self.memoized_schedule.user_case_filter['filter_mode']
+        overall_result = False
+        if mode == 'ALL':
+            overall_result = True
+        for filter in self.memoized_schedule.user_case_filter['filters']:
+            filter_result = user_case.get_case_property(filter['property']) == filter['value']
+            if mode == 'ALL':
+                overall_result = overall_result and filter_result
+            elif mode == 'ANY':
+                overall_result = overall_result or filter_result
+
+        return overall_result
+
     def passes_user_data_filter(self, contact):
         if not isinstance(contact, CouchUser):
             return True
@@ -272,7 +288,13 @@ class ScheduleInstance(PartitionedModel):
 
         for member in recipient_list:
             for contact in self._expand_recipient(member):
-                if self.passes_user_data_filter(contact):
+                # TODO: move if to better spot
+                if contact.is_commcare_user():
+                    user_case = contact.memoized_usercase
+                else:
+                    user_case = contact.get_usercase_by_domain(self.domain)
+
+                if self.passes_user_case_filter(user_case) and self.passes_user_data_filter(contact):
                     yield contact
 
     def get_content_send_lock(self, recipient):

@@ -149,6 +149,7 @@ class Schedule(models.Model):
             'location_type_filter': self.location_type_filter,
             'use_utc_as_default_timezone': self.use_utc_as_default_timezone,
             'user_data_filter': self.user_data_filter,
+            # TODO: user_case_filter
         }
 
     def set_extra_scheduling_options(self, options):

@@ -146,6 +146,7 @@ class Command(BaseCommand):
             custom_metadata=copy.deepcopy(schedule.custom_metadata),
             use_utc_as_default_timezone=schedule.use_utc_as_default_timezone,
             user_data_filter=copy.deepcopy(schedule.user_data_filter),
+            # TODO: user_case_filter
             stop_date_case_property_name=schedule.stop_date_case_property_name,
         )
 
