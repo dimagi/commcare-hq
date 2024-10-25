@@ -58,3 +58,30 @@ def update_connectid_messaging_consent(request, domain):
     link.messaging_consent = consent
     link.save()
     return HttpResponse(status=200)
+
+
+@csrf_exempt
+@require_POST
+@validate_request_hmac("CONNECTID_SECRET_KEY")
+def messaging_callback_url(request, *args, **kwargs):
+    channel_id = request.POST.get("channel_id")
+    if channel_id is None:
+        return HttpResponseBadRequest("Channel ID is required.")
+    user_link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
+    messages = request.POST.get("messages", [])
+    messages_to_update = []
+    message_data = {message.get("message_id"): message.get("received_on") for message in messages}
+    message_ids = list(message_data.keys())
+    message_objs = ConnectMessage.objects.filter(
+        message_id__in=message_ids,
+        domain=user_link.domain,
+        backend_id="connectid"
+    )
+    for message_obj in message_objs:
+        received_on = message_data.get(message_obj.message_id)
+        if received_on is None:
+            continue
+        message_obj.received_on = received_on
+        messages_to_update.append(message_obj)
+    ConnectMessage.objects.bulk_update(messages_to_update, ("received_on",))
+    return HttpResponse(status=200)
