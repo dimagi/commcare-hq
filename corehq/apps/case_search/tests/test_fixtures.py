@@ -64,7 +64,7 @@ class TestCaseSearchFixtures(TestCase):
         res = self.render("@owner_id = '{user.uuid}'")
         self.assertEqual(res, f"@owner_id = '{self.user.user_id}'")
 
-    @patch('custom.bha.commcare_extensions._get_user_clinic_ids')
+    @patch('custom.bha.commcare_extensions.get_user_clinic_ids')
     def test_bha_custom_csql_fixture_context(self, get_user_clinic_ids):
         self.restore_user.domain = 'co-carecoordination'
 
