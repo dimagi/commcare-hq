@@ -113,9 +113,10 @@ class BaseExpressionRepeater(Repeater):
                 message = self._process_response_as_case_update(response, repeat_record)
             except Exception as e:
                 notify_exception(None, "Error processing response from Repeater request", e)
-            else:
-                attempt.message += f"\n\n{message}"
-                attempt.save()
+                message = "Error processing response"
+
+            attempt.message += f"\n\n{message}"
+            attempt.save()
 
     def _process_response_as_case_update(self, response, repeat_record):
         domain = repeat_record.domain
