@@ -1,9 +1,9 @@
 import logging
-from json import JSONDecodeError
 
 from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
+from requests import JSONDecodeError as RequestsJSONDecodeError
 
 from dimagi.utils.logging import notify_exception
 
@@ -277,7 +277,7 @@ class ArcGISFormExpressionRepeater(FormExpressionRepeater):
 def get_evaluation_context(domain, repeat_record, payload_doc, response):
     try:
         body = response.json()
-    except JSONDecodeError:
+    except RequestsJSONDecodeError:
         body = response.text
     return EvaluationContext({
         'domain': domain,
