@@ -84,11 +84,20 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     )
 
 
-def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
-                     include_ucrs=None, exclude_ucrs=None,
-                     num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
-                     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
-                     topics=None, dedicated_migration_process=False, **kwargs):
+def get_xform_pillow(
+        pillow_id='xform-pillow',
+        ucr_division=None,
+        include_ucrs=None,
+        exclude_ucrs=None,
+        num_processes=1,
+        process_num=0,
+        ucr_configs=None,
+        skip_ucr=False,
+        processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
+        topics=None,
+        dedicated_migration_process=False,
+        **kwargs,
+):
     """Generic XForm change processor
 
     Processors:

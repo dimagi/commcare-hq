@@ -68,6 +68,7 @@ from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     user_can_view_deid_exports,
 )
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     location_restricted_response,
@@ -506,7 +507,7 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 
 class BaseExportListView(BaseProjectDataView):
-    template_name = 'export/bootstrap3/export_list.html'
+    template_name = 'export/export_list.html'
     lead_text = mark_safe(gettext_lazy(  # nosec: no user input
         '''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
@@ -516,6 +517,7 @@ class BaseExportListView(BaseProjectDataView):
     page_title = gettext_lazy("Export Form Data")
 
     @method_decorator(login_and_domain_required)
+    @method_decorator(use_bootstrap5)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
         self.permissions.access_list_exports_or_404(is_deid=self.is_deid, is_odata=self.is_odata)
@@ -875,7 +877,7 @@ def get_app_data_drilldown_values(request, domain):
     permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
     permissions.access_list_exports_or_404(is_deid=False, is_odata=is_odata)
 
-    rmi_helper = ApplicationDataRMIHelper(domain, request.couch_user)
+    rmi_helper = ApplicationDataRMIHelper(domain, request.project, request.couch_user)
     if model_type == 'form':
         response = rmi_helper.get_form_rmi_response()
     elif model_type == 'case':
@@ -1003,7 +1005,7 @@ class ODataFeedListHelper(ExportListHelper):
         form.fields['model_type'].label = _("Feed Type")
 
         model_type_choices = [
-            ('', _("Select field type")),
+            ('', _("Select feed type")),
         ]
         if self.has_case_export_permissions:
             model_type_choices.append(('case', _('Case')))

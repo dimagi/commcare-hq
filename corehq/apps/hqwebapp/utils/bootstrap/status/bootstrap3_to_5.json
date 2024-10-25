@@ -133,14 +133,9 @@
     "is_complete": true
   },
   "export": {
-    "in_progress": true,
-    "templates": [
-      "download_data_files.html",
-      "paywall.html",
-      "datasource_export_view.html"
-    ],
-    "javascript": [
-      "js/download_data_files.js"
-    ]
+    "is_complete": true
+  },
+  "integration": {
+    "is_complete": true
   }
 }
