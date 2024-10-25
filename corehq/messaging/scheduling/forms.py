@@ -55,6 +55,7 @@ from corehq.apps.data_interfaces.models import (
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.reminders.util import (
     get_combined_id,
@@ -1344,6 +1345,18 @@ class ScheduleForm(Form):
         required=False,
     )
 
+    use_user_case_for_filter_choices = [("false", "User Properties"), ("true", "User Case Properties")]
+
+    use_user_case_for_filter = ChoiceField(
+        label=gettext_lazy("Filter on"),
+        required=False,
+        initial='ALL',
+        choices=use_user_case_for_filter_choices,
+        widget=SelectToggle(
+            choices=use_user_case_for_filter_choices,
+        ),
+    )
+
     user_data_property_name = TrimmedCharField(
         label=gettext_lazy("User data filter: property name"),
         required=False,
@@ -1569,6 +1582,7 @@ class ScheduleForm(Form):
                 result['use_user_data_filter'] = choice
                 result['user_data_property_name'] = name
                 result['user_data_property_value'] = value
+            result['use_user_case_for_filter'] = schedule.use_user_case_for_filter
 
             result['use_utc_as_default_timezone'] = schedule.use_utc_as_default_timezone
             if isinstance(schedule, AlertSchedule):
@@ -2086,6 +2100,7 @@ class ScheduleForm(Form):
                     ),
                 ),
                 crispy.Div(
+                    crispy.Field('use_user_case_for_filter'),
                     crispy.Field('user_data_property_name'),
                     crispy.Field('user_data_property_value'),
                     data_bind="visible: use_user_data_filter() !== 'N'",
@@ -2487,6 +2502,9 @@ class ScheduleForm(Form):
 
         return validate_int(self.cleaned_data.get('occurrences'), 2)
 
+    def clean_use_user_case_for_filter(self):
+        return self.cleaned_data.get('use_user_case_for_filter') == 'true'
+
     def clean_user_data_property_name(self):
         if self.cleaned_data.get('use_user_data_filter') == self.NO:
             return None
@@ -2567,6 +2585,7 @@ class ScheduleForm(Form):
             'location_type_filter': form_data['location_types'],
             'use_utc_as_default_timezone': form_data['use_utc_as_default_timezone'],
             'user_data_filter': self.distill_user_data_filter(),
+            'use_user_case_for_filter': self.cleaned_data['use_user_case_for_filter']
         }
 
     def distill_user_data_filter(self):
