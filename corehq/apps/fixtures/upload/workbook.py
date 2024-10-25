@@ -51,7 +51,6 @@ class _FixtureWorkbook(object):
         except JSONReaderError as e:
             raise FixtureUploadError(e.args)
 
-
     def get_data_sheet(self, tag):
         # Cache all rows in memory in order to traverse them more than
         # once because IteratorJSONReader only allows a single iteration
