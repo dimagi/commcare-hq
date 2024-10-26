@@ -121,6 +121,7 @@ from corehq.apps.users.models import (
     HqPermissions,
     WebUser,
 )
+from corehq.apps.users.views.mobile.users import remove_profile
 from corehq.apps.users.util import (
     generate_mobile_username,
     raw_username,
@@ -367,6 +368,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         self.throttle_check(request)
 
         user = CommCareUser.get_by_user_id(kwargs['pk'], kwargs["domain"])
+        remove_profile(user, request.domain)
         if not user:
             raise NotFound()
 
