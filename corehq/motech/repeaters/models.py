@@ -1243,6 +1243,19 @@ class RepeatRecord(models.Model):
                 self.repeater.fire_for_record(self, timing_context=timing_context)
             except Exception as e:
                 self.handle_payload_error(str(e), traceback_str=traceback.format_exc())
+                # Repeat records with State.Fail are retried, and repeat
+                # records with State.InvalidPayload are not.
+                #
+                # But a repeat record can have State.InvalidPayload
+                # because it was sent and rejected, so we know that the
+                # remote endpoint is healthy and responding, or because
+                # this exception occurred and it was not sent, so we
+                # don't know anything about the remote endpoint.
+                #
+                # Return None so that `tasks.update_repeater()` treats
+                # the repeat record as unsent, and does not apply or
+                # reset a backoff.
+                return None
             return self.state
         return None
 

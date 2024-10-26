@@ -701,7 +701,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
             state_or_none = rr.fire()
 
-        self.assertEqual(state_or_none, State.InvalidPayload)
+        self.assertIsNone(state_or_none)
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.InvalidPayload)
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
