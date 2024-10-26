@@ -1,6 +1,6 @@
 import random
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from django.conf import settings
 
@@ -374,6 +374,7 @@ def process_ready_repeat_record(repeat_record_id):
             if not is_repeat_record_ready(repeat_record):
                 return None
 
+            _metrics_wait_duration(repeat_record)
             report_repeater_attempt(repeat_record.repeater.repeater_id)
             with timer('fire_timing') as fire_timer:
                 state_or_none = repeat_record.fire(timing_context=fire_timer)
@@ -401,6 +402,32 @@ def is_repeat_record_ready(repeat_record):
             repeat_record.domain,
             repeat_record.repeater.repeater_id
         )
+    )
+
+
+def _metrics_wait_duration(repeat_record):
+    """
+    Metrics for the duration since ``repeat_record`` was registered or
+    attempted.
+
+    Max backoff for a Repeater (``MAX_RETRY_WAIT``) is 7 days.
+    """
+    if repeat_record.attempt_set:
+        duration_start = repeat_record.attempt_set[-1].created_at
+    else:
+        duration_start = repeat_record.registered_at
+    wait_duration = datetime.now(UTC) - duration_start
+    buckets = [60 * (3 ** exp) for exp in range(10)]  # 1 minute to 9 days
+    metrics_histogram(
+        'commcare.repeaters.repeat_record.waited',
+        wait_duration.total_seconds(),
+        buckets=buckets,
+        bucket_tag='duration',
+        bucket_unit='s',
+        tags={
+            'domain': repeat_record.domain,
+            'repeater': f'{repeat_record.domain}: {repeat_record.repeater.name}',
+        },
     )
 
 
