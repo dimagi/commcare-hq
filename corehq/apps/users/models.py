@@ -1552,7 +1552,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
             if by_username and by_username['id'] != self._id:
-                raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
+                raise self.Inconsistent("User with username %s already exists" % self.username)
 
             if update_django_user and self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
@@ -3291,6 +3291,17 @@ class ConnectIDUserLink(models.Model):
     connectid_username = models.TextField()
     commcare_user = models.ForeignKey(User, related_name='connectid_user', on_delete=models.CASCADE)
     domain = models.TextField()
+    messaging_consent = models.BooleanField(default=False)
+    channel_id = models.CharField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         unique_together = ('domain', 'commcare_user')
+
+
+class ConnectIDMessagingKey(models.Model):
+    domain = models.TextField()
+    connectid_user_link = models.ForeignKey(ConnectIDUserLink, on_delete=models.CASCADE)
+    key = models.CharField(max_length=44, null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
