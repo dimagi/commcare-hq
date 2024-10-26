@@ -371,9 +371,10 @@ def process_ready_repeat_record(repeat_record_id):
                 .prefetch_related('repeater', 'attempt_set')
                 .get(id=repeat_record_id)
             )
-            report_repeater_attempt(repeat_record.repeater.repeater_id)
             if not is_repeat_record_ready(repeat_record):
                 return None
+
+            report_repeater_attempt(repeat_record.repeater.repeater_id)
             with timer('fire_timing') as fire_timer:
                 state_or_none = repeat_record.fire(timing_context=fire_timer)
             report_repeater_usage(
