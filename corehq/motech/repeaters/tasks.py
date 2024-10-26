@@ -31,7 +31,6 @@ from corehq.util.timer import TimingContext
 from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
-    CHECK_REPEATERS_PARTITION_COUNT,
     ENDPOINT_TIMER,
     MAX_RETRY_WAIT,
     PROCESS_REPEATERS_INTERVAL,
@@ -85,22 +84,23 @@ def delete_old_request_logs():
 def check_repeaters():
     # this creates a task for all partitions
     # the Nth child task determines if a lock is available for the Nth partition
-    for current_partition in range(CHECK_REPEATERS_PARTITION_COUNT):
+    for current_partition in range(settings.CHECK_REPEATERS_PARTITION_COUNT):
         check_repeaters_in_partition.delay(current_partition)
 
 
 @task(queue=settings.CELERY_PERIODIC_QUEUE)
 def check_repeaters_in_partition(partition):
     """
-    The CHECK_REPEATERS_PARTITION_COUNT constant dictates the total number of partitions
+    The CHECK_REPEATERS_PARTITION_COUNT value dictates the total number of partitions
     :param partition: index of partition to check
+
     """
     start = datetime.utcnow()
     twentythree_hours_sec = 23 * 60 * 60
     twentythree_hours_later = start + timedelta(hours=23)
 
     # Long timeout to allow all waiting repeat records to be iterated
-    lock_key = f"{CHECK_REPEATERS_KEY}_{partition}_in_{CHECK_REPEATERS_PARTITION_COUNT}"
+    lock_key = f"{CHECK_REPEATERS_KEY}_{partition}_in_{settings.CHECK_REPEATERS_PARTITION_COUNT}"
     check_repeater_lock = get_redis_lock(
         lock_key,
         timeout=twentythree_hours_sec,
@@ -116,7 +116,7 @@ def check_repeaters_in_partition(partition):
             timing_buckets=_check_repeaters_buckets,
         ):
             for record in RepeatRecord.objects.iter_partition(
-                    start, partition, CHECK_REPEATERS_PARTITION_COUNT):
+                    start, partition, settings.CHECK_REPEATERS_PARTITION_COUNT):
 
                 if datetime.utcnow() > twentythree_hours_later:
                     break
@@ -459,7 +459,7 @@ def update_repeater(repeat_record_states, repeater_id, lock_token):
 
 metrics_gauge_task(
     'commcare.repeaters.overdue',
-    RepeatRecord.objects.count_overdue,
+    RepeatRecord.objects.count_overdue_by_partition,
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )
