@@ -1,6 +1,7 @@
 import random
 import uuid
 from datetime import datetime, timedelta
+from inspect import cleandoc
 
 from django.conf import settings
 
@@ -248,6 +249,7 @@ def process_repeaters():
     if not process_repeater_lock.acquire(blocking=False):
         return
 
+    metrics_counter('commcare.repeaters.process_repeaters.start')
     try:
         for domain, repeater_id, lock_token in iter_ready_repeater_ids_forever():
             process_repeater.delay(domain, repeater_id, lock_token)
@@ -298,6 +300,7 @@ def iter_ready_repeater_ids_once():
         ...
 
     """
+    metrics_counter('commcare.repeaters.process_repeaters.iter_once')
     repeater_ids_by_domain = get_repeater_ids_by_domain()
     while True:
         if not repeater_ids_by_domain:
@@ -374,6 +377,7 @@ def process_ready_repeat_record(repeat_record_id):
             if not is_repeat_record_ready(repeat_record):
                 return None
 
+            _metrics_wait_duration(repeat_record)
             report_repeater_attempt(repeat_record.repeater.repeater_id)
             with timer('fire_timing') as fire_timer:
                 state_or_none = repeat_record.fire(timing_context=fire_timer)
@@ -402,6 +406,37 @@ def is_repeat_record_ready(repeat_record):
             repeat_record.repeater.repeater_id
         )
     )
+
+
+def _metrics_wait_duration(repeat_record):
+    """
+    The duration since ``repeat_record`` was registered or last attempted.
+
+    Buckets are exponential: [1m, 6m, 36m, 3.6h, 21.6h, 5.4d]
+    """
+    buckets = [60 * (6 ** exp) for exp in range(6)]
+    metrics_histogram(
+        'commcare.repeaters.process_repeaters.repeat_record_wait',
+        _get_wait_duration_seconds(repeat_record),
+        bucket_tag='duration',
+        buckets=buckets,
+        bucket_unit='s',
+        tags={
+            'domain': repeat_record.domain,
+            'repeater': f'{repeat_record.domain}: {repeat_record.repeater.name}',
+        },
+        documentation=cleandoc(_metrics_wait_duration.__doc__)
+    )
+
+
+def _get_wait_duration_seconds(repeat_record):
+    last_attempt = repeat_record.attempt_set.last()
+    if last_attempt:
+        duration_start = last_attempt.created_at
+    else:
+        duration_start = repeat_record.registered_at
+    wait_duration = datetime.utcnow() - duration_start
+    return int(wait_duration.total_seconds())
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -441,7 +476,7 @@ metrics_gauge_task(
 # This metric monitors the number of Repeaters with RepeatRecords ready to
 # be sent. A steep increase indicates a problem with `process_repeaters()`.
 metrics_gauge_task(
-    'commcare.repeaters.all_ready',
+    'commcare.repeaters.process_repeaters.all_ready_count',
     Repeater.objects.all_ready_count,
     run_every=crontab(minute='*/5'),  # every five minutes
     multiprocess_mode=MPM_MAX

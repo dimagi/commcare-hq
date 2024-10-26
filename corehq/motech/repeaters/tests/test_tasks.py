@@ -17,6 +17,7 @@ from corehq.form_processor.utils.xform import (
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.models import FormRepeater, Repeater, RepeatRecord
 from corehq.motech.repeaters.tasks import (
+    _get_wait_duration_seconds,
     _process_repeat_record,
     delete_old_request_logs,
     get_repeater_ids_by_domain,
@@ -558,3 +559,65 @@ class TestUpdateRepeater(SimpleTestCase):
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
+
+
+class TestGetWaitDurationSeconds(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.repeater = FormRepeater.objects.create(
+            domain=DOMAIN,
+            connection_settings=ConnectionSettings.objects.create(
+                domain=DOMAIN,
+                url='http://www.example.com/api/'
+            ),
+        )
+
+    def test_repeat_record_no_attempts(self):
+        five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+        repeat_record = RepeatRecord.objects.create(
+            repeater=self.repeater,
+            domain=DOMAIN,
+            payload_id='abc123',
+            registered_at=five_minutes_ago,
+        )
+        wait_duration = _get_wait_duration_seconds(repeat_record)
+        self.assertEqual(wait_duration, 300)
+
+    def test_repeat_record_one_attempt(self):
+        five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+        repeat_record = RepeatRecord.objects.create(
+            repeater=self.repeater,
+            domain=DOMAIN,
+            payload_id='abc123',
+            registered_at=five_minutes_ago,
+        )
+        thirty_seconds_ago = datetime.utcnow() - timedelta(seconds=30)
+        repeat_record.attempt_set.create(
+            created_at=thirty_seconds_ago,
+            state=State.Fail,
+        )
+        wait_duration = _get_wait_duration_seconds(repeat_record)
+        self.assertEqual(wait_duration, 30)
+
+    def test_repeat_record_two_attempts(self):
+        an_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        repeat_record = RepeatRecord.objects.create(
+            repeater=self.repeater,
+            domain=DOMAIN,
+            payload_id='abc123',
+            registered_at=an_hour_ago,
+        )
+        thirty_minutes = datetime.utcnow() - timedelta(minutes=30)
+        repeat_record.attempt_set.create(
+            created_at=thirty_minutes,
+            state=State.Fail,
+        )
+        five_seconds_ago = datetime.utcnow() - timedelta(seconds=5)
+        repeat_record.attempt_set.create(
+            created_at=five_seconds_ago,
+            state=State.Fail,
+        )
+        wait_duration = _get_wait_duration_seconds(repeat_record)
+        self.assertEqual(wait_duration, 5)
