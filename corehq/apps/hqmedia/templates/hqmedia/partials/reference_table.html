@@ -27,7 +27,7 @@
       <td class="media-type-icon text-center"><i data-bind="attr: { class: type_icon }"></i></td>
       <td>
         <a data-toggle="modal"
-           data-bind="attr: { class: upload_button_class, href: upload_controller.container },
+           data-bind="attr: { class: upload_button_class, href: '#' + slug },
                       click: triggerUpload">
           <i data-bind="css: {'fa fa-recycle': is_matched(), 'fa-solid fa-cloud-arrow-up': !is_matched()}"></i>
           <span data-bind="visible: !is_matched()">{% trans "Upload" %}</span>
