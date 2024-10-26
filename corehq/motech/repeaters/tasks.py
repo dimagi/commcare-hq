@@ -446,18 +446,16 @@ def update_repeater(repeat_record_states, repeater_id, lock_token):
     results of ``_process_repeat_record()`` tasks.
     """
     try:
-        repeater = Repeater.objects.get(id=repeater_id)
-        if any(s == State.Success for s in repeat_record_states):
-            # At least one repeat record was sent successfully. The
-            # remote endpoint is healthy.
-            repeater.reset_backoff()
-        elif all(s in (State.Empty, State.InvalidPayload, None)
-                 for s in repeat_record_states):
+        if all(s in (State.Empty, None) for s in repeat_record_states):
             # We can't tell anything about the remote endpoint.
-            # (_process_repeat_record() can return None on an exception.)
-            pass
+            return
+        success_or_invalid = (State.Success, State.InvalidPayload)
+        repeater = Repeater.objects.get(id=repeater_id)
+        if any(s in success_or_invalid for s in repeat_record_states):
+            # The remote endpoint appears to be healthy.
+            repeater.reset_backoff()
         else:
-            # All sent payloads failed. Try again later.
+            # All the payloads that were sent failed. Try again later.
             repeater.set_backoff()
     finally:
         lock = get_repeater_lock(repeater_id)
