@@ -13,7 +13,7 @@ class SubjectTemplate:
 
 
 def send_subscription_change_alert(domain, new_subscription, old_subscription, internal_change=False,
-                                   subject=SubjectTemplate.CHANGE):
+                                   subject_template=SubjectTemplate.CHANGE):
 
     billing_account = (
         new_subscription.account if new_subscription else
@@ -33,7 +33,7 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
         'username': request.couch_user.username if getattr(request, 'couch_user', None) else None,
         'referer': request.META.get('HTTP_REFERER') if request else None,
     }
-    email_subject = subject.format(
+    email_subject = subject_template.format(
         env=("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
              if settings.SERVER_ENVIRONMENT == "staging" else ""),
         domain=email_context['domain'],
@@ -53,9 +53,10 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
 
 
 def send_subscription_renewal_alert(domain, new_subscription, old_subscription):
-    send_subscription_change_alert(domain, new_subscription, old_subscription, subject=SubjectTemplate.RENEW)
+    send_subscription_change_alert(domain, new_subscription, old_subscription,
+                                   subject_template=SubjectTemplate.RENEW)
 
 
 def send_self_start_subscription_alert(domain, new_subscription, old_subscription):
     send_subscription_change_alert(domain, new_subscription, old_subscription,
-                                   subject=SubjectTemplate.SELF_START)
+                                   subject_template=SubjectTemplate.SELF_START)
