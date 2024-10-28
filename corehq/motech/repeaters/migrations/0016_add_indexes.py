@@ -57,8 +57,13 @@ class Migration(migrations.Migration):
                     """
                 ),
 
-                # Replace with a partial index on `id_` column. Used
-                # when next_attempt_at is null
+                # Replace `Repeater.id_deleted` index with a partial
+                # index on `id_` column.
+                # > One major reason for using a partial index is to
+                # > avoid indexing common values. ... This reduces the
+                # > size of the index, which will speed up those queries
+                # > that do use the index.
+                # > -- https://www.postgresql.org/docs/current/indexes-partial.html
                 migrations.RunSQL(
                     sql="""
                     CREATE INDEX CONCURRENTLY "deleted_partial_idx"
@@ -71,7 +76,7 @@ class Migration(migrations.Migration):
                 ),
 
                 # Add partial index for is_deleted and is_paused on `id_`
-                # column. Used when next_attempt_at is not null
+                # column.
                 migrations.RunSQL(
                     sql="""
                     CREATE INDEX CONCURRENTLY "deleted_paused_partial_idx"
@@ -84,7 +89,8 @@ class Migration(migrations.Migration):
                 ),
 
                 # Add partial index for RepeatRecord.state on `repeater_id`
-                # column. Used when next_attempt_at is not null
+                # column. This does the heavy lifting for the queries
+                # related to `RepeaterManager.all_ready()`.
                 migrations.RunSQL(
                     sql="""
                     CREATE INDEX CONCURRENTLY "state_partial_idx"
