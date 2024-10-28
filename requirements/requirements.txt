@@ -211,6 +211,8 @@ dropbox==11.36.2
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
+elasticsearch6==6.8.2
+    # via -r base-requirements.in
 envier==0.5.2
     # via ddtrace
 et-xmlfile==1.0.1
@@ -621,6 +623,7 @@ urllib3==1.26.19
     # via
     #   botocore
     #   elasticsearch5
+    #   elasticsearch6
     #   google-auth
     #   py-kissmetrics
     #   requests
