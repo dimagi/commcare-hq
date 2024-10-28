@@ -82,6 +82,7 @@ from corehq.messaging.scheduling.models import (
     AlertEvent,
     AlertSchedule,
     CasePropertyTimedEvent,
+    ConnectMessageContent,
     CustomContent,
     EmailContent,
     FCMNotificationContent,
@@ -101,6 +102,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     ScheduleInstance,
 )
 from corehq.toggles import (
+    COMMCARE_CONNECT,
     EXTENSION_CASES_SYNC_ENABLED,
     FCM_NOTIFICATION,
     RICH_TEXT_EMAILS,
@@ -454,6 +456,10 @@ class ContentForm(Form):
                 action=self.cleaned_data['fcm_action'],
                 message_type=self.cleaned_data['fcm_message_type'],
             )
+        elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_CONNECT_MESSAGE:
+            return ConnectMessageContent(
+                message=self.cleaned_data['message'],
+            )
         else:
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
 
@@ -680,6 +686,9 @@ class ContentForm(Form):
             result['message'] = content.message
             result['fcm_action'] = content.action
             result['fcm_message_type'] = content.message_type
+        elif isinstance(content, ConnectMessageContent):
+            result['subject'] = content.subject
+            result['message'] = content.message
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -1154,6 +1163,7 @@ class ScheduleForm(Form):
     CONTENT_SMS_CALLBACK = 'sms_callback'
     CONTENT_CUSTOM_SMS = 'custom_sms'
     CONTENT_FCM_NOTIFICATION = 'fcm_notification'
+    CONTENT_CONNECT_MESSAGE = 'connect_message'
 
     YES = 'Y'
     NO = 'N'
@@ -1544,6 +1554,8 @@ class ScheduleForm(Form):
             initial['content'] = self.CONTENT_SMS_CALLBACK
         elif isinstance(content, FCMNotificationContent):
             initial['content'] = self.CONTENT_FCM_NOTIFICATION
+        elif isinstance(content, ConnectMessageContent):
+            initial['conent'] = self.CONTENT_CONNECT_MESSAGE
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -1731,6 +1743,10 @@ class ScheduleForm(Form):
     def form_choices(self):
         return [(form['code'], form['name']) for form in get_form_list(self.domain)]
 
+    @property
+    def can_use_connect(self):
+        return COMMCARE_CONNECT.enabled(self.domain)
+
     def add_additional_content_types(self):
         if (
             self.can_use_sms_surveys
@@ -1750,6 +1766,11 @@ class ScheduleForm(Form):
                 self.fields['content'].choices += [
                     (self.CONTENT_SMS_CALLBACK, _("SMS Expecting Callback")),
                 ]
+
+        if self.can_use_connect:
+            self.fields['content'].choices += [
+                (self.CONTENT_CONNECT_MESSAGE, _("Connect Message")),
+            ]
 
     def enable_json_user_data_filter(self, initial):
         if self.is_system_admin or initial.get('use_user_data_filter') == self.JSON:
