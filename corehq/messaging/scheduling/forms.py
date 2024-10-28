@@ -517,9 +517,9 @@ class ContentForm(Form):
                         data_bind='with: message',
                     ),
                     data_bind=(
-                        "visible: $root.content() === '%s' || $root.content() === '%s' "
+                        "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s' "
                         "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
-                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_SMS_CALLBACK,
+                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_SMS_CALLBACK, ScheduleForm.CONTENT_CONNECT_MESSAGE,
                          ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
                     ),
                 )
@@ -538,11 +538,11 @@ class ContentForm(Form):
                     ),
                     data_bind=(
                         "visible: $root.content() === '%s' || $root.content() === '%s' "
-                        "|| $root.content() === '%s' "
+                        "|| $root.content() === '%s' || $root.content() === '%s' "
                         "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
-                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
-                         ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION,
-                         ScheduleForm.CONTENT_CONNECT_MESSAGE)
+                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL,
+                         ScheduleForm.CONTENT_SMS_CALLBACK, ScheduleForm.CONTENT_CONNECT_MESSAGE,
+                         ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION,)
                     ),
                 ),
             ]
