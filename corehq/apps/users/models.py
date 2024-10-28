@@ -586,8 +586,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
         If create_record is True but the domain membership is not found,
         then None is returned.
         """
+        from corehq.apps.users.views.mobile.users import remove_profile
         self.get_by_user_id.clear(self.__class__, self.user_id, domain)
         record = None
+        remove_profile(self, domain)
 
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
