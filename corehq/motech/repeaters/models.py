@@ -1313,10 +1313,13 @@ def has_failed(record):
 def format_response(response):
     if not is_response(response):
         return ''
+    request_url = getattr(response, "url", "")
+    request_url = request_url + "\n" if request_url else ""
+    formatted_response = f'{request_url}{response.status_code}: {response.reason}'
     response_text = getattr(response, "text", "")[:MAX_REQUEST_LOG_LENGTH]
     if response_text:
-        return f'{response.status_code}: {response.reason}\n{response_text}'
-    return f'{response.status_code}: {response.reason}'
+        return formatted_response + f'\n{response_text}'
+    return formatted_response
 
 
 def is_success_response(response):
