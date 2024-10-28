@@ -26,10 +26,17 @@ def get_all_usernames_of_the_idp_from_entra(idp):
     config = _configure_idp(idp)
 
     # Create a preferably long-lived app instance which maintains a token cache.
-    app = msal.ConfidentialClientApplication(
-        config["client_id"], authority=config["authority"],
-        client_credential=config["secret"],
-    )
+    try:
+        app = msal.ConfidentialClientApplication(
+            config["client_id"], authority=config["authority"],
+            client_credential=config["secret"],
+        )
+    except ValueError as e:
+        if "check your tenant name" in str(e):
+            raise EntraVerificationFailed(error="invalid_tenant",
+                                          message="Please double check your tenant id is correct")
+        else:
+            raise e
 
     token = _get_access_token(app, config)
 
