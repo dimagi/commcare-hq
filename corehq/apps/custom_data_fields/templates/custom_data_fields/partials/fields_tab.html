@@ -46,6 +46,17 @@
                           {% endblocktrans %}">
       </span>
     </th>
+    <!-- ko if: requiredForOptions.length > 0 -->
+    <th class="col-md-1">
+      {% trans "Required for" %}
+      <span class="hq-help-template"
+            data-title="{% trans "Required for" %}"
+            data-content="{% blocktrans with entity_string=view.entity_string|lower %}
+                          Specify which {{ entity_string }} type this field is required for.
+                          {% endblocktrans %}">
+      </span>
+    </th>
+    <!-- /ko -->
     <th class="col-md-3">
       {% if request|request_has_privilege:"REGEX_FIELD_VALIDATION" or couch_user.is_superuser %}
         {% trans "Validation" %}
@@ -88,18 +99,20 @@
       <input class="form-control" type="text" data-bind="value: label, attr: { 'readonly': !isEditable() }"/>
     </td>
     <td>
-      <div class="form-check mt-2 d-flex align-items-center">
+      <div class="form-check mt-2">
         <input class="form-check-input" type="checkbox" data-bind="checked: is_required, attr: { 'disabled': !isEditable() }"/>
-        <!-- ko if: is_required() && $root.requiredForOptions.length > 0 -->
-          <select class="form-select ms-2" data-bind="options: $root.requiredForOptions,
+      </div>
+    </td>
+    <!-- ko if: $root.requiredForOptions.length > 0 -->
+    <td>
+          <select class="form-select" data-bind="options: $root.requiredForOptions,
                                                       optionsText: 'text',
                                                       optionsValue: 'value',
                                                       value: required_for,
-                                                      attr: { disabled: !isEditable() }">
+                                                      attr: { disabled: !isEditable() || !is_required() }">
           </select>
-        <!-- /ko -->
-      </div>
     </td>
+    <!-- /ko -->
     <td>
 
       {% if request|request_has_privilege:"REGEX_FIELD_VALIDATION" or couch_user.is_superuser %}
