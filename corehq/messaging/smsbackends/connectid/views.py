@@ -24,12 +24,14 @@ def receive_message(request, *args, **kwargs):
     cipher = AES.new(key, AES.MODE_GCM, nonce=content["nonce"])
     text = cipher.decrypt_and_verify(content["ciphertext"], content["tag"]).decode("utf-8")
     timestamp = data["timestamp"]
+    message_id = data["message_id"]
     msg = ConnectMessage(
         direction=INCOMING,
         date=timestamp,
         text=text,
         domain_scope=user_link.domain,
-        backend_id="connectid"
+        backend_id="connectid",
+        message_id=message_id
     )
     process_incoming(msg, phone_obj)
     return HttpResponse("")
@@ -41,7 +43,7 @@ def receive_message(request, *args, **kwargs):
 def connectid_messaging_key(request, *args, **kwargs):
     channel_id = request.POST.get("channel_id")
     if channel_id is None:
-        return HttpResponseBadRequest("ChannelID is required.")
+        return HttpResponseBadRequest("Channel ID is required.")
     link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
     key = generate_aes_key().decode("utf-8")
     messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
@@ -57,7 +59,7 @@ def update_connectid_messaging_consent(request, *args, **kwargs):
     channel_id = request.POST.get("channel_id")
     consent = request.POST.get("consent", False)
     if channel_id is None:
-        return HttpResponseBadRequest("ChannelID is required.")
+        return HttpResponseBadRequest("Channel ID is required.")
     link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
     link.messaging_consent = consent
     link.save()
