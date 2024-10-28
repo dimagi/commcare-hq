@@ -1,9 +1,9 @@
 import logging
-from json import JSONDecodeError
 
 from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
+from requests import JSONDecodeError as RequestsJSONDecodeError
 
 from dimagi.utils.logging import notify_exception
 
@@ -22,7 +22,6 @@ from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.expression.repeater_generators import (
     ArcGISFormExpressionPayloadGenerator,
     ExpressionPayloadGenerator,
-    FormExpressionPayloadGenerator,
 )
 from corehq.motech.repeaters.models import (
     OptionValue,
@@ -108,27 +107,31 @@ class BaseExpressionRepeater(Repeater):
         return base_url
 
     def handle_response(self, response, repeat_record):
-        super().handle_response(response, repeat_record)
+        attempt = super().handle_response(response, repeat_record)
         if self.case_action_filter_expression and is_response(response):
             try:
-                self._process_response_as_case_update(response, repeat_record)
+                message = self._process_response_as_case_update(response, repeat_record)
             except Exception as e:
                 notify_exception(None, "Error processing response from Repeater request", e)
+                message = "Error processing response"
+
+            attempt.message += f"\n\n{message}"
+            attempt.save()
 
     def _process_response_as_case_update(self, response, repeat_record):
         domain = repeat_record.domain
         context = get_evaluation_context(domain, repeat_record, self.payload_doc(repeat_record), response)
         if not self.parsed_case_action_filter(context.root_doc, context):
-            return False
+            return "Response did not match filter"
 
-        self._perform_case_update(domain, context)
-        return True
+        form_id = self._perform_case_update(domain, context)
+        return f"Response generated a form: {form_id}"
 
     def _perform_case_update(self, domain, context):
         data = self.parsed_case_action_expression(context.root_doc, context)
         if data:
             data = data if isinstance(data, list) else [data]
-            handle_case_update(
+            form, _ = handle_case_update(
                 domain=domain,
                 data=data,
                 user=UserDuck('system', ''),
@@ -136,6 +139,7 @@ class BaseExpressionRepeater(Repeater):
                 is_creation=False,
                 xmlns=REPEATER_RESPONSE_XMLNS,
             )
+            return form.form_id
 
     @property
     def device_id(self):
@@ -156,7 +160,7 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain).to_json()
+        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
 
     def allowed_to_forward(self, payload):
         allowed = super().allowed_to_forward(payload)
@@ -183,7 +187,6 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
 class FormExpressionRepeater(BaseExpressionRepeater):
 
     friendly_name = _("Configurable Form Repeater")
-    payload_generator_classes = (FormExpressionPayloadGenerator,)
 
     class Meta:
         app_label = 'repeaters'
@@ -275,14 +278,14 @@ class ArcGISFormExpressionRepeater(FormExpressionRepeater):
 def get_evaluation_context(domain, repeat_record, payload_doc, response):
     try:
         body = response.json()
-    except JSONDecodeError:
+    except RequestsJSONDecodeError:
         body = response.text
     return EvaluationContext({
         'domain': domain,
         'success': is_success_response(response),
         'payload': {
             'id': repeat_record.payload_id,
-            'doc': payload_doc,
+            'doc': payload_doc.to_json(),
         },
         'response': {
             'status_code': response.status_code,

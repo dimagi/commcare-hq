@@ -481,6 +481,7 @@ msgstr ""
 #: corehq/apps/settings/views.py corehq/apps/sms/forms.py
 #: corehq/apps/sso/forms.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
@@ -3690,7 +3691,6 @@ msgstr ""
 #: corehq/apps/app_execution/templates/app_execution/workflow_log.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
 #: corehq/motech/generic_inbound/reports.py
 msgid "Details"
 msgstr ""
@@ -6005,6 +6005,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 #: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Value"
 msgstr ""
 
@@ -6355,14 +6356,12 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/bootstrap3/feed_filter_modal.html
 #: corehq/apps/export/templates/export/partials/bootstrap3/odata_feed_limit_reached_modal.html
 #: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/odata_feed_limit_reached_modal.html
 #: corehq/apps/export/templates/export/partials/bootstrap5/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/templates/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
@@ -6378,6 +6377,7 @@ msgstr ""
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/standard/bootstrap3/submission_error_report.html
 #: corehq/apps/reports/templates/reports/standard/bootstrap5/submission_error_report.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -9221,6 +9221,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/inactivity_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/get_demo_modals.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/main.html
 #: corehq/apps/users/views/mobile/users.py
 msgid "Done"
 msgstr "समाप्त"
@@ -9453,6 +9454,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
 #: corehq/apps/sms/forms.py corehq/apps/sms/views.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
@@ -9721,15 +9723,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
 msgid "Set Path"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
-msgid ""
-"\n"
-"            To hear audio on Java Phones, you must be in CommCare Sense\n"
-"            mode or Numeric Selection Mode. (On Android it will always "
-"work.)\n"
-"          "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
@@ -12336,6 +12329,10 @@ msgid ""
 "          "
 msgstr ""
 
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_unsupported.html
+msgid "OK"
+msgstr ""
+
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid ""
 "\n"
@@ -14019,6 +14016,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Match Type"
 msgstr ""
 
@@ -14570,6 +14568,7 @@ msgid "Requires System Admin"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Add Filter"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
@@ -20746,7 +20745,6 @@ msgid "Edit Columns"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
 msgid ""
 "\n"
 "            Copy &amp; Edit Feed\n"
@@ -21017,7 +21015,6 @@ msgid "DET Config"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
 msgid ""
 "\n"
 "                      Copy &amp; Edit Feed\n"
@@ -21050,7 +21047,6 @@ msgid "View Feed"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
 msgid ""
 "\n"
 "                    Copy &amp; Edit Feed\n"
@@ -21070,6 +21066,12 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/bootstrap3/table.html
 #: corehq/apps/export/templates/export/partials/bootstrap5/table.html
 msgid "Edit & Export"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/bootstrap5/export_bulk_notice.html
+msgid ""
+"All of the selected exports will be collected for download to a single Excel "
+"file, with each export as a separate sheet."
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
@@ -21099,6 +21101,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+msgid ""
+"\n"
+"            Copy &amp; Edit\n"
+"          "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
 #, python-format
 msgid ""
 "\n"
@@ -21115,6 +21124,20 @@ msgid ""
 "                If this problem persists, please <a "
 "href=\"#modalReportIssue\" data-bs-toggle=\"modal\">Report an Issue</a>.\n"
 "              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+msgid ""
+"\n"
+"                      Copy &amp; Edit\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+msgid ""
+"\n"
+"                    Copy &amp; Edit\n"
+"                  "
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/customize_export_header.html
@@ -21448,7 +21471,7 @@ msgid "Feed Type"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
-msgid "Select field type"
+msgid "Select feed type"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
@@ -22827,6 +22850,26 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/views.py
+msgid "POST Body must be a valid json in {\"geo_json\": <geo_json>} format"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "Empty geo_json POST field"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "Please specify a name for the GeoPolygon area."
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "GeoPolygon with given name already exists! Please use a different name."
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
 #, python-brace-format
 msgid "Saved area '{polygon_name}' has been successfully deleted."
 msgstr ""
@@ -23723,10 +23766,6 @@ msgid "Error encountered processing Zip File. File doesn't look valid."
 msgstr ""
 
 #: corehq/apps/hqmedia/controller.py
-msgid "zip"
-msgstr ""
-
-#: corehq/apps/hqmedia/controller.py
 msgid "image"
 msgstr ""
 
@@ -23850,81 +23889,85 @@ msgstr ""
 msgid "Transifex"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid ""
-"Use this tool to upload ZIP files of your multimedia, so you don't have to\n"
-"    upload each file one-by-one."
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid ""
-"The bulk uploader will compare the file paths in your form with the file "
-"paths\n"
-"    in your zip to find a matching file."
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid ""
-"For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your "
-"zip's\n"
-"    <code>commcare/images/hin/image.jpg</code> file would match, but it "
-"would <strong>not</strong> match\n"
-"    <code>commcare/images/image.jpg</code>."
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload.html
 msgid ""
 "\n"
-"          Your browser does not support this uploader.\n"
-"          We recommend <a href=\"https://www.google.com/intl/en/chrome/"
-"browser/\">Google Chrome</a>.\n"
-"        "
+"    <p>\n"
+"      Use this tool to upload ZIP files of your multimedia.\n"
+"      The bulk uploader will compare the file paths in your form with the "
+"file paths\n"
+"      in your zip to find a matching file.\n"
+"    </p>\n"
+"    <p>\n"
+"      For example, <code>jr://file/commcare/images/hin/image.jpg</code> and "
+"your zip's\n"
+"      <code>commcare/images/hin/image.jpg</code> file would match, but it "
+"would <strong>not</strong> match\n"
+"      <code>commcare/images/image.jpg</code>.\n"
+"    </p>\n"
+"  "
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Select Files"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+#, python-format
+msgid ""
+"\n"
+"        One match found.\n"
+"      "
+msgid_plural ""
+"\n"
+"        %(matched_count)s matches found.\n"
+"      "
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "No Matches Found"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Begin Upload"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "No Matches"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Bulk Upload File Queue"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "Matched Images"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Filename"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+#: corehq/apps/reports/standard/users/reports.py
+msgid "Updated"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Size"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "View Full Image"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Upload Progress"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "Matched Audio"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Match Status"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "Playing audio directly on this page is currently not supported."
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Queued Files"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
+msgid "Listen to Audio"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Select files above to add to the queue."
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "Matched Video"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Processing Upload"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "Watching video directly on this page is not supported. Opens a new tab."
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Uploaded Files"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_video_single.html
+msgid "Watch Video"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/manage_paths.html
@@ -23987,6 +24030,10 @@ msgstr ""
 msgid "Current File"
 msgstr ""
 
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Begin Upload"
+msgstr ""
+
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
 msgid ""
 "<strong>Warning:</strong>\n"
@@ -24014,6 +24061,10 @@ msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 msgid "Menu or Form"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+msgid "Size"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
@@ -24059,18 +24110,6 @@ msgstr ""
 msgid "Open file in new tab"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
-msgid "Listen to Audio"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_video_single.html
-msgid "Watch Video"
-msgstr ""
-
 #: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
 #, python-format
 msgid ""
@@ -24104,39 +24143,6 @@ msgstr ""
 msgid "Check for missing media"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "No Matches"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "Matched Images"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "View Full Image"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-#: corehq/apps/reports/standard/users/reports.py
-msgid "Updated"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "Matched Audio"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "Playing audio directly on this page is currently not supported."
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "Matched Videos"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "Watching video directly on this page is not supported. Opens a new tab."
-msgstr ""
-
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/errors.html
 msgid "Errors found"
 msgstr ""
@@ -24161,59 +24167,20 @@ msgstr ""
 msgid "New Video Uploaded Successfully"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Added to queue. Click <strong>Begin Upload</strong> above to start."
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Queued for processing. Please wait."
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Files"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Processing upload, please wait."
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Upload Finished"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
-msgid "There were errors"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Remove from queue"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
-msgid "Cancel Upload"
-msgstr ""
-
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
 msgid "Ready to upload. Click <strong>Begin Upload</strong> below to start."
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+msgid "There were errors"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
 msgid "Select another file"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html
-msgid "1 Match Found"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html
-#, python-format
-msgid "<%%- num %%> Matches Found"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html
-msgid "No Matches Found"
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+msgid "Cancel Upload"
 msgstr ""
 
 #: corehq/apps/hqmedia/view_helpers.py
@@ -24262,6 +24229,36 @@ msgstr ""
 
 #: corehq/apps/hqmedia/views.py
 msgid "Bulk Upload Multimedia"
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py corehq/apps/users/views/mobile/users.py
+msgid "CommCare Help Site"
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py
+msgid "multimedia"
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py
+msgid "multimedia files"
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py
+msgid "Bulk Upload Multimedia Status"
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py
+msgid "Importing your multimedia. This may take some time..."
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py corehq/apps/locations/views.py
+#: corehq/apps/products/views.py corehq/apps/users/views/__init__.py
+#: corehq/apps/users/views/mobile/users.py
+msgid "Problem importing data! Please try again or report an issue."
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py
+msgid "Return to multimedia reference checker"
 msgstr ""
 
 #: corehq/apps/hqmedia/views.py
@@ -24849,6 +24846,10 @@ msgstr ""
 msgid "Errors"
 msgstr ""
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
+msgid "Server Error Encountered"
+msgstr ""
+
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/domain_list_dropdown.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/domain_list_dropdown.html
 msgid "Change Project"
@@ -25423,7 +25424,7 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      %(plural_noun)s using Excel\n"
+"      %(plural_noun)s\n"
 "    "
 msgstr ""
 
@@ -25441,7 +25442,7 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"          Download your current %(adjective)s Excel file.\n"
+"          Download your current %(adjective)s file.\n"
 "        "
 msgstr ""
 
@@ -25464,8 +25465,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"              Check the <a href=\"%(address)s\">%(name)s</a> for "
-"instructions.\n"
+"              Check the <a target=\"_blank\" href=\"%(address)s\">%(name)s</"
+"a> for instructions.\n"
 "            "
 msgstr ""
 
@@ -25870,6 +25871,7 @@ msgid "You have no items."
 msgstr ""
 
 #: corehq/apps/hqwebapp/views.py
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html
 msgid "Loading..."
 msgstr ""
@@ -25961,10 +25963,6 @@ msgid "A subtitle for the Dialer Page header"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
-msgid "Telephony Services"
-msgstr ""
-
-#: corehq/apps/integration/forms.py
 msgid "Enable GAEN OTP server integration"
 msgstr ""
 
@@ -25993,11 +25991,7 @@ msgid "Server Auth Token"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
-msgid "OTP Callouts"
-msgstr ""
-
-#: corehq/apps/integration/forms.py
-msgid "Enable Signed Callout in Web Apps"
+msgid "Enable in Web Apps"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
@@ -26015,7 +26009,7 @@ msgid "API Key"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
-msgid "API Key for CommCare in the external System"
+msgid "API Key for CommCare in the external system"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
@@ -26023,11 +26017,7 @@ msgid "API Secret"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
-msgid "API Secret for message Signing"
-msgstr ""
-
-#: corehq/apps/integration/forms.py
-msgid "Signed Callout Config"
+msgid "API secret for message signing"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
@@ -26042,11 +26032,6 @@ msgstr ""
 
 #: corehq/apps/integration/forms.py
 msgid "Module ID"
-msgstr ""
-
-#: corehq/apps/integration/forms.py
-#: corehq/apps/integration/templates/integration/biometric.html
-msgid "Simprints Integration"
 msgstr ""
 
 #: corehq/apps/integration/templates/integration/web_app_dialer.html
@@ -27719,11 +27704,6 @@ msgstr ""
 
 #: corehq/apps/locations/views.py
 msgid "Organization Structure Import Status"
-msgstr ""
-
-#: corehq/apps/locations/views.py corehq/apps/products/views.py
-#: corehq/apps/users/views/__init__.py corehq/apps/users/views/mobile/users.py
-msgid "Problem importing data! Please try again or report an issue."
 msgstr ""
 
 #: corehq/apps/locations/views.py
@@ -35662,6 +35642,7 @@ msgid "This certificate has already expired!"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Please specify a value."
 msgstr ""
 
@@ -36541,6 +36522,42 @@ msgstr ""
 msgid "Examples of Readonly Fields"
 msgstr ""
 
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is exactly"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is not"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "contains"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#, fuzzy
+#| msgid "Empty"
+msgid "is empty"
+msgstr "Manejo de Casos"
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
+msgid "Column"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
+msgid "Color"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "Hint: select 'is empty' to watch the Value field below disappear"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_hq_hx_action.py
+msgid "New Item"
+msgstr ""
+
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
 msgid "Team"
 msgstr ""
@@ -36683,10 +36700,6 @@ msgid "Create Menu"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
-msgid "Color"
-msgstr ""
-
-#: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
 msgid "What is your favorite primary color"
 msgstr ""
 
@@ -36777,6 +36790,31 @@ msgstr ""
 
 #: corehq/apps/styleguide/tabs.py
 msgid "Examples"
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
+msgid ""
+"\n"
+"        Added filter!\n"
+"      "
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/item.html
+msgid "Edit Value"
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/main.html
+msgid "To-Do"
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/main.html
+#, fuzzy
+#| msgid "Add Filter"
+msgid "Add Item"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/main.html
+msgid "Trigger Error"
 msgstr ""
 
 #: corehq/apps/styleguide/views/bootstrap5_data.py
@@ -39100,6 +39138,12 @@ msgstr ""
 
 #: corehq/apps/userreports/views.py
 msgid "Data source \"{}\" saved!"
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+msgid ""
+"This data source will be built/rebuilt automatically the next time a row is "
+"added."
 msgstr ""
 
 #: corehq/apps/userreports/views.py
@@ -41470,10 +41514,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
-msgid "CommCare Help Site"
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
 msgid "Bulk Upload Mobile Workers"
 msgstr ""
 
@@ -43268,7 +43308,8 @@ msgstr ""
 msgid "Include '+' in Phone Number"
 msgstr ""
 
-#: corehq/messaging/smsbackends/http/forms.py corehq/motech/repeaters/forms.py
+#: corehq/messaging/smsbackends/http/forms.py
+#: corehq/motech/repeaters/expression/forms.py corehq/motech/repeaters/forms.py
 msgid "HTTP Request Method"
 msgstr ""
 
@@ -44008,10 +44049,6 @@ msgstr ""
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a href=\"https://github."
 "com/dimagi/commcare-hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
-msgstr ""
-
-#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
-msgid "Column"
 msgstr ""
 
 #: corehq/motech/dhis2/forms.py
@@ -44770,6 +44807,12 @@ msgstr ""
 
 #: corehq/motech/repeaters/expression/forms.py
 msgid ""
+"This expression is used to generate the request payload. It is required for "
+"POST, and PUT requests."
+msgstr ""
+
+#: corehq/motech/repeaters/expression/forms.py
+msgid ""
 "Items to add to the end of the URL. Please see the documentation for more "
 "information."
 msgstr ""
@@ -44792,6 +44835,11 @@ msgstr ""
 
 #: corehq/motech/repeaters/expression/forms.py
 #, python-brace-format
+msgid "This field is required for {request_method} requests."
+msgstr ""
+
+#: corehq/motech/repeaters/expression/forms.py
+#, python-brace-format
 msgid "This field is required when '{other}' is provided"
 msgstr ""
 
@@ -44805,6 +44853,10 @@ msgstr ""
 
 #: corehq/motech/repeaters/expression/repeaters.py
 msgid "Configurable ArcGIS Form Repeater"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/repeaters.py
+msgid "[No error message given by ArcGIS]"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/views.py

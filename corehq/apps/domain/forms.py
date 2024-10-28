@@ -120,6 +120,7 @@ from corehq.apps.hqwebapp.widgets import (
     GeoCoderInput,
     Select2Ajax,
 )
+from corehq.apps.registration.models import SelfSignupWorkflow
 from corehq.apps.registration.utils import project_logo_emails_context
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
@@ -1856,6 +1857,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                             do_not_invoice=False,
                             no_invoice_reason='',
                         )
+                    if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
+                        self_signup.complete_workflow(self.plan_version.plan.edition)
                 else:
                     Subscription.new_domain_subscription(
                         self.account, self.domain, self.plan_version,
