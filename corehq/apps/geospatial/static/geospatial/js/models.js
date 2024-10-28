@@ -19,8 +19,6 @@ hqDefine('geospatial/js/models', [
     const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
-    const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
-    const reassignCasesUrl = initialPageData.reverse('reassign_cases');
     const unexpectedErrorMessage = gettext(
         "Oops! Something went wrong!" +
         " Please report an issue if the problem persists."
@@ -775,6 +773,7 @@ hqDefine('geospatial/js/models', [
                 if (!validateSavedPolygonName(name)) {
                     return;
                 }
+                const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
                 data['name'] = name;
                 $.ajax({
                     type: 'post',
@@ -1024,7 +1023,7 @@ hqDefine('geospatial/js/models', [
                 'case_id_to_owner_id': caseIdToOwnerId,
                 'include_related_cases': self.includeRelatedCases(),
             };
-
+            const reassignCasesUrl = initialPageData.reverse('reassign_cases');
             self.assignmentAjaxInProgress(true);
             $.ajax({
                 type: 'post',
