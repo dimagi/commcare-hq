@@ -21,9 +21,8 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, override
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import TemplateView, View
+from django.views.generic import TemplateView
 
-from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
@@ -87,7 +86,6 @@ from corehq.apps.registration.forms import (
     MobileWorkerAccountConfirmationForm,
 )
 from corehq.apps.sms.api import send_sms
-from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
@@ -108,7 +106,6 @@ from corehq.apps.users.decorators import (
 )
 from corehq.apps.users.exceptions import InvalidRequestException, ModifyUserStatusException
 from corehq.apps.users.forms import (
-    CommCareAccountForm,
     CommCareUserFormSet,
     CommtrackUserForm,
     ConfirmExtraUserChargesForm,
@@ -998,91 +995,6 @@ def paginate_mobile_workers(request, domain):
         'users': users,
         'total': users_data.total,
     })
-
-
-class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
-    template_name = "users/new_mobile_worker_modal.html"
-    urlname = 'new_mobile_worker_modal'
-
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, request, *args, **kwargs):
-        if not can_add_extra_mobile_workers(request):
-            raise PermissionDenied()
-        return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
-
-    def render_form(self, status):
-        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
-            return self.render_json_response({
-                "status": "failure",
-                "form_html": "<div class='alert alert-danger'>{}</div>".format(_("""
-                    Cannot add new worker due to usage of user field profiles.
-                    Please add your new worker from the mobile workers page.
-                """)),
-            })
-        return self.render_json_response({
-            "status": status,
-            "form_html": render_to_string(self.template_name, {
-                'form': self.new_commcare_user_form,
-                'data_fields_form': self.custom_data.form,
-            }, request=self.request)
-        })
-
-    def get(self, request, *args, **kwargs):
-        return self.render_form("success")
-
-    @property
-    @memoized
-    def custom_data(self):
-        return CustomDataEditor(
-            field_view=CommcareUserFieldsView,
-            domain=self.domain,
-            post_dict=self.request.POST if self.request.method == "POST" else None,
-            request_user=self.request.couch_user,
-        )
-
-    @property
-    @memoized
-    def new_commcare_user_form(self):
-        if self.request.method == "POST":
-            data = self.request.POST.dict()
-            form = CommCareAccountForm(data, domain=self.domain)
-        else:
-            form = CommCareAccountForm(domain=self.domain)
-        return form
-
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    def post(self, request, *args, **kwargs):
-        if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
-            username = self.new_commcare_user_form.cleaned_data['username']
-            password = self.new_commcare_user_form.cleaned_data['password_1']
-            phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
-
-            user = CommCareUser.create(
-                self.domain,
-                username,
-                password,
-                created_by=request.couch_user,
-                created_via=USER_CHANGE_VIA_WEB,
-                phone_number=phone_number,
-                device_id="Generated from HQ",
-                user_data=self.custom_data.get_data_to_save(),
-            )
-
-            if 'location_id' in request.GET:
-                try:
-                    loc = SQLLocation.objects.get(domain=self.domain,
-                                                  location_id=request.GET['location_id'])
-                except SQLLocation.DoesNotExist:
-                    raise Http404()
-                user.set_location(loc)
-
-            if phone_number:
-                initiate_sms_verification_workflow(user, phone_number)
-
-            user_json = {'user_id': user._id, 'text': user.username_in_report}
-            return self.render_json_response({"status": "success",
-                                              "user": user_json})
-        return self.render_form("failure")
 
 
 def get_user_upload_context(domain, request_params, download_url, adjective, plural_noun):

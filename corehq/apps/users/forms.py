@@ -1,6 +1,5 @@
 import datetime
 import json
-import re
 import secrets
 import string
 
@@ -8,7 +7,6 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, validate_email
-from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -587,69 +585,6 @@ class SetUserPasswordForm(SetPasswordForm):
         couch_user = CouchUser.from_django_user(self.user)
         clear_login_attempts(couch_user)
         return user
-
-
-class CommCareAccountForm(forms.Form):
-    """
-    Form for CommCareAccounts
-    """
-    username = forms.CharField(required=True)
-    password_1 = forms.CharField(label=gettext_lazy('Password'), widget=PasswordInput(),
-                                 required=True, min_length=1)
-    password_2 = forms.CharField(label=gettext_lazy('Password (reenter)'), widget=PasswordInput(),
-                                 required=True, min_length=1)
-    phone_number = forms.CharField(
-        max_length=80,
-        required=False,
-        help_text=gettext_lazy("Please enter number, including "
-                               "international code, in digits only.")
-    )
-
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain', None)
-        super(forms.Form, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.label_class = 'col-lg-3'
-        self.helper.field_class = 'col-lg-9'
-        self.helper.layout = Layout(
-            Fieldset(
-                _("Mobile Worker's Primary Information"),
-                'username',
-                'password_1',
-                'password_2',
-                'phone_number',
-            )
-        )
-
-    def clean_username(self):
-        return clean_mobile_worker_username(
-            self.domain,
-            self.cleaned_data.get('username')
-        )
-
-    def clean_phone_number(self):
-        phone_number = self.cleaned_data['phone_number']
-        phone_number = re.sub(r'\s|\+|\-', '', phone_number)
-        if phone_number == '':
-            return None
-        elif not re.match(r'\d+$', phone_number):
-            raise forms.ValidationError(_("%s is an invalid phone number." % phone_number))
-        return phone_number
-
-    def clean(self):
-        try:
-            password_1 = self.cleaned_data['password_1']
-            password_2 = self.cleaned_data['password_2']
-        except KeyError:
-            pass
-        else:
-            if password_1 != password_2:
-                raise forms.ValidationError("Passwords do not match")
-
-        return self.cleaned_data
 
 
 validate_username = EmailValidator(message=gettext_lazy('Username contains invalid characters.'))
