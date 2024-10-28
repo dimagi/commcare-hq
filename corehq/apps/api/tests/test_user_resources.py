@@ -742,6 +742,6 @@ class TestCommCareAnalyticsUserResource(APIResourceTest):
         expected_response_obj = {
             'permissions': {'can_edit': True, 'can_view': True},
             'resource_uri': '',
-            'roles': ['gamma', 'sql_lab', 'dataset_editor']
+            'roles': ['sql_lab', 'dataset_editor']
         }
         self.assertEqual(response.json(), expected_response_obj)
