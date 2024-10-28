@@ -2,7 +2,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
-    send_sms_to_verified_number,
+    send_message_to_verified_number,
 )
 from corehq.apps.sms.models import WORKFLOW_DEFAULT, MessagingEvent
 
@@ -26,7 +26,7 @@ def fallback_handler(verified_number, text, msg):
         outbound_meta = MessageMetadata(workflow=WORKFLOW_DEFAULT,
             location_id=msg.location_id,
             messaging_subevent_id=outbound_subevent.pk)
-        send_sms_to_verified_number(verified_number, domain_obj.default_sms_response,
+        send_message_to_verified_number(verified_number, domain_obj.default_sms_response,
                                     metadata=outbound_meta)
         outbound_subevent.completed()
 

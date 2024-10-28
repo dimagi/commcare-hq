@@ -767,3 +767,55 @@ class EmailImage(object):
         return absolute_reverse("download_messaging_image", args=[self.domain, self.blob_id])
 
     DoesNotExist = BlobMeta.DoesNotExist
+
+
+class ConnectMessageContent(Content):
+    message = old_jsonfield.JSONField(default=dict)
+
+    def create_copy(self):
+        return ConnectMessageContent(
+            message=deepcopy(self.message),
+        )
+
+    def send(self, recipient, logged_event, phone_entry=None):
+        domain = logged_event.domain
+        domain_obj = Domain.get_by_name(domain)
+
+        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+            recipient,
+            self,
+            case_id=None,
+        )
+        message = self.get_translation_from_message_dict(
+            domain_obj,
+            self.message,
+            recipient.get_language_code()
+        )
+        connect_number = ConnectMessagingNumber(recipient)
+
+        send_message_to_verified_number(recipient, message, logged_subevent=logged_subevent)
+
+class ConnectMessageSurveyContent(Content):
+    message = old_jsonfield.JSONField(default=dict)
+
+    def create_copy(self):
+        return ConnectMessageSurveyContent(
+            message=deepcopy(self.message),
+        )
+
+    def send(self, recipient, logged_event, phone_entry=None):
+        domain = logged_event.domain
+        domain_obj = Domain.get_by_name(domain)
+
+        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+            recipient,
+            self,
+            case_id=None,
+        )
+        message = self.get_translation_from_message_dict(
+            domain_obj,
+            self.message,
+            recipient.get_language_code()
+        )
+
+        send_connect_message(message)
