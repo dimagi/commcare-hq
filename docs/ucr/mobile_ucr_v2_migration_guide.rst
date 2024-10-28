@@ -3,7 +3,7 @@ Migrating to Mobile UCR Restore V2
 
 Evolution of Mobile UCR Restore Versions
 ----------------------------------------
-Historically, there were three configuration settings for how Mobile UCRs were restored and sent to devices:
+Historically, there were three configuration settings for how Mobile UCRs were sent to devices:
 
 - Version 1.0: Bundled all reports into a single fixture during the restore process.
 - Version 1.5: Sent both V1 and V2 restore formats.
@@ -11,7 +11,7 @@ Historically, there were three configuration settings for how Mobile UCRs were r
 
 Deprecation of Mobile UCR V1 and V1.5
 -------------------------------------
-Dimagi deprecated both V1 and V1.5 to address performance challenges encountered with these versions.
+Both V1 and V1.5 to address performance challenges encountered with these versions.
 The primary issue with V1 was that all UCRs were bundled into a single fixture, meaning any change to a
 single report required resyncing the entire fixture, leading to slow and inefficient restore processes.
 This bundling often caused unnecessary server load and sluggish syncing for mobile users.
