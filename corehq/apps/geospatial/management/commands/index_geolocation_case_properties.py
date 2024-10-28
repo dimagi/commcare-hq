@@ -41,7 +41,7 @@ def index_case_docs(domain, query_limit=DEFAULT_QUERY_LIMIT, chunk_size=DEFAULT_
     print(f"Cases will be processed in {batch_count} batches")
     for i in range(batch_count):
         print(f'Processing {i+1}/{batch_count}')
-        process_batch(domain, geo_case_property, case_type, query_limit, chunk_size)
+        process_batch(domain, geo_case_property, case_type, query_limit, chunk_size, with_progress=True)
 
 
 def get_batch_count(doc_count, query_limit):
@@ -50,14 +50,18 @@ def get_batch_count(doc_count, query_limit):
     return math.ceil(doc_count / query_limit)
 
 
-def process_batch(domain, geo_case_property, case_type, query_limit, chunk_size):
+def process_batch(domain, geo_case_property, case_type, query_limit, chunk_size, with_progress=False):
     query = case_query_for_missing_geopoint_val(domain, geo_case_property, case_type, size=query_limit)
     case_ids = query.get_ids()
-    _index_case_ids(domain, case_ids, chunk_size)
+    _index_case_ids(domain, case_ids, chunk_size, with_progress)
 
 
-def _index_case_ids(domain, case_ids, chunk_size):
-    for case_id_chunk in chunked(with_progress_bar(case_ids), chunk_size):
+def _index_case_ids(domain, case_ids, chunk_size, with_progress=False):
+    if with_progress:
+        ids = with_progress_bar(case_ids)
+    else:
+        ids = case_ids
+    for case_id_chunk in chunked(ids, chunk_size):
         case_chunk = CommCareCase.objects.get_cases(list(case_id_chunk), domain)
         case_search_adapter.bulk_index(case_chunk)
     manager.index_refresh(case_search_adapter.index_name)
