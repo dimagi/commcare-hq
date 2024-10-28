@@ -61,7 +61,7 @@ from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     case_type_or_app_limit_exceeded
 )
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_daterangepicker
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
@@ -149,7 +149,7 @@ class SMSDownloadExportViewHelper(DownloadExportViewHelper):
 
 
 class BaseDownloadExportView(BaseProjectDataView):
-    template_name = 'export/bootstrap3/download_export.html'
+    template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_date_range = False
     check_for_multimedia = False
@@ -157,7 +157,8 @@ class BaseDownloadExportView(BaseProjectDataView):
     # To serve filters for export from mobile_user_and_group_slugs
     export_filter_class = None
 
-    @use_daterangepicker
+    @use_bootstrap5
+    @use_tempusdominus
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
