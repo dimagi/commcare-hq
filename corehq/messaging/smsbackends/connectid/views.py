@@ -36,9 +36,13 @@ def receive_message(request, *args, **kwargs):
 
 
 @csrf_exempt
+@require_POST
 @connectid_token_auth
-def connectid_messaging_key(request, domain):
-    link = get_object_or_404(ConnectIDUserLink, commcare_user=request.user, domain=request.domain)
+def connectid_messaging_key(request, *args, **kwargs):
+    channel_id = request.POST.get("channel_id")
+    if channel_id is None:
+        return HttpResponseBadRequest("ChannelID is required.")
+    link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
     key = generate_aes_key().decode("utf-8")
     messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
         connectid_user_link=link, domain=request.domain, active=True, defaults={"key": key}
@@ -49,12 +53,12 @@ def connectid_messaging_key(request, domain):
 @csrf_exempt
 @require_POST
 @validate_request_hmac("CONNECTID_SECRET_KEY")
-def update_connectid_messaging_consent(request, domain):
-    username = request.POST.get("username")
+def update_connectid_messaging_consent(request, *args, **kwargs):
+    channel_id = request.POST.get("channel_id")
     consent = request.POST.get("consent", False)
-    if username is None:
-        return HttpResponseBadRequest("ConnectId Username is required.")
-    link = get_object_or_404(ConnectIDUserLink, connectid_username=username, domain=request.domain)
+    if channel_id is None:
+        return HttpResponseBadRequest("ChannelID is required.")
+    link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
     link.messaging_consent = consent
     link.save()
     return HttpResponse(status=200)
