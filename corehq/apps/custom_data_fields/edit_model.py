@@ -269,10 +269,6 @@ class CustomDataModelMixin(object):
     required_for_options = []
     profile_required_for_options = []
 
-    def get_profile_required_for_user_type(self):
-        definition = self.get_definition()
-        return definition.profile_required_for_user_type
-
     @use_bootstrap5
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
@@ -294,6 +290,17 @@ class CustomDataModelMixin(object):
     @memoized
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
+
+    def get_profile_required_for_user_type(self):
+        definition = self.get_definition()
+        return definition.profile_required_for_user_type
+
+    def update_profile_required(self, profile_required_for_user_type):
+        fields_definition = self.get_definition()
+        current_require_for = fields_definition.profile_required_for_user_type
+        if current_require_for != profile_required_for_user_type:
+            fields_definition.profile_required_for_user_type = profile_required_for_user_type
+            fields_definition.save()
 
     @memoized
     def get_profiles(self):

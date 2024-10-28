@@ -68,13 +68,6 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     def update_existing_models(self):
         remove_unused_custom_fields_from_users_task.delay(self.domain)
 
-    def update_profile_required(self, profile_required_for_user_type):
-        fields_definition = self.get_definition()
-        current_require_for = fields_definition.profile_required_for_user_type
-        if current_require_for != profile_required_for_user_type:
-            fields_definition.profile_required_for_user_type = profile_required_for_user_type
-            fields_definition.save()
-
     @classmethod
     def get_user_accessible_profiles(cls, domain, couch_user):
         all_profiles = cls.get_definition_for_domain(domain).get_profiles()
