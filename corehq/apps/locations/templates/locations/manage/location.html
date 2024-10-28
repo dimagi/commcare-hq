@@ -57,7 +57,7 @@
 
         {% if location.supply_point_id %}
           <div class="btn-group me-2">
-            <a class="btn btn-outline-primary" href="{% url "case_data" domain location.supply_point_id %}">
+            <a class="btn btn-outline-primary" href="{% url "case_data" domain location.supply_point_id %}" target="_blank">
               <i class="fa-solid fa-up-right-from-square"></i> {% trans "View Location Case" %}
             </a>
           </div>
