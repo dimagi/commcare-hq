@@ -647,7 +647,7 @@ webencodings==0.5.1
     # via
     #   bleach
     #   tinycss2
-werkzeug==3.0.3
+werkzeug==3.0.6
     # via -r base-requirements.in
 wrapt==1.12.1
     # via deprecated
