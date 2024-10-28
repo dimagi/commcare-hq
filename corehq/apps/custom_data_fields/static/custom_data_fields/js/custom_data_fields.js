@@ -266,10 +266,10 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 JSON.stringify(option.value) === JSON.stringify(currentProfileRequiredForList || [])
             );
             initialRequiredFor = _.has(profileReqiredForMatch, 'value') ? profileReqiredForMatch.value :
-            (self.profileRequiredForOptions.find(option => option.isDefault)).value || [];
+            (self.profileRequiredForOptions.find(function (option) {return option && option.isDefault;}) || {}).value || [];
         } else {
             // If no user type already requires a profile selection set to default
-            initialRequiredFor = (self.profileRequiredForOptions.find(option => option.isDefault)).value || [];
+            initialRequiredFor = (self.profileRequiredForOptions.find(function (option) {return option && option.isDefault;}) || {}).value || [];
         }
         self.profile_required_for = ko.observableArray(initialRequiredFor);
 
