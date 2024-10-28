@@ -8,7 +8,7 @@ from couchdbkit.client import Database, ResourceNotFound
 
 
 @skip_on_fresh_install
-def _delete_receiverwrapper_couchdb():
+def _delete_receiverwrapper_couchdb(apps, schema_editor):
     db = Database(f"{settings.COUCH_DATABASE}__receiverwrapper")
     try:
         db.server.delete_db(db.dbname)
