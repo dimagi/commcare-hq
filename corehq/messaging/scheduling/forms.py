@@ -287,7 +287,8 @@ class ContentForm(Form):
             return self._validate_fcm_message_length(cleaned_value, self.FCM_MESSAGE_MAX_LENGTH)
 
         if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS,
-                                                                  ScheduleForm.CONTENT_EMAIL):
+                                                                  ScheduleForm.CONTENT_EMAIL,
+                                                                  ScheduleForm.CONTENT_CONNECT_MESSAGE):
             return None
 
         return self._clean_message_field('message')
@@ -540,7 +541,8 @@ class ContentForm(Form):
                         "|| $root.content() === '%s' "
                         "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
                         (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
-                         ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
+                         ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION,
+                         ScheduleForm.CONTENT_CONNECT_MESSAGE)
                     ),
                 ),
             ]
