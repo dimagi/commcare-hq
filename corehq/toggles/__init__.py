@@ -2261,6 +2261,13 @@ FHIR_INTEGRATION = StaticToggle(
     help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
 )
 
+MGH_EPIC_STUDY = StaticToggle(
+    'mgh_epic_study',
+    'Enable updating/creating extension cases through open epic API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 AUTO_DEACTIVATE_MOBILE_WORKERS = StaticToggle(
     'auto_deactivate_mobile_workers',
     'Development flag for auto-deactivation of mobile workers. To be replaced '
