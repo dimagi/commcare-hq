@@ -770,7 +770,7 @@ class EmailImage(object):
 
 
 class ConnectMessageContent(Content):
-    message = None
+    message = old_jsonfield.JSONField(default=dict)
 
     def create_copy(self):
         return ConnectMessageContent(
@@ -796,7 +796,7 @@ class ConnectMessageContent(Content):
         send_message_to_verified_number(recipient, message, logged_subevent=logged_subevent)
 
 class ConnectMessageSurveyContent(Content):
-    message = None
+    message = old_jsonfield.JSONField(default=dict)
 
     def create_copy(self):
         return ConnectMessageSurveyContent(

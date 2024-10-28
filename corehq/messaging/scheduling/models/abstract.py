@@ -508,8 +508,6 @@ class Content(models.Model):
         )
 
     def send_sms_message(self, domain, recipient, phone_entry_or_number, message, logged_subevent):
-        __import__("pdb").set_trace()
-
         if not message:
             return
 
