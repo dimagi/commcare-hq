@@ -458,7 +458,6 @@ class ContentForm(Form):
             )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_CONNECT_MESSAGE:
             return ConnectMessageContent(
-                subject=self.cleaned_data['subject'],
                 message=self.cleaned_data['message'],
             )
         else:
@@ -1164,6 +1163,7 @@ class ScheduleForm(Form):
     CONTENT_SMS_CALLBACK = 'sms_callback'
     CONTENT_CUSTOM_SMS = 'custom_sms'
     CONTENT_FCM_NOTIFICATION = 'fcm_notification'
+    CONTENT_CONNECT_MESSAGE = 'connect_message'
 
     YES = 'Y'
     NO = 'N'
@@ -1769,7 +1769,7 @@ class ScheduleForm(Form):
 
         if self.can_use_connect:
             self.fields['content'].choices += [
-                (self.CONNECT_MESSAGE_CONTENT, _("Connect Message")),
+                (self.CONTENT_CONNECT_MESSAGE, _("Connect Message")),
             ]
 
     def enable_json_user_data_filter(self, initial):
