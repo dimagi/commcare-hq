@@ -21,19 +21,11 @@ Benefits of Upgrading to Mobile UCR V2
 The introduction of Mobile UCR V2 brings significant improvements, especially around how
 UCR data is restored and synced:
 
-- Multiple Fixtures: Instead of bundling all reports into one fixture, UCRs are now split into multiple
-  fixtures. Each fixture corresponds to a specific report and its filters. This allows for:
-    - *Faster Lookups*: Because reports are no longer combined, users can access specific data more quickly.
-      Individual Updates: Reports can be updated separately, reducing the need to sync the entire set of reports.
-    - *App-Aware Restores*: V2 also introduces “app-aware” restores, where only the fixtures relevant to
-      the specific app being used are synced. This targeted sync ensures that only necessary data is
-      processed, further improving efficiency.
-- Sync Delay Option: V2 includes a "Sync Delay" option for each report, allowing administrators to control
-  how frequently report data is synced. For reports that can tolerate slightly outdated (or “stale”) data,
-  this feature reduces the load on the server and the device:
-    - *Performance Improvements*: Syncing less often reduces the time required for the restore process.
-      User Experience: Users experience fewer interruptions, allowing them to continue their work with
-      minimal delays in syncing reports.
+- Multiple Fixtures: Instead of bundling all reports into one fixture, UCRs are now split into multiple fixtures. Each fixture corresponds to a specific report and its filters. This allows for:
+    - *Faster Lookups*: Because reports are no longer combined, users can access specific data more quickly. Individual Updates: Reports can be updated separately, reducing the need to sync the entire set of reports.
+    - *App-Aware Restores*: V2 also introduces “app-aware” restores, where only the fixtures relevant to the specific app being used are synced. This targeted sync ensures that only necessary data is processed, further improving efficiency.
+- Sync Delay Option: V2 includes a "Sync Delay" option for each report, allowing administrators to control how frequently report data is synced. For reports that can tolerate slightly outdated (or “stale”) data this feature reduces the load on the server and the device:
+    - *Performance Improvements*: Syncing less often reduces the time required for the restore process. User Experience: Users experience fewer interruptions, allowing them to continue their work with minimal delays in syncing reports.
 
 Moving to Mobile UCR V2
 -----------------------
