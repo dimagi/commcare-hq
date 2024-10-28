@@ -134,7 +134,6 @@ from corehq.util.workbook_json.excel import (
     get_workbook,
 )
 from corehq.apps.users.permissions import (
-    COMMCARE_ANALYTICS_GAMMA,
     COMMCARE_ANALYTICS_SQL_LAB,
     COMMCARE_ANALYTICS_DATASET_EDITOR,
 )
@@ -789,10 +788,6 @@ class ListRolesView(BaseRoleAccessView):
 
 def _commcare_analytics_roles_options():
     return [
-        {
-            'slug': COMMCARE_ANALYTICS_GAMMA,
-            'name': 'Gamma'
-        },
         {
             'slug': COMMCARE_ANALYTICS_SQL_LAB,
             'name': 'SQL Lab'

@@ -14,7 +14,6 @@ from corehq.apps.users.role_utils import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.permissions import (
-    COMMCARE_ANALYTICS_GAMMA,
     COMMCARE_ANALYTICS_SQL_LAB,
     COMMCARE_ANALYTICS_USER_ROLES,
 )
@@ -142,7 +141,6 @@ class TestCommcareAnalyticsRolesByUser(TestCase):
         cls.hq_no_cca_role = cls._create_role("No CCA role", analytics_roles=None)
 
         cls.limited_cca_roles = [
-            COMMCARE_ANALYTICS_GAMMA,
             COMMCARE_ANALYTICS_SQL_LAB,
         ]
         cls.hq_limited_cca_role = cls._create_role("Limited CCA role", analytics_roles=cls.limited_cca_roles)
