@@ -19,7 +19,7 @@ def _delete_receiverwrapper_couchdb():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repeaters', '0011_remove_obsolete_entities'),
+        ('repeaters', '0014_alter_repeater_request_method'),
     ]
 
     operations = [
