@@ -236,6 +236,8 @@ class Schedule(models.Model):
 class ContentForeignKeyMixin(models.Model):
     sms_content = models.ForeignKey('scheduling.SMSContent', null=True, on_delete=models.CASCADE)
     email_content = models.ForeignKey('scheduling.EmailContent', null=True, on_delete=models.CASCADE)
+    project_notification_content = models.ForeignKey('scheduling.ProjectNotificationContent', null=True,
+                                                   on_delete=models.CASCADE)
     sms_survey_content = models.ForeignKey('scheduling.SMSSurveyContent', null=True, on_delete=models.CASCADE)
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
     custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
