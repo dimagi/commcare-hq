@@ -22,7 +22,6 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.util.test_utils import 
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
