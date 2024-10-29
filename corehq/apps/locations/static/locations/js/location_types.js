@@ -398,12 +398,12 @@ hqDefine('locations/js/location_types', [
         }
 
         $("form#settings").on("change input", function () {
-            $(this).find(":submit").addClass("btn-primary").enable();
+            $(this).find(":submit").addClass("btn-primary").enableButton();
             window.onbeforeunload = warnBeforeUnload;
         });
 
         $("form#settings button").on("click", function () {
-            $("form#settings").find(":submit").enable();
+            $("form#settings").find(":submit").enableButton();
             window.onbeforeunload = warnBeforeUnload;
         });
 
