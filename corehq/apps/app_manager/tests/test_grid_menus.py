@@ -2,7 +2,6 @@ from django.test import TestCase
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
-from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
