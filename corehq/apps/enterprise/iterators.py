@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from django.utils.translation import gettext as _
 from corehq.apps.es import filters
 from corehq.apps.es.forms import FormES
-from corehq.apps.enterprise.resumable_iterator_wrapper import ResumableIteratorWrapper
+from corehq.apps.api.resumable_iterator_wrapper import ResumableIteratorWrapper
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 

@@ -19,7 +19,7 @@ from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.api.resources.meta import get_hq_throttle
-from corehq.apps.enterprise.api.keyset_paginator import KeysetPaginator
+from corehq.apps.api.keyset_paginator import KeysetPaginator
 from corehq.apps.enterprise.enterprise import EnterpriseReport
 from corehq.apps.enterprise.iterators import IterableEnterpriseFormQuery
 

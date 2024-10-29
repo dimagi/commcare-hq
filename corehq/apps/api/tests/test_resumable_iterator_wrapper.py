@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.enterprise.resumable_iterator_wrapper import ResumableIteratorWrapper
+from corehq.apps.api.resumable_iterator_wrapper import ResumableIteratorWrapper
 
 
 class ResumableIteratorWrapperTests(SimpleTestCase):

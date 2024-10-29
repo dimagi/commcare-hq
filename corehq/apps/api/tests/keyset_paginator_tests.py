@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 from django.http import QueryDict
-from corehq.apps.enterprise.resumable_iterator_wrapper import ResumableIteratorWrapper
-from corehq.apps.enterprise.api.keyset_paginator import KeysetPaginator
+from corehq.apps.api.resumable_iterator_wrapper import ResumableIteratorWrapper
+from corehq.apps.api.keyset_paginator import KeysetPaginator
 
 
 class SequenceWrapper:
