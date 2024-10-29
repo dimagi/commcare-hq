@@ -1,0 +1,57 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<form class="form form-horizontal" name="exportFiltersForm" data-bind="submit: prepareExport">
+  <div class="position-relative">
+    {% if dynamic_filters %}
+      <div class="mb-3" data-bind="allowDescendantBindings: false"> {# IMPORTANT: needed because some of the dynamic_filters have their own ko bindings #}
+        {{ dynamic_filters }}
+      </div>
+    {% endif %}
+    {% crispy download_export_form %}
+    <div class="form-notice position-absolute top-0 start-0 bottom-0 end-0 opacity-75 bg-white"
+         data-bind="visible: downloadInProgress()">
+      <div class="row">
+        <div class="col-md-9 col-xl-5">
+          <div class="badge text-bg-secondary label-lg bg-secondary">
+            <i class="fa fa-info-circle"></i>
+            {% trans "Filters inactive while download in progress. " %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div data-bind="visible: !downloadInProgress()">
+    <div class="col-md-9">
+      <div class="alert alert-warning" data-bind="visible: prepareExportError()">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span data-bind="text: prepareExportError"></span>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <button type="submit" class="btn btn-primary btn-full-width" data-bind="disable: disablePrepareExport">
+            <i data-bind="visible: !preparingExport()" class="fa-solid fa-cloud-arrow-down"></i>
+            <span data-bind="visible: !preparingExport()">{% trans "Prepare Export" %}</span>
+
+            <i data-bind="visible: preparingExport()" class="fa-spin fa fa-spinner"></i>
+            <span data-bind="visible: preparingExport()">{% trans "Preparing Export" %}</span>
+          </button>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3" data-bind="visible: hasMultimedia">
+          <button type="button" class="btn btn-outline-primary btn-full-width"
+                  data-bind="
+                                click: prepareMultimediaExport,
+                                disable: disablePrepareMultimediaExport,
+                            ">
+            <i data-bind="visible: !preparingMultimediaExport()" class="fa-solid fa-cloud-arrow-down"></i>
+            <span data-bind="visible: !preparingMultimediaExport()">{% trans "Prepare Multimedia" %}</span>
+
+            <i data-bind="visible: preparingMultimediaExport()" class="fa-spin fa fa-spinner"></i>
+            <span data-bind="visible: preparingMultimediaExport()">{% trans "Preparing Multimedia" %}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>

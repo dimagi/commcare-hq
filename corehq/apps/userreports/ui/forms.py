@@ -231,6 +231,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 twbscrispy.StrictButton(
                     _("Save"),
                     type="submit",
+                    css_id="gtm-save-ds-btn",
                     css_class="btn btn-primary",
                 ),
             ),
