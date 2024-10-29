@@ -1400,7 +1400,6 @@ class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSp
 
     class Meta(CustomResourceMeta):
         resource_name = 'analytics-roles'
-        list_allowed_methods = []
         detail_allowed_methods = ['get']
 
     def dehydrate_roles(self, bundle):
