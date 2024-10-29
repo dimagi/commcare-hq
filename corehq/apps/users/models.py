@@ -85,6 +85,7 @@ from corehq.apps.users.util import (
     bulk_auto_deactivate_commcare_users,
     is_dimagi_email,
 )
+from corehq.apps.users.user_data import UserDataError
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
@@ -588,6 +589,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         """
         self.get_by_user_id.clear(self.__class__, self.user_id, domain)
         record = None
+        old_profile_id = self.set_user_profile(domain, '')
 
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
@@ -596,6 +598,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                         domain=domain,
                         user_id=self.user_id,
                         domain_membership=dm,
+                        profile_id=str(old_profile_id),
                     )
                 del self.domain_memberships[i]
                 break
@@ -1147,6 +1150,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def _save_user_data(self):
         for user_data in self._user_data_accessors.values():
             user_data.save()
+
+    def set_user_profile(self, domain, profile_id):
+        user_data = self.get_user_data(domain)
+        if (user_data.profile and not profile_id) or (profile_id and not user_data.profile):
+            data = user_data.to_dict()
+            old_profile_id = user_data.profile_id
+            user_data.update(data, profile_id)
+            user_data.save()
+            return old_profile_id
+        return ''
 
     def get_user_session_data(self, domain):
         from corehq.apps.custom_data_fields.models import (
@@ -2870,11 +2883,17 @@ class Invitation(models.Model):
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
     domain_membership = SchemaProperty(DomainMembership)
+    profile_id = StringProperty()
 
     def undo(self):
         user = WebUser.get_by_user_id(self.user_id)
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
+        if self.profile_id:
+            try:
+                user.set_user_profile(self.domain, int(self.profile_id))
+            except UserDataError:
+                pass
         user.save()
         DeletedCouchDoc.objects.filter(
             doc_id=self._id,
