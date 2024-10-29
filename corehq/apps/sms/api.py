@@ -226,7 +226,7 @@ def send_message_to_verified_number(verified_number, text, metadata=None, logged
     if verified_number.is_sms:
         return queue_outgoing_sms(msg)
     else:
-        return send_connect_message(msg)
+        return send_connect_message(msg, backend)
 
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):
@@ -397,13 +397,14 @@ def should_log_exception_for_backend(backend, exception):
         return True
 
 
-def send_connect_message(message):
+def send_connect_message(message, backend):
     try:
-        ConnectBackend.send(message)
+        backend.send(message)
         return True
     except Exception:
+        log_sms_exception(message)
         return False
-    
+
 
 
 def register_sms_user(
