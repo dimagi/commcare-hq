@@ -2891,7 +2891,7 @@ class DomainRemovalRecord(DeleteRecord):
         user.domains.append(self.domain)
         if self.profile_id:
             try:
-                user.set_user_profile(self.domain, self.profile_id)
+                user.set_user_profile(self.domain, int(self.profile_id))
             except UserDataError:
                 pass
         user.save()
