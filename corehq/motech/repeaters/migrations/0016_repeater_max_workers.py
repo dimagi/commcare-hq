@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("repeaters", "0014_alter_repeater_request_method"),
+        ("repeaters", "0015_drop_receiverwrapper_couchdb"),
     ]
 
     operations = [

@@ -5,7 +5,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ("repeaters", "0015_repeater_max_workers"),
+        ("repeaters", "0016_repeater_max_workers"),
     ]
 
     operations = [
