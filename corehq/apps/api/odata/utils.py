@@ -3,6 +3,7 @@ from collections import namedtuple
 
 from corehq.apps.export.models import ExportInstance
 from corehq.util.metrics import metrics_histogram
+from corehq.util.metrics.utils import bucket_value
 
 FieldMetadata = namedtuple('FieldMetadata', ['name', 'odata_type'])
 
@@ -71,9 +72,9 @@ def record_feed_access_in_datadog(request, config_id, duration, response):
             'feed_id': config_id,
             'feed_type': config.type,
             'username': username,
-            'row_count': row_count,
-            'column_count': column_count,
-            'size': len(response.content)
+            'row_count': bucket_value(row_count, [100, 1000, 10000, 1000000]),
+            'column_count': bucket_value(column_count, [10, 50, 100, 500, 1000]),
+            'size': bucket_value(len(response.content) / (1024 ** 2), [1, 10, 100, 1000])  # in MB
         }
     )
 
