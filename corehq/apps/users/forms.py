@@ -1027,16 +1027,15 @@ class MultipleSelectionForm(forms.Form):
         self.helper.form_tag = False
 
         from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
-        bootstrap_version = get_bootstrap_version()
-        use_bootstrap5 = bootstrap_version == BOOTSTRAP_5
+        is_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
         submit_button_holder = crispy.ButtonHolder(Submit('submit', submit_label))
-        if not use_bootstrap5:
+        if not is_bootstrap5:
             submit_button_holder = hqcrispy.FormActions(submit_button_holder)
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 fieldset_title,
-                crispy.Field('selected_ids', css_class="d-none" if use_bootstrap5 else "hide"),
+                crispy.Field('selected_ids', css_class="d-none" if is_bootstrap5 else "hide"),
             ),
             submit_button_holder
         )
