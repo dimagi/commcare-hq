@@ -76,9 +76,3 @@ $persistent-menu-image-size: 3rem;
     overflow: visible !important;
   }
 }
-
-@media print {
-  #persistent-menu-region {
-    display: none;
-  }
-}
