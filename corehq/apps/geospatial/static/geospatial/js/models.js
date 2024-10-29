@@ -681,7 +681,6 @@ hqDefine('geospatial/js/models', [
                     self.mapObj.removeDisbursementLayers();
                     $('#disbursement-clear-message').show();
                     $('#disbursement-params').hide();
-                    proceedFurther = true;
                 } else {
                     proceedFurther = false;
                 }
