@@ -24,6 +24,7 @@ requirejs.config({
         "underscore": "underscore/underscore",
         "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
         "stripe": "https://js.stripe.com/v2/?noext",
+        "commcarehq": "hqwebapp/js/requirejs_webpack_fake",
     },
     shim: {
         "stripe": { exports: 'Stripe' },
