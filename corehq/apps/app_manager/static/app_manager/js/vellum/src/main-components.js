@@ -56228,36 +56228,6 @@ define('vellum/uploader',[
     });
 });
 
-define('vellum/polyfills',[],function () {
-    if (!String.prototype.startsWith) {
-      Object.defineProperty(String.prototype, 'startsWith', {
-        enumerable: false,
-        configurable: false,
-        writable: false,
-        value: function(searchString, position) {
-          position = position || 0;
-          return this.lastIndexOf(searchString, position) === position;
-        }
-      });
-    }
-    if (!String.prototype.endsWith) {
-      Object.defineProperty(String.prototype, 'endsWith', {
-        enumerable: false,
-        configurable: false,
-        writable: false,
-        value: function(searchString, position) {
-          var subjectString = this.toString();
-          if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
-            position = subjectString.length;
-          }
-          position -= searchString.length;
-          var lastIndex = subjectString.indexOf(searchString, position);
-          return lastIndex !== -1 && lastIndex === position;
-        }
-      });
-    }
-});
-
 
 define('tpl/tpl!vellum/templates/copy_paste_help', ['underscore'], function (_) { return function(obj){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
@@ -57710,7 +57680,6 @@ define('main',[
     'vellum/saveToCase',
     'vellum/uploader',
     'vellum/window',
-    'vellum/polyfills',
     'vellum/copy-paste',
     'vellum/commander',
     'vellum/commcareConnect',

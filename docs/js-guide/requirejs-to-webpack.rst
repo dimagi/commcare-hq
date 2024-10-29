@@ -29,6 +29,15 @@ for a more detailed explanation.
     If new ``exports-loader`` statements are added, it is recommended to test the changes on staging to ensure
     the functionality is maintained between production and staging.
 
+Step 0: Decide What to Migrate
+------------------------------
+
+How do you know what areas have and have not been migrated? Because all pages that bundle javascript use a template
+tag to specify the entry point, this template tag is an easy way to tell if a page uses Webpack or RequireJS.
+
+If looking for areas that **need** to be migrated, grepping for ``requirejs_main`` will identify all unmigrated
+pages.
+
 
 Step 1: Update the Template Tag and Add Global ``commcarehq`` Dependency
 ------------------------------------------------------------------------
@@ -71,6 +80,9 @@ Then, in the file itself, we add the ``commcarehq`` dependency to the list of de
     ) {
         ...
 
+`Here is an example commit of a migrated Bootstrap 5 entry point
+<https://github.com/dimagi/commcare-hq/pull/35186/commits/029854e14ef08ef29d87293da5970bf35fb5ffca>`__.
+
 
 Bootstrap 3 Entry Points
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,6 +109,9 @@ Then, in the file itself, we add the ``commcarehq_b3`` dependency to the list of
         initialPageData
     ) {
         ...
+
+`Here is an example commit of a migrated Bootstrap 3 entry point
+<https://github.com/dimagi/commcare-hq/pull/35186/commits/9153f3cedc550b518f537bc6783d06754fd35577>`__.
 
 
 Step 2: Verify Webpack Build
