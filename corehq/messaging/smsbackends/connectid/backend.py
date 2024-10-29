@@ -11,7 +11,7 @@ class ConnectBackend:
     couch_id = "connectid"
 
     def send(self, message):
-        user = CouchUser.get_by_user_id(message.couch_recipient).django_user
+        user = CouchUser.get_by_user_id(message.couch_recipient).get_django_user()
         user_link = ConnectIDUserLink.objects.get(commcare_user=user)
         key = base64.b64decode(user_link.conectidmessagingkey_set.first())
         cipher = AES.new(key, AES.MODE_GCM)
