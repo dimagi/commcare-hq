@@ -11,7 +11,6 @@ RATE_LIMITER_DELAY_RANGE = (
     timedelta(minutes=getattr(settings, 'MAX_REPEATER_RATE_LIMIT_DELAY', 15)),
 )
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
-CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
 PROCESS_REPEATERS_INTERVAL = timedelta(minutes=1)
 PROCESS_REPEATERS_KEY = 'process-repeaters-key'
@@ -20,6 +19,8 @@ ENDPOINT_TIMER = 'endpoint_timer'
 MAX_ATTEMPTS = 3
 # Number of exponential backoff attempts to an offline endpoint
 MAX_BACKOFF_ATTEMPTS = 6
+# Minutes past next_check time that make a record "overdue"
+OVERDUE_THRESHOLD = 10
 
 
 class State(IntegerChoices):

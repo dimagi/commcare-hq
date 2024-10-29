@@ -8,6 +8,7 @@ from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import flag_enabled
 
 from django.test import SimpleTestCase, TestCase
+from django.test.utils import override_settings
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
 import attr
 from requests import RequestException
@@ -384,15 +385,16 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertEqual(repeat_record.max_possible_tries - repeat_record.num_attempts, MAX_BACKOFF_ATTEMPTS)
         self.assertNotEqual(None, repeat_record.next_check)
 
+    @override_settings(CHECK_REPEATERS_PARTITION_COUNT=10)
     def test_check_repeat_records_ignores_future_retries_using_multiple_partitions(self):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
 
-        with patch('corehq.motech.repeaters.models.simple_request') as mock_retry, \
-             patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_retry:
             check_repeaters()
             self.assertEqual(mock_retry.delay.call_count, 0)
 
+    @override_settings(CHECK_REPEATERS_PARTITION_COUNT=10)
     def test_repeat_record_status_check_using_multiple_partitions(self):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
@@ -402,8 +404,7 @@ class RepeaterTest(BaseRepeaterTest):
             repeat_record.state = State.Cancelled
             repeat_record.next_check = None
             repeat_record.save()
-        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire, \
-             patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
 
@@ -421,19 +422,18 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertEqual(repeat_record.num_attempts, 1)
 
         # not trigger records succeeded triggered after cancellation
-        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire, \
-             patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
             for repeat_record in self.repeat_records():
                 self.assertEqual(repeat_record.state, State.Success)
 
+    @override_settings(CHECK_REPEATERS_PARTITION_COUNT=10)
     def test_check_repeaters_successfully_retries_using_multiple_partitions(self):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
 
-        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process, \
-             patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
+        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process:
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 0)
 
@@ -442,8 +442,7 @@ class RepeaterTest(BaseRepeaterTest):
             record.next_check = datetime.utcnow() - timedelta(hours=1)
             record.save()
 
-        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process, \
-             patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
+        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process:
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 20)
 
