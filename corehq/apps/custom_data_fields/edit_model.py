@@ -35,6 +35,7 @@ class CustomDataFieldsForm(forms.Form):
     data_fields = forms.CharField(widget=forms.HiddenInput)
     purge_existing = forms.BooleanField(widget=forms.HiddenInput, required=False, initial=False)
     profiles = forms.CharField(widget=forms.HiddenInput)
+    req_profile = forms.CharField(widget=forms.HiddenInput, required=False)
 
     @classmethod
     def verify_no_duplicates(cls, data_fields):
@@ -266,6 +267,7 @@ class CustomDataModelMixin(object):
     show_purge_existing = False
     entity_string = None  # User, Group, Location, Product...
     required_for_options = []
+    profile_required_for_options = []
 
     @use_bootstrap5
     @use_jquery_ui
@@ -288,6 +290,17 @@ class CustomDataModelMixin(object):
     @memoized
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
+
+    def get_profile_required_for_user_type(self):
+        definition = self.get_definition()
+        return definition.profile_required_for_user_type
+
+    def update_profile_required(self, profile_required_for_user_type):
+        fields_definition = self.get_definition()
+        current_require_for = fields_definition.profile_required_for_user_type
+        if current_require_for != profile_required_for_user_type:
+            fields_definition.profile_required_for_user_type = profile_required_for_user_type
+            fields_definition.save()
 
     @memoized
     def get_profiles(self):
@@ -425,6 +438,11 @@ class CustomDataModelMixin(object):
             context.update({
                 "required_for_options": self.required_for_options
             })
+        if self.profile_required_for_options:
+            context.update({
+                "profile_required_for_options": self.profile_required_for_options,
+                "profile_required_for_user_type": self.get_profile_required_for_user_type()
+            })
         return context
 
     @property
@@ -469,6 +487,8 @@ class CustomDataModelMixin(object):
 
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
+            if self.form.cleaned_data['req_profile']:
+                self.update_profile_required(self.form.cleaned_data['req_profile'])
             if self.show_profiles:
                 msg = _("{} fields and profiles saved successfully.").format(self.entity_string)
             else:
