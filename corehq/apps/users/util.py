@@ -432,6 +432,7 @@ def bulk_auto_deactivate_commcare_users(user_ids, domain):
     """
     from corehq.apps.users.models import UserHistory, CommCareUser
     from corehq.apps.users.model_log import UserModelAction
+    from corehq.apps.users.user_data import prime_user_data_caches
 
     last_modified = json_format_datetime(datetime.datetime.utcnow())
     user_docs_to_bulk_save = []
@@ -440,6 +441,18 @@ def bulk_auto_deactivate_commcare_users(user_ids, domain):
             user_doc['is_active'] = False
             user_doc['last_modified'] = last_modified
             user_docs_to_bulk_save.append(user_doc)
+
+    # Remove profiles
+    user_objs = []
+    for user_id in user_ids:
+        user_objs.append(CommCareUser.get_by_user_id(user_id))
+    users = prime_user_data_caches(user_objs, domain)
+    for user in users:
+        user_data = user.get_user_data(domain)
+        if user_data.profile:
+            data = user_data.to_dict()
+            user_data.update(data, '')
+            user_data.save()
 
     # bulk save django Users
     user_query = User.objects.filter(
