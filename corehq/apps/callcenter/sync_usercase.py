@@ -155,6 +155,7 @@ def _get_user_case_fields(user, case_type, owner_id, domain):
         'hq_user_id': user.get_id,
         'first_name': user.first_name or '',
         'last_name': user.last_name or '',
+        'commcare_project': domain,
     })
 
     return fields

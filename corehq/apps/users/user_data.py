@@ -6,7 +6,6 @@ from django.utils.translation import gettext as _
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.custom_data_fields.models import (
-    COMMCARE_PROJECT,
     PROFILE_SLUG,
     CustomDataFieldsProfile,
     CustomDataFieldsDefinition,
@@ -63,7 +62,6 @@ class UserData:
         return {
             **(self.profile.fields if self.profile else {}),
             PROFILE_SLUG: self.profile_id or '',
-            COMMCARE_PROJECT: self.domain,
         }
 
     def to_dict(self):

@@ -131,8 +131,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': self.domain.name, 'key': 'F#', 'commcare_profile': '', 'mode': ''})
+        self.assert_user_data_equals({'key': 'F#', 'commcare_profile': '', 'mode': ''})
 
         # Update user_data
         import_users_and_groups(
@@ -143,8 +142,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': self.domain.name, 'key': 'Bb', 'commcare_profile': '', 'mode': ''})
+        self.assert_user_data_equals({'key': 'Bb', 'commcare_profile': '', 'mode': ''})
 
         # set user data to blank
         import_users_and_groups(
@@ -178,12 +176,7 @@ class TestUserDataMixin:
             is_web_upload
         )
 
-        self.assert_user_data_equals({
-            'commcare_project': self.domain.name,
-            'key': 'F#',
-            'mode': 'minor',
-            PROFILE_SLUG: self.profile.id,
-        })
+        self.assert_user_data_equals({'key': 'F#', 'mode': 'minor', PROFILE_SLUG: self.profile.id})
         user_history = UserHistory.objects.get(
             user_id=self.user.get_id,
             changed_by=self.uploading_user.get_id,

@@ -113,6 +113,7 @@ class CommCareUserResource(UserResource):
                 bundle.obj.get_location_ids(bundle.obj.domain))
             user_data['commcare_primary_case_sharing_id'] = location_id
 
+        user_data['commcare_project'] = bundle.obj.domain
         if self.determine_format(bundle.request) == 'application/xml':
             # attribute names can't start with digits in xml
             user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}

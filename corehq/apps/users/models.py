@@ -1161,6 +1161,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             session_data[COMMCARE_USER_TYPE_KEY] = COMMCARE_USER_TYPE_DEMO
 
         session_data.update({
+            f'{SYSTEM_PREFIX}_project': domain,
             f'{SYSTEM_PREFIX}_first_name': self.first_name,
             f'{SYSTEM_PREFIX}_last_name': self.last_name,
             f'{SYSTEM_PREFIX}_phone_number': self.phone_number,
