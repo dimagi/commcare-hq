@@ -1402,13 +1402,13 @@ class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSp
         resource_name = 'analytics-roles'
         detail_allowed_methods = ['get']
 
-    def dehydrate_roles(self, bundle):
+    def dehydrate(self, bundle):
         cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
-        return cca_access['roles']
 
-    def dehydrate_permissions(self, bundle):
-        cca_access = get_commcare_analytics_access_for_user_domain(bundle.obj, bundle.request.domain)
-        return cca_access['permissions']
+        bundle.data['roles'] = cca_access['roles']
+        bundle.data['permissions'] = cca_access['permissions']
+
+        return bundle
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
