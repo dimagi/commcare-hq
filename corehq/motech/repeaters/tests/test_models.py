@@ -16,7 +16,7 @@ from nose.tools import assert_in, assert_raises
 
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeater_helpers import RepeaterResponse
-from corehq.util.test_utils import _create_case
+from corehq.util.test_utils import _create_case, flag_enabled
 
 from ..const import (
     MAX_ATTEMPTS,
@@ -195,6 +195,14 @@ class RepeaterManagerTests(RepeaterTestCase):
             repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(repeaters), 1)
             self.assertEqual(repeaters[0].id, self.repeater.id)
+
+    def test_all_ready_ids(self):
+        with make_repeat_record(self.repeater, RECORD_PENDING_STATE):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
 
 
 @contextmanager
@@ -545,6 +553,25 @@ class TestAttemptForwardNow(RepeaterTestCase):
         self.assert_not_called(retry_process)
 
     def test_fire_synchronously(self, process, retry_process):
+        rec = self.new_record()
+        rec.attempt_forward_now(fire_synchronously=True)
+
+        process.assert_called_once()
+        self.assert_not_called(retry_process)
+
+    @flag_enabled('PROCESS_REPEATERS')
+    def test_process_repeaters_enabled(self, process, retry_process):
+        rec = self.new_record()
+        rec.attempt_forward_now()
+
+        self.assert_not_called(process, retry_process)
+
+    @flag_enabled('PROCESS_REPEATERS')
+    def test_fire_synchronously_process_repeaters_enabled(
+            self,
+            process,
+            retry_process,
+    ):
         rec = self.new_record()
         rec.attempt_forward_now(fire_synchronously=True)
 
@@ -958,3 +985,8 @@ class TestIsSuccessResponse(SimpleTestCase):
 
     def test_none_response(self):
         self.assertFalse(is_success_response(None))
+
+
+def test_repeater_all_ready_union_all_sql():
+    sql_str = str(Repeater.objects.all_ready().query)
+    assert_in('UNION ALL', sql_str)
