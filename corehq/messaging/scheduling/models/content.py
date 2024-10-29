@@ -795,7 +795,7 @@ class ConnectMessageContent(Content):
         )
         connect_number = ConnectMessagingNumber(recipient)
 
-        send_message_to_verified_number(recipient, message, logged_subevent=logged_subevent)
+        send_message_to_verified_number(connect_number, message, logged_subevent=logged_subevent)
 
 class ConnectMessageSurveyContent(Content):
     message = old_jsonfield.JSONField(default=dict)

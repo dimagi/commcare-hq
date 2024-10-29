@@ -8,6 +8,8 @@ from django.conf import settings
 from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 
 class ConnectBackend:
+    couch_id = "connectid"
+
     def send(self, message):
         user = CouchUser.get_by_user_id(message.couch_recipient).django_user
         user_link = ConnectIDUserLink.objects.get(commcare_user=user)

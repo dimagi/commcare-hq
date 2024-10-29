@@ -23,6 +23,7 @@ from corehq.apps.sms.mixin import (
 )
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import CommCareCase
+from corehq.messaging.smsbackends.connectid.backend import ConnectBackend
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.util.quickcache import quickcache
 
@@ -629,11 +630,15 @@ class ConnectMessagingNumber(AbstractNumber):
 
     @property
     def backend(self):
-        return None
+        return ConnectBackend()
 
     @property
     def owner_id(self):
         return self.user._id
+
+    @property
+    def owner(self):
+        return self.user
 
     @property
     def domain(self):
