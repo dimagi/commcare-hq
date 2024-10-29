@@ -893,6 +893,7 @@ scheduling
  0025_schedule_and_broadcast_deleted_on
  0026_add_model_fcm_notification_content
  0027_emailcontent_html_message
+ 0028_connectmessagecontent_connectmessagesurveycontent_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -967,6 +968,7 @@ sms
  0057_fcm_content_type_messaging_events
  0058_email_html_body
  0059_remove_unicel_backend
+ 0060_alter_messagingevent_content_type_and_more
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1262,6 +1264,7 @@ users
  0070_alter_invitation_tableau_role
  0071_rm_user_data
  0072_remove_invitation_supply_point
+ 0073_connectiduserlink_channel_id_and_more
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
