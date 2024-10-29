@@ -252,7 +252,9 @@ hqDefine("geospatial/js/case_management", [
         if (polygonFilterModel.activeSavedPolygon()) {
             features = features.concat(polygonFilterModel.activeSavedPolygon().geoJson.features);
         }
-        mapModel.selectAllMapItems(features);
+        if (features.length) {
+            mapModel.selectAllMapItems(features);
+        }
     }
 
     function initPolygonFilters() {
@@ -362,6 +364,7 @@ hqDefine("geospatial/js/case_management", [
 
                     const userMapItems = mapModel.addMarkersToMap(userData, userMarkerColors);
                     mapModel.userMapItems(userMapItems);
+                    selectMapItemsInPolygons();
                 },
                 error: function () {
                     self.hasErrors(true);
