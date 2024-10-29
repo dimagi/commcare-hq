@@ -494,10 +494,10 @@ class ContentForm(Form):
                         crispy.Div(template='scheduling/partials/rich_text_message_configuration.html'),
                         data_bind='with: html_message',
                     ),
-                    data_bind="visible: $root.content() === '%s' || ($root.content() === '%s' "
-                    "&& fcm_message_type() === '%s')" %
-                    (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION,
-                     FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
+                    data_bind="visible: $root.content() === '%s' || $root.content() === '%s' "
+                    "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
+                    (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_PROJECT_NOTIFICATION,
+                     ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
                 ),
                 hqcrispy.B3MultiField(
                     _("Message"),
@@ -531,9 +531,10 @@ class ContentForm(Form):
                     ),
                     data_bind=(
                         "visible: $root.content() === '%s' || $root.content() === '%s' "
-                        "|| $root.content() === '%s' "
+                        "|| $root.content() === '%s' || $root.content() === '%s'"
                         "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
-                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
+                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL,
+                         ScheduleForm.CONTENT_PROJECT_NOTIFICATION, ScheduleForm.CONTENT_SMS_CALLBACK,
                          ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
                     ),
                 ),
@@ -563,10 +564,10 @@ class ContentForm(Form):
                     crispy.Div(template='scheduling/partials/message_configuration.html'),
                     data_bind='with: subject',
                 ),
-                data_bind="visible: $root.content() === '%s' || ($root.content() === '%s' "
-                          "&& fcm_message_type() === '%s')" %
-                          (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION,
-                           FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
+                data_bind="visible: $root.content() === '%s' || $root.content() === '%s' "
+                          "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
+                          (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_PROJECT_NOTIFICATION,
+                           ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
             ),
             *message_fields,
             crispy.Div(
@@ -1154,6 +1155,7 @@ class ScheduleForm(Form):
     CONTENT_SMS_CALLBACK = 'sms_callback'
     CONTENT_CUSTOM_SMS = 'custom_sms'
     CONTENT_FCM_NOTIFICATION = 'fcm_notification'
+    CONTENT_PROJECT_NOTIFICATION = 'project_notification'
 
     YES = 'Y'
     NO = 'N'
@@ -1739,6 +1741,10 @@ class ScheduleForm(Form):
             self.fields['content'].choices += [
                 (self.CONTENT_SMS_SURVEY, _("SMS Survey")),
             ]
+
+        self.fields['content'].choices += [
+            (self.CONTENT_PROJECT_NOTIFICATION, _("In-Product Notification")),
+        ]
 
         if self.initial_schedule:
             if self.initial_schedule.memoized_uses_ivr_survey:
