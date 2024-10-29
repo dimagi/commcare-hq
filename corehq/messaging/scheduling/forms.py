@@ -689,7 +689,6 @@ class ContentForm(Form):
             result['fcm_action'] = content.action
             result['fcm_message_type'] = content.message_type
         elif isinstance(content, ConnectMessageContent):
-            result['subject'] = content.subject
             result['message'] = content.message
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
