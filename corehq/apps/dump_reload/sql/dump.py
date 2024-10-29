@@ -166,6 +166,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
     FilteredModelIteratorBuilder('user_importer.UserUploadRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.ConnectIDUserLink', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.ConnectIDMessagingKey', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.DeactivateMobileWorkerTrigger', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.DomainRequest', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.Invitation', SimpleFilter('domain')),
