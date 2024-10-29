@@ -223,7 +223,7 @@ def send_message_to_verified_number(verified_number, text, metadata=None, logged
                 msg.custom_metadata[field] = value
     msg.save()
 
-    if phone_number.is_sms:
+    if verified_number.is_sms:
         return queue_outgoing_sms(msg)
     else:
         return send_connect_message(msg)
