@@ -133,6 +133,10 @@ from corehq.util.workbook_json.excel import (
     WorksheetNotFound,
     get_workbook,
 )
+from corehq.apps.users.permissions import (
+    COMMCARE_ANALYTICS_SQL_LAB,
+    COMMCARE_ANALYTICS_DATASET_EDITOR,
+)
 
 from dimagi.utils.logging import notify_exception
 
@@ -789,15 +793,11 @@ class ListRolesView(BaseRoleAccessView):
 def _commcare_analytics_roles_options():
     return [
         {
-            'slug': 'gamma',
-            'name': 'Gamma'
-        },
-        {
-            'slug': 'sql_lab',
+            'slug': COMMCARE_ANALYTICS_SQL_LAB,
             'name': 'SQL Lab'
         },
         {
-            'slug': 'dataset_editor',
+            'slug': COMMCARE_ANALYTICS_DATASET_EDITOR,
             'name': 'Dataset Editor'
         }
     ]
