@@ -12,6 +12,7 @@ from django.http import (
     Http404,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    HttpResponse,
     JsonResponse,
 )
 from django.http.response import HttpResponseServerError
@@ -24,7 +25,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base, json_response
@@ -43,11 +44,8 @@ from corehq.apps.fixtures.exceptions import (
     FixtureUploadError,
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.fixtures.models import (
-    LookupTableRow,
-    LookupTable,
-    TypeField,
-)
+from corehq.apps.fixtures.models import (LookupTable, LookupTableRow, CSQLFixtureExpression,
+    TypeField)
 from corehq.apps.fixtures.tasks import (
     async_fixture_download,
     fixture_upload_async,
@@ -575,3 +573,83 @@ def fixture_metadata(request, domain):
     Returns list of fixtures and metadata needed for itemsets in vellum
     """
     return json_response(item_lists_by_domain(domain))
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+class CSQLFixtureExpressionView(BaseDomainView):
+    urlname = 'csql_fixture_configuration'
+    page_title = _('CSQL Fixture Confguration')
+    template_name = 'fixtures/csql_fixture_configuration.html'
+
+    @method_decorator(toggles.MODULE_BADGES.required_decorator())
+    @method_decorator(require_can_edit_fixtures)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CSQLFixtureExpressionView, self).dispatch(request, *args, **kwargs)
+
+    def all_module_badge_configurations(self):
+        return CSQLFixtureExpression.by_domain(self.domain)
+
+    @property
+    def page_context(self):
+        return {
+            'save_url': reverse('csql_fixture_configuration', args=[self.domain]),
+            'csql_fixture_configurations':
+                list(self.all_module_badge_configurations().values('id', 'name', 'csql')),
+        }
+
+    def _post_response(self, message, div_class):
+        return HttpResponse((f'<div class="alert {div_class}">' + _(message) + '</div>'),
+                            content_type='text/html')
+
+    @atomic
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.POST
+            ''' Post data format is:
+                {
+                    'name': ['name1', 'name2', 'name3'],
+                    'id': ['1', '2', ''],  # empty string ID means new expression, missing means delete
+                    'csql': ['asdf', 'asdfg', 'asdfgh'],}
+                }
+            '''
+
+            touched_badge_ids = []
+            ids_list = data.getlist('id')
+            name_list = data.getlist('name')
+            csql_list = data.getlist('csql')
+
+            name_list_without_blanks = [name for name in name_list if name]
+            if len(name_list_without_blanks) != len(set(name_list_without_blanks)):
+                return self._post_response(
+                    "Configuration not updated, two expressions cannot have the same name.", 'alert-warning')
+
+            for index in range(0, len(ids_list)):
+                _id = ids_list[index]
+                name = name_list[index]
+                csql = csql_list[index]
+
+                if not name_list[index] or not csql_list[index]:
+                    if not name_list[index] and not csql_list[index]:
+                        continue  # ignore empty rows
+                    return self._post_response("Configuration not updated, some fields are blank.",
+                                               'alert-warning')
+
+                if _id:
+                    module_badge_configuration = CSQLFixtureExpression.by_domain(self.domain).get(id=_id)
+                    module_badge_configuration.name = name
+                    module_badge_configuration.csql = csql
+                    module_badge_configuration.save()
+                else:
+                    module_badge_configuration = CSQLFixtureExpression.objects.create(
+                        domain=self.domain, name=name, csql=csql)
+                touched_badge_ids.append(module_badge_configuration.id)
+            for expression in CSQLFixtureExpression.by_domain(self.domain).exclude(id__in=touched_badge_ids):
+                expression.soft_delete()
+            return self._post_response("Fixture confugration updated!", 'alert-success')
+        except Exception as e:
+            notify_exception(request, message=str(e))
+            return self._post_response("Configuration not updated, unknown error occurred.", 'alert-danger')
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=[self.domain])
