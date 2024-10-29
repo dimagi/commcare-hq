@@ -17,6 +17,9 @@
   {% initial_page_data 'dashboard_tiles' dashboard_tiles %}
   {% registerurl 'dashboard_tile' domain '---' %}
   {% registerurl 'dashboard_tile_total' domain '---' %}
+  <h3>ignore me: {% static 'dashboard/scss/dashboard.scss' %}</h3>
+  {% load static %}
+  <h3>ignore me, too: {% static 'dashboard/scss/dashboard.scss' %}</h3>
   <div class="container" id="hq-content">
     <h1 class="mb-3 mt-5">
       {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
