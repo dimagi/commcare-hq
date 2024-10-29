@@ -27,6 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.reminders.models import EmailUsage
+from corehq.apps.sms.api import send_message_to_verified_number
 from corehq.apps.sms.models import (
     ConnectMessagingNumber,
     Email,
