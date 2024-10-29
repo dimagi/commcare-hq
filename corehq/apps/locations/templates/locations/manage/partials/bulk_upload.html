@@ -1,15 +1,15 @@
-{% extends "hqwebapp/partials/bootstrap3/bulk_upload.html" %}
+{% extends "hqwebapp/partials/bootstrap5/bulk_upload.html" %}
 {% load i18n %}
 
 {% block download_file %}
 
   {% if manage_consumption %}
-    <div class="controls">
-      <label for="include_consumption" class="checkbox">
-        <input class="checkboxinput"
-               id="include_consumption"
-               type="checkbox"
-               data-bind="checked: include_consumption">
+    <div class="form-check">
+      <input class="form-check-input"
+             id="include_consumption"
+             type="checkbox"
+             data-bind="checked: include_consumption">
+      <label for="include_consumption" class="form-check-label">
         {% trans "Include consumption data (this can cause the download to take several minutes)." %}
       </label>
     </div>
@@ -24,7 +24,7 @@
         {% endblocktrans %}
       </a>
     {% endif %}
-    <a class="btn {% if request.can_access_all_locations %}btn-default{% else %}btn-primary{% endif %}" href="{{ bulk_upload.download_url }}?download_type=empty">
+    <a class="btn {% if request.can_access_all_locations %}btn-outline-primary{% else %}btn-primary{% endif %}" href="{{ bulk_upload.download_url }}?download_type=empty">
       {% trans "Download Empty Template" %}
     </a>
   </p>
