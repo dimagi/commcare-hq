@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,10 +1,10 @@
+@@ -1,11 +1,10 @@
 -hqDefine('reports/v2/js/views/bootstrap3/explore_case_data', [
 +hqDefine('reports/v2/js/views/bootstrap5/explore_case_data', [
      'jquery',
@@ -9,6 +9,7 @@
      'reports/v2/js/context',
 -    'reports/v2/js/bootstrap3/datagrid',
 -    'hqwebapp/js/components/bootstrap3/feedback',
+-    'commcarehq_b3',
 +    'reports/v2/js/bootstrap5/datagrid',
 +    'hqwebapp/js/components/bootstrap5/feedback',
  ], function (
