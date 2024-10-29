@@ -152,7 +152,7 @@ def patch_jsonfield():
 
 def unpatch_sys_modules():
     # until https://github.com/DataDog/dd-trace-py/issues/9143 is implemented
-    if os.environ.get("DD_TRACE_ENABLED") == "false":
+    if os.environ.get("DD_TRACE_ENABLED", "").lower() == "false":
         from ddtrace import ModuleWatchdog
         if isinstance(sys.modules, ModuleWatchdog):
             sys.modules.uninstall()

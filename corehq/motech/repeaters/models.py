@@ -320,7 +320,7 @@ class Repeater(RepeaterSuperProxy):
                 condition=models.Q(is_deleted=False),
             ),
             models.Index(
-                name="deleted_paused_partial_idx",
+                name="active_partial_idx",
                 fields=["id"],
                 condition=models.Q(("is_deleted", False), ("is_paused", False)),
             ),

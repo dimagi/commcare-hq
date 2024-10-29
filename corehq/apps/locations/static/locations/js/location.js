@@ -4,7 +4,6 @@ hqDefine("locations/js/location", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
     'analytix/js/google',
     'locations/js/location_drilldown',
     'locations/js/location_tree',
@@ -16,7 +15,6 @@ hqDefine("locations/js/location", [
     ko,
     _,
     initialPageData,
-    alertUser,
     googleAnalytics,
     locationModels,
     locationTreeModel
@@ -29,47 +27,7 @@ hqDefine("locations/js/location", [
         // Push the updated list of currentUsers to the ui
         $select.select2("data", currentUsers);
     };
-    var TEMPLATE_STRINGS = {
-        new_user_success: _.template(gettext("User <%- name %> added successfully. " +
-                                             "A validation message has been sent to the phone number provided.")),
-    };
 
-    $(function () {
-        var form_node = $('#add_commcare_account_form');
-        var url = form_node.prop('action');
-
-        $('#new_user').on('show.bs.modal', function () {
-            form_node.html('<i class="fa fa-refresh fa-spin"></i>');
-            $.get(url, function (data) {
-                form_node.html(data.form_html);
-            });
-        });
-
-        form_node.submit(function (event) {
-            event.preventDefault();
-            $.ajax({
-                type: 'POST',
-                url: url,
-                data: form_node.serialize(),
-                success: function (data) {
-                    if (data.status === 'success') {
-                        insert_new_user(data.user);
-                        alertUser.alert_user(
-                            TEMPLATE_STRINGS.new_user_success({name: data.user.text}),
-                            'success'
-                        );
-                        $('#new_user').modal('hide');
-                    } else {
-                        form_node.html(data.form_html);
-                    }
-                },
-                error: function () {
-                    alertUser.alert_user(gettext('Error saving user', 'danger'));
-                },
-            });
-        });
-
-    });
     $(function () {
 
         var location_url = initialPageData.get('api_root');

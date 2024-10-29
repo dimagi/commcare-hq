@@ -771,13 +771,6 @@ BIOMETRIC_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ADD_USERS_FROM_LOCATION = StaticToggle(
-    'add_users_from_location',
-    "Allow users to add new mobile workers from the locations page",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
 CASE_DETAIL_PRINT = StaticToggle(
     'case_detail_print',
     'MLabour: Allowing printing of the case detail, based on an HTML template',

@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                             ("is_paused", False),
                         ),
                         fields=["id"],
-                        name="deleted_paused_partial_idx",
+                        name="active_partial_idx",
                     ),
                 ),
                 migrations.AddIndex(
@@ -79,12 +79,12 @@ class Migration(migrations.Migration):
                 # column.
                 migrations.RunSQL(
                     sql="""
-                    CREATE INDEX CONCURRENTLY "deleted_paused_partial_idx"
+                    CREATE INDEX CONCURRENTLY "active_partial_idx"
                         ON "repeaters_repeater" ("id_")
                         WHERE (NOT "is_deleted" AND NOT "is_paused");
                     """,
                     reverse_sql="""
-                    DROP INDEX CONCURRENTLY "deleted_paused_partial_idx";
+                    DROP INDEX CONCURRENTLY "active_partial_idx";
                     """
                 ),
 
