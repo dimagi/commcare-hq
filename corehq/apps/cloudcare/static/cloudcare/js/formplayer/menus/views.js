@@ -616,6 +616,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, false, true);
             }
         },
+        onAttach: function () {
+            $('.case-tile-container').css('margin-bottom', '12px');
+        },
+        onDetach: function () {
+            $('.case-tile-container').css('margin-bottom', '0px');
+        },
     });
 
     const CaseListViewUI = function () {
@@ -1546,8 +1552,47 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         events: {
             'click #app-main': 'onClickAppMain',
         },
+        handleSmallScreenChange: function (smallScreenEnabled) {
+            const offcanvas = 'offcanvas';
+            const collapse = 'collapse';
+            const containerDesktopClasses = collapse + ' position-relative';
+            const containerMobileClasses = offcanvas + ' offcanvas-start';
+            if (smallScreenEnabled) {
+                $('#persistent-menu-container').removeClass(containerDesktopClasses + ' show');
+                $('#persistent-menu-container').addClass(containerMobileClasses);
+                $('#persistent-menu-arrow-toggle').attr('aria-expanded', false);
+                $('#persistent-menu-close-button').removeAttr('data-bs-toggle');
+                $('#persistent-menu-close-button').attr('data-bs-dismiss', offcanvas);
+                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', offcanvas);
+            } else {
+                $('#persistent-menu-container').removeClass(containerMobileClasses);
+                $('#persistent-menu-container').addClass(containerDesktopClasses);
+                if (sessionStorage.showPersistentMenu !== 'false') {
+                    $('#persistent-menu-container').addClass('show');
+                }
+                $('#persistent-menu-arrow-toggle').attr('aria-expanded', true);
+                $('#persistent-menu-close-button').removeAttr('data-bs-dismiss');
+                $('#persistent-menu-close-button').attr('data-bs-toggle', collapse);
+                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', collapse);
+            }
+        },
+        initialize: function (options) {
+            self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                this.handleSmallScreenChange(smallScreenEnabled);
+            });
+            self.smallScreenListener.listen();
+        },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
+        },
+        onAttach: function () {
+            this.handleSmallScreenChange(cloudcareUtils.smallScreenIsEnabled());
+            $('#persistent-menu-container').on('hidden.bs.collapse', function () {
+                sessionStorage.showPersistentMenu = false;
+            });
+            $('#persistent-menu-container').on('show.bs.collapse', function () {
+                sessionStorage.showPersistentMenu = true;
+            });
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
@@ -1561,15 +1606,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         onClickAppMain: function () {
             FormplayerFrontend.trigger("persistentMenuSelect");
-        },
-        onBeforeDetach: function () {
-            // Be sure to hide offcanvas element so scroll works properly
-            const openedCanvas = bootstrap.Offcanvas.getInstance(
-                document.getElementById('persistent-menu-container')
-            );
-            if (openedCanvas) {
-                openedCanvas.hide();
-            }
         },
     });
 
