@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main_b5 'notifications/js/manage_notifications' %}
+{% js_entry 'notifications/js/manage_notifications' %}
 
 {% block page_content %}
   {% initial_page_data 'alerts' alerts %}
