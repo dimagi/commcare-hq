@@ -24,8 +24,11 @@
   {% registerurl 'paginate_mobile_workers' domain %}
   {% registerurl 'activate_commcare_user' domain '---' %}
   {% registerurl 'deactivate_commcare_user' domain '---' %}
+  {% registerurl 'activate_connectid_link' domain '---' %}
+  {% registerurl 'deactivate_connectid_link' domain '---' %}
   {% registerurl 'send_confirmation_email' domain '---' %}
   {% registerurl 'send_confirmation_sms' domain '---' %}
+  {% registerurl 'send_connectid_invite' domain '---' %}
 
   <div>
     <div class="row">
@@ -198,6 +201,7 @@
               <a data-bind="attr: {href: edit_url}, visible: user_id">
                 <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
               </a>
+              <span data-bind="visible: is_connect_link_active() !== null" class="btn btn-info">ConnectID</span>
             </td>
             <td data-bind="attr: {class: creation_status}, text: first_name"></td>
             <td data-bind="attr: {class: creation_status}, text: last_name"></td>
@@ -295,6 +299,7 @@
                 <i class="fa fa-user"></i>
                 <strong data-bind="text: username"></strong>
               </a>
+              <span data-bind="visible: is_connect_link_active() !== null" class="btn btn-sm btn-info">ConnectID</span>
             </td>
             <td data-bind="text: first_name"></td>
             <td data-bind="text: last_name"></td>
@@ -320,17 +325,21 @@
                   </p>
                 </div>
                 <div data-bind="visible: !is_active() && !is_account_confirmed()">
-                  {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
                   <button type="button" class="btn btn-default" data-toggle="modal"
                           data-bind="attr: {'data-target': '#confirm_' + user_id()}">
-                    {% trans "Send Confirmation Email" %}
-                  </button>
-                  {% else %}
-                  <button type="button" class="btn btn-default" data-toggle="modal"
-                          data-bind="attr: {'data-target': '#confirm_' + user_id()}">
-                    {% trans "Send Confirmation SMS" %}
-                  </button>
-                  {% endif %}
+                    {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+                      {% blocktrans %}
+                      Send Confirmation Email
+                      {% endblocktrans %}
+                    {% elif request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
+                      {% blocktrans %}
+                      Send Confirmation SMS
+                      {% endblocktrans %}
+                    {% elif request|toggle_enabled:"COMMCARE_CONNECT" %}
+                      {% blocktrans %}
+                      Send ConnectID Invite
+                      {% endblocktrans %}
+                    {% endif %}
                   <p data-bind="visible: action_error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     <span data-bind="text: action_error"></span>
@@ -442,6 +451,104 @@
                     </div>
                   </div>
                 </div>
+                {% if request|toggle_enabled:"COMMCARE_CONNECT" %}
+                  <div data-bind="visible: is_connect_link_active() === false">
+                    <button type="button" class="btn btn-default" data-toggle="modal"
+                            data-bind="attr: {'data-target': '#activate_connect_link_' + user_id()}">
+                      {% trans "Reactivate Connect Lik" %}
+                    </button>
+                    <p data-bind="visible: action_error">
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                      <span data-bind="text: action_error"></span>
+                    </p>
+                  </div>
+                  <div class="modal fade" data-bind="attr: {id: 'activate_connect_link_' + user_id()}">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                            <span class="sr-only">{% trans "Close" %}</span>
+                          </button>
+                          <h4 class="modal-title">{% trans "Re-activate ConnectID Link" %}</h4>
+                        </div>
+                        <div class="modal-body">
+                          <p class="lead">
+                            {% blocktrans %}
+                              Are you sure you want to <strong>reactivate</strong> Connect Link for this mobile worker?
+                            {% endblocktrans %}
+                          </p>
+                          <p class="lead">
+                            <i class="fa fa-user"></i>
+                            <strong data-bind="text: username"></strong>
+                          </p>
+                          <p>
+                            {% blocktrans %}
+                              Deactivating disables users from logging in using their ConnectID account
+                            {% endblocktrans %}
+                          </p>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-default" data-dismiss="modal">
+                            {% trans "Cancel" %}
+                          </button>
+                          <button type="button" class="btn btn-primary"
+                                  data-bind="click: function(user) { user.is_connect_link_active(true); }">
+                            {% trans 'Reactivate' %}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div data-bind="visible: is_connect_link_active()">
+                    <button type="button" class="btn btn-default" data-toggle="modal"
+                            data-bind="attr: {'data-target': '#deactivate_connect_link_' + user_id()}">
+                      {% trans "Deactivate Connect Link" %}
+                    </button>
+                    <p data-bind="visible: action_error">
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                      <span data-bind="text: action_error"></span>
+                    </p>
+                  </div>
+                  <div class="modal fade" data-bind="attr: {id: 'deactivate_connect_link_' + user_id()}">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                            <span class="sr-only">{% trans "Close" %}</span>
+                          </button>
+                          <h4 class="modal-title">{% trans "De-link ConnectID" %}</h4>
+                        </div>
+                        <div class="modal-body">
+                          <p class="lead">
+                            {% blocktrans %}
+                              Are you sure you want to <strong>deactivate</strong> ConnectID link for this mobile worker?
+                            {% endblocktrans %}
+                          </p>
+                          <p class="lead">
+                            <i class="fa fa-user"></i>
+                            <strong data-bind="text: username"></strong>
+                          </p>
+                          <p>
+                            {% blocktrans %}
+                              De-linked ConnectID users can no longer access this project
+                            {% endblocktrans %}
+                          </p>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-default" data-dismiss="modal">
+                            {% trans "Cancel" %}
+                          </button>
+                          <button type="button" class="btn btn-danger"
+                                  data-bind="click: function(user) { user.is_connect_link_active(false); }">
+                            {% trans 'Deactivate' %}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
                 {% if two_stage_user_confirmation %}
                 <div class="modal fade" data-bind="attr: {id: 'confirm_' + user_id()}">
                   <div class="modal-dialog">
@@ -451,7 +558,18 @@
                           <span aria-hidden="true">&times;</span>
                           <span class="sr-only">{% trans "Close" %}</span>
                         </button>
-                        <h4 class="modal-title">{% trans "Confirm Account" %}</h4>
+
+                        <h4 class="modal-title">
+                        {% if request|toggle_enabled:"COMMCARE_CONNECT" %}
+                          {% blocktrans %}
+                            Re-Invite
+                          {% endblocktrans %}
+                        {% else %}
+                          {% blocktrans %}
+                            Confirm Account
+                          {% endblocktrans %}
+                        {% endif %}
+                        </h4>
                       </div>
                       <div class="modal-body">
                         <p class="lead">
@@ -460,10 +578,14 @@
                               Would you like to send the account confirmation
                               email to this account?
                             {% endblocktrans %}
-                          {% else %}
+                          {% elif request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
                             {% blocktrans %}
                               Would you like to send the account confirmation
                               SMS to this account?
+                            {% endblocktrans %}
+                          {% elif request|toggle_enabled:"COMMCARE_CONNECT" %}
+                            {% blocktrans %}
+                              Would you like to reinvite the ConnectID User?
                             {% endblocktrans %}
                           {% endif %}
                         </p>
@@ -477,10 +599,15 @@
                               The user will be sent an email with instructions to
                               set a password and be able to login to this project.
                             {% endblocktrans %}
-                          {% else %}
+                          {% elif request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
                             {% blocktrans %}
                               The user will be sent a SMS with instructions to
                               set a password and be able to login to this project.
+                            {% endblocktrans %}
+                          {% elif request|toggle_enabled:"COMMCARE_CONNECT" %}
+                            {% blocktrans %}
+                              The user will be sent a ConnectID SMS with instructions to
+                              login to this project using their ConnectID account.
                             {% endblocktrans %}
                           {% endif %}
                         </p>
@@ -494,10 +621,15 @@
                                   data-bind="click: sendConfirmationEmail">
                             {% trans 'Send Account Confirmaton Email' %}
                           </button>
-                        {% else %}
+                        {% elif request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
                           <button type="button" class="btn btn-primary"
                                   data-bind="click: sendConfirmationSMS">
                             {% trans 'Send Account Confirmaton SMS' %}
+                          </button>
+                        {% elif request|toggle_enabled:"COMMCARE_CONNECT" %}
+                          <button type="button" class="btn btn-primary"
+                                  data-bind="click: sendConnectIDInvite">
+                            {% trans 'Send ConnectID Invite' %}
                           </button>
                         {% endif %}
                       </div>
