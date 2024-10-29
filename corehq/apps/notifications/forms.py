@@ -6,9 +6,9 @@ from django.utils.translation import gettext_lazy
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 
 from .models import NOTIFICATION_TYPES, Notification
 
@@ -27,8 +27,11 @@ class NotificationCreationForm(forms.Form):
         choices=NOTIFICATION_TYPES,
     )
     domain_specific = forms.BooleanField(
-        label=gettext_lazy("This notification is not for all domains"),
-        required=False
+        label=gettext_lazy("Domain-specific"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy("This notification is not for all domains"),
+        ),
     )
     domains = SimpleArrayField(
         base_field=forms.CharField(),
@@ -42,37 +45,28 @@ class NotificationCreationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         from corehq.apps.notifications.views import ManageNotificationView
         super(NotificationCreationForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
 
         self.helper.form_method = 'POST'
-        self.helper.form_class = 'form-horizontal'
         self.helper.form_action = '#'
-
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         self.helper.layout = crispy.Layout(
             crispy.Field('content'),
             crispy.Field('url'),
             crispy.Field('type'),
-            hqcrispy.B3MultiField(
-                "Domain Specific",
-                crispy.Field('domain_specific')
-            ),
+            twbscrispy.PrependedText('domain_specific', ''),
             crispy.Field('domains'),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Submit Information"),
-                    type="submit",
-                    css_class="btn btn-primary",
-                    name="submit",
-                ),
-                hqcrispy.LinkButton(
-                    _("Cancel"),
-                    reverse(ManageNotificationView.urlname),
-                    css_class="btn btn-default",
-                    name="cancel",
-                ),
+            twbscrispy.StrictButton(
+                _("Submit Information"),
+                type="submit",
+                css_class="btn btn-primary",
+                name="submit",
+            ),
+            hqcrispy.LinkButton(
+                _("Cancel"),
+                reverse(ManageNotificationView.urlname),
+                css_class="btn btn-outline-primary",
+                name="cancel",
             ),
         )
 

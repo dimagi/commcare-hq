@@ -7,25 +7,21 @@
 {% block page_content %}
   {% initial_page_data 'alerts' alerts %}
   <div id="ko-alert-container">
-    <div class="card card-default">  {# todo B5: css:panel #}
+    <div class="card card-default mb-3">
       <div class="card-header">
-        <h3 class="card-title">
-          Create Notification
-        </h3>
+        Create Notification
       </div>
       <div class="card-body">
         <p>
           Enter notification text below and preview in the table below.  Notifications will not be public until the
           "activate notification" button is pressed.
         </p>
-        {% crispy form %}  {# todo B5: check crispy #}
+        {% crispy form %}
       </div>
     </div>
-    <div class="card card-default">  {# todo B5: css:panel #}
+    <div class="card card-default mb-3">
       <div class="card-header">
-        <h3 class="card-title">
-          Current Notifications
-        </h3>
+        Current Notifications
       </div>
       <div class="card-body">
         <table class="table table-striped">
