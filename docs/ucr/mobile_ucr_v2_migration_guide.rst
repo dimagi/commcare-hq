@@ -3,40 +3,32 @@ Migrating to Mobile UCR Restore V2
 
 Evolution of Mobile UCR Restore Versions
 ----------------------------------------
-Historically, there were three configuration settings for how Mobile UCRs were sent to devices:
+Historically, there have been three versions for how Mobile UCRs were sent to mobile devices:
 
-- Version 1.0: Bundled all reports into a single fixture during the restore process.
-- Version 1.5: Sent both V1 and V2 restore formats.
-- Version 2.0: Split UCRs into multiple fixtures within the restore.
+- **Version 1.0**: All reports are bundled together into a single fixture during the restore process.
+- **Version 1.5**: Both V1 and V2 are supported together. This is used to migrate from V1 without causing any breaking changes.
+- **Version 2.0**: Enhanced performance where each report has a fixture of its own.
 
 Deprecation of Mobile UCR V1 and V1.5
 -------------------------------------
-Both V1 and V1.5 to address performance challenges encountered with these versions.
-The primary issue with V1 was that all UCRs were bundled into a single fixture, meaning any change to a
-single report required resyncing the entire fixture, leading to slow and inefficient restore processes.
-This bundling often caused unnecessary server load and sluggish syncing for mobile users.
+Both V1 and V1.5 have been deprecated to address the performance challenges encountered with these versions.
 
 Benefits of Upgrading to Mobile UCR V2
 --------------------------------------
-The introduction of Mobile UCR V2 brings significant improvements, especially around how
-UCR data is restored and synced:
-
-- Multiple Fixtures: Instead of bundling all reports into one fixture, UCRs are now split into multiple fixtures. Each fixture corresponds to a specific report and its filters. This allows for:
-    - *Faster Lookups*: Because reports are no longer combined, users can access specific data more quickly. Individual Updates: Reports can be updated separately, reducing the need to sync the entire set of reports.
-    - *App-Aware Restores*: V2 also introduces “app-aware” restores, where only the fixtures relevant to the specific app being used are synced. This targeted sync ensures that only necessary data is processed, further improving efficiency.
-- Sync Delay Option: V2 includes a "Sync Delay" option for each report, allowing administrators to control how frequently report data is synced. For reports that can tolerate slightly outdated (or “stale”) data this feature reduces the load on the server and the device:
-    - *Performance Improvements*: Syncing less often reduces the time required for the restore process. User Experience: Users experience fewer interruptions, allowing them to continue their work with minimal delays in syncing reports.
+The introduction of Mobile UCR V2 offers significant performance and efficiency improvements around how UCR data is restored and synced.
+These improvements offer faster report lookups and restores, as well as a new sync delay option for each report that allows administrators to control
+how frequently report data is synced.
 
 Moving to Mobile UCR V2
 -----------------------
-- It is recommended to remove any older app versions (especially older than 2 years) that the project has
-  no use for. This will lessen the chances of having to update very old projects in the case of releasing
-  a previous version.
 - Applications that do not have any references to UCRs in forms, case lists and filters need only have their
   Mobile UCR Version updated to V2 and the app will continue working as normal.
 - Applications with references to reports will need to have all manual references to the `commcare:reports`
   fixture changed before updating to V2. These are most likely to be contained in reports modules,
   but others may be in case lists.
+
+The above migration steps will need to be carried out for any old app versions that get restored. These restored
+app versions will first need to be migrated to Mobile UCR V2 before they can be released.
 
 Update Mobile UCR Version
 -------------------------
