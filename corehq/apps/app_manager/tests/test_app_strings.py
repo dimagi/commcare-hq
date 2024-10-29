@@ -8,6 +8,7 @@ import commcare_translations
 from lxml import etree
 from testil import eq
 
+from corehq import privileges
 from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.models import (
     Application,
@@ -23,7 +24,7 @@ from corehq.apps.app_manager.tests.util import SuiteMixin
 from corehq.apps.translations.app_translations.upload_form import (
     BulkAppTranslationFormUpdater,
 )
-from corehq.util.test_utils import flag_enabled, flag_disabled
+from corehq.util.test_utils import flag_enabled, flag_disabled, privilege_enabled
 
 
 def get_app():
@@ -223,11 +224,10 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
         factory = AppFactory(build_version='2.40.0')
         factory.app.profile['features'] = {'dependencies': [app_id]}
 
-        with flag_disabled('APP_DEPENDENCIES'):
-            default_strings = self._generate_app_strings(factory.app, 'default')
-            self.assertNotIn(f'android.package.name.{app_id}', default_strings)
+        default_strings = self._generate_app_strings(factory.app, 'default')
+        self.assertNotIn(f'android.package.name.{app_id}', default_strings)
 
-        with flag_enabled('APP_DEPENDENCIES'):
+        with privilege_enabled(privileges.APP_DEPENDENCIES):
             default_strings = self._generate_app_strings(factory.app, 'default')
             self.assertEqual(
                 default_strings[f'android.package.name.{app_id}'],
