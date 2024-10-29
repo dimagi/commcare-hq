@@ -21,7 +21,7 @@ from corehq.apps.sms.mixin import (
     PhoneNumberInUseException,
     apply_leniency,
 )
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.smsbackends.connectid.backend import ConnectBackend
 from corehq.util.mixin import UUIDGeneratorMixin
