@@ -626,7 +626,8 @@ class ConnectMessagingNumber(AbstractNumber):
 
     @property
     def user_link(self):
-        return ConnectIDUserLink.objects.get(commcare_username=self.user.username)
+        django_user = self.user.get_django_user()
+        return ConnectIDUserLink.objects.get(commcare_user=django_user)
 
     @property
     def backend(self):
