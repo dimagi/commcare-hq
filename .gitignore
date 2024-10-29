@@ -88,3 +88,6 @@ corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
 
 # webpack build related
 /webpack/_build/
+
+# ruff
+ruff.toml
