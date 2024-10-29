@@ -138,12 +138,17 @@ hqDefine("geospatial/js/case_management", [
                 self.showParams(true);
             };
 
-            let userData = users.map(function (c) {
-                return {
-                    id: c.itemId,
-                    lon: c.itemData.coordinates.lng,
-                    lat: c.itemData.coordinates.lat,
-                };
+            const hasSelectedUsers = mapModel.hasSelectedUsers();
+            let userData = [];
+            users.forEach((userMapItem) => {
+                // Either select all if none selected, or only pick selected users
+                if (!hasSelectedUsers || userMapItem.isSelected()) {
+                    userData.push({
+                        id: userMapItem.itemId,
+                        lon: userMapItem.itemData.coordinates.lng,
+                        lat: userMapItem.itemData.coordinates.lat,
+                    });
+                }
             });
 
             $.ajax({
