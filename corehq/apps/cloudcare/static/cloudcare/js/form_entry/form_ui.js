@@ -10,6 +10,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/entries',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/form_entry/utils',
     'jquery-tiny-pubsub/dist/ba-tiny-pubsub',       // $.pubsub
 ], function (
@@ -23,6 +24,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     cloudcareUtils,
     constants,
     entries,
+    UsersModels,
     formEntryUtils
 ) {
     var groupNum = 0;
@@ -1010,8 +1012,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 currentNode = parent;
             }
             var el = $("#" + self.entry.entryId + "-label");
-            $('html, body').animate({
-                scrollTop: $(el).offset().top - 60,
+            const scrollContainer = $('#content-plus-version-info-container');
+            scrollContainer.animate({
+                scrollTop: scrollContainer.scrollTop() + $(el).offset().top - 80,
             });
             self.form().currentJumpPoint = self;
             el.fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);
