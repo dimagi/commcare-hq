@@ -101,6 +101,7 @@ _OLD_API_LIST = (
         fixtures.v0_1.LookupTableResource,
         fixtures.v0_1.LookupTableItemResource,
         v0_5.NavigationEventAuditResource,
+        v0_5.CommCareAnalyticsUserResource,
     )),
     ((0, 6), (
         locations.v0_6.LocationResource,
