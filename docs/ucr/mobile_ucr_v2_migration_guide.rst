@@ -5,7 +5,7 @@ Evolution of Mobile UCR Restore Versions
 ----------------------------------------
 Historically, there have been three versions for how Mobile UCRs were sent to mobile devices:
 
-- **Version 1.0**: All reports are bundled together into a single fixture during the restore process.
+- **Version 1.0**: All reports are bundled together into a single fixture during the mobile sync process.
 - **Version 1.5**: Both V1 and V2 are supported together. This is used to migrate from V1 without causing any breaking changes.
 - **Version 2.0**: Enhanced performance where each report has a fixture of its own.
 
@@ -15,8 +15,8 @@ Both V1 and V1.5 have been deprecated to address the performance challenges enco
 
 Benefits of Upgrading to Mobile UCR V2
 --------------------------------------
-The introduction of Mobile UCR V2 offers significant performance and efficiency improvements around how UCR data is restored and synced.
-These improvements offer faster report lookups and restores, as well as a new sync delay option for each report that allows administrators to control
+The introduction of Mobile UCR V2 offers significant performance and efficiency improvements around how UCR data is sent over to the mobile app and synced.
+These improvements offer faster report lookups and mobile syncs, as well as a new sync delay option for each report that allows administrators to control
 how frequently report data is synced.
 
 Moving to Mobile UCR V2
