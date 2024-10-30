@@ -4922,6 +4922,12 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
+
+        if not domain_has_privilege(self.domain, privileges.APP_DEPENDENCIES):
+            # remove any previous dependencies if privilege was revoked
+            if 'dependencies' in app_profile['features']:
+                del app_profile['features']['dependencies']
+
         apk_heartbeat_url = self.heartbeat_url(build_profile_id)
         locale = self.get_build_langs(build_profile_id)[0]
         target_package_id = {

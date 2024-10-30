@@ -348,7 +348,7 @@
 - id: 'dependencies'
   name: 'Android app dependencies'
   type: 'features'
-  toggle: APP_DEPENDENCIES
+  privilege: 'app_dependencies'
   description: >
     Prevents mobile workers from using a CommCare app until the Android
     apps that it needs have been installed on the device.
