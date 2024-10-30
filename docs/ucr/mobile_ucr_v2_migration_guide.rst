@@ -24,11 +24,9 @@ Moving to Mobile UCR V2
 - Applications that do not have any references to UCRs in forms, case lists and filters need only have their
   Mobile UCR Version updated to V2 and the app will continue working as normal.
 - Applications with references to reports will need to have all manual references to the `commcare:reports`
-  fixture changed before updating to V2. These are most likely to be contained in reports modules,
-  but others may be in case lists.
-
-The above migration steps will need to be carried out for any old app versions that get restored. These restored
-app versions will first need to be migrated to Mobile UCR V2 before they can be released.
+  fixture changed to `commcare-reports:{report-UUID}` before updating to V2.
+  These are most likely to be contained in reports modules, but others may be in case lists. Please refer to
+  "Update Application Manual References" for more details.
 
 Update Mobile UCR Version
 -------------------------
@@ -37,10 +35,15 @@ Set the version to '2.0' if your application does not have any references to UCR
 
 .. image:: ../images/mobile_ucr_restore_version_2_setting.png
 
-Update Application manual references
+Update Application Manual References
 ------------------------------------
 Applications with references to reports will need to have all manual references to
-the `commcare:reports` fixture changed before updating to V2.
+the `commcare:reports` fixture changed before updating to V2. This involves making the following change:
+
+- **V1**: `<instance id="reports" src="jr://fixture/commcare:reports"/>`
+- **V2**: `<instance id="commcare-reports:{UUID}" src="jr://fixture/commcare-reports:{UUID}"/>`
+
+The V1 example should be replaced with the V2 example for each report that is to be added.
 
 To do this, you will need the UUID for each report which can be found in the Reports
 module in the report definition.
