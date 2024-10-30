@@ -809,7 +809,7 @@ hqDefine('geospatial/js/models', [
                         );
                         // redraw using mapControlsModelInstance
                         self.selectedSavedPolygonId(ret.id);
-                        self.shouldRefreshPage(self.requiresPageRefresh());
+                        self.shouldRefreshPage(true);
                     },
                     error: function (response) {
                         const responseText = response.responseText;
