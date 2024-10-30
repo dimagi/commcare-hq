@@ -413,7 +413,7 @@ def user_can_access_domain_specific_pages(request):
 
 def connectid_token_auth(view_func):
     @wraps(view_func)
-    def _inner(request, domain, *args, **kwargs):
+    def _inner(request, *args, **kwargs):
         auth_header = request.META.get("HTTP_AUTHORIZATION")
         if not auth_header:
             return HttpResponseForbidden()
@@ -425,5 +425,5 @@ def connectid_token_auth(view_func):
             return HttpResponseForbidden()
         link = ConnectIDUserLink.objects.get(connectid_username=username, domain=request.domain)
         request.user = link.commcare_user
-        return view_func(request, domain, *args, **kwargs)
+        return view_func(request,  *args, **kwargs)
     return _inner
