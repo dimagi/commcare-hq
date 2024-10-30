@@ -287,7 +287,8 @@ class ContentForm(Form):
             return self._validate_fcm_message_length(cleaned_value, self.FCM_MESSAGE_MAX_LENGTH)
 
         if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS,
-                                                                  ScheduleForm.CONTENT_EMAIL):
+                                                                  ScheduleForm.CONTENT_EMAIL,
+                                                                  ScheduleForm.CONTENT_CONNECT_MESSAGE):
             return None
 
         return self._clean_message_field('message')
@@ -458,7 +459,6 @@ class ContentForm(Form):
             )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_CONNECT_MESSAGE:
             return ConnectMessageContent(
-                subject=self.cleaned_data['subject'],
                 message=self.cleaned_data['message'],
             )
         else:
@@ -517,9 +517,9 @@ class ContentForm(Form):
                         data_bind='with: message',
                     ),
                     data_bind=(
-                        "visible: $root.content() === '%s' || $root.content() === '%s' "
+                        "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s' "
                         "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
-                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_SMS_CALLBACK,
+                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_SMS_CALLBACK, ScheduleForm.CONTENT_CONNECT_MESSAGE,
                          ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
                     ),
                 )
@@ -538,10 +538,11 @@ class ContentForm(Form):
                     ),
                     data_bind=(
                         "visible: $root.content() === '%s' || $root.content() === '%s' "
-                        "|| $root.content() === '%s' "
+                        "|| $root.content() === '%s' || $root.content() === '%s' "
                         "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
-                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
-                         ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
+                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL,
+                         ScheduleForm.CONTENT_SMS_CALLBACK, ScheduleForm.CONTENT_CONNECT_MESSAGE,
+                         ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION,)
                     ),
                 ),
             ]
@@ -688,7 +689,6 @@ class ContentForm(Form):
             result['fcm_action'] = content.action
             result['fcm_message_type'] = content.message_type
         elif isinstance(content, ConnectMessageContent):
-            result['subject'] = content.subject
             result['message'] = content.message
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
@@ -1164,6 +1164,7 @@ class ScheduleForm(Form):
     CONTENT_SMS_CALLBACK = 'sms_callback'
     CONTENT_CUSTOM_SMS = 'custom_sms'
     CONTENT_FCM_NOTIFICATION = 'fcm_notification'
+    CONTENT_CONNECT_MESSAGE = 'connect_message'
 
     YES = 'Y'
     NO = 'N'
@@ -1769,7 +1770,7 @@ class ScheduleForm(Form):
 
         if self.can_use_connect:
             self.fields['content'].choices += [
-                (self.CONNECT_MESSAGE_CONTENT, _("Connect Message")),
+                (self.CONTENT_CONNECT_MESSAGE, _("Connect Message")),
             ]
 
     def enable_json_user_data_filter(self, initial):

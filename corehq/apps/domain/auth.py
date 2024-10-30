@@ -287,12 +287,13 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             return False
 
         # ensure API Key exists
-        domain_accessible = Q(domain='')
+        query = Q(key=api_key)
         domain = getattr(request, 'domain', '')
         if domain:
-            domain_accessible = domain_accessible | Q(domain=domain)
+            domain_accessible = Q(domain='') | Q(domain=domain)
+            query = domain_accessible & query
         try:
-            key = user.api_keys.get(domain_accessible, key=api_key)
+            key = user.api_keys.get(query)
         except HQApiKey.DoesNotExist:
             return self._unauthorized()
 
@@ -377,6 +378,8 @@ class ConnectIDAuthBackend:
             domain=couch_user.domain,
             commcare_user__username=couch_user.username
         )
+        if not link.is_active:
+            return None
 
         return link.commcare_user
 

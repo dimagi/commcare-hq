@@ -1,6 +1,5 @@
 import datetime
 import json
-import re
 import secrets
 import string
 
@@ -8,7 +7,6 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, validate_email
-from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -59,6 +57,7 @@ from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.toggles import (
+    COMMCARE_CONNECT,
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
@@ -589,69 +588,6 @@ class SetUserPasswordForm(SetPasswordForm):
         return user
 
 
-class CommCareAccountForm(forms.Form):
-    """
-    Form for CommCareAccounts
-    """
-    username = forms.CharField(required=True)
-    password_1 = forms.CharField(label=gettext_lazy('Password'), widget=PasswordInput(),
-                                 required=True, min_length=1)
-    password_2 = forms.CharField(label=gettext_lazy('Password (reenter)'), widget=PasswordInput(),
-                                 required=True, min_length=1)
-    phone_number = forms.CharField(
-        max_length=80,
-        required=False,
-        help_text=gettext_lazy("Please enter number, including "
-                               "international code, in digits only.")
-    )
-
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain', None)
-        super(forms.Form, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.label_class = 'col-lg-3'
-        self.helper.field_class = 'col-lg-9'
-        self.helper.layout = Layout(
-            Fieldset(
-                _("Mobile Worker's Primary Information"),
-                'username',
-                'password_1',
-                'password_2',
-                'phone_number',
-            )
-        )
-
-    def clean_username(self):
-        return clean_mobile_worker_username(
-            self.domain,
-            self.cleaned_data.get('username')
-        )
-
-    def clean_phone_number(self):
-        phone_number = self.cleaned_data['phone_number']
-        phone_number = re.sub(r'\s|\+|\-', '', phone_number)
-        if phone_number == '':
-            return None
-        elif not re.match(r'\d+$', phone_number):
-            raise forms.ValidationError(_("%s is an invalid phone number." % phone_number))
-        return phone_number
-
-    def clean(self):
-        try:
-            password_1 = self.cleaned_data['password_1']
-            password_2 = self.cleaned_data['password_2']
-        except KeyError:
-            pass
-        else:
-            if password_1 != password_2:
-                raise forms.ValidationError("Passwords do not match")
-
-        return self.cleaned_data
-
-
 validate_username = EmailValidator(message=gettext_lazy('Username contains invalid characters.'))
 
 
@@ -732,6 +668,13 @@ class NewMobileWorkerForm(forms.Form):
         label=gettext_noop("Require Account Confirmation by SMS?"),
         help_text=gettext_noop(
             "If checked, the user will be sent a confirmation SMS and asked to set their password."
+        ),
+        required=False,
+    )
+    account_invite_by_cid = forms.BooleanField(
+        label=gettext_noop("Invite using ConnectID phone number?"),
+        help_text=gettext_noop(
+            "If checked, the user will be sent an SMS to join the project using their ConnectID app."
         ),
         required=False,
     )
@@ -833,10 +776,16 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: send_account_confirmation_email',
             )
 
-        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
+        # cid => connect-id
+        provision_by_cid = COMMCARE_CONNECT.enabled(self.domain)
+
+        provision_by_sms = TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
+
+        if provision_by_sms or provision_by_cid:
+            varname = 'account_invite_by_cid' if provision_by_cid else 'force_account_confirmation_by_sms'
             confirm_account_by_sms_field = crispy.Field(
-                'force_account_confirmation_by_sms',
-                data_bind='checked: force_account_confirmation_by_sms',
+                varname,
+                data_bind=f'checked: {varname}',
             )
             phone_number_field = crispy.Div(
                 crispy.Field(
@@ -932,8 +881,13 @@ class NewMobileWorkerForm(forms.Form):
                                         <i class="fa fa-warning"></i> {disabled_email}
                                     <!-- /ko -->
                                     <!-- ko if: !($root.stagedUser().force_account_confirmation())
-                                    && $root.stagedUser().force_account_confirmation_by_sms() -->
+                                    && ($root.stagedUser().force_account_confirmation_by_sms()
+                                    || $root.stagedUser().account_invite_by_cid) -->
                                         <i class="fa fa-warning"></i> {disabled_phone}
+                                    <!-- /ko -->
+                                    <!-- ko if: !($root.stagedUser().force_account_confirmation())
+                                    && $root.stagedUser().account_invite_by_cid() -->
+                                        <i class="fa fa-warning"></i> {disabled_cid}
                                     <!-- /ko -->
                                 <!-- /ko -->
                             </p>
@@ -956,6 +910,11 @@ class NewMobileWorkerForm(forms.Form):
                                 "Setting a password is disabled. The user "
                                 "will set their own password on confirming "
                                 "their account phone number."
+                            ),
+                            disabled_cid = _(
+                                "Setting a password is disabled. The user "
+                                "will be to access by logging into their "
+                                "ConnectID app."
                             ),
                             short=_("Password must have at least {password_length} characters."
                                     ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
@@ -1518,14 +1477,15 @@ class _UserFormSet(object):
     def user_form(self):
         raise NotImplementedError()
 
+    @property
+    def field_view(self):
+        raise NotImplementedError()
+
     @cached_property
     def custom_data(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import (
-            UserFieldsView,
-        )
         return CustomDataEditor(
             domain=self.domain,
-            field_view=UserFieldsView,
+            field_view=self.field_view,
             existing_custom_data=self.editable_user.get_user_data(self.domain).to_dict(),
             post_dict=self.data,
             ko_model="custom_fields",
@@ -1567,6 +1527,11 @@ class CommCareUserFormSet(_UserFormSet):
             request=self.request,
         )
 
+    @property
+    def field_view(self):
+        from .views.mobile.custom_data_fields import CommcareUserFieldsView
+        return CommcareUserFieldsView
+
 
 class WebUserFormSet(_UserFormSet):
     """Combines UpdateUserRoleForm and the Custom Data form"""
@@ -1575,6 +1540,11 @@ class WebUserFormSet(_UserFormSet):
     def user_form(self):
         return UpdateUserRoleForm(data=self.data, domain=self.domain,
                                   existing_user=self.editable_user, request=self.request)
+
+    @property
+    def field_view(self):
+        from .views.mobile.custom_data_fields import WebUserFieldsView
+        return WebUserFieldsView
 
 
 class UserFilterForm(forms.Form):

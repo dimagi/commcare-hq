@@ -21,7 +21,10 @@ hqDefine('geospatial/js/models', [
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
     const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
     const reassignCasesUrl = initialPageData.reverse('reassign_cases');
-    const unexpectedErrorMessage = "Oops! Something went wrong! Please report an issue if the problem persists.";
+    const unexpectedErrorMessage = gettext(
+        "Oops! Something went wrong!" +
+        " Please report an issue if the problem persists."
+    );
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -531,6 +534,18 @@ hqDefine('geospatial/js/models', [
             });
             return layerRemoved;
         };
+
+        self.hasSelectedUsers = function () {
+            return self.userMapItems().some((userMapItem) => {
+                return userMapItem.isSelected();
+            });
+        };
+
+        self.hasSelectedCases = function () {
+            return self.caseMapItems().some((caseMapItem) => {
+                return caseMapItem.isSelected();
+            });
+        };
     };
 
     var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter) {
@@ -692,7 +707,7 @@ hqDefine('geospatial/js/models', [
                     }, 2000);
                 },
                 error: function () {
-                    alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                    alertUser.alert_user(unexpectedErrorMessage, 'danger');
                 },
             });
         };
@@ -798,9 +813,9 @@ hqDefine('geospatial/js/models', [
                     error: function (response) {
                         const responseText = response.responseText;
                         if (responseText) {
-                            alertUser.alert_user(gettext(responseText), 'danger');
+                            alertUser.alert_user(responseText, 'danger');
                         } else {
-                            alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                            alertUser.alert_user(unexpectedErrorMessage, 'danger');
                         }
                     },
                 });
@@ -1040,7 +1055,7 @@ hqDefine('geospatial/js/models', [
                     if (responseText) {
                         alertUser.alert_user(responseText, 'danger');
                     } else {
-                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger', false, true);
+                        alertUser.alert_user(unexpectedErrorMessage, 'danger', false, true);
                     }
                 },
                 complete: function () {

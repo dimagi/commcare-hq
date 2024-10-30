@@ -159,14 +159,14 @@ class Schedule(models.Model):
     @property
     @memoized
     def memoized_language_set(self):
-        from corehq.messaging.scheduling.models import SMSContent, EmailContent, SMSCallbackContent
+        from corehq.messaging.scheduling.models import ConnectMessageContent, SMSContent, EmailContent, SMSCallbackContent
 
         result = set()
         for event in self.memoized_events:
             content = event.memoized_content
-            if isinstance(content, (SMSContent, SMSCallbackContent)):
+            if isinstance(content, (SMSContent, SMSCallbackContent, ConnectMessageContent)):
                 result |= set(content.message)
-            elif isinstance(content, (EmailContent, ConnectMessageContent)):
+            elif isinstance(content, (EmailContent)):
                 result |= set(content.subject)
                 result |= set(content.message)
 
@@ -508,8 +508,6 @@ class Content(models.Model):
         )
 
     def send_sms_message(self, domain, recipient, phone_entry_or_number, message, logged_subevent):
-        __import__("pdb").set_trace()
-
         if not message:
             return
 

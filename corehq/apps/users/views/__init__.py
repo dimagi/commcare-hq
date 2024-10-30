@@ -10,7 +10,8 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
@@ -31,6 +32,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, ngettext, gettext_lazy, gettext_noop
 
@@ -777,6 +779,10 @@ class ListRolesView(BaseRoleAccessView):
             'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
             'commcare_analytics_roles': _commcare_analytics_roles_options(),
+            'has_restricted_application_access': (
+                get_application_access_for_domain(self.domain).restrict
+                and toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(self.domain)
+            ),
         }
 
 
@@ -1144,7 +1150,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 is_add_user=is_add_user,
                 should_show_location=self.request.project.uses_locations,
                 can_edit_tableau_config=can_edit_tableau_config,
-                request=self.request
+                request=self.request,
+                custom_data=self.custom_data
             )
         return AdminInvitesUserForm(
             initial=initial,
@@ -1153,8 +1160,24 @@ class InviteWebUserView(BaseManageWebUserView):
             is_add_user=is_add_user,
             should_show_location=self.request.project.uses_locations,
             can_edit_tableau_config=can_edit_tableau_config,
-            request=self.request
+            request=self.request,
+            custom_data=self.custom_data
         )
+
+    @cached_property
+    def custom_data(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
+        post_dict = None
+        if self.request.method == 'POST':
+            post_dict = self.request.POST
+        custom_data = CustomDataEditor(
+            field_view=WebUserFieldsView,
+            domain=self.domain,
+            post_dict=post_dict,
+            ko_model="custom_fields",
+            request_user=self.request.couch_user
+        )
+        return custom_data
 
     @property
     @memoized
@@ -1165,9 +1188,13 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def page_context(self):
-        return {
+        ctx = {
             'registration_form': self.invite_web_user_form,
+            **self.custom_data.field_view.get_field_page_context(
+                self.domain, self.request.couch_user, self.custom_data, None
+            )
         }
+        return ctx
 
     def _assert_user_has_permission_to_access_locations(self, assigned_location_ids):
         if not set(assigned_location_ids).issubset(set(SQLLocation.objects.accessible_to_user(
@@ -1197,6 +1224,7 @@ class InviteWebUserView(BaseManageWebUserView):
                                          program_id=data.get("program", None),
                                          assigned_location_ids=data.get("assigned_locations", None),
                                          profile=profile,
+                                         custom_user_data=data.get("custom_user_data"),
                                          tableau_role=data.get("tableau_role", None),
                                          tableau_group_ids=data.get("tableau_group_ids", None)
                                          )

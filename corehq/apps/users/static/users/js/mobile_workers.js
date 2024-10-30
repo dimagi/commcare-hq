@@ -28,7 +28,8 @@ hqDefine("users/js/mobile_workers",[
     'zxcvbn/dist/zxcvbn',
     'locations/js/widgets',
     'users/js/custom_data_fields',
-    'hqwebapp/js/components.ko', // for pagination
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
     'hqwebapp/js/bootstrap3/validators.ko', // email address validation
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
 ], function (
@@ -70,9 +71,11 @@ hqDefine("users/js/mobile_workers",[
             email: '',
             send_account_confirmation_email: false,
             force_account_confirmation_by_sms: false,
+            account_invite_by_cid: false,
             phone_number: '',
             is_active: true,
             is_account_confirmed: true,
+            is_connect_link_active: null,
             deactivate_after_date: '',
         });
 
@@ -93,9 +96,11 @@ hqDefine("users/js/mobile_workers",[
         self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
 
         // used by two-stage sms provisioning
-        self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
+        self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms() || self.account_invite_by_cid());
 
-        self.passwordEnabled = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
+        self.passwordEnabled = ko.observable(!(
+            self.force_account_confirmation_by_sms() || self.force_account_confirmation() || self.account_invite_by_cid())
+        );
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -103,10 +108,7 @@ hqDefine("users/js/mobile_workers",[
             return initialPageData.reverse('edit_commcare_user', self.user_id());
         });
 
-        self.is_active.subscribe(function (newValue) {
-            var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
-                $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
-
+        var toggle_active = function($modal, urlName) {
             $modal.find(".btn").addSpinnerToButton();
             $.ajax({
                 method: 'POST',
@@ -124,6 +126,18 @@ hqDefine("users/js/mobile_workers",[
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },
             });
+        };
+
+        self.is_active.subscribe(function (newValue) {
+            var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
+                $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
+            toggle_active($modal, urlName);
+        });
+
+        self.is_connect_link_active.subscribe(function (newValue) {
+            var urlName = newValue ? 'activate_connectid_link' : 'deactivate_connectid_link',
+                $modal = $('#' + (newValue ? 'activate_connect_link_' : 'deactivate_connect_link_') + self.user_id());
+            toggle_active($modal, urlName);
         });
 
         self.sendConfirmationEmail = function () {
@@ -153,6 +167,31 @@ hqDefine("users/js/mobile_workers",[
 
         self.sendConfirmationSMS = function () {
             var urlName = 'send_confirmation_sms';
+            var $modal = $('#confirm_' + self.user_id());
+
+            $modal.find(".btn").addSpinnerToButton();
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse(urlName, self.user_id()),
+                success: function (data) {
+                    $modal.modal('hide');
+                    if (data.success) {
+                        self.action_error('');
+                    } else {
+                        self.action_error(data.error);
+                    }
+
+                },
+                error: function () {
+                    $modal.modal('hide');
+                    $modal.find(".btn").removeSpinnerFromButton();
+                    self.action_error(gettext("Issue communicating with server. Try again."));
+                },
+            });
+        };
+
+        self.sendConnectIDInvite = function () {
+            var urlName = 'send_connectid_invite';
             var $modal = $('#confirm_' + self.user_id());
 
             $modal.find(".btn").addSpinnerToButton();
@@ -255,6 +294,7 @@ hqDefine("users/js/mobile_workers",[
     var newUserCreationModel = function (options) {
         assertProperties.assertRequired(options, [
             'custom_fields_slugs',
+            'required_custom_fields_slugs',
             'skip_standard_password_validations',
             'location_url',
             'require_location_id',
@@ -265,7 +305,8 @@ hqDefine("users/js/mobile_workers",[
         var self = {};
         self.STATUS = STATUS;   // make status constants available to bindings in HTML
 
-        self.customFieldSlugs = options.custom_fields_slugs; // Required custom fields this domain has configured
+        self.customFieldSlugs = options.custom_fields_slugs;
+        self.requiredCustomFieldSlugs = options.required_custom_fields_slugs;
         self.stagedUser = ko.observable();                   // User in new user modal, not yet sent to server
         self.newUsers = ko.observableArray();                // New users sent to server
 
@@ -290,7 +331,7 @@ hqDefine("users/js/mobile_workers",[
                 return self.STATUS.DISABLED;
             }
 
-            if (self.stagedUser().force_account_confirmation_by_sms()) {
+            if (self.stagedUser().force_account_confirmation_by_sms() || self.stagedUser().account_invite_by_cid()) {
                 return self.STATUS.DISABLED;
             }
 
@@ -507,7 +548,7 @@ hqDefine("users/js/mobile_workers",[
                     user.send_account_confirmation_email(false);
                 }
             });
-            user.force_account_confirmation_by_sms.subscribe(function (enabled) {
+            var handlePhoneRequired = function (enabled) {
                 if (enabled) {
                     // make phone number required
                     user.phoneRequired(true);
@@ -521,7 +562,9 @@ hqDefine("users/js/mobile_workers",[
                     // enable password input
                     user.passwordEnabled(true);
                 }
-            });
+            };
+            user.force_account_confirmation_by_sms.subscribe(handlePhoneRequired);
+            user.account_invite_by_cid.subscribe(handlePhoneRequired);
         });
 
         self.initializeUser = function () {
@@ -583,7 +626,7 @@ hqDefine("users/js/mobile_workers",[
             if (self.usernameAvailabilityStatus() !== self.STATUS.SUCCESS) {
                 return false;
             }
-            if (_.find(self.customFieldSlugs, function (slug) {
+            if (_.find(self.requiredCustomFieldSlugs, function (slug) {
                 return !self.stagedUser().custom_fields[slug].value();
             })) {
                 return false;
@@ -632,6 +675,7 @@ hqDefine("users/js/mobile_workers",[
 
         var newUserCreation = newUserCreationModel({
             custom_fields_slugs: initialPageData.get('custom_fields_slugs'),
+            required_custom_fields_slugs: initialPageData.get('required_custom_fields_slugs'),
             skip_standard_password_validations: initialPageData.get('skip_standard_password_validations'),
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),

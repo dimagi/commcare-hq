@@ -135,6 +135,7 @@ from corehq.util.timer import TimingContext
 from ..exceptions import UpdateUserException
 from ..user_updates import update
 from . import (
+    ApiVersioningMixin,
     CorsResourceMixin,
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -253,7 +254,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
                                                           domain=obj.domain,
-                                                          api_name=self._meta.api_name,
+                                                          api_name=self.api_name,
                                                           pk=obj._id))
 
     def obj_create(self, bundle, **kwargs):
@@ -347,10 +348,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/activate/$" % self._meta.resource_name,
-                self.wrap_view('activate_user'), name="api_activate_user"),
-            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/deactivate/$" % self._meta.resource_name,
-                self.wrap_view('deactivate_user'), name="api_deactivate_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('activate_user'), name="api_activate_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/deactivate/$", self.wrap_view('deactivate_user'), name="api_deactivate_user"),
         ]
 
     @location_safe
@@ -393,7 +392,7 @@ class WebUserResource(v0_1.WebUserResource):
         return reverse('api_dispatch_detail', kwargs={
             'resource_name': self._meta.resource_name,
             'domain': bundle_or_obj.request.domain,
-            'api_name': self._meta.api_name,
+            'api_name': self.api_name,
             'pk': bundle_or_obj.obj._id,
         })
 
@@ -502,7 +501,7 @@ class GroupResource(v0_4.GroupResource):
         """Returns the literal string "/a/{domain}/api/v0.5/group/{pk}/" in a DRY way"""
         return reverse('api_dispatch_detail', kwargs=dict(
             resource_name=self._meta.resource_name,
-            api_name=self._meta.api_name,
+            api_name=self.api_name,
             domain='__domain__',
             pk='__pk__')).replace('__pk__', '{pk}').replace('__domain__', '{domain}')
 
@@ -610,7 +609,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             # limit has not changed, but it may not have been present in get params before.
             new_get_params["limit"] = limit
             return reverse('api_dispatch_detail', kwargs=dict(
-                api_name=self._meta.api_name,
+                api_name=self.api_name,
                 resource_name=self._meta.resource_name,
                 domain=domain,
                 pk=id_,
@@ -847,7 +846,7 @@ UserDomain = namedtuple('UserDomain', 'domain_name project_name')
 UserDomain.__new__.__defaults__ = ('', '')
 
 
-class UserDomainsResource(CorsResourceMixin, Resource):
+class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
     domain_name = fields.CharField(attribute='domain_name')
     project_name = fields.CharField(attribute='project_name')
 
@@ -897,7 +896,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         return results
 
 
-class IdentityResource(CorsResourceMixin, Resource):
+class IdentityResource(ApiVersioningMixin, CorsResourceMixin, Resource):
     id = fields.CharField(attribute='get_id', readonly=True)
     username = fields.CharField(attribute='username', readonly=True)
     first_name = fields.CharField(attribute='first_name', readonly=True)
@@ -921,7 +920,7 @@ Form = namedtuple('Form', 'form_xmlns form_name')
 Form.__new__.__defaults__ = ('', '')
 
 
-class DomainForms(Resource):
+class DomainForms(ApiVersioningMixin, Resource):
     """
     Returns: list of forms for a given domain with form name formatted for display in Zapier
     """
@@ -961,7 +960,7 @@ CaseType = namedtuple('CaseType', 'case_type placeholder')
 CaseType.__new__.__defaults__ = ('', '')
 
 
-class DomainCases(Resource):
+class DomainCases(ApiVersioningMixin, Resource):
     """
     Returns: list of case types for a domain
 
@@ -990,7 +989,7 @@ UserInfo = namedtuple('UserInfo', 'user_id user_name')
 UserInfo.__new__.__defaults__ = ('', '')
 
 
-class DomainUsernames(Resource):
+class DomainUsernames(ApiVersioningMixin, Resource):
     """
     Returns: list of usernames for a domain.
     """
@@ -1030,6 +1029,7 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
                         **response_kwargs):
         data['domain'] = request.domain
         data['api_path'] = request.path
+        data['api_version'] = self.api_name
         # Avoids storing these properties on the class instance which protects against the possibility of
         # concurrent requests making conflicting updates to properties
         data['config_id'] = request.resolver_match.kwargs['config_id']
@@ -1083,10 +1083,8 @@ class ODataCaseResource(BaseODataResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed", self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/feed", self.wrap_view('dispatch_list')),
         ]
 
 
@@ -1124,10 +1122,8 @@ class ODataFormResource(BaseODataResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed", self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/feed", self.wrap_view('dispatch_list')),
         ]
 
 
@@ -1365,7 +1361,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 @require_can_edit_data
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
-def get_ucr_data(request, domain):
+def get_ucr_data(request, domain, api_version):
     if not toggles.EXPORT_DATA_SOURCE_DATA.enabled(domain):
         return HttpResponseForbidden()
     try:

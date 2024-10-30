@@ -27,7 +27,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.reminders.models import EmailUsage
+from corehq.apps.sms.api import send_message_to_verified_number
 from corehq.apps.sms.models import (
+    ConnectMessagingNumber,
     Email,
     MessagingEvent,
     PhoneBlacklist,
@@ -770,7 +772,7 @@ class EmailImage(object):
 
 
 class ConnectMessageContent(Content):
-    message = None
+    message = old_jsonfield.JSONField(default=dict)
 
     def create_copy(self):
         return ConnectMessageContent(
@@ -793,10 +795,10 @@ class ConnectMessageContent(Content):
         )
         connect_number = ConnectMessagingNumber(recipient)
 
-        send_message_to_verified_number(recipient, message, logged_subevent=logged_subevent)
+        send_message_to_verified_number(connect_number, message, logged_subevent=logged_subevent)
 
 class ConnectMessageSurveyContent(Content):
-    message = None
+    message = old_jsonfield.JSONField(default=dict)
 
     def create_copy(self):
         return ConnectMessageSurveyContent(

@@ -396,7 +396,6 @@ HQ_APPS = (
     'custom.common',
 
     'custom.hki',
-    'custom.champ',
     'custom.covid',
     'custom.inddex',
     'custom.nutrition_project',
@@ -1145,6 +1144,7 @@ COMMCARE_ANALYTICS_HOST = ""
 FCM_CREDS = None
 
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
+CONNECTID_CLIENT_ID = ''
 CONNECTID_SECRET_KEY = ''
 CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
 CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
@@ -1930,8 +1930,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
-    os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
-    os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
@@ -1964,7 +1962,6 @@ DOMAIN_MODULE_MAP = {
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
 
-    'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',  # Required by self-hosted ONSE-ISS project
 
     # vectorlink domains

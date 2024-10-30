@@ -21,7 +21,7 @@ from corehq.apps.users.audit.change_messages import (
 )
 from corehq.apps.users.models import CommCareUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.users.views.mobile import UserFieldsView
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 
 
@@ -141,6 +141,10 @@ class TestUpdateUserMethods(TestCase):
         self.addCleanup(group.delete)
         with self.assertRaises(ValidationError):
             update(self.user, 'groups', [group._id])
+
+    def test_update_groups_with_fake_group_id_raises_exception(self):
+        with self.assertRaises(ValidationError):
+            update(self.user, 'groups', ["fake_id"])
 
     def test_update_unknown_field_raises_exception(self):
         with self.assertRaises(UpdateUserException) as cm:

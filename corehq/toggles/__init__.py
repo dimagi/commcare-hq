@@ -314,14 +314,41 @@ def was_user_created_after(username, checkpoint):
     )
 
 
-def deterministic_random(input_string):
+class FrozenPrivilegeToggle(StaticToggle):
     """
-    Returns a deterministically random number between 0 and 1 based on the
-    value of the string. The same input should always produce the same output.
+    A special toggle to represent a legacy toggle that should't be
+    edited via the UI or the code and its new associated privilege.
+
+    This can be used when releasing a domain-only Toggle to general
+    availability as a new paid privilege to support domains that
+    may not have the privilege but had the toggle enabled historically.
+
+    To do this, simply change the toggle type to FrozenPrivilegeToggle
+    and pass the privilege as the first argument to it.
+
+    For e.g.
+    If a toggle were defined as below
+        MY_DOMAIN_TOGGLE = StaticToggle(
+            'toggle_name',
+            'Title',
+            TAG_PRODUCT,
+            namespaces=[NAMESPACE_DOMAIN],
+            description='Description'
+        )
+    It can be converted to a FrozenPrivilegeToggle by defining.
+        MY_DOMAIN_TOGGLE = FrozenPrivilegeToggle(
+            privilege_name
+            'toggle_name',
+            'Title',
+            TAG_PRODUCT,
+            namespaces=[NAMESPACE_DOMAIN],
+            description='Description'
+        )
     """
-    if isinstance(input_string, str):
-        input_string = input_string.encode('utf-8')
-    return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
+
+    def __init__(self, privilege_slug, *args, **kwargs):
+        self.privilege_slug = privilege_slug
+        super(FrozenPrivilegeToggle, self).__init__(*args, **kwargs)
 
 
 class PredictablyRandomToggle(StaticToggle):
@@ -397,6 +424,16 @@ class PredictablyRandomToggle(StaticToggle):
             return True
         else:
             return super().enabled(item, namespace)
+
+
+def deterministic_random(input_string):
+    """
+    Returns a deterministically random number between 0 and 1 based on the
+    value of the string. The same input should always produce the same output.
+    """
+    if isinstance(input_string, str):
+        input_string = input_string.encode('utf-8')
+    return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
 
 class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
@@ -768,13 +805,6 @@ BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
     "Enables biometric integration (simprints) features.",
     TAG_PRODUCT,
-    [NAMESPACE_DOMAIN]
-)
-
-ADD_USERS_FROM_LOCATION = StaticToggle(
-    'add_users_from_location',
-    "Allow users to add new mobile workers from the locations page",
-    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1606,6 +1636,15 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
+
+
+EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
+    'export_apps_use_elasticsearch',
+    'Use elasticsearch when fetching apps for exports',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
@@ -2440,10 +2479,9 @@ GOOGLE_SHEETS_INTEGRATION = StaticToggle(
 )
 
 APP_DEPENDENCIES = StaticToggle(
-    'app-dependencies',
-    'Set Android app dependencies that must be installed before using a '
-    'CommCare app',
-    TAG_SOLUTIONS_LIMITED,
+    slug='app-dependencies',
+    label='Set Android app dependencies that must be installed before using a CommCare app',
+    tag=TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Prevents mobile workers from using a CommCare app until the Android apps
@@ -2526,6 +2564,13 @@ RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
     'Limit which user profiles a web user can assign to other web users and mobile workers.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
+    'web_user_invite_additional_fields',
+    'USH: Enable additional fields in web user invite form for enhanced user details',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
@@ -2653,43 +2698,6 @@ RESTORE_ACCESSIBLE_REPORTS_ONLY = StaticToggle(
     based on which apps the user can access.
     """
 )
-
-
-class FrozenPrivilegeToggle(StaticToggle):
-    """
-    A special toggle to represent a legacy toggle that should't be
-    edited via the UI or the code and its new associated privilege.
-
-    This can be used when releasing a domain-only Toggle to general
-    availability as a new paid privilege to support domains that
-    may not have the privilege but had the toggle enabled historically.
-
-    To do this, simply change the toggle type to FrozenPrivilegeToggle
-    and pass the privilege as the first argument to it.
-
-    For e.g.
-    If a toggle were defined as below
-        MY_DOMAIN_TOGGLE = StaticToggle(
-            'toggle_name',
-            'Title',
-            TAG_PRODUCT,
-            namespaces=[NAMESPACE_DOMAIN],
-            description='Description'
-        )
-    It can be converted to a FrozenPrivilegeToggle by defining.
-        MY_DOMAIN_TOGGLE = FrozenPrivilegeToggle(
-            privilege_name
-            'toggle_name',
-            'Title',
-            TAG_PRODUCT,
-            namespaces=[NAMESPACE_DOMAIN],
-            description='Description'
-        )
-    """
-
-    def __init__(self, privilege_slug, *args, **kwargs):
-        self.privilege_slug = privilege_slug
-        super(FrozenPrivilegeToggle, self).__init__(*args, **kwargs)
 
 
 def frozen_toggles_by_privilege():

@@ -21,8 +21,9 @@ from corehq.apps.sms.mixin import (
     PhoneNumberInUseException,
     apply_leniency,
 )
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 from corehq.form_processor.models import CommCareCase
+from corehq.messaging.smsbackends.connectid.backend import ConnectBackend
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.util.quickcache import quickcache
 
@@ -625,15 +626,20 @@ class ConnectMessagingNumber(AbstractNumber):
 
     @property
     def user_link(self):
-        return ConnectIDUserLink.objects.get(commcare_username=self.user.username)
+        django_user = self.user.get_django_user()
+        return ConnectIDUserLink.objects.get(commcare_user=django_user)
 
     @property
     def backend(self):
-        return None
+        return ConnectBackend()
 
     @property
     def owner_id(self):
         return self.user._id
+
+    @property
+    def owner(self):
+        return self.user
 
     @property
     def domain(self):

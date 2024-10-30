@@ -4,7 +4,9 @@ hqDefine("data_interfaces/js/auto_update_rules", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
-    'hqwebapp/js/components.ko', // for pagination and search box
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
+    'commcarehq_b3',
 ], function (
     $,
     ko,

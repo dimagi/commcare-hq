@@ -2,10 +2,12 @@ import io
 import json
 import re
 import time
+from urllib.parse import quote_plus, unquote_plus
 
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
+from django.db.models import F
 from django.http import (
     Http404,
     HttpResponse,
@@ -21,9 +23,8 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, override
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import TemplateView, View
+from django.views.generic import TemplateView
 
-from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
@@ -32,7 +33,7 @@ from memoized import memoized
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_site_domain
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -62,7 +63,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
-from corehq.apps.domain.utils import guess_domain_language_for_sms
+from corehq.apps.domain.utils import guess_domain_language_for_sms, encrypt_account_confirmation_info
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
 from corehq.apps.events.models import (
@@ -87,7 +88,6 @@ from corehq.apps.registration.forms import (
     MobileWorkerAccountConfirmationForm,
 )
 from corehq.apps.sms.api import send_sms
-from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
@@ -108,7 +108,6 @@ from corehq.apps.users.decorators import (
 )
 from corehq.apps.users.exceptions import InvalidRequestException, ModifyUserStatusException
 from corehq.apps.users.forms import (
-    CommCareAccountForm,
     CommCareUserFormSet,
     CommtrackUserForm,
     ConfirmExtraUserChargesForm,
@@ -160,6 +159,7 @@ from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.metrics import metrics_counter
+from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
@@ -167,7 +167,7 @@ from corehq.util.workbook_json.excel import (
 )
 
 from ..utils import log_user_groups_change
-from .custom_data_fields import UserFieldsView
+from .custom_data_fields import CommcareUserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -711,19 +711,18 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @memoized
     def custom_data(self):
         return CustomDataEditor(
-            field_view=UserFieldsView,
+            field_view=CommcareUserFieldsView,
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
-            required_only=True,
             ko_model="custom_fields",
             request_user=self.couch_user,
         )
 
     @property
     def two_stage_user_confirmation(self):
-        return toggles.TWO_STAGE_USER_PROVISIONING.enabled(
-            self.domain
-        ) or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
+        return (toggles.TWO_STAGE_USER_PROVISIONING.enabled(self.domain)
+            or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
+            or toggles.COMMCARE_CONNECT.enabled(self.domain))
 
     @property
     def page_context(self):
@@ -799,10 +798,15 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
+
         if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
+        if self.new_mobile_worker_form.cleaned_data['account_invite_by_cid']:
+            phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
+            couch_user.set_default_phone_number(phone_number)
+            send_connectid_invite_sms(couch_user)
 
         plan_limit, user_count = Subscription.get_plan_and_user_count_by_domain(self.domain)
         check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
@@ -824,14 +828,19 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
-        password = self.new_mobile_worker_form.cleaned_data['new_password']
+        if self.new_mobile_worker_form.cleaned_data['account_invite_by_cid']:
+            # Passwordless login using ConnectID
+            password = ''
+        else:
+            password = self.new_mobile_worker_form.cleaned_data['new_password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
         email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
         is_account_confirmed = not (
             self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
-            or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
+            or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']
+            or self.new_mobile_worker_form.cleaned_data['account_invite_by_cid'])
 
         role_id = UserRole.commcare_user_default(self.domain).get_id
         commcare_user = CommCareUser.create(
@@ -881,6 +890,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
                 'force_account_confirmation_by_sms': user_data.get('force_account_confirmation_by_sms'),
+                'account_invite_by_cid': user_data.get('account_invite_by_cid'),
                 'phone_number': user_data.get('phone_number'),
                 'deactivate_after_date': user_data.get('deactivate_after_date'),
                 'domain': self.domain,
@@ -919,6 +929,32 @@ def _modify_user_status(request, domain, user_id, is_active):
     log_user_change(by_domain=request.domain, for_domain=user.domain,
                     couch_user=user, changed_by_user=request.couch_user,
                     changed_via=USER_CHANGE_VIA_WEB, fields_changed={'is_active': user.is_active})
+    return JsonResponse({
+        'success': True,
+    })
+
+
+@require_can_edit_commcare_users
+@require_POST
+@location_safe
+def activate_connectid_link(request, domain, user_id):
+    return _toggle_connectid_link(request, domain, user_id, True)
+
+
+@require_can_edit_commcare_users
+@require_POST
+@location_safe
+def deactivate_connectid_link(request, domain, user_id):
+    return _toggle_connectid_link(request, domain, user_id, False)
+
+
+def _toggle_connectid_link(request, domain, user_id, is_active):
+    if not toggles.COMMCARE_CONNECT.enabled(domain):
+        return HttpResponseBadRequest()
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    connect_link = ConnectIDUserLink.objects.get(commcare_user=user.get_django_user())
+    connect_link.is_active = is_active
+    connect_link.save()
     return JsonResponse({
         'success': True,
     })
@@ -981,6 +1017,22 @@ def paginate_mobile_workers(request, domain):
         else:
             return _('Pending Confirmation')
 
+    def get_connect_links_by_username(users):
+        if not toggles.COMMCARE_CONNECT.enabled(domain):
+            return {}
+        usernames = [
+            f"{u['base_username']}@{domain}.commcarehq.org"
+            for u in users
+        ]
+        links = ConnectIDUserLink.objects.filter(
+            commcare_user__username__in=usernames
+        ).annotate(commcare_username=F("commcare_user__username")).all()
+        return {
+            link.commcare_username.split("@")[0]: link
+            for link in links
+        }
+
+    connect_links = get_connect_links_by_username(users)
     for user in users:
         date_registered = user.pop('created_on', '')
         if date_registered:
@@ -988,6 +1040,8 @@ def paginate_mobile_workers(request, domain):
         # make sure these are always set and default to true
         user['is_active'] = user.get('is_active', True)
         user['is_account_confirmed'] = user.get('is_account_confirmed', True)
+        connect_link = connect_links.get(user.get('base_username'))
+        user['is_connect_link_active'] = connect_link.is_active if connect_link else None
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
@@ -999,91 +1053,6 @@ def paginate_mobile_workers(request, domain):
         'users': users,
         'total': users_data.total,
     })
-
-
-class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
-    template_name = "users/new_mobile_worker_modal.html"
-    urlname = 'new_mobile_worker_modal'
-
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, request, *args, **kwargs):
-        if not can_add_extra_mobile_workers(request):
-            raise PermissionDenied()
-        return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
-
-    def render_form(self, status):
-        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
-            return self.render_json_response({
-                "status": "failure",
-                "form_html": "<div class='alert alert-danger'>{}</div>".format(_("""
-                    Cannot add new worker due to usage of user field profiles.
-                    Please add your new worker from the mobile workers page.
-                """)),
-            })
-        return self.render_json_response({
-            "status": status,
-            "form_html": render_to_string(self.template_name, {
-                'form': self.new_commcare_user_form,
-                'data_fields_form': self.custom_data.form,
-            }, request=self.request)
-        })
-
-    def get(self, request, *args, **kwargs):
-        return self.render_form("success")
-
-    @property
-    @memoized
-    def custom_data(self):
-        return CustomDataEditor(
-            field_view=UserFieldsView,
-            domain=self.domain,
-            post_dict=self.request.POST if self.request.method == "POST" else None,
-            request_user=self.request.couch_user,
-        )
-
-    @property
-    @memoized
-    def new_commcare_user_form(self):
-        if self.request.method == "POST":
-            data = self.request.POST.dict()
-            form = CommCareAccountForm(data, domain=self.domain)
-        else:
-            form = CommCareAccountForm(domain=self.domain)
-        return form
-
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    def post(self, request, *args, **kwargs):
-        if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
-            username = self.new_commcare_user_form.cleaned_data['username']
-            password = self.new_commcare_user_form.cleaned_data['password_1']
-            phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
-
-            user = CommCareUser.create(
-                self.domain,
-                username,
-                password,
-                created_by=request.couch_user,
-                created_via=USER_CHANGE_VIA_WEB,
-                phone_number=phone_number,
-                device_id="Generated from HQ",
-                user_data=self.custom_data.get_data_to_save(),
-            )
-
-            if 'location_id' in request.GET:
-                try:
-                    loc = SQLLocation.objects.get(domain=self.domain,
-                                                  location_id=request.GET['location_id'])
-                except SQLLocation.DoesNotExist:
-                    raise Http404()
-                user.set_location(loc)
-
-            if phone_number:
-                initiate_sms_verification_workflow(user, phone_number)
-
-            user_json = {'user_id': user._id, 'text': user.username_in_report}
-            return self.render_json_response({"status": "success",
-                                              "user": user_json})
-        return self.render_form("failure")
 
 
 def get_user_upload_context(domain, request_params, download_url, adjective, plural_noun):
@@ -1684,6 +1653,74 @@ def link_connectid_user(request, domain):
     else:
         return HttpResponse()
 
+
+@require_can_edit_commcare_users
+@location_safe
+def send_connectid_invite(request, domain, user_id):
+    # Currently same as what send_confirmation_sms does
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if user.domain != domain:
+        return HttpResponse(status=400)
+    is_sent = send_connectid_invite_sms(user)
+    if not is_sent:
+        return HttpResponse(status=400)
+    return HttpResponse(status=200)
+
+
+def send_connectid_invite_sms(user):
+    if user.is_account_confirmed or not user.is_commcare_user():
+        messages.error(request, "The user is already confirmed or is not a mobile user")
+        return False
+
+    invite_code = encrypt_account_confirmation_info(user)
+    deeplink = f"connect://hq_invite/{get_site_domain()}/a/{quote_plus(user.domain)}/{quote_plus(invite_code)}/{quote_plus(user.raw_username)}/"
+    text_content = f"""
+    You are invited to join a CommCare project ({user.domain})
+    Please click on {deeplink} to join using your ConnectID
+    account.
+
+    Once you confirm, you will be able to login using your
+    ConnectID account. Your username is {(user.raw_username)}
+
+    Thanks.
+    -The CommCare HQ team.
+    """
+
+    send_sms(
+        domain=user.domain,
+        contact=None,
+        phone_number=user.default_phone_number,
+        text=text_content
+    )
+    return True
+
+
+@csrf_exempt
+@require_POST
+def confirm_connectid_user(request, domain):
+    try:
+        token = request.POST["token"]
+        invite_code = request.POST["invite_code"]
+        invite = json.loads(b64_aes_decrypt(unquote_plus(invite_code)))
+        user_id = invite['user_id']
+        expiry_time = invite['time']
+    except ValueError:
+        return HttpResponseBadRequest("Invalid Request")
+
+    # Expiry limit is 3 days
+    if float(int(time.time()) - expiry_time) > 3 * 24 * 60 * 60:
+        return JsonResponse(data={"error": "Invite has expired"})
+
+    user = CommCareUser.get(user_id)
+    if user.domain != domain:
+        return HttpResponseBadRequest("Invalid Request")
+
+    connectid_username = get_connectid_userinfo(token)
+    ConnectIDUserLink.objects.get_or_create(
+        connectid_username=connectid_username, commcare_user=user.get_django_user(), domain=domain
+    )
+    user.confirm_account(password=None)
+    return json_response({'success': True})
 
 
 @waf_allow('XSS_BODY')

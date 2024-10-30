@@ -21,6 +21,11 @@ class Migration(migrations.Migration):
             name="messaging_consent",
             field=models.BooleanField(default=False),
         ),
+        migrations.AddField(
+            model_name='connectiduserlink',
+            name='is_active',
+            field=models.BooleanField(default=True),
+        ),
         migrations.CreateModel(
             name="ConnectIDMessagingKey",
             fields=[

@@ -8,10 +8,12 @@ from django.conf import settings
 from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 
 class ConnectBackend:
+    couch_id = "connectid"
+
     def send(self, message):
-        user = CouchUser.get_by_user_id(message.couch_recipient).django_user
+        user = CouchUser.get_by_user_id(message.couch_recipient).get_django_user()
         user_link = ConnectIDUserLink.objects.get(commcare_user=user)
-        key = base64.b64decode(user_link.conectidmessagingkey_set.first())
+        key = base64.b64decode(user_link.connectidmessagingkey_set.first().key)
         cipher = AES.new(key, AES.MODE_GCM)
         data, tag = cipher.encrypt_and_digest(message.text.encode("utf-8"))
         content = {
@@ -22,10 +24,11 @@ class ConnectBackend:
         requests.post(
             settings.CONNECTID_MESSAGE_URL,
             data={
-                "channel_id": user_link.channel_id,
-                "text": content,
+                "channel": user_link.channel_id,
+                "content": content,
                 "message_id": uuid4(),
-            }
+            },
+            auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
 
     def create_channel(self, user):
@@ -33,9 +36,10 @@ class ConnectBackend:
         response = requests.post(
             settings.CONNECTID_CHANNEL_URL,
             data={
-                "connectid": connectid_username
+                "connectid": user_link.connectid_username,
                 "channel_source": user_link.domain,
-            }
+            },
+            auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
         user_link.channel_id = response.json()["channel_id"]
         user_link.save()
