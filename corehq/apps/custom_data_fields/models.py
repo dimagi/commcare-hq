@@ -74,8 +74,8 @@ class Field(models.Model):
             return _("'{value}' is not a valid match for {label}").format(
                 value=value, label=self.label)
 
-    def validate_required(self, value):
-        if self.is_required and not value:
+    def validate_required(self, value, field_view):
+        if field_view.is_field_required(self) and not value:
             return _(
                 "{label} is required."
             ).format(
@@ -139,7 +139,7 @@ class CustomDataFieldsDefinition(models.Model):
     def get_profiles(self):
         return list(CustomDataFieldsProfile.objects.filter(definition=self).order_by(Lower('name')))
 
-    def get_validator(self):
+    def get_validator(self, field_view):
         """
         Returns a validator to be used in bulk import
         """
@@ -151,7 +151,7 @@ class CustomDataFieldsDefinition(models.Model):
             fields = [f for f in self.get_fields() if f.slug not in skip_fields]
             for field in fields:
                 value = custom_fields.get(field.slug, None)
-                errors.append(field.validate_required(value))
+                errors.append(field.validate_required(value, field_view))
                 errors.append(field.validate_choices(value))
                 errors.append(field.validate_regex(value))
             return ' '.join(filter(None, errors))
