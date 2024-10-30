@@ -3,15 +3,23 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
+
 from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
 
 from corehq import feature_previews, privileges, toggles
-from corehq.apps.accounting.models import BillingAccount, Subscription, SubscriptionType
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    Subscription,
+    SubscriptionType,
+)
 from corehq.apps.accounting.utils import domain_has_privilege, get_privileges
-from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name
-from corehq.apps.hqwebapp.utils import bootstrap
+from corehq.apps.analytics.utils.hubspot import (
+    is_hubspot_js_allowed_for_request,
+)
+from corehq.apps.hqwebapp.utils import bootstrap, get_environment_friendly_name
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import HqPermissions
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -200,6 +208,23 @@ def emails(request=None):
         'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
         'PRIVACY_EMAIL': settings.PRIVACY_EMAIL,
         'INVOICING_CONTACT_EMAIL': settings.INVOICING_CONTACT_EMAIL,
+    }
+
+
+def user_permissions(request):
+    """
+    Adds the permissions for the currently logged in user to initial page data.
+    Right now this is only used to determine if the user has the ability to view the apps.
+    Which is used by AppCues to determine whether to show the app cues modal.
+    """
+    has_app_view_permission = False
+    if getattr(request, 'project', None) and getattr(request, 'couch_user', None):
+        domain = request.project.name
+        has_app_view_permission = request.couch_user.has_permission(
+            domain, get_permission_name(HqPermissions.view_apps)
+        )
+    return {
+        'has_app_view_permission': has_app_view_permission
     }
 
 
