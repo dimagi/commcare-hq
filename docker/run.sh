@@ -55,9 +55,7 @@ function setup {
             -dname 'CN=Foo, OU=Bar, O=Bizzle, L=Bazzle, ST=Bingle, C=US'
     fi
 
-    if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
-        yarn install --progress=false --frozen-lockfile
-    fi
+    yarn install --progress=false --frozen-lockfile
 }
 
 function python_preheat {
