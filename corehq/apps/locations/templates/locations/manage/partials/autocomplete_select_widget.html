@@ -1,6 +1,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-<select id="{{ id }}" class="locations-widget-autocomplete form-control" name="{{ name }}" value="{{ value }}" style="width: 30em;"
+<!--
+    Both B3 form-control and B5 form-select are used to avoid needing to split this template.
+    When USE_BOOTSTRAP5 is removed, form-control can be removed.
+-->
+<select id="{{ id }}" class="locations-widget-autocomplete form-control form-select" name="{{ name }}" value="{{ value }}" style="width: 30em;"
   {% if attrs.disabled %}
         disabled="disabled"
   {% endif %}
