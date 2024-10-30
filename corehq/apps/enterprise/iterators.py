@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from django.utils.translation import gettext as _
 from corehq.apps.es import filters
+from corehq.apps.es.utils import es_format_datetime
 from corehq.apps.es.forms import FormES
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
@@ -178,19 +179,19 @@ def create_domain_query(domain, start_date, end_date, last_time, last_id, limit=
         query = query.size(limit)
 
     query.es_query['sort'] = [
-        {'received_on': {'order': 'desc'}},
-        {'form.meta.instanceID': 'asc'}
+        {'inserted_at': {'order': 'desc'}},
+        {'doc_id': 'asc'}
     ]
 
     if last_id:
         query = query.filter(filters.OR(
             filters.AND(
-                filters.term('received_on', last_time),
-                filters.range_filter('form.meta.instanceID', gt=last_id)
+                filters.term('inserted_at', es_format_datetime(last_time)),
+                filters.range_filter('doc_id', gt=last_id)
             ),
-            filters.range_filter('received_on', lt=last_time)
+            filters.date_range('inserted_at', lt=last_time)
         ))
     else:
-        query = query.submitted(lte=last_time)
+        query = query.inserted(lte=last_time)
 
     return query
