@@ -59,8 +59,6 @@ from .views.mobile.users import (
     UploadCommCareUsers,
     UserUploadStatusView,
     activate_commcare_user,
-    connectid_messaging_key,
-    activate_connectid_link,
     count_commcare_users,
     count_web_users,
     deactivate_commcare_user,
@@ -73,7 +71,6 @@ from .views.mobile.users import (
     reset_demo_user_restore,
     restore_commcare_user,
     toggle_demo_mode,
-    update_connectid_messaging_consent,
     update_user_groups,
     user_download_job_poll,
     CommCareUserConfirmAccountView,
@@ -271,16 +268,6 @@ urlpatterns = [
         r'^commcare/link_connectid_user/$',
         link_connectid_user,
         name='link_connectid_user'
-    ),
-    url(
-        r'^commcare/connectid_messaging_key/$',
-        connectid_messaging_key,
-        name='connectid_messaging_key',
-    ),
-    url(
-        r'^commcare/update_connectid_messaging_consent/$',
-        update_connectid_messaging_consent,
-        name='update_connectid_messaging_consent',
     ),
 ] + [
     url(r'^groups/$', GroupsListView.as_view(), name=GroupsListView.urlname),

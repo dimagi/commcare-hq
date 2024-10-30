@@ -2753,3 +2753,5 @@ class Email(models.Model):
 class ConnectMessage(Log):
     date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)
     text = models.CharField(max_length=300)
+    received_on = models.DateTimeField(null=True, blank=True)
+    message_id = models.UUIDField(null=True)
