@@ -266,7 +266,7 @@ class TestProfileRequiredForUserType(FieldsViewMixin, TestCase):
         profiles[0].save()
         req_for = CustomDataFieldsProfile.objects.get(name='profile').definition.profile_required_for_user_type
 
-        self.assertIsNone(req_for)
+        self.assertEqual([], req_for)
 
     def test_update_profile_required(self):
         fields = [self.create_field(slug='one', is_required=True)]
@@ -284,6 +284,11 @@ class TestProfileRequiredForUserType(FieldsViewMixin, TestCase):
         updated = CustomDataFieldsProfile.objects.get(name='profile').definition.profile_required_for_user_type
 
         self.assertEqual(updated, UserFieldsView.COMMCARE_USER)
+
+        view.update_profile_required(self.BOTH)
+        updated = CustomDataFieldsProfile.objects.get(name='profile').definition.profile_required_for_user_type
+
+        self.assertEqual(updated, self.BOTH)
 
 
 class TestCustomDataFieldForm(SimpleTestCase):
