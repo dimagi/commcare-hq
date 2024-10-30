@@ -21,6 +21,25 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     _show_profiles = True
     page_title = _('Edit User Fields')
 
+    user_type = None
+    WEB_USER = "web_user"
+    COMMCARE_USER = "commcare_user"
+    required_for_options = [
+        {
+            "text": _("Web Users"),
+            "value": [WEB_USER],
+        },
+        {
+            "text": _("Mobile Workers"),
+            "value": [COMMCARE_USER],
+            "isDefault": True,
+        },
+        {
+            "text": _("Both"),
+            "value": [WEB_USER, COMMCARE_USER],
+        }
+    ]
+
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(UserFieldsView, self).dispatch(request, *args, **kwargs)
@@ -73,6 +92,23 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         return {
             'can_edit_original_profile': can_edit_original_profile,
             'custom_fields_slugs': [f.slug for f in custom_data_editor.fields],
+            'required_custom_fields_slugs': [
+                f.slug for f in custom_data_editor.fields if cls.is_field_required(f)
+            ],
             'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
             'custom_fields_profile_slug': PROFILE_SLUG,
         }
+
+    @classmethod
+    def is_field_required(cls, field):
+        if cls.user_type is None:
+            raise NotImplementedError("user_type must be defined in child classes")
+        return field.is_required and cls.user_type in field.required_for
+
+
+class WebUserFieldsView(UserFieldsView):
+    user_type = UserFieldsView.WEB_USER
+
+
+class CommcareUserFieldsView(UserFieldsView):
+    user_type = UserFieldsView.COMMCARE_USER

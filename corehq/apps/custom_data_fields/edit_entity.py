@@ -109,9 +109,10 @@ class CustomDataEditor(object):
 
     def _make_field(self, field):
         safe_label = escape(field.label)
+        is_required_field = self.field_view.is_field_required(field)
         if field.regex:
             validator = RegexValidator(field.regex, field.regex_msg)
-            return forms.CharField(label=safe_label, required=field.is_required,
+            return forms.CharField(label=safe_label, required=is_required_field,
                                    validators=[validator])
         elif field.choices:
             # If form uses knockout, knockout must have control over the select2.
@@ -129,12 +130,12 @@ class CustomDataEditor(object):
 
             return forms.ChoiceField(
                 label=safe_label,
-                required=field.is_required,
+                required=is_required_field,
                 choices=placeholder_choices + [(c, c) for c in field.choices],
                 widget=forms.Select(attrs=attrs)
             )
         else:
-            return forms.CharField(label=safe_label, required=field.is_required)
+            return forms.CharField(label=safe_label, required=is_required_field)
 
     def make_fieldsets(self, form_fields, is_post, field_name_includes_prefix=False):
         if self.ko_model:
@@ -143,8 +144,8 @@ class CustomDataEditor(object):
                 data_bind_field_name = (
                     without_prefix(field_name, self.prefix) if field_name_includes_prefix else field_name)
                 data_binds = [
-                    f"value: {self.ko_model}.{data_bind_field_name}.value",
-                    f"disable: {self.ko_model}.{data_bind_field_name}.disable",
+                    f"value: {self.ko_model}['{data_bind_field_name}'].value",
+                    f"disable: {self.ko_model}['{data_bind_field_name}'].disable",
                 ]
                 if hasattr(field, 'choices') or without_prefix(field_name, self.prefix) == PROFILE_SLUG:
                     data_binds.append("select2: " + json.dumps([
@@ -171,15 +172,19 @@ class CustomDataEditor(object):
     @property
     @memoized
     def fields(self):
-        return list(self.model.get_fields(required_only=self.required_only))
+        field_filter_config = CustomDataFieldsDefinition.FieldFilterConfig(
+            required_only=self.required_only,
+            is_required_check_func=self.field_view.is_field_required
+        )
+        return list(self.model.get_fields(field_filter_config=field_filter_config))
 
     def init_form(self, post_dict=None):
         form_fields = OrderedDict()
 
-        from corehq.apps.users.views.mobile import UserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         has_profile_privilege_and_is_user_fields_view = (
             domain_has_privilege(self.domain, privileges.APP_USER_PROFILES)
-            and self.field_view is UserFieldsView
+            and issubclass(self.field_view, UserFieldsView)
         )
         if has_profile_privilege_and_is_user_fields_view:
             original_profile_id = None
