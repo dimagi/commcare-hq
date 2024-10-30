@@ -548,7 +548,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                 initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
                 mapModel.mapInstance.on('load', () => {
-                    polygonFilterInstance = new models.PolygonFilter(mapModel, true, false);
+                    polygonFilterInstance = new models.PolygonFilter(mapModel, true, false, true);
                     polygonFilterInstance.loadPolygons(initialPageData.get('saved_polygons'));
                     $("#polygon-filters").koApplyBindings(polygonFilterInstance);
                 });

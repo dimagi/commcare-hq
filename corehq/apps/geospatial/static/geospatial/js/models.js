@@ -548,7 +548,7 @@ hqDefine('geospatial/js/models', [
         };
     };
 
-    var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter) {
+    var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter, requiresPageRefresh) {
         var self = this;
 
         self.mapObj = mapObj;
@@ -565,6 +565,7 @@ hqDefine('geospatial/js/models', [
 
         self.polygons = {};
         self.shouldRefreshPage = ko.observable(false);
+        self.requiresPageRefresh = ko.observable(requiresPageRefresh);  // If true then actions such as adding or moving a polygon requires a page refresh
         self.hasUrlError = ko.observable(false);
 
         self.savedPolygons = ko.observableArray([]);
@@ -600,7 +601,7 @@ hqDefine('geospatial/js/models', [
             } else {
                 success = utils.clearQueryParam(FEATURE_QUERY_PARAM);
             }
-            self.shouldRefreshPage(success);
+            self.shouldRefreshPage(success && self.requiresPageRefresh());
             self.hasUrlError(!success);
         }
 
@@ -618,7 +619,7 @@ hqDefine('geospatial/js/models', [
             } else {
                 success = utils.clearQueryParam(SELECTED_FEATURE_ID_QUERY_PARAM);
             }
-            self.shouldRefreshPage(success);
+            self.shouldRefreshPage(success && self.requiresPageRefresh());
             self.hasUrlError(!success);
         }
 
@@ -808,7 +809,7 @@ hqDefine('geospatial/js/models', [
                         );
                         // redraw using mapControlsModelInstance
                         self.selectedSavedPolygonId(ret.id);
-                        self.shouldRefreshPage(true);
+                        self.shouldRefreshPage(self.requiresPageRefresh());
                     },
                     error: function (response) {
                         const responseText = response.responseText;
