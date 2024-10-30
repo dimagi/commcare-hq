@@ -44,6 +44,7 @@ def is_system_key(slug):
 class Field(models.Model):
     slug = models.CharField(max_length=127)
     is_required = models.BooleanField(default=False)
+    required_for = models.JSONField(default=list)
     label = models.CharField(max_length=255)
     choices = models.JSONField(default=list, null=True)
     regex = models.CharField(max_length=127, null=True)
@@ -73,8 +74,8 @@ class Field(models.Model):
             return _("'{value}' is not a valid match for {label}").format(
                 value=value, label=self.label)
 
-    def validate_required(self, value):
-        if self.is_required and not value:
+    def validate_required(self, value, field_view):
+        if field_view.is_field_required(self) and not value:
             return _(
                 "{label} is required."
             ).format(
@@ -110,11 +111,18 @@ class CustomDataFieldsDefinition(models.Model):
             new.save()
             return new
 
+    class FieldFilterConfig:
+        def __init__(self, required_only=False, is_required_check_func=None):
+            self.required_only = required_only
+            self.is_required_check_func = is_required_check_func or (lambda field: field.is_required)
+
     # Gets ordered, and optionally filtered, fields
-    def get_fields(self, required_only=False, include_system=True):
+    def get_fields(self, field_filter_config: FieldFilterConfig = None, include_system=True):
         def _is_match(field):
             return not (
-                (required_only and not field.is_required)
+                (field_filter_config
+                 and field_filter_config.required_only
+                 and not field_filter_config.is_required_check_func(field))
                 or (not include_system and is_system_key(field.slug))
             )
         order = self.get_field_order()
@@ -130,7 +138,7 @@ class CustomDataFieldsDefinition(models.Model):
     def get_profiles(self):
         return list(CustomDataFieldsProfile.objects.filter(definition=self).order_by(Lower('name')))
 
-    def get_validator(self):
+    def get_validator(self, field_view):
         """
         Returns a validator to be used in bulk import
         """
@@ -142,7 +150,7 @@ class CustomDataFieldsDefinition(models.Model):
             fields = [f for f in self.get_fields() if f.slug not in skip_fields]
             for field in fields:
                 value = custom_fields.get(field.slug, None)
-                errors.append(field.validate_required(value))
+                errors.append(field.validate_required(value, field_view))
                 errors.append(field.validate_choices(value))
                 errors.append(field.validate_regex(value))
             return ' '.join(filter(None, errors))

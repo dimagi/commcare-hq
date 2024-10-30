@@ -534,6 +534,18 @@ hqDefine('geospatial/js/models', [
             });
             return layerRemoved;
         };
+
+        self.hasSelectedUsers = function () {
+            return self.userMapItems().some((userMapItem) => {
+                return userMapItem.isSelected();
+            });
+        };
+
+        self.hasSelectedCases = function () {
+            return self.caseMapItems().some((caseMapItem) => {
+                return caseMapItem.isSelected();
+            });
+        };
     };
 
     var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter) {

@@ -117,6 +117,7 @@ accounting
  0095_update_softwareplan_visibilities
  0096_formsubmittingmobileworkerhistory_and_featuretype_choice
  0097_add_form_submitting_mobile_worker_feature
+ 0098_app_dependencies_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -292,6 +293,7 @@ custom_data_fields
  0006_auto_20200924_1753
  0007_custom_data_fields_erm_support
  0008_custom_data_fields_upstream_ids
+ 0009_field_required_for
 data_analytics
  0001_squashed_0004_auto_20150810_1710
  0002_maltrow_threshold
@@ -837,6 +839,9 @@ repeaters
  0012_formexpressionrepeater_arcgisformexpressionrepeater
  0013_alter_repeatrecord_state_and_more
  0014_alter_repeater_request_method
+ 0015_drop_receiverwrapper_couchdb
+ 0016_repeater_max_workers
+ 0017_add_indexes
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -1258,6 +1263,7 @@ users
  0070_alter_invitation_tableau_role
  0071_rm_user_data
  0072_remove_invitation_supply_point
+ 0073_rm_location_from_user_data
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

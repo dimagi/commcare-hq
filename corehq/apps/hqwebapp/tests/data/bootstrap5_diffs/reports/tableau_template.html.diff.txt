@@ -3,10 +3,10 @@
 @@ -1,4 +1,4 @@
 -{% extends "hqwebapp/bootstrap3/base_section.html" %}
 +{% extends "hqwebapp/bootstrap5/base_section.html" %}
- {% load compress %}
  {% load hq_shared_tags %}
- {% load i18n %}
-@@ -21,7 +21,7 @@
+ 
+ {% block page_content %}
+@@ -18,7 +18,7 @@
          <i class="fa fa-spin fa-spinner"></i>
      </div>
      <div id="vizContainer"></div>

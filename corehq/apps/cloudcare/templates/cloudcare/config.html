@@ -13,13 +13,48 @@
   <h2>{% trans 'Manage Web Apps Permissions' %}</h2>
   <div class="alert alert-danger">
     {% url "roles_and_permissions" domain as roles_url %}
+    {% url "mobile_workers" domain as mobile_workers_url %}
     {% blocktrans %}
       This feature is deprecated. Access to specific web apps can now be managed via
       <a target="_blank" href="{{ roles_url }}">Roles & Permissions</a>.
       <br /><br />
       Please avoid using <em>both</em> this configuration and Roles & Permissions to manage access.
-      Please contact <a href="mailto:{{ SUPPORT_EMAIL }}">CommCare Support</a> if you need assistance
-      setting up access via Roles & Permissions.
+      <br/><br/>
+      <h5>Transitioning from the Deprecated Feature to Roles & Permissions</h5>
+
+      <p>
+        For the simplest case where each mobile worker belongs to only one group, follow the steps below.
+        For more complex cases, please contact <a href="mailto:{{ SUPPORT_EMAIL }}">CommCare Support</a> for assistance
+        setting up access via Roles & Permissions.
+      </p>
+
+      <ol>
+        <li>
+          <strong>Set up a role for each group</strong><br/>
+          Create a corresponding role in the <a target="_blank" href="{{ roles_url }}">Roles & Permissions</a> page for every existing group.
+        </li>
+        <li>
+          <strong>Configure permissions for each role</strong><br/>
+          Ensure that each role is granted the same permissions and access to apps that were previously available to the corresponding group.
+        </li>
+        <li>
+          <strong>Assign mobile workers to their new roles</strong><br/>
+          Map each <a target="_blank" href="{{ mobile_workers_url }}">mobile worker</a> to the appropriate role that matches their previous group membership.
+        </li>
+        <li>
+          <strong>Enable Roles & Permissions for Web Apps access</strong><br/>
+          On this page, select the option to "Use Roles & Permissions to manage Web Apps access" and click <strong>Save</strong>.
+        </li>
+        <li>
+          <strong>Test access for mobile workers</strong><br/>
+          Verify that all mobile workers can access the apps as expected, based on their assigned roles.
+        </li>
+        <li>
+          <strong>(Optional) Deactivate the deprecated feature</strong><br/>
+          Disable this feature to avoid accidentally re-enabling it in the future.
+          Simply check the box to turn it off and click <strong>Save</strong>.
+        </li>
+      </ol>
     {% endblocktrans %}
   </div>
   <section id="cloudcare-app-settings" style="display: none">
@@ -28,13 +63,22 @@
       <div class="form-check">
         <input class="form-check-input" type="radio" value="false" data-bind="checked: restrict.JSON" id="radioFalse"/>
         <label class="form-check-label" for="radioFalse">
-          {% blocktrans %}Allow all mobile workers to see all Web Apps applications.{% endblocktrans %}
+          {% blocktrans %}Use Roles & Permissions to manage Web Apps access{% endblocktrans %}
+        </label>
+      </div>
+      <div class="form-check ms-3" data-bind="visible: !restrict()">
+        <input type="checkbox" class="form-check-input" data-bind="checked: disable_feature_flag" id="disable_ff"/>
+        <label class="form-check-label" for="disable_ff">
+          {% blocktrans %}
+          Web Apps permissions have been transferred to "Roles & Permissions", and this deprecated feature can be turned off.
+          Please note that once you "save", you will no longer have access to this page.
+          {% endblocktrans %}
         </label>
       </div>
       <div class="form-check">
         <input class="form-check-input" type="radio" value="true" data-bind="checked: restrict.JSON" id="radioTrue"/>
         <label class="form-check-label" for="radioTrue">
-          {% blocktrans %}Customize each mobile worker's access to Web Apps{% endblocktrans %}
+          {% blocktrans %}Manage Web Apps access for each mobile worker based on their group{% endblocktrans %}
         </label>
       </div>
       <div data-bind="visible: restrict">

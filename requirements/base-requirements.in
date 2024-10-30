@@ -7,7 +7,7 @@ bleach[css]  # USH - used for rich text messaging emails
 boto3
 celery
 CommcareTranslationChecker>=0.9.7
-cryptography>=42.0
+cryptography>=43.0.1
 csiphash
 css_inline  # USH - used for rich text messaging emails
 datadog
@@ -44,6 +44,7 @@ django>=4.2.16,<5.0
 djangorestframework
 dropbox
 elasticsearch5>=5.0.0,<6.0.0
+elasticsearch6>=6.0.0,<7.0.0
 ethiopian-date-converter
 eulxml
 firebase-admin  # India Division - used for FCM Push Notifications
