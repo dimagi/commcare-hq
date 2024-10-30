@@ -294,6 +294,7 @@ custom_data_fields
  0008_custom_data_fields_upstream_ids
  0009_field_required_for
  0010_customdatafieldsdefinition_profile_required_for_user_type
+ 0011_alter_customdatafieldsdefinition_profile_required_for_user_type
 data_analytics
  0001_squashed_0004_auto_20150810_1710
  0002_maltrow_threshold
