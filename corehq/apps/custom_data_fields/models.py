@@ -93,7 +93,7 @@ class Field(models.Model):
 class CustomDataFieldsDefinition(models.Model):
     field_type = models.CharField(max_length=126)
     domain = models.CharField(max_length=255, null=True)
-    profile_required_for_user_type = models.CharField(max_length=126, null=True)
+    profile_required_for_user_type = models.JSONField(default=list)
 
     class Meta:
         unique_together = ('domain', 'field_type')
