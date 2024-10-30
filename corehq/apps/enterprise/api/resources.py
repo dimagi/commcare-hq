@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urljoin
 
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFound
@@ -371,11 +371,11 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
     def get_object_list(self, request):
         start_date = request.GET.get('startdate', None)
         if start_date:
-            start_date = datetime.fromisoformat(start_date)
+            start_date = datetime.fromisoformat(start_date).astimezone(timezone.utc)
 
         end_date = request.GET.get('enddate', None)
         if end_date:
-            end_date = datetime.fromisoformat(end_date)
+            end_date = datetime.fromisoformat(end_date).astimezone(timezone.utc)
 
         account = BillingAccount.get_account_by_domain(request.domain)
 

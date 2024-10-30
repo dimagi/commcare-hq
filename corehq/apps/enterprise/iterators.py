@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from django.utils.translation import gettext as _
 from corehq.apps.es import filters
 from corehq.apps.es.utils import es_format_datetime
@@ -50,7 +50,7 @@ class IterableEnterpriseFormQuery:
         last_domain = map.get('domain', None)
         last_time = map.get('received_on', None)
         if last_time:
-            last_time = datetime.fromisoformat(last_time)
+            last_time = datetime.fromisoformat(last_time).astimezone(timezone.utc)
         last_id = map.get('id', None)
         return {
             'last_domain': last_domain,
@@ -72,7 +72,7 @@ def resolve_start_and_end_date(start_date, end_date, maximum_date_range):
     Provide start and end date values if not supplied.
     '''
     if not end_date:
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
 
     if not start_date:
         start_date = end_date - timedelta(days=30)
@@ -144,7 +144,7 @@ def multi_domain_form_generator(
 
 def domain_form_generator(domain, start_date, end_date, last_time=None, last_id=None, limit=None):
     if not last_time:
-        last_time = datetime.now()
+        last_time = datetime.now(timezone.utc)
 
     remaining = limit
 
