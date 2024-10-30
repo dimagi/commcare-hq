@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("users", "0072_remove_invitation_supply_point"),
+        ("users", "0073_rm_location_from_user_data"),
     ]
 
     operations = [

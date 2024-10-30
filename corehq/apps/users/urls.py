@@ -59,6 +59,7 @@ from .views.mobile.users import (
     UploadCommCareUsers,
     UserUploadStatusView,
     activate_commcare_user,
+    activate_connectid_link,
     count_commcare_users,
     count_web_users,
     deactivate_commcare_user,
