@@ -1,3 +1,4 @@
+from itertools import islice
 from django.http.request import QueryDict
 from urllib.parse import urlencode
 from tastypie.paginator import Paginator
@@ -7,9 +8,8 @@ class KeysetPaginator(Paginator):
     '''
     An alternate paginator meant to support paginating by keyset rather than by index/offset.
     `objects` is expected to represent a query object that exposes an `.execute(limit)`
-        method that returns an iterable.
-    The above returned iterable must expose a `.get_next_query_params()` method that will return
-        parameters to allow the user to fetch the next page of data.
+        method that returns an iterable, and a `get_query_params(object)` method to retrieve the parameters
+        for the next query
     Because keyset pagination does not efficiently handle slicing or offset operations,
     these methods have been intentionally disabled
     '''
@@ -76,17 +76,25 @@ class KeysetPaginator(Paginator):
         Generates all pertinent data about the requested page.
         """
         limit = self.get_limit()
-        it = self.objects.execute(limit=limit)
-        objects = list(it)
+        padded_limit = limit + 1 if limit else limit
+        # Fetch 1 more record than requested to allow us to determine if further queries will be needed
+        it = iter(self.objects.execute(limit=padded_limit))
+        objects = list(islice(it, limit))
+
+        try:
+            next(it)
+            has_more = True
+        except StopIteration:
+            has_more = False
 
         meta = {
             'limit': limit,
         }
 
-        if limit:
-            next_params = it.get_next_query_params()
-            if next_params:
-                meta['next'] = self.get_next(limit, **next_params)
+        if limit and has_more:
+            last_fetched = objects[-1]
+            next_page_params = self.objects.get_query_params(last_fetched)
+            meta['next'] = self.get_next(limit, **next_page_params)
 
         return {
             self.collection_name: objects,
@@ -97,6 +105,6 @@ class KeysetPaginator(Paginator):
 class PageableQueryInterface:
     def execute(limit=None):
         '''
-        Should return an iterable that exposes a `.get_next_query_params()` method
+        Should return an iterable that exposes a `.get_query_params()` method
         '''
         raise NotImplementedError()

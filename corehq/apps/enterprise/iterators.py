@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from django.utils.translation import gettext as _
 from corehq.apps.es import filters
 from corehq.apps.es.forms import FormES
-from corehq.apps.api.resumable_iterator_wrapper import ResumableIteratorWrapper
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 
@@ -32,24 +31,39 @@ class IterableEnterpriseFormQuery:
     def execute(self, limit=None):
         domains = self.account.get_domains()
 
-        def create_multi_domain_form_generator(limit):
-            it = multi_domain_form_generator(
-                domains,
-                self.start_date,
-                self.end_date,
-                self.last_domain,
-                self.last_time,
-                self.last_id,
-                limit=limit
-            )
-            xform_converter = RawFormConverter()
-            return (xform_converter.convert(form) for form in it)
+        it = multi_domain_form_generator(
+            domains,
+            self.start_date,
+            self.end_date,
+            self.last_domain,
+            self.last_time,
+            self.last_id,
+            limit=limit
+        )
 
-        return ResumableIteratorWrapper(create_multi_domain_form_generator, lambda form: {
-            'domain': form['domain'],
-            'received_on': form['submitted'],
-            'id': form['form_id']
-        }, limit=limit)
+        xform_converter = RawFormConverter()
+        return (xform_converter.convert(form) for form in it)
+
+    @classmethod
+    def get_kwargs_from_map(cls, map):
+        last_domain = map.get('domain', None)
+        last_time = map.get('received_on', None)
+        if last_time:
+            last_time = datetime.fromisoformat(last_time)
+        last_id = map.get('id', None)
+        return {
+            'last_domain': last_domain,
+            'last_time': last_time,
+            'last_id': last_id
+        }
+
+    @classmethod
+    def get_query_params(cls, fetched_object):
+        return {
+            'domain': fetched_object['domain'],
+            'received_on': fetched_object['submitted'],
+            'id': fetched_object['form_id']
+        }
 
 
 def resolve_start_and_end_date(start_date, end_date, maximum_date_range):

@@ -377,16 +377,10 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
         if end_date:
             end_date = datetime.fromisoformat(end_date)
 
-        last_time = request.GET.get('received_on', None)
-        if last_time:
-            last_time = datetime.fromisoformat(last_time)
-
-        last_domain = request.GET.get('domain', None)
-        last_id = request.GET.get('id', None)
-
         account = BillingAccount.get_account_by_domain(request.domain)
 
-        return IterableEnterpriseFormQuery(account, start_date, end_date, last_domain, last_time, last_id)
+        query_kwargs = IterableEnterpriseFormQuery.get_kwargs_from_map(request.GET)
+        return IterableEnterpriseFormQuery(account, start_date, end_date, **query_kwargs)
 
     def dehydrate(self, bundle):
         bundle.data['form_id'] = bundle.obj['form_id']
