@@ -44,7 +44,10 @@ jobs:
         username: dimagi
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Build Webpack
-      run: yarn build
+      run: |
+        yarn install
+        ./manage.py generate_webpack_settings
+        yarn build
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}
