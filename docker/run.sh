@@ -130,14 +130,15 @@ function run_tests {
 
         send_timing_metric_to_datadog "setup" $delta
 
+        logmsg INFO "Building Webpack"
+        chown -R cchq:cchq ./webpack
+        su cchq -c "yarn build"
+
         log_group_begin "Django test suite: $TEST"
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         log_group_end  # only log group end on success (notice: `set -e`)
-        logmsg INFO "Building Webpack"
-        chown -R cchq:cchq ./webpack
-        su cchq -c "yarn build"
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
             su cchq -c scripts/test-prod-entrypoints.sh
             scripts/test-make-requirements.sh
