@@ -4,7 +4,6 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
 .form-container {
   background-color: white;
   box-shadow: 0 0 10px 2px rgba(0,0,0,.1);
-  margin-bottom: 2rem;
   font-size: $form-text-size;   // Don't overshadow inputs
 
   .page-header h1 {
@@ -31,6 +30,7 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
 
   .sticky-submit {
     position: sticky;
+    bottom: 0;
     /* Puts the anchored submit button in front of form elements that use bootstrap's .form-control,
        which adds z-index of 2 (3 when focused) */
     z-index: $zindex-formplayer-anchored-submit;
@@ -95,6 +95,12 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
     border-top-right-radius: 0px;
   }
 
+}
+
+.has-debugger {
+  .sticky-submit {
+    bottom: $minimized-debugger-height;
+  }
 }
 
 .form-group-required-label {
@@ -215,6 +221,7 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
 #next-error {
   position: fixed;
   bottom: 35px;
+  z-index: $zindex-next-error;
 }
 
 .my-05em-for-hs {
