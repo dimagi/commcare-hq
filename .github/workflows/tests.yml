@@ -46,7 +46,6 @@ jobs:
     - name: Build Webpack
       run: |
         yarn install
-        ./manage.py generate_webpack_settings
         yarn build
     - name: Run tests
       env:
