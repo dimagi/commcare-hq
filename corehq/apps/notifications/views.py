@@ -12,6 +12,7 @@ from memoized import memoized
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition, SubscriptionType
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
 from corehq.apps.notifications.models import (
@@ -115,9 +116,10 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
 class ManageNotificationView(BasePageView):
     urlname = 'manage_notifications'
     page_title = gettext_noop("Manage Notification")
-    template_name = 'notifications/bootstrap3/manage_notifications.html'
+    template_name = 'notifications/manage_notifications.html'
 
     @method_decorator(require_superuser)
+    @method_decorator(use_bootstrap5)
     def dispatch(self, request, *args, **kwargs):
         return super(ManageNotificationView, self).dispatch(request, *args, **kwargs)
 
