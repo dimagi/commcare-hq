@@ -149,7 +149,7 @@ def domain_form_generator(domain, start_date, end_date, last_time=None, last_id=
     remaining = limit
 
     while True:
-        query = create_domain_query(domain, start_date, end_date, last_time, last_id, limit=remaining)
+        query = create_domain_forms_query(domain, start_date, end_date, last_time, last_id, limit=remaining)
         results = query.run()
         for form in results.hits:
             last_form_fetched = form
@@ -167,7 +167,7 @@ def domain_form_generator(domain, start_date, end_date, last_time=None, last_id=
             last_id = last_form_fetched['_id']
 
 
-def create_domain_query(domain, start_date, end_date, last_time, last_id, limit=None):
+def create_domain_forms_query(domain, start_date, end_date, last_time, last_id, limit=None):
     query = (
         FormES()
         .domain(domain)
