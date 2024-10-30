@@ -257,12 +257,11 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         };
         self.profileRequiredForOptions = options.profile_required_for_options || [];
         let initialRequiredFor;
-        let profileReqiredForMatch;
         // Check if there is already a user type set as requiring a profile selection and
         // match to options from UserFieldsView
         if (options.current_profile_required_for_user_type) {
-            const currentProfileRequiredForList = options.current_profile_required_for_user_type.split(',');
-            profileReqiredForMatch = self.profileRequiredForOptions.find(option =>
+            const currentProfileRequiredForList = options.current_profile_required_for_user_type;
+            let profileReqiredForMatch = self.profileRequiredForOptions.find(option =>
                 JSON.stringify(option.value) === JSON.stringify(currentProfileRequiredForList || [])
             );
             initialRequiredFor = _.has(profileReqiredForMatch, 'value') ? profileReqiredForMatch.value :
