@@ -29,7 +29,7 @@ from corehq.messaging.scheduling.models import (
     Content,
     SMSContent,
     TimedEvent,
-    TimedSchedule,
+    TimedSchedule, AlertSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
@@ -44,6 +44,94 @@ from corehq.util.test_utils import (
     unregistered_django_model,
 )
 from testapps.test_pillowtop.utils import process_pillow_changes
+
+
+class GetFilterValueTest(TestCase):
+    domain = 'get-filter-value-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super(GetFilterValueTest, cls).setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(GetFilterValueTest, cls).tearDownClass()
+
+    def testNoBracesJustReturnValue(self):
+        value_or_property = "test value"
+        value = ScheduleInstance()._get_filter_value(value_or_property)
+        self.assertEqual(value, value_or_property)
+
+    def testBracesReturnProperty(self):
+        with create_test_case(self.domain, 'thing', 'thing A', case_properties={"property": "value"}) as case:
+            value_or_property = "{property}"
+            value = ScheduleInstance(case=case)._get_filter_value(value_or_property)
+            self.assertEqual(value, "value")
+
+    def testIgnoreSpacesBracesReturnProperty(self):
+        with create_test_case(self.domain, 'thing', 'thing A', case_properties={"property": "value"}) as case:
+            value_or_property = "{ property }"
+            value = ScheduleInstance(case=case)._get_filter_value(value_or_property)
+            self.assertEqual(value, "value")
+
+
+class PassesUserDataFilterTest(TestCase):
+    domain = 'passes-user-data-filter-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super(PassesUserDataFilterTest, cls).setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+
+        user_data = {"wants_email": "yes", "color": "green"}
+        cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc', None, None, user_data=user_data)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(PassesUserDataFilterTest, cls).tearDownClass()
+
+    def test_passes_with_user_data_filters_if_no_user_data_filter(self):
+        schedule = AlertSchedule()
+        self.assertFalse(schedule.user_data_filter)
+        self.assertTrue(ScheduleInstance(schedule=schedule)._passes_user_data_filter(self.mobile_user))
+
+    def test_passes_with_user_data_filter(self):
+        with create_test_case(self.domain, 'thing', 'thing A', case_properties={"case_color": "green"}) as case:
+            schedule = AlertSchedule()
+            schedule.use_user_case_for_filter = False
+            schedule.user_data_filter = {"wants_email": ["yes"], "color": ["{case_color}"]}
+            self.assertTrue(ScheduleInstance(case=case, domain=self.domain, schedule=schedule)
+                            ._passes_user_data_filter(self.mobile_user))
+
+    def test_fails_with_user_data_filter_because_value_does_not_match(self):
+        schedule = AlertSchedule()
+        schedule.use_user_case_for_filter = False
+        schedule.user_data_filter = {"wants_email": ["no"]}
+        self.assertFalse(ScheduleInstance(domain=self.domain, schedule=schedule)
+                         ._passes_user_data_filter(self.mobile_user))
+
+    def test_fails_with_user_data_filter_because_one_value_does_not_match(self):
+        schedule = AlertSchedule()
+        schedule.use_user_case_for_filter = False
+        schedule.user_data_filter = {"wants_email": ["yes"], "color": ["red"]}
+        self.assertFalse(ScheduleInstance(domain=self.domain, schedule=schedule)
+                         ._passes_user_data_filter(self.mobile_user))
+
+    def test_passes_with_user_case_filter(self):
+        with create_test_case(self.domain, 'thing', 'thing A', case_properties={"case_color": "red"}) as case:
+            with create_test_case(self.domain, USERCASE_TYPE, self.mobile_user.user_id,
+                                  case_properties={"wants_email": "yes", "color": "red"}) as user_case:
+                user_case.external_id = self.mobile_user.user_id
+                user_case.save()
+
+                schedule = AlertSchedule()
+                schedule.use_user_case_for_filter = True
+                schedule.user_data_filter = {"wants_email": ["yes"], "color": ["{case_color}"]}
+                self.assertTrue(ScheduleInstance(case=case, domain=self.domain, schedule=schedule)
+                                ._passes_user_data_filter(self.mobile_user))
 
 
 class SchedulingRecipientTest(TestCase):
@@ -899,4 +987,12 @@ class SchedulingRecipientTest(TestCase):
 
 @unregistered_django_model
 class ScheduleInstance(AbstractScheduleInstance):
-    pass
+
+    def __init__(self, *args, **kwargs):
+        self.case = kwargs.pop('case', None)
+        self.test_schedule = kwargs.pop('schedule', None)
+        super().__init__(*args, **kwargs)
+
+    @property
+    def schedule(self):
+        return self.test_schedule
