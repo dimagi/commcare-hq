@@ -48,7 +48,6 @@ hqDefine("geospatial/js/case_management", [
         var self = {};
 
         self.isBusy = ko.observable(false);
-        self.showParams = ko.observable(false);
         self.parameters = ko.observableArray([]);
 
         self.disbursementErrorMessage = ko.observable('');
@@ -139,7 +138,7 @@ hqDefine("geospatial/js/case_management", [
                 }
 
                 self.parameters(parametersList);
-                self.showParams(true);
+                $('#disbursement-params').show();
             };
 
             const hasSelectedUsers = mapModel.hasSelectedUsers();
