@@ -198,8 +198,7 @@ class CustomDataEditor(object):
             def profile_selection_required():
                 user_type = self.field_view.user_type
                 profile_required_list_user_types = self.model.profile_required_for_user_type or []
-                if profile_required_list_user_types:
-                    profile_required_list_user_types = profile_required_list_user_types.split(',')
+
                 return user_type in profile_required_list_user_types
 
             def validate_profile_slug(value):

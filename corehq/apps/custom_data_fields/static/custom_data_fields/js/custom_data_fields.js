@@ -305,7 +305,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 .appendTo(customDataFieldsForm);
 
             $('<input type="hidden">')
-                .attr('name', 'req_profile')
+                .attr('name', 'require_profile')
                 .attr('value', self.profile_required_for())
                 .appendTo(customDataFieldsForm);
 

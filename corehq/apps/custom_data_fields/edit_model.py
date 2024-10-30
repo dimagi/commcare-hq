@@ -35,7 +35,7 @@ class CustomDataFieldsForm(forms.Form):
     data_fields = forms.CharField(widget=forms.HiddenInput)
     purge_existing = forms.BooleanField(widget=forms.HiddenInput, required=False, initial=False)
     profiles = forms.CharField(widget=forms.HiddenInput)
-    req_profile = forms.CharField(widget=forms.HiddenInput, required=False)
+    require_profile = forms.CharField(widget=forms.HiddenInput, required=False)
 
     @classmethod
     def verify_no_duplicates(cls, data_fields):
@@ -155,6 +155,14 @@ class CustomDataFieldsForm(forms.Form):
             raise ValidationError('<br/>'.join(sorted(errors)))
 
         return profiles
+
+    def clean_require_profile(self):
+        require_profile = self.cleaned_data['require_profile']
+        if not require_profile:
+            require_profile = []
+        else:
+            require_profile = require_profile.split(',')
+        return require_profile
 
     def clean(self):
         cleaned_data = super().clean()
@@ -487,8 +495,8 @@ class CustomDataModelMixin(object):
 
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
-            if self.form.cleaned_data['req_profile']:
-                self.update_profile_required(self.form.cleaned_data['req_profile'])
+            if self.form.cleaned_data['require_profile'] is not None:
+                self.update_profile_required(self.form.cleaned_data['require_profile'])
             if self.show_profiles:
                 msg = _("{} fields and profiles saved successfully.").format(self.entity_string)
             else:
