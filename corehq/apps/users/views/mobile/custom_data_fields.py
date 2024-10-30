@@ -56,7 +56,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         },
         {
             "text": _("Neither"),
-            "value": [NEITHER],
+            "value": [],
             "isDefault": True
         }
     ]
