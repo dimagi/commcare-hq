@@ -457,11 +457,12 @@ class ContentForm(Form):
         else:
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
 
-    def _distill_rich_text_email(self):
+    @classmethod
+    def _sanitize_rich_text_message(cls, html_content):
         plaintext_message = {}
         html_message = {}
         css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
-        for lang, content in self.cleaned_data['html_message'].items():
+        for lang, content in html_content.items():
             # remove everything except the body for plaintext
             soup = BeautifulSoup(content, features='lxml')
             try:
@@ -475,6 +476,10 @@ class ContentForm(Form):
                 css_sanitizer=css_sanitizer,
                 strip=True,
             )
+        return plaintext_message, html_message
+
+    def _distill_rich_text_email(self):
+        plaintext_message, html_message = self._sanitize_rich_text_message(self.cleaned_data['html_message'])
         return EmailContent(
             subject=self.cleaned_data['subject'],
             message=plaintext_message,
