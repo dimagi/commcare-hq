@@ -75,6 +75,10 @@
   left: calc(100vw - 80px);
 }
 
+.has-persistent-case-tile .case-tile-container {
+  margin-bottom: 12px;
+}
+
 .case-tile-container {
   background: transparent !important;
   > div {

@@ -617,10 +617,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
         },
         onAttach: function () {
-            $('.case-tile-container').css('margin-bottom', '12px');
+            FormplayerFrontend.regions.el.classList.add('has-persistent-case-tile');
         },
         onDetach: function () {
-            $('.case-tile-container').css('margin-bottom', '0px');
+            FormplayerFrontend.regions.el.classList.remove('has-persistent-case-tile');
         },
     });
 
