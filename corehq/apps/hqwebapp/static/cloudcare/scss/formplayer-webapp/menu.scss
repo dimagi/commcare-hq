@@ -6,11 +6,30 @@
 #menu-region .module-case-list-container {
   background-color: white;
   box-shadow: 0 0 10px 2px rgba(0,0,0,.1);
-  margin-bottom: 2rem;
 }
 
 #menu-region .module-menu-container {
   padding-bottom: 6px;
+}
+
+#persistent-menu-region > div {
+  height: 100%;
+}
+
+.collapsing#persistent-menu-container {
+  @include media-breakpoint-up(sm) {
+    transition: none !important;
+  }
+}
+
+#persistent-menu-container {
+  padding: 1.5rem 1.5rem 2.5rem 2.5rem;
+  font-size: 14px;
+}
+
+#persistent-menu-container .btn-close {
+  right: 15px;
+  top: 15px;
 }
 
 .persistent-menu-toggle {
@@ -22,7 +41,7 @@
   }
 }
 
-$persistent-menu-image-size: 2rem;
+$persistent-menu-image-size: 3rem;
 
 .persistent-menu-image {
   height: $persistent-menu-image-size;
@@ -52,6 +71,8 @@ $persistent-menu-image-size: 2rem;
   }
 }
 
-.persistent-menu-max-width {
-    max-width: 400px;
+@media print {
+  #content-plus-version-info-container {
+    overflow: visible !important;
+  }
 }
