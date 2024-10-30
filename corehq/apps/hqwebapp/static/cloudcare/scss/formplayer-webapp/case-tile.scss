@@ -75,11 +75,14 @@
   left: calc(100vw - 80px);
 }
 
+.has-persistent-case-tile .case-tile-container {
+  margin-bottom: 12px;
+}
+
 .case-tile-container {
   background: transparent !important;
   > div {
     background: white;
-    margin-bottom: 20px;
     display: grid;
     container-type: inline-size;
   }
@@ -99,8 +102,8 @@
 @media screen {
   .case-tile-container {
     position: sticky;
-    top: $breadcrumb-height-cloudcare;
     z-index: $zindex-persistent-tile-cloudcare;
+    top: 0;
 
     #persistent-case-tile .persistent-sticky {
       box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
