@@ -300,7 +300,7 @@ class UserRegistrationView(BasePageView):
                 _("Custom mobile app builder"),
                 _("Powerful case management"),
                 _("Field staff reports"),
-                _("Unlimited mobile users"),
+                _("125+ mobile users"),
                 _("Full suite of data tools"),
                 _("3rd party integrations"),
                 _("2-way SMS workflows"),
