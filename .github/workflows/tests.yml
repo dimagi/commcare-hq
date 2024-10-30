@@ -45,7 +45,6 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Build Webpack
       run: |
-        yarn install
         yarn build
     - name: Run tests
       env:
