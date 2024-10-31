@@ -636,9 +636,10 @@ class CSQLFixtureExpressionView(BaseDomainView):
             for _id, name, csql in zip(ids_list, name_list, csql_list):
                 if _id:
                     module_badge_configuration = CSQLFixtureExpression.by_domain(self.domain).get(id=_id)
-                    module_badge_configuration.name = name
-                    module_badge_configuration.csql = csql
-                    module_badge_configuration.save()
+                    if name != module_badge_configuration.name or csql != module_badge_configuration.csql:
+                        module_badge_configuration.name = name
+                        module_badge_configuration.csql = csql
+                        module_badge_configuration.save()
                 else:
                     CSQLFixtureExpression.objects.create(
                         domain=self.domain, name=name, csql=csql)
