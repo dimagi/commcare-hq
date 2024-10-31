@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load humanize %}
 
-{% requirejs_main 'hqadmin/js/system_info' %}
+{% js_entry_b3 'hqadmin/js/system_info' %}
 
 {% block reportcontent %}
   {% initial_page_data "celery_update" celery_update %}
