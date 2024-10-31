@@ -1,0 +1,30 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<tr id="expression-{{ expression.id }}">
+  <td><input class="form-control" type="text" name="name" x-model="expression.name" maxlength="64"></td>
+  <td><textarea class="form-control vertical-resize" spellcheck="false" rows="1" name="csql"
+    x-model="expression.csql"></textarea></td>
+    <td><p id="#status-{{ expression.id }}">Status</p></td>
+    <td><button class="btn btn-primary"
+      hx-post={{ save_url }}
+      hq-hx-action="save_expression"
+      x-bind:hx-vals="JSON.stringify(expression)"
+      hx-swap="innerHTML"
+      hx-target="#response-message"
+      >{% trans "Save" %}
+    </button></td>
+  <td><button class="btn btn-danger"
+      x-on:click="removeRow(expression)"
+      hx-post={{ save_url }}
+      hq-hx-action="delete_expression"
+      hx-vals='{
+          "expression_id": "{{ expression.id }}"
+      }'
+      hx-swap="outerHTML"
+      hx-target="#response-message"
+      >
+    <i class="fa-regular fa-trash-can"></i>
+    {% trans "Delete" %}
+  </button></td>
+  <input type="hidden" name="id" x-model="expression.id">          
+</tr>

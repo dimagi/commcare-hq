@@ -65,6 +65,7 @@ from corehq.sql_db.jsonops import JsonDelete, JsonGet, JsonSet
 from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
 from corehq import toggles
+from corehq.util.htmx_action import hq_hx_action, HqHtmxActionMixin
 
 
 def _to_kwargs(req):
@@ -575,80 +576,132 @@ def fixture_metadata(request, domain):
     return json_response(item_lists_by_domain(domain))
 
 
-@method_decorator(use_bootstrap5, name='dispatch')
-class CSQLFixtureExpressionView(BaseDomainView):
+@method_decorator([
+    use_bootstrap5,
+    toggles.MODULE_BADGES.required_decorator(),
+    require_can_edit_fixtures,
+], name='dispatch')
+class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseDomainView):
     urlname = 'csql_fixture_configuration'
     page_title = _('CSQL Fixture Confguration')
     template_name = 'fixtures/csql_fixture_configuration.html'
 
-    @method_decorator(toggles.MODULE_BADGES.required_decorator())
-    @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, *args, **kwargs):
         return super(CSQLFixtureExpressionView, self).dispatch(request, *args, **kwargs)
 
-    def all_module_badge_configurations(self):
+    def all_expressions(self):
         return CSQLFixtureExpression.by_domain(self.domain)
 
     @property
     def page_context(self):
         return {
-            'save_url': reverse('csql_fixture_configuration', args=[self.domain]),
-            'csql_fixture_configurations':
-                list(self.all_module_badge_configurations().values('id', 'name', 'csql')),
+            'save_url': reverse(self.urlname, args=[self.domain]),
+            'csql_fixture_configuration':
+                list(self.all_expressions().values('id', 'name', 'csql')),
         }
 
-    def _post_response(self, message, div_class):
+    def _message_response(self, message, div_class):
         return HttpResponse((f'<div class="alert {div_class}">' + _(message) + '</div>'),
                             content_type='text/html')
 
-    @atomic
-    def post(self, request, *args, **kwargs):
+    def _error_response(self, request, e):
+        notify_exception(request, str(e))
+        return self._message_response('Could not save change, there was an error.', 'alert-danger')
+
+    def _get_expression_id(self, request):
+        return dict(request.POST)['id'][0]
+
+    # def render_expression_response(self, request, expression):
+    #     template = "fixtures/partials/expression_row.html"
+    #     print(expression)
+    #     context = {
+    #         'expression': expression,
+    #     }
+        # return self.render_htmx_partial_response(request, template, context)
+
+    @hq_hx_action('post')
+    def delete_expression(self, request, *args, **kwargs):
+        print('deleted.......')
         try:
-            data = request.POST
-            ''' Post data format is:
-                {
-                    'name': ['name1', 'name2', 'name3'],
-                    'id': ['1', '2', ''],  # empty string ID means new expression, missing means delete
-                    'csql': ['asdf', 'asdfg', 'asdfgh'],}
-                }
-            '''
-
-            touched_badge_ids = []
-            ids_list = data.getlist('id')
-            name_list = data.getlist('name')
-            csql_list = data.getlist('csql')
-
-            name_list_without_blanks = [name for name in name_list if name]
-            if len(name_list_without_blanks) != len(set(name_list_without_blanks)):
-                return self._post_response(
-                    "Configuration not updated, two expressions cannot have the same name.", 'alert-warning')
-
-            for index in range(0, len(ids_list)):
-                _id = ids_list[index]
-                name = name_list[index]
-                csql = csql_list[index]
-
-                if not name_list[index] or not csql_list[index]:
-                    if not name_list[index] and not csql_list[index]:
-                        continue  # ignore empty rows
-                    return self._post_response("Configuration not updated, some fields are blank.",
-                                               'alert-warning')
-
-                if _id:
-                    module_badge_configuration = CSQLFixtureExpression.by_domain(self.domain).get(id=_id)
-                    module_badge_configuration.name = name
-                    module_badge_configuration.csql = csql
-                    module_badge_configuration.save()
-                else:
-                    module_badge_configuration = CSQLFixtureExpression.objects.create(
-                        domain=self.domain, name=name, csql=csql)
-                touched_badge_ids.append(module_badge_configuration.id)
-            for expression in CSQLFixtureExpression.by_domain(self.domain).exclude(id__in=touched_badge_ids):
-                expression.soft_delete()
-            return self._post_response("Fixture confugration updated!", 'alert-success')
+            expression_id = self._get_expression_id(request)
+            expression = CSQLFixtureExpression.objects.get(id=int(expression_id))
+            expression.soft_delete()
+            return self._message_response('Expression deleted!', 'alert-success')
         except Exception as e:
-            notify_exception(request, message=str(e))
-            return self._post_response("Configuration not updated, unknown error occurred.", 'alert-danger')
+            return self._error_response(request, e)
+
+    @hq_hx_action('post')
+    def save_expression(self, request, *args, **kwargs):
+        try:
+            expression_id = self._get_expression_id(request)
+            request_dict = dict(request.POST)
+            new_name = request_dict['name'][0]
+            new_csql = request_dict['csql'][0]
+            if expression_id:
+                expression = CSQLFixtureExpression.objects.get(id=int(expression_id))
+                request_dict = dict(request.POST)
+                expression.name = new_name
+                expression.csql = new_csql
+                expression.save()
+                return self._message_response('Expression saved!', 'alert-success')
+            else:
+                CSQLFixtureExpression.objects.create(
+                    domain=self.domain,
+                    name=new_name,
+                    csql=new_csql
+                )
+                return self._message_response('Expression created!', 'alert-success')
+        except Exception as e:
+            return self._error_response(request, e)
+
+    # @atomic
+    # def post(self, request, *args, **kwargs):
+    #     try:
+    #         data = request.POST
+    #         ''' Post data format is:
+    #             {
+    #                 'name': ['name1', 'name2', 'name3'],
+    #                 'id': ['1', '2', ''],  # empty string ID means new expression, missing means delete
+    #                 'csql': ['asdf', 'asdfg', 'asdfgh'],}
+    #             }
+    #         '''
+
+    #         touched_badge_ids = []
+    #         ids_list = data.getlist('id')
+    #         name_list = data.getlist('name')
+    #         csql_list = data.getlist('csql')
+
+    #         name_list_without_blanks = [name for name in name_list if name]
+    #         if len(name_list_without_blanks) != len(set(name_list_without_blanks)):
+    #             return self._post_response(
+    #                 "Configuration not updated, two expressions cannot have the same name.", 'alert-warning')
+
+    #         for index in range(0, len(ids_list)):
+    #             _id = ids_list[index]
+    #             name = name_list[index]
+    #             csql = csql_list[index]
+
+    #             if not name_list[index] or not csql_list[index]:
+    #                 if not name_list[index] and not csql_list[index]:
+    #                     continue  # ignore empty rows
+    #                 return self._post_response("Configuration not updated, some fields are blank.",
+    #                                            'alert-warning')
+
+    #             if _id:
+    #                 module_badge_configuration = CSQLFixtureExpression.by_domain(self.domain).get(id=_id)
+    #                 module_badge_configuration.name = name
+    #                 module_badge_configuration.csql = csql
+    #                 module_badge_configuration.save()
+    #             else:
+    #                 module_badge_configuration = CSQLFixtureExpression.objects.create(
+    #                     domain=self.domain, name=name, csql=csql)
+    #             touched_badge_ids.append(module_badge_configuration.id)
+    #         for expression in CSQLFixtureExpression.by_domain(self.domain).exclude(id__in=touched_badge_ids):
+    #             expression.soft_delete()
+    #         return self._post_response("Fixture confugration updated!", 'alert-success')
+    #     except Exception as e:
+    #         notify_exception(request, message=str(e))
+    #         return self._post_response("Configuration not updated, unknown error occurred.", 'alert-danger')
 
     @property
     def section_url(self):
