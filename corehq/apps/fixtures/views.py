@@ -616,7 +616,6 @@ class CSQLFixtureExpressionView(BaseDomainView):
                 }
             '''
 
-            touched_badge_ids = []
             ids_list = data.getlist('id')
             name_list = data.getlist('name')
             csql_list = data.getlist('csql')
@@ -625,29 +624,27 @@ class CSQLFixtureExpressionView(BaseDomainView):
             if len(name_list_without_blanks) != len(set(name_list_without_blanks)):
                 return self._post_response(
                     "Configuration not updated, two expressions cannot have the same name.", 'alert-warning')
+            for i in range(0, len(name_list)):
+                if not name_list[i] or not csql_list[i]:
+                    return self._post_response("Configuration not updated, some fields are blank.",
+                                               'alert-warning')
+
+            id_list_without_blanks = [_id for _id in ids_list if _id]
+            for expression in CSQLFixtureExpression.by_domain(self.domain).exclude(id__in=id_list_without_blanks):
+                expression.soft_delete()
 
             for index in range(0, len(ids_list)):
                 _id = ids_list[index]
                 name = name_list[index]
                 csql = csql_list[index]
-
-                if not name_list[index] or not csql_list[index]:
-                    if not name_list[index] and not csql_list[index]:
-                        continue  # ignore empty rows
-                    return self._post_response("Configuration not updated, some fields are blank.",
-                                               'alert-warning')
-
                 if _id:
                     module_badge_configuration = CSQLFixtureExpression.by_domain(self.domain).get(id=_id)
                     module_badge_configuration.name = name
                     module_badge_configuration.csql = csql
                     module_badge_configuration.save()
                 else:
-                    module_badge_configuration = CSQLFixtureExpression.objects.create(
+                    CSQLFixtureExpression.objects.create(
                         domain=self.domain, name=name, csql=csql)
-                touched_badge_ids.append(module_badge_configuration.id)
-            for expression in CSQLFixtureExpression.by_domain(self.domain).exclude(id__in=touched_badge_ids):
-                expression.soft_delete()
             return self._post_response("Fixture confugration updated!", 'alert-success')
         except Exception as e:
             notify_exception(request, message=str(e))
