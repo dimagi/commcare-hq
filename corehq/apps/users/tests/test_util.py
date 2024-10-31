@@ -24,6 +24,7 @@ from corehq.apps.users.views.utils import (
     _get_locations_with_orphaned_cases,
     get_user_location_info,
 )
+from corehq.apps.users.tests.util import setup_profile
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 
 
@@ -199,6 +200,17 @@ class TestBulkAutoDeactivateCommCareUser(TestCase):
         self.assertFalse(
             UserHistory.objects.filter(user_id=self.inactive_user.user_id).exists()
         )
+
+    def test_user_profile_is_removed_on_bulk_deactivation(self):
+        profile_id = setup_profile(self.domain)
+        self.inactive_user.set_user_profile(self.domain, profile_id)
+        user_data_before = self.inactive_user.get_user_data(self.domain)
+        self.assertEqual(user_data_before.profile_id, profile_id)
+
+        bulk_auto_deactivate_commcare_users([self.inactive_user.user_id], self.domain)
+        refreshed_user = CommCareUser.get_by_user_id(self.inactive_user.get_id)
+        user_data_after = refreshed_user.get_user_data(self.domain)
+        self.assertFalse(user_data_after.profile)
 
 
 class TestGenerateMobileUsername(TestCase):
