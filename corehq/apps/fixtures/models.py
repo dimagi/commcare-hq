@@ -314,8 +314,8 @@ class UserLookupTableStatus(models.Model):
 
 class CSQLFixtureExpression(models.Model):
     domain = models.CharField(max_length=64, default='')
-    name = models.CharField(max_length=64, default='')
-    csql = models.CharField(max_length=2000, default='')
+    name = models.CharField(max_length=64, null=False)
+    csql = models.CharField(null=False)
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     deleted = models.BooleanField(default=False)
@@ -330,30 +330,27 @@ class CSQLFixtureExpression(models.Model):
         self.save()
         CSQLFixtureExpressionLog.objects.create(
             expression=self,
-            action=CSQLFixtureExpressionLog.DELETE,
+            action=CSQLFixtureExpressionLog.Action.DELETE.value,
         )
 
 
 class CSQLFixtureExpressionLog(models.Model):
-
-    CREATE = 'create'
-    DELETE = 'delete'
-    UPDATE = 'update'
+    class Action(models.TextChoices):
+        CREATE = 'CR', _('Create')
+        DELETE = 'DE', _('Delete')
+        UPDATE = 'UP', _('Update')
 
     expression = ForeignKey(CSQLFixtureExpression, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
-    action = models.CharField(max_length=16, choices=(
-        (UPDATE, _('Updated')),
-        (CREATE, _('Created')),
-        (DELETE, _('Deleted')),
-    ), null=False)
+    action = models.CharField(max_length=16, choices=Action.choices, null=False)
     name = models.CharField(max_length=64, default='')
-    csql = models.CharField(max_length=2000, default='')
+    csql = models.TextField(default='')
 
 
 @receiver(post_save, sender=CSQLFixtureExpression)
 def after_save(sender, instance, created, **kwargs):
-    updated_or_created = CSQLFixtureExpressionLog.CREATE if created else CSQLFixtureExpressionLog.UPDATE
+    updated_or_created = (CSQLFixtureExpressionLog.Action.CREATE.value if created
+                          else CSQLFixtureExpressionLog.Action.UPDATE.value)
     CSQLFixtureExpressionLog.objects.create(
         expression=instance,
         action=updated_or_created,
