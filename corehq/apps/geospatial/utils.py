@@ -1,6 +1,7 @@
 from dataclasses import asdict, dataclass, field
 
 import math
+import time
 import jsonschema
 from jsonobject.exceptions import BadValueError
 
@@ -238,12 +239,16 @@ class CeleryTaskTracker(object):
         self.task_key = task_key
         self.progress_key = f'{task_key}_progress'
         self.error_slug_key = f'{task_key}_error_slug'
+        self.start_time_key = f'{task_key}_start_time'
+        self.end_time_key = f'{task_key}_end_time'
         self._client = get_redis_client()
 
     def mark_requested(self, timeout=ONE_DAY):
         # Timeout here is just a fail safe mechanism in case task is not processed by Celery
         # due to unexpected circumstances
         self.clear_progress()
+        self._client.delete(self.start_time_key)
+        self._client.delete(self.end_time_key)
         self._client.delete(self.error_slug_key)
         self._client.set(self.task_key, 'ACTIVE', timeout=timeout)
 
@@ -257,10 +262,16 @@ class CeleryTaskTracker(object):
 
     def get_status(self):
         status = self._client.get(self.task_key)
+        start_time = self._client.get(self.start_time_key) or 0
+        end_time = self._client.get(self.end_time_key) or 0
+
         return {
             'status': status,
             'progress': self.get_progress(),
             'error_slug': self._client.get(self.error_slug_key) if status == 'ERROR' else None,
+            'start_time': start_time,
+            'end_time': end_time,
+            'process_time': (time.time() if end_time == 0 else end_time) - start_time,
         }
 
     def mark_completed(self):
@@ -280,3 +291,9 @@ class CeleryTaskTracker(object):
 
     def clear_progress(self):
         return self._client.delete(self.progress_key)
+
+    def mark_start_time(self, timeout=ONE_DAY):
+        return self._client.set(self.start_time_key, time.time(), timeout)
+
+    def mark_end_time(self, timeout=ONE_DAY):
+        return self._client.set(self.end_time_key, time.time(), timeout)
