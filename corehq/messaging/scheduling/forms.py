@@ -95,6 +95,7 @@ from corehq.messaging.scheduling.models import (
     SMSSurveyContent,
     TimedEvent,
     TimedSchedule,
+    ProjectNotificationContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
@@ -268,7 +269,8 @@ class ContentForm(Form):
             cleaned_value = self._clean_message_field('subject')
             return self._validate_fcm_message_length(cleaned_value, self.FCM_SUBJECT_MAX_LENGTH)
 
-        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_EMAIL:
+        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_EMAIL,
+                                                                ScheduleForm.CONTENT_PROJECT_NOTIFICATION):
             return None
 
         return self._clean_message_field('subject')
@@ -285,7 +287,8 @@ class ContentForm(Form):
             return self._validate_fcm_message_length(cleaned_value, self.FCM_MESSAGE_MAX_LENGTH)
 
         if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS,
-                                                                  ScheduleForm.CONTENT_EMAIL):
+                                                                  ScheduleForm.CONTENT_EMAIL,
+                                                                  ScheduleForm.CONTENT_PROJECT_NOTIFICATION):
             return None
 
         return self._clean_message_field('message')
@@ -430,6 +433,14 @@ class ContentForm(Form):
                     subject=self.cleaned_data['subject'],
                     message=self.cleaned_data['message'],
                 )
+        elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_PROJECT_NOTIFICATION:
+            if RICH_TEXT_EMAILS.enabled(self.domain):
+                return self._distill_rich_text_project_notification()
+            else:
+                return ProjectNotificationContent(
+                    subject=self.cleaned_data['subject'],
+                    message=self.cleaned_data['message'],
+                )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_SMS_SURVEY:
             combined_id = self.cleaned_data['app_and_form_unique_id']
             app_id, form_unique_id = split_combined_id(combined_id)
@@ -481,6 +492,14 @@ class ContentForm(Form):
     def _distill_rich_text_email(self):
         plaintext_message, html_message = self._sanitize_rich_text_message(self.cleaned_data['html_message'])
         return EmailContent(
+            subject=self.cleaned_data['subject'],
+            message=plaintext_message,
+            html_message=html_message,
+        )
+
+    def _distill_rich_text_project_notification(self):
+        plaintext_message, html_message = self._sanitize_rich_text_message(self.cleaned_data['html_message'])
+        return ProjectNotificationContent(
             subject=self.cleaned_data['subject'],
             message=plaintext_message,
             html_message=html_message,
