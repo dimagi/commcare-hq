@@ -377,18 +377,33 @@
               It is important you read the entire message below thoroughly before completing this action.
             {% endblocktrans %}
           </p>
-          <p>
-            {% blocktrans %}
-              Once deleted, you will not be able to recover this form. Are you sure you want to delete this form?
-            {% endblocktrans %}
-          </p>
+          {% if is_create_form %}
+            <p>
+              {% blocktrans %}
+                Deleting this form will also permanently delete cases/subcases it has created.
+                Click Continue to review these cases as this action CANNOT be undone.
+              {% endblocktrans %}
+            </p>
+          {% else %}
+            <p>
+              {% blocktrans %}
+                Once deleted, you will not be able to recover this form. Are you sure you want to delete this form?
+              {% endblocktrans %}
+            </p>
+          {% endif %}
           <div class="modal-footer">
             <button type="button" class="btn btn-default disable-on-submit-no-spinner" data-dismiss="modal">
               {% trans "Cancel" %}
             </button>
-            <button type="submit" class="btn btn-danger disable-on-submit" id="delete-form-btn">
-              {% trans "Delete" %}
-            </button>
+            {% if is_create_form %}
+              <a class="btn btn-danger" href="{% url 'soft_delete_case_view' domain case_id instance.form_id %}">
+                {% trans 'Continue' %}
+              </a>
+            {% else %}
+              <button type="submit" class="btn btn-danger disable-on-submit" id="delete-form-btn">
+                {% trans "Delete" %}
+              </button>
+            {% endif %}
           </div>
         </form>
       </div>
