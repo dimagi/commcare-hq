@@ -271,7 +271,7 @@ class CeleryTaskTracker(object):
             'error_slug': self._client.get(self.error_slug_key) if status == 'ERROR' else None,
             'start_time': start_time,
             'end_time': end_time,
-            'process_time': (end_time - start_time)
+            'process_time': (time.time() if end_time == 0 else end_time) - start_time,
         }
 
     def mark_completed(self):
