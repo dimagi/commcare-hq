@@ -256,10 +256,7 @@ class ScheduleInstance(PartitionedModel):
             return True
 
         if self.memoized_schedule.use_user_case_for_filter:
-            if contact.is_commcare_user():
-                user_case = contact.memoized_usercase
-            else:
-                user_case = contact.get_usercase_by_domain(self.domain)
+            user_case = contact.get_usercase_by_domain(self.domain)
             user_data = user_case.case_json
         else:
             user_data = contact.get_user_data(self.domain)
