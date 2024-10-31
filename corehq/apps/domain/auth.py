@@ -423,7 +423,5 @@ def connectid_token_auth(view_func):
         username = get_connectid_userinfo(token)
         if username is None:
             return HttpResponseForbidden()
-        link = ConnectIDUserLink.objects.get(connectid_username=username, domain=request.domain)
-        request.user = link.commcare_user
         return view_func(request,  *args, **kwargs)
     return _inner

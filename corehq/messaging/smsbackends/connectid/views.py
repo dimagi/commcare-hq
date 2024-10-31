@@ -47,7 +47,7 @@ def connectid_messaging_key(request, *args, **kwargs):
     link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
     key = generate_aes_key().decode("utf-8")
     messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
-        connectid_user_link=link, domain=request.domain, active=True, defaults={"key": key}
+        connectid_user_link=link, domain=link.domain, active=True, defaults={"key": key}
     )
     return JsonResponse({"key": messaging_key.key})
 
