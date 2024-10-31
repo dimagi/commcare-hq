@@ -193,8 +193,9 @@ hqDefine('locations/js/location_drilldown', [
                 //'all choices' meta-entry; annoying that we have to stuff this in
                 //the children list, but all my attempts to make computed observables
                 //based of children() caused infinite loops.
-                if (self.withAllOption || (!self.withAllOption && self.depth > requiredOption))
+                if (self.withAllOption || (!self.withAllOption && self.depth > requiredOption)) {
                     children.splice(0, 0, {name: '_all', auto_drill: self.auto_drill});
+                }
             }
             self.children($.map(children, function (e) {
                 e.auto_drill = self.auto_drill;
