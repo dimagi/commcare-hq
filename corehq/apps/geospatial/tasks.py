@@ -3,6 +3,8 @@ from dimagi.utils.logging import notify_exception
 from corehq.util.decorators import serial_task
 
 from corehq.apps.celery import task
+from corehq.apps.es import case_search_adapter
+from corehq.apps.es.client import manager
 from corehq.apps.geospatial.const import INDEX_ES_TASK_HELPER_BASE_KEY
 from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
 from corehq.apps.geospatial.utils import (
@@ -46,6 +48,7 @@ def index_es_docs_with_location_props(domain):
         return
 
     celery_task_tracker.mark_requested()
+    celery_task_tracker.mark_start_time()
     batch_count = get_batch_count(doc_count, DEFAULT_QUERY_LIMIT)
     try:
         for i in range(batch_count):
@@ -66,3 +69,6 @@ def index_es_docs_with_location_props(domain):
         )
     else:
         celery_task_tracker.mark_completed()
+    finally:
+        celery_task_tracker.mark_end_time()
+        manager.index_refresh(case_search_adapter.index_name)
