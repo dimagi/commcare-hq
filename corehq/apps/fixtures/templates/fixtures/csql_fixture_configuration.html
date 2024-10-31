@@ -50,8 +50,8 @@
               <tr>
                   <td><input class="form-control" type="text" name="name" x-model="row.name" maxlength="64"></td>
                   <td><textarea class="form-control vertical-resize" spellcheck="false" rows="1" name="csql"
-                    x-model="row.csql" maxlength="2000"></textarea></td>
-                  <td><button class="btn btn-danger"
+                    x-model="row.csql"></textarea></td>
+                  <td><button class="btn btn-outline-danger"
                               @click="deleteRow(index)">
                     <i class="fa-regular fa-trash-can"></i>
                     {% trans "Delete" %}
