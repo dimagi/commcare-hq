@@ -633,10 +633,7 @@ class CSQLFixtureExpressionView(BaseDomainView):
             for expression in CSQLFixtureExpression.by_domain(self.domain).exclude(id__in=id_list_without_blanks):
                 expression.soft_delete()
 
-            for index in range(0, len(ids_list)):
-                _id = ids_list[index]
-                name = name_list[index]
-                csql = csql_list[index]
+            for _id, name, csql in zip(ids_list, name_list, csql_list):
                 if _id:
                     module_badge_configuration = CSQLFixtureExpression.by_domain(self.domain).get(id=_id)
                     module_badge_configuration.name = name
