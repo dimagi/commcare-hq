@@ -294,6 +294,7 @@ custom_data_fields
  0007_custom_data_fields_erm_support
  0008_custom_data_fields_upstream_ids
  0009_field_required_for
+ 0010_customdatafieldsdefinition_profile_required_for_user_type
 data_analytics
  0001_squashed_0004_auto_20150810_1710
  0002_maltrow_threshold
@@ -895,6 +896,7 @@ scheduling
  0026_add_model_fcm_notification_content
  0027_emailcontent_html_message
  0028_connectmessagecontent_connectmessagesurveycontent_and_more
+ 0029_alertschedule_use_user_case_for_filter_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
