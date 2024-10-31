@@ -139,7 +139,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
-                            if (!(response.session_id) && !cloudcareUtils.smallScreenIsEnabled()) {
+                            if (!(response.session_id) && (UsersModels.getCurrentUser().isAppPreview
+                                    || !cloudcareUtils.smallScreenIsEnabled())) {
                                 FormplayerFrontend.trigger('configureDebugger');
                             }
                         }
