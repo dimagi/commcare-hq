@@ -262,8 +262,8 @@ class CeleryTaskTracker(object):
 
     def get_status(self):
         status = self._client.get(self.task_key)
-        start_time = self._client.get(self.start_time_key)
-        end_time = self._client.get(self.end_time_key)
+        start_time = self._client.get(self.start_time_key) or 0
+        end_time = self._client.get(self.end_time_key) or 0
 
         return {
             'status': status,
