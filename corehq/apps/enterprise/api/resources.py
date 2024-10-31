@@ -363,7 +363,7 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
     form_name = fields.CharField()
     submitted = fields.DateTimeField()
     app_name = fields.CharField()
-    mobile_user = fields.CharField()
+    username = fields.CharField()
     domain = fields.CharField()
 
     REPORT_SLUG = EnterpriseReport.FORM_SUBMISSIONS
@@ -387,7 +387,7 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
         bundle.data['form_name'] = bundle.obj['form_name']
         bundle.data['submitted'] = self.convert_datetime(bundle.obj['submitted'])
         bundle.data['app_name'] = bundle.obj['app_name']
-        bundle.data['mobile_user'] = bundle.obj['username']
+        bundle.data['username'] = bundle.obj['username']
         bundle.data['domain'] = bundle.obj['domain']
 
         return bundle
