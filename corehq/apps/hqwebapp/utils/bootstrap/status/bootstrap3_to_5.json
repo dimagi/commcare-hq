@@ -137,5 +137,8 @@
   },
   "integration": {
     "is_complete": true
+  },
+  "locations": {
+    "is_complete": true
   }
 }
