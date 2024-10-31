@@ -48,6 +48,7 @@ def index_es_docs_with_location_props(domain):
         return
 
     celery_task_tracker.mark_requested()
+    celery_task_tracker.mark_start_time()
     batch_count = get_batch_count(doc_count, DEFAULT_QUERY_LIMIT)
     try:
         for i in range(batch_count):
@@ -69,4 +70,5 @@ def index_es_docs_with_location_props(domain):
     else:
         celery_task_tracker.mark_completed()
     finally:
+        celery_task_tracker.mark_end_time()
         manager.index_refresh(case_search_adapter.index_name)
