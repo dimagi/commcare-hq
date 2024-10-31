@@ -575,16 +575,19 @@ def fixture_metadata(request, domain):
     return json_response(item_lists_by_domain(domain))
 
 
-@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator([
+    use_bootstrap5,
+    toggles.MODULE_BADGES.required_decorator(),
+    require_can_edit_fixtures,
+], name='dispatch')
 class CSQLFixtureExpressionView(BaseDomainView):
     urlname = 'csql_fixture_configuration'
     page_title = _('CSQL Fixture Confguration')
     template_name = 'fixtures/csql_fixture_configuration.html'
 
-    @method_decorator(toggles.MODULE_BADGES.required_decorator())
-    @method_decorator(require_can_edit_fixtures)
-    def dispatch(self, request, *args, **kwargs):
-        return super(CSQLFixtureExpressionView, self).dispatch(request, *args, **kwargs)
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=[self.domain])
 
     def all_module_badge_configurations(self):
         return CSQLFixtureExpression.by_domain(self.domain)
@@ -592,7 +595,7 @@ class CSQLFixtureExpressionView(BaseDomainView):
     @property
     def page_context(self):
         return {
-            'save_url': reverse('csql_fixture_configuration', args=[self.domain]),
+            'save_url': reverse(self.urlname, args=[self.domain]),
             'csql_fixture_configurations':
                 list(self.all_module_badge_configurations().values('id', 'name', 'csql')),
         }
@@ -649,7 +652,3 @@ class CSQLFixtureExpressionView(BaseDomainView):
         except Exception as e:
             notify_exception(request, message=str(e))
             return self._post_response("Configuration not updated, unknown error occurred.", 'alert-danger')
-
-    @property
-    def section_url(self):
-        return reverse(self.urlname, args=[self.domain])
