@@ -294,6 +294,20 @@ class DataSourceProperty(object):
                 'pre_operator': "distinct from",
                 # pre_value already set by "pre" clause
             })
+        if configuration['format'] == const.PRE_FILTER_VALUE_LESS_THAN:
+            filter.update({
+                'type': 'pre',
+                'pre_operator': "<",
+                'datatype': 'decimal',
+                # pre_value already set by "pre" clause
+            })
+        if configuration['format'] == const.PRE_FILTER_VALUE_GREATER_THAN:
+            filter.update({
+                'type': 'pre',
+                'pre_operator': ">",
+                'datatype': 'decimal',
+                # pre_value already set by "pre" clause
+            })
         return filter
 
     def to_report_filter_indicator(self, configuration):
