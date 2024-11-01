@@ -2,6 +2,7 @@ from lxml.builder import E
 
 from casexml.apps.phone.fixtures import FixtureProvider
 
+from corehq import extensions
 from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
 from corehq.apps.es.case_search import CaseSearchES
@@ -9,8 +10,6 @@ from corehq.messaging.templating import (
     MessagingTemplateRenderer,
     NestedDictTemplateParam,
 )
-
-from corehq import extensions
 
 
 def _get_user_template_info(restore_user):
