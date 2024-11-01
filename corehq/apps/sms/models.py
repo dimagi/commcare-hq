@@ -3,6 +3,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from datetime import datetime
+from uuid import uuid4
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
@@ -2754,4 +2755,4 @@ class ConnectMessage(Log):
     date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)
     text = models.CharField(max_length=300)
     received_on = models.DateTimeField(null=True, blank=True)
-    message_id = models.UUIDField(null=True)
+    message_id = models.UUIDField(default=uuid4)

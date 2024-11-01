@@ -30,6 +30,7 @@ class ConnectBackend:
             },
             auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
+        return response.status_code == requests.codes.OK
 
 
     def create_channel(self, user):
