@@ -12,7 +12,6 @@ from corehq.apps.case_search.models import (
 from corehq.apps.case_search.tests.utils import get_case_search_query
 from corehq.apps.case_search.utils import QueryHelper
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'mighty-search'
 
@@ -258,7 +257,6 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             validate_query=False
         )
 
-    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
     def test_multi_xpath_query(self):
         criteria = OrderedDict([
             ('_xpath_query', ["name='Frodo Baggins'", "home='Hobbiton'"]),

@@ -107,18 +107,6 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
             column = self.headers.header[column_id]
             try:
                 meta_property = INDEXED_METADATA_BY_KEY[column.prop_name]
-                if meta_property.key == '@case_id':
-                    # This condition is added because ES 5 does not allow sorting on _id.
-                    #  When we will have case_id in root of the document, this should be removed.
-                    sort_order = 'desc' if descending else 'asc'
-                    query.es_query['sort'] = [{
-                        'case_properties.value.exact': {
-                            'order': sort_order,
-                            'nested_path': 'case_properties',
-                            'nested_filter': {'term': {"case_properties.key.exact": "@case_id"}},
-                        }
-                    }]
-                    return query
                 query = query.sort(meta_property.es_field_name, desc=descending)
             except KeyError:
                 query = query.sort_by_case_property(column.prop_name, desc=descending)
