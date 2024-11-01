@@ -521,6 +521,9 @@ hqDefine("geospatial/js/case_management", [
             if (polygonFilterModel) {
                 selectMapItemsInPolygons();
             }
+            if (mapModel.hasDisbursementLayers()) {
+                mapModel.removeDisbursementLayers();
+            }
         }
     });
 });
