@@ -11,6 +11,8 @@ from corehq.messaging.templating import (
     NestedDictTemplateParam,
 )
 
+from .models import CSQLFixtureExpression
+
 
 def _get_user_template_info(restore_user):
     return {
@@ -63,7 +65,7 @@ class CaseSearchFixtureProvider(FixtureProvider):
 
 
 def _get_indicators(domain):
-    return []  # TODO
+    return list(CSQLFixtureExpression.by_domain(domain).values_list('name', 'csql'))
 
 
 case_search_fixture_generator = CaseSearchFixtureProvider()
