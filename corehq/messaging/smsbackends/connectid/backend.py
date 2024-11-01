@@ -17,19 +17,20 @@ class ConnectBackend:
         cipher = AES.new(key, AES.MODE_GCM)
         data, tag = cipher.encrypt_and_digest(message.text.encode("utf-8"))
         content = {
-            "tag": tag,
-            "nonce": cipher.nonce,
-            "ciphertext": data,
+            "tag": base64.b64encode(tag).decode("utf-8"),
+            "nonce": base64.b64encode(cipher.nonce).decode("utf-8"),
+            "ciphertext": base64.b64encode(data).decode("utf-8"),
         }
-        requests.post(
+        response = requests.post(
             settings.CONNECTID_MESSAGE_URL,
-            data={
-                "channel": user_link.channel_id,
+            json={
+                "channel": str(user_link.channel_id),
                 "content": content,
-                "message_id": uuid4(),
+                "message_id": str(message.message_id),
             },
             auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
+
 
     def create_channel(self, user):
         user_link = ConnectIDUserLink.objects.get(commcare_user=user)
