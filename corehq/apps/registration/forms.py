@@ -73,6 +73,7 @@ class RegisterWebUserForm(forms.Form):
             """)))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
+    is_self_signup = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         self.is_sso = kwargs.pop('is_sso', False)
@@ -215,6 +216,7 @@ class RegisterWebUserForm(forms.Form):
                                   "disable: disableNextStepTwo"
                     )
                 ),
+                hqcrispy.InlineField('is_self_signup'),
                 css_class="form-bubble form-step step-2",
                 style="display: none;"
             ),
