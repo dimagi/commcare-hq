@@ -2,6 +2,12 @@ from contextlib import ContextDecorator
 from unittest.mock import patch, PropertyMock
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+)
+from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.users.user_data import UserData
 
 
@@ -50,3 +56,24 @@ class _patch_user_data_db_layer(ContextDecorator):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.schema_patcher.stop()
         self.init_patcher.stop()
+
+
+def setup_profile(domain):
+    definition = CustomDataFieldsDefinition(domain=domain,
+                                            field_type=UserFieldsView.field_type)
+    definition.save()
+    definition.set_fields([
+        Field(
+            slug='conflicting_field',
+            label='Conflicting Field',
+            choices=['yes', 'no'],
+        ),
+    ])
+    definition.save()
+    profile = CustomDataFieldsProfile(
+        name='character',
+        fields={'conflicting_field': 'yes'},
+        definition=definition,
+    )
+    profile.save()
+    return profile.id
