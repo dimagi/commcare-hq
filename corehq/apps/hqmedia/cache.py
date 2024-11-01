@@ -15,13 +15,17 @@ from corehq.apps.hqmedia.models import (
 
 class BaseMultimediaStatusCache(object):
     upload_type = None
-    cache_expiry = 60 * 60 # defaults to one hour
+    cache_expiry = 60 * 60  # defaults to one hour
 
     def __init__(self, processing_id):
         self.processing_id = processing_id
         self.in_celery = False
         self.complete = False
-        self.progress = 0
+        self.progress = {
+            'percent': 0,
+            'current': 0,
+            'total': 1,
+        }
         self.errors = []
         if self.upload_type is None:
             raise NotImplementedError("You need to specify an upload type.")
@@ -29,7 +33,7 @@ class BaseMultimediaStatusCache(object):
     def __str__(self):
         return "Status of process id %(processing_id)s: %(progress)d%%" % {
             'processing_id': self.processing_id,
-            'progress': self.progress,
+            'progress': self.progress['percent'],
         }
 
     def save(self):
@@ -47,6 +51,7 @@ class BaseMultimediaStatusCache(object):
         return {
             'type': self.upload_type,
             'in_celery': self.in_celery,
+            'is_ready': self.complete,
             'complete': self.complete,
             'progress': self.progress,
             'errors': self.errors,
@@ -81,10 +86,15 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
         response = super(BulkMultimediaStatusCache, self).get_response()
         response.update({
             'unmatched_files': self.unmatched_files,
+            'unmatched_count': len(self.unmatched_files),
             'matched_files': self.matched_files,
+            'matched_count': len([f for files in self.matched_files.values() for f in files]),
             'total_files': self.total_files,
             'processed_files': self.processed_files,
             'skipped_files': self.skipped_files,
+            'image_count': len(self.matched_files['CommCareImage']),
+            'audio_count': len(self.matched_files['CommCareAudio']),
+            'video_count': len(self.matched_files['CommCareVideo']),
         })
         return response
 
@@ -92,8 +102,12 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
         if self.total_files is None:
             raise ValueError("You need to set total_files before you can update progress.")
         self.processed_files = num_files_processed
-        self.progress = int(100 * (self.processed_files / self.total_files))
-        if self.progress >= 100:
+        self.progress = {
+            'percent': int(100 * (self.processed_files / self.total_files)),
+            'current': self.processed_files,
+            'total': self.total_files,
+        }
+        if self.progress['percent'] >= 100:
             self.complete = True
         self.save()
 

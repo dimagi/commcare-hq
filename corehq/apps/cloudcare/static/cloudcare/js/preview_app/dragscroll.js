@@ -47,9 +47,12 @@ hqDefine("cloudcare/js/preview_app/dragscroll", ["jquery"], function ($) {
                             lastClientY = e.clientY;
 
                             // monkeypatch
-                            if (!($(e.srcElement).hasClass('form-control') || $(e.target).hasClass('form-control'))) {
+                            if (!(
+                                $(e.srcElement).hasClass('form-control') || $(e.target).hasClass('form-control')
+                                || $(e.srcElement).hasClass('form-select') || $(e.target).hasClass('form-select')
+                            )) {
                                 e.preventDefault();
-                                $('.form-control').blur();
+                                $('.form-control, .form-select').blur();
                             }
 
                         }

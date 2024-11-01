@@ -100,7 +100,7 @@ to become more familiar with JSONPath.
 .. _Postman REST Client: https://www.postman.com/product/rest-client/
 .. _Firefox add-on: https://addons.mozilla.org/en-US/firefox/addon/rested/
 .. _Chrome extension: https://chrome.google.com/webstore/detail/rested/eelcnbccaccipfolokglfhhmapdchbfg
-.. _API key authentication: https://confluence.dimagi.com/display/commcarepublic/Authentication#Authentication-ApiKeyauthentication
+.. _API key authentication: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication
 
 
 .. _admin-interface-mapping:

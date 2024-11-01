@@ -1,13 +1,11 @@
 from datetime import datetime, timedelta
 from time import sleep
 
-from django.conf import settings
-
 from celery import Celery, current_app
 from celery.backends.base import DisabledBackend
 from celery.schedules import crontab
 
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import task
 
 
 def no_result_task(*args, **kwargs):
@@ -207,17 +205,6 @@ def deserialize_run_every_setting(run_every_setting):
         return fn(**params)
     else:
         raise generic_value_error
-
-
-def periodic_task_when_true(boolean, *args, **kwargs):
-    if boolean:
-        return periodic_task(*args, **kwargs)
-    else:
-        return lambda fn: fn
-
-
-def periodic_task_on_envs(envs, *args, **kwargs):
-    return periodic_task_when_true(settings.SERVER_ENVIRONMENT in envs, *args, **kwargs)
 
 
 def run_periodic_task_again(run_every, last_run_start: datetime, last_duration: timedelta) -> bool:

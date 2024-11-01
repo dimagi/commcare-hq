@@ -115,7 +115,15 @@ def get_case_owners(request, domain, mobile_user_and_group_slugs):
                     )).fields(["users"])
             )
             user_lists = [group["users"] for group in report_group_q.run().hits]
-            selected_reporting_group_users = list(set().union(*user_lists))
+            selected_reporting_group_users = set()
+            for element in user_lists:
+                if isinstance(element, list):
+                    # Groups containing multiple users will be returned as a list.
+                    selected_reporting_group_users |= set(element)
+                else:
+                    # Groups containing a single user will be returned as single elements in query.
+                    selected_reporting_group_users.add(element)
+            selected_reporting_group_users = list(selected_reporting_group_users)
 
     # Get user ids for each user that was specifically selected
     selected_user_ids = EMWF.selected_user_ids(mobile_user_and_group_slugs)

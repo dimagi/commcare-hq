@@ -5,6 +5,7 @@ from django.test import TestCase, override_settings
 
 from casexml.apps.case.tests.util import create_case
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
@@ -620,7 +621,7 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(
                 domain=self.domain,
                 case_id=case.case_id,
-                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
                 recipient_id='recipient'
             )
             self.assertEqual(instance.recipient.get_id, self.full_mobile_user.get_id)
@@ -635,7 +636,7 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(
                 domain=self.domain,
                 case_id=case.case_id,
-                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
                 recipient_id='recipient'
             )
             self.assertIsNone(instance.recipient)
@@ -649,10 +650,41 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(
                 domain=self.domain,
                 case_id=case.case_id,
-                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
                 recipient_id='recipient'
             )
             self.assertIsNone(instance.recipient)
+
+    def test_user_id_case_property_recipient(self):
+        # test valid ID
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id,
+                update={'hq_user_id': self.web_user.get_id}
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
+                recipient_id='hq_user_id'
+            )
+            self.assertEqual(instance.recipient.get_id, self.web_user.get_id)
+
+        # test invalid ID
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id,
+                update={'hq_user_id': '1234abcd'}
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
+                recipient_id='hq_user_id'
+            )
+            self.assertEqual(instance.recipient, None)
 
     def test_email_case_property_recipient(self):
         with create_case(
@@ -693,7 +725,7 @@ class SchedulingRecipientTest(TestCase):
                 'external_id': user.get_id,
                 'update': {'hq_user_id': user.get_id},
             }
-            return create_case(self.domain, 'commcare-user', **create_case_kwargs)
+            return create_case(self.domain, USERCASE_TYPE, **create_case_kwargs)
 
     def update_case_and_process_change(self, *args, **kwargs):
         with self.process_pillow_changes:

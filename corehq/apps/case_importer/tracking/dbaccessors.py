@@ -29,9 +29,8 @@ def get_case_upload_record_count(domain, user):
 
 
 def get_case_ids_for_case_upload(case_upload):
-    enterprise_perms = EnterprisePermissions.get_by_domain(case_upload.domain)
     for form_record in case_upload.form_records.order_by('pk').all():
-        if enterprise_perms.is_enabled and enterprise_perms.source_domain == case_upload.domain:
+        if EnterprisePermissions.is_source_domain(case_upload.domain):
             form = XFormInstance.objects.get_form(form_record.form_id)
         else:
             form = XFormInstance.objects.get_form(form_record.form_id, case_upload.domain)

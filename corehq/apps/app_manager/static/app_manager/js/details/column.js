@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Model for a column in the Display Properties section of case list/detail.
  *
@@ -13,6 +14,7 @@
 hqDefine("app_manager/js/details/column", function () {
     const uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
     const initialPageData = hqImport('hqwebapp/js/initial_page_data').get;
+    const microCaseImageName = 'cc_case_image';
 
     return function (col, screen) {
         /*
@@ -230,6 +232,9 @@ hqDefine("app_manager/js/details/column", function () {
                     }
                 }
             }
+        } else {
+            // Restrict Translatable Text usage to Calculated Properties only
+            menuOptions.splice(-1);
         }
 
         self.format = uiElement.select(menuOptions).val(self.original.format || null);
@@ -244,6 +249,7 @@ hqDefine("app_manager/js/details/column", function () {
                 multimedia: self.screen.config.multimedia,
                 values_are_icons: self.original.format === 'enum-image',
                 keys_are_conditions: self.original.format === 'conditional-enum',
+                values_are_translatable: self.original.format === 'translatable-enum',
             };
             self.enum_extra = uiElement.key_value_mapping(o);
         }());
@@ -364,6 +370,15 @@ hqDefine("app_manager/js/details/column", function () {
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
         self.format.on('change', function () {
+            if (self.field.val() === microCaseImageName && self.format.val() !== 'image') {
+                // The field name input was disabled to enforce using the reserved micro image name.
+                // If the format is no longer an image then the user can edit the field input again
+                self.field.val('');
+                self.field.observableVal('');
+                self.field.ui.find('select').val('').change();
+                self.field.ui.find('select').prop('disabled', false);
+            }
+
             self.coordinatesVisible(!_.contains(['address', 'address-popup', 'invisible'], self.format.val()));
             // Prevent self from running on page load before init
             if (self.format.ui.parent().length > 0) {
@@ -384,9 +399,11 @@ hqDefine("app_manager/js/details/column", function () {
                         fireChange();
                     });
                     self.date_extra.value = format.val();
-                } else if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
+                } else if (this.val() === "enum" || this.val() === "enum-image"
+                           || this.val() === 'conditional-enum' || this.val() === 'translatable-enum') {
                     self.enum_extra.values_are_icons(this.val() === 'enum-image');
                     self.enum_extra.keys_are_conditions(this.val() === 'conditional-enum');
+                    self.enum_extra.values_are_translatable(this.val() === 'translatable-enum');
                     self.format.ui.parent().append(self.enum_extra.ui);
                 } else if (this.val() === "clickable-icon") {
                     self.enum_extra.values_are_icons(true);
@@ -426,6 +443,13 @@ hqDefine("app_manager/js/details/column", function () {
                         self.time_ago_extra.value = interval.val();
                         fireChange();
                     });
+                } else if (this.val() === 'image') {
+                    // We are enforcing the reserved field name for the micro image format,
+                    // so don't allow a user to change this
+                    self.field.ui.find('select').val(microCaseImageName).change();
+                    self.field.val(microCaseImageName);
+                    self.field.observableVal(microCaseImageName);
+                    self.field.ui.find('select').prop('disabled', true);
                 }
             }
         }).fire('change');

@@ -3,10 +3,12 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
     "jquery",
     "knockout",
     "underscore",
+    "es6!hqwebapp/js/bootstrap5_loader",
 ], function (
     $,
     ko,
-    _
+    _,
+    bootstrap
 ) {
     var CRUDPaginatedListModel = function (
         total,
@@ -57,7 +59,7 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
         });
 
         self.isPaginatedListEmpty = ko.computed(function () {
-            return self.paginatedList().length == 0;
+            return self.paginatedList().length === 0;
         });
 
         self.isNewListVisible = ko.computed(function () {
@@ -88,12 +90,14 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
         });
 
         self.allPages = ko.computed(function () {
-            var last_ind = self.maxPage() + 1;
-            if (self.maxPage() <= 5 || self.currentPage() <= 3)
-                return _.range(1, Math.min(last_ind, 6));
-            if (self.currentPage() >= self.maxPage() - 2)
-                return _.range(self.maxPage() - 4, last_ind);
-            return _.range(self.currentPage() - 2, Math.min(last_ind, self.currentPage() + 3));
+            var lastIndex = self.maxPage() + 1;
+            if (self.maxPage() <= 5 || self.currentPage() <= 3) {
+                return _.range(1, Math.min(lastIndex, 6));
+            }
+            if (self.currentPage() >= self.maxPage() - 2) {
+                return _.range(self.maxPage() - 4, lastIndex);
+            }
+            return _.range(self.currentPage() - 2, Math.min(lastIndex, self.currentPage() + 3));
         });
 
         self.utils = {
@@ -143,16 +147,15 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
         };
 
         self.initCreateForm = function () {
-            var $createForm = $("#create-item-form");
+            const $createForm = $("#create-item-form");
             $createForm.submit(function (e) {
                 e.preventDefault();
-                $createForm.ajaxSubmit({
-                    url: "",
-                    type: 'post',
+                let formData = new FormData($createForm.get(0));
+                formData.set("action", "create");
+                $.ajax({
+                    method: 'POST',
                     dataType: 'json',
-                    data: {
-                        'action': 'create',
-                    },
+                    data: Object.fromEntries(formData),
                     statusCode: self.handleStatusCode,
                     success: function (data) {
                         $createForm[0].reset();
@@ -197,8 +200,9 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             self.changePage(1);
         };
 
-        self.deleteItem = function (paginatedItem, event) {
+        self.deleteItem = function (paginatedItem, event, button) {
             var pList = self.paginatedList();
+            $(button).enableButton();
             paginatedItem.dismissModals();
             self.paginatedList(_(pList).without(paginatedItem));
             self.deletedList.push(paginatedItem);
@@ -222,7 +226,7 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             });
         };
 
-        self.refreshList = function (paginatedItem) {
+        self.refreshList = function (paginatedItem, button) {
             $.ajax({
                 url: '',
                 type: 'post',
@@ -238,6 +242,7 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
                 statusCode: self.handleStatusCode,
                 success: function (data) {
                     self.utils.reloadList(data);
+                    $(button).enableButton();
                 },
             });
         };
@@ -246,9 +251,10 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             return null;
         };
 
-        self.initRow = function (rowElems, paginatedItem) {
+        self.initRow = function () {
             // Intended to be overridden with additional initialization for
             // each row in the paginated list.
+            // Arguments: rowElems, paginatedItem
         };
 
         return self;
@@ -268,15 +274,9 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
         };
 
         self.dismissModals = function () {
-            var $modals = self.getItemRow().find('.modal');
-            if ($modals) {
-                $modals.modal('hide');
-                //  fix for b3
-                $('body').removeClass('modal-open');
-                var $modalBackdrop = $('.modal-backdrop');
-                if ($modalBackdrop) {
-                    $modalBackdrop.remove();
-                }
+            var $modal = self.getItemRow().find('.modal');
+            if ($modal) {
+                bootstrap.Modal.getOrCreateInstance($modal).hide();
             }
         };
 
@@ -296,14 +296,12 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             var $updateForm = $(elems).find('.update-item-form');
             if ($updateForm) {
                 $updateForm.submit(function (e) {
+                    let formData = new FormData($updateForm.get(0));
+                    formData.set("action", "update");
                     e.preventDefault();
-                    $updateForm.ajaxSubmit({
-                        url: "",
-                        type: 'post',
-                        dataType: 'json',
-                        data: {
-                            action: 'update',
-                        },
+                    $.ajax({
+                        method: 'POST',
+                        data: Object.fromEntries(formData),
                         success: function (data) {
                             if (data.updatedItem) {
                                 self.dismissModals();
@@ -321,15 +319,15 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
             var $deleteButton = $(elems).find('.delete-item-confirm');
             if ($deleteButton) {
                 $deleteButton.click(function () {
-                    $(this).button('loading');
-                    self.getItemRow().trigger('deleteItem');
+                    $(this).disableButton();
+                    self.getItemRow().trigger('deleteItem', this);
                 });
             }
             var $refreshButton = $(elems).find('.refresh-list-confirm');
             if ($refreshButton) {
                 $refreshButton.click(function () {
-                    $(this).button('loading');
-                    self.getItemRow().trigger('refreshList');
+                    $(this).disableButton();
+                    self.getItemRow().trigger('refreshList', this);
                 });
             }
             self.initRow(elems, self);

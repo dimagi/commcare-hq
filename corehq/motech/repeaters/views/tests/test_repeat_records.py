@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.http import QueryDict
 from django.test import SimpleTestCase, TestCase
 from nose.tools import assert_equal
 from unittest.mock import Mock
@@ -9,7 +8,7 @@ from corehq.motech.models import ConnectionSettings
 
 from .. import repeaters
 from .. import repeat_records
-from ...models import FormRepeater, SQLRepeatRecord
+from ...models import FormRepeater, RepeatRecord
 
 
 class TestUtilities(SimpleTestCase):
@@ -44,46 +43,6 @@ class TestUtilities(SimpleTestCase):
             result = repeat_records._get_flag(mock_request)
             assert_equal(result, expected_result)
 
-    def test__change_record_state(self):
-        query_strings = [
-            None,
-            '',
-            'repeater=&record_state=&payload_id=payload_3',
-            'repeater=repeater_3&record_state=STATUS_2&payload_id=payload_2',
-            'repeater=&record_state=&payload_id=',
-            'repeater=repeater_1&record_state=STATUS_2&payload_id=payload_1',
-            'repeater=&record_state=STATUS&payload_id=payload_2',
-            'repeater=repeater_2&record_state=STATUS&payload_id=',
-        ]
-        strings_to_add = [
-            'NO_STATUS',
-            'NO_STATUS',
-            None,
-            '',
-            'STATUS',
-            'STATUS_2',
-            'STATUS_3',
-            'STATUS_4',
-        ]
-        desired_strings = [
-            '',
-            '',
-            'repeater=&record_state=&payload_id=payload_3',
-            'repeater=repeater_3&record_state=STATUS_2&payload_id=payload_2',
-            'repeater=&record_state=STATUS&payload_id=',
-            'repeater=repeater_1&record_state=STATUS_2&payload_id=payload_1',
-            'repeater=&record_state=STATUS_3&payload_id=payload_2',
-            'repeater=repeater_2&record_state=STATUS_4&payload_id=',
-        ]
-
-        for qs, str_to_add, expected_result in zip(query_strings,
-                                                   strings_to_add,
-                                                   desired_strings):
-            query_dict = QueryDict(qs)
-            result = repeat_records._change_record_state(
-                query_dict, str_to_add).urlencode()
-            self.assertEqual(result, expected_result)
-
 
 class TestDomainForwardingOptionsView(TestCase):
 
@@ -106,18 +65,20 @@ class TestDomainForwardingOptionsView(TestCase):
     def test_get_repeater_types_info(self):
         class view:
             domain = "test"
-        state_counts = SQLRepeatRecord.objects.count_by_repeater_and_state("test")
+        state_counts = RepeatRecord.objects.count_by_repeater_and_state("test")
         infos = repeaters.DomainForwardingOptionsView.get_repeater_types_info(view, state_counts)
         repeater, = {i.class_name: i for i in infos}['FormRepeater'].instances
 
         self.assertEqual(repeater.count_State, {
             # templates that reference `count_State` may need to be
             # updated if the keys in this dict change
-            'Pending': 1,
-            'Fail': 0,
-            'Success': 0,
             'Cancelled': 0,
             'Empty': 0,
+            'EmptyOrSuccess': 0,
+            'Fail': 0,
+            'InvalidPayload': 0,
+            'Pending': 1,
+            'Success': 0
         })
 
 
@@ -151,17 +112,12 @@ class TestRepeatRecordView(TestCase):
         record = repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
         self.assertEqual(record.id, rec_id)
 
-    def test_get_record_or_404_with_couch_id(self):
-        rec_id = self.record.couch_id
-        record = repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
-        self.assertEqual(record.id, self.record.id)
-
     def test_get_record_or_404_not_found(self):
-        rec_id = "404aaaaaaaaaaaaaaaaaaaaaaaaaa404"
+        rec_id = 40400000000000000000000000000404
         with self.assertRaises(repeat_records.Http404):
             repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
 
     def test_get_record_or_404_with_wrong_domain(self):
-        rec_id = str(self.record.id)
+        rec_id = self.record.id
         with self.assertRaises(repeat_records.Http404):
             repeat_records.RepeatRecordView.get_record_or_404("wrong", rec_id)

@@ -1,0 +1,49 @@
+{% load i18n %}
+
+<script type="text/template" id="persistent-menu-template">
+  <button id="persistent-menu-arrow-toggle"
+     role="button"
+     aria-label="Expand Persistent Menu"
+     tabindex="1"
+     data-bs-target="#persistent-menu-container"
+     aria-expanded="true"
+     aria-controls="persistent-menu-container"
+     class="position-fixed top-50 start-0 rounded-end persistent-menu-toggle">
+    <i class="fa fa-chevron-right"></i>
+  </button>
+  <div id="persistent-menu-container" class="bg-white h-100 position-relative overflow-scroll"
+    aria-labelledby="persistent-menu-label">
+    <button type="button" id="persistent-menu-close-button" class="btn-close text-reset position-absolute"
+      data-bs-target="#persistent-menu-container" aria-label="Close"></button>
+    <h2 class="title position-relative me-4" id="persistent-menu-label">
+      <% if (imageUri) { %>
+        <i class="fcc persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"
+            style="background-image: url('<%- imageUri %>');"></i>
+      <% } else { %>
+        <i class="fcc fcc-flower persistent-menu-image" aria-hidden="true"></i>
+      <% } %>
+      <a id="app-main" class="align-middle stretched-link text-reset" href="#">
+        <%- appName %>
+      </a>
+    </h2>
+    <div id="persistent-menu-content" class="persistent-menu"></div>
+  </div>
+</script>
+
+<script type="text/template" id="persistent-menu-item">
+  <div class="position-relative persistent-menu-item rounded d-flex align-items-center">
+    <% if (imageUri) { %>
+      <i class="fcc persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"
+         style="background-image: url('<%- imageUri %>');"></i>
+    <% } else { %>
+      <i class="fa <%- iconClass %> persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"></i>
+    <% } %>
+    <div class="mx-3 flex-grow-1">
+      <a class="d-block stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#"
+         data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
+        <%- displayText %>
+      </a>
+    </div>
+  </div>
+  <ul></ul>
+</script>

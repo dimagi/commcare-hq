@@ -1,0 +1,7 @@
+.query-caption.required label::before, .search-query-group-header.required .search-query-group-header-label::before {
+  content: '*';
+  font-weight: bold;
+  color: $danger;
+  margin: 0 3px;
+  float: left;
+}

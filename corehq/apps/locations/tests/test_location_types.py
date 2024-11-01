@@ -3,7 +3,7 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 
 
 class TestLocationTypes(TestCase):
@@ -139,6 +139,16 @@ class TestLocationTypeOwnership(TestCase):
             set([parent_loc._id, grandchild_loc._id]),
             set([g._id for g in self.user.get_case_sharing_groups()])
         )
+
+    def test_web_user_has_location_as_case_sharing_group(self):
+        loc_type = make_loc_type('loc-type', domain=self.domain, shares_cases=True)
+        location = make_loc('loc', type=loc_type.name, domain=self.domain)
+        web_user = WebUser.create(self.domain, 'web_username', 'password', created_by=None, created_via=None)
+        self.addCleanup(web_user.delete, self.domain, deleted_by=None)
+        web_user.set_location(self.domain, location)
+        location_groups = web_user.get_case_sharing_groups(domain=self.domain)
+        self.assertEqual(1, len(location_groups))
+        self.assertEqual(location.location_id, location_groups[0]._id)
 
 
 class TestLocationTypeExpansions(SimpleTestCase):

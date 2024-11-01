@@ -9,6 +9,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.case_importer.util import RESERVED_FIELDS
 from corehq.apps.data_dictionary.util import get_values_hints_dict, get_deprecated_fields
+from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 
 
@@ -115,3 +116,8 @@ def get_special_fields(domain=None):
             )
         )
     return special_fields
+
+
+def get_non_discoverable_system_properties():
+    discoverable = {s.field for s in get_special_fields() if s.description and s.discoverable}
+    return [p.label for p in MAIN_CASE_TABLE_PROPERTIES if p.label not in discoverable]

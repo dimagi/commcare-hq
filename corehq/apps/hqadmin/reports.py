@@ -23,6 +23,11 @@ from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.dbaccessors import get_all_user_search_query
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es.forms import FormES
+from corehq.toggles import USER_CONFIGURABLE_REPORTS, RESTRICT_DATA_SOURCE_REBUILD
+from corehq.motech.repeaters.const import UCRRestrictionFFStatus
+from corehq.apps.es.aggregations import TermsAggregation
 
 
 class AdminReport(GenericTabularReport):
@@ -333,3 +338,160 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
                 abbrev_sha=commit_sha[:7]
             )
         return None
+
+
+class UCRRebuildRestrictionTable:
+    UCR_RESTRICTION_THRESHOLD = 1_000_000
+
+    restriction_ff_status: str
+
+    def __init__(self, *args, **kwargs):
+        self.restriction_ff_status = kwargs.get('restriction_ff_status')
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(gettext_lazy("Domain")),
+            DataTablesColumn(gettext_lazy("Case count")),
+            DataTablesColumn(gettext_lazy("Form count")),
+            DataTablesColumn(gettext_lazy("UCR rebuild restriction status")),
+        )
+
+    @property
+    def rows(self):
+        rows = []
+
+        ucr_domains = self.ucr_domains
+        if not ucr_domains:
+            return []
+
+        case_count_by_domain = self._case_count_by_domain(ucr_domains)
+        form_count_by_domain = self._forms_count_by_domain(ucr_domains)
+
+        for domain in ucr_domains:
+            case_count = getattr(case_count_by_domain.get(domain), 'doc_count', 0)
+            form_count = getattr(form_count_by_domain.get(domain), 'doc_count', 0)
+
+            if self.should_show_domain(domain, case_count, form_count):
+                rows.append(
+                    self._row_data(domain, case_count, form_count)
+                )
+
+        return rows
+
+    @property
+    @memoized
+    def ucr_domains(self):
+        return USER_CONFIGURABLE_REPORTS.get_enabled_domains()
+
+    def should_show_domain(self, domain, total_cases, total_forms):
+        if self._show_all_domains:
+            return True
+
+        should_restrict_rebuild = self._should_restrict_rebuild(total_cases, total_forms)
+        restriction_ff_enabled = self._rebuild_restricted_ff_enabled(domain)
+
+        if self._show_ff_enabled_domains:
+            return restriction_ff_enabled
+        if self._show_ff_disabled_domains:
+            return not restriction_ff_enabled
+        if self._show_should_enable_ff_domains:
+            return should_restrict_rebuild and not restriction_ff_enabled
+        if self._show_should_disable_ff_domains:
+            return not should_restrict_rebuild and restriction_ff_enabled
+
+    @staticmethod
+    def _case_count_by_domain(domains):
+        return CaseES().domain(domains).aggregation(
+            TermsAggregation('domain', 'domain.exact')
+        ).run().aggregations.domain.buckets_dict
+
+    @staticmethod
+    def _forms_count_by_domain(domains):
+        return FormES().domain(domains).aggregation(
+            TermsAggregation('domain', 'domain.exact')
+        ).run().aggregations.domain.buckets_dict
+
+    def _row_data(self, domain, case_count, form_count):
+        return [
+            domain,
+            case_count,
+            form_count,
+            self._ucr_rebuild_restriction_status_column_data(domain, case_count, form_count),
+        ]
+
+    def _should_restrict_rebuild(self, case_count, form_count):
+        return case_count >= self.UCR_RESTRICTION_THRESHOLD or form_count >= self.UCR_RESTRICTION_THRESHOLD
+
+    @staticmethod
+    @memoized
+    def _rebuild_restricted_ff_enabled(domain):
+        return RESTRICT_DATA_SOURCE_REBUILD.enabled(domain)
+
+    @property
+    def _show_ff_enabled_domains(self):
+        return self.restriction_ff_status == UCRRestrictionFFStatus.Enabled.name
+
+    @property
+    def _show_ff_disabled_domains(self):
+        return self.restriction_ff_status == UCRRestrictionFFStatus.NotEnabled.name
+
+    @property
+    def _show_should_enable_ff_domains(self):
+        return self.restriction_ff_status == UCRRestrictionFFStatus.ShouldEnable.name
+
+    @property
+    def _show_should_disable_ff_domains(self):
+        return self.restriction_ff_status == UCRRestrictionFFStatus.CanDisable.name
+
+    @property
+    def _show_all_domains(self):
+        return not self.restriction_ff_status
+
+    def _ucr_rebuild_restriction_status_column_data(self, domain, case_count, form_count):
+        from django.utils.safestring import mark_safe
+        from corehq.apps.toggle_ui.views import ToggleEditView
+
+        restriction_ff_enabled = self._rebuild_restricted_ff_enabled(domain)
+        toggle_edit_url = reverse(ToggleEditView.urlname, args=(RESTRICT_DATA_SOURCE_REBUILD.slug,))
+
+        if self._should_restrict_rebuild(case_count, form_count):
+            if not restriction_ff_enabled:
+                return mark_safe(f"""
+                    <a href={toggle_edit_url}>{gettext_lazy("Rebuild restriction required")}</a>
+                """)
+            return gettext_lazy("Rebuild restricted")
+
+        if restriction_ff_enabled:
+            return mark_safe(f"""
+                <a href={toggle_edit_url}>{gettext_lazy("Rebuild restriction not required")}</a>
+            """)
+        return gettext_lazy("No rebuild restriction required")
+
+
+class UCRDataLoadReport(AdminReport):
+    slug = 'ucr_data_load'
+    name = gettext_lazy("UCR Domains Data Report")
+
+    fields = [
+        'corehq.apps.reports.filters.select.UCRRebuildStatusFilter',
+    ]
+    emailable = False
+    exportable = False
+    disable_pagination = True
+    ajax_pagination = False
+    use_datatables = False
+
+    def __init__(self, request, *args, **kwargs):
+        self.table_data = UCRRebuildRestrictionTable(
+            restriction_ff_status=request.GET.get('ucr_rebuild_restriction')
+        )
+        super().__init__(request, *args, **kwargs)
+
+    @property
+    def headers(self):
+        return self.table_data.headers
+
+    @property
+    def rows(self):
+        return self.table_data.rows

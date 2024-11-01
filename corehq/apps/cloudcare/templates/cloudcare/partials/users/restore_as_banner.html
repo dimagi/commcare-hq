@@ -1,11 +1,13 @@
 {% load hq_shared_tags %}
 
 <script type="text/template" id="restore-as-banner-template">
-  {% if request|can_use_restore_as %}
-    <% if (restoreAs) { %>
-    <div class="restore-as-banner module-banner">
-      <%= message %>
-    </div>
-    <% } %>
-  {% endif %}
+  <div class="restore-as-banner py-1 text-dark bg-cc-light-warm-accent-extra-hi text-center shadow-sm">
+    <%= message %>
+  </div>
+</script>
+
+<script type="text/template" id="restore-as-pill-template">
+  <span class="badge rounded-pill text-dark bg-cc-light-warm-accent-extra-hi">
+    <%= message %>
+  </span>
 </script>

@@ -1,6 +1,5 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load case_tags %}
-{% load timezone_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -10,7 +9,7 @@
 
 {% requirejs_main_b5 'reports/js/bootstrap5/form_data_main' %}
 
-{% block title %}Form: {{ form_name }}{% if form_received_on %} ({% utc_to_timezone form_received_on timezone %}){% endif %}{% endblock %}
+{% block title %}Form: {{ form_name }} {% if form_received_on %} ({{ form_received_on|to_user_time:request }}){% endif %}{% endblock %}
 
 {% block page_content %}
   {% initial_page_data 'ordered_question_values' ordered_question_values %}

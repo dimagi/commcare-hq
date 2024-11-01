@@ -221,7 +221,7 @@ class SlowApiVersionTest(TestCase):
 
     def test_none_fetches_metadata(self):
         self.assertIsNone(self.repeater.dhis2_version)
-        with patch('corehq.motech.dhis2.repeaters.fetch_metadata') as mock_fetch:
+        with patch('corehq.motech.dhis2.repeaters.fetch_system_metadata') as mock_fetch:
             mock_fetch.return_value = {"system": {"version": "2.31.6"}}
             self.assertEqual(self.repeater.get_api_version(), 31)
             mock_fetch.assert_called()
@@ -230,7 +230,7 @@ class SlowApiVersionTest(TestCase):
         major_ver, max_api_ver, patch_ver = LooseVersion(KNOWN_GOOD).version
         bigly_api_version = max_api_ver + 1
         bigly_dhis2_version = f"{major_ver}.{bigly_api_version}.{patch_ver}"
-        with patch('corehq.motech.dhis2.repeaters.fetch_metadata') as mock_fetch, \
+        with patch('corehq.motech.dhis2.repeaters.fetch_system_metadata') as mock_fetch, \
                 patch.object(Requests, 'notify_error') as mock_notify:
             mock_fetch.return_value = {"system": {"version": bigly_dhis2_version}}
 

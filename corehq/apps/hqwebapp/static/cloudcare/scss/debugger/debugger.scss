@@ -1,5 +1,5 @@
 .debugger {
-  width: 800px;
+  width: 100%;
   position: fixed;
   bottom: 0;
   left: 0;
@@ -27,7 +27,7 @@
   .debugger-tab-title {
     line-height: 18px;
     color: white;
-    background-color: $cc-brand-low;
+    background-color: $cc-brand-mid;
     border-bottom: #ddd solid 4px;
     border-top: 0;
     border-left: 0;

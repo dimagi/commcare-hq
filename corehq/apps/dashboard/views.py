@@ -1,3 +1,5 @@
+from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.http.response import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -11,7 +13,11 @@ from dimagi.utils.web import json_response
 from corehq import privileges
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.mixins import BillingModalsMixin
-from corehq.apps.accounting.utils import get_paused_plan_context
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.utils import (
+    get_paused_plan_context,
+    get_pending_plan_context,
+)
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.dashboard.models import (
     AppsPaginator,
@@ -25,13 +31,17 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_edit_location_types,
 )
-from corehq.apps.users.views import DefaultProjectUserSettingsView
+from corehq.apps.registration.models import SelfSignupWorkflow
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+from corehq.apps.users.views import DefaultProjectUserSettingsView, require_POST
 from corehq.util.context_processors import commcare_hq_names
 
 
@@ -61,6 +71,7 @@ def dashboard_tile_total(request, domain, slug):
     return json_response({'total': tile.paginator.total})
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(always_allow_project_access, name='dispatch')
 @location_safe
 class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView, DomainViewMixin):
@@ -105,6 +116,7 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
             ),
         }
         context.update(get_paused_plan_context(self.request, self.domain))
+        context.update(get_pending_plan_context(self.request, self.domain))
         return context
 
 
@@ -270,3 +282,15 @@ def _get_default_tiles(request):
             help_text=_("Visit CommCare's knowledge base"),
         ),
     ]
+
+
+@require_POST
+@login_and_domain_required
+@require_permission(HqPermissions.edit_billing)
+def dismiss_self_signup(request, domain):
+    self_signup = SelfSignupWorkflow.get_in_progress_for_domain(domain)
+    if self_signup is not None:
+        self_signup.complete_workflow(SoftwarePlanEdition.COMMUNITY)
+        messages.success(request, _("Subscribed to Community Edition."))
+
+    return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))

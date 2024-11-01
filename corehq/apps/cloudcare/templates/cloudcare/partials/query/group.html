@@ -1,0 +1,16 @@
+<script type="text/template" id="query-view-group-template">
+  <td class="search-query-group">
+    <% if (named) { %>
+    <div class="search-query-group-header d-flex<% if (required) { %> required<% } %>" data-bs-toggle="collapse" data-bs-target="#group-<%- groupKey %>" aria-expanded="true" aria-controls="group-<%- groupKey %>">
+      <label class="search-query-group-header-label fw-bold flex-fill"><%= groupName %></label>
+      <i class="fa fa-angle-double-down float-end fs-5"></i>
+    </div>
+    <% } %>
+    <div id="group-<%- groupKey %>" class="show">
+      <table class="table" role="presentation">
+        <tbody id="query-group-content">
+        </tbody>
+      </table>
+    </div>
+  </td>
+</script>

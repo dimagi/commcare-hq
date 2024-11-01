@@ -1,0 +1,62 @@
+<script type="text/template" id="case-tile-grouped-view-item-template">
+  <% if (isMultiSelect) { %>
+    <div class="select-row-checkbox-div">
+      <input type="checkbox" class="select-row-checkbox form-check-input" />
+    </div>
+  <% } %>
+
+  <div class="group-data collapsible-tile-content text-break">
+    <div class="<%- prefix %>-cell-grid-style">
+      <% for (let [index, datum] of Object.entries(indexedHeaderData)) { %>
+        <% if (styles[index].displayFormat === 'ClickableIcon') { %>
+          <div class="<%- prefix %>-grid-style-<%- index %> box">
+            <% if(resolveUri(datum)) { %>
+              <button class="clickable-icon">
+                <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" />
+                <i class="fa fa-spin fa-spinner d-none"></i>
+              </button>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="<%- prefix %>-grid-style-<%- index %> box p-3 pb-0">
+            <% if (styles[index].displayFormat === 'Image') {
+              if(resolveUri(datum)) { %>
+                <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
+              <% } %>
+            <% } else if(styles[index].widthHint === 0) { %>
+              <div class="d-none"><%- datum %></div>
+            <% } else { %>
+              <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+            <% } %>
+          </div>
+        <% } %>
+      <% }; %>
+    </div>
+
+    <div class="gap-0">
+      <% _.each(indexedRowDataList, function(indexedRowData) { %>
+        <div class="<%- prefix %>-cell-grid-style group-row">
+          <% for (let index in indexedRowData) { %>
+            <% let datum = indexedRowData[index]; %>
+            <div class="<%- prefix %>-grid-style-<%- index %> box p-3">
+              <% if (styles[index].displayFormat === 'Image') {
+                if(resolveUri(datum)) { %>
+                  <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
+                <% } %>
+              <% } else if (styles[index].displayFormat === 'ClickableIcon') {
+                if(resolveUri(datum)) { %>
+                  <button class="clickable-icon">
+                    <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" />
+                    <i class="fa fa-spin fa-spinner d-none"></i>
+                  </button>
+                <% } %>
+              <% } else { %>
+                  <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</script>

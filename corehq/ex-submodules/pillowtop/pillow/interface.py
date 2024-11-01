@@ -6,9 +6,7 @@ from datetime import datetime
 from django.conf import settings
 from memoized import memoized
 
-import sys
-
-from sentry_sdk import configure_scope
+from sentry_sdk import Scope
 
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
@@ -105,8 +103,8 @@ class PillowBase(metaclass=ABCMeta):
         Main entry point for running pillows forever.
         """
         pillow_logging.info("Starting pillow %s" % self.__class__)
-        with configure_scope() as scope:
-            scope.set_tag("pillow_name", self.get_name())
+        scope = Scope.get_current_scope()
+        scope.set_tag("pillow_name", self.get_name())
         if self.is_dedicated_migration_process:
             for processor in self.processors:
                 processor.bootstrap_if_needed()
@@ -376,13 +374,26 @@ class PillowBase(metaclass=ABCMeta):
             metrics_counter(metric, tags=metric_tags)
 
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).total_seconds()
-            metrics_gauge('commcare.change_feed.change_lag', change_lag, tags={
-                'pillow_name': self.get_name(),
-                'topic': _topic_for_ddog(
-                    TopicPartition(change.topic, change.partition)
-                    if change.partition is not None else change.topic
-                ),
-            }, multiprocess_mode=MPM_MAX)
+            dd_topic = _topic_for_ddog(
+                TopicPartition(change.topic, change.partition)
+                if change.partition is not None else change.topic)
+            metrics_gauge(
+                'commcare.change_feed.change_lag',
+                change_lag,
+                tags={
+                    'pillow_name': self.get_name(),
+                    'topic': dd_topic
+                },
+                multiprocess_mode=MPM_MAX
+            )
+            if change.partition is not None:
+                # adding check for partition as dd_topic may or
+                # may not contain partition name.
+                # and for the pillows that we are interested in
+                # we would be needing both topic and partition.
+                from corehq.project_limits.gauge import case_pillow_lag_gauge
+                if case_pillow_lag_gauge.feature_key == change.topic:
+                    case_pillow_lag_gauge.report(dd_topic, change_lag)
 
             if processing_time:
                 tags = {'pillow_name': self.get_name()}

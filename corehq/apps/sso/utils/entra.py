@@ -18,11 +18,12 @@ class MSOdataType:
 
 
 ENDPOINT_BASE_URL = "https://graph.microsoft.com/v1.0"
+MS_BATCH_LIMIT = 20
 
 
-def get_all_members_of_the_idp_from_entra(idp):
+def get_all_usernames_of_the_idp_from_entra(idp):
     import msal
-    config = configure_idp(idp)
+    config = _configure_idp(idp)
 
     # Create a preferably long-lived app instance which maintains a token cache.
     app = msal.ConfidentialClientApplication(
@@ -30,20 +31,20 @@ def get_all_members_of_the_idp_from_entra(idp):
         client_credential=config["secret"],
     )
 
-    token = get_access_token(app, config)
+    token = _get_access_token(app, config)
 
     # microsoft.graph.appRoleAssignment's property doesn't have userPrincipalName
-    user_principal_ids = get_all_user_ids_in_app(token, config["client_id"])
+    user_principal_ids = _get_all_user_ids_in_app(token, config["client_id"])
 
     if len(user_principal_ids) == 0:
         return []
 
-    user_principal_names = get_user_principal_names(user_principal_ids, token)
+    user_principal_names = _get_user_principal_names(user_principal_ids, token)
 
     return user_principal_names
 
 
-def configure_idp(idp):
+def _configure_idp(idp):
     authority_base_url = "https://login.microsoftonline.com/"
     authority = f"{authority_base_url}{idp.api_host}"
 
@@ -55,39 +56,54 @@ def configure_idp(idp):
     }
 
 
-def get_user_principal_names(user_ids, token):
-    # Prepare batch request
-    batch_payload = {
-        "requests": [
-            {
-                "id": str(i),
-                "method": "GET",
-                "url": f"/users/{principal_id}?$select=userPrincipalName"
-            } for i, principal_id in enumerate(user_ids)
-        ]
-    }
-    # Send batch request
-    batch_response = requests.post(
-        f'{ENDPOINT_BASE_URL}/$batch',
-        headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
-        data=json.dumps(batch_payload)
-    )
-    batch_response.raise_for_status()
-    batch_result = batch_response.json()
+def _get_user_principal_names(user_ids, token):
+    # Convert set to list to make it subscriptable
+    user_ids = list(user_ids)
+    #JSON batch requests are currently limited to 20 individual requests.
+    user_id_chunks = [user_ids[i:i + MS_BATCH_LIMIT] for i in range(0, len(user_ids), MS_BATCH_LIMIT)]
 
-    for resp in batch_result['responses']:
-        if 'body' in resp and 'error' in resp['body']:
-            raise EntraVerificationFailed(resp['body']['error']['code'], resp['body']['message'])
+    user_principal_names = []
 
-    # Extract userPrincipalName from batch response
-    user_principal_names = [
-        resp['body']['userPrincipalName'] for resp in batch_result['responses']
-        if 'body' in resp and 'userPrincipalName' in resp['body']
-    ]
+    for chunk in user_id_chunks:
+        batch_payload = {
+            "requests": [
+                {
+                    "id": str(i),
+                    "method": "GET",
+                    "url": f"/users/{principal_id}?$select=userPrincipalName,accountEnabled"
+                } for i, principal_id in enumerate(chunk)
+            ]
+        }
+
+        # Send batch request
+        batch_response = requests.post(
+            f'{ENDPOINT_BASE_URL}/$batch',
+            headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+            data=json.dumps(batch_payload)
+        )
+
+        try:
+            batch_response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            # Append the response body to the HTTPError message
+            error_message = f"{e.response.status_code} {e.response.reason} - {batch_response.text}"
+            raise requests.exceptions.HTTPError(error_message, response=e.response)
+
+        batch_result = batch_response.json()
+        for resp in batch_result['responses']:
+            if 'body' in resp and 'error' in resp['body']:
+                raise EntraVerificationFailed(resp['body']['error']['code'], resp['body']['message'])
+
+        # Extract userPrincipalName from batch response
+        for resp in batch_result['responses']:
+            if ('body' in resp and 'userPrincipalName' in resp['body']
+            and resp['body'].get('accountEnabled') is True):
+                user_principal_names.append(resp['body']['userPrincipalName'])
+
     return user_principal_names
 
 
-def get_access_token(app, config):
+def _get_access_token(app, config):
     # looks up a token from cache
     result = app.acquire_token_silent(config["scope"], account=None)
     if not result:
@@ -98,7 +114,7 @@ def get_access_token(app, config):
     return result.get("access_token")
 
 
-def get_all_user_ids_in_app(token, app_id):
+def _get_all_user_ids_in_app(token, app_id):
     endpoint = (f"{ENDPOINT_BASE_URL}/servicePrincipals(appId='{app_id}')/"
                f"appRoleAssignedTo?$select=principalId, principalType")
     # Calling graph using the access token
@@ -123,8 +139,8 @@ def get_all_user_ids_in_app(token, app_id):
                                        "Please include only Users or Groups as members of this SSO application")
 
     for group_id in group_queue:
-        members_data = get_group_members(group_id, token)
-        for member in members_data.get("value", []):
+        members_data = _get_group_members(group_id, token)
+        for member in members_data:
             # Only direct user in the group will have access to the application
             # Nested group won't have access to the application
             if member["@odata.type"] == MSOdataType.USER:
@@ -133,9 +149,18 @@ def get_all_user_ids_in_app(token, app_id):
     return user_ids
 
 
-def get_group_members(group_id, token):
+def _get_group_members(group_id, token):
+    members = []
     endpoint = f"{ENDPOINT_BASE_URL}/groups/{group_id}/members?$select=id"
     headers = {'Authorization': 'Bearer ' + token}
-    response = requests.get(endpoint, headers=headers)
-    response.raise_for_status()
-    return response.json()
+
+    while endpoint:
+        response = requests.get(endpoint, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        members.extend(data.get('value', []))
+
+        # Check for a nextLink to continue paging through results
+        endpoint = data.get('@odata.nextLink')
+
+    return members

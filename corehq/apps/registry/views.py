@@ -1,6 +1,5 @@
 import json
 from collections import Counter
-from datetime import datetime
 
 from django.contrib import messages
 from django.db.models import Q
@@ -24,9 +23,9 @@ from corehq.apps.registry.utils import (
     manage_all_registries_required,
     RegistryPermissionCheck,
 )
-from corehq.util.timezones.conversions import ServerTime, UserTime
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
-from dimagi.utils.parsing import ISO_DATE_FORMAT
+from corehq.util.view_utils import get_date_param
 
 
 @manage_some_registries_required
@@ -393,8 +392,8 @@ def registry_audit_logs(request, domain, registry_slug):
 
     timezone = get_timezone_for_user(request.couch_user, domain)
     try:
-        start_date = _get_date_param(request, 'startDate', timezone=timezone)
-        end_date = _get_date_param(request, 'endDate', timezone=timezone)
+        start_date = get_date_param(request, 'startDate', timezone=timezone)
+        end_date = get_date_param(request, 'endDate', timezone=timezone)
     except ValueError:
         return JsonResponse({"error": "Invalid date parameter"})
 
@@ -411,12 +410,3 @@ def registry_audit_logs(request, domain, registry_slug):
         "total": helper.get_total(),
         "logs": logs
     })
-
-
-def _get_date_param(request, param_name, timezone=None):
-    param = request.GET.get(param_name) or None
-    if param:
-        value = datetime.strptime(param, ISO_DATE_FORMAT)
-        if timezone:
-            value = UserTime(value, tzinfo=timezone).server_time().done()
-        return value

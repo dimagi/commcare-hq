@@ -143,7 +143,7 @@ class OTARestoreUser(object):
         raise NotImplementedError()
 
     def get_case_sharing_groups(self):
-        raise NotImplementedError()
+        return self._couch_user.get_case_sharing_groups(domain=self.domain)
 
     def get_fixture_last_modified(self):
         raise NotImplementedError()
@@ -178,13 +178,10 @@ class OTARestoreWebUser(OTARestoreUser):
     def get_call_center_indicators(self, config):
         return None
 
-    def get_case_sharing_groups(self):
-        return []
-
     def get_fixture_last_modified(self):
-        from corehq.apps.fixtures.models import UserLookupTableStatus
+        from corehq.apps.fixtures.models import UserLookupTableType
 
-        return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
+        return self._couch_user.fixture_status(UserLookupTableType.LOCATION)
 
     def get_usercase_id(self):
         return self._couch_user.get_usercase_id(self.domain)
@@ -222,9 +219,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
             self._couch_user,
             indicator_config=config
         )
-
-    def get_case_sharing_groups(self):
-        return self._couch_user.get_case_sharing_groups()
 
     def get_fixture_last_modified(self):
         from corehq.apps.fixtures.models import UserLookupTableType

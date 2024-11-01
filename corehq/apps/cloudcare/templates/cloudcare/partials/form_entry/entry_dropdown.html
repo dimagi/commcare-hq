@@ -1,7 +1,8 @@
 <script type="text/html" id="dropdown-entry-ko-template">
-  <select class="form-control" data-bind="
+  <select class="form-select" data-bind="
         foreach: options,
         value: rawAnswer,
+        css: { 'is-invalid': $parent.hasError() },
         attr: {
             id: entryId,
             'aria-required': $parent.required() ? 'true' : 'false',

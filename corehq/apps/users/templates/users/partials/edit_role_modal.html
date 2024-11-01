@@ -55,7 +55,7 @@
                     </label>
                   </div>
                 </div>
-                <div class="col-sm-2 controls" data-bind="visible: !showEditCheckbox">
+                <div class="col-sm-2 controls" data-bind="visible: !ko.utils.unwrapObservable(showEditCheckbox)">
                   <div class="form-check-placeholder">
                     <label></label>
                   </div>
@@ -487,6 +487,47 @@
                 </div>
               </div>
             </div>
+            {% if request|request_has_privilege:"APP_USER_PROFILES" and request|toggle_enabled:"RESTRICT_USER_PROFILE_ASSIGNMENT" %}
+              <div class="form-group"
+                data-bind="visible: permissions.edit_web_users() || permissions.edit_commcare_users()">
+                <label class="col-sm-4 control-label">
+                  {% trans "Assign All User Profiles" %}
+                </label>
+                <div class="col-sm-8 controls">
+                  <div class="form-check">
+                    <input type="checkbox"
+                          id="assign-profiles-checkbox"
+                          data-bind="checked: profilePermissions.all" />
+                    <label for="assign-profiles-checkbox">
+                      {% trans "Allow role to access all user profiles while setting up mobile workers and web users." %}
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group"
+                data-bind="visible: !profilePermissions.all() && (permissions.edit_web_users() || permissions.edit_commcare_users())">
+                <label class="col-sm-4 control-label">
+                  {% trans "Assign Specific User Profiles" %}
+                </label>
+                <div class="col-sm-8 controls">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      {% trans "Select which user profiles the role can assign to mobile workers and web users:" %}
+                    </div>
+                    <div class="panel-body"
+                      data-bind="foreach: profilePermissions.specific, slideVisible: !profilePermissions.all()">
+                      <div class="form-check">
+                        <input type="checkbox"
+                        data-bind="checked: value, attr: { 'id': 'profile-' + slug() + '-checkbox' }" />
+                        <label data-bind="attr: { 'for': 'profile-' + slug() + '-checkbox' }">
+                          <span data-bind="text: name"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
             {% if request|request_has_privilege:"CUSTOM_DOMAIN_ALERTS" %}
             <div class="form-group">
               <label class="col-sm-4 control-label">
@@ -535,8 +576,19 @@
 </div>
 
 <script type="text/html" id="permission_all_selected_none">
-  <div class="form-group">
-    <label class="col-sm-4 control-label" data-bind="text: text"></label>
+  <div class="form-group" data-bind="css: {'has-warning': id === 'access_web_apps' && hasRestrictedApplicationAccess}">
+    <div class="col-sm-4 control-label">
+      <label data-bind="text: text"></label>
+      <!-- ko if: id === 'access_web_apps' && hasRestrictedApplicationAccess -->
+        <span class='help-block'>
+          {% url "cloudcare_app_settings" domain as manage_web_apps_permissions_url %}
+          {% blocktrans %}
+            This permission is already configured via <a target="_blank" href="{{ manage_web_apps_permissions_url }}">Manage Web Apps Permissions</a>.
+            Please remove this configuration before updating access here.
+          {% endblocktrans %}
+        </span>
+      <!-- /ko -->
+    </div>
     <div class="col-sm-8 controls">
       <select class="form-control" data-bind="
         attr: { 'id': id },
@@ -547,12 +599,8 @@
         <option value="none" data-bind="text: accessNoneText"></option>
         <option value="all" data-bind="text: accessAllText"></option>
         <option value="selected" data-bind="text: accessSelectedText"></option>
-    </select>
-    </div>
-  </div>
-  <div class="form-group" data-bind="visible: showItems, css: {'has-error': hasError()}">
-    <div class="col-sm-8 col-sm-offset-4 controls">
-      <div class="panel panel-default">
+      </select>
+      <div class="panel panel-default"data-bind="visible: showItems, css: {'has-error': hasError()}" style="margin-top: 15px;">
         <div class="panel-heading" data-bind="text: listHeading"></div>
         <div class="panel-body">
           <div data-bind="foreach: specific, slideVisible: showItems">

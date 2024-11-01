@@ -1,20 +1,20 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% block page_content %}
-  <div class="mb-3">
-    <h2>Workflow Execution Log for {{ log.config.name }}: {{ log.started|date }}</h2>
-    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' log.workflow_id %}">Edit Workflow</a>
-  </div>
-  <h3>Details</h3>
+  {% blocktrans asvar title_text with workflow_name=log.config.name date=log.started|date %}
+    Workflow Execution Log for {{ workflow_name }}: {{ date }}
+  {% endblocktrans %}
+  {% include "app_execution/components/title_bar.html" with workflow_id=log.workflow_id title_text=title_text%}
+  <h3>{% translate 'Details' %}</h3>
   <p>
   <ul>
-    <li>Started: {{ log.started|date:"DATETIME_FORMAT" }}</li>
-    <li>Ended: {{ log.completed|date:"DATETIME_FORMAT" }}</li>
-    <li>Duration: {{ log.duration }}</li>
-    <li>Status: <span class="badge {% if log.success %}text-bg-success{% else %}text-bg-danger{% endif %}">
-      {% if log.success %}Success{% else %}Error{% endif %}
+    <li>{% blocktrans with date_started=log.started|date:"DATETIME_FORMAT" %}Started: {{ date_started }}{% endblocktrans %}</li>
+    <li>{% blocktrans with date_ended=log.completed|date:"DATETIME_FORMAT" %}Ended: {{ date_ended }}{% endblocktrans %}</li>
+    <li>{% blocktrans with duration=log.duration %}Duration: {{ duration }}{% endblocktrans %}</li>
+    <li>{% translate 'Status:' %} <span class="badge {% if log.success %}text-bg-success{% else %}text-bg-danger{% endif %}">
+      {% if log.success %}{% translate 'Success' %}{% else %}{% translate 'Error' %}{% endif %}
     </span></li>
   </ul>
   </p>
-  {% include "app_execution/components/logs.html" with output=log.output success=log.success error=log.error %}
+  {% include "app_execution/components/logs.html" with log=log %}
 {% endblock page_content %}

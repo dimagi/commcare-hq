@@ -64,6 +64,7 @@ hqDefine("users/js/roles_and_permissions",[
             deleteUrl: url("delete_user_role"),
             reportOptions: initialPageData.get("report_list"),
             tableauOptions: initialPageData.get("tableau_list"),
+            profileOptions: initialPageData.get("profile_list"),
             allowEdit: initialPageData.get("can_edit_roles"),
             canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
             landingPageChoices: initialPageData.get("landing_page_choices"),
@@ -74,6 +75,7 @@ hqDefine("users/js/roles_and_permissions",[
             dataRegistryChoices: initialPageData.get("data_registry_choices"),
             canEditLinkedData: initialPageData.get("can_edit_linked_data"),
             commcareAnalyticsRoles: initialPageData.get('commcare_analytics_roles'),
+            hasRestrictedApplicationAccess: initialPageData.get('has_restricted_application_access'),
         });
     });
 });

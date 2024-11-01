@@ -20,6 +20,7 @@ from corehq.apps.consumption.shortcuts import (
     get_loaded_default_monthly_consumption,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.users import UserES
 from corehq.apps.locations.const import (
     LOCATION_SHEET_HEADERS_BASE,
     LOCATION_SHEET_HEADERS_OPTIONAL,
@@ -429,3 +430,9 @@ def get_location_type(domain, location, parent, loc_type_string, exception, is_n
     return loc_type_obj
 
 # ---
+
+
+# Checks if a location type has any users assigned to it's related locations
+def does_location_type_have_users(loc_type):
+    location_ids = list(SQLLocation.objects.filter(location_type=loc_type).values_list('location_id', flat=True))
+    return bool(UserES().location(location_ids).count())

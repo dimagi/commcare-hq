@@ -1,0 +1,25 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{# use the `hqwebapp/js/htmx_and_alpine` entry point to get started with HTMX and Alpine without any extra javascript #}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block content %}
+  <div
+      class="container p-5"
+      {# loads FilterDemoFormView on load with hx-get #}
+      hx-trigger="load"
+      hx-get="{{ filter_form_url }}"
+  >
+    <div class="htmx-indicator">
+      <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  {# you can either include this template or include an extension of this template to show HTMX errors to the user #}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

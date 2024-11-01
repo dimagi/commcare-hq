@@ -2,6 +2,7 @@ import doctest
 from decimal import Decimal
 from uuid import uuid4
 
+import pytest
 from django.test import SimpleTestCase
 
 from nose.tools import assert_equal
@@ -18,8 +19,20 @@ from ..matchers import (
     PropertyWeight,
 )
 
+JOHN = {'name': [{'given': 'Henry John Colchester'.split()}]}
 
-def test_given_name_method():
+
+@pytest.mark.parametrize("resource, candidate, expected", [
+    # candidate "H. John" matches patient "Henry John Colchester"
+    (JOHN, {'name': [{'given': ['H.', 'John']}]}, True),
+    # candidate "John" does not match patient "Henry John Colchester"
+    (JOHN, {'name': [{'given': ['John']}]}, False),
+    (JOHN, {'name': [{'given': ['Henry']}]}, True),
+    (JOHN, {'name': [{'given': ['H.', 'J.', 'C.']}]}, False),
+    # candidate "Eric John Marwood" matches "Henry John Colchester"
+    (JOHN, {'name': [{'given': ['Eric', 'John', 'Marwood']}]}, True),
+])
+def test_given_name_method(resource, candidate, expected):
     """
     Test the GivenName ComparisonMethod as used by PersonMatcher
     """
@@ -27,21 +40,16 @@ def test_given_name_method():
     assert pw in PersonMatcher.property_weights
     method = pw.method
 
-    john = {'name': [{'given': 'Henry John Colchester'.split()}]}
-    for resource, candidate, expected in [
-        # candidate "H. John" matches patient "Henry John Colchester"
-        (john, {'name': [{'given': ['H.', 'John']}]}, True),
-        # candidate "John" does not match patient "Henry John Colchester"
-        (john, {'name': [{'given': ['John']}]}, False),
-        (john, {'name': [{'given': ['Henry']}]}, True),
-        (john, {'name': [{'given': ['H.', 'J.', 'C.']}]}, False),
-        # candidate "Eric John Marwood" matches "Henry John Colchester"
-        (john, {'name': [{'given': ['Eric', 'John', 'Marwood']}]}, True),
-    ]:
-        yield check_method, method, resource, candidate, expected
+    check_method(method, resource, candidate, expected)
 
 
-def test_organization_name_method():
+@pytest.mark.parametrize("resource, candidate, expected", [
+    ({'name': 'Dimagi'}, {'name': 'Dimagi'}, True),
+    ({'name': 'Dimagi'}, {'name': 'DiMaggi'}, True),
+    ({'name': 'Dimagi'}, {'name': 'Di Maggi'}, False),
+    ({'name': 'Dimagi'}, {'name': 'dimCGI'}, True),
+])
+def test_organization_name_method(resource, candidate, expected):
     """
     Test the OrganizationName method as used by OrganizationMatcher
     """
@@ -49,14 +57,7 @@ def test_organization_name_method():
     assert pw in OrganizationMatcher.property_weights
     method = pw.method
 
-    dimagi = {'name': 'Dimagi'}
-    for resource, candidate, expected in [
-        (dimagi, {'name': 'Dimagi'}, True),
-        (dimagi, {'name': 'DiMaggi'}, True),
-        (dimagi, {'name': 'Di Maggi'}, False),
-        (dimagi, {'name': 'dimCGI'}, True),
-    ]:
-        yield check_method, method, resource, candidate, expected
+    check_method(method, resource, candidate, expected)
 
 
 def check_method(method, a, b, expected):
@@ -64,18 +65,14 @@ def check_method(method, a, b, expected):
     assert_equal(result, expected)
 
 
-def test_negative_identifier():
-    for a, b, expected in [
-        ('name|Beth Harmon', 'name|Elizabeth Harmon', False),
-        ('name|Beth', 'name|Beth', True),
-        ('name|Elizabeth Harmon', 'name|Elisabeth Harmon', True),
-        ('given_name|Elizabeth', 'family_name|Harmon', True),
-    ]:
-        yield check_compare, NegativeIdentifier, a, b, expected
-
-
-def check_compare(method_class, a, b, expected):
-    result = method_class.compare(a, b)
+@pytest.mark.parametrize("a, b, expected", [
+    ('name|Beth Harmon', 'name|Elizabeth Harmon', False),
+    ('name|Beth', 'name|Beth', True),
+    ('name|Elizabeth Harmon', 'name|Elisabeth Harmon', True),
+    ('given_name|Elizabeth', 'family_name|Harmon', True),
+])
+def test_negative_identifier(a, b, expected):
+    result = NegativeIdentifier.compare(a, b)
     assert_equal(result, expected)
 
 

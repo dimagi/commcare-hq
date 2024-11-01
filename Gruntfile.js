@@ -1,5 +1,5 @@
-/* globals process */
-
+/* globals module, process, require */
+'use strict';
 module.exports = function (grunt) {
     var headless = require('mocha-headless-chrome'),
         _ = require('lodash'),
@@ -34,21 +34,15 @@ module.exports = function (grunt) {
         'reports_core/choiceListUtils',
         'locations',
         'userreports',
-        'cloudcare/bootstrap3',
-        'cloudcare/bootstrap5',
-        'cloudcare/form_entry/bootstrap3',
-        'cloudcare/form_entry/bootstrap5',
+        'cloudcare',
+        'cloudcare/form_entry',
         'hqwebapp/bootstrap3',
         'hqwebapp/bootstrap5',
         'case_importer',
     ];
 
-    var custom = [
-        'champ',
-    ];
-
     var extensions = _.split(process.env.JS_TEST_EXTENSIONS || '', ','),
-        testPaths = _.filter(_.concat(apps, custom, extensions), function (path) { return path !== ''; });
+        testPaths = _.filter(_.concat(apps, extensions), function (path) { return path !== ''; });
 
     var runTest = function (queuedTests, taskPromise, finishedTests, failures) {
         if (finishedTests === undefined) {

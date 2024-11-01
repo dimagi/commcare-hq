@@ -153,12 +153,6 @@ hqDefine("reports/js/bootstrap5/config.dataTables.bootstrap", [
                                 }
                             }
                             applyBootstrapMagic();
-                            if ('context' in data) {
-                                var iconPath = data['icon_path'] || $(".base-maps-data").data("icon_path");
-                                hqRequire(["reports/js/bootstrap5/maps_utils"], function (mapsUtils) {
-                                    mapsUtils.load(data['context'], iconPath);
-                                });
-                            }
                             if (self.successCallbacks) {
                                 for (i = 0; i < self.successCallbacks.length; i++) {
                                     self.successCallbacks[i](data);

@@ -1,4 +1,5 @@
 from .query_functions import (
+    fuzzy_date,
     fuzzy_match,
     not_,
     selected_all,
@@ -30,6 +31,7 @@ XPATH_QUERY_FUNCTIONS = {
     'selected-any': selected_any,
     'selected-all': selected_all,
     'within-distance': within_distance,
+    'fuzzy-date': fuzzy_date,
     'fuzzy-match': fuzzy_match,
     'phonetic-match': phonetic_match,
     'starts-with': starts_with,

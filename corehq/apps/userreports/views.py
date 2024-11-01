@@ -108,6 +108,7 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     TableNotFoundWarning,
     UserQueryError,
+    UserReportsError,
     translate_programming_error,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -825,7 +826,14 @@ class ReportPreview(BaseDomainView):
                     return json_response(response_data)
             except BadBuilderConfigError as e:
                 return json_response({'status': 'error', 'message': str(e)}, status_code=400)
-
+            except UserReportsError as err:
+                notify_exception(request, str(err), details={'domain': self.domain})
+                # Empty message -> generic error in the template.
+                return json_response({'status': 'error', 'message': ''}, status_code=400)
+            return json_response({
+                'status': 'error',
+                'message': 'Report preview returned no response',
+            }, status_code=400)
         else:
             return json_response({
                 'status': 'error',
@@ -902,6 +910,8 @@ def undelete_report(request, domain, report_id):
     ])
     if config and is_deleted(config):
         undo_delete(config)
+        indicator_adapter = get_indicator_adapter(config.config)
+        indicator_adapter.adapter.rebuild_table(initiated_by=request.user.username)
         messages.success(
             request,
             _('Successfully restored report "{name}"').format(name=config.title)
@@ -1198,6 +1208,10 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                 messages.success(request, _('Data source "{}" saved!').format(
                     config.display_name
                 ))
+                messages.success(request, _(
+                    'This data source will be built/rebuilt automatically the '
+                    'next time a row is added.'
+                ))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(
                         EditDataSourceView.urlname, args=[self.domain, config._id])
@@ -1309,7 +1323,7 @@ def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
 
     if toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
-        number_of_records = _number_of_records_to_be_iterated_for_rebuild(config=config)
+        number_of_records = _number_of_records_to_be_iterated_for_rebuild(datasource_configuration=config)
         if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
             messages.error(
                 request,
@@ -1336,23 +1350,31 @@ def rebuild_data_source(request, domain, config_id):
     ))
 
 
-def _number_of_records_to_be_iterated_for_rebuild(config):
-    count_of_records = None
-
-    case_types_or_xmlns = config.get_case_type_or_xmlns_filter()
-    # case_types_or_xmlns could also be [None]
-    case_types_or_xmlns = list(filter(None, case_types_or_xmlns))
-
-    if config.referenced_doc_type == 'CommCareCase':
-        if case_types_or_xmlns:
-            count_of_records = CaseSearchES().domain(config.domain).case_type(case_types_or_xmlns).count()
-        else:
-            count_of_records = CaseSearchES().domain(config.domain).count()
-    elif config.referenced_doc_type == 'XFormInstance':
-        if case_types_or_xmlns:
-            count_of_records = FormES().domain().xmlns(case_types_or_xmlns)
-        else:
-            count_of_records = FormES().domain().count()
+def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
+    if datasource_configuration.referenced_doc_type == 'CommCareCase':
+        es_query = CaseSearchES().domain(datasource_configuration.domain)
+        case_types = [
+            case_type
+            for case_type in datasource_configuration.get_case_type_or_xmlns_filter()
+            if case_type is not None
+        ]
+        if case_types:
+            es_query = es_query.case_type(case_types)
+        count_of_records = es_query.count()
+    elif datasource_configuration.referenced_doc_type == 'XFormInstance':
+        es_query = FormES().domain(datasource_configuration.domain)
+        xmlnses = [
+            xmlns
+            for xmlns in datasource_configuration.get_case_type_or_xmlns_filter()
+            if xmlns is not None
+        ]
+        if xmlnses:
+            es_query = es_query.xmlns(xmlnses)
+        count_of_records = es_query.count()
+    else:
+        # DataSourceConfiguration.referenced_doc_type is neither
+        # 'CommCareCase' nor 'XFormInstance'
+        count_of_records = None
 
     return count_of_records
 
@@ -1414,9 +1436,12 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-    rebuild_indicators_in_place.delay(config_id, request.user.username,
-                                      source='edit_data_source_build_in_place',
-                                      domain=config.domain)
+    rebuild_indicators_in_place.delay(
+        config_id,
+        request.user.username,
+        source='edit_data_source_build_in_place',
+        domain=config.domain,
+    )
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1632,13 +1657,61 @@ def subscribe_to_data_source_changes(request, domain, config_id):
         ds=config_id,
         server=client_hostname,
     )
-    DataSourceRepeater.objects.create(
-        name=repeater_name,
+
+    datasource_query = DataSourceRepeater.objects.filter(
         domain=domain,
-        data_source_id=config_id,
         connection_settings_id=conn_settings.id,
+        options={"data_source_id": config_id},
     )
+    if not datasource_query.exists():
+        DataSourceRepeater.objects.create(
+            name=repeater_name,
+            domain=domain,
+            data_source_id=config_id,
+            connection_settings_id=conn_settings.id,
+        )
     return HttpResponse(status=201)
+
+
+@csrf_exempt
+@require_POST
+@api_auth()
+@require_permission(HqPermissions.view_reports)
+@toggles.SUPERSET_ANALYTICS.required_decorator()
+@api_throttle
+def unsubscribe_from_data_source(request, domain, config_id):
+    if 'client_id' not in request.POST:
+        return HttpResponse(
+            status=422,
+            content="The client_id parameter is required",
+        )
+    client_id = request.POST['client_id']
+
+    try:
+        conn_settings = ConnectionSettings.objects.get(client_id=client_id)
+    except ConnectionSettings.DoesNotExist:
+        return HttpResponse(
+            status=422,
+            content="Invalid client_id"
+        )
+
+    repeater = DataSourceRepeater.objects.filter(
+        domain=domain,
+        connection_settings_id=conn_settings.id,
+        options={"data_source_id": config_id},
+    )
+    if not repeater.exists():
+        return HttpResponse(
+            status=422,
+            content="Invalid data source ID"
+        )
+    repeater.delete()
+    conn_settings.clear_caches()
+
+    if not conn_settings.used_by:
+        conn_settings.delete()
+
+    return HttpResponse(status=200)
 
 
 def _get_report_filter(domain, report_id, filter_id):
@@ -1841,6 +1914,16 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             "template": "base-ucr-statement-template",
         }
 
+    def get_deleted_item_data(self, item_id):
+        deleted_expression = self.base_query.get(id=item_id)
+        deleted_expression.delete()
+        return {
+            'itemData': {
+                'name': deleted_expression.name,
+            },
+            'template': 'deleted-ucr-statement-template',
+        }
+
 
 @method_decorator(toggles.UCR_EXPRESSION_REGISTRY.required_decorator(), name='dispatch')
 class UCRExpressionEditView(BaseProjectDataView):
@@ -1888,7 +1971,7 @@ class UCRExpressionEditView(BaseProjectDataView):
         if form.is_valid():
             form.save()
             try:
-                self.expression.wrapped_definition(EvaluationContext({}))
+                self.expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
             except BadSpecError as e:
                 return JsonResponse({"warning": _("Problem with expression: {}").format(e)})
             return JsonResponse({})

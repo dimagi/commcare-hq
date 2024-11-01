@@ -86,6 +86,34 @@ def test_simple_request_DELETE():
         )
 
 
+def test_simple_request_get():
+    with patch.object(requests.Session, 'request') as request_mock, \
+         patch.object(RequestLog, 'log'):
+        request_mock.return_value = Response()
+        auth_manager = BasicAuthManager(TEST_API_USERNAME, TEST_API_PASSWORD)
+        simple_request(
+            domain=TEST_DOMAIN,
+            url=TEST_API_URL,
+            data=None,
+            headers={'Content-Type': 'text/xml+parrot'},
+            auth_manager=auth_manager,
+            verify=True,
+            payload_id=TEST_PAYLOAD_ID,
+            method="GET"
+        )
+
+        request_mock.assert_called_with(
+            'GET',
+            TEST_API_URL,
+            data=None,
+            headers={
+                'Content-Type': 'text/xml+parrot',
+            },
+            allow_redirects=True,
+            timeout=REQUEST_TIMEOUT,
+        )
+
+
 def test_simple_post():
     with patch.object(requests.Session, 'request') as request_mock, \
             patch.object(RequestLog, 'log') as log_mock:

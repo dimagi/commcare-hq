@@ -1,5 +1,6 @@
 from django.test import SimpleTestCase
 
+import pytest
 from testil import eq
 
 from dimagi.utils.couch.undo import remove_deleted_doc_type_suffix
@@ -90,15 +91,13 @@ class UtilitiesTestCase(SimpleTestCase):
         )
 
 
-def test_remove_deleted_doc_type_suffix():
-    def _check(doc_type, expected):
-        eq(expected, remove_deleted_doc_type_suffix(doc_type))
-
-    yield from [
-        (_check, 'DataSource', 'DataSource'),
-        (_check, 'DataSource-Deleted', 'DataSource'),
-        (_check, 'DataSource-Deleted-Deleted', 'DataSource'),
-    ]
+@pytest.mark.parametrize("doc_type, expected", [
+    ('DataSource', 'DataSource'),
+    ('DataSource-Deleted', 'DataSource'),
+    ('DataSource-Deleted-Deleted', 'DataSource'),
+])
+def test_remove_deleted_doc_type_suffix(doc_type, expected):
+    eq(expected, remove_deleted_doc_type_suffix(doc_type))
 
 
 class TestGetDomainForUCRTableName(SimpleTestCase):

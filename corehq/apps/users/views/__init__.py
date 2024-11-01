@@ -10,8 +10,9 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -31,6 +32,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, ngettext, gettext_lazy, gettext_noop
 
@@ -130,6 +132,10 @@ from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
     get_workbook,
+)
+from corehq.apps.users.permissions import (
+    COMMCARE_ANALYTICS_SQL_LAB,
+    COMMCARE_ANALYTICS_DATASET_EDITOR,
 )
 
 from dimagi.utils.logging import notify_exception
@@ -331,6 +337,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     @memoized
     def tableau_form(self):
+        user = CouchUser.get_by_user_id(self.couch_user._id)
         try:
             if self.request.method == "POST" and self.request.POST['form_type'] == "tableau":
                 return TableauUserForm(self.request.POST,
@@ -347,7 +354,8 @@ class BaseEditUserView(BaseUserSettingsView):
                 username=self.editable_user.username,
                 initial={
                     'role': tableau_user.role
-                }
+                },
+                readonly=(not user.has_permission(self.domain, 'edit_user_tableau_config'))
             )
         except (TableauAPIError, TableauUser.DoesNotExist) as e:
             messages.error(self.request, _('''There was an error getting data for this user's associated Tableau
@@ -365,13 +373,13 @@ class BaseEditUserView(BaseUserSettingsView):
                 saved = True
         elif self.request.POST['form_type'] == "update-user":
             if self.update_user():
-                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
                 saved = True
         elif self.request.POST['form_type'] == "tableau":
             if self.tableau_form and self.tableau_form.is_valid():
                 self.tableau_form.save(self.editable_user.username)
                 saved = True
         if saved:
+            messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
             return HttpResponseRedirect(self.page_url)
         else:
             return self.get(request, *args, **kwargs)
@@ -434,21 +442,28 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def page_context(self):
-        profiles = [profile.to_json() for profile in self.form_user_update.custom_data.model.get_profiles()]
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
-            'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
-            'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
-            'custom_fields_profile_slug': PROFILE_SLUG,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
         }
+
+        original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
+        field_view_context = self.form_user_update.custom_data.field_view.get_field_page_context(
+            self.domain, self.request.couch_user, self.form_user_update.custom_data, original_profile_id
+        )
+        ctx.update(field_view_context)
         if self.request.is_view_only:
             make_form_readonly(self.commtrack_form)
         if self.request.project.commtrack_enabled or self.request.project.uses_locations:
             ctx.update({'update_form': self.commtrack_form})
         if TABLEAU_USER_SYNCING.enabled(self.domain):
-            ctx.update({'tableau_form': self.tableau_form})
+            user = CouchUser.get_by_user_id(self.couch_user._id)
+            ctx.update({
+                'tableau_form': self.tableau_form,
+                'view_user_tableau_config': user.has_permission(self.domain, 'view_user_tableau_config'),
+                'edit_user_tableau_config': user.has_permission(self.domain, 'edit_user_tableau_config')
+            })
         if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
 
@@ -464,7 +479,10 @@ class EditWebUserView(BaseEditUserView):
             ),
             'idp_name': idp.name if idp else '',
         })
-
+        if toggles.SUPPORT.enabled(self.request.couch_user.username):
+            ctx["support_info"] = {
+                'locations': self.editable_user.get_sql_locations(self.domain)
+            }
         return ctx
 
     @method_decorator(always_allow_project_access)
@@ -585,19 +603,19 @@ class ListWebUsersView(BaseRoleAccessView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'bulk_download_url': bulk_download_url,
-            'user_can_access_all_locations': self.request.couch_user.has_permission(
-                self.domain, 'access_all_locations'),
             'from_address': settings.DEFAULT_FROM_EMAIL
         }
 
 
 @require_can_edit_or_view_web_users
+@location_safe
 def download_web_users(request, domain):
     track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
     from corehq.apps.users.views.mobile.users import download_users
     return download_users(request, domain, user_type=WEB_USER_TYPE)
 
 
+@location_safe
 class DownloadWebUsersStatusView(BaseUserSettingsView):
     urlname = 'download_web_users_status'
     page_title = gettext_noop('Download Web Users Status')
@@ -700,6 +718,20 @@ class ListRolesView(BaseRoleAccessView):
             )
         return role_view_data
 
+    def get_possible_profiles(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            CUSTOM_USER_DATA_FIELD_TYPE,
+        )
+        definition = CustomDataFieldsDefinition.get(self.domain, CUSTOM_USER_DATA_FIELD_TYPE)
+        if definition is not None:
+            return [{
+                    'id': profile.id,
+                    'name': profile.name,
+                    }
+                for profile in definition.get_profiles()]
+        else:
+            return []
+
     @property
     def page_context(self):
         from corehq.apps.linked_domain.dbaccessors import is_active_downstream_domain
@@ -729,6 +761,7 @@ class ListRolesView(BaseRoleAccessView):
             'default_role': StaticRole.domain_default(self.domain),
             'tableau_list': tableau_list,
             'report_list': get_possible_reports(self.domain),
+            'profile_list': self.get_possible_profiles(),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
@@ -750,18 +783,22 @@ class ListRolesView(BaseRoleAccessView):
             'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
             'commcare_analytics_roles': _commcare_analytics_roles_options(),
+            'has_restricted_application_access': (
+                get_application_access_for_domain(self.domain).restrict
+                and toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(self.domain)
+            ),
         }
 
 
 def _commcare_analytics_roles_options():
     return [
         {
-            'slug': 'gamma',
-            'name': 'Gamma'
+            'slug': COMMCARE_ANALYTICS_SQL_LAB,
+            'name': 'SQL Lab'
         },
         {
-            'slug': 'sql_lab',
-            'name': 'SQL Lab'
+            'slug': COMMCARE_ANALYTICS_DATASET_EDITOR,
+            'name': 'Dataset Editor'
         }
     ]
 
@@ -1100,6 +1137,8 @@ class InviteWebUserView(BaseManageWebUserView):
         initial = {
             'email': domain_request.email if domain_request else None,
         }
+        can_edit_tableau_config = (self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config')
+                                and toggles.TABLEAU_USER_SYNCING.enabled(self.domain))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
             pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
@@ -1110,7 +1149,9 @@ class InviteWebUserView(BaseManageWebUserView):
                 domain=self.domain,
                 is_add_user=is_add_user,
                 should_show_location=self.request.project.uses_locations,
-                request=self.request
+                can_edit_tableau_config=can_edit_tableau_config,
+                request=self.request,
+                custom_data=self.custom_data
             )
         return AdminInvitesUserForm(
             initial=initial,
@@ -1118,8 +1159,25 @@ class InviteWebUserView(BaseManageWebUserView):
             domain=self.domain,
             is_add_user=is_add_user,
             should_show_location=self.request.project.uses_locations,
-            request=self.request
+            can_edit_tableau_config=can_edit_tableau_config,
+            request=self.request,
+            custom_data=self.custom_data
         )
+
+    @cached_property
+    def custom_data(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
+        post_dict = None
+        if self.request.method == 'POST':
+            post_dict = self.request.POST
+        custom_data = CustomDataEditor(
+            field_view=WebUserFieldsView,
+            domain=self.domain,
+            post_dict=post_dict,
+            ko_model="custom_fields",
+            request_user=self.request.couch_user
+        )
+        return custom_data
 
     @property
     @memoized
@@ -1130,9 +1188,13 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def page_context(self):
-        return {
+        ctx = {
             'registration_form': self.invite_web_user_form,
+            **self.custom_data.field_view.get_field_page_context(
+                self.domain, self.request.couch_user, self.custom_data, None
+            )
         }
+        return ctx
 
     def _assert_user_has_permission_to_access_locations(self, assigned_location_ids):
         if not set(assigned_location_ids).issubset(set(SQLLocation.objects.accessible_to_user(
@@ -1146,6 +1208,10 @@ class InviteWebUserView(BaseManageWebUserView):
             create_invitation = True
             data = self.invite_web_user_form.cleaned_data
             domain_request = DomainRequest.by_email(self.domain, data["email"])
+            profile_id = data.get("profile", None)
+            profile = CustomDataFieldsProfile.objects.get(
+                id=profile_id,
+                definition__domain=self.domain) if profile_id else None
             if domain_request is not None:
                 domain_request.is_approved = True
                 domain_request.save()
@@ -1157,6 +1223,10 @@ class InviteWebUserView(BaseManageWebUserView):
                                          primary_location_id=data.get("primary_location", None),
                                          program_id=data.get("program", None),
                                          assigned_location_ids=data.get("assigned_locations", None),
+                                         profile=profile,
+                                         custom_user_data=data.get("custom_user_data"),
+                                         tableau_role=data.get("tableau_role", None),
+                                         tableau_group_ids=data.get("tableau_group_ids", None)
                                          )
                 messages.success(request, "%s added." % data["email"])
             else:
@@ -1177,10 +1247,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 if primary_location_id:
                     assert primary_location_id in assigned_location_ids
                 self._assert_user_has_permission_to_access_locations(assigned_location_ids)
-                profile_id = data.get("profile", None)
-                data["profile"] = CustomDataFieldsProfile.objects.get(
-                    id=profile_id,
-                    definition__domain=self.domain) if profile_id else None
+                data["profile"] = profile
                 invite = Invitation(**data)
                 invite.save()
 
@@ -1206,59 +1273,75 @@ class BaseUploadUser(BaseUserSettingsView):
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
         try:
-            self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+            workbook = get_workbook(request.FILES.get("bulk_upload_file"))
+            user_specs, group_specs = self.process_workbook(workbook, self.domain, self.is_web_upload)
+            task_ref = self.upload_users(
+                request, user_specs, group_specs, self.domain, self.is_web_upload)
+            return self._get_success_response(request, task_ref)
         except WorkbookJSONError as e:
             messages.error(request, str(e))
             return self.get(request, *args, **kwargs)
-
-        try:
-            self.user_specs = self.workbook.get_worksheet(title='users')
         except WorksheetNotFound:
-            try:
-                self.user_specs = self.workbook.get_worksheet()
-            except WorksheetNotFound:
-                return HttpResponseBadRequest("Workbook has no worksheets")
-
-        try:
-            self.group_specs = self.workbook.get_worksheet(title='groups')
-        except WorksheetNotFound:
-            self.group_specs = []
-        try:
-            from corehq.apps.user_importer.importer import check_headers
-            check_headers(self.user_specs, self.domain, is_web_upload=self.is_web_upload)
+            return HttpResponseBadRequest("Workbook has no worksheets")
         except UserUploadError as e:
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
+    @staticmethod
+    def process_workbook(workbook, domain, is_web_upload):
+        from corehq.apps.user_importer.importer import check_headers
+
+        try:
+            user_specs = workbook.get_worksheet(title="users")
+        except WorksheetNotFound:
+            try:
+                user_specs = workbook.get_worksheet()
+            except WorksheetNotFound as e:
+                raise WorksheetNotFound("Workbook has no worksheets") from e
+
+        check_headers(user_specs, domain, is_web_upload=is_web_upload)
+
+        try:
+            group_specs = workbook.get_worksheet(title="groups")
+        except WorksheetNotFound:
+            group_specs = []
+
+        return user_specs, group_specs
+
+    @staticmethod
+    def upload_users(request, user_specs, group_specs, domain, is_web_upload):
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        if PARALLEL_USER_IMPORTS.enabled(self.domain) and not self.is_web_upload:
-            if list(self.group_specs):
-                messages.error(
-                    request,
-                    _("Groups are not allowed with parallel user import. Please upload them separately")
-                )
-                return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+        if PARALLEL_USER_IMPORTS.enabled(domain) and not is_web_upload:
+            if list(group_specs):
+                raise UserUploadError(
+                    "Groups are not allowed with parallel user import. Please upload them separately")
 
             task = parallel_user_import.delay(
-                self.domain,
-                list(self.user_specs),
+                domain,
+                list(user_specs),
                 request.couch_user.user_id
             )
         else:
             upload_record = UserUploadRecord(
-                domain=self.domain,
+                domain=domain,
                 user_id=request.couch_user.user_id
             )
             upload_record.save()
+
             task = import_users_and_groups.delay(
-                self.domain,
-                list(self.user_specs),
-                list(self.group_specs),
+                domain,
+                list(user_specs),
+                list(group_specs),
                 request.couch_user.user_id,
                 upload_record.pk,
-                self.is_web_upload
+                is_web_upload
             )
+
         task_ref.set_task(task)
+        return task_ref
+
+    def _get_success_response(self, request, task_ref):
         if self.is_web_upload:
             return HttpResponseRedirect(
                 reverse(
@@ -1276,6 +1359,7 @@ class BaseUploadUser(BaseUserSettingsView):
             )
 
 
+@location_safe
 class UploadWebUsers(BaseUploadUser):
     template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
     urlname = 'upload_web_users'
@@ -1299,6 +1383,7 @@ class UploadWebUsers(BaseUploadUser):
         return super(UploadWebUsers, self).post(request, *args, **kwargs)
 
 
+@location_safe
 class WebUserUploadStatusView(BaseManageWebUserView):
     urlname = 'web_user_upload_status'
     page_title = gettext_noop('Web User Upload Status')
@@ -1339,6 +1424,7 @@ class UserUploadJobPollView(BaseUserSettingsView):
         return render(request, 'users/mobile/partials/user_upload_status.html', context)
 
 
+@location_safe
 class WebUserUploadJobPollView(UserUploadJobPollView, BaseManageWebUserView):
     urlname = "web_user_upload_job_poll"
     on_complete_long = 'Web Worker upload has finished'
@@ -1488,7 +1574,7 @@ def change_password(request, domain, login_id):
     else:
         form = SetUserPasswordForm(request.project, login_id, user=django_user)
     json_dump['formHTML'] = render_crispy_form(form)
-    return HttpResponse(json.dumps(json_dump))
+    return JsonResponse(json_dump)
 
 
 @httpdigest

@@ -14,6 +14,7 @@ from couchforms.analytics import (
 )
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.data_analytics.esaccessors import get_mobile_users
 from corehq.apps.domain.models import Domain
@@ -386,7 +387,7 @@ def calced_props(domain_obj, id, all_stats):
         "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
         "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
         "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
-        "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
+        "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type=USERCASE_TYPE),
         "cp_n_trivet_backends": num_telerivet_backends(dom),
         "cp_use_domain_security": use_domain_security_settings(domain_obj),
         "cp_n_custom_roles": num_custom_roles(dom),

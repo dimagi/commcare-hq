@@ -1,0 +1,29 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<script type="text/html" id="unsupported-entry-ko-template">
+  <div class="unsupported alert alert-warning">
+    <a class="unsupported-question-type-trigger" role="button"
+    ><i class="fa fa-question-circle"></i></a>
+    {% blocktrans %}
+      Sorry, web entry cannot support this type of question.
+    {% endblocktrans %}
+  </div>
+  <div class="modal fade" role="dialog" id="unsupported-question-type-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <button type="button" class="btn-close float-end" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+          {% blocktrans %}
+            This question will appear as follows in data exports.
+          {% endblocktrans %}
+          <br><br>
+          <input type="text" class="form-control" data-bind="value: $data.answer" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{% trans "OK" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</script>

@@ -317,4 +317,4 @@ class TestWebUserTableauIntegration(BaseCommCareUserTestSetup):
                             tableau_role="Viewer", tableau_group_ids=["u908e", "1a2b3"])
         mock_add_tableau_user.assert_called_once_with(self.domain, user.username)
         mock_update_tableau_user.assert_called_once_with(domain=self.domain, username=user.username,
-                                                        role="Viewer", groups=groups)
+                                                        role="Viewer", groups=groups, blocking_exception=False)

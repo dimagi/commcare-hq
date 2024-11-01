@@ -652,7 +652,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
                 options.sanitize = false;
             }
             if (options.title || options.content) { // don't show empty popovers
-                $(element).popover(options);
+                new bootstrap.Popover(element, options);
             }
         },
     };

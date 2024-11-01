@@ -181,10 +181,11 @@ class UserInvitationView(object):
                         created_via=USER_CHANGE_VIA_INVITATION,
                         domain=invitation.domain,
                         is_domain_admin=False,
+                        commit=False
                     )
-                    user.save()
-                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     invitation.accept_invitation_and_join_domain(user)
+                    user.log_user_create(invitation.domain, invited_by_user, USER_CHANGE_VIA_INVITATION)
+                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     messages.success(
                         self.request,
                         _('You have been added to the "{}" project space.').format(self.domain)

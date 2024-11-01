@@ -15,7 +15,6 @@ from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.apps.users.dbaccessors import (
-    get_all_commcare_users_by_domain,
     get_mobile_users_by_filters
 )
 from .exceptions import AttendeeTrackedException

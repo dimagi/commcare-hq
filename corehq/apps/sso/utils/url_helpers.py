@@ -31,7 +31,8 @@ def get_oidc_logout_url(identity_provider):
 
 
 def get_documentation_url(identity_provider):
-    return 'https://confluence.dimagi.com/display/commcarepublic/Set+up+SSO+for+CommCare+HQ'
+    return ('https://dimagi.atlassian.net/wiki/spaces/'
+            'commcarepublic/pages/2143945270/Single+Sign-On+for+CommCare+HQ')
 
 
 def get_dashboard_link(identity_provider):

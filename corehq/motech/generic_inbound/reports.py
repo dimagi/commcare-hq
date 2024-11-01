@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy
 
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
@@ -16,7 +17,6 @@ from corehq.motech.generic_inbound.models import ConfigurableAPI
 from corehq.toggles import GENERIC_INBOUND_API
 from corehq.util import reverse
 from corehq.util.timezones.conversions import ServerTime
-from corehq.util.timezones.utils import get_timezone
 
 from .models import RequestLog
 
@@ -117,6 +117,7 @@ def _to_link(log):
     )
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator([GENERIC_INBOUND_API.required_decorator(), domain_admin_required], name='dispatch')
 class ApiLogDetailView(BaseProjectSettingsView):
     page_title = gettext_lazy("API Request Log")
@@ -135,5 +136,4 @@ class ApiLogDetailView(BaseProjectSettingsView):
     def page_context(self):
         return {
             'log': self.log,
-            'timezone': get_timezone(self.request, self.domain)
         }

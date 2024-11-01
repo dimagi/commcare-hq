@@ -10,6 +10,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.motech.const import (
     AUTH_PRESETS,
     AUTH_TYPES,
@@ -58,10 +59,23 @@ class ConnectionSettingsForm(forms.ModelForm):
         help_text=_('Pass credentials in Basic Auth header when requesting a token'),
         required=False,
     )
+    include_client_id = forms.BooleanField(
+        label=_('Include client ID'),
+        help_text=_('Send the client ID in the body of the token request'),
+        required=False,
+    )
+    scope = forms.CharField(
+        label=_('Scope'),
+        help_text=_('Space-separated list of scopes e.g. "read write"'),
+        required=False,
+    )
     skip_cert_verify = forms.BooleanField(
-        label=_('Skip certificate verification'),
+        label="",
         help_text=_('Do not use in a production environment'),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=_('Skip certificate verification'),
+        ),
     )
     notify_addresses_str = forms.CharField(
         label=_('Addresses to send notifications'),
@@ -88,6 +102,8 @@ class ConnectionSettingsForm(forms.ModelForm):
             'plaintext_password',
             'client_id',
             'plaintext_client_secret',
+            'include_client_id',
+            'scope',
             'skip_cert_verify',
             'notify_addresses_str',
             'token_url',
@@ -128,6 +144,7 @@ class ConnectionSettingsForm(forms.ModelForm):
         from corehq.motech.views import ConnectionSettingsListView
 
         helper = hqcrispy.HQFormHelper()
+        helper.form_class = "form-horizontal"
         helper.layout = crispy.Layout(
             crispy.Field('name'),
             crispy.Field('notify_addresses_str'),
@@ -143,27 +160,27 @@ class ConnectionSettingsForm(forms.ModelForm):
                     crispy.Field('auth_preset'),
                     crispy.Field('token_url'),
                     crispy.Field('refresh_url'),
-                    twbscrispy.PrependedText('pass_credentials_in_header', ''),
+                    crispy.Field('pass_credentials_in_header'),
+                    crispy.Field('include_client_id'),
+                    crispy.Field('scope'),
                 ),
                 id="div_id_oauth_settings",
             ),
-            twbscrispy.PrependedText('skip_cert_verify', ''),
+            crispy.Field('skip_cert_verify'),
             self.test_connection_button,
 
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Save"),
-                    type="submit",
-                    css_class="btn btn-primary",
+            twbscrispy.StrictButton(
+                _("Save"),
+                type="submit",
+                css_class="btn btn-primary",
+            ),
+            hqcrispy.LinkButton(
+                _("Cancel"),
+                reverse(
+                    ConnectionSettingsListView.urlname,
+                    kwargs={'domain': self.domain},
                 ),
-                hqcrispy.LinkButton(
-                    _("Cancel"),
-                    reverse(
-                        ConnectionSettingsListView.urlname,
-                        kwargs={'domain': self.domain},
-                    ),
-                    css_class="btn btn-default",
-                ),
+                css_class="btn btn-outline-primary",
             ),
         )
 
@@ -177,11 +194,13 @@ class ConnectionSettingsForm(forms.ModelForm):
                     _('Test Connection'),
                     type='button',
                     css_id='test-connection-button',
-                    css_class='btn btn-default disabled',
+                    css_class='btn btn-outline-primary disabled mb-3',
                 ),
-                css_class=hqcrispy.CSS_ACTION_CLASS,
             ),
-            css_class='form-group'
+            crispy.Div(
+                css_id='test-connection-result',
+                css_class='text-success d-none mb-3',
+            ),
         )
 
     def clean_notify_addresses_str(self):

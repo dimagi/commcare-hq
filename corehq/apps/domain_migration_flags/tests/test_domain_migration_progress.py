@@ -1,13 +1,16 @@
 import uuid
 from datetime import datetime
+from unittest.mock import Mock
 
 from django.test import TestCase
 
 from corehq.apps.domain_migration_flags.api import (
+    ALL_DOMAINS,
     any_migrations_in_progress,
     get_migration_complete,
     get_migration_status,
     migration_in_progress,
+    once_off_migration,
     set_migration_complete,
     set_migration_not_started,
     set_migration_started,
@@ -20,10 +23,8 @@ from corehq.apps.domain_migration_flags.models import (
 
 class DomainMigrationProgressTest(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(DomainMigrationProgressTest, cls).setUpClass()
-        cls.slug = uuid.uuid4().hex
+    def setUp(self):
+        self.slug = uuid.uuid4().hex
 
     def get_progress(self, domain):
         return DomainMigrationProgress.objects.get(domain=domain, migration_slug=self.slug)
@@ -109,3 +110,42 @@ class DomainMigrationProgressTest(TestCase):
         self.assertTrue(any_migrations_in_progress('purple'))
         set_migration_complete('purple', 'other_slug')
         self.assertFalse(any_migrations_in_progress('purple'))
+
+    def test_once_off_decorator(self):
+        actual_migration = Mock()
+
+        @once_off_migration(self.slug)
+        def basic_migration():
+            self.assertEqual(get_migration_status(ALL_DOMAINS, self.slug), MigrationStatus.IN_PROGRESS)
+            actual_migration()
+
+        self.assertEqual(get_migration_status(ALL_DOMAINS, self.slug), MigrationStatus.NOT_STARTED)
+        actual_migration.assert_not_called()
+
+        basic_migration()
+        self.assertEqual(get_migration_status(ALL_DOMAINS, self.slug), MigrationStatus.COMPLETE)
+        actual_migration.assert_called_once()
+
+        basic_migration()
+        actual_migration.assert_called_once()
+
+    def test_once_off_decorator_failure(self):
+        actual_migration = Mock()
+
+        @once_off_migration(self.slug)
+        def failing_migration():
+            self.assertEqual(get_migration_status(ALL_DOMAINS, self.slug), MigrationStatus.IN_PROGRESS)
+            actual_migration()
+            raise ValueError('this migration failed')
+
+        self.assertEqual(get_migration_status(ALL_DOMAINS, self.slug), MigrationStatus.NOT_STARTED)
+        self.assertEqual(actual_migration.call_count, 0)
+
+        with self.assertRaises(ValueError):
+            failing_migration()
+        self.assertEqual(get_migration_status(ALL_DOMAINS, self.slug), MigrationStatus.NOT_STARTED)
+        self.assertEqual(actual_migration.call_count, 1)
+
+        with self.assertRaises(ValueError):
+            failing_migration()
+        self.assertEqual(actual_migration.call_count, 2)

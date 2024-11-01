@@ -1,0 +1,10 @@
+{% extends "cloudcare/preview_app_base.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load i18n %}
+
+{% block body %}
+<div class="alert alert-warning">
+    <p>{{ error_message }}</p>
+</div>
+{% endblock %}

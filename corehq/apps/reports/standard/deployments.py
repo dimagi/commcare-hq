@@ -47,6 +47,7 @@ from corehq.apps.reports.standard import (
     ProjectReportParametersMixin,
 )
 from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.quickcache import quickcache
@@ -81,6 +82,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
                              sql_col='user_dim__username'),
+            DataTablesColumn(_("Assigned Location(s)"),
+                             help_text=_('Assigned locations for the user, with the primary '
+                                         'location highlighted in bold.'),
+                             sortable=False),
             DataTablesColumn(_("Last Submission"),
                              prop_name='reporting_metadata.last_submissions.submission_date',
                              alt_prop_name='reporting_metadata.last_submission_for_user.submission_date',
@@ -119,7 +124,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                  sortable=False)
             )
         headers = DataTablesHeader(*columns)
-        headers.custom_sort = [[1, 'desc']]
+        headers.custom_sort = [[2, 'desc']]
         return headers
 
     @cached_property
@@ -316,6 +321,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
             self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
 
+        loc_names_dict = self._locations_names_dict(users)
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             last_build_profile_name = device = device_app_meta = num_unsent_forms = None
@@ -373,6 +379,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
+                self._get_location_column(user, loc_names_dict),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---',
                 num_unsent_forms if num_unsent_forms is not None else "---",
@@ -387,6 +394,23 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
             rows.append(row_data)
         return rows
+
+    def _locations_names_dict(self, user_es_docs):
+        """
+        Returns a dict of all assigned location names for given `user_docs`.
+        The dict has the following structure:
+        {
+            'loc_id': 'loc_name'
+        }
+        """
+        all_loc_ids = set()
+        for user_es_doc in user_es_docs:
+            user = CouchUser.wrap_correctly(user_es_doc)
+            for loc_id in user.get_location_ids(self.domain):
+                all_loc_ids.add(loc_id)
+        return dict(SQLLocation.objects.filter(
+            location_id__in=all_loc_ids, domain=self.domain
+        ).values_list('location_id', 'name'))
 
     def process_facts(self, app_status_facts, fmt_for_export=False):
         rows = []
@@ -477,11 +501,50 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         for row in table[1:]:
             # Last submission
-            row[len(location_colums) + 1] = _fmt_timestamp(row[len(location_colums) + 1])
-            # Last sync
             row[len(location_colums) + 2] = _fmt_timestamp(row[len(location_colums) + 2])
+            # Last sync
+            row[len(location_colums) + 3] = _fmt_timestamp(row[len(location_colums) + 3])
         result[0][1] = table
         return result
+
+    def _get_location_column(self, user_es_doc, user_loc_dict):
+        user = CouchUser.wrap_correctly(user_es_doc)
+        if not user.get_location_ids(self.domain):
+            return '---'
+        return self._get_formatted_assigned_location_names(user, user_loc_dict)
+
+    def _get_formatted_assigned_location_names(self, user, user_loc_dict):
+        """
+        Create an HTML formatted string of the given assigned location names.
+        The primary location will be highlighted in bold.
+        """
+        assigned_location_ids = user.get_location_ids(self.domain)
+        primary_location_id = user.get_location_id(self.domain)
+        formatted_loc_names = []
+        for loc_id in assigned_location_ids:
+            loc_name = user_loc_dict.get(loc_id)
+            if loc_id == primary_location_id:
+                formatted_loc_names.insert(
+                    0, f'<strong>{loc_name}</strong>'
+                )
+            else:
+                formatted_loc_names.append(loc_name)
+
+        formatted_str = ', '.join(formatted_loc_names[:4])
+        html_nodes = [
+            f'<span class="locations-list">{formatted_str}</span>',
+        ]
+        if len(formatted_loc_names) > 4:
+            all_str = ', '.join(formatted_loc_names)
+            view_controls_html_nodes = [
+                f'<span class="loc-view-control">{_("...See more")}</span>',
+                f'<span class="loc-view-control" style="display:none">{_("...Collapse")}</span>',
+            ]
+            html_nodes += [
+                f'<span class="all-locations-list" style="display:none">{all_str}</span>',
+                f'<a href="#" class="toggle-all-locations">{"".join(view_controls_html_nodes)}</a>',
+            ]
+        return format_html(f'<div>{"".join(html_nodes)}</div>')
 
 
 def _get_commcare_version(app_version_info):

@@ -24,6 +24,7 @@ from corehq.apps.accounting.utils.subscription import is_domain_enterprise
 from corehq.apps.accounting.views import (
     TriggerAutopaymentsView,
     TriggerDowngradeView,
+    TriggerRemovedSsoUserAutoDeactivationView,
 )
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
@@ -51,6 +52,7 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    UCRDataLoadReport,
 )
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
@@ -560,7 +562,7 @@ class ProjectDataTab(UITab):
     @memoized
     def can_only_see_deid_exports(self):
         from corehq.apps.export.views.utils import user_can_view_deid_exports
-        return (not self.can_view_form_exports
+        return (not self.can_view_form_or_case_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
     @property
@@ -661,11 +663,16 @@ class ProjectDataTab(UITab):
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
                 DeIdFormExportListView,
+                DeIdCaseExportListView,
                 ODataFeedListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
                 'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
+            })
+            export_data_views.append({
+                'title': _(DeIdCaseExportListView.page_title),
+                'url': reverse(DeIdCaseExportListView.urlname, args=(self.domain,)),
             })
             export_data_views.extend([
                 {
@@ -1125,8 +1132,47 @@ class ApplicationsTab(UITab):
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
+        if toggles.APP_TESTING.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                _('Application Testing'),
+                url=(reverse('app_execution:workflow_list', args=[self.domain])),
+            ))
 
         return submenu_context
+
+    @property
+    @memoized
+    def sidebar_items(self):
+        return [
+            (_("Application Test Flows"), [
+                {
+                    'title': "Workflow List",
+                    'url': reverse("app_execution:workflow_list", args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': _("New"),
+                            'urlname': "new_workflow",
+                        },
+                        {
+                            'title': _("Edit"),
+                            'urlname': "edit_workflow",
+                        },
+                        {
+                            'title': _("Run"),
+                            'urlname': "test_workflow",
+                        },
+                        {
+                            'title': _("Logs"),
+                            'urlname': "workflow_logs",
+                        },
+                        {
+                            'title': _("Log Details"),
+                            'urlname': "workflow_log",
+                        },
+                    ],
+                },
+            ]),
+        ]
 
     @property
     def _is_viewable(self):
@@ -1797,7 +1843,7 @@ class EnterpriseSettingsTab(UITab):
         if self.couch_user.is_superuser:
             from corehq.apps.enterprise.models import EnterprisePermissions
             if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
+                    or EnterprisePermissions.is_source_domain(self.domain):
                 enterprise_views.append({
                     'title': _("Enterprise Permissions"),
                     'url': reverse("enterprise_permissions", args=[self.domain]),
@@ -1866,10 +1912,6 @@ class TranslationsTab(UITab):
                     {
                         'url': reverse('download_translations', args=[self.domain]),
                         'title': _('Download Translations')
-                    },
-                    {
-                        'url': reverse('migrate_transifex_project', args=[self.domain]),
-                        'title': _('Migrate Project')
                     },
                 ]))
         if self._request.user.is_staff:
@@ -2374,6 +2416,10 @@ class AccountingTab(UITab):
                     'title': _(TriggerAutopaymentsView.page_title),
                     'url': reverse(TriggerAutopaymentsView.urlname),
                 },
+                {
+                    'title': _(TriggerRemovedSsoUserAutoDeactivationView.page_title),
+                    'url': reverse(TriggerRemovedSsoUserAutoDeactivationView.urlname),
+                }
             ])
         items.append(('Other Actions', other_actions))
         return items
@@ -2500,9 +2546,6 @@ class AdminTab(UITab):
                 {'title': GlobalThresholds.page_title,
                  'url': reverse(GlobalThresholds.urlname),
                  'icon': 'fa fa-fire'},
-                {'title': 'Auto App Workflows',
-                 'url': reverse('app_execution:workflow_list'),
-                 'icon': 'fcc fcc-chart-report'},
             ]
             user_operations = user_operations + [
                 {'title': _('Grant superuser privileges'),
@@ -2564,7 +2607,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport, UCRDataLoadReport]
         ]))
         return sections
 

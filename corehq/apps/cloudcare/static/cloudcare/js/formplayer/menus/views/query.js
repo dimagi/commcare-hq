@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'backbone.marionette',
     'moment',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/tempus_dominus',
     'hqwebapp/js/toggles',
     'analytix/js/kissmetrix',
     'cloudcare/js/markdown',
@@ -17,8 +18,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/menus/collections',
     'cloudcare/js/formplayer/utils/utils',
-    'hqwebapp/js/bootstrap3/hq.helpers',   // needed for hqHelp
-    'bootstrap-daterangepicker/daterangepicker',  // needed for $.daterangepicker
+    'hqwebapp/js/bootstrap5/hq.helpers',   // needed for hqHelp
     'cloudcare/js/formplayer/menus/api',    // needed for app:select:menus
     'select2/dist/js/select2.full.min',
 ], function (
@@ -29,6 +29,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     Marionette,
     moment,
     initialPageData,
+    hqTempusDominus,
     toggles,
     kissmetrics,
     markdown,
@@ -40,7 +41,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     Collection,
     formplayerUtils
 ) {
-    var separator = " to ",
+    var separator = hqTempusDominus.getDateRangeSeparator(),
         serverSeparator = "__",
         serverPrefix = "__range__",
         dateFormat = cloudcareUtils.dateFormat,
@@ -299,7 +300,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         events: {
             'change @ui.queryField': 'changeQueryField',
             'change @ui.searchForBlank': 'notifyParentOfFieldChange',
-            'dp.change @ui.queryField': 'changeDateQueryField',
+            'change.td @ui.date': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
@@ -378,9 +379,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             self.errorMessage = null;
             self.model.set('searchForBlank', false);
             sessionStorage.removeItem('geocoderValues');
-            if (self.ui.date.length) {
-                self.ui.date.data("DateTimePicker").clear();
-            }
             self._render();
             FormplayerFrontend.trigger('clearNotifications');
         },
@@ -469,33 +467,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
 
         onRender: function () {
             this._initializeSelect2Dropdown();
+            const fallback = this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled ?  'bottom' : 'right';
             this.ui.hqHelp.hqHelp({
-                placement: () => {
-                    if (this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled) {
-                        return 'auto bottom';
-                    } else {
-                        return 'auto right';
-                    }
-                },
+                placement: 'auto',
+                fallbackPlacements: [fallback],
             });
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
-            this.ui.dateRange.daterangepicker({
-                locale: {
-                    format: dateFormat,
-                    separator: separator,
-                },
-                autoUpdateInput: false,
-                "autoApply": true,
+            this.ui.dateRange.each(function (index, el) {
+                hqTempusDominus.createDefaultDateRangePicker(el, {
+                    localization: {
+                        format: dateFormat,
+                    },
+                });
             });
             this.ui.dateRange.attr("placeholder", dateFormat + separator + dateFormat);
             let separatorChars = _.unique(separator).join("");
             this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
-            this.ui.dateRange.on('cancel.daterangepicker', function () {
-                $(this).val('').trigger('change');
-            });
-            this.ui.dateRange.on('apply.daterangepicker', function (ev, picker) {
-                $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
-            });
             this.ui.dateRange.on('change', function () {
                 // Validate free-text input
                 var start, end,
@@ -517,7 +504,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 }
             });
             if (this.model.get('hidden') === 'true') {
-                this.$el.hide();
+                this.$el.addClass("d-none");
             }
         },
 

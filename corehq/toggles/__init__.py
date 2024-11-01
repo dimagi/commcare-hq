@@ -314,14 +314,41 @@ def was_user_created_after(username, checkpoint):
     )
 
 
-def deterministic_random(input_string):
+class FrozenPrivilegeToggle(StaticToggle):
     """
-    Returns a deterministically random number between 0 and 1 based on the
-    value of the string. The same input should always produce the same output.
+    A special toggle to represent a legacy toggle that should't be
+    edited via the UI or the code and its new associated privilege.
+
+    This can be used when releasing a domain-only Toggle to general
+    availability as a new paid privilege to support domains that
+    may not have the privilege but had the toggle enabled historically.
+
+    To do this, simply change the toggle type to FrozenPrivilegeToggle
+    and pass the privilege as the first argument to it.
+
+    For e.g.
+    If a toggle were defined as below
+        MY_DOMAIN_TOGGLE = StaticToggle(
+            'toggle_name',
+            'Title',
+            TAG_PRODUCT,
+            namespaces=[NAMESPACE_DOMAIN],
+            description='Description'
+        )
+    It can be converted to a FrozenPrivilegeToggle by defining.
+        MY_DOMAIN_TOGGLE = FrozenPrivilegeToggle(
+            privilege_name
+            'toggle_name',
+            'Title',
+            TAG_PRODUCT,
+            namespaces=[NAMESPACE_DOMAIN],
+            description='Description'
+        )
     """
-    if isinstance(input_string, str):
-        input_string = input_string.encode('utf-8')
-    return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
+
+    def __init__(self, privilege_slug, *args, **kwargs):
+        self.privilege_slug = privilege_slug
+        super(FrozenPrivilegeToggle, self).__init__(*args, **kwargs)
 
 
 class PredictablyRandomToggle(StaticToggle):
@@ -390,10 +417,23 @@ class PredictablyRandomToggle(StaticToggle):
             return False
         elif namespace is not Ellipsis and namespace not in self.namespaces:
             return False
-        return (
-            (item and deterministic_random(self._get_identifier(item)) < self.randomness)
-            or super(PredictablyRandomToggle, self).enabled(item, namespace)
-        )
+        elif item and super().enabled(f'!{item}', namespace):
+            # if there is an explicit entry for the item preceded by '!', always disable
+            return False
+        elif item and deterministic_random(self._get_identifier(item)) < self.randomness:
+            return True
+        else:
+            return super().enabled(item, namespace)
+
+
+def deterministic_random(input_string):
+    """
+    Returns a deterministically random number between 0 and 1 based on the
+    value of the string. The same input should always produce the same output.
+    """
+    if isinstance(input_string, str):
+        input_string = input_string.encode('utf-8')
+    return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
 
 class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
@@ -768,13 +808,6 @@ BIOMETRIC_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ADD_USERS_FROM_LOCATION = StaticToggle(
-    'add_users_from_location',
-    "Allow users to add new mobile workers from the locations page",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
 CASE_DETAIL_PRINT = StaticToggle(
     'case_detail_print',
     'MLabour: Allowing printing of the case detail, based on an HTML template',
@@ -973,6 +1006,14 @@ WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     owner='Jenny Schweers',
 )
 
+LOCATION_FIELD_USER_PROVISIONING = FeatureRelease(
+    'location_field_user_provisioning',
+    'USH: Holding feature flag for various works relating to the location field',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Minha Lee',
+)
+
 WEB_APPS_ANCHORED_SUBMIT = StaticToggle(
     'web_apps_anchored_submit',
     'USH: Keep submit button anchored at the bottom of screen for forms in Web Apps',
@@ -1138,6 +1179,20 @@ HIDE_SYNC_BUTTON = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+PAUSE_DATA_FORWARDING = StaticToggle(
+    'pause_data_forwarding',
+    "Pause all data forwarding from this domain",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+PERSISTENT_MENU_SETTING = StaticToggle(
+    "persistent_menu_setting",
+    "Show Persistent Menu option in Web Apps settings",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 def _ensure_search_index_is_enabled(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
@@ -1164,6 +1219,14 @@ EXPLORE_CASE_DATA = StaticToggle(
     'the Case List Explorer toggle or doing a manual migration.\n\n'
     'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
     'This will be deprecated once the Feature Preview is in full swing.',
+)
+
+SAAS_PROTOTYPE = StaticToggle(
+    'saas_prototype',
+    'Use allowed to view SaaS prototypes',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+    description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
@@ -1365,7 +1428,7 @@ def _commtrackify(domain_name, toggle_is_enabled):
 COMMTRACK = StaticToggle(
     'commtrack',
     "CommCare Supply",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     description=(
         '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
@@ -1574,6 +1637,15 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+
+EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
+    'export_apps_use_elasticsearch',
+    'Use elasticsearch when fetching apps for exports',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
+
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Enikshay: Disable column limit in UCR',
@@ -1699,8 +1771,8 @@ MOBILE_RECOVERY_MEASURES = StaticToggle(
 
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
-    'ICDS: Used for ICDS emergencies when UCR sync is killing the DB',
-    TAG_CUSTOM,
+    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description='Prevents mobile UCRs from being generated or included in the sync payload',
 )
@@ -1762,6 +1834,13 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'Send logs to sumologic',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_OTHER],
+)
+
+BLOCK_SUMOLOGIC_LOGS = StaticToggle(
+    'block_sumologic_logs',
+    'Block sending logs to sumologic per domain',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 TARGET_COMMCARE_FLAVOR = StaticToggle(
@@ -1933,6 +2012,41 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     When an individual project is having problems with rate limiting,
     use this toggle to lift the restriction for them on a temporary basis,
     just to unblock them while we sort out the conversation with the client.
+    """
+)
+
+RATE_LIMIT_REPEATERS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_repeaters',
+    'Apply rate limiting to data forwarding (repeaters)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Rate limits are based on aggregate time spent waiting on data forwarding responses
+    within tasks for each project within the last second, minute, hour, day, and week windows.
+    Project allowances are based on the number of mobile workers in the project or subscription.
+    Rate limits are only applied (to any project) when global thresholds are surpassed.
+    The specific per-domain and global thresholds can be dynamically updated within the Django Admin.
+    """
+)
+
+RATE_LIMIT_REPEATER_ATTEMPTS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_repeater_attempts',
+    'Apply rate limiting to attempts for data forwarding (repeaters)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    In addition to the rate limits based on time spent waiting, these rate limits ensure a project
+    is limited to how many records they can attempt to forward in a given time window.
+    """
+)
+
+DECREASE_REPEATER_TIMEOUT = StaticToggle(
+    'decrease_repeater_timeout',
+    'Decrease the request timeout value when forwarding data to external endpoints.',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Decreases the request timeout from 5 minutes to 1 minute for repeater endpoints when enabled.
     """
 )
 
@@ -2245,6 +2359,13 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
 )
 
+ARCGIS_INTEGRATION = StaticToggle(
+    'arcgis_integration',
+    'Enable the ArcGIS Form Repeater integration. Used for forwarding form data to an ArcGIS account.',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 GENERIC_INBOUND_API = StaticToggle(
     'configurable_api',
     'Generic inbound APIs',
@@ -2358,10 +2479,9 @@ GOOGLE_SHEETS_INTEGRATION = StaticToggle(
 )
 
 APP_DEPENDENCIES = StaticToggle(
-    'app-dependencies',
-    'Set Android app dependencies that must be installed before using a '
-    'CommCare app',
-    TAG_SOLUTIONS_LIMITED,
+    slug='app-dependencies',
+    label='Set Android app dependencies that must be installed before using a CommCare app',
+    tag=TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Prevents mobile workers from using a CommCare app until the Android apps
@@ -2418,17 +2538,6 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     owner='Simon Kelly'
 )
 
-EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
-    'embed_tableau_report_by_user',
-    'Use a Tableau username "HQ/{username}" to embed reports instead of "HQ/{role name}"',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
-                'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
-                'to Tableau to get the embedded report.',
-    parent_toggles=[EMBEDDED_TABLEAU]
-)
-
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
@@ -2446,8 +2555,22 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBED_TABLEAU_REPORT_BY_USER],
+    parent_toggles=[EMBEDDED_TABLEAU],
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
+)
+
+RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
+    'restrict_user_profile_assignment',
+    'Limit which user profiles a web user can assign to other web users and mobile workers.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
+    'web_user_invite_additional_fields',
+    'USH: Enable additional fields in web user invite form for enhanced user details',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
@@ -2575,43 +2698,6 @@ RESTORE_ACCESSIBLE_REPORTS_ONLY = StaticToggle(
     based on which apps the user can access.
     """
 )
-
-
-class FrozenPrivilegeToggle(StaticToggle):
-    """
-    A special toggle to represent a legacy toggle that should't be
-    edited via the UI or the code and its new associated privilege.
-
-    This can be used when releasing a domain-only Toggle to general
-    availability as a new paid privilege to support domains that
-    may not have the privilege but had the toggle enabled historically.
-
-    To do this, simply change the toggle type to FrozenPrivilegeToggle
-    and pass the privilege as the first argument to it.
-
-    For e.g.
-    If a toggle were defined as below
-        MY_DOMAIN_TOGGLE = StaticToggle(
-            'toggle_name',
-            'Title',
-            TAG_PRODUCT,
-            namespaces=[NAMESPACE_DOMAIN],
-            description='Description'
-        )
-    It can be converted to a FrozenPrivilegeToggle by defining.
-        MY_DOMAIN_TOGGLE = FrozenPrivilegeToggle(
-            privilege_name
-            'toggle_name',
-            'Title',
-            TAG_PRODUCT,
-            namespaces=[NAMESPACE_DOMAIN],
-            description='Description'
-        )
-    """
-
-    def __init__(self, privilege_slug, *args, **kwargs):
-        self.privilege_slug = privilege_slug
-        super(FrozenPrivilegeToggle, self).__init__(*args, **kwargs)
 
 
 def frozen_toggles_by_privilege():
@@ -2751,7 +2837,8 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
         For mobile users, enables bulk deletion page and bulk lookup page.
         For web users, enables filtered download page.
     """,
-    help_link='https://confluence.dimagi.com/display/commcarepublic/Bulk+User+Management'
+    help_link=('https://dimagi.atlassian.net/wiki/spaces/'
+               'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
@@ -2833,21 +2920,38 @@ SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
 
 USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
     'ush_restore_file_location_case_sync_restriction',
-    'USH: Limit the location-owned cases that show up in a user\'s restore file',
+    'USH: Limit the location-owned cases in a user\'s restore file, and allow marking whether a '
+    'location can have users assigned or not.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2252210196/Prevent+Syncing+of+Lower+Level+Locations',  # noqa: E501
     description="""
     In the 'Organizational Level' section of location management, web admins can specify which org level to
     expand to when syncing the location-owned cases included in a user's restore file. Limits cases in a user's
-    restore file and thus can improve performance.
+    restore file and thus can improve performance. Also allows marking whether a location can have users assigned
+    to it.
     """
 )
 
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',
     label='Restrict data source rebuilt from UI',
-    tag=TAG_SOLUTIONS,
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
+)
+
+APP_TESTING = StaticToggle(
+    slug='app_testing',
+    label='App Testing UI',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=''
+)
+
+SMART_LINKS_FOR_WEB_USERS = StaticToggle(
+    slug='smart_links_for_web_users',
+    label='USH: Allow web users to use smart links without logging in as before',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )

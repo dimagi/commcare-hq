@@ -9,7 +9,7 @@
      var module = {};
  
      // To autogenerate cssid from random string
-@@ -348,7 +348,7 @@
+@@ -361,7 +361,7 @@
          $div.attr("data-bind", "template: 'key_value_mapping_template'");
          $div.koApplyBindings(m);
          m.ui = $div;

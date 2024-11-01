@@ -91,14 +91,23 @@ class XPathEnum(TextXPath):
             v_val = get_value(v_key)
             variables.append(XPathVariable(name=v_key, locale_id=v_val))
         parts = []
-        for i, item in enumerate(enum):
-            template_context = get_template_context(item, i)
-            parts.append(template.format(**template_context))
+        if format == 'translatable-enum':
+            calculated_property = get_template_context()['calculated_property']
+            # converting variables into suite.xml recognized variables (i.e. $variable > $kvariable)
+            for item in enum:
+                key = item.key_as_variable
+                if key[1:] in calculated_property:
+                    calculated_property = calculated_property.replace(key[1:], key)
+            parts.append(calculated_property)
+        else:
+            for i, item in enumerate(enum):
+                template_context = get_template_context(item, i)
+                parts.append(template.format(**template_context))
         if type == "display" and format == "enum":
             parts.insert(0, "replace(join(' ', ")
             parts[-1] = parts[-1][:-2]  # removes extra comma from last string
             parts.append("), '\\s+', ' ')")
-        else:
+        elif format != "translatable-enum":
             parts.append("''")
             parts.append(")" * len(enum))
 

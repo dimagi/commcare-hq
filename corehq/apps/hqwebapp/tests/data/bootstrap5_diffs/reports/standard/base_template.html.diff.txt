@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,44 +1,44 @@
+@@ -1,45 +1,45 @@
 -{% extends "hqwebapp/bootstrap3/two_column.html" %}
 +{% extends "hqwebapp/bootstrap5/two_column.html" %}
  {% load compress %}
@@ -48,8 +48,10 @@
      <script src="{% static 'reports/js/inspect_data.js' %}"></script>
 -    <script src="{% static 'reports/js/bootstrap3/project_health_dashboard.js' %}"></script>
 -    <script src="{% static 'reports/js/bootstrap3/aggregate_user_status.js' %}"></script>
+-    <script src="{% static 'reports/js/bootstrap3/application_status.js' %}"></script>
 +    <script src="{% static 'reports/js/bootstrap5/project_health_dashboard.js' %}"></script>
 +    <script src="{% static 'reports/js/bootstrap5/aggregate_user_status.js' %}"></script>
++    <script src="{% static 'reports/js/bootstrap5/application_status.js' %}"></script>
      <script src="{% static 'reports/js/user_history.js' %}"></script>
      <script src="{% static 'reports/js/case_activity.js' %}"></script>
 -    <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
@@ -57,7 +59,7 @@
    {% endcompress %}
  {% endblock %}
  
-@@ -58,8 +58,8 @@
+@@ -59,8 +59,8 @@
  {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
  
  {% block page_breadcrumbs %}
@@ -68,7 +70,7 @@
      <li>
        <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
      </li>
-@@ -98,17 +98,17 @@
+@@ -99,17 +99,17 @@
    {% initial_page_data 'slug' report.slug %}
  
    {% block filter_panel %}
@@ -90,7 +92,7 @@
                      aria-label="Close"
                      data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
              <h4 class="modal-title">
-@@ -120,14 +120,14 @@
+@@ -121,14 +121,14 @@
                {{ datespan.enddate|date:"Y-m-d" }}
              </h4>
            </div>
@@ -107,7 +109,7 @@
        <h4>{% trans 'Notice' %}</h4>
        <p>{{ report.special_notice }}</p>
      </div>
-@@ -137,7 +137,7 @@
+@@ -138,7 +138,7 @@
        {% block reportcontent %}
        {% endblock %}
      {% else %}

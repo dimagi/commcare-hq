@@ -10,13 +10,19 @@
   {% registerurl "enterprise_dashboard_email" domain "---" %}
   {% registerurl "enterprise_dashboard_total" domain "---" %}
 
+  {% initial_page_data 'max_date_range_days' max_date_range_days %}
+
   <div class="row">
     {% for report in reports %}
       <div class="col-md-6 col-lg-6 col-xl-3">
-        <div class="card text-center report-panel mb-3" data-slug="{{ report.slug }}">
+        <div class="card text-center report-panel mb-3" data-slug="{{ report.slug }}" id="{{ report.slug }}">
           <div class="card-header">
             <div class="fs-4">{{ report.title }}</div>
-            <div class="fs-6">{{ report.subtitle|default:"&nbsp;" }}</div>
+            {% if report.title == "Mobile Form Submissions" %}
+              <button id="dateRangeDisplay" type="button" data-bind="text: presetText" data-bs-toggle="modal" data-bs-target="#enterpriseFormsDaterange" class="btn btn-link fs-6">&nbsp;</button>
+            {% else %}
+               <div class="form-control-plaintext fs-6">{{ report.subtitle|default:"&nbsp;" }}</div>
+            {% endif %}
           </div>
           <div class="card-body">
             <h1 class="card-text total">
@@ -32,4 +38,6 @@
       </div>
     {% endfor %}
   </div>
+
+  {% include 'enterprise/partials/date_range_modal.html' %}
 {% endblock %}

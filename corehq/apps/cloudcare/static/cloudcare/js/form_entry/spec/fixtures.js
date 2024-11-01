@@ -92,67 +92,17 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", [
             "add-choice": null,
         })),
 
-        repeatJSON: (options = {}) => (_.defaults(options, {
-            "caption_audio": null,
-            "caption": "Repeater",
-            "caption_image": null,
-            "type": "repeat-juncture",
-            "caption_markdown": null,
-            "ix": "0J",
-            "relevant": 1,
-            "main-header": "Repeater",
-            "children": [],
-            "add-choice": "None - Add Repeater",
-            "caption_video": null,
-        })),
-
-        repeatNestJSON: () => ({
-            "caption_audio": null,
-            "caption": "Repeat Simple",
-            "caption_image": null,
-            "type": "repeat-juncture",
-            "caption_markdown": null,
-            "ix": "0J",
-            "relevant": 1,
-            "children": [{
-                "caption": "Repeat Simple 1/1",
-                "type": "sub-group",
-                "uuid": "ed3f01b37034",
-                "ix": "0:0",
-                "children": [{
-                    "caption_audio": null,
-                    "caption": "Text_Question",
-                    "binding": "/data/repeat/Text_Question",
-                    "caption_image": null,
-                    "type": "question",
-                    "caption_markdown": null,
-                    "required": 0,
-                    "ix": "0:0,0",
-                    "relevant": 1,
-                    "help": null,
-                    "help_image": null,
-                    "help_audio": null,
-                    "help_video": null,
-                    "answer": null,
-                    "datatype": "str",
-                    "style": {},
-                    "caption_video": null,
-                }],
-                "repeatable": 1,
-            }],
-            "add-choice": "Add another Repeat Simple",
-            "header": "Repeat Simple",
-            "caption_video": null,
-        }),
-
         groupJSON: (options = {}) => (_.defaults(options, {
             "type": "sub-group",
             "ix": "1",
+            "exists": true,
             "caption": "Group",
             "children": [
                 {
                     "type": "sub-group",
+                    "exists": true,
                     "ix": "1,2",
+                    "caption": "Sub Group",
                     "children": [
                         {
                             "type": "question",
@@ -176,10 +126,12 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", [
         noQuestionGroupJSON: () => ({
             "type": "sub-group",
             "ix": "2",
+            "exists": true,
             "children": [
                 {
                     "type": "sub-group",
                     "ix": "2,2",
+                    "exists": true,
                     "children": [],
                 },
             ],

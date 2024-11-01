@@ -32,21 +32,22 @@ hqDefine('toggle_ui/js/edit-flag', [
         };
 
         self.init_items = function (config) {
-            var items = config.items,
-                lastUsed = config.last_used || {},
-                serviceType = config.service_type || {};
-            self.items.removeAll();
-            _.each(_.sortBy(items), function (item) {
-                var fields = item.split(':'),
-                    namespace = fields.length > 1 ? fields[0] : 'user',
-                    value = fields.length > 1 ? fields[1] : fields[0];
-                self.items.push({
-                    namespace: ko.observable(self.padded_ns[namespace]),
-                    value: ko.observable(value),
-                    last_used: ko.observable(lastUsed[value]),
-                    service_type: ko.observable(serviceType[value]),
+            const lastUsed = config.last_used || {},
+                serviceType = config.service_type || {},
+                items = _.map(config.items, function (item) {
+                    var fields = item.split(':'),
+                        namespace = fields.length > 1 ? fields[0] : 'user',
+                        value = fields.length > 1 ? fields[1] : fields[0];
+                    return {
+                        namespace: ko.observable(self.padded_ns[namespace]),
+                        value: ko.observable(value),
+                        last_used: ko.observable(lastUsed[value]),
+                        service_type: ko.observable(serviceType[value]),
+                    };
                 });
-            });
+            self.items(_.sortBy(items, function (item) {
+                return [item.last_used(), item.value()];
+            }));
         };
 
         self.addItem = function (namespace) {
@@ -104,12 +105,14 @@ hqDefine('toggle_ui/js/edit-flag', [
         self.saveButtonTop = self.createSaveButton();
         self.saveButtonBottom = self.createSaveButton();
 
-        var projectInfoUrl = '<a href="' + initialPageData.reverse('domain_internal_settings') + '">domain</a>';
         self.getNamespaceHtml = function (namespace, value) {
+            if (value && value[0] === '!') {
+                value = value.replace(/^!/, '');
+            }
             if (namespace === 'domain') {
-                return projectInfoUrl.replace('___', value);
+                return '<a href="' + initialPageData.reverse('domain_internal_settings', value) + '">domain <i class="fa fa-external-link"></i></a>';
             } else {
-                return namespace;
+                return "<i class='fa fa-user'></i> " + namespace;
             }
         };
 

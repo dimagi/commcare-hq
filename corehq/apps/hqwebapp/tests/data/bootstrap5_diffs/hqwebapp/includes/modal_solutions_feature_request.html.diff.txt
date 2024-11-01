@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,115 +1,119 @@
+@@ -1,121 +1,131 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  {% if request.user.is_authenticated %}
@@ -22,14 +22,20 @@
 -                    <h4 class="modal-title">{% trans "Make a Feature Request to Solutions" %}</h4>
 -                    <br/>
 -                    <p>
--                        <b>{% trans "Please submit this report from the page where you would like to see the change" %}</b>
+-                        <b>
+-                            {% blocktrans %}
+-                                If this request is related to a specific feature, then please submit this report
+-                                from the location where you would like to see the change.
+-                            {% endblocktrans %}
+-                        </b>
 -                    </p>
 -
 +  <div class="modal fade"
 +       tabindex="-1"
 +       aria-labelledby="requestAFeatureModalLabel"
 +       aria-hidden="true"
-+       id="modalSolutionsFeatureRequest">
++       id="modalSolutionsFeatureRequest"
++       data-bind="event: { 'shown.bs.modal': openModal, 'hidden.bs.modal': resetForm }">
 +    <div class="modal-dialog modal-lg">
 +      <form id="hqwebapp-requestReportForm"
 +            action="{% url "solutions_feature_request" %}"
@@ -37,7 +43,7 @@
 +            enctype="multipart/form-data"
 +            role="form">
 +        {% csrf_token %}
-+        <input type="hidden" id="request-report-url" name="url"/>
++        <input type="hidden" id="request-report-url" data-bind="value: reportUrl" name="url"/>
 +        <input type="hidden" id="request-report-username" name="username" value="{{ user.username }}"/>
 +        <input type="hidden" id="request-report-domain" name="domain" value="{{ domain }}"/>
 +        <input type="hidden" id="request-report-app_id" name="app_id" value="{{ app.id }}"/>
@@ -48,19 +54,25 @@
 +          </div>
 +          <div class="modal-body">
 +            <p>
-+              <strong>{% trans "Please submit this report from the page where you would like to see the change" %}</strong>
++              <strong>
++                {% blocktrans %}
++                  If this request is related to a specific feature, then please submit this report
++                  from the location where you would like to see the change.
++                {% endblocktrans %}
++              </strong>
 +            </p>
 +            <div class="form-horizontal">
 +              <div class="row mb-3">
 +                <label for="request-report-subject"
 +                       class="col-sm-2 col-form-label">{% trans "Short Description" %} *</label>
-+                <div class="col-sm-10">
++                <div class="col-sm-10 has-validation">
 +                  <input type="text"
 +                         class="form-control"
 +                         name="subject"
 +                         id="request-report-subject"
-+                         placeholder="{% trans 'One sentence description of feature/change request.' %}">
-+                  <span class="badge badge-danger d-none">
++                         placeholder="{% trans 'One sentence description of feature/change request.' %}"
++                         data-bind="value: subjectText, hasfocus: subjectHasFocus, css: { 'is-invalid': hasSubjectError }">
++                  <span class="invalid-feedback">
 +                    <i class="fa fa-warning"></i> {% trans 'Please give us some information about the feature/change request' %}
 +                  </span>
                  </div>
@@ -93,7 +105,7 @@
 -                                          data-bind="value: descriptionText"></textarea>
 -                            </div>
 -                        </div>
--                        <div class="form-group" id="request-report-cc-form-group" data-bind="css: { 'has-error has-feedback': hasRecipientsInputError}">
+-                        <div class="form-group" id="request-report-cc-form-group" data-bind="css: { 'has-error has-feedback': recipientsErrorMessage}">
 -                            <label for="request-report-cc"
 -                                   class="col-sm-3 control-label">{% trans "Other recipients" %}</label>
 -                            <div class="col-sm-9">
@@ -107,9 +119,10 @@
 -                                    {% blocktrans %}
 -                                        Comma-separated email addresses of others you want to notify about this request.
 -                                    {% endblocktrans %}
--                                    <span class="label label-danger" data-bind="visible: hasRecipientsInputError">
--                                        <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
--                                    </span>
+-                                    <div class="label label-danger" data-bind="visible: recipientsErrorMessage">
+-                                        <i class="fa fa-warning"></i>
+-                                        <span data-bind="text: recipientsErrorMessage"></span>
+-                                    </div>
 -                                </p>
 -                            </div>
 -                        </div>
@@ -143,7 +156,8 @@
 +                            class="form-control vertical-resize"
 +                            id="request-report-message"
 +                            rows="3"
-+                            placeholder="{% trans "Please describe the product changes you would like to see in CommCare." %}"></textarea>
++                            placeholder="{% trans "Please describe the product changes you would like to see in CommCare." %}"
++                            data-bind="value: descriptionText"></textarea>
                  </div>
 -                <div class="modal-footer">
 -                    <button type="button"
@@ -172,14 +186,16 @@
 +                         name="cc"
 +                         class="form-control"
 +                         id="request-report-cc"
-+                         placeholder="ex: admin@commcarehq.org, test@commcarehq.org" />
++                         placeholder="ex: admin@commcarehq.org, test@commcarehq.org"
++                         data-bind="value: recipientEmailsText, css: { 'is-invalid': recipientsErrorMessage }" />
++                  <div class="invalid-feedback">
++                    <i class="fa fa-warning"></i>
++                    <span data-bind="text: recipientsErrorMessage"></span>
++                  </div>
 +                  <p class="help-block">
-+                      {% blocktrans %}
-+                          Comma-separated email addresses of others you want to notify about this request.
-+                      {% endblocktrans %}
-+                      <span class="badge bade-danger hide">
-+                          <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
-+                      </span>
++                    {% blocktrans %}
++                      Comma-separated email addresses of others you want to notify about this request.
++                    {% endblocktrans %}
 +                  </p>
                  </div>
 +              </div>
@@ -191,15 +207,15 @@
 +                  <div class="col-sm-10">
 +                      <input type="file" id="request-report-file" name="feature_request"/>
 +                      <p class="help-block">
-+                          {% blocktrans %}
++                        {% blocktrans %}
 +                          Please upload any files relevant to your suggestion.
-+                          {% endblocktrans %}
++                        {% endblocktrans %}
 +                      </p>
 +                      <p class="help-block">
-+                          <i class="fa fa-warning"></i>
-+                          {% blocktrans %}
-+                              Do not upload a file containing sensitive data like passwords or project data.
-+                          {% endblocktrans %}
++                        <i class="fa fa-warning"></i>
++                        {% blocktrans %}
++                          Do not upload a file containing sensitive data like passwords or project data.
++                        {% endblocktrans %}
 +                      </p>
 +                  </div>
 +              </div>
@@ -209,14 +225,16 @@
 +          <div class="modal-footer">
 +              <button type="button"
 +                      id="request-report-cancel"
-+                      class="btn btn-default"
-+                      data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
++                      class="btn btn-outline-secondary"
++                      data-bs-dismiss="modal"
++                      data-bind="enable: cancelBtnEnabled">{% trans 'Cancel' %}</button>
 +              <button type="submit"
 +                      class="btn btn-primary"
 +                      id="request-report-submit"
 +                      data-loading-text="{% trans "Submitting Report..." %}"
 +                      data-error-text="{% trans "Failed. Retry Request Submission" %}"
-+                      data-success-text="{% trans "Success! Back to CommCare HQ" %}">
++                      data-success-text="{% trans "Success! Back to CommCare HQ" %}"
++                      data-bind="css: { 'btn-danger': hasSubmitError, 'btn-primary': !hasSubmitError() }">
 +                  {% trans "Submit Report" %}
 +              </button>
 +          </div>

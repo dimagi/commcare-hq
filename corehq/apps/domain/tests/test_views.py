@@ -1,4 +1,6 @@
 from contextlib import contextmanager
+from datetime import datetime
+from unittest.mock import patch
 
 from django.contrib.messages import get_messages
 from django.test import TestCase
@@ -6,15 +8,22 @@ from django.test.client import Client
 from django.urls import reverse
 
 from bs4 import BeautifulSoup
-from unittest.mock import patch
 
 from corehq import privileges
-from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+)
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views.settings import EditDomainAlertView, ManageDomainAlertsView, MAX_ACTIVE_ALERTS
+from corehq.apps.domain.views.settings import (
+    MAX_ACTIVE_ALERTS,
+    EditDomainAlertView,
+    ManageDomainAlertsView,
+)
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
@@ -453,6 +462,79 @@ class TestEditDomainAlertView(TestBaseDomainAlertView):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(messages[0].message, 'There was an error saving your alert. Please try again!')
         self.assertEqual(response.status_code, 200)
+
+
+class TestSubscriptionRenewalViews(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.domain = generator.arbitrary_domain()
+        self.user = generator.arbitrary_user(self.domain.name, is_webuser=True, is_admin=True)
+        self.account = generator.billing_account(self.user, self.user.name)
+        self.client = Client()
+        self.client.force_login(user=self.user.get_django_user())
+
+    def tearDown(self):
+        self.user.delete(self.domain.name, deleted_by=None)
+        self.domain.delete()
+        clear_plan_version_cache()
+        super().tearDown()
+
+    def _generate_subscription(self, edition, annual_plan=False):
+        plan_version = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=annual_plan)
+        return generator.generate_domain_subscription(self.account, self.domain, datetime.today(), None,
+                                                      plan_version=plan_version, is_active=True)
+
+    def test_renewal_page_context(self):
+        edition = SoftwarePlanEdition.PRO
+        subscription = self._generate_subscription(edition)
+        response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+
+        self.assertEqual(response.status_code, 200)
+
+        expected_monthly_plan = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=False)
+        expected_annual_plan = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=True)
+        expected_renewal_choices = {
+            'monthly_plan': expected_monthly_plan.user_facing_description,
+            'annual_plan': expected_annual_plan.user_facing_description,
+        }
+
+        self.assertEqual(response.context['current_edition'], edition)
+        self.assertEqual(response.context['plan'], subscription.plan_version.user_facing_description)
+        self.assertEqual(response.context['renewal_choices'], expected_renewal_choices)
+        self.assertEqual(response.context['is_annual_plan'], False)
+        self.assertEqual(response.context['is_self_renewable_plan'], True)
+
+    def test_non_paid_edition_raises_404(self):
+        self._generate_subscription(SoftwarePlanEdition.COMMUNITY)
+        response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+
+        self.assertEqual(404, response.status_code)
+
+    def test_non_self_renewable_edition(self):
+        # a billing admin may still view the renewal page even if their plan is not self-renewable
+        self._generate_subscription(SoftwarePlanEdition.ENTERPRISE)
+        response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['renewal_choices'], {})
+        self.assertEqual(response.context['is_self_renewable_plan'], False)
+
+    def test_confirm_renewal_page_context(self):
+        edition = SoftwarePlanEdition.PRO
+        annual_plan = True
+        subscription = self._generate_subscription(edition, annual_plan=annual_plan)
+        response = self.client.post(
+            reverse('domain_subscription_renewal_confirmation', args=[self.domain.name]),
+            data={'is_annual_plan': annual_plan, 'plan_edition': edition, 'from_plan_page': True}
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        subscription.refresh_from_db()
+        expected_next_plan = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=annual_plan)
+        self.assertEqual(response.context['subscription'], subscription)
+        self.assertEqual(response.context['plan'], subscription.plan_version.user_facing_description)
+        self.assertEqual(response.context['next_plan'], expected_next_plan.user_facing_description)
 
 
 @contextmanager

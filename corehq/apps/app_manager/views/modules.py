@@ -147,6 +147,9 @@ def get_module_template(user, module):
 
 
 def get_module_view_context(request, app, module, lang=None):
+    # make sure all modules have unique ids
+    app.ensure_module_unique_ids(should_save=True)
+
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
         'show_search_workflow': (
@@ -854,7 +857,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
-    return HttpResponse(json.dumps(resp))
+    return JsonResponse(resp)
 
 
 def _new_advanced_module(request, domain, app, name, lang):

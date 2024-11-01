@@ -8,11 +8,11 @@ hqDefine("registry/js/registry_edit", [
     'registry/js/registry_actions',
     'registry/js/registry_logs',
     'es6!hqwebapp/js/bootstrap5_loader',
-    'hqwebapp/js/components/inline_edit',
     'hqwebapp/js/select2_knockout_bindings.ko',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
     'hqwebapp/js/bootstrap5/main', // makeHqHelp
     'hqwebapp/js/multiselect_utils',
+    'hqwebapp/js/components/inline_edit',
 ], function (
     moment,
     ko,
@@ -21,11 +21,8 @@ hqDefine("registry/js/registry_edit", [
     text,
     actions,
     auditLogs,
-    bootstrap,
-    inlineEdit
+    bootstrap
 ) {
-    ko.components.register('inline-edit', inlineEdit);
-
     let InvitationModel = function (data) {
         let self = data;
         self.statusText = text.getStatusText(self.status);

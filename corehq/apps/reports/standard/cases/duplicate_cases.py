@@ -19,6 +19,7 @@ from corehq.apps.data_interfaces.models import CaseDuplicateNew
 class DuplicateCasesExplorer(CaseListExplorer):
     name = _("Duplicate Cases")
     slug = 'duplicate_cases'
+    description = _("Identify and manage duplicate cases")
 
     fields = [
         DuplicateCaseRuleFilter,

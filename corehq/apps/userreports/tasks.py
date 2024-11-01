@@ -80,8 +80,16 @@ def _build_indicators(config, document_store, relevant_ids):
 
 @serial_task('{indicator_config_id}', default_retry_delay=60 * 10, timeout=3 * 60 * 60, max_retries=20,
              queue=UCR_CELERY_QUEUE, ignore_result=True, serializer='pickle')
-def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None,
-                       engine_id=None, diffs=None, trigger_time=None, domain=None):
+def rebuild_indicators(
+    indicator_config_id,
+    initiated_by=None,
+    limit=-1,
+    source=None,
+    engine_id=None,
+    diffs=None,
+    trigger_time=None,
+    domain=None,
+):
     config = get_ucr_datasource_config_by_id(indicator_config_id)
     if trigger_time is not None and trigger_time < config.last_modified:
         return
@@ -254,7 +262,9 @@ def queue_async_indicators():
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
     retry_threshold = start - timedelta(hours=4)
     # don't requeue anything that has been retried more than ASYNC_INDICATOR_MAX_RETRIES times
-    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=ASYNC_INDICATOR_MAX_RETRIES)[:settings.ASYNC_INDICATORS_TO_QUEUE]
+    indicators = AsyncIndicator.objects.filter(
+        unsuccessful_attempts__lt=ASYNC_INDICATOR_MAX_RETRIES
+    )[:settings.ASYNC_INDICATORS_TO_QUEUE]
 
     indicators_by_domain_doc_type = defaultdict(list)
     # page so that envs can have arbitarily large settings.ASYNC_INDICATORS_TO_QUEUE

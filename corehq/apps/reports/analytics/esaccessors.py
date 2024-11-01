@@ -6,6 +6,7 @@ from django.conf import settings
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.data_dictionary.util import get_data_dict_case_types, get_data_dict_deprecated_case_types
 from corehq.apps.es import (
     CaseES,
@@ -87,7 +88,7 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False,
     if case_types:
         case_query = case_query.filter({"terms": {"type.exact": case_types}})
     else:
-        case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
+        case_query = case_query.filter(filters.NOT(case_type_filter(USERCASE_TYPE)))
 
     if not is_total:
         case_query = case_query.active_in_range(
@@ -130,7 +131,7 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
     if case_types:
         case_query = case_query.case_type(case_types)
     else:
-        case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
+        case_query = case_query.filter(filters.NOT(case_type_filter(USERCASE_TYPE)))
 
     if user_ids:
         case_query = case_query.filter(filters.term(user_field, user_ids))
@@ -416,7 +417,13 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
 
 
 def _duration_script():
-    return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
+    # ES 5 returns long where as ES 6 returns a JodaCompatibleZonedDateTime
+    # This class can't use - operator directly
+    from corehq.apps.es.client import manager
+    script = "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
+    if manager.elastic_major_version >= 6:
+        script = "doc['form.meta.timeEnd'].value.getMillis() - doc['form.meta.timeStart'].value.getMillis()"
+    return script
 
 
 def get_form_duration_stats_by_user(

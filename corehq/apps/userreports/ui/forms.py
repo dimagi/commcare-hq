@@ -193,7 +193,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
 
         if toggles.SUPERSET_ANALYTICS.enabled(domain):
             self.fields['is_available_in_analytics'].widget = BootstrapCheckboxInput(
-                inline_label="Availabe in Analytics"
+                inline_label="Available in Analytics"
             )
         self.helper = FormHelper()
 
@@ -231,6 +231,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 twbscrispy.StrictButton(
                     _("Save"),
                     type="submit",
+                    css_id="gtm-save-ds-btn",
                     css_class="btn btn-primary",
                 ),
             ),

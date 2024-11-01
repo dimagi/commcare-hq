@@ -246,7 +246,7 @@
 
 - name: "Auto-Resize Images"
   description: "Automatically resizes images within forms. Follow 
-  <a href='https://confluence.dimagi.com/display/commcarepublic/Auto-Resize+Images+on+Android'>
+  <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/Images+in+CommCare#Auto-Resize-Images-on-Android'>
   the instructions here</a> to determine which value to use."
   id: "cc-resize-images"
   values:
@@ -298,7 +298,7 @@
 - name: "Image Compatibility on Multiple Devices"
   description: "When a value is selected, this feature controls the display size of any user-provided image such
   that it will be consistent with the size of the original image file, and consistent across devices. Follow 
-  <a href='https://confluence.dimagi.com/display/commcarepublic/Image+Sizing+with+Multiple+Android+Device+Models'>
+  <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/Images+in+CommCare#CommCare-Developer-Toolkit-Image-Sizing-with-Multiple-Android-Device-Models'>
   the instructions here</a> to determine which value to use."
   id: "cc-inflation-target-density"
   values:
@@ -348,7 +348,7 @@
 - id: 'dependencies'
   name: 'Android app dependencies'
   type: 'features'
-  toggle: APP_DEPENDENCIES
+  privilege: 'app_dependencies'
   description: >
     Prevents mobile workers from using a CommCare app until the Android
     apps that it needs have been installed on the device.
@@ -356,7 +356,11 @@
   values:
     - ['org.commcare.dalvik.reminders', 'CommCare Reminders']
     - ['callout.commcare.org.sendussd', 'CommCare USSD']
-    - ['org.commcare.dalvik.abha', 'CommCare ABHA']
+    - ['com.dimagi.biometric', 'Biometrics Capture']
+    - ['org.rdtoolkit', 'CommCare Toolkit']
+    - ['richard.chard.lu.android.areamapper', 'Area Calculator for CommCare']
+    - ['org.commcare.respiratory', 'Breath Counter']
+    - ['com.simprints.id', 'Simprints ID']
   default: []  # multiSelect default takes a list
-  since: '2.53'
+  since: '2.54'
   force: true

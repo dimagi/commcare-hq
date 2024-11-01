@@ -1,7 +1,8 @@
 import json
 
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
-from django.urls import NoReverseMatch
+from django.urls import NoReverseMatch, include, re_path
 
 from tastypie import http
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, InvalidSortError
@@ -88,7 +89,42 @@ class CorsResourceMixin(object):
         return request_method
 
 
-class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
+class ApiVersioningMixin:
+    def __init__(self, api_name=None):
+        super().__init__(api_name)
+        # Tastypie sets `api_name` on `_meta`, which is a singleton, so if a
+        # resource registered multiple times, each instances uses the
+        # `api_name` that came last. This approach works with multiple versions
+        self.api_name = api_name or self._meta.api_name
+
+    @property
+    def urls(self):
+        # Old way of doing things, in line with tastypie's versioning scheme
+        return [
+            re_path(r"^(?P<resource_name>%s)/" % (self._meta.resource_name), include(self._get_urls()))
+        ]
+
+    @classmethod
+    def get_urlpattern(cls, version):
+        # Newer URL pattern, allows for versioning per resource
+        resource = cls(api_name=version)
+        return re_path(
+            r"^(?P<resource_name>%s)/(?P<api_name>%s)/" % (resource._meta.resource_name, version),
+            include(resource._get_urls()),
+        )
+
+    def _get_urls(self):
+        return self.prepend_urls() + [
+            re_path(r"^$", self.wrap_view('dispatch_list'), name="api_dispatch_list"),
+            re_path(r"^schema/$", self.wrap_view('get_schema'), name="api_get_schema"),
+            re_path(r"^set/(?P<%s_list>.*?)/$" % (self._meta.detail_uri_name),
+                    self.wrap_view('get_multiple'), name="api_get_multiple"),
+            re_path(r"^(?P<%s>.*?)/$" % (self._meta.detail_uri_name),
+                    self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+        ]
+
+
+class HqBaseResource(ApiVersioningMixin, CorsResourceMixin, JsonResourceMixin, Resource):
     """
     Convenience class to allow easy adjustment of API resource base classes.
     """
@@ -113,6 +149,22 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
                 json.dumps({"error": "Your current subscription does not have access to this feature"}),
                 content_type="application/json",
                 status=401))
+
+    def alter_deserialized_detail_data(self, request, data):
+        """Provide a hook for data validation
+
+        Subclasses may implement ``validate_deserialized_data`` that
+        raises ``django.core.exceptions.ValidationError`` if the submitted
+        data is not valid. This is designed to work conveniently with
+        ``corehq.util.validation.JSONSchemaValidator``.
+        """
+        data = super().alter_deserialized_detail_data(request, data)
+        if hasattr(self, "validate_deserialized_data"):
+            try:
+                self.validate_deserialized_data(data)
+            except ValidationError as error:
+                raise ImmediateHttpResponse(self.error_response(request, error.messages))
+        return data
 
     def get_required_privilege(self):
         return privileges.API_ACCESS
@@ -243,8 +295,8 @@ class DomainSpecificResourceMixin(object):
         kwargs = dict(kwargs)
         kwargs['resource_name'] = self._meta.resource_name
 
-        if self._meta.api_name is not None:
-            kwargs['api_name'] = self._meta.api_name
+        if self.api_name is not None:
+            kwargs['api_name'] = self.api_name
 
         try:
             return self._build_reverse_url("api_dispatch_list", kwargs=kwargs)

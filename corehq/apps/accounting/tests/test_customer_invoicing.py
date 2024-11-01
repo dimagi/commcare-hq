@@ -204,7 +204,8 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(product_line_item_count, 1)
         product_line_item = invoice.lineitem_set.get_products().first()
         product_description = product_line_item.base_description
-        self.assertEqual(product_description, 'One month of CommCare Advanced Edition Software Plan.')
+        self.assertEqual(product_description,
+                         'One month of CommCare Advanced Edition - Pay Monthly Software Plan.')
         product_cost = product_line_item.base_cost
         self.assertEqual(product_cost, self.product_rate.monthly_fee)
 

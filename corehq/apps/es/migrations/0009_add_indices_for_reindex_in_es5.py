@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name=index_runtime_name('apps-2024-03-09'),
             type_='app',
             mapping={
@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             settings_key='hqapps',
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name=index_runtime_name('case-search-2024-03-09'),
             type_='case',
             mapping={
@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
             settings_key='case_search',
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name=index_runtime_name('cases-2024-03-09'),
             type_='case',
             mapping={
@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
             settings_key='hqcases',
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name=index_runtime_name('domains-2024-03-09'),
             type_='hqdomain',
             mapping={
@@ -80,7 +80,7 @@ class Migration(migrations.Migration):
             settings_key='hqdomains',
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name=index_runtime_name('forms-2024-03-09'),
             type_='xform',
             mapping={
@@ -95,7 +95,7 @@ class Migration(migrations.Migration):
             settings_key='xforms',
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name=index_runtime_name('groups-2024-03-09'),
             type_='group',
             mapping={
@@ -110,7 +110,7 @@ class Migration(migrations.Migration):
             settings_key='hqgroups',
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name=index_runtime_name('sms-2024-03-09'),
             type_='sms',
             mapping={
@@ -126,7 +126,7 @@ class Migration(migrations.Migration):
             settings_key='smslogs',
             es_versions=[5],
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name=index_runtime_name('users-2024-03-09'),
             type_='user',
             mapping={

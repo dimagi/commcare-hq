@@ -38,6 +38,7 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    UCRDataLoadReport,
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
@@ -125,7 +126,6 @@ def REPORTS(project):
             commtrack.SimplifiedInventoryReport,
             commtrack.InventoryReport,
             commtrack.CurrentStockStatusReport,
-            commtrack.StockStatusMapReport,
         )
         reports.insert(0, (gettext_lazy("CommCare Supply"), supply_reports))
 
@@ -330,6 +330,7 @@ ADMIN_REPORTS = (
         AdminPhoneNumberReport,
         UserAuditReport,
         DeployHistoryReport,
+        UCRDataLoadReport,
     )),
 )
 

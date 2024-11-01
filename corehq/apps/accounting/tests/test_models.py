@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.core import mail
 from django.db import models
+from django.test import SimpleTestCase
 
 from unittest import mock
 
@@ -343,3 +344,9 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'False'})
         self.assertIsNone(self.billing_account.auto_pay_user)
         self.assertFalse(self.billing_account.auto_pay_enabled)
+
+
+class SimpleBillingAccountTest(SimpleTestCase):
+    def test_has_enterprise_admin_does_case_insensitive_match(self):
+        account = BillingAccount(is_customer_billing_account=True, enterprise_admin_emails=['TEST@dimagi.com'])
+        self.assertTrue(account.has_enterprise_admin('test@DIMAGI.com'))

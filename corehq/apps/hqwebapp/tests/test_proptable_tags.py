@@ -38,8 +38,9 @@ class CaseDisplayDataTest(SimpleTestCase):
         })
 
     def test_get_display_data_function(self):
-        get_color = lambda x: x['color']
-        column = DisplayConfig(name='favorite color', expr=get_color)
+        def _get_color(x):
+            return x['color']
+        column = DisplayConfig(name='favorite color', expr=_get_color)
         data = {
             'color': 'red'
         }
@@ -108,22 +109,6 @@ class CaseDisplayDataTest(SimpleTestCase):
         data = {'date': "2021-03-16T14:37:22Z"}
         expected_value = (
             "<time title='2021-03-16T14:37:22+00:00' datetime='2021-03-16T14:37:22+00:00'>"
-            "Mar 16, 2021 14:37 UTC"
-            "</time>"
-        )
-        self.assertEqual(get_display_data(data, column), {
-            'expr': 'date',
-            'name': 'date',
-            'description': None,
-            'value': expected_value,
-            'has_history': False,
-        })
-
-    def test_get_display_process_timeago(self):
-        column = DisplayConfig(expr='date', process="date", timeago=True)
-        data = {'date': "2021-03-16T14:37:22Z"}
-        expected_value = (
-            "<time class='timeago' title='2021-03-16T14:37:22+00:00' datetime='2021-03-16T14:37:22+00:00'>"
             "Mar 16, 2021 14:37 UTC"
             "</time>"
         )

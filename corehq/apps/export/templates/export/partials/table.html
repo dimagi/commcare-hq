@@ -8,33 +8,33 @@
   <thead>
     <tr>
       {% if has_edit_permissions or allow_bulk_export %}
-        <th class="col-sm-1">
+        <th class="col-md-1">
           {% blocktrans %}Select{% endblocktrans %}
           <br>
           <button type="button"
-                  class="btn btn-xs btn-default"
+                  class="btn btn-sm btn-outline-primary"
                   data-bind="click: selectAll">
             {% trans 'All' %}
           </button>
           {%trans 'or'%}
           <button type="button"
-                  class="btn btn-xs btn-default"
+                  class="btn btn-sm btn-outline-primary"
                   data-bind="click: selectNone">
             {% trans 'None' %}
           </button>
         </th>
       {% endif %}
-      <th class="col-sm-4">
+      <th class="col-md-4">
         {% trans 'Name' %}
       </th>
 
     {% if model_type == "case" %}
-      <th class="col-sm-2">
+      <th class="col-md-2">
         {% trans 'Case Type' %}
       </th>
     {% endif %}
 
-    <th class="col-sm-1">
+    <th class="col-md-1">
       {% if export_filter_form %}
         {% if has_edit_permissions %}
           {% trans "Filters and Files" %}
@@ -45,28 +45,28 @@
     </th>
 
     {% if is_daily_saved_export %}
-      <th class="col-sm-1">{% trans "Enable/Disable" %}</th>
+      <th class="col-md-1">{% trans "Enable/Disable" %}</th>
     {% endif %}
 
     {% if has_edit_permissions %}
-      <th class="col-sm-1">
+      <th class="col-md-1">
         {% if is_daily_saved_export %}
           {% trans "Edit Columns" %}
         {% elif not is_odata %}
           {% trans 'Edit' %}
         {% else %}
           {% blocktrans %}
-            Copy &amp; Edit Feed
+            Copy &amp; Edit
           {% endblocktrans %}
         {% endif %}
       </th>
-      <th class="col-sm-1">
+      <th class="col-md-1">
         {% trans 'Delete' %}
       </th>
     {% endif %}
 
     {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
-      <th class="col-sm-1"
+      <th class="col-md-1"
           data-bind="visible: showOwnership">
         <span data-bind="visible: myExports">
           {% trans "Share" %}
@@ -82,29 +82,28 @@
     <tr>
     {% if has_edit_permissions or allow_bulk_export %}
       <td>
-        <div class="checkbox checkbox-table-cell">
-          <label>
-            <input type="checkbox"
-                   data-bind="checked: addedToBulk" />
-          </label>
+        <div class="form-check checkbox-table-cell">
+          <input type="checkbox"
+                 class="form-check-input"
+                 data-bind="checked: addedToBulk" />
         </div>
       </td>
     {% endif %}
       <td>
-        <h4 data-bind="css: {'text-muted': hasEmailedExport && !isAutoRebuildEnabled()}">
+        <div data-bind="css: {'text-body-secondary': hasEmailedExport && !isAutoRebuildEnabled()}">
           <inline-edit params="value: name,
                                url: editNameUrl,
                                placeholder: '{% trans "Enter name here"|escapejs %}',
                                cols: 50"
                        data-apply-bindings="false"></inline-edit>
-          <label class="label label-default label-default"
+          <label class="badge text-bg-secondary label-default"
                  data-bind="visible: isDeid()">
             {% trans 'De-Identified' %}
           </label>
-        </h4>
+        </div>
         <p data-bind="visible: formname,
                       css: {
-                        'text-muted': hasEmailedExport && !isAutoRebuildEnabled()
+                        'text-body-secondary': hasEmailedExport && !isAutoRebuildEnabled()
                       }">
           <i class="fa-regular fa-file"></i>
           <strong>
@@ -129,16 +128,11 @@
         <!-- ko if: isOData -->
           <!-- ko with: odataFeedUrl -->
           <p>
-            <div class="input-group">
-              <span data-bind="css: {
-                                 'input-group-btn': showLink
-                               },
-                               click: copyLinkRequested">
-                <a class="btn btn-default btn-sm">
-                  <i class="fa fa-clipboard"></i>
-                  {% trans "Copy OData Feed Link" %}
-                </a>
-              </span>
+            <div data-bind="css: {'input-group': showLink}">
+              <button class="btn btn-outline-primary btn-sm" data-bind="click: copyLinkRequested">
+                <i class="fa fa-clipboard"></i>
+                {% trans "Copy OData Feed Link" %}
+              </button>
               <input data-bind="visible: showLink,
                                 value: url"
                      type="text"
@@ -149,12 +143,12 @@
           <!-- /ko -->
           <!-- ko if: hasAdditionalODataFeeds -->
             <p>
-              <a class="btn btn-link btn-sm"
+              <a class="btn btn-sm btn-outline-primary"
                  data-bind="attr: {
                               href: '#' + id() + '-odata-additional'
                             },
                             click: sendAnalyticsOpenAdditionalFeeds"
-                 data-toggle="modal">
+                 data-bs-toggle="modal">
                 <i class="fa fa-rss"></i>
                 <!-- ko if: exportType() == 'form' -->
                   {% trans "Show additional feeds for Repeat Group data." %}
@@ -169,17 +163,10 @@
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <button type="button"
-                            class="close"
-                            data-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                      <span class="sr-only">
-                        {% trans 'Close' %}
-                      </span>
-                    </button>
                     <h4 class="modal-title">
                       {% trans "Additional Feeds" %}
                     </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
                   </div>
                   <div class="modal-body">
                     <p class="lead">
@@ -197,16 +184,11 @@
                     </p>
                     <!-- ko foreach: odataAdditionalFeedUrls -->
                     <p>
-                      <div class="input-group">
-                        <span data-bind="css: {
-                                           'input-group-btn': url.showLink
-                                         },
-                                         click: url.copyLinkRequested">
-                          <a class="btn btn-default btn-sm">
-                            <i class="fa fa-clipboard"></i>
-                            <span data-bind="text: label"></span>
-                          </a>
-                        </span>
+                      <div data-bind="css: {'input-group': url.showLink}">
+                        <button class="btn btn-outline-primary btn-sm" data-bind="click: url.copyLinkRequested">
+                          <i class="fa fa-clipboard"></i>
+                          <span data-bind="text: label"></span>
+                        </button>
                         <input data-bind="visible: url.showLink,
                                           value: url.url"
                                type="text"
@@ -218,9 +200,9 @@
                   </div>
                   <div class="modal-footer">
                     <a href="#"
-                       class="btn btn-default"
+                       class="btn btn-outline-primary"
                        data-bind="click: sendAnalyticsCloseAdditionalFeeds"
-                       data-dismiss="modal">
+                       data-bs-dismiss="modal">
                       {% trans "Close" %}
                     </a>
                   </div>
@@ -231,7 +213,7 @@
         <!-- /ko -->
 
         <!-- ko if: hasEmailedExport && !isAutoRebuildEnabled() -->
-        <p class="text-warning">
+        <p class="text-danger">
           <i class="fa-solid fa-triangle-exclamation"></i>
           {% blocktrans %}
             Automatic updates for this saved {{ export_type }} have been disabled. Click 'Enable'
@@ -272,32 +254,26 @@
             &nbsp;&nbsp;
             <div data-bind="if: isLocationSafeForUser()">
               <button type="button"
-                      class="btn btn-default btn-xs"
+                      class="btn btn-outline-primary btn-sm"
                       data-bind="visible: emailedExport.canUpdateData,
                                  attr: {
-                                   'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()
+                                   'data-bs-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()
                                  }"
-                      data-toggle="modal">
+                      data-bs-toggle="modal">
                 <i class="fa fa-refresh"></i>
                 {% trans "Update Data" %}
               </button>
               <button type="button"
-                      class="btn btn-default btn-xs btn-disabled"
+                      class="btn btn-outline-primary btn-sm btn-disabled"
                       data-bind="visible: emailedExport.updatingData() && !emailedExport.prepareExportError()"
                       disabled="disabled">
                 <i class="fa fa-refresh fa-spin"></i>
                 {% trans "Updating Data, please wait..." %}
               </button>
               <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.started()">
-                <div class="progress">
-                  <div class="progress-bar progress-bar-striped active"
-                       role="progressbar"
-                       aria-valuemin="0"
-                       aria-valuemax="100"
-                       data-bind="attr: {
-                                    'aria-valuenow': emailedExport.taskStatus.percentComplete(),
-                                    'style': 'width: ' + emailedExport.taskStatus.percentComplete() + '%',
-                                  }">
+                <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-bind="attr: {'aria-valuenow': emailedExport.taskStatus.percentComplete()}">
+                  <div class="progress-bar progress-bar-striped"
+                       data-bind="attr: {style: 'width: ' + emailedExport.taskStatus.percentComplete() + '%'}">
                   </div>
                 </div>
               </div>
@@ -312,34 +288,29 @@
                             href: emailedExport.fileData.downloadUrl()
                           },
                           click: downloadRequested"
-               class="btn btn-info btn-xs">
+               class="btn btn-info btn-sm">
               <i class="fa-solid fa-cloud-arrow-down"></i>
               {% trans "Download" %}
             </a>
             <!-- ko if: isFeed -->
-              <div class="input-group">
-                <!-- ko with: feedUrl -->
-                <span data-bind="css: {
-                                   'input-group-btn': showLink
-                                 },
-                                 click: copyLinkRequested">
-                  <a class="btn btn-default btn-sm">
-                    <i class="fa fa-clipboard"></i>
-                    {% trans "Copy Dashboard Feed Link" %}
-                  </a>
-                </span>
+              <!-- ko with: feedUrl -->
+                <div data-bind="css: {'input-group': showLink}">
+                <button class="btn btn-outline-primary btn-sm" data-bind="click: copyLinkRequested">
+                  <i class="fa fa-clipboard"></i>
+                  {% trans "Copy Dashboard Feed Link" %}
+                </button>
                 <input data-bind="visible: showLink,
                                   value: url"
                        type="text"
                        class="form-control input-sm"
                        readonly />
-                <!-- /ko -->
-              </div>
+                </div>
+              <!-- /ko -->
             <!-- /ko -->
           </div>
 
           <div data-bind="if: isLocationSafeForUser()">
-            <p class="text-warning"
+            <p class="text-danger"
                data-bind="if: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning() && isAutoRebuildEnabled()">
               <i class="fa-solid fa-triangle-exclamation"></i>
               {% blocktrans %}
@@ -353,7 +324,7 @@
                data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.failed() == 'too_large'">
               <i class="fa-solid fa-triangle-exclamation"></i>
               {% blocktrans with max_rows=max_daily_export_size|intcomma %}
-                Your export exceeds the limit of {{ max_rows }} rows. Please see <a href="https://confluence.dimagi.com/display/commcarepublic/Selecting+Tools+for+CommCare+Data+Processing+and+Analysis" data-toggle="modal">documentation</a> for more information.
+                Your export exceeds the limit of {{ max_rows }} rows. Please see <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2337669143/Setting+up+a+Data+Pipeline+via+CommCare" data-bs-toggle="modal">documentation</a> for more information.
               {% endblocktrans %}
             </p>
 
@@ -372,7 +343,7 @@
                 {% trans "Data update failed!" %}
               </strong>
               {% blocktrans %}
-                If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.
+                If this problem persists, please <a href="#modalReportIssue" data-bs-toggle="modal">Report an Issue</a>.
               {% endblocktrans %}
             </p>
 
@@ -402,17 +373,10 @@
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <button type="button"
-                            class="close"
-                            data-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                      <span class="sr-only">
-                        {% trans 'Close' %}
-                      </span>
-                    </button>
                     <h4 class="modal-title">
                       {% trans "Confirm data updates" %}
                     </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
                   </div>
                   <div class="modal-body"
                        data-bind="visible: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning()">
@@ -445,8 +409,8 @@
                   </div>
                   <div class="modal-footer">
                     <a href="#"
-                       class="btn btn-default"
-                       data-dismiss="modal">
+                       class="btn btn-outline-primary"
+                       data-bs-dismiss="modal">
                       {% trans "Cancel" %}
                     </a>
                     <button type="button"
@@ -463,17 +427,10 @@
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <button type="button"
-                            class="close"
-                            data-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                      <span class="sr-only">
-                        {% trans 'Close' %}
-                      </span>
-                    </button>
                     <h4 class="modal-title">
                       {% trans "Confirm data updates." %}
                     </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
                   </div>
                   <div class="modal-body">
                     <p data-bind="if: isDailySaved() && !isAutoRebuildEnabled()">
@@ -489,8 +446,8 @@
                   </div>
                   <div class="modal-footer">
                     <a href="#"
-                       class="btn btn-default"
-                       data-dismiss="modal">
+                       class="btn btn-outline-primary"
+                       data-bs-dismiss="modal">
                       {% trans "Cancel" %}
                     </a>
                     <button type="button"
@@ -513,8 +470,8 @@
       </td>
     {% if model_type == "case" %}
       <td>
-        <h4 data-bind="text: case_type" style="display: inline-block;"></h4>
-        <span data-bind="visible: is_case_type_deprecated" class="label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
+        <span class="h4" data-bind="text: case_type"></span>
+        <span data-bind="visible: is_case_type_deprecated" class="badge text-bg-warning">{% trans "deprecated" %}</span>
       </td>
     {% endif %}
 
@@ -526,19 +483,19 @@
         {{ export_type_caps }}
       </a>
       {% if has_edit_permissions %}
-        <a class="btn btn-default"
+        <a class="btn btn-outline-primary"
            data-bind="visible: showSavedFilters && isLocationSafeForUser(),
                       click: function (model) {
                         $root.filterModalExportId(model.id());
                       }"
            href="#setFeedFiltersModal"
-           data-toggle="modal">
+           data-bs-toggle="modal">
           <i class="fa fa-filter"></i>
           {% trans "Edit Filters" %}
         </a>
       {% endif %}
       {% trans "Download a Data Export Tool configuration file for this export" as det_help %}
-      <a data-bind="visible: showDetDownload, attr: {href: detSchemaUrl}" class="btn btn-default" title="{{ det_help }}">
+      <a data-bind="visible: showDetDownload, attr: {href: detSchemaUrl}" class="btn btn-outline-primary" title="{{ det_help }}">
         <i class="fa fa-download"></i>
         {% trans "DET Config" %}
       </a>
@@ -547,11 +504,11 @@
     {% if is_daily_saved_export %}
       <td>
         <!-- ko if: isLocationSafeForUser() -->
-        <a class="btn btn-default"
+        <a class="btn btn-outline-primary"
            data-bind="attr: {
-                        'data-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
+                        'data-bs-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
                       }"
-           data-toggle="modal">
+           data-bs-toggle="modal">
           <span data-bind="visible: !isAutoRebuildEnabled()">
             {% trans "Enable" %}
           </span>
@@ -568,10 +525,10 @@
         <div data-bind="if: $parent.showOwnership">
           <div data-bind="if: can_edit()">
             <div data-bind="if: isLocationSafeForUser()">
-              <a class="btn btn-default"
+              <a class="btn btn-outline-primary"
                  {% if odata_feeds_over_limit %}
                  href="#odataFeedLimitReachedModal"
-                 data-toggle="modal"
+                 data-bs-toggle="modal"
                  {% else %}
                  data-bind="attr: {href: editUrl}"
                  {% endif %}>
@@ -588,7 +545,7 @@
                   <i class="fa fa-pencil"></i>
                   <span>
                     {% blocktrans %}
-                      Copy &amp; Edit Feed
+                      Copy &amp; Edit
                     {% endblocktrans %}
                   </span>
                 </div>
@@ -597,7 +554,7 @@
           </div>
           <div data-bind="ifnot: can_edit()">
             <div data-bind="if: isLocationSafeForUser()">
-              <a class="btn btn-default disabled"
+              <a class="btn btn-outline-primary disabled"
                  data-bind="visible: $parent.myExports">
                 <div data-bind="ifnot: isOData()">
                   <i class="fa fa-pencil"></i>
@@ -612,14 +569,14 @@
                   <i class="fa fa-pencil"></i>
                   <span>
                     {% blocktrans %}
-                      Copy &amp; Edit Feed
+                      Copy &amp; Edit
                     {% endblocktrans %}
                   </span>
                 </div>
               </a>
               <a data-bind="attr: {href: editUrl},
                             visible: !$parent.myExports"
-                 class="btn btn-default">
+                 class="btn btn-outline-primary">
                 <div data-bind="ifnot: isOData()">
                   <span data-bind="visible: !isDailySaved()">
                     {% trans 'View' %}
@@ -640,10 +597,10 @@
         </div>
         <div data-bind="ifnot: $parent.showOwnership">
           <div data-bind="if: isLocationSafeForUser()">
-            <a class="btn btn-default"
+            <a class="btn btn-outline-primary"
                     {% if odata_feeds_over_limit %}
                     href="#odataFeedLimitReachedModal"
-                    data-toggle="modal"
+                    data-bs-toggle="modal"
                     {% else %}
                     data-bind="click: editExport"
                     {% endif %}>
@@ -660,7 +617,7 @@
                 <i class="fa fa-pencil"></i>
                 <span>
                   {% blocktrans %}
-                    Copy &amp; Edit Feed
+                    Copy &amp; Edit
                   {% endblocktrans %}
                 </span>
               </div>
@@ -670,8 +627,8 @@
       </td>
       <td>
         <div data-bind="if: isLocationSafeForUser()">
-          <a class="btn btn-danger"
-             data-toggle="modal"
+          <a class="btn btn-outline-danger"
+             data-bs-toggle="modal"
              data-bind="attr: {
                           href: '#delete-export-modal-' + id()
                         }">
@@ -698,7 +655,7 @@
         </div>
         <div data-bind="visible: !$parent.myExports">
           <div data-bind="visible: owner_username === 'unknown'">
-            <div class="label label-default">
+            <div class="badge text-bg-secondary">
               {% trans 'Unknown' %}
             </div>
           </div>

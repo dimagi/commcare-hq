@@ -1,4 +1,3 @@
-import json
 import socket
 from collections import defaultdict, namedtuple
 
@@ -146,8 +145,8 @@ def system_ajax(request):
                     traw['name'] = None
                 ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
-            return HttpResponse(json.dumps(ret), content_type='application/json')
-    return HttpResponse('{}', content_type='application/json')
+            return JsonResponse(ret, safe=False)
+    return JsonResponse({})
 
 
 @require_superuser_or_contractor
@@ -255,7 +254,7 @@ def _get_branches_merged_into_autostaging(cwd=None):
 def _get_submodules():
     """
     returns something like
-    ['corehq/apps/hqmedia/static/hqmedia/MediaUploader', ...]
+    ['submodules/commcare-translations', 'submodules/django-digest-src', ...]
     """
     import sh
     git = sh.git.bake(_tty_out=False)

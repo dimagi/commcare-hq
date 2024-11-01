@@ -100,11 +100,10 @@ hqDefine('hqwebapp/js/bootstrap3/inactivity', [
                 shouldShowWarning = true;
             } else {
                 shouldShowWarning = false;
-                // Close the New version modal before showing warning modal
-                if (isModalOpen($newVersionModal)) {
-                    $newVersionModal.modal('hide');
+                // Don't show if the new version modal is already showing
+                if (!isModalOpen($newVersionModal)) {
+                    $warningModal.modal('show');
                 }
-                $warningModal.modal('show');
             }
         };
 
@@ -130,7 +129,10 @@ hqDefine('hqwebapp/js/bootstrap3/inactivity', [
             } else {
                 $newVersionModal.find('#incompleteFormWarning').hide();
             }
-            if (!isModalOpen($modal) && !isModalOpen($warningModal)) {
+            if (!isModalOpen($modal)) {
+                if (isModalOpen($warningModal)) {
+                    $warningModal.modal('hide');
+                }
                 $newVersionModal.modal('show');
             }
         };
@@ -145,6 +147,7 @@ hqDefine('hqwebapp/js/bootstrap3/inactivity', [
                     selectedAppId = urlParams.appId;
                 }
             } catch (error) {
+                log("Could not parse app id out of " + window.location.hash)
                 return;
             }
             var domain = initialPageData.get('domain');
@@ -156,6 +159,10 @@ hqDefine('hqwebapp/js/bootstrap3/inactivity', [
                     domain: domain,
                 },
                 success: function (data) {
+                    log(
+                        "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
+                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version")
+                    );
                     if (!data.success) {
                         _.each($(".select2-hidden-accessible"), function (el) {
                             $(el).select2('close');
@@ -179,7 +186,6 @@ hqDefine('hqwebapp/js/bootstrap3/inactivity', [
                         $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
                         hideWarningModal(true);
                     } else {
-                        log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
                     }
                     if (

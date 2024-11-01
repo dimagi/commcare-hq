@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,19 +1,19 @@
+@@ -1,20 +1,20 @@
 -hqDefine("hqwebapp/js/bootstrap3/base_main", [
 -    'hqwebapp/js/bootstrap3/downgrade_modal',
 -    'hqwebapp/js/bootstrap3/prepaid_modal',
@@ -25,6 +25,7 @@
      'analytix/js/google',
      'analytix/js/hubspot',
      'analytix/js/kissmetrix',
+     'analytix/js/gtx',
 -    'hqwebapp/js/bootstrap3/mobile_experience_warning',
 +    'hqwebapp/js/bootstrap5/mobile_experience_warning',
  ], function () {

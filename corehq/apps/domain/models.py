@@ -448,6 +448,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     ga_opt_out = BooleanProperty(default=False)
     orphan_case_alerts_warning = BooleanProperty(default=False)
+    exports_use_elasticsearch = BooleanProperty(default=False)
 
     # For domains that have been migrated to a different environment
     redirect_url = StringProperty()
@@ -829,10 +830,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         if not self.has_custom_logo:
             return None
 
-        return (
-            self.fetch_attachment(LOGO_ATTACHMENT),
-            self.blobs[LOGO_ATTACHMENT].content_type
-        )
+        return self.fetch_attachment(LOGO_ATTACHMENT)
 
     def get_odata_feed_limit(self):
         return self.odata_feed_limit or settings.DEFAULT_ODATA_FEED_LIMIT

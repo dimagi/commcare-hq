@@ -1,4 +1,3 @@
-import json
 from contextlib import closing, contextmanager
 from io import BytesIO
 
@@ -6,9 +5,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
-    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
@@ -49,6 +48,7 @@ from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
 )
 from corehq.apps.userreports.exceptions import (
+    BadBuilderConfigError,
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     TableNotFoundWarning,
@@ -555,9 +555,9 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 self.report_export.create_export(temp, Format.HTML)
             except UserReportsError as e:
                 return self.render_json_response({'error': str(e)})
-            return HttpResponse(json.dumps({
+            return JsonResponse({
                 'report': temp.getvalue().decode('utf-8'),
-            }), content_type='application/json')
+            })
 
     @property
     @memoized
@@ -592,13 +592,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 "chart_configs": report_config.charts,
                 "aaData": cls.sanitize_page(export.get_data()),
             }
-        except UserReportsError:
-            # User posted an invalid report configuration
-            return None
         except DataSourceConfigurationNotFoundError:
-            # A temporary data source has probably expired
-            # TODO: It would be more helpful just to quietly recreate the data source config from GET params
-            return None
+            raise BadBuilderConfigError(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
 
 
 # Base class for classes that provide custom rendering for UCRs

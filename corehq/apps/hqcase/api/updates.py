@@ -158,7 +158,7 @@ class JsonCaseUpdate(BaseJsonCaseChange):
         return case_db.get_by_external_id(self.external_id)
 
 
-def handle_case_update(domain, data, user, device_id, is_creation):
+def handle_case_update(domain, data, user, device_id, is_creation, xmlns=None):
     is_bulk = isinstance(data, list)
     if is_bulk:
         updates = _get_bulk_updates(domain, data, user)
@@ -171,7 +171,7 @@ def handle_case_update(domain, data, user, device_id, is_creation):
         validate_update_permission(domain, updates, user, case_db)
 
     case_blocks = [update.get_caseblock(case_db) for update in updates]
-    xform, cases = _submit_case_blocks(case_blocks, domain, user, device_id)
+    xform, cases = _submit_case_blocks(case_blocks, domain, user, device_id, xmlns)
     if xform.is_error:
         raise SubmissionError(xform.problem, xform.form_id,)
 
@@ -289,13 +289,13 @@ class CaseIDLookerUpper:
         }
 
 
-def _submit_case_blocks(case_blocks, domain, user, device_id):
+def _submit_case_blocks(case_blocks, domain, user, device_id, xmlns):
     return submit_case_blocks(
         case_blocks=case_blocks,
         domain=domain,
         username=user.username,
         user_id=user.user_id,
-        xmlns='http://commcarehq.org/case_api',
+        xmlns=xmlns or 'http://commcarehq.org/case_api',
         device_id=device_id,
         max_wait=15
     )

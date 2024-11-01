@@ -470,7 +470,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     app.save(resp)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     if ajax:
-        return HttpResponse(json.dumps(resp))
+        return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
 
@@ -588,8 +588,7 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     source = form.source
-    response = HttpResponse(source)
-    response['Content-Type'] = "application/xml"
+    response = HttpResponse(source, content_type='application/xml')
     filename = form.default_name()
     for lc in [lang] + app.langs:
         if lc in form.name:
@@ -649,7 +648,14 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
     ]
 
 
-def get_form_view_context_and_template(request, domain, form, langs, current_lang, messages=messages):
+def get_form_view_context(
+        request,
+        domain,
+        form,
+        langs,
+        current_lang,
+        messages=messages,
+):
     # HELPME
     #
     # This method has been flagged for refactoring due to its complexity and
@@ -889,7 +895,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         })
 
     context.update({'case_config_options': case_config_options})
-    return "app_manager/form_view.html", context
+    return context
 
 
 def _get_form_link_context(app, module, form, langs):

@@ -93,8 +93,8 @@ class CaseManagementMap(BaseCaseMapReport):
     name = gettext_noop("Case Management Map")
     slug = "case_management_map"
 
-    base_template = "geospatial/map_visualization_base.html"
-    report_template_path = "map_visualization.html"
+    base_template = "geospatial/case_management_base.html"
+    report_template_path = "case_management.html"
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
@@ -109,6 +109,7 @@ class CaseManagementMap(BaseCaseMapReport):
             DataTablesColumn(_("case_id"), prop_name="type.exact"),
             DataTablesColumn(_("gps_point"), prop_name="type.exact"),
             DataTablesColumn(_("link"), prop_name="name.exact", css_class="case-name-link"),
+            DataTablesColumn(_("name"), prop_name="name.exact"),
         )
         headers.custom_sort = [[2, 'desc']]
         return headers
@@ -125,7 +126,8 @@ class CaseManagementMap(BaseCaseMapReport):
             cases.append([
                 display.case_id,
                 coordinates,
-                display.case_link
+                display.case_link,
+                display.case_name,
             ])
         return cases
 
