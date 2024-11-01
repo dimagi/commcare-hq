@@ -1420,6 +1420,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
+        'data_interfaces_handler': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': "%s/%s" % (FILEPATH, "data_interfaces.log"),
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 10,
+        }
     },
     'root': {
         'level': 'INFO',
@@ -1515,6 +1523,11 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'data_interfaces': {
+            'handlers': ['data_interfaces_handler'],
+            'level': 'INFO',
+            'propagate': False
         }
     }
 }
