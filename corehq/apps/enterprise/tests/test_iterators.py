@@ -1,14 +1,16 @@
+from unittest.mock import patch
 from django.test import SimpleTestCase, TestCase
 from datetime import datetime
 
-from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.forms import form_adapter, ElasticForm
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.apps.enterprise.iterators import (
     raise_after_max_elements,
-    domain_form_generator,
-    multi_domain_form_generator,
+    loop_over_domains,
+    loop_over_domain,
+    MobileFormSubmissionsQueryFactory
 )
 
 
@@ -29,10 +31,14 @@ class TestRaiseAfterMaxElements(SimpleTestCase):
 
 
 @es_test(requires=[form_adapter])
-class TestMultiDomainFormGenerator(TestCase):
+class TestLoopOverDomains(TestCase):
     def setUp(self):
         self.user = CommCareUser.create('test-domain', 'test-user', 'password', None, None)
         self.addCleanup(self.user.delete, None, None)
+
+        inserted_at_mapping_patcher = map_received_on_to_inserted_at()
+        inserted_at_mapping_patcher.start()
+        self.addCleanup(inserted_at_mapping_patcher.stop)
 
     def test_iterates_through_multiple_domains(self):
         forms = [
@@ -42,8 +48,9 @@ class TestMultiDomainFormGenerator(TestCase):
         ]
         form_adapter.bulk_index(forms, refresh=True)
 
-        it = multi_domain_form_generator(
+        it = loop_over_domains(
             ['domain1', 'domain2', 'domain3'],
+            MobileFormSubmissionsQueryFactory(),
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=15)
         )
@@ -60,8 +67,9 @@ class TestMultiDomainFormGenerator(TestCase):
         ]
         form_adapter.bulk_index(forms, refresh=True)
 
-        it = multi_domain_form_generator(
+        it = loop_over_domains(
             ['domain1', 'domain2'],
+            MobileFormSubmissionsQueryFactory(),
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=15),
             limit=3
@@ -88,10 +96,14 @@ class TestMultiDomainFormGenerator(TestCase):
 
 
 @es_test(requires=[form_adapter])
-class TestDomainFormGenerator(TestCase):
+class TestLoopOverDomain(TestCase):
     def setUp(self):
         self.user = CommCareUser.create('test-domain', 'test-user', 'password', None, None)
         self.addCleanup(self.user.delete, None, None)
+
+        inserted_at_mapping_patcher = map_received_on_to_inserted_at()
+        inserted_at_mapping_patcher.start()
+        self.addCleanup(inserted_at_mapping_patcher.stop)
 
     def test_iterates_through_all_forms_in_domain(self):
         form1 = self._create_form('test-domain', form_id='1', received_on=datetime(year=2024, month=7, day=2))
@@ -99,8 +111,9 @@ class TestDomainFormGenerator(TestCase):
         form3 = self._create_form('test-domain', form_id='3', received_on=datetime(year=2024, month=7, day=4))
         form_adapter.bulk_index([form1, form2, form3], refresh=True)
 
-        it = domain_form_generator(
+        it = loop_over_domain(
             'test-domain',
+            MobileFormSubmissionsQueryFactory(),
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=15),
         )
@@ -109,8 +122,9 @@ class TestDomainFormGenerator(TestCase):
         self.assertEqual(form_ids, ['3', '2', '1'])
 
     def test_handles_empty_domain(self):
-        it = domain_form_generator(
+        it = loop_over_domain(
             'empty-domain',
+            MobileFormSubmissionsQueryFactory(),
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=15),
         )
@@ -122,8 +136,9 @@ class TestDomainFormGenerator(TestCase):
         form2 = self._create_form('test-domain', form_id='2', received_on=datetime(year=2024, month=7, day=2))
         form_adapter.bulk_index([form1, form2], refresh=True)
 
-        it = domain_form_generator(
+        it = loop_over_domain(
             'test-domain',
+            MobileFormSubmissionsQueryFactory(),
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=2)
         )
@@ -136,8 +151,9 @@ class TestDomainFormGenerator(TestCase):
         form2 = self._create_form('not-test-domain', form_id='2', received_on=datetime(year=2024, month=7, day=2))
         form_adapter.bulk_index([form1, form2], refresh=True)
 
-        it = domain_form_generator(
+        it = loop_over_domain(
             'test-domain',
+            MobileFormSubmissionsQueryFactory(),
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=15),
         )
@@ -150,8 +166,9 @@ class TestDomainFormGenerator(TestCase):
         form1 = self._create_form('test-domain', form_id='1', received_on=datetime(year=2024, month=7, day=1))
         form_adapter.bulk_index([form2, form1], refresh=True)
 
-        it = domain_form_generator(
+        it = loop_over_domain(
             'test-domain',
+            MobileFormSubmissionsQueryFactory(),
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=2),
         )
@@ -164,8 +181,9 @@ class TestDomainFormGenerator(TestCase):
         form2 = self._create_form('test-domain', form_id='2', received_on=datetime(year=2024, month=7, day=1))
         form_adapter.bulk_index([form1, form2], refresh=True)
 
-        it = domain_form_generator(
+        it = loop_over_domain(
             'test-domain',
+            MobileFormSubmissionsQueryFactory(),
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=2),
             limit=1
@@ -187,5 +205,21 @@ class TestDomainFormGenerator(TestCase):
             user_id=self.user._id,
             form_data=form_data,
             form_id=form_id,
-            received_on=received_on
+            received_on=received_on,
         )
+
+
+def map_received_on_to_inserted_at():
+    '''
+    A patcher to use the date value found in a form's 'received_on' field for the 'inserted_at' value.
+    Without this patch, 'inserted_at' will be `utcnow()`, which would require knowing the order and number of times
+    that `utcnow()` would be called to manipulate dates
+    '''
+    original = ElasticForm._from_dict
+
+    def from_dict(cls, xform_dict):
+        id, result = original(cls, xform_dict)
+        result['inserted_at'] = result['received_on']
+        return (id, result)
+
+    return patch.object(ElasticForm, '_from_dict', new=from_dict)

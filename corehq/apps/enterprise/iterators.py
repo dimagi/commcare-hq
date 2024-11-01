@@ -32,14 +32,15 @@ class IterableEnterpriseFormQuery:
     def execute(self, limit=None):
         domains = self.account.get_domains()
 
-        it = multi_domain_form_generator(
+        it = loop_over_domains(
             domains,
-            self.start_date,
-            self.end_date,
-            self.last_domain,
-            self.last_time,
-            self.last_id,
-            limit=limit
+            MobileFormSubmissionsQueryFactory(),
+            limit=limit,
+            last_domain=self.last_domain,
+            start_date=self.start_date,
+            end_date=self.end_date,
+            last_time=self.last_time,
+            last_id=self.last_id,
         )
 
         xform_converter = RawFormConverter()
@@ -48,7 +49,7 @@ class IterableEnterpriseFormQuery:
     @classmethod
     def get_kwargs_from_map(cls, map):
         last_domain = map.get('domain', None)
-        last_time = map.get('received_on', None)
+        last_time = map.get('inserted_at', None)
         if last_time:
             last_time = datetime.fromisoformat(last_time).astimezone(timezone.utc)
         last_id = map.get('id', None)
@@ -62,7 +63,7 @@ class IterableEnterpriseFormQuery:
     def get_query_params(cls, fetched_object):
         return {
             'domain': fetched_object['domain'],
-            'received_on': fetched_object['submitted'],
+            'inserted_at': fetched_object['inserted_at'],
             'id': fetched_object['form_id']
         }
 
@@ -92,11 +93,13 @@ class RawFormConverter:
     def convert(self, form):
         domain = form['domain']
         submitted_date = datetime.strptime(form['received_on'][:19], '%Y-%m-%dT%H:%M:%S')
+        inserted_at = datetime.strptime(form['inserted_at'][:19], '%Y-%m-%dT%H:%M:%S')
 
         return {
             'form_id': form['form']['meta']['instanceID'],
             'form_name': form['form']['@name'] or _('Unnamed'),
             'submitted': submitted_date,
+            'inserted_at': inserted_at,
             'app_name': self.app_lookup.resolve_app_id_to_name(domain, form['app_id']) or _('App not found'),
             'username': form['form']['meta']['username'],
             'domain': domain
@@ -115,23 +118,22 @@ class AppIdToNameResolver:
         return self.domain_lookup_tables[domain].get(app_id, None)
 
 
-def multi_domain_form_generator(
-        domains, start_date, end_date, last_domain=None, last_time=None, last_id=None, limit=None):
+def loop_over_domains(domains, query_factory, limit=None, last_domain=None, **kwargs):
     domain_index = domains.index(last_domain) if last_domain else 0
 
     remaining = limit
 
-    def _get_domain_iterator(last_time=None, last_id=None):
+    def _get_domain_iterator(**kwargs):
         if domain_index >= len(domains):
             return None
         domain = domains[domain_index]
-        return domain_form_generator(domain, start_date, end_date, last_time, last_id, limit=remaining)
+        return loop_over_domain(domain, query_factory, limit=remaining, **kwargs)
 
-    current_iterator = _get_domain_iterator(last_time, last_id)
+    current_iterator = _get_domain_iterator(**kwargs)
 
     while current_iterator:
-        for form in current_iterator:
-            yield form
+        for hit in current_iterator:
+            yield hit
             if remaining:
                 remaining -= 1
                 if remaining == 0:
@@ -139,21 +141,21 @@ def multi_domain_form_generator(
         domain_index += 1
         if domain_index >= len(domains):
             return
-        current_iterator = _get_domain_iterator()
+        next_args = query_factory.get_next_query_args(kwargs, last_hit=None)
+        current_iterator = _get_domain_iterator(**next_args)
 
 
-def domain_form_generator(domain, start_date, end_date, last_time=None, last_id=None, limit=None):
-    if not last_time:
-        last_time = datetime.now(timezone.utc)
-
+def loop_over_domain(domain, query_factory, limit=None, **kwargs):
     remaining = limit
 
+    next_query_args = kwargs
+
     while True:
-        query = create_domain_forms_query(domain, start_date, end_date, last_time, last_id, limit=remaining)
+        query = query_factory.get_query(domain, limit=limit, **next_query_args)
         results = query.run()
-        for form in results.hits:
-            last_form_fetched = form
-            yield last_form_fetched
+        for hit in results.hits:
+            last_hit = hit
+            yield last_hit
 
         num_fetched = len(results.hits)
 
@@ -162,36 +164,64 @@ def domain_form_generator(domain, start_date, end_date, last_time=None, last_id=
         else:
             if remaining:
                 remaining -= num_fetched
-                assert remaining > 0
-            last_time = last_form_fetched['received_on']
-            last_id = last_form_fetched['_id']
+
+            next_query_args = query_factory.get_next_query_args(next_query_args, last_hit)
 
 
-def create_domain_forms_query(domain, start_date, end_date, last_time, last_id, limit=None):
-    query = (
-        FormES()
-        .domain(domain)
-        .user_type('mobile')
-        .submitted(gte=start_date, lte=end_date)
-    )
+class ReportQueryFactoryInterface:
+    '''
+    A generic interface for any report queries.
+    '''
+    def get_query(self, **kwargs):
+        '''
+        Returns an ElasticSearch query, configured by **kwargs
+        '''
+        raise NotImplementedError()
 
-    if limit:
-        query = query.size(limit)
+    def get_next_query_args(self, previous_args, last_hit):
+        '''
+        Modifies the `previous_args` dictionary with information from `last_hit` to create
+        a new set of kwargs suitable to pass back to `get_query` to retrieve results beyond `last_hit`
+        '''
+        raise NotImplementedError()
 
-    query.es_query['sort'] = [
-        {'inserted_at': {'order': 'desc'}},
-        {'doc_id': 'asc'}
-    ]
 
-    if last_id:
-        query = query.filter(filters.OR(
-            filters.AND(
-                filters.term('inserted_at', es_format_datetime(last_time)),
-                filters.range_filter('doc_id', gt=last_id)
-            ),
-            filters.date_range('inserted_at', lt=last_time)
-        ))
-    else:
-        query = query.inserted(lte=last_time)
+class MobileFormSubmissionsQueryFactory(ReportQueryFactoryInterface):
+    def get_query(self, domain, start_date, end_date, last_time=None, last_id=None, limit=None):
+        query = (
+            FormES()
+            .domain(domain)
+            .user_type('mobile')
+            .submitted(gte=start_date, lte=end_date)
+        )
 
-    return query
+        if limit:
+            query = query.size(limit)
+
+        query.es_query['sort'] = [
+            {'inserted_at': {'order': 'desc'}},
+            {'doc_id': 'asc'}
+        ]
+
+        if last_time and last_id:
+            query = query.filter(filters.OR(
+                filters.AND(
+                    filters.term('inserted_at', es_format_datetime(last_time)),
+                    filters.range_filter('doc_id', gt=last_id)
+                ),
+                filters.date_range('inserted_at', lt=last_time)
+            ))
+
+        return query
+
+    def get_next_query_args(self, previous_args, last_hit):
+        if last_hit:
+            return previous_args | {
+                'last_time': last_hit['inserted_at'],
+                'last_id': last_hit['doc_id']
+            }
+        else:
+            new_args = previous_args.copy()
+            new_args.pop('last_time', None)
+            new_args.pop('last_id', None)
+            return new_args
