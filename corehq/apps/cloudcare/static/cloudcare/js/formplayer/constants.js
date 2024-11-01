@@ -37,6 +37,7 @@ hqDefine("cloudcare/js/formplayer/constants", [], function () {
             FIELD_CHANGE: "field_change",
             PAGINATION: "pagination",
             CLICKABLE_ICON: "clickable_icon",
+            USER_CLICK_SUBMIT: "user_click_submit",
         },
 
         //Custom Properties
