@@ -198,8 +198,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
                 var receiveTopic = match[1];
                 var receiveTopicField = match[2];
                 if (receiveTopicField === constants.RECEIVER_FIELD_INDEXED) {
-                    var ixMatch = question.ix().match(/_(\d+)/g);
-                    receiveTopicField = ixMatch ? ixMatch.pop().replace('_', '') : '0';
+                    receiveTopicField = constants.BROADCAST_FIELD_FILENAME;
                 }
                 question.broadcastPubSub.subscribe(function (message) {
                     if (message === constants.NO_ANSWER) {
@@ -993,8 +992,8 @@ hqDefine("cloudcare/js/form_entry/entries", [
             self.question.onchange();
 
             if (self.broadcastTopics.length) {
-                // allow support for broadcasting multiple filenames
-                var broadcastObj = Object.fromEntries([self.file()].map((file, i) => [i, file.name]));
+                var broadcastObj = {};
+                broadcastObj[constants.BROADCAST_FIELD_FILENAME] = self.file().name;
                 self.question.formplayerMediaRequest.then(function () {
                     self.broadcastMessages(self.question, broadcastObj);
                 });
