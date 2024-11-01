@@ -10,8 +10,7 @@ from corehq.apps.fixtures.views import (
     fixture_metadata,
     fixture_upload_job_poll,
     update_tables,
-    upload_fixture_api,
-    CSQLFixtureExpressionView
+    upload_fixture_api
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
 
@@ -26,8 +25,6 @@ urlpatterns = [
     url(r'^edit_lookup_tables/upload/$', waf_allow('XSS_BODY')(UploadItemLists.as_view()), name='upload_fixtures'),
     url(r'^edit_lookup_tables/update-tables/(?P<data_type_id>[\w-]+)?$', update_tables,
         name='update_lookup_tables'),
-    url(r'^csql_fixture/csql_fixture_configuration/$', CSQLFixtureExpressionView.as_view(),
-        name=CSQLFixtureExpressionView.urlname),
 
     # upload status
     url(r'^upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',

@@ -237,6 +237,7 @@ case_search
  0012_casesearchconfig_sync_cases_on_form_entry
  0013_casesearchconfig_fuzzy_prefix_length
  0014_casesearchconfig_index_name
+ 0015_csqlfixtureexpression_csqlfixtureexpressionlog
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -482,7 +483,6 @@ fixtures
  0008_sqllookuptables
  0009_remove_lookuptablerowowner_couch_id
  0010_lookuptable_is_synced
- 0011_csqlfixtureexpression_csqlfixtureexpressionlog
 form_processor
  0001_initial
  0002_xformattachmentsql

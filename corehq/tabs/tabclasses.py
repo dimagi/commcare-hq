@@ -45,7 +45,7 @@ from corehq.apps.events.views import (
     AttendeesListView,
     EventsView,
 )
-from corehq.apps.fixtures.views import CSQLFixtureExpressionView
+from corehq.apps.case_search.views import CSQLFixtureExpressionView
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
@@ -625,7 +625,7 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
-        if (toggles.MODULE_BADGES.enabled(self.domain) and self.couch_user.can_edit_fixtures()):
+        if (toggles.MODULE_BADGES.enabled(self.domain) and self.couch_user.can_edit_data()):
             items.append([_('CSQL Fixtures'), [{
                 'title': _(CSQLFixtureExpressionView.page_title),
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
