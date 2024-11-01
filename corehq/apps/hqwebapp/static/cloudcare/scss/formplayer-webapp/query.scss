@@ -5,17 +5,11 @@
   max-width: none;  // clear any max-widths set by bootstrap, such as in .container
 }
 
-.sidebar-push {
-  @include media-breakpoint-up(lg) {
-    margin-left: 310px;
-  }
-}
-
-#sidebar-region {
+// Applies only to split-screen case search
+#sidebar-region #query-list-contents {
   background: transparent;
   @include media-breakpoint-up(lg) {
     width: 300px;
-    position: absolute;
   }
   @include media-breakpoint-down(lg) {
     max-width: 600px;

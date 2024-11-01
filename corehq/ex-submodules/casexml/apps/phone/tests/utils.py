@@ -64,7 +64,15 @@ def deprecated_generate_restore_payload(project, user, restore_id="", version=V1
     ).get_payload().as_string()
 
 
-def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=None, device_id=''):
+def call_fixture_generator(
+    gen,
+    restore_user,
+    project=None,
+    last_sync=None,
+    app=None,
+    device_id='',
+    current_sync_log=None,
+):
     """
     Convenience function for use in unit tests
 
@@ -84,4 +92,6 @@ def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=
     if last_sync:
         params.sync_log_id = last_sync._id
         restore_state._last_sync_log = last_sync
+    if current_sync_log:
+        restore_state.current_sync_log = current_sync_log
     return gen(restore_state)

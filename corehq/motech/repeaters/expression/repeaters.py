@@ -1,9 +1,9 @@
 import logging
-from json import JSONDecodeError
 
 from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
+from requests import JSONDecodeError as RequestsJSONDecodeError
 
 from dimagi.utils.logging import notify_exception
 
@@ -113,9 +113,10 @@ class BaseExpressionRepeater(Repeater):
                 message = self._process_response_as_case_update(response, repeat_record)
             except Exception as e:
                 notify_exception(None, "Error processing response from Repeater request", e)
-            else:
-                attempt.message += f"\n\n{message}"
-                attempt.save()
+                message = "Error processing response"
+
+            attempt.message += f"\n\n{message}"
+            attempt.save()
 
     def _process_response_as_case_update(self, response, repeat_record):
         domain = repeat_record.domain
@@ -277,7 +278,7 @@ class ArcGISFormExpressionRepeater(FormExpressionRepeater):
 def get_evaluation_context(domain, repeat_record, payload_doc, response):
     try:
         body = response.json()
-    except JSONDecodeError:
+    except RequestsJSONDecodeError:
         body = response.text
     return EvaluationContext({
         'domain': domain,

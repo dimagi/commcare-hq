@@ -30,6 +30,10 @@ class TestConfirmDomainView(TestCase):
         self.client.force_login(self.user.get_django_user())
         self.client.defaults.update({'plan': DefaultProductPlan.get_default_plan_version()})
 
+    def tearDown(self):
+        SelfSignupWorkflow.get_in_progress_for_domain.clear(SelfSignupWorkflow, self.domain.name)
+        super().tearDown()
+
     def create_registration_request(self, guid):
         reg_request = RegistrationRequest.objects.create(
             request_time=datetime.now(),

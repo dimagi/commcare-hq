@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 
 import commcare_translations
 
+from corehq import privileges
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
 from corehq.apps.app_manager.models import CustomAssertion
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -10,6 +11,7 @@ from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
+from corehq.util.test_utils import privilege_enabled
 
 
 @patch_get_xform_resource_overrides()
@@ -23,6 +25,7 @@ class DefaultSuiteAssertionsTest(SimpleTestCase, SuiteMixin):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
 
+@privilege_enabled(privileges.APP_DEPENDENCIES)
 @patch_get_xform_resource_overrides()
 class CustomSuiteAssertionsTest(SimpleTestCase, TestXmlMixin):
     _instance_declaration = """<partial><instance id="casedb" src="jr://instance/casedb"/></partial>"""
