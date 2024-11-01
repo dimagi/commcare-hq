@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
-{% requirejs_main_b5 "integration/js/dialer/domain_dialer_main" %}
+{% js_entry "integration/js/dialer/domain_dialer_main" %}
 
 {% block stylesheets %}
   {{ block.super }}

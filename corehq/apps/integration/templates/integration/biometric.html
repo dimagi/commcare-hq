@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main_b5 'integration/js/biometric' %}
+{% js_entry 'integration/js/biometric' %}
 
 {% block page_content %}
   {% initial_page_data 'simprintsFormData' simprints_form.initial_data %}

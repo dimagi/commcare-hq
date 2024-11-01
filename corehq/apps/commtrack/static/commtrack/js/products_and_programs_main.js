@@ -7,6 +7,7 @@ hqDefine('commtrack/js/products_and_programs_main', [
     'es6!hqwebapp/js/bootstrap5_loader',
     'commtrack/js/base_list_view_model',
     'hqwebapp/js/bootstrap5/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
+    'commcarehq',
 ], function (
     $,
     ko,
