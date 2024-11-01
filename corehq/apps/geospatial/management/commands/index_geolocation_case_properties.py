@@ -12,7 +12,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.log import with_progress_bar
 
 DEFAULT_QUERY_LIMIT = 10_000
-DEFAULT_CHUNK_SIZE = 100
+DEFAULT_CHUNK_SIZE = 200
 
 
 class Command(BaseCommand):

@@ -72,4 +72,4 @@ def index_es_docs_with_location_props(domain):
         celery_task_tracker.mark_completed()
     finally:
         celery_task_tracker.mark_end_time()
-        manager.index_refresh(case_search_adapter.index_name)
+        # manager.index_refresh(case_search_adapter.index_name)
