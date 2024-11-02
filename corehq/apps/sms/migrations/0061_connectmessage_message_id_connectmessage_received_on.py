@@ -13,8 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="connectmessage",
             name="message_id",
-            field=models.UUIDField(null=True),
-            default=uuid.uuid4
+            field=models.UUIDField(default=uuid.uuid4),
         ),
         migrations.AddField(
             model_name="connectmessage",
