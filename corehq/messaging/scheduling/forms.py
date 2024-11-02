@@ -1347,12 +1347,12 @@ class ScheduleForm(Form):
         required=False,
     )
 
-    use_user_case_for_filter_choices = [("false", "User Properties"), ("true", "User Case Properties")]
+    use_user_case_for_filter_choices = [(NO, "User Properties"), (YES, "User Case Properties")]
 
     use_user_case_for_filter = ChoiceField(
         label=gettext_lazy("Filter on"),
         required=False,
-        initial='false',
+        initial=NO,
         choices=use_user_case_for_filter_choices,
         widget=SelectToggle(
             choices=use_user_case_for_filter_choices,
@@ -1594,8 +1594,7 @@ class ScheduleForm(Form):
                     result['user_data_property_value'] = values[0]
                 else:
                     result['user_data_property_json'] = json.dumps(schedule.user_data_filter, indent=4)
-
-            result['use_user_case_for_filter'] = schedule.use_user_case_for_filter
+                result['use_user_case_for_filter'] = self.YES if schedule.use_user_case_for_filter else self.NO
 
             result['use_utc_as_default_timezone'] = schedule.use_utc_as_default_timezone
             if isinstance(schedule, AlertSchedule):
@@ -2523,7 +2522,7 @@ class ScheduleForm(Form):
         return validate_int(self.cleaned_data.get('occurrences'), 2)
 
     def clean_use_user_case_for_filter(self):
-        return self.cleaned_data.get('use_user_case_for_filter') == 'true'
+        return self.cleaned_data.get('use_user_case_for_filter') == self.YES
 
     def clean_user_data_property_name(self):
         if self.cleaned_data.get('use_user_data_filter') != self.YES:
