@@ -39,6 +39,7 @@ from memoized import memoized
 
 from dimagi.utils.django.fields import TrimmedCharField
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_released_app,
@@ -2543,19 +2544,7 @@ class ScheduleForm(Form):
         if not value:
             raise ValidationError(_("This field is required."))
 
-        if use_user_data_filter == self.JSON:
-            err = _("Invalid JSON value. Expected a list of strings.")
-            try:
-                value = json.loads(value)
-            except Exception:
-                raise ValidationError(err)
-            if (not isinstance(value, list) or not value
-                    or any(not isinstance(v, str) for v in value)):
-                raise ValidationError(err)
-        else:
-            value = [value]
-
-        return value
+        return [value]
 
     def clean_user_data_property_json(self):
         use_user_data_filter = self.cleaned_data.get('use_user_data_filter')
@@ -2566,12 +2555,24 @@ class ScheduleForm(Form):
         if not value:
             raise ValidationError(_("This field is required."))
 
+        def json_error():
+            return ValidationError(_("Invalid JSON value: Needs to be and object with valid "
+                                     "properties as keys and strings as values"))
         try:
             value = json.loads(value)
         except Exception:
-            raise ValidationError(_("Invalid JSON value. Expected a list of strings."))
-        # TODO: check that keys are strings and that they are user case fields
-        # Check that values are lists of strings
+            raise json_error()
+        if not isinstance(value, dict):
+            raise json_error()
+
+        if self.cleaned_data.get("use_user_case_for_filter"):
+            from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
+            user_case_properties = (
+                get_data_dict_props_by_case_type(self.domain, exclude_deprecated=True))[USERCASE_TYPE]
+            if any(property_name not in user_case_properties for property_name in value.keys()):
+                raise json_error()
+        if any(not isinstance(vs, list) and any(not isinstance(v, str) for v in vs) for vs in value.values()):
+            raise json_error()
 
         return value
 
