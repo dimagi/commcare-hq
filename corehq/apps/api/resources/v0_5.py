@@ -1426,5 +1426,5 @@ class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSp
         # We're overriding the default "list" view to redirect to "detail" view since
         # we already know the user through OAuth.
         return [
-            url(r"^(?P<resource_name>%s)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail')),
+            url(r"^$", self.wrap_view('dispatch_detail'), name='api_dispatch_detail'),
         ]
