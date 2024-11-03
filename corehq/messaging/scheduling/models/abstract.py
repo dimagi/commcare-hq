@@ -92,6 +92,10 @@ class Schedule(models.Model):
     # type is android and whose nickname is either bob or jim.
     user_data_filter = jsonfield.JSONField(default=dict)
 
+    #   If set to True, use the user case properties instead of the user properties
+    # to filter recipients
+    use_user_case_for_filter = models.BooleanField(default=False)
+
     #   Only applies when this Schedule is used with CaseAlertScheduleInstances or
     # CaseTimedScheduleInstances.
     #   If null, this is ignored. Otherwise, it's the name of a case property which
