@@ -55,9 +55,7 @@ function setup {
             -dname 'CN=Foo, OU=Bar, O=Bizzle, L=Bazzle, ST=Bingle, C=US'
     fi
 
-    if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
-        yarn install --progress=false --frozen-lockfile
-    fi
+    yarn install --progress=false --frozen-lockfile
 }
 
 function python_preheat {
@@ -132,15 +130,16 @@ function run_tests {
 
         send_timing_metric_to_datadog "setup" $delta
 
+        logmsg INFO "Building Webpack"
+        chown -R cchq:cchq ./webpack
+        su cchq -c "yarn build"
+
         log_group_begin "Django test suite: $TEST"
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         log_group_end  # only log group end on success (notice: `set -e`)
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
-            logmsg INFO "Building Webpack"
-            chown -R cchq:cchq ./webpack
-            su cchq -c "yarn build"
             su cchq -c scripts/test-prod-entrypoints.sh
             scripts/test-make-requirements.sh
             scripts/test-serializer-pickle-files.sh

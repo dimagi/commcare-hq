@@ -6,6 +6,7 @@ hqDefine('dhis2/js/dataset_map_json', [
     'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/base_ace',
     'dhis2/js/json_syntax_parse',
+    'commcarehq',
 ], function (
     $,
     _,
