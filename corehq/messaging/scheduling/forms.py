@@ -1356,6 +1356,7 @@ class ScheduleForm(Form):
         choices=use_user_case_for_filter_choices,
         widget=SelectToggle(
             choices=use_user_case_for_filter_choices,
+            apply_bindings=True
         ),
     )
 
