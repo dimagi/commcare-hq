@@ -10,6 +10,7 @@ from corehq.messaging.templating import (
     MessagingTemplateRenderer,
     NestedDictTemplateParam,
 )
+from corehq.toggles import MODULE_BADGES
 
 from .models import CSQLFixtureExpression
 
@@ -58,6 +59,8 @@ class CaseSearchFixtureProvider(FixtureProvider):
     id = 'case-search-fixture'
 
     def __call__(self, restore_state):
+        if not MODULE_BADGES.enabled(restore_state.domain):
+            return
         indicators = _get_indicators(restore_state.domain)
         if indicators:
             nodes = _get_indicator_nodes(restore_state.domain, restore_state.restore_user, indicators)

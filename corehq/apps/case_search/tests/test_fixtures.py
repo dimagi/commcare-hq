@@ -13,10 +13,12 @@ from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import case_search_es_setup, es_test
 from corehq.apps.users.models import WebUser
 from corehq.tests.util.xml import assert_xml_equal, assert_xml_partial_equal
+from corehq.util.test_utils import flag_enabled
 
 from ..fixtures import _get_template_renderer, case_search_fixture_generator
 
 
+@flag_enabled('MODULE_BADGES')
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestCaseSearchFixtures(TestCase):
     domain_name = 'test-case-search-fixtures'
