@@ -149,6 +149,10 @@ def build_filter_from_xpath(xpath, *, domain=None, context=None):
             raise CaseFilterError(error_message.format(bad_part, ", ".join(ALL_OPERATORS)), bad_part)
         raise CaseFilterError(_("Malformed search query"), None)
     except RuntimeError as e:
+        # eulxml doesn't appear to clean up after this type of failure
+        # properly, so throw in an extra 'parse' to reset it
+        parse_xpath("thisisdumb")
+
         # eulxml passes us string errors from YACC
         lex_token_error = re.search(r"LexToken\((\w+),\w?'(.+)'", str(e))
         if lex_token_error:
