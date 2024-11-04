@@ -976,8 +976,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                                     marker.setIcon(selectedLocationIcon);
 
                                     const offset = getScrollTopOffset(this.smallScreenEnabled, addressMap.isFullscreen());
-                                    $([document.documentElement, document.body]).animate({
-                                        scrollTop: $(`#${rowId}`).offset().top - offset,
+                                    const scrollContainer = $('#content-plus-version-info-container');
+                                    scrollContainer.animate({
+                                        scrollTop: scrollContainer.scrollTop() + $(`#${rowId}`).offset().top - offset,
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
