@@ -2467,17 +2467,6 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     """
 )
 
-GOOGLE_SHEETS_INTEGRATION = StaticToggle(
-    'google-sheet-integration',
-    'Unlock the Google Sheets view in Exports',
-    TAG_SAAS_CONDITIONAL,
-    namespaces=[NAMESPACE_USER],
-    description="""
-    Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
-    on the Exports page.
-    """
-)
-
 APP_DEPENDENCIES = StaticToggle(
     slug='app-dependencies',
     label='Set Android app dependencies that must be installed before using a CommCare app',
