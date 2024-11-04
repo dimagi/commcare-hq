@@ -447,8 +447,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 arrow.removeClass("fa-angle-double-up");
                 arrow.addClass("fa-angle-double-down");
                 tileContent.addClass("collapsed-tile-content");
+                const scrollContainer = $('#content-plus-version-info-container');
                 const offset = getScrollTopOffset(this.smallScreenEnabled);
-                $(window).scrollTop($(e.currentTarget).parent().offset().top - offset);
+                $(scrollContainer).scrollTop($(e.currentTarget).parent().offset().top - offset);
             }
 
         },
@@ -751,7 +752,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         scrollToBottom: function () {
-            $([document.documentElement, document.body]).animate({
+            const scrollContainer = $('#content-plus-version-info-container');
+            scrollContainer.animate({
                 scrollTop: $('.container .pagination-container').offset().top,
             }, 500);
         },
@@ -1015,8 +1017,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         shouldShowScrollButton: function () {
             const $pagination = $('.container .pagination-container');
+            const scrollContainer = $('#content-plus-version-info-container');
             const paginationOffscreen = $pagination[0]
-                ? $pagination.offset().top - $(window).scrollTop() > window.innerHeight : false;
+                ? $pagination.offset().top - scrollContainer.scrollTop() > scrollContainer.innerHeight : false;
             return paginationOffscreen;
         },
 
