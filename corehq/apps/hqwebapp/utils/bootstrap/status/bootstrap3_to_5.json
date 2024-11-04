@@ -95,7 +95,10 @@
     "is_complete": true
   },
   "notifications": {
-    "in_progress": true
+    "in_progress": true,
+    "templates": [
+      "manage_notifications.html"
+    ]
   },
   "reminders": {
     "is_complete": true
