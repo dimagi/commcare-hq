@@ -5,7 +5,6 @@ hqDefine('openmrs/js/openmrs_importers', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/base_ace',
-    'commcarehq',
 ], function (
     $,
     _,

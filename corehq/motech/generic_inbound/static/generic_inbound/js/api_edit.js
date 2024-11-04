@@ -4,7 +4,6 @@ hqDefine('generic_inbound/js/api_edit', [
     'hqwebapp/js/initial_page_data',
     'generic_inbound/js/manage_links',
     'generic_inbound/js/copy_data',
-    'commcarehq',
 ], function (_, ko, initialPageData, manageLinks) {
 
     const VALIDATION_DEFAULTS = {

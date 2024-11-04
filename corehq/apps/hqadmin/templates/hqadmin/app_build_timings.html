@@ -8,7 +8,7 @@
   <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
 {% endblock stylesheets %}
 
-{% js_entry_b3 'hqadmin/js/app_build_timings' %}
+{% requirejs_main 'hqadmin/js/app_build_timings' %}
 
 {% block content %}
   <div class="container-fluid">
