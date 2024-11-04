@@ -8,10 +8,12 @@ hqDefine('locations/js/location_drilldown', [
     _
 ) {
     function apiGetChildren(locUuid, callback, locUrl) {
+        // Both B3 hide and B5 d-none are used to avoid needing to split this template.
+        // When USE_BOOTSTRAP5 is removed, form-control can be removed.
         var params = (locUuid ? {parent_id: locUuid} : {});
-        $('#loc_ajax').show().removeClass('hide');
+        $('#loc_ajax').removeClass('hide d-none');
         $.getJSON(locUrl, params, function (allData) {
-            $('#loc_ajax').hide().addClass('hide');
+            $('#loc_ajax').addClass('hide d-none');
             callback(allData.objects);
         });
     }

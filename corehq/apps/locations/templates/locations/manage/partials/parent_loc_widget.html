@@ -12,6 +12,10 @@
                        value: selected_child">
     </select>
   </div>
-  <i id="loc_ajax" class="fa fa-spinner fa-spin hide"></i>
+  <!--
+      Both B3 hide and B5 d-none are used to avoid needing to split this template.
+      When USE_BOOTSTRAP5 is removed, form-control can be removed.
+  -->
+  <i id="loc_ajax" class="fa fa-spinner fa-spin hide d-none"></i>
   <input name="{{ name }}" type="hidden" data-bind="value: selected_locid" />
 </div>
