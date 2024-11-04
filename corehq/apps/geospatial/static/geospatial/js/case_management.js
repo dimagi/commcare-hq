@@ -260,7 +260,7 @@ hqDefine("geospatial/js/case_management", [
     function initPolygonFilters() {
         // Assumes `map` var is initialized
         const $mapControlDiv = $("#polygon-filters");
-        polygonFilterModel = new models.PolygonFilter(mapModel, false, true);
+        polygonFilterModel = new models.PolygonFilter(mapModel, false, true, false);
         polygonFilterModel.loadPolygons(initialPageData.get('saved_polygons'));
         if ($mapControlDiv.length) {
             ko.cleanNode($mapControlDiv[0]);

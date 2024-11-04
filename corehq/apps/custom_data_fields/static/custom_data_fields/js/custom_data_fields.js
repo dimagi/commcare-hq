@@ -179,7 +179,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
     function CustomDataFieldsModel(options) {
         assertProperties.assertRequired(options,
-            [ 'custom_fields', 'custom_fields_profiles', 'can_edit_linked_data', 'required_for_options']);
+            [ 'custom_fields', 'custom_fields_profiles', 'can_edit_linked_data', 'required_for_options', 'profile_required_for_options']);
 
         var self = {};
         self.data_fields = ko.observableArray();
@@ -255,6 +255,22 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 return profile.serialize();
             });
         };
+        self.profileRequiredForOptions = options.profile_required_for_options || [];
+        let initialRequiredFor;
+        // Check if there is already a user type set as requiring a profile selection and
+        // match to options from UserFieldsView
+        if (options.current_profile_required_for_user_type) {
+            const currentProfileRequiredForList = options.current_profile_required_for_user_type;
+            let profileReqiredForMatch = self.profileRequiredForOptions.find(option =>
+                JSON.stringify(option.value) === JSON.stringify(currentProfileRequiredForList || [])
+            );
+            initialRequiredFor = _.has(profileReqiredForMatch, 'value') ? profileReqiredForMatch.value :
+            (self.profileRequiredForOptions.find(function (option) {return option && option.isDefault;}) || {}).value || [];
+        } else {
+            // If no user type already requires a profile selection set to default
+            initialRequiredFor = (self.profileRequiredForOptions.find(function (option) {return option && option.isDefault;}) || {}).value || [];
+        }
+        self.profile_required_for = ko.observableArray(initialRequiredFor);
 
         self.submitFields = function (fieldsForm) {
             var customDataFieldsForm = $("<form>")
@@ -287,6 +303,11 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 .attr('value', $('#custom-fields-form .nav-tabs li:last').hasClass('active'))
                 .appendTo(customDataFieldsForm);
 
+            $('<input type="hidden">')
+                .attr('name', 'require_profile')
+                .attr('value', self.profile_required_for())
+                .appendTo(customDataFieldsForm);
+
             customDataFieldsForm.appendTo("body");
             customDataFieldsForm.submit();
         };
@@ -317,6 +338,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             custom_fields_profiles: initialPageData.get('custom_fields_profiles'),
             can_edit_linked_data: initialPageData.get('can_edit_linked_data'),
             required_for_options: initialPageData.get('required_for_options'),
+            profile_required_for_options: initialPageData.get('profile_required_for_options'),
+            current_profile_required_for_user_type: initialPageData.get('profile_required_for_user_type')
         });
         customDataFieldsModel.data_fields.subscribe(function () {
             $("#save-custom-fields").prop("disabled", false);

@@ -726,3 +726,24 @@ class TestUserDomainsResource(TestCase):
         bundle.request.user = self.user
         resp = UserDomainsResource().obj_get_list(bundle)
         self.assertEqual(0, len(resp))
+
+
+class TestCommCareAnalyticsUserResource(APIResourceTest):
+    resource = v0_5.CommCareAnalyticsUserResource
+    api_name = 'v0.5'
+
+    def test_flag_not_enabled(self):
+        endpoint = self.single_endpoint(self.username)
+        response = self._assert_auth_get_resource(endpoint)
+        self.assertEqual(response.status_code, 404)
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_user_roles_returned(self):
+        endpoint = self.single_endpoint(self.username)
+        response = self._assert_auth_get_resource(endpoint)
+        expected_response_obj = {
+            'permissions': {'can_edit': True, 'can_view': True},
+            'resource_uri': '',
+            'roles': ['sql_lab', 'dataset_editor']
+        }
+        self.assertEqual(response.json(), expected_response_obj)
