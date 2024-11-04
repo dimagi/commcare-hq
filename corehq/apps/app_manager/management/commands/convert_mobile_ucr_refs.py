@@ -3,11 +3,13 @@ import re
 import uuid
 from copy import deepcopy
 
-from django.core.management.base import BaseCommand
+from django.core.management import BaseCommand, CommandError
 
+from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_2
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import AppValidationError
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
+from corehq.toggles import MOBILE_UCR
 
 # Mobile UCR report references:
 # V1: `instance('reports')/reports/report[@id='xxxxxxx']`
@@ -31,8 +33,20 @@ class Command(BaseCommand):
 
     def handle(self, domain, app_id, **options):
         # Based on ApplicationBase.make_build()
+        if not MOBILE_UCR.enabled(domain):
+            raise CommandError(
+                'MOBILE_UCR is not enabled for "%s"' % domain,
+                returncode=1
+            )
+
         v1_app = get_app(domain, app_id)
         assert v1_app.copy_of is None
+
+        if v1_app.mobile_ucr_restore_version != MOBILE_UCR_VERSION_2:
+            raise CommandError(
+                'The Mobile UCR version of "%s" must be set to 2' % v1_app.name,
+                returncode=2
+            )
 
         app_dict = _copy_app_dict(v1_app.to_json())
         app_dict = _replace_v1_refs(app_dict)
