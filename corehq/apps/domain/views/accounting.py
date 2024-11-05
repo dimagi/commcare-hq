@@ -1090,7 +1090,7 @@ class PlanViewBase(DomainAccountingSettings):
 
 
 class SelectPlanView(PlanViewBase):
-    template_name = 'domain/select_plan.html'
+    template_name = 'domain/bootstrap3/select_plan.html'
     urlname = 'domain_select_plan'
     step_title = gettext_lazy("Select Plan")
 
