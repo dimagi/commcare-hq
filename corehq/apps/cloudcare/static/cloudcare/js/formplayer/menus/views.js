@@ -447,8 +447,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 arrow.removeClass("fa-angle-double-up");
                 arrow.addClass("fa-angle-double-down");
                 tileContent.addClass("collapsed-tile-content");
+                const scrollContainer = $('#content-plus-version-info-container');
                 const offset = getScrollTopOffset(this.smallScreenEnabled);
-                $(window).scrollTop($(e.currentTarget).parent().offset().top - offset);
+                $(scrollContainer).animate({
+                    scrollTop: scrollContainer.scrollTop() + $(e.currentTarget).parent().offset().top - offset
+                });
             }
 
         },
