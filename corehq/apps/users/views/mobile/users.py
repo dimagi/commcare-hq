@@ -911,6 +911,8 @@ def _modify_user_status(request, domain, user_id, is_active):
             'error': _(str(e)),
         })
     user.is_active = is_active
+    if not is_active:
+        user.set_user_profile(domain, '')
     user.save(spawn_task=True)
     log_user_change(by_domain=request.domain, for_domain=user.domain,
                     couch_user=user, changed_by_user=request.couch_user,
