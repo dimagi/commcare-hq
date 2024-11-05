@@ -202,7 +202,7 @@ class DomainAccountingSettings(BaseProjectSettingsView):
 
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
-    template_name = 'domain/current_subscription.html'
+    template_name = 'domain/bootstrap3/current_subscription.html'
     page_title = gettext_lazy("Current Subscription")
 
     @property
