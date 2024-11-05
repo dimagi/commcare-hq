@@ -96,7 +96,7 @@ class ManageReleasesByLocation(BaseProjectSettingsView):
 @method_decorator([toggles.RELEASE_BUILDS_PER_PROFILE.required_decorator(),
                    require_can_edit_apps], name='dispatch')
 class ManageReleasesByAppProfile(BaseProjectSettingsView):
-    template_name = 'domain/manage_releases_by_app_profile.html'
+    template_name = 'domain/bootstrap3/manage_releases_by_app_profile.html'
     urlname = 'manage_releases_by_app_profile'
     page_title = gettext_lazy("Manage Releases By App Profile")
 
