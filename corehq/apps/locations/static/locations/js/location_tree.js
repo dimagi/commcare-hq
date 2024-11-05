@@ -2,26 +2,24 @@ hqDefine('locations/js/location_tree', [
     'jquery',
     'knockout',
     'underscore',
-    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap5/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'analytix/js/google',
     'locations/js/search',
 ], function (
     $,
     ko,
     _,
-    bootstrap,
     initialPageData,
     alertUser,
     googleAnalytics,
     locationUtils
 ) {
-    function apiGetChildren(locUuid, showInactive, callback) {
-        var params = (locUuid ? {
-            parent_id: locUuid,
+    function api_get_children(loc_uuid, show_inactive, callback) {
+        var params = (loc_uuid ? {
+            parent_id: loc_uuid,
         } : {});
-        params.include_inactive = showInactive;
+        params.include_inactive = show_inactive;
         $.getJSON(initialPageData.get('api_root'), params, function (allData) {
             callback(allData.objects);
         });
@@ -126,10 +124,10 @@ hqDefine('locations/js/location_tree', [
                 level = locationModel(data, treeModel, lineage.length - idx - 1);
                 child = Array.of(Object.assign({}, data));
             });
-            var rootChildren = [];
+            var root_children = [];
             treeModel.root().children().forEach(function (location) {
                 if (location.name() === child[0].name) {
-                    rootChildren.push(child[0]);
+                    root_children.push(child[0]);
                 } else {
                     var data = {
                         can_edit: options.can_edit_root,
@@ -138,13 +136,13 @@ hqDefine('locations/js/location_tree', [
                         name: location.name(),
                         uuid: location.uuid(),
                     };
-                    rootChildren.push(data);
+                    root_children.push(data);
                 }
             });
 
             level = locationModel({
                 name: '_root',
-                children: rootChildren,
+                children: root_children,
                 can_edit: options.can_edit_root,
                 expanded: 'semi',
             }, treeModel);
@@ -208,18 +206,18 @@ hqDefine('locations/js/location_tree', [
             }
 
             if (self.children().length > 0 && self.name() !== "_root") {
-                for (var childIndex = 0; childIndex < sortedChildren.length; childIndex++) {
-                    if (sortedChildren[childIndex].name === self.children()[0].name()) {
-                        sortedChildren.splice(childIndex, 1);
+                for (var child_idx = 0; child_idx < sortedChildren.length; child_idx++) {
+                    if (sortedChildren[child_idx].name === self.children()[0].name()) {
+                        sortedChildren.splice(child_idx, 1);
                         break;
                     }
                 }
 
-                var modelChildren = $.map(sortedChildren, function (e) {
+                var model_children = $.map(sortedChildren, function (e) {
                     return locationModel(e, root, self.depth + 1);
                 });
-                modelChildren.unshift(self.children()[0]);
-                self.children(modelChildren);
+                model_children.unshift(self.children()[0]);
+                self.children(model_children);
             } else {
                 self.children($.map(sortedChildren, function (e) {
                     return locationModel(e, root, self.depth + 1);
@@ -235,7 +233,7 @@ hqDefine('locations/js/location_tree', [
 
         self.load_children_async = function (callback) {
             self.children_status('loading');
-            apiGetChildren(self.uuid(), root.show_inactive, function (resp) {
+            api_get_children(self.uuid(), root.show_inactive, function (resp) {
                 self.set_children(resp);
                 if (callback) {
                     callback(self);
@@ -246,10 +244,10 @@ hqDefine('locations/js/location_tree', [
         self.allowed_child_types = function () {
             var loc = self;
             var types = [];
-            $.each(root.location_types, function (i, locType) {
-                $.each(locType.allowed_parents, function (i, parentType) {
-                    if (loc.type() === parentType) {
-                        types.push(locType.type);
+            $.each(root.location_types, function (i, loc_type) {
+                $.each(loc_type.allowed_parents, function (i, parent_type) {
+                    if (loc.type() === parent_type) {
+                        types.push(loc_type.type);
                     }
                 });
             });
@@ -266,16 +264,16 @@ hqDefine('locations/js/location_tree', [
         };
 
         self.new_child_caption = ko.computed(function () {
-            var childType = self.allowed_child_type();
-            var topLevel = (self.name() === '_root');
-            return 'New ' + (childType || 'location') + (topLevel ? ' at top level' : ' in ' + self.name() + ' ' + self.type());
+            var child_type = self.allowed_child_type();
+            var top_level = (self.name() === '_root');
+            return 'New ' + (child_type || 'location') + (top_level ? ' at top level' : ' in ' + self.name() + ' ' + self.type());
         }, self);
 
         self.no_children_caption = ko.computed(function () {
-            var topLevel = (self.name() === '_root');
+            var top_level = (self.name() === '_root');
 
             // TODO replace 'location' with proper type as applicable (what about pluralization?)
-            return (topLevel ? 'No locations created in this project yet' : 'No child locations inside ' + self.name());
+            return (top_level ? 'No locations created in this project yet' : 'No child locations inside ' + self.name());
         }, self);
 
         self.show_archive_action_button = ko.computed(function () {
@@ -301,29 +299,29 @@ hqDefine('locations/js/location_tree', [
 
         self.delete_error_message = _.template(gettext("An error occurred while deleting your location. If the problem persists, please report an issue"));
 
-        self.loc_archive_url = function (locId) {
-            return initialPageData.reverse('archive_location', locId);
+        self.loc_archive_url = function (loc_id) {
+            return initialPageData.reverse('archive_location', loc_id);
         };
 
-        self.loc_unarchive_url = function (locId) {
-            return initialPageData.reverse('unarchive_location', locId);
+        self.loc_unarchive_url = function (loc_id) {
+            return initialPageData.reverse('unarchive_location', loc_id);
         };
 
-        self.loc_delete_url = function (locId) {
-            return initialPageData.reverse('delete_location', locId, locId);
+        self.loc_delete_url = function (loc_id) {
+            return initialPageData.reverse('delete_location', loc_id, loc_id);
         };
 
-        self.loc_lineage_url = function (locId) {
-            return initialPageData.reverse('location_lineage', locId);
+        self.loc_lineage_url = function (loc_id) {
+            return initialPageData.reverse('location_lineage', loc_id);
         };
 
-        self.loc_descendant_url = function (locId) {
-            return initialPageData.reverse('location_descendants_count', locId);
+        self.loc_descendant_url = function (loc_id) {
+            return initialPageData.reverse('location_descendants_count', loc_id);
         };
 
-        self.loc_edit_url = function (locId, urlName) {
+        self.loc_edit_url = function (loc_id, urlName) {
             urlName = urlName || 'edit_location';
-            return initialPageData.reverse(urlName, locId);
+            return initialPageData.reverse(urlName, loc_id);
         };
 
         self.new_loc_url = function () {
@@ -334,15 +332,14 @@ hqDefine('locations/js/location_tree', [
             return initialPageData.reverse('location_search_url');
         };
 
-        self.archive_loc = function (button, name, locId) {
-            const modalNode = $('#archive-location-modal')[0],
-                modal = bootstrap.Modal.getOrCreateInstance(modalNode);
+        self.archive_loc = function (button, name, loc_id) {
+            var archive_location_modal = $('#archive-location-modal')[0];
 
-            function archiveFn() {
+            function archive_fn() {
                 $(button).disableButton();
                 $.ajax({
                     type: 'POST',
-                    url: self.loc_archive_url(locId),
+                    url: self.loc_archive_url(loc_id),
                     dataType: 'json',
                     error: 'error',
                     success: function () {
@@ -353,25 +350,25 @@ hqDefine('locations/js/location_tree', [
                         locationUtils.reloadLocationSearchSelect();
                     },
                 });
-                modal.hide();
+                $(archive_location_modal).modal('hide');
                 googleAnalytics.track.event('Organization Structure', 'Archive');
             }
 
-            const modalContext = {
+            var modal_context = {
                 "name": name,
-                "loc_id": locId,
-                "archive_fn": archiveFn,
+                "loc_id": loc_id,
+                "archive_fn": archive_fn,
             };
-            ko.cleanNode(modalNode);
-            $(modalNode).koApplyBindings(modalContext);
-            modal.show();
+            ko.cleanNode(archive_location_modal);
+            $(archive_location_modal).koApplyBindings(modal_context);
+            $(archive_location_modal).modal('show');
         };
 
-        self.unarchive_loc = function (button, locId) {
+        self.unarchive_loc = function (button, loc_id) {
             $(button).disableButton();
             $.ajax({
                 type: 'POST',
-                url: self.loc_unarchive_url(locId),
+                url: self.loc_unarchive_url(loc_id),
                 dataType: 'json',
                 error: 'error',
                 success: function () {
@@ -381,18 +378,17 @@ hqDefine('locations/js/location_tree', [
             });
         };
 
-        self.delete_loc = function (button, name, locId) {
-            const modalNode = $('#delete-location-modal')[0],
-                modal = bootstrap.Modal.getOrCreateInstance(modalNode);
-            let modalContext;
+        self.delete_loc = function (button, name, loc_id) {
+            var delete_location_modal = $('#delete-location-modal')[0];
+            var modal_context;
 
-            function deleteFn() {
-                if (modalContext.count === parseInt(modalContext.signOff())) {
+            function delete_fn() {
+                if (modal_context.count === parseInt(modal_context.signOff())) {
                     $(button).disableButton();
 
                     $.ajax({
                         type: 'DELETE',
-                        url: self.loc_delete_url(locId),
+                        url: self.loc_delete_url(loc_id),
                         dataType: 'json',
                         error: function () {
                             alertUser.alert_user(self.delete_error_message, "warning");
@@ -411,26 +407,26 @@ hqDefine('locations/js/location_tree', [
                             }
                         },
                     });
-                    modal.hide();
+                    $(delete_location_modal).modal('hide');
                     googleAnalytics.track.event('Organization Structure', 'Delete');
                 }
             }
 
             $.ajax({
                 type: 'GET',
-                url: self.loc_descendant_url(locId),
+                url: self.loc_descendant_url(loc_id),
                 dataType: 'json',
                 success: function (response) {
-                    modalContext = {
+                    modal_context = {
                         "name": name,
-                        "loc_id": locId,
-                        "delete_fn": deleteFn,
+                        "loc_id": loc_id,
+                        "delete_fn": delete_fn,
                         "count": response.count,
                         "signOff": ko.observable(''),
                     };
-                    ko.cleanNode(modalNode);
-                    ko.applyBindings(modalContext, modalNode);
-                    modal.show();
+                    ko.cleanNode(delete_location_modal);
+                    ko.applyBindings(modal_context, delete_location_modal);
+                    $(delete_location_modal).modal('show');
                 },
             });
         };

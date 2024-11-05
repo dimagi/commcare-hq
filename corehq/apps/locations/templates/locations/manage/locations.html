@@ -1,8 +1,13 @@
-{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main_b5 'locations/js/locations' %}
+{% requirejs_main 'locations/js/locations' %}
+
+{% block stylesheets %}{{ block.super }}
+  <link rel="stylesheet" href="{% static 'locations/css/manage.css' %}">
+{% endblock %}
+
 
 {% block page_content %}
   {% registerurl 'archive_location' domain '---' %}
@@ -22,7 +27,7 @@
 
   <header>
     <div class="row">
-      <div class="col-md-8">
+      <div class="col-sm-8">
         <p class="lead">
           {% if request.is_view_only %}
             {% trans "View Organization Structure" %}
@@ -49,42 +54,37 @@
 
   {% if not show_inactive %}
     <div class="row">
-      <div class="col-md-12">
+      <div class="col-sm-12">
         <div class="btn-toolbar">
-          <div class="btn-group me-2">
-            <a class="btn btn-info"
+
+          <a class="btn btn-info"
+            {% if not has_location_types %}
+             disabled
+            {% else %}
+             href="{{ bulk_download_url }}"
+            {% endif %}
+          >
+            <i class="fa-solid fa-cloud-arrow-down"></i> {% trans 'Download Organization Structure' %}
+          </a>
+
+          {% if not request.is_view_only %}
+            <a class="btn btn-default"
               {% if not has_location_types %}
                disabled
               {% else %}
-               href="{{ bulk_download_url }}"
+               href="{% url "location_import" domain %}"
               {% endif %}
             >
-              <i class="fa-solid fa-cloud-arrow-down"></i> {% trans 'Download Organization Structure' %}
+              <i class="fa-solid fa-cloud-arrow-up"></i> {% trans 'Bulk Upload' %}
             </a>
-          </div>
-
-          {% if not request.is_view_only %}
-            <div class="btn-group me-2">
-              <a class="btn btn-outline-primary"
-                {% if not has_location_types %}
-                 disabled
-                {% else %}
-                 href="{% url "location_import" domain %}"
-                {% endif %}
-              >
-                <i class="fa-solid fa-cloud-arrow-up"></i> {% trans 'Bulk Upload' %}
-              </a>
-            </div>
           {% endif %}
 
           {% if user_is_domain_admin %}
-            <div class="btn-group me-2">
-              <a class="btn btn-outline-primary track-usage-link" href="{% url "location_fields_view" domain %}"
-                 data-category="Organization Structure" data-action="Edit Location Fields">
-                <i class="fa fa-edit"></i>
-                {% trans "Edit Location Fields" %}
-              </a>
-            </div>
+            <a class="btn btn-default track-usage-link" href="{% url "location_fields_view" domain %}"
+               data-category="Organization Structure" data-action="Edit Location Fields">
+              <i class="fa fa-edit"></i>
+              {% trans "Edit Location Fields" %}
+            </a>
           {% endif %}
 
         </div>
@@ -95,40 +95,37 @@
   <hr />
 
   <div class="row">
-    <div class="col-sm-8 col-lg-8 col-xl-8 loc_search" id="location_search">
-      <label for="location_search" class="form-label">{% trans "Location" %}</label>
+    <div class="col-xs-8 col-md-8 col-lg-8 loc_search" id="location_search">
+      <label for="location_search" class="col-xs-2 col-md-1 col-lg-1 control-label">{% trans "Location" %}</label>
 
-      <div class="row">
-        <div class="col-sm-6 col-lg-6 col-xl-7">
-          <select type="text"
-                  id="location_search_select"
-                  data-bind="value: selected_location_id"
-                  class="form-select float-start"
-                  placeholder="{% trans_html_attr "Specify location" %}"
-                  name="location_search"></select>
+      <div class="col-xs-7 col-md-7 col-lg-8">
 
-          <span class="help-block">
-            {{ location_search_help }}
-          </span>
-        </div>
+        <select type="text"
+                id="location_search_select"
+                data-bind="value: selected_location_id"
+                class="span4 form-control"
+                placeholder="Specify location"
+                name="location_search"
+                style="max-width:80%;"></select>
 
-        <div class="col-sm-1 col-lg-1 col-xl-1">
-          <button type="button" class="btn btn-outline-primary"
-                   aria-label="{% trans_html_attr 'Clear location selection' %}"
-                   data-bind="visible: selected_location_id(), click: clearLocationSelection">
-            <i class="fa fa-times" aria-hidden="true"></i>
-          </button>
-        </div>
+        <button type="button" class="btn btn-default" style="display:inline; cursor:pointer;" aria-label="{% trans 'Clear location selection' %}" data-bind="visible: selected_location_id(), click: clearLocationSelection">
+          <i class="fa fa-times" aria-hidden="true"></i>
+        </button>
+
+        <span class="help-block">
+          {{ location_search_help }}
+        </span>
+
       </div>
-    </div>
 
-    <div class="col-md-4">
+    </div>
+    <div class="col-sm-4">
       {% if not show_inactive %}
-        <a class="btn btn-outline-primary float-end" href="?show_inactive=true">
+        <a class="btn btn-default pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
           {% trans "Show Archived Locations" %}
         </a>
       {% else %}
-        <a class="btn btn-outline-primary float-end" href="?">
+        <a class="btn btn-default pull-right" href="?" style="margin-right: 2.5em;">
           {% trans "Show Active Locations" %}
         </a>
       {% endif %}
@@ -136,7 +133,7 @@
   </div>
 
   {% if not has_location_types %}
-    <div class="loc_child alert alert-info">
+    <div class="loc_child no_children alert alert-info">
       {% url "location_types" domain as location_types_url %}
       {% blocktrans %}
         Please define the organization levels
@@ -146,6 +143,8 @@
     </div>
   {% endif %}
 
-  {% include 'locations/manage/location_template.html' with view_only=request.is_view_only %}
+  <div style="margin-left:-2em;">
+    {% include 'locations/manage/location_template.html' with view_only=request.is_view_only %}
+  </div>
 
 {% endblock %}

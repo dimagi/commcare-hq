@@ -8,12 +8,10 @@ hqDefine('locations/js/location_drilldown', [
     _
 ) {
     function apiGetChildren(locUuid, callback, locUrl) {
-        // Both B3 hide and B5 d-none are used to avoid needing to split this template.
-        // When USE_BOOTSTRAP5 is removed, form-control can be removed.
         var params = (locUuid ? {parent_id: locUuid} : {});
-        $('#loc_ajax').removeClass('hide d-none');
+        $('#loc_ajax').show().removeClass('hide');
         $.getJSON(locUrl, params, function (allData) {
-            $('#loc_ajax').addClass('hide d-none');
+            $('#loc_ajax').hide().addClass('hide');
             callback(allData.objects);
         });
     }
@@ -195,9 +193,8 @@ hqDefine('locations/js/location_drilldown', [
                 //'all choices' meta-entry; annoying that we have to stuff this in
                 //the children list, but all my attempts to make computed observables
                 //based of children() caused infinite loops.
-                if (self.withAllOption || (!self.withAllOption && self.depth > requiredOption)) {
+                if (self.withAllOption || (!self.withAllOption && self.depth > requiredOption))
                     children.splice(0, 0, {name: '_all', auto_drill: self.auto_drill});
-                }
             }
             self.children($.map(children, function (e) {
                 e.auto_drill = self.auto_drill;
