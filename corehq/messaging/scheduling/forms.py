@@ -19,6 +19,7 @@ from django.forms.widgets import (
     HiddenInput,
     Select,
     SelectMultiple,
+    Textarea
 )
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
@@ -38,6 +39,7 @@ from memoized import memoized
 
 from dimagi.utils.django.fields import TrimmedCharField
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_released_app,
@@ -1356,16 +1358,22 @@ class ScheduleForm(Form):
         required=False,
     )
 
-    use_user_case_for_filter_choices = [("false", "User Properties"), ("true", "User Case Properties")]
+    use_user_case_for_filter_choices = [(NO, "User Properties"), (YES, "User Case Properties")]
 
     use_user_case_for_filter = ChoiceField(
         label=gettext_lazy("Filter on"),
         required=False,
-        initial='ALL',
+        initial=NO,
         choices=use_user_case_for_filter_choices,
         widget=SelectToggle(
             choices=use_user_case_for_filter_choices,
         ),
+    )
+
+    user_data_property_json = TrimmedCharField(
+        label=gettext_lazy("User data filter: whole json"),
+        required=False,
+        widget=Textarea,
     )
 
     user_data_property_name = TrimmedCharField(
@@ -1588,14 +1596,18 @@ class ScheduleForm(Form):
                 # {name: [value]} or {name: [value1, value2, ...]}
                 # See Schedule.user_data_filter for an explanation of the full possible
                 # structure.
-                name = list(schedule.user_data_filter)[0]
-                values = schedule.user_data_filter[name]
-                choice = self.YES if len(values) == 1 else self.JSON
-                value = values[0] if len(values) == 1 else json.dumps(values)
+                more_than_one_property = len(schedule.user_data_filter) > 1
+                first_property_has_multiple_value = len(next(iter(schedule.user_data_filter.values()))) > 1
+                choice = self.JSON if more_than_one_property or first_property_has_multiple_value else self.YES
                 result['use_user_data_filter'] = choice
-                result['user_data_property_name'] = name
-                result['user_data_property_value'] = value
-            result['use_user_case_for_filter'] = schedule.use_user_case_for_filter
+                if choice == self.YES:
+                    name = list(schedule.user_data_filter)[0]
+                    values = schedule.user_data_filter[name]
+                    result['user_data_property_name'] = name
+                    result['user_data_property_value'] = values[0]
+                else:
+                    result['user_data_property_json'] = json.dumps(schedule.user_data_filter, indent=4)
+                result['use_user_case_for_filter'] = self.YES if schedule.use_user_case_for_filter else self.NO
 
             result['use_utc_as_default_timezone'] = schedule.use_utc_as_default_timezone
             if isinstance(schedule, AlertSchedule):
@@ -1790,7 +1802,7 @@ class ScheduleForm(Form):
     def enable_json_user_data_filter(self, initial):
         if self.is_system_admin or initial.get('use_user_data_filter') == self.JSON:
             self.fields['use_user_data_filter'].choices += [
-                (self.JSON, _("JSON: list of strings")),
+                (self.JSON, _("JSON")),
             ]
 
     @property
@@ -2123,9 +2135,16 @@ class ScheduleForm(Form):
                 ),
                 crispy.Div(
                     crispy.Field('use_user_case_for_filter'),
+                    data_bind="visible: use_user_data_filter() !== 'N'",
+                ),
+                crispy.Div(
                     crispy.Field('user_data_property_name'),
                     crispy.Field('user_data_property_value'),
-                    data_bind="visible: use_user_data_filter() !== 'N'",
+                    data_bind="visible: use_user_data_filter() == 'Y'",
+                ),
+                crispy.Div(
+                    crispy.Field('user_data_property_json'),
+                    data_bind="visible: use_user_data_filter() == 'J'",
                 ),
             ])
 
@@ -2525,10 +2544,10 @@ class ScheduleForm(Form):
         return validate_int(self.cleaned_data.get('occurrences'), 2)
 
     def clean_use_user_case_for_filter(self):
-        return self.cleaned_data.get('use_user_case_for_filter') == 'true'
+        return self.cleaned_data.get('use_user_case_for_filter') == self.YES
 
     def clean_user_data_property_name(self):
-        if self.cleaned_data.get('use_user_data_filter') == self.NO:
+        if self.cleaned_data.get('use_user_data_filter') != self.YES:
             return None
 
         value = self.cleaned_data.get('user_data_property_name')
@@ -2539,24 +2558,42 @@ class ScheduleForm(Form):
 
     def clean_user_data_property_value(self):
         use_user_data_filter = self.cleaned_data.get('use_user_data_filter')
-        if use_user_data_filter == self.NO:
+        if use_user_data_filter != self.YES:
             return None
 
         value = self.cleaned_data.get('user_data_property_value')
         if not value:
             raise ValidationError(_("This field is required."))
 
-        if use_user_data_filter == self.JSON:
-            err = _("Invalid JSON value. Expected a list of strings.")
-            try:
-                value = json.loads(value)
-            except Exception:
-                raise ValidationError(err)
-            if (not isinstance(value, list) or not value
-                    or any(not isinstance(v, str) for v in value)):
-                raise ValidationError(err)
-        else:
-            value = [value]
+        return [value]
+
+    def clean_user_data_property_json(self):
+        use_user_data_filter = self.cleaned_data.get('use_user_data_filter')
+        if use_user_data_filter != self.JSON:
+            return None
+
+        value = self.cleaned_data.get('user_data_property_json')
+        if not value:
+            raise ValidationError(_("This field is required."))
+
+        def json_error():
+            return ValidationError(_("Invalid JSON value: Needs to be and object with valid "
+                                     "properties as keys and strings as values"))
+        try:
+            value = json.loads(value)
+        except Exception:
+            raise json_error()
+        if not isinstance(value, dict):
+            raise json_error()
+
+        if self.cleaned_data.get("use_user_case_for_filter"):
+            from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
+            user_case_properties = (
+                get_data_dict_props_by_case_type(self.domain, exclude_deprecated=True))[USERCASE_TYPE]
+            if any(property_name not in user_case_properties for property_name in value.keys()):
+                raise json_error()
+        if any(not isinstance(vs, list) and any(not isinstance(v, str) for v in vs) for vs in value.values()):
+            raise json_error()
 
         return value
 
@@ -2614,9 +2651,12 @@ class ScheduleForm(Form):
         if self.cleaned_data['use_user_data_filter'] == self.NO:
             return {}
 
-        name = self.cleaned_data['user_data_property_name']
-        value = self.cleaned_data['user_data_property_value']
-        return {name: value}
+        if self.cleaned_data['use_user_data_filter'] == self.YES:
+            name = self.cleaned_data['user_data_property_name']
+            value = self.cleaned_data['user_data_property_value']
+            return {name: value}
+
+        return self.cleaned_data['user_data_property_json']
 
     def distill_start_offset(self):
         raise NotImplementedError()
