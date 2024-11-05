@@ -43,7 +43,7 @@ from corehq.apps.api.odata.urls import (
     odata_case_urlpatterns,
     odata_form_urlpatterns,
 )
-from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
+from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5, v1_0
 from corehq.apps.api.resources.messaging_event.view import messaging_events
 from corehq.apps.api.resources.v0_5 import (
     DomainCases,
@@ -101,7 +101,6 @@ _OLD_API_LIST = (
         fixtures.v0_1.LookupTableResource,
         fixtures.v0_1.LookupTableItemResource,
         v0_5.NavigationEventAuditResource,
-        v0_5.CommCareAnalyticsUserResource,
     )),
     ((0, 6), (
         locations.v0_6.LocationResource,
@@ -182,6 +181,7 @@ urlpatterns = [
     fixtures.v0_1.LookupTableItemResource.get_urlpattern('v1'),
     fixtures.v0_6.LookupTableItemResource.get_urlpattern('v2'),
     v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
+    v1_0.CommCareAnalyticsUserResource.get_urlpattern('v1'),
 ]
 
 
