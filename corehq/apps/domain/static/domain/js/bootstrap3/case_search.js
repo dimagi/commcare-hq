@@ -1,4 +1,4 @@
-hqDefine('domain/js/case_search', [
+hqDefine('domain/js/bootstrap3/case_search', [
     'jquery',
     'knockout',
     'underscore',

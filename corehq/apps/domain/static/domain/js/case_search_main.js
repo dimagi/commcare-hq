@@ -1,7 +1,7 @@
 hqDefine('domain/js/case_search_main', [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'domain/js/case_search',
+    'domain/js/bootstrap3/case_search',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko',     // save button
 ], function (
     $,
