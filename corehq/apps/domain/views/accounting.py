@@ -1592,7 +1592,7 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
 
 class ConfirmSubscriptionRenewalView(PlanViewBase, DomainAccountingSettings,
                                      AsyncHandlerMixin, SubscriptionMixin):
-    template_name = 'domain/confirm_subscription_renewal.html'
+    template_name = 'domain/bootstrap3/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'
     page_title = gettext_lazy("Confirm Billing Information")
     step_title = gettext_lazy("Confirm Billing Information")
