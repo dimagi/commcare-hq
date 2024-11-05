@@ -75,7 +75,7 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
     page_title = gettext_lazy("Project Information")
-    template_name = 'domain/internal_settings.html'
+    template_name = 'domain/bootstrap3/internal_settings.html'
     strict_domain_fetching = True
 
     @method_decorator(always_allow_project_access)
