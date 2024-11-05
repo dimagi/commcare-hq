@@ -809,10 +809,6 @@ class RestoreConfig(object):
                     bucket_tag='duration', buckets=timer_buckets, bucket_unit='s',
                     tags={**tags, **extra_tags}
                 )
-                metrics_counter(
-                    'commcare.restores.{}'.format(segment),
-                    tags={**tags, **extra_tags},
-                )
 
         tags['type'] = 'sync' if self.params.sync_log_id else 'restore'
 
@@ -823,7 +819,6 @@ class RestoreConfig(object):
             else:
                 tags['app'] = ''
 
-        metrics_counter('commcare.restores.count', tags=tags)
         metrics_histogram(
             'commcare.restores.duration.seconds', timing.duration,
             bucket_tag='duration', buckets=timer_buckets, bucket_unit='s',
