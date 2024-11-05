@@ -1,11 +1,11 @@
 'use strict';
-hqDefine("domain/js/billing_statements", [
+hqDefine("domain/js/bootstrap5/billing_statements", [
     'jquery',
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
     'accounting/js/payment_method_handler',
-    'hqwebapp/js/bootstrap3/crud_paginated_list',
+    'hqwebapp/js/bootstrap5/crud_paginated_list',
     'stripe',
 ], function (
     $,
