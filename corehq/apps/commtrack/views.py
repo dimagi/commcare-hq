@@ -185,7 +185,7 @@ class DefaultConsumptionView(BaseCommTrackManageView):
 class SMSSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_sms_settings'
     page_title = gettext_noop("SMS")
-    template_name = 'domain/admin/sms_settings.html'
+    template_name = 'domain/admin/bootstrap3/sms_settings.html'
 
     @property
     def page_context(self):
