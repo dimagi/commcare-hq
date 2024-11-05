@@ -1044,7 +1044,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onBeforeDetach: function () {
             const self = this;
             self.smallScreenListener.stopListening();
-            $(this.scrollContainer()).off('scroll', self.boundHandleScroll);
+            this.scrollContainer().off('scroll', self.boundHandleScroll);
         },
 
         templateContext: function () {
