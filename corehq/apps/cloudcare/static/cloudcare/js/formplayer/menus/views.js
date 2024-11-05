@@ -447,7 +447,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 arrow.removeClass("fa-angle-double-up");
                 arrow.addClass("fa-angle-double-down");
                 tileContent.addClass("collapsed-tile-content");
-                const scrollContainer = $('#content-plus-version-info-container');
+                const scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
                 const offset = getScrollTopOffset(this.smallScreenEnabled);
                 $(scrollContainer).animate({
                     scrollTop: scrollContainer.scrollTop() + $(e.currentTarget).parent().offset().top - offset
@@ -1005,7 +1005,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         scrollContainer: function () {
-            return $('#content-plus-version-info-container');
+            return $(constants.SCROLLABLE_CONTENT_CONTAINER);
         },
 
         handleScroll: function () {
