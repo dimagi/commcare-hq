@@ -1526,7 +1526,7 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
     page_title = gettext_lazy("Renew Plan")
     step_title = gettext_lazy("Renew Plan")
-    template_name = "domain/renew_plan.html"
+    template_name = "domain/bootstrap3/renew_plan.html"
 
     @property
     def current_edition(self):
