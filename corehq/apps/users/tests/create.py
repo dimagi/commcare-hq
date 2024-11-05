@@ -10,6 +10,7 @@ from corehq.apps.users.role_utils import (
     UserRolePresets,
     initialize_domain_with_default_roles,
 )
+from corehq.apps.users.tests.util import setup_profile
 
 
 class CreateTestCase(TestCase):
@@ -85,6 +86,7 @@ class TestDomainMemberships(TestCase):
         cls.project = Domain(name=cls.domain)
         cls.project.save()
         create_domain('nodomain')
+        cls.profile_id = setup_profile(cls.domain)
 
         cls.webuser = WebUser.create(cls.domain, w_username, password, None, None, email=w_email)
         cls.webuser2 = WebUser.create('nodomain', w2_username, password, None, None, email=w2_email)
@@ -140,6 +142,15 @@ class TestDomainMemberships(TestCase):
         self.assertTrue(self.ccuser.is_member_of(self.domain))
         self.assertEqual(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
 
+    def test_delete_domain_membership_removes_profile(self):
+        self.webuser.set_user_profile(self.domain, self.profile_id)
+        user_data_before = self.webuser.get_user_data(self.domain)
+        self.assertEqual(user_data_before.profile_id, self.profile_id)
+
+        self.webuser.delete_domain_membership(self.domain)
+        user_data_after = self.webuser.get_user_data(self.domain)
+        self.assertFalse(user_data_after.profile)
+
     def test_undo_delete_domain_membership_removes_deleted_couch_doc_record(self):
         rec = self.webuser.delete_domain_membership(self.domain, create_record=True)
         self.webuser.save()
@@ -148,6 +159,19 @@ class TestDomainMemberships(TestCase):
         rec.undo()
         with self.assertRaises(DeletedCouchDoc.DoesNotExist):
             DeletedCouchDoc.objects.get(**params)
+
+    def test_undo_delete_domain_membership_restores_profile(self):
+        self.webuser.set_user_profile(self.domain, self.profile_id)
+        record = self.webuser.delete_domain_membership(self.domain, create_record=True)
+        self.webuser.save()
+
+        user_data_before = self.webuser.get_user_data(self.domain)
+        self.assertFalse(user_data_before.profile)
+
+        record.undo()
+        same_user = WebUser.get_by_user_id(self.webuser.get_id)
+        user_data_after = same_user.get_user_data(self.domain)
+        self.assertEqual(user_data_after.profile_id, self.profile_id)
 
     def testTransferMembership(self):
         self.webuser.transfer_domain_membership(self.domain, self.webuser2)
