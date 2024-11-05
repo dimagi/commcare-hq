@@ -8,14 +8,14 @@ hqDefine('locations/js/locations', [
     locationModels
 ) {
     $(function () {
-        const locs = initialPageData.get('locations'),
-            canEditRoot = initialPageData.get('can_edit_root'),
+        var locs = initialPageData.get('locations'),
+            can_edit_root = initialPageData.get('can_edit_root'),
             hierarchy = initialPageData.get('hierarchy'),
-            showInactive = initialPageData.get('show_inactive');
+            show_inactive = initialPageData.get('show_inactive');
 
         var options = {
-            show_inactive: showInactive,
-            can_edit_root: canEditRoot,
+            show_inactive: show_inactive,
+            can_edit_root: can_edit_root,
         };
 
         var treeModel = locationModels.locationTreeViewModel(hierarchy, options);

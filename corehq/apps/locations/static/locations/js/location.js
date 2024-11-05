@@ -3,29 +3,36 @@ hqDefine("locations/js/location", [
     'jquery',
     'knockout',
     'underscore',
-    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'locations/js/location_drilldown',
     'locations/js/location_tree',
     'hqwebapp/js/select_2_ajax_widget',
-    'hqwebapp/js/bootstrap5/widgets',       // custom data fields use a .hqwebapp-select2
+    'hqwebapp/js/bootstrap3/widgets',       // custom data fields use a .hqwebapp-select2
     'locations/js/widgets',
 ], function (
     $,
     ko,
     _,
-    bootstrap,
     initialPageData,
     googleAnalytics,
     locationModels,
     locationTreeModel
 ) {
+    var insert_new_user = function (user) {
+        var $select = $('#id_users-selected_ids');
+        // Add the newly created user to the users that are already at the location.
+        var currentUsers = $select.select2('data');
+        currentUsers.push({ "text": user.text, "id": user.user_id });
+        // Push the updated list of currentUsers to the ui
+        $select.select2("data", currentUsers);
+    };
+
     $(function () {
 
-        var locationUrl = initialPageData.get('api_root');
-        var locId = initialPageData.get('location_id');
-        var locType = initialPageData.get('location_type');
+        var location_url = initialPageData.get('api_root');
+        var loc_id = initialPageData.get('location_id');
+        var loc_type = initialPageData.get('location_type');
         var hierarchy = initialPageData.get('hierarchy');
 
         var model = locationModels.locationSelectViewModel({
@@ -33,20 +40,20 @@ hqDefine("locations/js/location", [
             "default_caption": "\u2026",
             "auto_drill": false,
             "loc_filter": function (loc) {
-                return loc.uuid() !== locId && loc.can_have_children();
+                return loc.uuid() !== loc_id && loc.can_have_children();
             },
-            "loc_url": locationUrl,
+            "loc_url": location_url,
         });
         model.editing = ko.observable(false);
         model.allowed_child_types = ko.computed(function () {
-            var activeLoc = (this.selected_location() || this.root());
-            return (activeLoc ? activeLoc.allowed_child_types() : []);
+            var active_loc = (this.selected_location() || this.root());
+            return (active_loc ? active_loc.allowed_child_types() : []);
         }, model);
-        model.loc_type = ko.observable(locType);
+        model.loc_type = ko.observable(loc_type);
 
         var locs = initialPageData.get('locations');
-        var selectedParent = initialPageData.get('location_parent_get_id');
-        model.load(locs, selectedParent);
+        var selected_parent = initialPageData.get('location_parent_get_id');
+        model.load(locs, selected_parent);
         model.orig_parent_id = model.selected_locid();
 
         $("#loc_form :button[type='submit']").click(function () {
@@ -71,7 +78,7 @@ hqDefine("locations/js/location", [
             var locData = {
                 name: location.name,
                 location_type: location.location_type,
-                uuid: locId,
+                uuid: loc_id,
                 is_archived: location.is_archived,
                 can_edit: options.can_edit_root,
             };
