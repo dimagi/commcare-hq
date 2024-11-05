@@ -67,7 +67,7 @@
      .select2-search-field {
          width: 100% !important;
      }
-@@ -72,16 +64,111 @@
+@@ -72,16 +64,114 @@
      .select2-input {
          width: 100% !important;
      }
@@ -123,9 +123,9 @@
 +  }
 +  .select2-selection--single .select2-selection__arrow {
 +    background-repeat: no-repeat;
-+    background-size: 24%;
-+    background-position: 15px 7px;
-+    width: 66px !important;
++    background-size: 32%;
++    background-position: 0 7px;
++    width: 50px !important;
 +  }
 +
 +  &.select2-container--focus {
@@ -143,6 +143,9 @@
 +  }
 +  .select2-selection--single .select2-selection__arrow {
 +    background-image: escape-svg($form-feedback-icon-invalid);
++  }
++  .select2-selection--single .select2-selection__clear {
++    margin-right: 55px !important;
 +  }
 +}
 +
