@@ -1356,7 +1356,6 @@ class ScheduleForm(Form):
         choices=use_user_case_for_filter_choices,
         widget=SelectToggle(
             choices=use_user_case_for_filter_choices,
-            apply_bindings=True
         ),
     )
 
@@ -2114,16 +2113,16 @@ class ScheduleForm(Form):
                 ),
                 crispy.Div(
                     crispy.Field('use_user_case_for_filter'),
-                    data_bind="visible: use_user_data_filter() !== 'N'",
+                    data_bind=f"visible: use_user_data_filter() !== '{self.NO}'",
                 ),
                 crispy.Div(
                     crispy.Field('user_data_property_name'),
                     crispy.Field('user_data_property_value'),
-                    data_bind="visible: use_user_data_filter() == 'Y'",
+                    data_bind=f"visible: use_user_data_filter() == '{self.YES}'",
                 ),
                 crispy.Div(
                     crispy.Field('user_data_property_json'),
-                    data_bind="visible: use_user_data_filter() == 'J'",
+                    data_bind=f"visible: use_user_data_filter() == '{self.JSON}'",
                 ),
             ])
 
@@ -2556,8 +2555,8 @@ class ScheduleForm(Form):
             raise ValidationError(_("This field is required."))
 
         def json_error():
-            return ValidationError(_("Invalid JSON value: Needs to be and object with valid "
-                                     "properties as keys and strings as values"))
+            return ValidationError(_("Invalid JSON: Needs to be an object with valid "
+                                     "properties as keys and list of strings as values"))
         try:
             value = json.loads(value)
         except Exception:
@@ -2569,10 +2568,20 @@ class ScheduleForm(Form):
             from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
             user_case_properties = (
                 get_data_dict_props_by_case_type(self.domain, exclude_deprecated=True))[USERCASE_TYPE]
-            if any(property_name not in user_case_properties for property_name in value.keys()):
-                raise json_error()
-        if any(not isinstance(vs, list) and any(not isinstance(v, str) for v in vs) for vs in value.values()):
-            raise json_error()
+            invalid_keys = \
+                [property_name for property_name in value.keys() if property_name not in user_case_properties]
+            if len(invalid_keys) > 0:
+                raise ValidationError(_("Invalid JSON: Keys are not valid user case property names: %s")
+                                      % ", ".join(invalid_keys))
+
+        keys_with_invalid_value = []
+        for property_name in value.keys():
+            property_values = value[property_name]
+            if not isinstance(property_values, list) or any(not isinstance(v, str) for v in property_values):
+                keys_with_invalid_value.append(property_name)
+        if len(keys_with_invalid_value) > 0:
+            raise ValidationError(_("Invalid JSON: Values for keys are not lists of strings: %s")
+                                  % ", ".join(keys_with_invalid_value))
 
         return value
 
