@@ -322,7 +322,7 @@ def _get_rate_limits(scope, rate_limiter):
 class TransferDomainView(BaseAdminProjectSettingsView):
     urlname = 'transfer_domain_view'
     page_title = gettext_lazy("Transfer Project")
-    template_name = 'domain/admin/transfer_domain.html'
+    template_name = 'domain/admin/bootstrap3/transfer_domain.html'
 
     @property
     @memoized
