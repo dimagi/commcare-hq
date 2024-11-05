@@ -1,0 +1,140 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block page_content %}
+  <p class="lead">
+    {% trans "Feature Previews" %}
+  </p>
+  <div class="row">
+    <div class="col-lg-6">
+      <p class="help-block">
+        <strong>
+          {% trans "What are Feature Previews?" %}
+        </strong>
+        <br/>
+        {% blocktrans %}
+          Before we invest in making certain product features generally
+          available, we release them as Feature Previews to learn the
+          following two things from usage data and qualitative feedback.
+        {% endblocktrans %}
+      </p>
+      <ul>
+        <li>
+          <p class="help-block">
+            {% blocktrans %}
+              <strong>Perceived Value:</strong>
+              The biggest risk in product development is to
+              build something that offers little value to our users. As such,
+              we make Feature Previews generally available only if they have
+              high perceived value.
+            {% endblocktrans %}
+          </p>
+        </li>
+        <li>
+          <p class="help-block">
+            {% blocktrans %}
+              <strong>User Experience:</strong>
+              Even if a feature has high perceived value,
+              it is important that the user experience of the feature is
+              optimized such that our users actually receive the value.
+              As such, we make high value Feature Previews generally
+              available after we optimize the user experience.
+            {% endblocktrans %}
+          </p>
+        </li>
+      </ul>
+      <p class="help-block">
+        {% blocktrans %}
+          Feature Previews are in active product development, therefore
+          should not be used for business critical workflows. We encourage
+          you to use Feature Previews and provide us feedback, however
+          please note that Feature Previews:
+        {% endblocktrans %}
+      </p>
+      <ul>
+        <li>
+          <p class="help-block">
+            {% blocktrans %}
+              May not be optimized for performance
+            {% endblocktrans %}
+          </p>
+        </li>
+        <li>
+          <p class="help-block">
+            {% blocktrans %}
+              Are not supported by the CommCare Support Team
+            {% endblocktrans %}
+          </p>
+        </li>
+        <li>
+          <p class="help-block">
+            {% blocktrans %}
+              May change at any time without notice
+            {% endblocktrans %}
+          </p>
+        </li>
+        <li>
+          <p class="help-block">
+            {% blocktrans %}
+              Are not subject to any warranties on current and future
+              availability. Please refer to our
+              <a href="http://www.dimagi.com/terms/latest/tos/"
+                 target="_blank">terms</a> to
+              learn more.
+            {% endblocktrans %}
+          </p>
+        </li>
+      </ul>
+      <div class="alert alert-info">
+        <p>
+          {% blocktrans %}
+            Looking for something that used to be here?
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans %}
+            The feature flags <strong>Control Mapping in Case List</strong>,
+            <strong>Custom Calculations in Case List</strong>, <strong>Custom
+            Single and Multiple Answer Questions</strong>, and <strong>Icons in
+            Case List</strong> are now add-ons for individual apps. To turn
+            them on, go to the application's settings and choose the
+            <strong>Add-Ons</strong> tab.
+          {% endblocktrans %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-10">
+      <form action="" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">{% trans "Update previews" %}</button>
+        <table class="table table-striped">
+          <thead>
+          <th class="col-md-3">{% trans "Feature Name" %}</th>
+          <th>{% trans "Description" %}</th>
+          <th>{% trans "Enable" %}</th>
+          </thead>
+          <tbody>
+          {% for feature, enabled in features %}
+            <tr>
+              <td>{{ feature.label }}</td>
+              <td>
+                {{ feature.description }}<br/>
+                {% if feature.help_link %}
+                  <a href="{{ feature.help_link }}" target="_blank">{% trans "More information" %}</a>
+                {% endif %}
+              </td>
+              <td>
+                <input type="checkbox" name="{{ feature.slug }}" {% if enabled %}checked{% endif %}/>  {# todo B5: css-checkbox #}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </form>
+    </div>
+  </div>
+{% endblock %}
