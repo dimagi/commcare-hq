@@ -126,7 +126,7 @@ PAYMENT_ERROR_MESSAGES = {
 
 class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = gettext_lazy("Upgrade Required")
-    template_name = "domain/insufficient_privilege_notification.html"
+    template_name = "domain/bootstrap3/insufficient_privilege_notification.html"
 
     @property
     def page_url(self):
