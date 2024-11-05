@@ -1107,7 +1107,7 @@ class SelectPlanView(PlanViewBase):
 
 
 class ContactFormViewBase(PlanViewBase):
-    template_name = 'domain/selected_plan_contact.html'
+    template_name = 'domain/bootstrap3/selected_plan_contact.html'
     step_title = gettext_lazy("Contact Dimagi")
     lead_text = gettext_lazy("Please submit the following form and a member of our sales team will be "
                              "in touch shortly about your plan.")
