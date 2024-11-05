@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         GROUP_TYPE: 'sub-group',
         QUESTION_TYPE: 'question',
         GROUPED_ELEMENT_TILE_ROW_TYPE: 'grouped-element-tile-row',
+        BROADCAST_FIELD_FILENAME: 'filename',
 
         // Entry types
         STRING: 'str',

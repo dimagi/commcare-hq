@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/form_entry/utils", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'cloudcare/js/utils',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/errors',
     'cloudcare/js/formplayer/constants',
@@ -18,6 +19,7 @@ hqDefine("cloudcare/js/form_entry/utils", [
     initialPageData,
     toggles,
     cloudcareUtils,
+    UsersModels,
     formEntryConst,
     errors
 ) {
@@ -67,7 +69,8 @@ hqDefine("cloudcare/js/form_entry/utils", [
             ko.cleanNode($div[0]);
             $div.koApplyBindings(form);
 
-            if ($debug.length && !cloudcareUtils.smallScreenIsEnabled()) {
+            if ($debug.length && (UsersModels.getCurrentUser().isAppPreview
+                || !cloudcareUtils.smallScreenIsEnabled())) {
                 cloudCareDebugger = new CloudCareDebugger({
                     baseUrl: formJSON.xform_url,
                     formSessionId: formJSON.session_id,
