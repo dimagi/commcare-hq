@@ -129,7 +129,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
 
 
 class EditBasicProjectInfoView(BaseEditProjectInfoView):
-    template_name = 'domain/admin/info_basic.html'
+    template_name = 'domain/admin/bootstrap3/info_basic.html'
     urlname = 'domain_basic_info'
     page_title = gettext_lazy("Basic")
 
