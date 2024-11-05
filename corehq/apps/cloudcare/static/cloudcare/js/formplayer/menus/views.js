@@ -751,8 +751,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         scrollToBottom: function () {
-            $([document.documentElement, document.body]).animate({
-                scrollTop: $('.container .pagination-container').offset().top,
+            this.scrollContainer().animate({
+                scrollTop: $('.container.pagination-container').offset().top,
             }, 500);
         },
 
@@ -976,7 +976,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                                     marker.setIcon(selectedLocationIcon);
 
                                     const offset = getScrollTopOffset(this.smallScreenEnabled, addressMap.isFullscreen());
-                                    const scrollContainer = $('#content-plus-version-info-container');
+                                    const scrollContainer = this.scrollContainer();
                                     scrollContainer.animate({
                                         scrollTop: scrollContainer.scrollTop() + $(`#${rowId}`).offset().top - offset,
                                     }, 500);
@@ -1001,6 +1001,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
         },
 
+        scrollContainer: function () {
+            return $('#content-plus-version-info-container');
+        },
+
         handleScroll: function () {
             const self = this;
             if (self.smallScreenEnabled) {
@@ -1014,9 +1018,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         shouldShowScrollButton: function () {
-            const $pagination = $('.container .pagination-container');
+            const $pagination = $('.container.pagination-container');
+            const scrollContainer = this.scrollContainer();
             const paginationOffscreen = $pagination[0]
-                ? $pagination.offset().top - $(window).scrollTop() > window.innerHeight : false;
+                ? $pagination.offset().top - scrollContainer.scrollTop() > scrollContainer.innerHeight() : false;
             return paginationOffscreen;
         },
 
@@ -1027,7 +1032,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
             self.handleSmallScreenChange(self.smallScreenEnabled);
             self.boundHandleScroll = self.handleScroll.bind(self);
-            $(window).on('scroll', self.boundHandleScroll);
+            this.scrollContainer().on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
                 $('#scroll-to-bottom').removeClass("d-none");
             }
@@ -1036,7 +1041,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onBeforeDetach: function () {
             const self = this;
             self.smallScreenListener.stopListening();
-            $(window).off('scroll', self.boundHandleScroll);
+            $(this.scrollContainer()).off('scroll', self.boundHandleScroll);
         },
 
         templateContext: function () {
