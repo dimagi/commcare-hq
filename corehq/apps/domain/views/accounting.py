@@ -444,7 +444,7 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
 
 
 class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
-    template_name = 'domain/billing_statements.html'
+    template_name = 'domain/bootstrap3/billing_statements.html'
     urlname = 'domain_billing_statements'
     page_title = gettext_lazy("Billing Statements")
 
