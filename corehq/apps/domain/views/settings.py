@@ -220,7 +220,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
 
 class EditMyProjectSettingsView(BaseProjectSettingsView):
-    template_name = 'domain/admin/my_project_settings.html'
+    template_name = 'domain/admin/bootstrap3/my_project_settings.html'
     urlname = 'my_project_settings'
     page_title = gettext_lazy("My Timezone")
 
