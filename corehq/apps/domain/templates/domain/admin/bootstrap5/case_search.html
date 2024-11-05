@@ -5,7 +5,7 @@
 {% requirejs_main_b5 'domain/js/case_search_main' %}
 
 {% block page_content %}
-  {% include 'domain/admin/partials/case_search_templates.html' %}
+  {% include 'domain/admin/partials/bootstrap5/case_search_templates.html' %}
   {% initial_page_data 'case_types' case_types %}
   {% initial_page_data 'values' values %}
   {% registerurl 'case_search_config' request.domain %}
