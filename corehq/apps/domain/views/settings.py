@@ -548,7 +548,7 @@ class BaseDomainAlertsView(BaseProjectSettingsView):
 
 
 class ManageDomainAlertsView(BaseDomainAlertsView):
-    template_name = 'domain/admin/manage_alerts.html'
+    template_name = 'domain/admin/bootstrap3/manage_alerts.html'
     urlname = 'domain_manage_alerts'
     page_title = gettext_lazy("Manage Project Alerts")
 
