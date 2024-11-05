@@ -3,6 +3,7 @@ hqDefine("motech/js/connection_settings_detail", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     _,
