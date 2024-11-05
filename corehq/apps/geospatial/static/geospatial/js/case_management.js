@@ -518,6 +518,12 @@ hqDefine("geospatial/js/case_management", [
             }
         } else if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
             loadCases(xhr.responseJSON.aaData);
+            if (polygonFilterModel) {
+                selectMapItemsInPolygons();
+            }
+            if (mapModel.hasDisbursementLayers()) {
+                mapModel.removeDisbursementLayers();
+            }
         }
     });
 });
