@@ -1,4 +1,4 @@
-hqDefine('domain/js/toggles', [
+hqDefine('domain/js/bootstrap3/toggles', [
     'jquery',
     'knockout',
     'underscore',
