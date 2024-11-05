@@ -1205,7 +1205,7 @@ class SelectedCustomPlanView(ContactFormViewBase):
 
 
 class ConfirmSelectedPlanView(PlanViewBase):
-    template_name = 'domain/confirm_plan.html'
+    template_name = 'domain/bootstrap3/confirm_plan.html'
     urlname = 'confirm_selected_plan'
 
     @property
