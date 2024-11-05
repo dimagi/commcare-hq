@@ -1,4 +1,4 @@
-hqDefine('domain/js/internal_subscription_management', [
+hqDefine('domain/js/bootstrap3/internal_subscription_management', [
     'jquery',
     'knockout',
     'hqwebapp/js/bootstrap3/widgets',
