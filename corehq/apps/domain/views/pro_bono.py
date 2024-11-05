@@ -47,7 +47,7 @@ class ProBonoMixin(object):
 
 
 class ProBonoStaticView(ProBonoMixin, BasePageView):
-    template_name = 'domain/pro_bono/static.html'
+    template_name = 'domain/pro_bono/bootstrap3/static.html'
     urlname = 'pro_bono_static'
     use_domain_field = True
 
