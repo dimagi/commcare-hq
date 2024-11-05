@@ -76,6 +76,7 @@
         "nprogress": "0.2.0",
         "nvd3": "1.1.10",
         "nvd3-1.8.6": "npm:nvd3#1.8.6",
+        "prettier": "^3.3.3",
         "quicksearch": "DeuxHuitHuit/quicksearch#2.2.1",
         "requirejs": "2.3.7",
         "requirejs-babel7": "^1.3.2",
