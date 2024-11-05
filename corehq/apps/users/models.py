@@ -2794,7 +2794,7 @@ class Invitation(models.Model):
         with override_language(lang):
             if domain_request is None:
                 text_content = render_to_string("domain/email/domain_invite.txt", params)
-                html_content = render_to_string("domain/email/domain_invite.html", params)
+                html_content = render_to_string("domain/email/bootstrap3/domain_invite.html", params)
                 subject = _('Invitation from %s to join CommCareHQ') % inviter.formatted_name
             else:
                 text_content = render_to_string("domain/email/domain_request_approval.txt", params)
