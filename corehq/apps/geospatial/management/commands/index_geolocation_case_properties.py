@@ -50,8 +50,10 @@ def get_batch_count(doc_count, query_limit):
     return math.ceil(doc_count / query_limit)
 
 
-def process_batch(domain, geo_case_property, case_type, query_limit, chunk_size, with_progress=False):
-    query = case_query_for_missing_geopoint_val(domain, geo_case_property, case_type, size=query_limit)
+def process_batch(domain, geo_case_property, case_type, query_limit, chunk_size, with_progress=False, offset=0):
+    query = case_query_for_missing_geopoint_val(
+        domain, geo_case_property, case_type, size=query_limit, offset=offset
+    )
     case_ids = query.get_ids()
     _index_case_ids(domain, case_ids, chunk_size, with_progress)
 

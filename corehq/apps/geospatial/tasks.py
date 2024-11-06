@@ -55,6 +55,7 @@ def index_es_docs_with_location_props(domain):
                 case_type=None,
                 query_limit=limit,
                 chunk_size=DEFAULT_CHUNK_SIZE,
+                offset=i * DEFAULT_QUERY_LIMIT,
             )
             celery_task_tracker.update_progress(current=i + 1, total=batch_count)
     except Exception as e:
