@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main_b5 "dhis2/js/dataset_map_create" %}
+{% js_entry "dhis2/js/dataset_map_create" %}
 
 {% block page_content %}
   <h2>{% trans "Add DataSet Map" %}</h2>

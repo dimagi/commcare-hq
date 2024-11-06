@@ -37,7 +37,7 @@
       </header>
       <template>
         <text>
-          <xpath function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"/>
+          <xpath function="format-date(date(instance('commcare-reports:ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i')/@last_sync), '%Y-%m-%d %H:%M')"/>
         </text>
       </template>
     </field>
@@ -47,10 +47,10 @@
       </header>
       <template form="graph">
         <graph type="bar">
-          <series nodeset="instance('reports')/reports/report[@id='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i']/rows/row[@is_total_row='False']">
+          <series nodeset="instance('commcare-reports:ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i')/rows/row[@is_total_row='False']">
             <configuration/>
-            <x function="column[@id='owner']" />
-            <y function="column[@id='count']" />
+            <x function="owner" />
+            <y function="count" />
           </series>
           <configuration/>
         </graph>

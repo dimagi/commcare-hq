@@ -275,9 +275,10 @@ class Repeater(RepeaterSuperProxy):
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
+    max_workers = models.IntegerField(default=0)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
-    is_deleted = models.BooleanField(default=False, db_index=True)
+    is_deleted = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
@@ -286,6 +287,18 @@ class Repeater(RepeaterSuperProxy):
 
     class Meta:
         db_table = 'repeaters_repeater'
+        indexes = [
+            models.Index(
+                name='deleted_partial_idx',
+                fields=['id'],
+                condition=models.Q(is_deleted=False),
+            ),
+            models.Index(
+                name="active_partial_idx",
+                fields=["id"],
+                condition=models.Q(("is_deleted", False), ("is_paused", False)),
+            ),
+        ]
 
     payload_generator_classes = ()
 
@@ -1010,7 +1023,12 @@ class RepeatRecord(models.Model):
                 name="next_check_not_null",
                 fields=["next_check"],
                 condition=models.Q(next_check__isnull=False),
-            )
+            ),
+            models.Index(
+                name="state_partial_idx",
+                fields=["repeater_id"],
+                condition=models.Q(state__in=(State.Pending, State.Fail)),
+            ),
         ]
         constraints = [
             models.CheckConstraint(
@@ -1313,10 +1331,13 @@ def has_failed(record):
 def format_response(response):
     if not is_response(response):
         return ''
+    request_url = getattr(response, "url", "")
+    request_url = request_url + "\n" if request_url else ""
+    formatted_response = f'{request_url}{response.status_code}: {response.reason}'
     response_text = getattr(response, "text", "")[:MAX_REQUEST_LOG_LENGTH]
     if response_text:
-        return f'{response.status_code}: {response.reason}\n{response_text}'
-    return f'{response.status_code}: {response.reason}'
+        return formatted_response + f'\n{response_text}'
+    return formatted_response
 
 
 def is_success_response(response):

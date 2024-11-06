@@ -92,6 +92,7 @@ hqDefine("geospatial/js/case_management", [
         self.clearConnectionLines = function (cases) {
             let mapInstance = mapModel.mapInstance;
             let caseData = [];
+            const hasSelectedCases = mapModel.hasSelectedCases();
             cases.forEach(function (c) {
                 const layerId = mapModel.getLineFeatureId(c.itemId);
                 if (mapInstance.getLayer(layerId)) {
@@ -101,11 +102,14 @@ hqDefine("geospatial/js/case_management", [
                     mapInstance.removeSource(layerId);
                 }
 
-                caseData.push({
-                    id: c.itemId,
-                    lon: c.itemData.coordinates.lng,
-                    lat: c.itemData.coordinates.lat,
-                });
+                // Either select all if none selected, or only pick selected cases
+                if (!hasSelectedCases || c.isSelected()) {
+                    caseData.push({
+                        id: c.itemId,
+                        lon: c.itemData.coordinates.lng,
+                        lat: c.itemData.coordinates.lat,
+                    });
+                }
             });
 
             return caseData;
@@ -137,12 +141,17 @@ hqDefine("geospatial/js/case_management", [
                 $('#disbursement-params').show();
             };
 
-            let userData = users.map(function (c) {
-                return {
-                    id: c.itemId,
-                    lon: c.itemData.coordinates.lng,
-                    lat: c.itemData.coordinates.lat,
-                };
+            const hasSelectedUsers = mapModel.hasSelectedUsers();
+            let userData = [];
+            users.forEach((userMapItem) => {
+                // Either select all if none selected, or only pick selected users
+                if (!hasSelectedUsers || userMapItem.isSelected()) {
+                    userData.push({
+                        id: userMapItem.itemId,
+                        lon: userMapItem.itemData.coordinates.lng,
+                        lat: userMapItem.itemData.coordinates.lat,
+                    });
+                }
             });
 
             $.ajax({
@@ -242,13 +251,15 @@ hqDefine("geospatial/js/case_management", [
         if (polygonFilterModel.activeSavedPolygon()) {
             features = features.concat(polygonFilterModel.activeSavedPolygon().geoJson.features);
         }
-        mapModel.selectAllMapItems(features);
+        if (features.length) {
+            mapModel.selectAllMapItems(features);
+        }
     }
 
     function initPolygonFilters() {
         // Assumes `map` var is initialized
         const $mapControlDiv = $("#polygon-filters");
-        polygonFilterModel = new models.PolygonFilter(mapModel, false, true);
+        polygonFilterModel = new models.PolygonFilter(mapModel, false, true, false);
         polygonFilterModel.loadPolygons(initialPageData.get('saved_polygons'));
         if ($mapControlDiv.length) {
             ko.cleanNode($mapControlDiv[0]);
@@ -352,6 +363,7 @@ hqDefine("geospatial/js/case_management", [
 
                     const userMapItems = mapModel.addMarkersToMap(userData, userMarkerColors);
                     mapModel.userMapItems(userMapItems);
+                    selectMapItemsInPolygons();
                 },
                 error: function () {
                     self.hasErrors(true);
@@ -505,6 +517,12 @@ hqDefine("geospatial/js/case_management", [
             }
         } else if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
             loadCases(xhr.responseJSON.aaData);
+            if (polygonFilterModel) {
+                selectMapItemsInPolygons();
+            }
+            if (mapModel.hasDisbursementLayers()) {
+                mapModel.removeDisbursementLayers();
+            }
         }
     });
 });

@@ -136,7 +136,7 @@ def mid(lower, upper):
     return ceil(lower + (upper - lower) / 2)
 
 
-def case_query_for_missing_geopoint_val(domain, geo_case_property, case_type=None, size=None):
+def case_query_for_missing_geopoint_val(domain, geo_case_property, case_type=None, size=None, offset=0):
     query = (
         CaseSearchES()
         .domain(domain)
@@ -146,6 +146,8 @@ def case_query_for_missing_geopoint_val(domain, geo_case_property, case_type=Non
         query = query.filter(_geopoint_value_missing_for_property(geo_case_property))
     if case_type:
         query = query.case_type(case_type)
+    query.sort('opened_on')
+    query.start(offset)
     if size:
         query = query.size(size)
     return query

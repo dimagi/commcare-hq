@@ -36,7 +36,8 @@ class ExpressionPayloadGenerator(BasePayloadGenerator):
         }
         return url_template.format(
             **{
-                template_var: expressions[template_var](payload_doc_json) if template_var in expressions else ""
+                template_var: expressions[template_var](payload_doc_json, context)
+                if template_var in expressions else ""
                 for template_var in required_template_vars
             }
         )

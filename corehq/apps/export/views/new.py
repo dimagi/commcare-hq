@@ -15,6 +15,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from dimagi.utils.web import json_response
 
@@ -61,9 +62,10 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
 from corehq.apps.data_dictionary.models import CaseProperty
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class BaseExportView(BaseProjectDataView):
     """Base class for all create and edit export views"""
-    template_name = 'export/bootstrap3/customize_export_new.html'
+    template_name = 'export/customize_export_new.html'
     export_type = None
     metric_name = None  # Override
     is_async = True
@@ -101,7 +103,7 @@ class BaseExportView(BaseProjectDataView):
             'help_text': mark_safe(  # nosec: no user input
                 _("""
                 Learn more about exports on our <a
-                href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview"
+                href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports"
                 target="_blank">Help Site</a>.
             """)),
             'name_label': _("Export Name"),

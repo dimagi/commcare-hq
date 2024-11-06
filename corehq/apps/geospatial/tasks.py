@@ -1,8 +1,8 @@
 from dimagi.utils.logging import notify_exception
 
-from corehq.util.decorators import serial_task
-
 from corehq.apps.celery import task
+from corehq.apps.es import case_search_adapter
+from corehq.apps.es.client import manager
 from corehq.apps.geospatial.const import INDEX_ES_TASK_HELPER_BASE_KEY
 from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
 from corehq.apps.geospatial.utils import (
@@ -32,7 +32,7 @@ def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict, task_k
         celery_task_tracker.mark_completed()
 
 
-@serial_task('async-index-es-docs', timeout=60 * 60, queue='background_queue', ignore_result=True)
+@task(queue='geospatial_queue', ignore_result=True)
 def index_es_docs_with_location_props(domain):
     celery_task_tracker = get_celery_task_tracker(domain, INDEX_ES_TASK_HELPER_BASE_KEY)
     if celery_task_tracker.is_active():
@@ -46,15 +46,19 @@ def index_es_docs_with_location_props(domain):
         return
 
     celery_task_tracker.mark_requested()
+    celery_task_tracker.mark_start_time()
     batch_count = get_batch_count(doc_count, DEFAULT_QUERY_LIMIT)
     try:
         for i in range(batch_count):
+            docs_left = doc_count - (DEFAULT_QUERY_LIMIT * i)
+            limit = min(DEFAULT_QUERY_LIMIT, docs_left)
             process_batch(
                 domain,
                 geo_case_prop,
                 case_type=None,
-                query_limit=DEFAULT_QUERY_LIMIT,
+                query_limit=limit,
                 chunk_size=DEFAULT_CHUNK_SIZE,
+                offset=i * DEFAULT_QUERY_LIMIT,
             )
             celery_task_tracker.update_progress(current=i + 1, total=batch_count)
     except Exception as e:
@@ -66,3 +70,6 @@ def index_es_docs_with_location_props(domain):
         )
     else:
         celery_task_tracker.mark_completed()
+    finally:
+        celery_task_tracker.mark_end_time()
+        # manager.index_refresh(case_search_adapter.index_name)
