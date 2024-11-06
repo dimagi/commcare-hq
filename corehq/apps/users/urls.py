@@ -49,7 +49,6 @@ from .views.mobile.users import (
     CommCareUsersLookup,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
-    CreateCommCareUserModal,
     DemoRestoreStatusView,
     DeleteCommCareUsers,
     DownloadUsersStatusView,
@@ -227,11 +226,6 @@ urlpatterns = [
         r'^commcare/download/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         user_download_job_poll,
         name='user_download_job_poll'
-    ),
-    url(
-        r'^commcare/new_mobile_worker_modal/$',
-        CreateCommCareUserModal.as_view(),
-        name=CreateCommCareUserModal.urlname
     ),
     url(
         r'^commcare/confirm_charges/$',

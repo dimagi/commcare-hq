@@ -64,8 +64,18 @@ hqDefine('analytix/js/gtx', [
     };
 
     $(function () {
-        // userProperties are added to dataLayer at earliest to be readily available once GTM loads
         var apiId = _get('apiId');
+        var projectGAOptOut = _get('projectGAOptOut');
+
+        // Tag Manager is solely used for Google Analytics. If a projects opts out of GA, we disable it here.
+        // In case we decide to use Tag Manager for other tooling in future, remove this check and instead
+        // add it for all the GA events at the Tag Manager Console end.
+        if (projectGAOptOut === 'yes') {
+            _logger.debug.log("Tag manager not initialized because Project has opted out of GA.");
+            return;
+        }
+
+        // userProperties are added to dataLayer at earliest to be readily available once GTM loads
         if (apiId && initialAnalytics.getFn('global')(('isEnabled'))) {
             addUserPropertiesToDataLayer();
         }

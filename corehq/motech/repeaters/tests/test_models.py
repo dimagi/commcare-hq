@@ -277,6 +277,14 @@ class FormatResponseTests(SimpleTestCase):
         self.assertEqual(format_response(resp), '200: OK\n'
                                                 '<h1>Hello World</h1>')
 
+    def test_with_url(self):
+        resp = ResponseMock()
+        resp.status_code = 200
+        resp.reason = 'OK'
+        resp.text = '<h1>Hello World</h1>'
+        resp.url = 'https://test.com'
+        self.assertEqual(format_response(resp), 'https://test.com\n200: OK\n<h1>Hello World</h1>')
+
 
 class AttemptsTests(RepeaterTestCase):
 

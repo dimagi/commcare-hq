@@ -26,13 +26,20 @@ from corehq.apps.user_importer.validation import (
     ConfirmationSmsValidator,
     LocationValidator,
     _get_invitation_or_editable_user,
+    CustomDataValidator,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, HqPermissions, Invitation, WebUser
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.custom_data_fields.models import (CustomDataFieldsDefinition,
-    CustomDataFieldsProfile)
-from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field)
+from corehq.apps.users.views.mobile.custom_data_fields import (
+    UserFieldsView,
+    WebUserFieldsView,
+    CommcareUserFieldsView,
+)
 from corehq.tests.tools import nottest
 from corehq.util.test_utils import flag_enabled
 
@@ -530,6 +537,110 @@ class TestProfileValidator(TestCase):
     def tearDownClass(cls):
         super(TestProfileValidator, cls).tearDownClass()
         delete_all_users()
+
+
+class TestCustomDataValidator(TestCase):
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_users()
+        super(TestCustomDataValidator, cls).setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+
+        cls.definition = CustomDataFieldsDefinition(
+            domain=cls.domain,
+            field_type=UserFieldsView.field_type
+        )
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='corners',
+                is_required=False,
+                label='Number of corners',
+                regex='^[0-9]+$',
+                regex_msg='This should be a number',
+            ),
+            Field(
+                slug='prefix',
+                is_required=False,
+                label='Prefix',
+                choices=['tri', 'tetra', 'penta'],
+            ),
+            Field(
+                slug='color',
+                is_required=True,
+                required_for=[CommcareUserFieldsView.user_type],
+                label='Color',
+            ),
+            Field(
+                slug='shape_type',
+                is_required=True,
+                required_for=[WebUserFieldsView.user_type],
+                label='Type of Shape',
+            )
+        ])
+        cls.profile1 = CustomDataFieldsProfile(
+            name='p1',
+            fields={'corners': '3', 'color': 'blue', 'shape_type': 'triangle'},
+            definition=cls.definition,
+        )
+        cls.profile1.save()
+
+    def test_valid_fields_without_profile(self):
+        import_validator = CustomDataValidator(self.domain, None, True)
+        custom_data_spec = {
+            'data': {'corners': '3', 'color': 'blue', 'shape_type': 'triangle'},
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == ''
+
+    def test_invalid_fields_with_valid_profile(self):
+        user_profiles_by_name = {'p1': self.profile1}
+        import_validator = CustomDataValidator(self.domain, user_profiles_by_name, True)
+        custom_data_spec = {
+            'data': {'corners': 'three'},
+            'user_profile': 'p1',
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == ''
+
+    def test_invalid_web_user_required_field(self):
+        import_validator = CustomDataValidator(self.domain, None, True)
+        custom_data_spec = {
+            'data': {'color': 'blue'},
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == "Type of Shape is required."
+
+    def test_invalid_commcare_user_required_field(self):
+        import_validator = CustomDataValidator(self.domain, None, False)
+        custom_data_spec = {
+            'data': {'shape_type': 'triangle'},
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == "Color is required."
+
+    def test_invalid_choices_field(self):
+        import_validator = CustomDataValidator(self.domain, None, True)
+        custom_data_spec = {
+            'data': {'prefix': 'bi', 'color': 'blue', 'shape_type': 'triangle'},
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == (
+            "'bi' is not a valid choice for Prefix. "
+            "The available options are: tri, tetra, penta."
+        )
+
+    def test_invalild_regex_fields(self):
+        import_validator = CustomDataValidator(self.domain, None, True)
+        custom_data_spec = {
+            'data': {'corners': 'three', 'color': 'blue', 'shape_type': 'triangle'},
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == (
+            "'three' is not a valid match for Number of corners"
+        )
 
 
 class TestUtil(TestCase):

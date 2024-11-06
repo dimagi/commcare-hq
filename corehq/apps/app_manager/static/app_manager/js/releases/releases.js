@@ -243,6 +243,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildState = ko.observable('');
         self.buildErrorCode = ko.observable('');
         self.errorMessage = ko.observable(self.genericErrorMessage);
+        self.releaseErrorMessage = ko.observable();
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.fetchLimit = ko.observable();
@@ -387,6 +388,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.toggleRelease = function (savedApp, event) {
+            self.releaseErrorMessage(null);
             $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('hide');
             var isReleased = savedApp.is_released();
             var savedAppId = savedApp.id();
@@ -404,7 +406,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     },
                     success: function (data) {
                         if (data.error) {
-                            alert(data.error);
+                            self.releaseErrorMessage(data.error);
                             $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
                             savedApp.is_released(isReleased);
                         } else {
@@ -492,6 +494,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.actuallyMakeBuild = function () {
             self.buildState('pending');
             self.errorMessage(self.genericErrorMessage);
+            self.releaseErrorMessage(null);
             $.post({
                 url: self.reverse('save_copy'),
                 success: function (data) {

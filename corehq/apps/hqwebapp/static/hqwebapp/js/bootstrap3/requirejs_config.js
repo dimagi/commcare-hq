@@ -16,6 +16,7 @@ requirejs.config({
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
         "underscore": "underscore/underscore",
         "stripe": "https://js.stripe.com/v2/?noext",
+        "commcarehq_b3": "hqwebapp/js/requirejs_webpack_fake",
     },
     shim: {
         "stripe": { exports: 'Stripe' },
