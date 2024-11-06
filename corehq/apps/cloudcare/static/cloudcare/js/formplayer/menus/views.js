@@ -451,7 +451,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 const scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
                 const offset = getScrollTopOffset(this.smallScreenEnabled);
                 $(scrollContainer).animate({
-                    scrollTop: scrollContainer.scrollTop() + $(e.currentTarget).parent().offset().top - offset
+                    scrollTop: scrollContainer.scrollTop() + $(e.currentTarget).parent().offset().top - offset,
                 });
             }
 
@@ -1586,7 +1586,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', collapse);
             }
         },
-        initialize: function (options) {
+        initialize: function () {
             self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
