@@ -48,15 +48,6 @@ def _run_query(domain, csql):
                .count())
 
 
-def _get_indicator_nodes(restore_state, indicators):
-    with restore_state.timing_context('_get_template_renderer'):
-        renderer = _get_template_renderer(restore_state.restore_user)
-    for name, csql_template in indicators:
-        with restore_state.timing_context(name):
-            value = _run_query(restore_state.domain, renderer.render(csql_template))
-        yield E.value(value, name=name)
-
-
 class CaseSearchFixtureProvider(FixtureProvider):
     id = 'case-search-fixture'
     ignore_skip_fixtures_flag = True
@@ -66,8 +57,15 @@ class CaseSearchFixtureProvider(FixtureProvider):
             return
         indicators = _get_indicators(restore_state.domain)
         if indicators:
-            nodes = _get_indicator_nodes(restore_state, indicators)
-            yield E.fixture(E.values(*nodes), id=self.id)
+            with restore_state.timing_context('_get_template_renderer'):
+                renderer = _get_template_renderer(restore_state.restore_user)
+            for name, csql_template in indicators:
+                with restore_state.timing_context(name):
+                    value = _run_query(restore_state.domain, renderer.render(csql_template))
+                yield self._to_xml(name, value)
+
+    def _to_xml(self, name, value):
+        return E.fixture(E.value(value), id=f"{self.id}:{name}")
 
 
 def _get_indicators(domain):
