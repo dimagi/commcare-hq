@@ -127,6 +127,7 @@ from corehq.apps.users.util import (
     log_user_change,
     verify_modify_user_conditions,
 )
+from corehq.apps.users.validation import validate_profile_required
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -269,7 +270,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
-
+        try:
+            validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
+        except ValidationError as e:
+            raise BadRequest(e.message)
         try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
