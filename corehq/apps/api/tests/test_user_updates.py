@@ -118,7 +118,7 @@ class TestUpdateUserMethods(TestCase):
         self.assertEqual(self.user.get_user_data(self.domain)["custom_data"], "updated custom data")
 
     def test_update_user_data_raises_exception_if_profile_conflict(self):
-        profile_id = self._setup_profile(self.domain)
+        profile_id = self._setup_profile()
         with self.assertRaises(UpdateUserException) as cm:
             update(self.user, 'user_data', {PROFILE_SLUG: profile_id, 'conflicting_field': 'no'})
         self.assertEqual(cm.exception.message, "'conflicting_field' cannot be set directly")
@@ -181,8 +181,8 @@ class TestUpdateUserMethods(TestCase):
             "There are multiple roles with the name 'edit-data' in the domain 'test-domain'"
         )
 
-    def _setup_profile(domain):
-        definition = CustomDataFieldsDefinition(domain=domain,
+    def _setup_profile(self):
+        definition = CustomDataFieldsDefinition(domain=self.domain,
                                                 field_type=UserFieldsView.field_type)
         definition.save()
         definition.set_fields([
