@@ -42,6 +42,16 @@ def set_toggle(slug, item, enabled, namespace=None):
         return True
 
 
+def set_toggles(slugs, item, enabled, namespace=None):
+    toggle_changed = False
+    for slug in slugs:
+        if set_toggle(slug, item, enabled, namespace):
+            toggle_changed = True
+    if toggle_changed:
+        from corehq.apps.toggle_ui.views import clear_cache_for_toggle
+        clear_cache_for_toggle(namespace, item)
+
+
 def namespaced_item(item, namespace):
     return '{namespace}:{item}'.format(
         namespace=namespace, item=item
