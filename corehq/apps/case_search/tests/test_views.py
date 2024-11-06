@@ -55,6 +55,6 @@ class TestCSQLFixtureExpressionView(TestCase):
         CSQLFixtureExpression.objects.get(domain=self.DOMAIN, name='exp2', id=exp2.id, csql='asdfg')
         CSQLFixtureExpression.objects.get(domain=self.DOMAIN, name='exp3', csql='asdf')
         CSQLFixtureExpressionLog.objects.get(expression=deleted_exp,
-                                             action=CSQLFixtureExpressionLog.Action.DELETE.value)
-        CSQLFixtureExpressionLog.objects.get(expression=exp2, action=CSQLFixtureExpressionLog.Action.UPDATE.value)
-        CSQLFixtureExpressionLog.objects.get(name='exp3', action=CSQLFixtureExpressionLog.Action.CREATE.value)
+                                             action=CSQLFixtureExpressionLog.Action.DELETE)
+        CSQLFixtureExpressionLog.objects.get(expression=exp2, action=CSQLFixtureExpressionLog.Action.UPDATE)
+        CSQLFixtureExpressionLog.objects.get(name='exp3', action=CSQLFixtureExpressionLog.Action.CREATE)

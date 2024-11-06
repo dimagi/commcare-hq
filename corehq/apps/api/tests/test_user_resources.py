@@ -8,7 +8,7 @@ from django.utils.http import urlencode
 from flaky import flaky
 from tastypie.bundle import Bundle
 
-from corehq.apps.api.resources import v0_5
+from corehq.apps.api.resources import v0_5, v1_0
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
     CustomDataFieldsDefinition,
@@ -729,8 +729,8 @@ class TestUserDomainsResource(TestCase):
 
 
 class TestCommCareAnalyticsUserResource(APIResourceTest):
-    resource = v0_5.CommCareAnalyticsUserResource
-    api_name = 'v0.5'
+    resource = v1_0.CommCareAnalyticsUserResource
+    api_name = 'v1'
 
     def test_flag_not_enabled(self):
         response = self._assert_auth_get_resource(self.list_endpoint)
