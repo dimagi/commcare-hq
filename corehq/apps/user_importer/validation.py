@@ -9,6 +9,7 @@ from dimagi.utils.parsing import string_to_boolean
 from django.utils.translation import gettext as _
 
 from corehq import toggles
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.reports.models import TableauUser
@@ -21,6 +22,7 @@ from corehq.apps.users.dbaccessors import get_existing_usernames
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import normalize_username, raw_username
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.views.utils import (
     user_can_access_invite
 )
@@ -347,7 +349,6 @@ class ProfileValidator(ImportValidator):
         if spec_profile_same_as_original:
             return
 
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         upload_user_accessible_profiles = (
             UserFieldsView.get_user_accessible_profiles(self.domain, self.upload_user))
         accessible_profile_ids = {p.id for p in upload_user_accessible_profiles}
