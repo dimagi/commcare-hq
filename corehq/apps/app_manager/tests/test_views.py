@@ -3,6 +3,7 @@ import doctest
 import json
 import re
 from contextlib import contextmanager
+from unittest import mock
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -521,6 +522,32 @@ class TestViews(ViewsBase):
              'You cannot create a linked app in the same project space as the upstream app.'],
             [m.message for m in response.wsgi_request._messages]
         )
+
+    def test_copy_regular_app_toggles(self, _):
+        other_domain = Domain.get_or_create_with_name('other-domain', is_active=True)
+        self.addCleanup(other_domain.delete)
+
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+
+        from corehq.toggles import NAMESPACE_DOMAIN, StaticToggle, TAG_INTERNAL
+        TEST_TOGGLE = StaticToggle(
+            'test_toggle',
+            'This is for tests',
+            TAG_INTERNAL,
+            [NAMESPACE_DOMAIN],
+        )
+        copy_data = {
+            'app': self.app.id,
+            'domain': other_domain.name,
+            'name': 'Copy App',
+            'toggles': 'test_toggle',
+        }
+        with patch('corehq.toggles.all_toggles_by_name', return_value={'test_toggle': TEST_TOGGLE}), \
+             mock.patch('corehq.apps.app_manager.views.apps.clear_cache_for_toggle') as mock_clear_cache:
+            self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+            mock_clear_cache.assert_called_once_with(NAMESPACE_DOMAIN, other_domain.name)
 
 
 @contextmanager
