@@ -448,6 +448,80 @@ class TestViews(ViewsBase):
             }
         ])
 
+    def test_copy_regular_app(self, _):
+        other_domain = Domain.get_or_create_with_name('other-domain', is_active=True)
+        self.addCleanup(other_domain.delete)
+
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+
+        copy_data = {
+            'app': self.app.id,
+            'domain': other_domain.name,
+            'name': 'Copy App',
+            'linked': False,
+        }
+        response = self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+        self.assertEqual(response.status_code, 302)
+
+        copied_app = other_domain.full_applications()[0]
+        self.assertEqual(copied_app.name, 'Copy App')
+        self.assertEqual(copied_app.doc_type, 'Application')
+        copied_app.delete()
+
+    def test_copy_linked_app_to_different_domain(self, _):
+        other_domain = Domain.get_or_create_with_name('other-domain', is_active=True)
+        self.addCleanup(other_domain.delete)
+
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+        build = self.app.make_build()
+        build.is_released = True
+        build.save()
+
+        copy_data = {
+            'app': self.app.id,
+            'domain': other_domain.name,
+            'name': 'Linked App',
+            'linked': True,
+            'build_id': build.id,
+        }
+        with patch('corehq.apps.app_manager.forms.can_domain_access_linked_domains', return_value=True):
+            response = self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+        self.assertEqual(response.status_code, 302)
+
+        linked_app = other_domain.full_applications()[0]
+        self.assertEqual(linked_app.name, 'Linked App')
+        self.assertEqual(linked_app.doc_type, 'LinkedApplication')
+        linked_app.delete()
+
+    def test_cannot_copy_linked_app_to_same_domain(self, _):
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+        build = self.app.make_build()
+        build.is_released = True
+        build.save()
+
+        copy_data = {
+            'app': self.app.id,
+            'domain': self.domain,
+            'name': 'Same Domain Link',
+            'linked': True,
+            'build_id': build.id,
+        }
+        with patch('corehq.apps.app_manager.forms.can_domain_access_linked_domains', return_value=True):
+            response = self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            ['Creating linked app failed. '
+             'You cannot create a linked app in the same project space as the upstream app.'],
+            [m.message for m in response.wsgi_request._messages]
+        )
+
 
 @contextmanager
 def apps_modules_setup(test_case):
