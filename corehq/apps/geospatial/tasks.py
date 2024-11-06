@@ -47,11 +47,13 @@ def index_es_docs_with_location_props(domain):
     batch_count = get_batch_count(doc_count, DEFAULT_QUERY_LIMIT)
     try:
         for i in range(batch_count):
+            docs_left = doc_count - (DEFAULT_QUERY_LIMIT * i)
+            limit = min(DEFAULT_QUERY_LIMIT, docs_left)
             process_batch(
                 domain,
                 geo_case_prop,
                 case_type=None,
-                query_limit=DEFAULT_QUERY_LIMIT,
+                query_limit=limit,
                 chunk_size=DEFAULT_CHUNK_SIZE,
             )
             celery_task_tracker.update_progress(current=i + 1, total=batch_count)
