@@ -362,6 +362,7 @@ class RestoreState:
             is_async: bool = False,
             overwrite_cache: bool = False,
             auth_type: Optional[str] = None,
+            timing_context: Optional[TimingContext] = None,
     ):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
@@ -380,6 +381,7 @@ class RestoreState:
         self.overwrite_cache = overwrite_cache
         self.auth_type = auth_type
         self._last_sync_log = Ellipsis
+        self.timing_context = timing_context or TimingContext()
 
     def validate_state(self):
         check_version(self.params.version)
@@ -532,19 +534,20 @@ class RestoreConfig(object):
         self.is_async = is_async
         self.skip_fixtures = skip_fixtures
 
+        self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
+
         self.restore_state = RestoreState(
             self.project,
             self.restore_user,
             self.params, is_async,
             self.cache_settings.overwrite_cache,
-            auth_type=auth_type
+            auth_type=auth_type,
+            timing_context=self.timing_context,
         )
 
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
-
-        self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
 
     @property
     @memoized
