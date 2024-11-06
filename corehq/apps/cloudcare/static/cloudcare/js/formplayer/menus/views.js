@@ -56,10 +56,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         attributes: function () {
             const displayText = this.options.model.attributes.displayText;
+            const badgeText = this.options.model.attributes.badgeText;
             return {
                 "role": "link",
                 "tabindex": "0",
-                "aria-label": displayText,
+                "aria-label": displayText + (badgeText ? "; " + badgeText : ""),
             };
         },
         events: {
