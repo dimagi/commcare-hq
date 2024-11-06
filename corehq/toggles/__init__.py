@@ -2955,3 +2955,10 @@ SMART_LINKS_FOR_WEB_USERS = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+MODULE_BADGES = StaticToggle(
+    slug='module_badges',
+    label='USH: Show case counts from CSQL queries as badges on modules',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)

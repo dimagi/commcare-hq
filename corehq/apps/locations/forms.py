@@ -412,8 +412,10 @@ class UsersAtLocationForm(forms.Form):
                 _("Specify Workers at this Location"),
                 crispy.Field('selected_ids'),
             ),
-            crispy.ButtonHolder(
-                Submit('submit', gettext_lazy("Update Location Membership"))
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', gettext_lazy("Update Location Membership"))
+                )
             )
         )
 
@@ -532,7 +534,7 @@ class LocationFilterForm(forms.Form):
         initial=False,
     )
     location_status_active = forms.ChoiceField(
-        label="",
+        label=_('Active / Archived'),
         choices=LOCATION_ACTIVE_STATUS,
         required=False,
         widget=SelectToggle(choices=LOCATION_ACTIVE_STATUS, attrs={"ko_value": "location_status_active"}),
@@ -567,11 +569,13 @@ class LocationFilterForm(forms.Form):
                 ),
                 crispy.Field('location_status_active',),
             ),
-            StrictButton(
-                _("Download Locations"),
-                type="submit",
-                css_class="btn btn-primary",
-                data_bind="html: buttonHTML",
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Download Locations"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                    data_bind="html: buttonHTML",
+                ),
             ),
         )
 

@@ -1012,7 +1012,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 currentNode = parent;
             }
             var el = $("#" + self.entry.entryId + "-label");
-            const scrollContainer = $('#content-plus-version-info-container');
+            const scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
             scrollContainer.animate({
                 scrollTop: scrollContainer.scrollTop() + $(el).offset().top - 80,
             });
