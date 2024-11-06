@@ -3,12 +3,7 @@ from django.core.exceptions import ValidationError
 
 from corehq.apps.api.exceptions import UpdateUserException
 from corehq.apps.api.user_updates import update
-from corehq.apps.custom_data_fields.models import (
-    PROFILE_SLUG,
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    Field,
-)
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -21,6 +16,7 @@ from corehq.apps.users.audit.change_messages import (
 )
 from corehq.apps.users.models import CommCareUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
+from corehq.apps.users.tests.util import setup_profile
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 
@@ -118,7 +114,7 @@ class TestUpdateUserMethods(TestCase):
         self.assertEqual(self.user.get_user_data(self.domain)["custom_data"], "updated custom data")
 
     def test_update_user_data_raises_exception_if_profile_conflict(self):
-        profile_id = self._setup_profile()
+        profile_id = setup_profile(self.domain)
         with self.assertRaises(UpdateUserException) as cm:
             update(self.user, 'user_data', {PROFILE_SLUG: profile_id, 'conflicting_field': 'no'})
         self.assertEqual(cm.exception.message, "'conflicting_field' cannot be set directly")
@@ -180,26 +176,6 @@ class TestUpdateUserMethods(TestCase):
             cm.exception.message,
             "There are multiple roles with the name 'edit-data' in the domain 'test-domain'"
         )
-
-    def _setup_profile(self):
-        definition = CustomDataFieldsDefinition(domain=self.domain,
-                                                field_type=UserFieldsView.field_type)
-        definition.save()
-        definition.set_fields([
-            Field(
-                slug='conflicting_field',
-                label='Conflicting Field',
-                choices=['yes', 'no'],
-            ),
-        ])
-        definition.save()
-        profile = CustomDataFieldsProfile(
-            name='character',
-            fields={'conflicting_field': 'yes'},
-            definition=definition,
-        )
-        profile.save()
-        return profile.id
 
     def test_update_locations_raises_if_primary_location_not_in_location_list(self):
         with self.assertRaises(UpdateUserException) as e:
