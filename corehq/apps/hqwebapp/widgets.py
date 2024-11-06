@@ -137,12 +137,27 @@ class DateRangePickerWidget(Input):
 
         attrs.update({
             'data-separator': self.separator,
-            'data-labels': json.dumps(self.range_labels),
             'data-start-date': startdate,
             'data-end-date': enddate,
         })
 
+        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+        use_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
+        if use_bootstrap5:
+            attrs.update({
+                'data-labels': json.dumps(self.range_labels),
+            })
+
         output = super(DateRangePickerWidget, self).render(name, value, attrs, renderer)
+        if use_bootstrap5:
+            return format_html(
+                '<div class="input-group hqwebapp-datespan">'
+                '   <span class="input-group-text"><i class="fa-solid fa-calendar-days"></i></span>'
+                '   {}'
+                '</div>',
+                output
+            )
+
         return format_html(
             '<div class="input-group hqwebapp-datespan">'
             '   <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>'

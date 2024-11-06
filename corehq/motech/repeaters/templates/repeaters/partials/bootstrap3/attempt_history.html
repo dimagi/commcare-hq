@@ -30,7 +30,7 @@
                             {% endif %}
                             {% if attempt.message %}
                                 <div class="well record-attempt" style="font-family: monospace;">
-                                    {{ attempt.message }}
+                                    {{ attempt.message|escape|linebreaksbr }}
                                 </div>
                             {% endif %}
                         </div>

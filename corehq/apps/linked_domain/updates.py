@@ -109,7 +109,7 @@ from corehq.apps.userreports.util import (
     get_ucr_class_name,
 )
 from corehq.apps.users.models import UserRole, HqPermissions
-from corehq.apps.users.views.mobile import UserFieldsView
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN, EMBEDDED_TABLEAU
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 from corehq.toggles.shortcuts import set_toggle
@@ -311,6 +311,7 @@ def create_local_field(upstream_field_definition):
     return Field(
         slug=upstream_field_definition['slug'],
         is_required=upstream_field_definition['is_required'],
+        required_for=upstream_field_definition['required_for'],
         label=upstream_field_definition['label'],
         choices=upstream_field_definition['choices'],
         regex=upstream_field_definition['regex'],

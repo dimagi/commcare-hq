@@ -1,0 +1,54 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<div class="modal fade" tabindex="-1" role="dialog" id="export-process-deleted-applications">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          {% if export_instance.type == 'form' %}
+            {% trans "Show Deleted Questions" %}
+          {% else %}
+            {% trans "Show Deleted Properties" %}
+          {% endif %}
+        </h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          {% if export_instance.type == 'form' %}
+            {% blocktrans %}
+              In order to show you your deleted questions, we need to process all of your old applications that have
+              had submissions. This operation can sometimes take a few minutes.
+            {% endblocktrans %}
+          {% else %}
+            {% blocktrans %}
+              In order to show you your deleted properties, we need to process all of your old applications that have
+              had submissions. This operation can sometimes take a few minutes.
+            {% endblocktrans %}
+          {% endif %}
+        </p>
+        <div class="spacer"></div>
+        <p data-bind="visible: errorOnBuildSchema, css: { 'text-danger': errorOnBuildSchema }">
+          {% trans "Unable to process applications. Please report an issue if this persists" %}
+        </p>
+        <div class="spacer"></div>
+        <div class="progress" role="progressbar" data-bind="visible: showBuildSchemaProgressBar">
+          <div class="progress-bar" data-bind="
+              style: {
+                  width: buildSchemaProgress() + '%'
+              }
+          "></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+        <button type="button" class="btn btn-primary" data-bind="
+            click: onBeginSchemaBuild,
+            text: schemaProgressText
+            ">
+          {% trans "Process" %}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

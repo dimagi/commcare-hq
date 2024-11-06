@@ -158,14 +158,6 @@
           <div class="row">
             <div class="col-sm-12">
 
-              {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' and can_edit_commcare_users and not request.is_view_only %}
-                <p>
-                  <a href="#new_user" role="button" class="btn btn-default" data-toggle="modal">
-                    <i class="fa fa-plus"></i> {% trans "Create Mobile Worker at this Location" %}
-                  </a>
-                </p>
-              {% endif %}
-
               <div class="panel panel-modern-gray panel-form-only">
                 <div class="panel-body">
                   <form class="form-horizontal disable-on-submit{% if not can_edit_users_in_location or request.is_view_only %} form-hide-actions{% endif %}" id="edit_users" action="" method='post'>
@@ -210,26 +202,3 @@
 
   </div>
 {% endblock %}
-
-{% block modals %}{{ block.super }}
-  {% if can_edit_commcare_users %}
-    <div id="new_user" class="modal fade">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button"
-                    class="close"
-                    data-dismiss="modal"
-                    aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title">{% trans "New Mobile Worker at This Location" %}</h4>
-          </div>
-          <form class="form form-horizontal" method="post" id="add_commcare_account_form"
-                action="{% url "new_mobile_worker_modal" domain %}?location_id={{ location.get_id }}">
-          </form>
-        </div>
-      </div>
-    </div>
-  {% endif %}
-{% endblock modals %}

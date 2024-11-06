@@ -1,5 +1,5 @@
 <partial>
-  <detail id="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data" nodeset="rows/row">
+  <detail id="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data" nodeset="row">
     <title>
       <text>
         <locale id="cchq.report_data_table"/>
@@ -13,7 +13,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(column[@id='owner'] = '2', 'two', if(column[@id='owner'] = '&#2319;&#2325;', 'one', column[@id='owner']))">
+          <xpath function="if(owner = '2', 'two', if(owner = '&#2319;&#2325;', 'one', owner))">
             <variable name="lang">
               <locale id="lang.current"/>
             </variable>
@@ -29,7 +29,7 @@
       </header>
       <template>
         <text>
-          <xpath function="column[@id='count']"/>
+          <xpath function="count"/>
         </text>
       </template>
     </field>
@@ -41,7 +41,7 @@
       </header>
       <template>
         <text>
-          <xpath function="column[@id='is_starred']"/>
+          <xpath function="is_starred"/>
         </text>
       </template>
     </field>

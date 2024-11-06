@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,19 +2,27 @@
+@@ -2,21 +2,29 @@
  requirejs.config({
      baseUrl: '/static/',
      paths: {
@@ -28,9 +28,12 @@
          "underscore": "underscore/underscore",
 +        "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
          "stripe": "https://js.stripe.com/v2/?noext",
+-        "commcarehq_b3": "hqwebapp/js/requirejs_webpack_fake",
++        "commcarehq": "hqwebapp/js/requirejs_webpack_fake",
      },
      shim: {
-@@ -25,7 +33,6 @@
+         "stripe": { exports: 'Stripe' },
+@@ -26,7 +34,6 @@
          "ace-builds/src-min-noconflict/ext-searchbox": { deps: ["ace-builds/src-min-noconflict/ace"] },
          "At.js/dist/js/jquery.atwho": { deps: ['jquery', 'Caret.js/dist/jquery.caret'] },
          "backbone": { exports: "backbone" },
@@ -38,7 +41,7 @@
          "calendars/dist/js/jquery.calendars.picker": {
              deps: [
                  "calendars/dist/js/jquery.plugin",
-@@ -61,10 +68,14 @@
+@@ -62,10 +69,14 @@
              ],
          },
          "datatables.bootstrap": { deps: ['datatables'] },
@@ -54,7 +57,7 @@
          "hqwebapp/js/lib/modernizr": {
              exports: 'Modernizr',
          },
-@@ -85,6 +96,10 @@
+@@ -86,6 +97,10 @@
              deps: ['d3/d3.min'],
              exports: 'nv',
          },
@@ -65,7 +68,7 @@
          "sentry_browser": { exports: "Sentry" },
      },
      wrapShim: true,
-@@ -99,7 +114,7 @@
+@@ -100,7 +115,7 @@
          },
      },
  
