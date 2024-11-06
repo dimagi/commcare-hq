@@ -367,8 +367,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         self.throttle_check(request)
 
         user = CommCareUser.get_by_user_id(kwargs['pk'], kwargs["domain"])
-        if not active:
-            user.set_user_profile(request.domain, '')
         if not user:
             raise NotFound()
 
