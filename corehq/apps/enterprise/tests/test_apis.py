@@ -15,7 +15,7 @@ from corehq.apps.users.models_role import UserRole
 
 @es_test(requires=[form_adapter])
 class FormSubmissionResourceTests(TestCase):
-    def test_happy_path(self):
+    def test_resource_is_accessible(self):
         enterprise_account = self._create_enterprise_account_covering_domains(['test-domain-1', 'test-domain-2'])
 
         enterprise_admin = self._create_enterprise_admin(
