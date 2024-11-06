@@ -6326,7 +6326,6 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/templates/case_management.html
-#: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
@@ -10884,13 +10883,16 @@ msgstr ""
 #, python-format
 msgid ""
 "The mobile UCR restore version for v%(app_version)s needs to be updated to "
-"V2.0"
+"V2.0. Please refer to the <a href='%(url)s'>migration documentation</a> for "
+"more details."
 msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
 #, python-format
 msgid ""
 "One or more forms for v%(app_version)s contain V1 Mobile UCR references."
+"Please refer to the <a href='%(url)s'>migration documentation</a> for more "
+"details."
 msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
@@ -13051,6 +13053,30 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/partials/modal_edit.html
 #: corehq/apps/users/templates/users/partials/linked_roles_modal.html
 msgid "Unlock"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid "Make user profiles a requirement for the following user types"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid "Make user profiles a requirement for the following user types."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid ""
+"\n"
+"                      A profile must be provided when creating or editing a "
+"user of the selected user type(s).\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid ""
+"\n"
+"                  Make user profiles a requirement for the following user "
+"types dropdown.\n"
+"                "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -23241,17 +23267,6 @@ msgstr ""
 msgid "UCR Domains Data Report"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/authenticate_as.html
-msgid ""
-"\n"
-"          Use this form to log in as a mobile user.\n"
-"          You can fill out the fully qualified username of\n"
-"          a mobile worker in the username box\n"
-"          (&lt;username&gt;@&lt;domain&gt;.commcarehq.org)\n"
-"          or fill the username and domain.\n"
-"        "
-msgstr ""
-
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr ""
@@ -23356,24 +23371,6 @@ msgstr ""
 msgid "Two Factor Enabled"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-msgid "Are you sure you want to continue?"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-msgid "If this fails you may have to perform the operation manually!"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-msgid ""
-"This may invoke a huge indexing task that could slow down many parts of the "
-"site!"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-msgid "Go!"
-msgstr ""
-
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid "You do not have permission to change superuser and staff status."
 msgstr ""
@@ -23454,10 +23451,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/views/reports.py
 msgid "Download GIR"
-msgstr ""
-
-#: corehq/apps/hqadmin/views/system.py corehq/tabs/tabclasses.py
-msgid "System Info"
 msgstr ""
 
 #: corehq/apps/hqadmin/views/system.py
@@ -27589,6 +27582,10 @@ msgstr ""
 #: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
 #: corehq/motech/generic_inbound/views.py corehq/motech/views.py
 msgid "URL"
+msgstr ""
+
+#: corehq/apps/notifications/forms.py
+msgid "Domain-specific"
 msgstr ""
 
 #: corehq/apps/notifications/forms.py
@@ -36134,6 +36131,20 @@ msgid ""
 "%(expires_on)s"
 msgstr ""
 
+#: corehq/apps/sso/utils/entra.py
+msgid "Please double check your tenant id is correct"
+msgstr ""
+
+#: corehq/apps/sso/utils/entra.py
+msgid "No error description provided"
+msgstr ""
+
+#: corehq/apps/sso/utils/entra.py
+msgid ""
+"Nested applications (ServicePrincipal members) are not supported. Please "
+"include only Users or Groups as members of this SSO application"
+msgstr ""
+
 #: corehq/apps/sso/utils/login_helpers.py
 msgid ""
 "We were unable to create your requested project because the name was already "
@@ -41157,6 +41168,10 @@ msgstr ""
 msgid "Both"
 msgstr ""
 
+#: corehq/apps/users/views/mobile/custom_data_fields.py
+msgid "Neither"
+msgstr ""
+
 #: corehq/apps/users/views/mobile/groups.py
 #, python-format
 msgid ""
@@ -45543,10 +45558,6 @@ msgid "Django Admin"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
-msgid "System Health"
-msgstr ""
-
-#: corehq/tabs/tabclasses.py
 msgid "Look up user by email"
 msgstr ""
 
@@ -45608,6 +45619,10 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Administrative Operations"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "System Health"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py

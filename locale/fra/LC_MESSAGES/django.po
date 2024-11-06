@@ -6673,7 +6673,6 @@ msgstr "Installer CommCare"
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/templates/case_management.html
-#: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
@@ -8604,10 +8603,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_ucr_v1_warning.html
-#, fuzzy
-#| msgid "Remaining"
 msgid "Warning"
-msgstr "Restant"
+msgstr "Avertissement"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_session_endpoint.html
 msgid ""
@@ -11354,13 +11351,16 @@ msgstr ""
 #, python-format
 msgid ""
 "The mobile UCR restore version for v%(app_version)s needs to be updated to "
-"V2.0"
+"V2.0. Please refer to the <a href='%(url)s'>migration documentation</a> for "
+"more details."
 msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
 #, python-format
 msgid ""
 "One or more forms for v%(app_version)s contain V1 Mobile UCR references."
+"Please refer to the <a href='%(url)s'>migration documentation</a> for more "
+"details."
 msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
@@ -13485,25 +13485,17 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#, fuzzy
-#| msgid "Required"
 msgid "Required for"
-msgstr "requise"
+msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                    Change my project's plan\n"
-#| "                                "
+#, python-format
 msgid ""
 "\n"
 "                          Specify which %(entity_string)s type this field is "
 "required for.\n"
 "                          "
 msgstr ""
-"\n"
-"Changer mon plan de projet."
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-brace-format
@@ -13592,6 +13584,30 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/partials/modal_edit.html
 #: corehq/apps/users/templates/users/partials/linked_roles_modal.html
 msgid "Unlock"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid "Make user profiles a requirement for the following user types"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid "Make user profiles a requirement for the following user types."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid ""
+"\n"
+"                      A profile must be provided when creating or editing a "
+"user of the selected user type(s).\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid ""
+"\n"
+"                  Make user profiles a requirement for the following user "
+"types dropdown.\n"
+"                "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -20589,14 +20605,7 @@ msgid "Create a Daily Saved Export"
 msgstr "Creer un Enregistrement de Téléchargement Journalière"
 
 #: corehq/apps/export/templates/export/customize_export_new.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                                  Should cases that don't "
-#| "have a value for the sort property\n"
-#| "                                                  appear at the top or "
-#| "the bottom of the case list?\n"
-#| "                                              "
+#, python-format
 msgid ""
 "\n"
 "                                      Daily saved exports are only available "
@@ -20606,9 +20615,6 @@ msgid ""
 "project.\n"
 "                                    "
 msgstr ""
-"\n"
-"Les dossiers sans valeurs pour la propriété de tri devraient-ils figurer en "
-"premier ou en dernier dans la liste de dossiers?"
 
 #: corehq/apps/export/templates/export/customize_export_new.html
 msgid "Generate a Data Export Tool config file"
@@ -24003,17 +24009,6 @@ msgstr ""
 msgid "UCR Domains Data Report"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/authenticate_as.html
-msgid ""
-"\n"
-"          Use this form to log in as a mobile user.\n"
-"          You can fill out the fully qualified username of\n"
-"          a mobile worker in the username box\n"
-"          (&lt;username&gt;@&lt;domain&gt;.commcarehq.org)\n"
-"          or fill the username and domain.\n"
-"        "
-msgstr ""
-
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "Nom du domaine"
@@ -24122,26 +24117,6 @@ msgstr "Administrateur de Compte"
 msgid "Two Factor Enabled"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-msgid "Are you sure you want to continue?"
-msgstr "Etes-vous sûr que vous voulez continuer ?"
-
-#: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-msgid "If this fails you may have to perform the operation manually!"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-msgid ""
-"This may invoke a huge indexing task that could slow down many parts of the "
-"site!"
-msgstr ""
-"Cela peut invoquer une énorme tâche de référencement qui pourrait ralentir "
-"de nombreuses parties du site!"
-
-#: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-msgid "Go!"
-msgstr "Démarrer"
-
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid "You do not have permission to change superuser and staff status."
 msgstr ""
@@ -24228,10 +24203,6 @@ msgstr ""
 #: corehq/apps/hqadmin/views/reports.py
 msgid "Download GIR"
 msgstr "Télécharger GIR"
-
-#: corehq/apps/hqadmin/views/system.py corehq/tabs/tabclasses.py
-msgid "System Info"
-msgstr "Infos sur le système"
 
 #: corehq/apps/hqadmin/views/system.py
 msgid "Global Usage Thresholds"
@@ -28511,6 +28482,12 @@ msgstr "Voici vos clés !"
 #: corehq/motech/generic_inbound/views.py corehq/motech/views.py
 msgid "URL"
 msgstr "URL"
+
+#: corehq/apps/notifications/forms.py
+#, fuzzy
+#| msgid "no domain specified"
+msgid "Domain-specific"
+msgstr "aucun domaine n'est spécifié"
 
 #: corehq/apps/notifications/forms.py
 msgid "This notification is not for all domains"
@@ -37350,6 +37327,22 @@ msgid ""
 "%(expires_on)s"
 msgstr ""
 
+#: corehq/apps/sso/utils/entra.py
+msgid "Please double check your tenant id is correct"
+msgstr ""
+
+#: corehq/apps/sso/utils/entra.py
+#, fuzzy
+#| msgid "Enter form description here"
+msgid "No error description provided"
+msgstr "Veuillez saisir la description du formulaire ici"
+
+#: corehq/apps/sso/utils/entra.py
+msgid ""
+"Nested applications (ServicePrincipal members) are not supported. Please "
+"include only Users or Groups as members of this SSO application"
+msgstr ""
+
 #: corehq/apps/sso/utils/login_helpers.py
 msgid ""
 "We were unable to create your requested project because the name was already "
@@ -42489,6 +42482,12 @@ msgstr "Éditer les champs de l`utilisateur"
 msgid "Both"
 msgstr ""
 
+#: corehq/apps/users/views/mobile/custom_data_fields.py
+#, fuzzy
+#| msgid "Other"
+msgid "Neither"
+msgstr "Autre"
+
 #: corehq/apps/users/views/mobile/groups.py
 #, python-format
 msgid ""
@@ -46942,10 +46941,6 @@ msgid "Django Admin"
 msgstr "Admin Django"
 
 #: corehq/tabs/tabclasses.py
-msgid "System Health"
-msgstr ""
-
-#: corehq/tabs/tabclasses.py
 msgid "Look up user by email"
 msgstr "Rechercher utilisateur par adresse mail"
 
@@ -47008,6 +47003,10 @@ msgstr "Télécharger le rapport d'impact global"
 #: corehq/tabs/tabclasses.py
 msgid "Administrative Operations"
 msgstr "Opérations administratives"
+
+#: corehq/tabs/tabclasses.py
+msgid "System Health"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "CommCare Reports"
@@ -47956,27 +47955,18 @@ msgstr "Le Score à la Fonctionnalité"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
-#~ msgid "Allow all mobile workers to see all Web Apps applications."
-#~ msgstr ""
-#~ "Autoriser tous les utilisateurs mobiles à voir toutes les applications "
-#~ "web."
-
-#~ msgid "Customize each mobile worker's access to Web Apps"
-#~ msgstr ""
-#~ "Personnaliser l'accès de chaque utilisateur mobile aux applications web"
-
-#~ msgid "Select another file"
-#~ msgstr "Sélectionner un autre fichier"
+#~ msgid "Are you sure you want to continue?"
+#~ msgstr "Etes-vous sûr que vous voulez continuer ?"
 
 #~ msgid ""
-#~ "There was an issue retrieving the status from the cache. We are looking "
-#~ "into it. Please try uploading again."
+#~ "This may invoke a huge indexing task that could slow down many parts of "
+#~ "the site!"
 #~ msgstr ""
-#~ "Il y a eu un problème lors de la récupération de l'état à partir de la "
-#~ "cache. Nous tentons de déterminer de quoi il s'agit. Veuillez essayer le "
-#~ "téléversement à nouveau !"
+#~ "Cela peut invoquer une énorme tâche de référencement qui pourrait "
+#~ "ralentir de nombreuses parties du site!"
 
-#~ msgid "Please enter number, including international code, in digits only."
-#~ msgstr ""
-#~ "Veuillez entrer le numéro, y compris le code international, en chiffres "
-#~ "uniquement."
+#~ msgid "Go!"
+#~ msgstr "Démarrer"
+
+#~ msgid "System Info"
+#~ msgstr "Infos sur le système"
