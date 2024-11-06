@@ -98,6 +98,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
+from corehq.apps.toggle_ui.views import clear_cache_for_toggle
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors import (
     get_practice_mode_mobile_workers,
@@ -454,6 +455,7 @@ def copy_app(request, domain):
         if data['toggles']:
             for slug in data['toggles'].split(","):
                 set_toggle(slug, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+            clear_cache_for_toggle(toggles.NAMESPACE_DOMAIN, to_domain)
 
         linked = data.get('linked')
         if linked:
