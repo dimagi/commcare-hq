@@ -1,7 +1,5 @@
 from dimagi.utils.logging import notify_exception
 
-from corehq.util.decorators import serial_task
-
 from corehq.apps.celery import task
 from corehq.apps.geospatial.const import INDEX_ES_TASK_HELPER_BASE_KEY
 from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
@@ -32,7 +30,7 @@ def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict, task_k
         celery_task_tracker.mark_completed()
 
 
-@serial_task('async-index-es-docs', timeout=60 * 60, queue='background_queue', ignore_result=True)
+@task(queue='geospatial_queue', ignore_result=True)
 def index_es_docs_with_location_props(domain):
     celery_task_tracker = get_celery_task_tracker(domain, INDEX_ES_TASK_HELPER_BASE_KEY)
     if celery_task_tracker.is_active():
