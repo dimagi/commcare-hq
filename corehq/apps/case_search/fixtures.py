@@ -49,7 +49,8 @@ def _run_query(domain, csql):
 
 
 def _get_indicator_nodes(restore_state, indicators):
-    renderer = _get_template_renderer(restore_state.restore_user)
+    with restore_state.timing_context('_get_template_renderer'):
+        renderer = _get_template_renderer(restore_state.restore_user)
     for name, csql_template in indicators:
         with restore_state.timing_context(name):
             value = _run_query(restore_state.domain, renderer.render(csql_template))
