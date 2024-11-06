@@ -1,16 +1,26 @@
-import json
-from django.test import TestCase, RequestFactory
-from corehq.apps.accounting.models import SoftwarePlanEdition, DefaultProductPlan
 import base64
+import json
 from datetime import datetime, timezone
-from corehq.apps.users.models import WebUser, CommCareUser, HQApiKey, HqPermissions
+
+from django.test import RequestFactory, TestCase
+
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+)
 from corehq.apps.accounting.tests import generator
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.es.forms import form_adapter
 from corehq.apps.enterprise.api.resources import FormSubmissionResource
-from corehq.form_processor.tests.utils import create_form_for_test
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.users.models import (
+    CommCareUser,
+    HQApiKey,
+    HqPermissions,
+    WebUser,
+)
 from corehq.apps.users.models_role import UserRole
+from corehq.form_processor.tests.utils import create_form_for_test
 
 
 @es_test(requires=[form_adapter])
