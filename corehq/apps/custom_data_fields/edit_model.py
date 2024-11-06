@@ -369,9 +369,12 @@ class CustomDataModelMixin(object):
                 bulk_sync_usercases_if_applicable(obj.definition.domain, list(obj.user_ids_assigned()))
             seen.add(obj.id)
 
+        return self.delete_eligible_profiles(self.get_profiles(), seen)
+
+    def delete_eligible_profiles(self, all_profiles, updated_profile_list):
         errors = []
-        for profile in self.get_profiles():
-            if profile.id not in seen:
+        for profile in all_profiles:
+            if profile.id not in updated_profile_list:
                 user_data = SQLUserData.objects.filter(profile=profile)
                 for ud in user_data:
                     user = CouchUser.get_by_user_id(ud.user_id)
