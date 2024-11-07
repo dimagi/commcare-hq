@@ -1035,7 +1035,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
             self.handleSmallScreenChange(self.smallScreenEnabled);
             self.boundHandleScroll = self.handleScroll.bind(self);
-            this.scrollContainer().on('scroll', self.boundHandleScroll);
+            self.scrollContainer().on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
                 $('#scroll-to-bottom').removeClass("d-none");
             }
@@ -1044,7 +1044,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onBeforeDetach: function () {
             const self = this;
             self.smallScreenListener.stopListening();
-            this.scrollContainer().off('scroll', self.boundHandleScroll);
+            self.scrollContainer().off('scroll', self.boundHandleScroll);
         },
 
         templateContext: function () {
