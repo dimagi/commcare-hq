@@ -41,7 +41,7 @@ from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
 )
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_bootstrap5
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import domain_case_rate_limiter, submission_rate_limiter
@@ -70,13 +70,6 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
     @property
     def page_name(self):
         return format_html("{} <small>Internal</small>", self.page_title)
-
-
-@method_decorator(use_bootstrap5, name='dispatch')
-class TestBootstrap5DomainView(BaseInternalDomainSettingsView):
-    urlname = 'test_bootstrap5_domain_view'
-    page_title = gettext_lazy("Test Bootstrap 5 Changes")
-    template_name = 'domain/test_bootstrap5.html'
 
 
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
