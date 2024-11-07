@@ -105,6 +105,7 @@ def js_api_keys(request):
         'ANALYTICS_IDS': settings.ANALYTICS_IDS.copy(),
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG.copy(),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+        'IS_ANALYTICS_ENVIRONMENT': settings.SERVER_ENVIRONMENT in ('production', 'staging', 'india'),
     }
     if (
         getattr(request, 'project', None)

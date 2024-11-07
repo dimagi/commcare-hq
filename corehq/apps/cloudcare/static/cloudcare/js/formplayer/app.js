@@ -62,16 +62,6 @@ hqDefine("cloudcare/js/formplayer/app", [
         if (!FormplayerFrontend.regions) {
             FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
         }
-        let sidebar = FormplayerFrontend.regions.getRegion('sidebar');
-        sidebar.on('show', function () {
-            $('#content-container').addClass('full-width');
-            $('#menu-region').addClass('sidebar-push');
-        });
-        sidebar.on('hide empty', function () {
-            $('#content-container').removeClass('full-width');
-            $('#menu-region').removeClass('sidebar-push');
-        });
-
         hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
             FormplayerFrontend.router = Router.start();
         });
@@ -150,8 +140,10 @@ hqDefine("cloudcare/js/formplayer/app", [
         FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
         $('#webforms').html("");
         $('.menu-scrollable-container').removeClass("d-none");
+        $('#sidebar-and-content').removeClass('remove-margins-on-mobile');
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
+        $('#cloudcare-main').removeClass('has-debugger');
         $('.atwho-container').remove();
         bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
         sessionStorage.removeItem('collapsedIx');
@@ -316,6 +308,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
         $('.menu-scrollable-container').addClass("d-none");
+        $('#sidebar-and-content').addClass('remove-margins-on-mobile');
     });
 
     FormplayerFrontend.on("start", function (model, options) {

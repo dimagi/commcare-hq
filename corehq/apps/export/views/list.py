@@ -272,7 +272,7 @@ class ExportListHelper(object):
             'api_dispatch_detail',
             kwargs={
                 'domain': export.domain,
-                'api_name': 'v0.5',
+                'api_name': 'v1',
                 'resource_name': resource_class._meta.resource_name,
                 'pk': pk + '/feed',
             }
