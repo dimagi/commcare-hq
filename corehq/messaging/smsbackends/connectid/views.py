@@ -13,28 +13,31 @@ from corehq.apps.sms.api import process_incoming
 from corehq.util.hmac_request import validate_request_hmac
 from corehq.apps.mobile_auth.utils import generate_aes_key
 
-
+@csrf_exempt
+@require_POST
+@validate_request_hmac("CONNECTID_SECRET_KEY")
 def receive_message(request, *args, **kwargs):
     data = request.POST
-    channel_id = data["channel_id"]
+    channel_id = data["channel"]
     user_link = ConnectIDUserLink.objects.get(channel_id=channel_id)
     phone_obj = ConnectMessagingNumber(user_link)
-    content = data["content"]
-    key = base64.b64decode(user_link.conectidmessagingkey_set.first())
-    cipher = AES.new(key, AES.MODE_GCM, nonce=content["nonce"])
-    text = cipher.decrypt_and_verify(content["ciphertext"], content["tag"]).decode("utf-8")
-    timestamp = data["timestamp"]
-    message_id = data["message_id"]
-    msg = ConnectMessage(
-        direction=INCOMING,
-        date=timestamp,
-        text=text,
-        domain_scope=user_link.domain,
-        backend_id="connectid",
-        message_id=message_id
-    )
-    process_incoming(msg, phone_obj)
-    return HttpResponse("")
+    for message in data["messages"]:
+        content = data["content"]
+        key = base64.b64decode(user_link.conectidmessagingkey_set.first())
+        cipher = AES.new(key, AES.MODE_GCM, nonce=content["nonce"])
+        text = cipher.decrypt_and_verify(content["ciphertext"], content["tag"]).decode("utf-8")
+        timestamp = data["timestamp"]
+        message_id = data["message_id"]
+        msg = ConnectMessage(
+            direction=INCOMING,
+            date=timestamp,
+            text=text,
+            domain_scope=user_link.domain,
+            backend_id="connectid",
+            message_id=message_id
+        )
+        process_incoming(msg, phone_obj)
+    return HttpResponse(status=200)
 
 
 @csrf_exempt
