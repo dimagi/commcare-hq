@@ -544,12 +544,15 @@ class TestViews(ViewsBase):
         self.app.save()
 
         from corehq.toggles import NAMESPACE_DOMAIN, StaticToggle, TAG_INTERNAL
+        from corehq.toggles.shortcuts import set_toggle
+
         TEST_TOGGLE = StaticToggle(
             'test_toggle',
             'This is for tests',
             TAG_INTERNAL,
             [NAMESPACE_DOMAIN],
         )
+        set_toggle(TEST_TOGGLE.slug, other_domain.name, False, namespace=NAMESPACE_DOMAIN)
         copy_data = {
             'app': self.app.id,
             'domain': other_domain.name,
@@ -557,10 +560,10 @@ class TestViews(ViewsBase):
             'toggles': 'test_toggle',
         }
         with patch('corehq.toggles.all_toggles_by_name', return_value={'test_toggle': TEST_TOGGLE}), \
-             patch('corehq.toggles.shortcuts.set_toggle', return_value=True), \
              mock.patch('corehq.apps.toggle_ui.views.clear_cache_for_toggle') as mock_clear_cache:
             self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
             mock_clear_cache.assert_called_once_with(NAMESPACE_DOMAIN, other_domain.name)
+        self.assertTrue(TEST_TOGGLE.enabled(other_domain.name))
 
 
 @contextmanager

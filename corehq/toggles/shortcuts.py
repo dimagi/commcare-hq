@@ -22,6 +22,23 @@ def set_toggle(slug, item, enabled, namespace=None):
     """
     Sets a toggle value explicitly. Should only save anything if the value needed to be changed.
     """
+    if _set_toggle_without_clear_cache(slug, item, enabled, namespace=namespace) != enabled:
+        from corehq.apps.toggle_ui.views import clear_cache_for_toggle
+        clear_cache_for_toggle(namespace, item)
+        return True
+
+
+def set_toggles(slugs, item, enabled, namespace=None):
+    toggle_changed = False
+    for slug in slugs:
+        if _set_toggle_without_clear_cache(slug, item, enabled, namespace):
+            toggle_changed = True
+    if toggle_changed:
+        from corehq.apps.toggle_ui.views import clear_cache_for_toggle
+        clear_cache_for_toggle(namespace, item)
+
+
+def _set_toggle_without_clear_cache(slug, item, enabled, namespace=None):
     if toggle_enabled(slug, item, namespace=namespace) != enabled:
         ns_item = namespaced_item(item, namespace)
         try:
@@ -39,19 +56,7 @@ def set_toggle(slug, item, enabled, namespace=None):
             static_toggle = static_toggles_by_slug[slug]
             if static_toggle.save_fn:
                 static_toggle.save_fn(item, enabled)
-        from corehq.apps.toggle_ui.views import clear_cache_for_toggle
-        clear_cache_for_toggle(namespace, item)
         return True
-
-
-def set_toggles(slugs, item, enabled, namespace=None):
-    toggle_changed = False
-    for slug in slugs:
-        if set_toggle(slug, item, enabled, namespace):
-            toggle_changed = True
-    if toggle_changed:
-        from corehq.apps.toggle_ui.views import clear_cache_for_toggle
-        clear_cache_for_toggle(namespace, item)
 
 
 def namespaced_item(item, namespace):
