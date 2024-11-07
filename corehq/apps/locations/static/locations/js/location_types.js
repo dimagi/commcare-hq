@@ -6,6 +6,7 @@ hqDefine('locations/js/location_types', [
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'select2/dist/js/select2.full.min',
+    'hqwebapp/js/bootstrap5/hq.helpers',
 ], function (
     $,
     ko,
