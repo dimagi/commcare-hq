@@ -469,6 +469,12 @@ class TestViews(ViewsBase):
         copied_app = other_domain.full_applications()[0]
         self.assertEqual(copied_app.name, 'Copy App')
         self.assertEqual(copied_app.doc_type, 'Application')
+
+        copied_module = copied_app.modules[0]
+        copied_form = list(copied_module.get_forms())[0]
+        self.assertEqual(copied_module.name['en'], "Module0")
+        self.assertEqual(copied_form.name['en'], "Form0")
+
         copied_app.delete()
 
     def test_copy_linked_app_to_different_domain(self, _):
@@ -496,6 +502,12 @@ class TestViews(ViewsBase):
         linked_app = other_domain.full_applications()[0]
         self.assertEqual(linked_app.name, 'Linked App')
         self.assertEqual(linked_app.doc_type, 'LinkedApplication')
+
+        linked_module = linked_app.modules[0]
+        linked_form = list(linked_module.get_forms())[0]
+        self.assertEqual(linked_module.name['en'], "Module0")
+        self.assertEqual(linked_form.name['en'], "Form0")
+
         linked_app.delete()
 
     def test_cannot_copy_linked_app_to_same_domain(self, _):
