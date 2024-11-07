@@ -1,0 +1,73 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block page_title %}
+  {% trans 'CSQL Fixture Configuration' %}
+{% endblock %}
+
+{% block page_content %}
+  {{ csql_fixture_configurations|json_script:"fixtureConfig" }}
+  <p>Please see <a href="https://dimagi.atlassian.net/wiki/spaces/USH/pages/2680389646/Module+Badges">the documentation</a> for this feature.</p>
+  <div x-data="{
+                validationFailed: false,
+                isDirty: false,
+                rows: JSON.parse(document.getElementById('fixtureConfig').textContent),
+                addRow() {
+                    this.rows.push({ row: '', csql: '', id: '' });
+                },
+                deleteRow(index) {
+                    this.rows.splice(index, 1);
+                    this.markDirty();
+                },
+                markDirty() {
+                    this.isDirty = true;
+                },
+                unmarkDirty() {
+                    this.isDirty = false;
+                }
+            }">
+    <form hx-post={{ save_url }} action="/submit" method="POST" hx-target="#response-message" hx-swap="innerHTML"
+        @change="markDirty" @submit="unmarkDirty">
+      <div id="response-message"></div>
+      <button type="submit" class="btn btn-primary" id="Save" x-bind:disabled="!isDirty">{% trans "Save" %}</button>
+      <p/>
+        <table class="table table-striped table-bordered">
+          <thead>
+            <tr>
+              <th class="col-sm-2">
+                {% trans "Name" %}
+              </th>
+              <th class="col-sm-7">
+                {% trans "Case Search QL Expression" %}
+              </th>
+              <th class="col-sm-1">
+                {% trans "Delete" %}
+              </th>
+          </thead>
+          <tbody>
+            <template x-for="(row, index) in rows" :key="index">
+              <tr>
+                  <td><input class="form-control" type="text" name="name" x-model="row.name" maxlength="64"></td>
+                  <td><textarea class="form-control vertical-resize" spellcheck="false" rows="1" name="csql"
+                    x-model="row.csql"></textarea></td>
+                  <td><button class="btn btn-outline-danger"
+                              @click="deleteRow(index)">
+                    <i class="fa-regular fa-trash-can"></i>
+                    {% trans "Delete" %}
+                  </button></td>
+                  <input type="hidden" name="id" x-model="row.id">
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      <button type="button" class="btn btn-default" @click="addRow()">
+        <i class="fa fa-plus"></i>
+        {% trans "Add Expression" %}
+      </button>
+      <br>
+    </form>
+  </div>
+{% endblock %}
