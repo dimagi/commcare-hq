@@ -1,5 +1,7 @@
 from dataclasses import asdict, dataclass, field
 
+import math
+import time
 import jsonschema
 from jsonobject.exceptions import BadValueError
 
@@ -33,6 +35,11 @@ def get_geo_config(domain):
     except GeoConfig.DoesNotExist:
         config = GeoConfig()
     return config
+
+
+def get_celery_task_tracker(domain, task_slug):
+    task_key = f'{task_slug}_{domain}'
+    return CeleryTaskTracker(task_key)
 
 
 def _format_coordinates(lat, lon):
@@ -230,15 +237,63 @@ class CeleryTaskTracker(object):
 
     def __init__(self, task_key):
         self.task_key = task_key
+        self.progress_key = f'{task_key}_progress'
+        self.error_slug_key = f'{task_key}_error_slug'
+        self.start_time_key = f'{task_key}_start_time'
+        self.end_time_key = f'{task_key}_end_time'
         self._client = get_redis_client()
 
     def mark_requested(self, timeout=ONE_DAY):
         # Timeout here is just a fail safe mechanism in case task is not processed by Celery
         # due to unexpected circumstances
+        self.clear_progress()
+        self._client.delete(self.start_time_key)
+        self._client.delete(self.end_time_key)
+        self._client.delete(self.error_slug_key)
         self._client.set(self.task_key, 'ACTIVE', timeout=timeout)
 
+    def mark_as_error(self, error_slug=None, timeout=ONE_DAY * 14):
+        if error_slug:
+            self._client.set(self.error_slug_key, error_slug, timeout)
+        return self._client.set(self.task_key, 'ERROR', timeout=timeout)
+
     def is_active(self):
-        return self._client.has_key(self.task_key)
+        return self._client.get(self.task_key) == 'ACTIVE'
+
+    def get_status(self):
+        status = self._client.get(self.task_key)
+        start_time = self._client.get(self.start_time_key) or 0
+        end_time = self._client.get(self.end_time_key) or 0
+
+        return {
+            'status': status,
+            'progress': self.get_progress(),
+            'error_slug': self._client.get(self.error_slug_key) if status == 'ERROR' else None,
+            'start_time': start_time,
+            'end_time': end_time,
+            'process_time': (time.time() if end_time == 0 else end_time) - start_time,
+        }
 
     def mark_completed(self):
         return self._client.delete(self.task_key)
+
+    def update_progress(self, current, total, timeout=ONE_DAY):
+        progress_val = 0
+        if total > 0:
+            progress_val = math.ceil(current / total * 100)
+        return self._client.set(self.progress_key, progress_val, timeout)
+
+    def get_progress(self):
+        progress = self._client.get(self.progress_key)
+        if not progress:
+            return 0
+        return progress
+
+    def clear_progress(self):
+        return self._client.delete(self.progress_key)
+
+    def mark_start_time(self, timeout=ONE_DAY):
+        return self._client.set(self.start_time_key, time.time(), timeout)
+
+    def mark_end_time(self, timeout=ONE_DAY):
+        return self._client.set(self.end_time_key, time.time(), timeout)
