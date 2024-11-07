@@ -276,6 +276,8 @@ class AbstractSyncLog(SafeSaveDocument):
     cache_payload_paths = DictProperty()
 
     last_ucr_sync_times = SchemaListProperty(UCRSyncLog)
+    # key/value store mapping fixture keys to the last time they were sent to the phone
+    last_fixture_sync_times = DictProperty(DateTimeProperty())
 
     strict = True  # for asserts
 

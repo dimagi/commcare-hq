@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from lxml.builder import E
 
 from casexml.apps.phone.fixtures import FixtureProvider
@@ -59,17 +61,27 @@ class CaseSearchFixtureProvider(FixtureProvider):
         if indicators:
             with restore_state.timing_context('_get_template_renderer'):
                 renderer = _get_template_renderer(restore_state.restore_user)
-            for name, csql_template in indicators:
-                with restore_state.timing_context(name):
-                    value = _run_query(restore_state.domain, renderer.render(csql_template))
-                yield self._to_xml(name, value)
+            for indicator in indicators:
+                if self._should_sync(restore_state, indicator):
+                    with restore_state.timing_context(indicator.name):
+                        value = _run_query(restore_state.domain, renderer.render(indicator.csql))
+                    yield self._to_xml(indicator.name, value)
+
+    def _should_sync(self, restore_state, indicator):
+        return not restore_state.use_cached_fixture(
+            self._fixture_id(indicator.name),
+            is_too_old=lambda last_sync_time: datetime.now() - last_sync_time > timedelta(minutes=10)
+        )
+
+    def _fixture_id(self, name):
+        return f"{self.id}:{name}"
 
     def _to_xml(self, name, value):
-        return E.fixture(E.value(value), id=f"{self.id}:{name}")
+        return E.fixture(E.value(value), id=self._fixture_id(name))
 
 
 def _get_indicators(domain):
-    return list(CSQLFixtureExpression.by_domain(domain).values_list('name', 'csql'))
+    return list(CSQLFixtureExpression.by_domain(domain))
 
 
 case_search_fixture_generator = CaseSearchFixtureProvider()

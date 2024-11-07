@@ -460,6 +460,21 @@ class RestoreState:
         except AttributeError:
             return extension_toggle_enabled
 
+    def use_cached_fixture(self, fixture_id, is_too_old):
+        """Return whether to include fixture in the restore.
+        Updates the sync log accordingly
+
+        :param is_too_old: fn accepting last_sync_time and returning a bool
+        """
+        if self.last_sync_log and not self.overwrite_cache:
+            last_sync_time = self.last_sync_log.last_fixture_sync_times.get(fixture_id)
+            if last_sync_time and is_too_old(last_sync_time):
+                self.current_sync_log.last_fixture_sync_times[fixture_id] = last_sync_time
+                return True
+
+        self.current_sync_log.last_fixture_sync_times[fixture_id] = self.current_sync_log.date
+        return False
+
     def start_sync(self):
         self.start_time = datetime.utcnow()
         self.current_sync_log = self._new_sync_log()
