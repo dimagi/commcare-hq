@@ -37,8 +37,9 @@ hqDefine("cloudcare/js/formplayer/constants", [], function () {
             FIELD_CHANGE: "field_change",
             PAGINATION: "pagination",
             CLICKABLE_ICON: "clickable_icon",
-            USER_CLICK_SUBMIT: "user_click_submit",
         },
+
+        USER_CLICK_SUBMIT: "userClickSubmit",
 
         //Custom Properties
         POST_FORM_SYNC: "cc-sync-after-form",
