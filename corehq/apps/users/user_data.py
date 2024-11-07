@@ -239,7 +239,7 @@ class SQLUserData(models.Model):
     modified_on = models.DateTimeField(auto_now=True)
 
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
-                                on_delete=models.PROTECT, null=True)
+                                on_delete=models.SET_NULL, null=True)
     data = models.JSONField()
 
     class Meta:
