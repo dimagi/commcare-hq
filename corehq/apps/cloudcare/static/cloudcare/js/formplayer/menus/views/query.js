@@ -731,7 +731,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             self.performSubmit(null, formplayerConstants.USER_CLICK_SUBMIT);
         },
 
-        performSubmit: function (initiatedBy, userClickSubmit=null) {
+        performSubmit: function (initiatedBy, userClickSubmit = null) {
             var self = this;
             self.executeSearch(initiatedBy).done(function (response) {
                 self.updateModels(response);
