@@ -1,3 +1,4 @@
+from itertools import dropwhile, chain, islice
 from datetime import datetime, timedelta, timezone
 from django.utils.translation import gettext as _
 from corehq.apps.es import filters
@@ -119,30 +120,19 @@ class AppIdToNameResolver:
 
 
 def loop_over_domains(domains, query_factory, limit=None, last_domain=None, **kwargs):
-    domain_index = domains.index(last_domain) if last_domain else 0
+    iterators = []
+    if last_domain:
+        remaining_domains = dropwhile(lambda d: d != last_domain, domains)
+        in_progress_domain = next(remaining_domains)
+        iterators.append(loop_over_domain(in_progress_domain, query_factory, limit=limit, **kwargs))
+    else:
+        remaining_domains = domains
 
-    remaining = limit
+    fresh_domain_query_args = query_factory.get_next_query_args(kwargs, last_hit=None)
+    for domain in remaining_domains:
+        iterators.append(loop_over_domain(domain, query_factory, limit=limit, **fresh_domain_query_args))
 
-    def _get_domain_iterator(**kwargs):
-        if domain_index >= len(domains):
-            return None
-        domain = domains[domain_index]
-        return loop_over_domain(domain, query_factory, limit=remaining, **kwargs)
-
-    current_iterator = _get_domain_iterator(**kwargs)
-
-    while current_iterator:
-        for hit in current_iterator:
-            yield hit
-            if remaining:
-                remaining -= 1
-                if remaining == 0:
-                    return
-        domain_index += 1
-        if domain_index >= len(domains):
-            return
-        next_args = query_factory.get_next_query_args(kwargs, last_hit=None)
-        current_iterator = _get_domain_iterator(**next_args)
+    yield from islice(chain.from_iterable(iterators), limit)
 
 
 def loop_over_domain(domain, query_factory, limit=None, **kwargs):
