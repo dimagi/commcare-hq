@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 
 @method_decorator(toggles.GEOSPATIAL.required_decorator(), name='dispatch')
 class CaseManagementMapDispatcher(ReportDispatcher):
-    prefix = 'geospatial'
+    prefix = 'microplanning'
     map_name = 'GEOSPATIAL_MAP'
 
     @cls_to_view_login_and_domain

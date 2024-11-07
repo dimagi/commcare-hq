@@ -91,7 +91,7 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
 
 class CaseManagementMap(BaseCaseMapReport):
     name = gettext_noop("Microplanning Map")
-    slug = "case_management_map"
+    slug = "microplanning_map"
 
     base_template = "geospatial/case_management_base.html"
     report_template_path = "case_management.html"
@@ -134,7 +134,7 @@ class CaseManagementMap(BaseCaseMapReport):
 
 class CaseGroupingReport(BaseCaseMapReport):
     name = gettext_noop('Case Clustering Map')
-    slug = 'case_grouping_map'
+    slug = 'case_clustering_map'
 
     base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'case_grouping_map.html'
