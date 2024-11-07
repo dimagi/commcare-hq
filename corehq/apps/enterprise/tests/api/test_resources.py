@@ -1,13 +1,22 @@
-from django.test import TestCase, RequestFactory
 from datetime import datetime, timezone
 from unittest.mock import patch
-from corehq.apps.domain.models import Domain
-from corehq.apps.enterprise.api.resources import EnterpriseODataAuthentication, ODataAuthentication
-from corehq.apps.accounting.models import DefaultProductPlan, SoftwarePlanEdition
-from corehq.apps.accounting.tests.utils import generator
-from corehq.apps.users.models import WebUser
+
 from django.http import Http404
+from django.test import RequestFactory, TestCase
+
 from tastypie.exceptions import ImmediateHttpResponse
+
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+)
+from corehq.apps.accounting.tests.utils import generator
+from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.api.resources import (
+    EnterpriseODataAuthentication,
+    ODataAuthentication,
+)
+from corehq.apps.users.models import WebUser
 
 
 class EnterpriseODataAuthenticationTests(TestCase):
