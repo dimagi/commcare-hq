@@ -33,9 +33,9 @@ class IterableEnterpriseFormQuery:
     def execute(self, limit=None):
         domains = self.account.get_domains()
 
-        it = loop_over_domains(
-            domains,
+        it = run_query_over_domains(
             MobileFormSubmissionsQueryFactory(),
+            domains,
             limit=limit,
             last_domain=self.last_domain,
             start_date=self.start_date,
@@ -119,23 +119,23 @@ class AppIdToNameResolver:
         return self.domain_lookup_tables[domain].get(app_id, None)
 
 
-def loop_over_domains(domains, query_factory, limit=None, last_domain=None, **kwargs):
+def run_query_over_domains(query_factory, domains, limit=None, last_domain=None, **kwargs):
     iterators = []
     if last_domain:
         remaining_domains = dropwhile(lambda d: d != last_domain, domains)
         in_progress_domain = next(remaining_domains)
-        iterators.append(loop_over_domain(in_progress_domain, query_factory, limit=limit, **kwargs))
+        iterators.append(run_query_over_domain(query_factory, in_progress_domain, limit=limit, **kwargs))
     else:
         remaining_domains = domains
 
     fresh_domain_query_args = query_factory.get_next_query_args(kwargs, last_hit=None)
     for domain in remaining_domains:
-        iterators.append(loop_over_domain(domain, query_factory, limit=limit, **fresh_domain_query_args))
+        iterators.append(run_query_over_domain(query_factory, domain, limit=limit, **fresh_domain_query_args))
 
     yield from islice(chain.from_iterable(iterators), limit)
 
 
-def loop_over_domain(domain, query_factory, limit=None, **kwargs):
+def run_query_over_domain(query_factory, domain, limit=None, **kwargs):
     remaining = limit
 
     next_query_args = kwargs

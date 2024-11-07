@@ -8,8 +8,8 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.apps.enterprise.iterators import (
     raise_after_max_elements,
-    loop_over_domains,
-    loop_over_domain,
+    run_query_over_domains,
+    run_query_over_domain,
     MobileFormSubmissionsQueryFactory
 )
 
@@ -48,9 +48,9 @@ class TestLoopOverDomains(TestCase):
         ]
         form_adapter.bulk_index(forms, refresh=True)
 
-        it = loop_over_domains(
-            ['domain1', 'domain2', 'domain3'],
+        it = run_query_over_domains(
             MobileFormSubmissionsQueryFactory(),
+            ['domain1', 'domain2', 'domain3'],
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=15)
         )
@@ -67,9 +67,9 @@ class TestLoopOverDomains(TestCase):
         ]
         form_adapter.bulk_index(forms, refresh=True)
 
-        it = loop_over_domains(
-            ['domain1', 'domain2'],
+        it = run_query_over_domains(
             MobileFormSubmissionsQueryFactory(),
+            ['domain1', 'domain2'],
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=15),
             limit=3
@@ -111,9 +111,9 @@ class TestLoopOverDomain(TestCase):
         form3 = self._create_form('test-domain', form_id='3', received_on=datetime(year=2024, month=7, day=4))
         form_adapter.bulk_index([form1, form2, form3], refresh=True)
 
-        it = loop_over_domain(
-            'test-domain',
+        it = run_query_over_domain(
             MobileFormSubmissionsQueryFactory(),
+            'test-domain',
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=15),
         )
@@ -122,9 +122,9 @@ class TestLoopOverDomain(TestCase):
         self.assertEqual(form_ids, ['3', '2', '1'])
 
     def test_handles_empty_domain(self):
-        it = loop_over_domain(
-            'empty-domain',
+        it = run_query_over_domain(
             MobileFormSubmissionsQueryFactory(),
+            'empty-domain',
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=15),
         )
@@ -136,9 +136,9 @@ class TestLoopOverDomain(TestCase):
         form2 = self._create_form('test-domain', form_id='2', received_on=datetime(year=2024, month=7, day=2))
         form_adapter.bulk_index([form1, form2], refresh=True)
 
-        it = loop_over_domain(
-            'test-domain',
+        it = run_query_over_domain(
             MobileFormSubmissionsQueryFactory(),
+            'test-domain',
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=2)
         )
@@ -151,9 +151,9 @@ class TestLoopOverDomain(TestCase):
         form2 = self._create_form('not-test-domain', form_id='2', received_on=datetime(year=2024, month=7, day=2))
         form_adapter.bulk_index([form1, form2], refresh=True)
 
-        it = loop_over_domain(
-            'test-domain',
+        it = run_query_over_domain(
             MobileFormSubmissionsQueryFactory(),
+            'test-domain',
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=15),
         )
@@ -166,9 +166,9 @@ class TestLoopOverDomain(TestCase):
         form1 = self._create_form('test-domain', form_id='1', received_on=datetime(year=2024, month=7, day=1))
         form_adapter.bulk_index([form2, form1], refresh=True)
 
-        it = loop_over_domain(
-            'test-domain',
+        it = run_query_over_domain(
             MobileFormSubmissionsQueryFactory(),
+            'test-domain',
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=2),
         )
@@ -181,9 +181,9 @@ class TestLoopOverDomain(TestCase):
         form2 = self._create_form('test-domain', form_id='2', received_on=datetime(year=2024, month=7, day=1))
         form_adapter.bulk_index([form1, form2], refresh=True)
 
-        it = loop_over_domain(
-            'test-domain',
+        it = run_query_over_domain(
             MobileFormSubmissionsQueryFactory(),
+            'test-domain',
             start_date=datetime(year=2024, month=7, day=1),
             end_date=datetime(year=2024, month=7, day=2),
             limit=1
