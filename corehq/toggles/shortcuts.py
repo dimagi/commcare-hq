@@ -39,6 +39,8 @@ def set_toggle(slug, item, enabled, namespace=None):
             static_toggle = static_toggles_by_slug[slug]
             if static_toggle.save_fn:
                 static_toggle.save_fn(item, enabled)
+        from corehq.apps.toggle_ui.views import clear_cache_for_toggle
+        clear_cache_for_toggle(namespace, item)
         return True
 
 
