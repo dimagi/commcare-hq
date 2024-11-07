@@ -1010,7 +1010,7 @@ class ProjectDataTab(UITab):
                 'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
             },
             {
-                'title': _("Configure Geospatial Settings"),
+                'title': _("Configure Microplanning Settings"),
                 'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
             }
         ]

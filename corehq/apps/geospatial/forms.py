@@ -171,7 +171,7 @@ class GeospatialConfigForm(forms.ModelForm):
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
-                    _('Case Grouping Parameters'),
+                    _('Case Clustering Map Parameters'),
                     crispy.Field('selected_grouping_method', data_bind="value: selectedGroupMethod"),
                     crispy.Div(
                         crispy.Field('max_cases_per_group'),
