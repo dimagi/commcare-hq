@@ -271,7 +271,6 @@ def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):
         if is_enabled:
             _notify_on_change(static_toggle, [item], request_username)
 
-        clear_cache_for_toggle(namespace, item)
         _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled)
 
 
