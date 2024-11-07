@@ -16,6 +16,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/layout/views/progress_bar',
+    'cloudcare/js/utils',
 ], function (
     $,
     _,
@@ -29,7 +30,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     AppsAPI,
     UsersModels,
     formplayerUtils,
-    ProgressBar
+    ProgressBar,
+    cloudcareUtils,
 ) {
     let currentSelections = null,
         ongoingRequests = [];
@@ -137,7 +139,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
-                            if (!(response.session_id)) {
+                            if (!(response.session_id) && (UsersModels.getCurrentUser().isAppPreview
+                                    || !cloudcareUtils.smallScreenIsEnabled())) {
                                 FormplayerFrontend.trigger('configureDebugger');
                             }
                         }

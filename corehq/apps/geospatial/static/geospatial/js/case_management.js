@@ -48,7 +48,6 @@ hqDefine("geospatial/js/case_management", [
         var self = {};
 
         self.isBusy = ko.observable(false);
-        self.showParams = ko.observable(false);
         self.parameters = ko.observableArray([]);
 
         self.disbursementErrorMessage = ko.observable('');
@@ -139,7 +138,7 @@ hqDefine("geospatial/js/case_management", [
                 }
 
                 self.parameters(parametersList);
-                self.showParams(true);
+                $('#disbursement-params').show();
             };
 
             const hasSelectedUsers = mapModel.hasSelectedUsers();
@@ -260,7 +259,7 @@ hqDefine("geospatial/js/case_management", [
     function initPolygonFilters() {
         // Assumes `map` var is initialized
         const $mapControlDiv = $("#polygon-filters");
-        polygonFilterModel = new models.PolygonFilter(mapModel, false, true);
+        polygonFilterModel = new models.PolygonFilter(mapModel, false, true, false);
         polygonFilterModel.loadPolygons(initialPageData.get('saved_polygons'));
         if ($mapControlDiv.length) {
             ko.cleanNode($mapControlDiv[0]);
@@ -518,6 +517,12 @@ hqDefine("geospatial/js/case_management", [
             }
         } else if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
             loadCases(xhr.responseJSON.aaData);
+            if (polygonFilterModel) {
+                selectMapItemsInPolygons();
+            }
+            if (mapModel.hasDisbursementLayers()) {
+                mapModel.removeDisbursementLayers();
+            }
         }
     });
 });

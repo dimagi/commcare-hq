@@ -1,35 +1,32 @@
 {% load i18n %}
 
 <script type="text/template" id="persistent-menu-template">
-  <a type="button"
-     href="#"
+  <button id="persistent-menu-arrow-toggle"
+     role="button"
+     aria-label="Expand Persistent Menu"
      tabindex="1"
-     data-bs-toggle="offcanvas"
      data-bs-target="#persistent-menu-container"
-     aria-expanded="false"
+     aria-expanded="true"
      aria-controls="persistent-menu-container"
      class="position-fixed top-50 start-0 rounded-end persistent-menu-toggle">
     <i class="fa fa-chevron-right"></i>
-  </a>
-  <div id="persistent-menu-container" class="offcanvas offcanvas-start w-auto" tabindex="-1" aria-labelledby="persistent-menu-label">
-    <div class="offcanvas-header persistent-menu-max-width d-flex align-items-center justify-content-between">
+  </button>
+  <div id="persistent-menu-container" class="bg-white h-100 position-relative overflow-scroll"
+    aria-labelledby="persistent-menu-label">
+    <button type="button" id="persistent-menu-close-button" class="btn-close text-reset position-absolute"
+      data-bs-target="#persistent-menu-container" aria-label="Close"></button>
+    <h2 class="title position-relative me-4" id="persistent-menu-label">
       <% if (imageUri) { %>
         <i class="fcc persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"
-           style="background-image: url('<%- imageUri %>');"></i>
+            style="background-image: url('<%- imageUri %>');"></i>
       <% } else { %>
-        <i class="fcc fcc-flower persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"></i>
+        <i class="fcc fcc-flower persistent-menu-image" aria-hidden="true"></i>
       <% } %>
-      <h5 class="offcanvas-title position-relative mx-2 flex-grow-1" id="persistent-menu-label">
-        <a id="app-main" class="stretched-link text-reset d-block" href="#"
-           data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
-          <%- appName %>
-        </a>
-      </h5>
-      <button type="button" class="btn-close text-reset p-3" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body persistent-menu-max-width">
-      <div id="persistent-menu-content" class="persistent-menu"></div>
-    </div>
+      <a id="app-main" class="align-middle stretched-link text-reset" href="#">
+        <%- appName %>
+      </a>
+    </h2>
+    <div id="persistent-menu-content" class="persistent-menu"></div>
   </div>
 </script>
 
