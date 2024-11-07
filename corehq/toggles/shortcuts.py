@@ -39,24 +39,26 @@ def set_toggles(slugs, item, enabled, namespace=None):
 
 
 def _set_toggle_without_clear_cache(slug, item, enabled, namespace=None):
-    if toggle_enabled(slug, item, namespace=namespace) != enabled:
-        ns_item = namespaced_item(item, namespace)
-        try:
-            toggle_doc = Toggle.get(slug)
-        except ResourceNotFound:
-            toggle_doc = Toggle(slug=slug, enabled_users=[])
-        if enabled:
-            toggle_doc.add(ns_item)
-        else:
-            toggle_doc.remove(ns_item)
-        from corehq.feature_previews import all_previews
-        from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
-        static_toggles_by_slug = {t.slug: t for t in all_toggles() + all_previews()}
-        if namespace == NAMESPACE_DOMAIN and slug in static_toggles_by_slug:
-            static_toggle = static_toggles_by_slug[slug]
-            if static_toggle.save_fn:
-                static_toggle.save_fn(item, enabled)
-        return True
+    if toggle_enabled(slug, item, namespace=namespace) == enabled:
+        return False
+
+    ns_item = namespaced_item(item, namespace)
+    try:
+        toggle_doc = Toggle.get(slug)
+    except ResourceNotFound:
+        toggle_doc = Toggle(slug=slug, enabled_users=[])
+    if enabled:
+        toggle_doc.add(ns_item)
+    else:
+        toggle_doc.remove(ns_item)
+    from corehq.feature_previews import all_previews
+    from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
+    static_toggles_by_slug = {t.slug: t for t in all_toggles() + all_previews()}
+    if namespace == NAMESPACE_DOMAIN and slug in static_toggles_by_slug:
+        static_toggle = static_toggles_by_slug[slug]
+        if static_toggle.save_fn:
+            static_toggle.save_fn(item, enabled)
+    return True
 
 
 def namespaced_item(item, namespace):
