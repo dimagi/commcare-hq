@@ -8,13 +8,7 @@ from django.core.management import BaseCommand, CommandError
 from corehq.blobs.export import EXPORTERS
 from corehq.util.decorators import change_log_level
 
-USAGE = """Usage: ./manage.py run_blob_export [options] <slug> <domain>
-
-Slugs:
-
-{}
-
-""".format('\n'.join(sorted(EXPORTERS)))
+USAGE = "Usage: ./manage.py run_blob_export [options] <domain>"
 
 
 class Command(BaseCommand):
@@ -22,9 +16,9 @@ class Command(BaseCommand):
     Example: ./manage.py run_blob_export [options] domain
 
     Dump XForms in parallel:
-        ./manage.py run_blob_export -e sql_xforms --limit-to-db p0 domain
+        ./manage.py run_blob_export --limit-to-db p0 domain
          ...
-        ./manage.py run_blob_export -e sql_xforms --limit-to-db pN domain
+        ./manage.py run_blob_export --limit-to-db pN domain
 
     To top-up an older blob dump, first extract a list of names from the archive:
         $ tar --list -f blob_export.tar.gz > blob_export.list
@@ -35,11 +29,6 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('-e', '--exporter', dest='exporters', action='append', default=[],
-                            help='Exporter slug to run '
-                                 '(use multiple --slug to run multiple exporters or --all to run them all).')
-        parser.add_argument('--all', action='store_true', default=False,
-                            help='Run all exporters')
         parser.add_argument('--chunk-size', type=int, default=100,
                             help='Maximum number of records to read from couch at once.')
         parser.add_argument('--limit-to-db', dest='limit_to_db',
@@ -51,16 +40,13 @@ class Command(BaseCommand):
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
     def handle(self, domain=None, reset=False,
-               chunk_size=100, all=None, limit_to_db=None, **options):
-        exporters = options.get('exporters')
+               chunk_size=100, limit_to_db=None, **options):
+        exporters = ['all_blobs']  # hard code exporters, will change in next commit
         already_exported = get_lines_from_file(options['already_exported'])
         print("Found {} existing blobs, these will be skipped".format(len(already_exported)))
 
         if not domain:
             raise CommandError(USAGE)
-
-        if all:
-            exporters = list(EXPORTERS)
 
         for exporter_slug in exporters:
             try:
