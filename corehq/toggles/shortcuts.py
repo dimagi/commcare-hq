@@ -19,9 +19,6 @@ def toggle_enabled(slug, item, namespace=None):
 
 
 def set_toggle(slug, item, enabled, namespace=None):
-    """
-    Sets a toggle value explicitly. Should only save anything if the value needed to be changed.
-    """
     if _set_toggle_without_clear_cache(slug, item, enabled, namespace=namespace):
         from corehq.apps.toggle_ui.views import clear_cache_for_toggle
         clear_cache_for_toggle(namespace, item)
@@ -39,6 +36,9 @@ def set_toggles(slugs, item, enabled, namespace=None):
 
 
 def _set_toggle_without_clear_cache(slug, item, enabled, namespace=None):
+    """
+    Sets a toggle value explicitly. Should only save anything if the value needed to be changed.
+    """
     if toggle_enabled(slug, item, namespace=namespace) == enabled:
         return False
 
