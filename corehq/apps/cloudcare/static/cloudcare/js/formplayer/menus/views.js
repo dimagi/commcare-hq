@@ -755,8 +755,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         scrollToBottom: function () {
-            const self = this;
-            self.scrollContainer.animate({
+            this.scrollContainer.animate({
                 scrollTop: $('.container.pagination-container').offset().top,
             }, 500);
         },
