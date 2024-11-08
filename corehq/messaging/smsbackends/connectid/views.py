@@ -1,5 +1,6 @@
 from Crypto.Cipher import AES
 import base64
+import json
 
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -17,7 +18,7 @@ from corehq.apps.mobile_auth.utils import generate_aes_key
 @require_POST
 @validate_request_hmac("CONNECTID_SECRET_KEY")
 def receive_message(request, *args, **kwargs):
-    data = request.POST
+    data = json.loads(request.body.decode("utf-8"))
     channel_id = data["channel"]
     user_link = ConnectIDUserLink.objects.get(channel_id=channel_id)
     phone_obj = ConnectMessagingNumber(user_link)
@@ -59,8 +60,9 @@ def connectid_messaging_key(request, *args, **kwargs):
 @require_POST
 @validate_request_hmac("CONNECTID_SECRET_KEY")
 def update_connectid_messaging_consent(request, *args, **kwargs):
-    channel_id = request.POST.get("channel_id")
-    consent = request.POST.get("consent", False)
+    data = json.loads(request.body)
+    channel_id = data.get("channel_id")
+    consent = data.get("consent", False)
     if channel_id is None:
         return HttpResponseBadRequest("Channel ID is required.")
     link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
@@ -73,11 +75,12 @@ def update_connectid_messaging_consent(request, *args, **kwargs):
 @require_POST
 @validate_request_hmac("CONNECTID_SECRET_KEY")
 def messaging_callback_url(request, *args, **kwargs):
-    channel_id = request.POST.get("channel_id")
+    data = json.loads(request.body.decode("utf-8"))
+    channel_id = data.get("channel_id")
     if channel_id is None:
         return HttpResponseBadRequest("Channel ID is required.")
     user_link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
-    messages = request.POST.get("messages", [])
+    messages = data.get("messages", [])
     messages_to_update = []
     message_data = {message.get("message_id"): message.get("received_on") for message in messages}
     message_ids = list(message_data.keys())
