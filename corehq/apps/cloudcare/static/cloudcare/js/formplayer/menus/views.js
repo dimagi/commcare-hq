@@ -449,7 +449,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 arrow.addClass("fa-angle-double-down");
                 tileContent.addClass("collapsed-tile-content");
                 const offset = getScrollTopOffset(this.smallScreenEnabled);
-                $(this.scrollContainer).animate({
+                this.scrollContainer.animate({
                     scrollTop: this.scrollContainer.scrollTop() + $(e.currentTarget).parent().offset().top - offset
                 });
             }
