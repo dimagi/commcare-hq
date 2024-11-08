@@ -112,6 +112,14 @@ class CustomDataFieldsDefinition(models.Model):
             new.save()
             return new
 
+    @classmethod
+    def get_profile_required_for_user_type_list(cls, domain, field_type):
+        definition = cls.get(domain, field_type)
+        if definition:
+            profile_required_for_user_type_list = definition.profile_required_for_user_type
+            return profile_required_for_user_type_list
+        return None
+
     class FieldFilterConfig:
         def __init__(self, required_only=False, is_required_check_func=None):
             self.required_only = required_only
