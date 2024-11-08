@@ -560,7 +560,7 @@ class TestViews(ViewsBase):
             'toggles': 'test_toggle',
         }
         with patch('corehq.toggles.all_toggles_by_name', return_value={'test_toggle': TEST_TOGGLE}), \
-             mock.patch('corehq.apps.toggle_ui.views.clear_cache_for_toggle') as mock_clear_cache:
+             mock.patch('corehq.apps.toggle_ui.views.clear_toggle_cache_by_namespace') as mock_clear_cache:
             self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
             mock_clear_cache.assert_called_once_with(NAMESPACE_DOMAIN, other_domain.name)
         self.assertTrue(TEST_TOGGLE.enabled(other_domain.name))

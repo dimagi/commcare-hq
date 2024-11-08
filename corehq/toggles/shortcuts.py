@@ -20,8 +20,8 @@ def toggle_enabled(slug, item, namespace=None):
 
 def set_toggle(slug, item, enabled, namespace=None):
     if _set_toggle_without_clear_cache(slug, item, enabled, namespace=namespace):
-        from corehq.apps.toggle_ui.views import clear_cache_for_toggle
-        clear_cache_for_toggle(namespace, item)
+        from corehq.apps.toggle_ui.views import clear_toggle_cache_by_namespace
+        clear_toggle_cache_by_namespace(namespace, item)
         return True
 
 
@@ -31,8 +31,8 @@ def set_toggles(slugs, item, enabled, namespace=None):
         if _set_toggle_without_clear_cache(slug, item, enabled, namespace):
             toggle_changed = True
     if toggle_changed:
-        from corehq.apps.toggle_ui.views import clear_cache_for_toggle
-        clear_cache_for_toggle(namespace, item)
+        from corehq.apps.toggle_ui.views import clear_toggle_cache_by_namespace
+        clear_toggle_cache_by_namespace(namespace, item)
 
 
 def _set_toggle_without_clear_cache(slug, item, enabled, namespace=None):
