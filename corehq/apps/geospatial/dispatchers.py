@@ -6,7 +6,7 @@ from corehq.apps.reports.dispatcher import (
 from django.utils.decorators import method_decorator
 
 
-@method_decorator(toggles.GEOSPATIAL.required_decorator(), name='dispatch')
+@method_decorator(toggles.MICROPLANNING.required_decorator(), name='dispatch')
 class CaseManagementMapDispatcher(ReportDispatcher):
     prefix = 'microplanning'
     map_name = 'GEOSPATIAL_MAP'
