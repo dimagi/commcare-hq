@@ -1705,7 +1705,6 @@ DATA_MIGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
 DISABLE_MOBILE_ENDPOINTS = StaticToggle(
     'disable_mobile_endpoints',
     'Disable mobile endpoints for form submissions and restores',
@@ -1719,6 +1718,12 @@ DISABLE_MOBILE_ENDPOINTS = StaticToggle(
     )
 )
 
+OPEN_SUBMISSION_ENDPOINT = StaticToggle(
+    'open_submission_endpoint',
+    'Leave submission endpoint open to let old APIs keep working',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+)
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
