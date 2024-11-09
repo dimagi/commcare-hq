@@ -999,7 +999,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                         .addTo(addressMap);
                     allCoordinates.push(homeCoordinates);
                 }
-                addressMap.fitBounds(allCoordinates, {maxZoom: 14});
+                if (allCoordinates.length > 0) {
+                    addressMap.fitBounds(allCoordinates, {maxZoom: 14});
+                }
             } catch (error) {
                 console.error(error);
             }
