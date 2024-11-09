@@ -933,13 +933,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 L.mapbox.accessToken = token;
 
                 const allCoordinates = [];
+                const nullCoordinate = ['0', '0'];
                 const markers = [];
                 this.options.collection.models
                     .forEach(model => {
                         const addressCoordinates = model.attributes.data[addressIndex];
                         if (addressCoordinates) {
                             let markerCoordinates = addressCoordinates.split(" ").slice(0,2);
-                            if (markerCoordinates.length > 1) {
+                            if (markerCoordinates.length > 1 && JSON.stringify(markerCoordinates) !== JSON.stringify(nullCoordinate)) {
                                 const rowId = `row-${model.id}`;
                                 const popupText = markdown.render(model.attributes.data[popupIndex]);
                                 let marker = L.marker(markerCoordinates, {icon: locationIcon});
