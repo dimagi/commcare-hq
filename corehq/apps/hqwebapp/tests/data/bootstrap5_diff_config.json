@@ -685,6 +685,17 @@
       "compare_all_files": true
     }
   ],
+  "apps/domain/templates/login_and_password": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "login_and_password",
+      "compare_all_files": true
+    }
+  ],
   "apps/domain/templates/domain": [
     {
       "directories": [
