@@ -1,5 +1,6 @@
 /* eslint-env node */
 const commonDefault = require("./webpack.common");
+const path = require('path');
 const webpack = require('webpack');
 const utils = require('./utils');
 const hqPlugins = require('./plugins');
@@ -18,6 +19,12 @@ module.exports = Object.assign({}, commonDefault, {
             filename: 'manifest_b3.json',
         }),
     ],
+
+    resolve: {
+        alias: Object.assign({}, commonDefault.resolve.alias, {
+            "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap3/'), 'commcarehq'),
+        }),
+    },
 
     optimization: {
         splitChunks: {
