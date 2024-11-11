@@ -1,6 +1,6 @@
 {% load i18n two_factor_tags %}
 <form action="" method="post">{% csrf_token %}
-  {% include "two_factor/_wizard_forms.html" %}
+  {% include "two_factor/bootstrap3/_wizard_forms.html" %}
 
   {# hidden submit button to enable [enter] key #}
   <div style="display: none"><input type="submit" value=""/></div>
@@ -30,6 +30,6 @@
   {% endif %}
 
   <div class="form-bubble-actions">
-    {% include "two_factor/_wizard_actions.html" %}
+    {% include "two_factor/bootstrap3/_wizard_actions.html" %}
   </div>
 </form>
