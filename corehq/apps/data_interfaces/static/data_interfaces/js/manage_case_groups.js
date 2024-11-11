@@ -3,7 +3,7 @@ hqDefine("data_interfaces/js/manage_case_groups", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/crud_paginated_list_init',
-    'commcarehq_b3',
+    'commcarehq',
 ], function (
     $,
     _,
