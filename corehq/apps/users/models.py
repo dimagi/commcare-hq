@@ -2334,6 +2334,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def memoized_usercase(self):
         return self.get_usercase()
 
+    def get_usercase_by_domain(self, domain):
+        if self.domain == domain:
+            return self.memoized_usercase
+        return None
+
     def get_usercase(self):
         return CommCareCase.objects.get_case_by_external_id(self.domain, self._id, USERCASE_TYPE)
 
