@@ -694,6 +694,42 @@
       "file_type": "template",
       "label": "login_and_password",
       "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "login_and_password/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "two_factor/bootstrap3",
+        "two_factor/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "login_and_password/two_factor",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "two_factor/core/bootstrap3",
+        "two_factor/core/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "login_and_password/two_factor/core",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "two_factor/profile/bootstrap3",
+        "two_factor/profile/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "login_and_password/two_factor/profile",
+      "compare_all_files": true
     }
   ],
   "apps/domain/templates/domain": [
