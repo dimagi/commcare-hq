@@ -73,7 +73,7 @@ class DomainMigrationMiddleware(MiddlewareMixin):
             if DATA_MIGRATION.enabled(request.domain):
                 return TemplateResponse(
                     request=request,
-                    template='domain/data_migration_in_progress.html',
+                    template='domain/bootstrap3/data_migration_in_progress.html',
                     status=503,
                     context={
                         'domain': request.domain
