@@ -39,8 +39,15 @@
       <i class="fa <%- iconClass %> persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"></i>
     <% } %>
     <div class="mx-3 flex-grow-1">
-      <a class="d-block stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#"
+      <a class="d-block d-lg-none stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#"
          data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
+        <%- displayText %>
+      </a>
+      <!--
+      Duplicate of the <a> tag above with the toggle attributes removed. They are only needed on small screens
+      and interfere with other modals on large screens.
+      -->
+      <a class="d-none d-lg-block stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#">
         <%- displayText %>
       </a>
     </div>
