@@ -40,7 +40,7 @@ function send_metric_to_datadog() {
                   \"tags\":[
                     $EXTRA_TAG
                     \"environment:$CI_ENV\",
-                    \"partition:$NOSE_DIVIDED_WE_RUN\"
+                    \"partition:$DIVIDED_WE_RUN\"
                   ]}
                 ]
               }" \
