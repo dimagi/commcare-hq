@@ -1,7 +1,6 @@
 /* eslint-env node */
 const path = require('path');
 const fs = require('fs');
-const utils = require('./utils');
 const appPaths = require('./appPaths');
 
 class EntryChunksPlugin {
