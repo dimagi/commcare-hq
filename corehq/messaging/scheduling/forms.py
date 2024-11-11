@@ -1778,7 +1778,7 @@ class ScheduleForm(Form):
                 ]
 
     def enable_json_user_data_filter(self, initial):
-        if self.is_system_admin or initial.get('use_user_data_filter') == self.JSON:
+        if True: #self.is_system_admin or initial.get('use_user_data_filter') == self.JSON:
             self.fields['use_user_data_filter'].choices += [
                 (self.JSON, _("JSON")),
             ]
