@@ -961,7 +961,7 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
 USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     'ush_dont_close_patient_extensions',
     'USH: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Suppress the normal behaviour of 'closing host cases closes its extension cases'.
@@ -2108,7 +2108,7 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
     'domain_permissions_mirror',
     "USH: Enterprise Permissions: mirror a project space's permissions in other project spaces",
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Enterprise+Permissions',
 )
@@ -2156,7 +2156,7 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
 REFER_CASE_REPEATER = StaticToggle(
     'refer_case_repeater',
     'USH: Allow refer case repeaters to be setup',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
@@ -2172,7 +2172,7 @@ WIDGET_DIALER = StaticToggle(
 HMAC_CALLOUT = StaticToggle(
     'hmac_callout',
     'USH: Enable signed messaging url callouts in cloudcare',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
 )
@@ -2180,7 +2180,7 @@ HMAC_CALLOUT = StaticToggle(
 GAEN_OTP_SERVER = StaticToggle(
     'gaen_otp_server',
     'USH: Enable retrieving OTPs from a GAEN Server',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
 )
@@ -2196,7 +2196,7 @@ PARALLEL_USER_IMPORTS = StaticToggle(
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
     'USH: Limit allowed users for Log In As',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Adds a permission that can be set on user roles to allow log in as, but only
@@ -2250,7 +2250,7 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
 ENTERPRISE_USER_MANAGEMENT = StaticToggle(
     'enterprise_user_management',
     'USH: UI for managing all web users in an enterprise',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/USH%3A+UI+for+managing+all+web+users+in+an+enterprise",
 )
@@ -2403,7 +2403,7 @@ FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
 DATA_REGISTRY = StaticToggle(
     'data_registry',
     'USH: Enable Data Registries for sharing data between project spaces',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/USH/Data+Registry",
 )
