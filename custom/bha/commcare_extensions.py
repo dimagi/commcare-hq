@@ -12,6 +12,6 @@ BHA_DOMAINS = settings.CUSTOM_DOMAINS_BY_MODULE['custom.bha']
 def bha_csql_fixture_context(domain, restore_user):
     facility_ids = get_user_facility_ids(domain, restore_user)
     return ('bha', SimpleDictTemplateParam({
-        'facility_ids': facility_ids,
+        'facility_ids': ' '.join(facility_ids),
         'user_clinic_ids': get_user_clinic_ids(domain, restore_user, facility_ids),
     }))
