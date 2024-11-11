@@ -372,7 +372,7 @@ class Command(BaseCommand):
                 self.display_rename_summary(changelog)
                 changelog.append("\n\n")
                 if review_changes:
-                    confirm = get_confirmation("Keep changes?")
+                    confirm = get_confirmation("Keep changes?", default='y')
                     if not confirm:
                         changelog.append("CHANGES DISCARDED\n\n")
                         self.write_response("ok, discarding changes...")
