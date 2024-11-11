@@ -5,7 +5,6 @@ from django.template.response import TemplateResponse
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq.apps.accounting.models import DefaultProductPlan, Subscription
-from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.toggles import DATA_MIGRATION
 
 
