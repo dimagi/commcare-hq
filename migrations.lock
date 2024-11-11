@@ -1269,7 +1269,8 @@ users
  0071_rm_user_data
  0072_remove_invitation_supply_point
  0073_rm_location_from_user_data
- 0074_connectiduserlink_channel_id_and_more
+ 0074_alter_sqluserdata_profile
+ 0075_connectiduserlink_channel_id_and_more
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

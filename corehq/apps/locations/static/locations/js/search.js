@@ -6,20 +6,20 @@ hqDefine('locations/js/search', [
     $,
     initialPageData
 ) {
-    var show_inactive, location_search_url, locs;
+    let showInactive, locationSearchUrl, locs;
 
     var enableLocationSearchSelect = function () {
         var $select = $('#location_search_select');
         $select.select2({
             ajax: {
-                url: location_search_url,
+                url: locationSearchUrl,
                 dataType: 'json',
                 data: function (params) {
                     return {
                         q: params.term,
                         page_limit: 10,
                         page: params.page,
-                        show_inactive: show_inactive,
+                        show_inactive: showInactive,
                     };
                 },
                 processResults: function (data, params) {
@@ -43,14 +43,14 @@ hqDefine('locations/js/search', [
         enableLocationSearchSelect();
     };
 
-    var clearLocationSelection = function (tree_model) {
+    var clearLocationSelection = function (treeModel) {
         reloadLocationSearchSelect();
-        tree_model.load(locs);
+        treeModel.load(locs);
     };
 
     $(function () {
-        show_inactive = initialPageData.get('show_inactive');
-        location_search_url = initialPageData.reverse('location_search');
+        showInactive = initialPageData.get('show_inactive');
+        locationSearchUrl = initialPageData.reverse('location_search');
         locs = initialPageData.get('locations');
         enableLocationSearchSelect();
     });
