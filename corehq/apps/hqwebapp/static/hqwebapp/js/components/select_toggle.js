@@ -29,7 +29,7 @@ hqDefine('hqwebapp/js/components/select_toggle', [
     ko,
     _,
     koComponents,
-    initialPageData,
+    initialPageData
 ) {
     const component = {
         viewModel: function (params) {
