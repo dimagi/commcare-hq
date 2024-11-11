@@ -1,0 +1,52 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load i18n phonenumber %}
+ 
+ {% block page_content %}
+@@ -29,14 +29,14 @@
+               <form method="post" action="{% url 'two_factor:phone_delete' phone.id %}"
+                     onsubmit="return confirm('Are you sure?')">
+                 {% csrf_token %}
+-                <button class="btn btn-xs btn-danger"
++                <button class="btn btn-sm btn-outline-danger"
+                         type="submit">{% trans "Unregister" %}</button>
+               </form>
+             </li>
+           {% endfor %}
+         </ul>
+         <p><a href="{% url 'two_factor:phone_create' %}"
+-              class="btn btn-default">{% trans "Add Phone Number" %}</a></p>
++              class="btn btn-outline-primary">{% trans "Add Phone Number" %}</a></p>
+         <br/>
+       </fieldset>
+       {% endif %}
+@@ -53,7 +53,7 @@
+           {% endblocktrans %}
+         </p>
+         <p><a href="{% url 'two_factor:backup_tokens' %}"
+-              class="btn btn-default">{% trans "Show Codes" %}</a></p>
++              class="btn btn-outline-primary">{% trans "Show Codes" %}</a></p>
+         <br/>
+       </fieldset>
+ 
+@@ -61,7 +61,7 @@
+         <legend>{% trans "Remove Two-Factor Authentication" %}</legend>
+         <p>{% blocktrans %}We <strong>strongly discourage</strong> this, but if absolutely necessary you can
+           remove two-factor authentication from your account.{% endblocktrans %}</p>
+-        <p><a class="btn btn-danger" href="{% url 'two_factor:disable' %}">
++        <p><a class="btn btn-outline-danger" href="{% url 'two_factor:disable' %}">
+           {% trans "Remove Two-Factor Authentication" %}</a></p>
+         <br/>
+       </fieldset>
+@@ -72,7 +72,7 @@
+           If you need to do this, please make sure you complete the entire process once you begin, otherwise your account will
+           not be protected by two-factor authentication.
+         {% endblocktrans %}</p>
+-        <p><a class="btn btn-default" href="{% url 'reset' %}">
++        <p><a class="btn btn-outline-primary" href="{% url 'reset' %}">
+           {% trans "Reset Two-Factor Authentication" %}</a></p>
+         <br/>
+       </fieldset>

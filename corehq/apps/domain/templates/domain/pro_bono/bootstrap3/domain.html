@@ -1,0 +1,8 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load hq_shared_tags %}
+
+{% requirejs_main 'domain/js/pro-bono' %}
+
+{% block page_content %}
+  {% include 'domain/pro_bono/bootstrap3/page_content.html' %}
+{% endblock %}
