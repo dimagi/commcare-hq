@@ -5,7 +5,7 @@ import sys
 
 from django.core.management import BaseCommand, CommandError
 
-from corehq.blobs.export import EXPORTERS
+from corehq.blobs.export import BlobExporter
 from corehq.util.decorators import change_log_level
 
 USAGE = "Usage: ./manage.py run_blob_export [options] <domain>"
@@ -41,34 +41,28 @@ class Command(BaseCommand):
     @change_log_level('botocore', logging.WARNING)
     def handle(self, domain=None, reset=False,
                chunk_size=100, limit_to_db=None, **options):
-        exporters = ['all_blobs']  # hard code exporters, will change in next commit
         already_exported = get_lines_from_file(options['already_exported'])
         print("Found {} existing blobs, these will be skipped".format(len(already_exported)))
 
         if not domain:
             raise CommandError(USAGE)
 
-        for exporter_slug in exporters:
-            try:
-                exporter_cls = EXPORTERS[exporter_slug]
-            except KeyError:
-                raise CommandError(USAGE)
-
-            self.stdout.write("\nRunning exporter: {}\n{}".format(exporter_slug, '-' * 50))
-            export_filename = _get_export_filename(exporter_slug, domain, already_exported)
-            if os.path.exists(export_filename):
-                raise CommandError(f"Export file '{export_filename}' exists. "
-                                   f"Remove the file and re-run the command.")
-
-            exporter = exporter_cls(domain)
-            total, skips = exporter.migrate(
-                export_filename,
-                chunk_size=chunk_size,
-                limit_to_db=limit_to_db,
-                already_exported=already_exported,
+        self.stdout.write("\nRunning blob exporter\n{}".format('-' * 50))
+        export_filename = _get_export_filename(domain, already_exported)
+        if os.path.exists(export_filename):
+            raise CommandError(
+                f"Export file '{export_filename}' exists. Remove the file and re-run the command."
             )
-            if skips:
-                sys.exit(skips)
+
+        exporter = BlobExporter(domain)
+        total, skips = exporter.migrate(
+            export_filename,
+            chunk_size=chunk_size,
+            limit_to_db=limit_to_db,
+            already_exported=already_exported,
+        )
+        if skips:
+            sys.exit(skips)
 
 
 def get_lines_from_file(filename):
@@ -78,7 +72,7 @@ def get_lines_from_file(filename):
         return {line.strip() for line in f}
 
 
-def _get_export_filename(slug, domain, already_exported):
+def _get_export_filename(domain, already_exported):
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H.%M')
     part = '-part' if already_exported else ''
-    return f'{timestamp}-{domain}-{slug}{part}.tar.gz'
+    return f'{timestamp}-{domain}-blobs{part}.tar.gz'
