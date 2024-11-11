@@ -270,7 +270,7 @@ class Command(BaseCommand):
             self.stdout.write("\n")
             if not self.skip_all:
                 review_changes = get_confirmation(
-                    'Do you want to review each change line-by-line here?', default='n'
+                    'Do you want to review each change line-by-line here?', default='y'
                 )
             else:
                 review_changes = False
