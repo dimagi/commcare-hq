@@ -241,19 +241,30 @@ class ScheduleInstance(PartitionedModel):
 
         return set([value])
 
-    def passes_user_data_filter(self, contact):
+    def _get_filter_value(self, filter_value_or_property_name):
+        if filter_value_or_property_name.startswith('{') and filter_value_or_property_name.endswith('}'):
+            property_name = filter_value_or_property_name[1:-1].strip()
+            return self.case.case_json[property_name]
+        else:
+            return filter_value_or_property_name
+
+    def _passes_user_data_filter(self, contact):
         if not isinstance(contact, CouchUser):
             return True
 
         if not self.memoized_schedule.user_data_filter:
             return True
 
-        user_data = contact.get_user_data(self.domain)
-        for key, value in self.memoized_schedule.user_data_filter.items():
+        if self.memoized_schedule.use_user_case_for_filter:
+            user_case = contact.get_usercase_by_domain(self.domain)
+            user_data = user_case.case_json
+        else:
+            user_data = contact.get_user_data(self.domain)
+        for key, value_or_property_name in self.memoized_schedule.user_data_filter.items():
             if key not in user_data:
                 return False
 
-            allowed_values_set = self.convert_to_set(value)
+            allowed_values_set = {self._get_filter_value(v) for v in self.convert_to_set(value_or_property_name)}
             actual_values_set = self.convert_to_set(user_data[key])
 
             if actual_values_set.isdisjoint(allowed_values_set):
@@ -272,7 +283,7 @@ class ScheduleInstance(PartitionedModel):
 
         for member in recipient_list:
             for contact in self._expand_recipient(member):
-                if self.passes_user_data_filter(contact):
+                if self._passes_user_data_filter(contact):
                     yield contact
 
     def get_content_send_lock(self, recipient):
