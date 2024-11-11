@@ -7,7 +7,7 @@ hqDefine('domain/js/bootstrap5/toggles', [
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // for slideVisible
     'hqwebapp/js/bootstrap5/main',
-    'commcarehq_b3',
+    'commcarehq',
 ], function (
     $,
     ko,
