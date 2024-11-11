@@ -1,15 +1,18 @@
 --- 
 +++ 
-@@ -5,7 +5,7 @@
- 
- {% block title %}{% trans "Your session has expired" %}{% endblock %}
+@@ -1,9 +1,9 @@
+-{% extends "hqwebapp/bootstrap3/base_page.html" %}
++{% extends "hqwebapp/bootstrap5/base_page.html" %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ {% load compress %}
  
 -{% requirejs_main 'registration/js/login' %}
 +{% requirejs_main_b5 'registration/js/login' %}
  
- {% block background_content %}
-   <div class="bg-container">
-@@ -48,7 +48,7 @@
+ {% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
+ 
+@@ -39,7 +39,7 @@
           id="user-login-form"
           class="ko-template"
           {% endif %}>
