@@ -22,7 +22,7 @@ module.exports = Object.assign({}, commonDefault, {
 
     resolve: {
         alias: Object.assign({}, commonDefault.resolve.alias, {
-            "commcarehq_bx": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap3/'), 'commcarehq'),
+            "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap3/'), 'commcarehq'),
         }),
     },
 
