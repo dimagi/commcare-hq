@@ -181,7 +181,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     self.request,
                     reg_form.cleaned_data['project_name'],
                     is_new_user=True,
-                    is_self_signup=False  # TODO: connect this to RegisterWebUserForm
+                    is_self_signup=reg_form.cleaned_data['is_self_signup']
                 )
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
@@ -300,7 +300,7 @@ class UserRegistrationView(BasePageView):
                 _("Custom mobile app builder"),
                 _("Powerful case management"),
                 _("Field staff reports"),
-                _("Unlimited mobile users"),
+                _("125+ mobile users"),
                 _("Full suite of data tools"),
                 _("3rd party integrations"),
                 _("2-way SMS workflows"),
