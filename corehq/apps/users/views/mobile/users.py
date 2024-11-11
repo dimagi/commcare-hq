@@ -1,9 +1,11 @@
 import io
 import json
 import re
+import requests
 import time
 from urllib.parse import quote_plus, unquote_plus
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -810,7 +812,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         if self.new_mobile_worker_form.cleaned_data['account_invite_by_cid']:
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             couch_user.set_default_phone_number(phone_number)
-            send_connectid_invite_sms(couch_user)
+            deliver_connectid_invite(couch_user)
 
         plan_limit, user_count = Subscription.get_plan_and_user_count_by_domain(self.domain)
         check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
@@ -1750,37 +1752,31 @@ def send_connectid_invite(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     if user.domain != domain:
         return HttpResponse(status=400)
-    is_sent = send_connectid_invite_sms(user)
+    is_sent = deliver_connectid_invite(user)
     if not is_sent:
         return HttpResponse(status=400)
     return HttpResponse(status=200)
 
 
-def send_connectid_invite_sms(user):
+def deliver_connectid_invite(user):
+    # ConnectID server delivers the invite to user
     if user.is_account_confirmed or not user.is_commcare_user():
         messages.error(request, "The user is already confirmed or is not a mobile user")
         return False
 
     invite_code = encrypt_account_confirmation_info(user)
-    deeplink = f"connect://hq_invite/{get_site_domain()}/a/{quote_plus(user.domain)}/{quote_plus(invite_code)}/{quote_plus(user.raw_username)}/"
-    text_content = f"""
-    You are invited to join a CommCare project ({user.domain})
-    Please click on {deeplink} to join using your ConnectID
-    account.
-
-    Once you confirm, you will be able to login using your
-    ConnectID account. Your username is {(user.raw_username)}
-
-    Thanks.
-    -The CommCare HQ team.
-    """
-
-    send_sms(
-        domain=user.domain,
-        contact=None,
-        phone_number=user.default_phone_number,
-        text=text_content
+    response = requests.post(
+        settings.CONNECTID_USERINVITE_URL,
+        data={
+            "phone_number": user.default_phone_number,
+            "callback_url": absolute_reverse("confirm_connectid_user", args=[user.domain]),
+            "user_domain": quote_plus(user.domain),
+            "username": quote_plus(user.raw_username),
+            "invite_code": quote_plus(invite_code),
+        },
+        auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
     )
+    response.raise_for_status()
     return True
 
 
