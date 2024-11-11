@@ -1,0 +1,22 @@
+--- 
++++ 
+@@ -5,7 +5,7 @@
+ {% endcomment %}
+ 
+ <div class="row">
+-  <div class="col-sm-10">
++  <div class="col-md-10">
+     {% for header, rate_infos in project_limits %}
+     <h1>{{ header }}</h1>
+     <table class="table table-striped">
+@@ -23,8 +23,8 @@
+           <td>{{ rate_info.key }}</td>
+           <td>
+             {{ rate_info.percent_usage }}%
+-            <div class="progress">
+-              <div class="progress-bar progress-bar-striped" style="width: {{ rate_info.percent_usage }}%"></div>
++            <div class="progress">  {# todo B5: css-progress #}
++              <div class="progress-bar progress-bar-striped" style="width: {{ rate_info.percent_usage }}%"></div>  {# todo B5: inline-style #}
+             </div>
+           </td>
+           <td>{{ rate_info.current_usage }}</td>
