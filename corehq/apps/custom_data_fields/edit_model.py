@@ -17,6 +17,7 @@ from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
+from corehq.apps.users.models import SQLUserData, CouchUser
 
 from .models import (
     CustomDataFieldsDefinition,
@@ -389,13 +390,20 @@ class CustomDataModelMixin(object):
                 bulk_sync_usercases_if_applicable(obj.definition.domain, list(obj.user_ids_assigned()))
             seen.add(obj.id)
 
+        return self.delete_eligible_profiles(self.get_profiles(), seen)
+
+    def delete_eligible_profiles(self, all_profiles, updated_profile_list):
         errors = []
-        for profile in self.get_profiles():
-            if profile.id not in seen:
-                if profile.has_users_assigned:
-                    errors.append(_("Could not delete profile '{}' because it has users "
-                                    "assigned.").format(profile.name))
-                else:
+        for profile in all_profiles:
+            if profile.id not in updated_profile_list:
+                user_data = SQLUserData.objects.filter(profile=profile)
+                for ud in user_data:
+                    user = CouchUser.get_by_user_id(ud.user_id)
+                    if user.is_active and self.domain in user.domains:
+                        errors.append(_("Could not delete profile '{}' because it has users "
+                                        "assigned.").format(profile.name))
+                        break
+                if not errors:
                     profile.delete()
 
         return errors
