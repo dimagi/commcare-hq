@@ -2475,17 +2475,9 @@ class AdminTab(UITab):
 
     @property
     def dropdown_items(self):
-        if (self.couch_user and not self.couch_user.is_superuser
-                and (toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
-            return [
-                dropdown_dict(_("System Info"), url=reverse("system_info")),
-                dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
-            ]
-
         submenu_context = [
             dropdown_dict(_("Reports"), is_header=True),
             dropdown_dict(_("Admin Reports"), url=reverse("default_admin_report")),
-            dropdown_dict(_("System Info"), url=reverse("system_info")),
             dropdown_dict(_("Management"), is_header=True),
         ]
         try:
@@ -2507,17 +2499,6 @@ class AdminTab(UITab):
 
     @property
     def sidebar_items(self):
-        # todo: convert these to dispatcher-style like other reports
-        if (self.couch_user
-                and (
-                not self.couch_user.is_superuser
-                and toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
-            return [
-                (_('System Health'), [
-                    {'title': _('System Info'),
-                     'url': reverse('system_info')},
-                ])]
-
         admin_operations = [
             {'title': _('Style Guide'),
              'url': reverse(MainStyleGuideView.urlname),
@@ -2543,9 +2524,6 @@ class AdminTab(UITab):
                  'url': reverse('doc_in_es')},
             ]
             system_operations = [
-                {'title': _('System Info'),
-                 'url': reverse('system_info'),
-                 'icon': 'fa fa-heartbeat'},
                 {'title': _('Branches on Staging'),
                  'url': reverse('branches_on_staging'),
                  'icon': 'fa fa-tree'},
@@ -2620,8 +2598,7 @@ class AdminTab(UITab):
     @property
     def _is_viewable(self):
         return (self.couch_user
-                and (self.couch_user.is_superuser
-                     or toggles.IS_CONTRACTOR.enabled(self.couch_user.username))
+                and self.couch_user.is_superuser
                 and not is_request_using_sso(self._request))
 
 
