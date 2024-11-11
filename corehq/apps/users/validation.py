@@ -3,7 +3,9 @@ from django.core.validators import validate_email
 from django.utils.translation import gettext as _
 
 from corehq.apps.users.util import is_username_available
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.users.views.mobile import BAD_MOBILE_USERNAME_REGEX
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
 def validate_mobile_username(username, domain, is_unique=True):
@@ -43,3 +45,17 @@ def _validate_complete_username(username, domain):
     if email_domain != expected_domain:
         raise ValidationError(
             _("The username email domain '@{}' should be '@{}'.").format(email_domain, expected_domain))
+
+
+def validate_profile_required(profile_name, domain):
+    profile_required_for_user_type_list = CustomDataFieldsDefinition.get_profile_required_for_user_type_list(
+        domain,
+        UserFieldsView.field_type
+    )
+    if not profile_required_for_user_type_list:
+        return
+    profile_assginment_required = UserFieldsView.COMMCARE_USER in profile_required_for_user_type_list
+    if profile_assginment_required and not profile_name:
+        raise ValidationError(
+            _("A profile assignment is required for Mobile Workers.")
+        )

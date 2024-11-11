@@ -167,6 +167,9 @@ def styleguide_molecules_selections(request):
                 SelectToggleDemoForm(), get_python_example_context('select_toggle_form.py'),
             ),
             'select2_manual': get_example_context('styleguide/bootstrap5/examples/select2_manual.html'),
+            'select2_manual_allow_clear': get_example_context(
+                'styleguide/bootstrap5/examples/select2_manual_allow_clear.html'
+            ),
             'select2_manual_crispy': CrispyFormsWithJsDemo(
                 form=Select2ManualDemoForm(),
                 code_python=get_python_example_context('select2_manual_form.py'),
