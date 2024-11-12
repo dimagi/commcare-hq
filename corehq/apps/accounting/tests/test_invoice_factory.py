@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import patch
 
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
@@ -136,9 +137,10 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
             self.account, self.domain.name, paused_plan,
             date_start=self.invoice_start,
             date_end=self.invoice_end + datetime.timedelta(days=1),
-
         )
-        self.assertListEqual(self.invoice_factory._get_subscriptions(), [])
+        with patch.object(self.invoice_factory, '_create_invoice_for_subscription') as mock_create_invoice:
+            self.invoice_factory.create_invoices()
+            mock_create_invoice.assert_not_called()
 
 
 class TestInvoicingMethods(BaseAccountingTest):
