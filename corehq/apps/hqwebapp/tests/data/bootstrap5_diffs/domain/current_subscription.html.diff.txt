@@ -1,0 +1,271 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% requirejs_main 'domain/js/current_subscription' %}
++{% requirejs_main_b5 'domain/js/current_subscription' %}
+ 
+ {% block page_content %}
+   {% initial_page_data "stripe_public_key" stripe_public_key %}
+@@ -15,12 +15,12 @@
+   {% registerurl "domain_wire_payment" domain %}
+ 
+   <div class="row">
+-    <div class="col-sm-12">
++    <div class="col-md-12">
+       <article id="subscriptionSummary" class="form-horizontal">
+         <legend>{% trans 'Current Subscription' %}</legend>
+-        <div class="form-group">
+-          <label class="control-label col-sm-2">{% trans 'Plan' %}</label>
+-          <div class="col-sm-10">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label col-md-2">{% trans 'Plan' %}</label>
++          <div class="col-md-10">
+             <div class="{{ plan.css_class }}">
+               <h4>
+                 {% if plan.is_paused %}
+@@ -55,8 +55,8 @@
+             {% if can_change_subscription %}
+               {% if plan.is_annual_plan %}
+                 <form action="{% url 'annual_plan_request_quote' domain %}">
+-                  <div style="margin-top:10px;">
+-                    <label class="control-label">{% trans "Got questions about your plan?" %}</label>
++                  <div style="margin-top:10px;">  {# todo B5: inline-style #}
++                    <label class="form-label">{% trans "Got questions about your plan?" %}</label>
+                     <button class="btn btn-primary btn-lg">
+                       {% trans 'Talk to Sales' %}
+                     </button>
+@@ -64,7 +64,7 @@
+                 </form>
+               {% else %}
+                 <p>
+-                  <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
++                  <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">  {# todo B5: inline-style #}
+                     {% if plan.is_paused %}
+                       {% trans "Subscribe to Plan" %}
+                     {% else %}
+@@ -95,17 +95,17 @@
+         </div>
+         {% if not plan.is_trial and not plan.is_paused %}
+           {% if plan.date_start %}
+-            <div class="form-group">
+-              <label class="control-label col-sm-2">{% trans 'Date Started' %}</label>
+-              <div class="col-sm-10">
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label class="form-label col-md-2">{% trans 'Date Started' %}</label>
++              <div class="col-md-10">
+                 <p class="form-control-text">{{ plan.date_start }}</p>
+               </div>
+             </div>
+           {% endif %}
+           {% if plan.date_end %}
+-            <div class="form-group">
+-              <label class="control-label col-sm-2">{% trans 'Date Ending' %}</label>
+-              <div class="col-sm-10">
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label class="form-label col-md-2">{% trans 'Date Ending' %}</label>
++              <div class="col-md-10">
+                 <p class="form-control-text">{{ plan.date_end }}</p>
+                 {% if plan.next_subscription.can_renew %}
+                   <a href="{{ plan.next_subscription.renew_url }}"
+@@ -117,9 +117,9 @@
+             </div>
+           {% endif %}
+           <div data-bind="foreach: products">
+-            <div class="form-group">
+-              <label class="control-label col-sm-2">{% trans 'Current Price' %}</label>
+-              <div class="col-sm-10">
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label class="form-label col-md-2">{% trans 'Current Price' %}</label>
++              <div class="col-md-10">
+                 <p class="form-control-text"
+                    data-bind="text: monthlyFee"></p>
+               </div>
+@@ -127,31 +127,31 @@
+           </div>
+         {% endif %}
+         {% if plan.next_subscription.exists and not plan.next_subscription.is_paused %}
+-          <div class="form-group">
+-            <label class="control-label col-sm-2">
++          <div class="form-group">  {# todo B5: css-form-group #}
++            <label class="form-label col-md-2">
+               {% trans "Next Subscription Begins" %}
+             </label>
+-            <div class="col-sm-10">
++            <div class="col-md-10">
+               <p class="form-control-text">
+                 {{ plan.next_subscription.date_start }}
+               </p>
+             </div>
+           </div>
+-          <div class="form-group">
+-            <label class="control-label col-sm-2">
++          <div class="form-group">  {# todo B5: css-form-group #}
++            <label class="form-label col-md-2">
+               {% trans "Next Subscription Plan" %}
+             </label>
+-            <div class="col-sm-10">
++            <div class="col-md-10">
+               <p class="form-control-text">
+                 {{ plan.next_subscription.name }}
+               </p>
+             </div>
+           </div>
+-          <div class="form-group">
+-            <label class="control-label col-sm-2">
++          <div class="form-group">  {# todo B5: css-form-group #}
++            <label class="form-label col-md-2">
+               {% trans "Next Subscription Price" %}
+             </label>
+-            <div class="col-sm-10">
++            <div class="col-md-10">
+               <p class="form-control-text">
+                 {{ plan.next_subscription.price }}
+               </p>
+@@ -164,50 +164,50 @@
+         <div class="form form-horizontal">
+           {% if plan.has_credits_in_non_general_credit_line %}
+             <div data-bind="foreach: products">
+-              <div class="form-group">
+-                <label class="control-label col-sm-2">
++              <div class="form-group">  {# todo B5: css-form-group #}
++                <label class="form-label col-md-2">
+                   {% trans 'Plan Credit' %}
+                 </label>
+-                <div class="col-sm-10">
++                <div class="col-md-10">
+                   <p class="form-control-text" data-bind="text: amount"></p>
+                 </div>
+               </div>
+             </div>
+           {% endif %}
+           {% if plan.general_credit and plan.general_credit.is_visible or not plan.has_credits_in_non_general_credit_line %}
+-            <div class="form-group">
+-              <label class="control-label col-sm-2">
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label class="form-label col-md-2">
+                 {% if plan.has_credits_in_non_general_credit_line %}
+                   {% trans 'General Credit' %}
+                 {% else %}
+                   {% trans 'Credits Remaining' %}
+                 {% endif %}
+               </label>
+-              <div class="col-sm-10">
++              <div class="col-md-10">
+                 <p class="form-control-text js-general-credit">{{ plan.general_credit.amount }}</p>
+               </div>
+             </div>
+           {% endif %}
+           <div data-bind="with: prepayments">
+-            <div class="form-group">
+-              <div class="col-sm-10 col-sm-offset-2">
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <div class="col-md-10 offset-md-2">
+                 {% if can_purchase_credits %}
+                   <button type="button"
+                           class="btn btn-primary"
+-                          data-toggle="modal"
+-                          data-target="#paymentModal"
++                          data-bs-toggle="modal"
++                          data-bs-target="#paymentModal"
+                           data-bind="click: function(){triggerPayment($root.paymentHandler.CREDIT_CARD)}">
+                     {% trans 'Prepay by Credit Card' %}
+                   </button>
+                   <button type="button"
+-                          class="btn btn-default"
+-                          data-toggle="modal"
+-                          data-target="#paymentModal"
++                          class="btn btn-outline-primary"
++                          data-bs-toggle="modal"
++                          data-bs-target="#paymentModal"
+                           data-bind="click: function(){triggerPayment($root.paymentHandler.WIRE)}">
+                     {% trans 'Generate Prepayment Invoice' %}
+                   </button>
+                 {% else %}
+-                  <span class="label label-default">
++                  <span class="badge text-bg-secondary">
+                                         <i class="fa fa-info-circle"></i>
+                                         {% trans "Not Billing Admin, Can't Add Credit" %}
+                                     </span>
+@@ -220,8 +220,8 @@
+           <legend>{% trans 'Account Credit' %}</legend>
+           <div class="form form-horizontal">
+             <div data-bind="foreach: products">
+-              <div class="form-group" data-bind="visible: isAccountVisible">
+-                <label class="control-label col-sm-2">
++              <div class="form-group" data-bind="visible: isAccountVisible">  {# todo B5: css-form-group #}
++                <label class="form-label col-md-2">
+                   {% trans 'Plan Credit' %}
+                   <div class="hq-help">
+                     <a href="#"
+@@ -234,14 +234,14 @@
+                     </a>
+                   </div>
+                 </label>
+-                <div class="col-sm-10">
++                <div class="col-md-10">
+                   <p class="form-control-text" data-bind="text: accountAmount"></p>
+                 </div>
+               </div>
+             </div>
+             {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
+-              <div class="form-group">
+-                <label class="control-label col-sm-2">
++              <div class="form-group">  {# todo B5: css-form-group #}
++                <label class="form-label col-md-2">
+                   {% trans 'General Credit' %}
+                   <div class="hq-help">
+                     <a href="#"
+@@ -255,7 +255,7 @@
+                     </a>
+                   </div>
+                 </label>
+-                <div class="col-sm-10">
++                <div class="col-md-10">
+                   <p class="form-control-text">{{ plan.account_general_credit.amount }}</p>
+                 </div>
+               </div>
+@@ -331,13 +331,13 @@
+       </div>
+ 
+       <div data-bind="with: general_credit">
+-        <div class="form-group">
+-          <label class="control-label col-sm-2">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label col-md-2">
+             <span data-bind="text: name"></span>
+           </label>
+-          <div class="col-sm-10">
++          <div class="col-md-10">
+             <div class="input-group">
+-              <span class="input-group-addon">$</span>
++              <span class="input-group-addon">$</span>  {# todo B5: css-input-group-addon #}
+               <input type="text"
+                      class="form-control"
+                      data-bind="
+@@ -355,11 +355,11 @@
+         </div>
+       </div>
+ 
+-      <div class="form-group">
+-        <label class="control-label col-sm-2">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label col-md-2">
+           {% trans 'Total Credits' %}
+         </label>
+-        <div class="col-sm-10">
++        <div class="col-md-10">
+           <p class="form-control-text" data-bind="text: ('$ ' + amount())"></p>
+         </div>
+       </div>
+@@ -391,5 +391,5 @@
+ {% endblock %}
+ 
+ {% block modals %}{{ block.super }}
+-  {% include 'domain/partials/bootstrap3/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment-complete-template" %}
++  {% include 'domain/partials/bootstrap5/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment-complete-template" %}
+ {% endblock %}
