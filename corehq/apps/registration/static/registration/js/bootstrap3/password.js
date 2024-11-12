@@ -5,6 +5,7 @@ hqDefine('registration/js/bootstrap3/password', [
     'zxcvbn/dist/zxcvbn',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // password initializeValue binding
+    'commcarehq',
 ], function (
     $,
     ko,
