@@ -3,6 +3,7 @@ hqDefine('sms/js/backend_map',[
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
+    "commcarehq",
 ], function (_, $, ko, initialPageData) {
     function backendMapping(prefix, backendId) {
         'use strict';
