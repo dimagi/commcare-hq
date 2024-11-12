@@ -143,5 +143,8 @@
   },
   "locations": {
     "is_complete": true
+  },
+  "domain": {
+    "in_progress": true
   }
 }
