@@ -6,8 +6,8 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
--{% requirejs_main "hqwebapp/js/bootstrap3/crud_paginated_list_init" %}
-+{% requirejs_main_b5 "hqwebapp/js/bootstrap5/crud_paginated_list_init" %}
+-{% js_entry "hqwebapp/js/bootstrap3/crud_paginated_list_init" %}
++{% js_entry "hqwebapp/js/bootstrap5/crud_paginated_list_init" %}
  
  {% block pagination_header %}
    <h2>{% trans "Tableau Visualizations" %}</h2>
