@@ -56,10 +56,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         attributes: function () {
             const displayText = this.options.model.attributes.displayText;
+            const badgeText = this.options.model.attributes.badgeText;
             return {
                 "role": "link",
                 "tabindex": "0",
-                "aria-label": displayText,
+                "aria-label": displayText + (badgeText ? "; " + badgeText : ""),
             };
         },
         events: {
@@ -450,7 +451,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 tileContent.addClass("collapsed-tile-content");
                 const offset = getScrollTopOffset(this.smallScreenEnabled);
                 this.scrollContainer.animate({
-                    scrollTop: this.scrollContainer.scrollTop() + $(e.currentTarget).parent().offset().top - offset
+                    scrollTop: this.scrollContainer.scrollTop() + $(e.currentTarget).parent().offset().top - offset,
                 });
             }
 
@@ -1581,7 +1582,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', collapse);
             }
         },
-        initialize: function (options) {
+        initialize: function () {
             self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
