@@ -21,6 +21,13 @@ class IterableEnterpriseFormQuery:
     '''
     A class representing a query that returns its results as an iterator
     The intended use case is to support queries that cross pagination boundaries
+    - start_date: a date to start the date range. Can be None
+    - end_date: the inclusive date to finish the date range. Can be None
+    last_domain, last_time, and last_id are intended to represent the last result from a previous query
+    that should now be resumed.
+    - last_domain: the domain to resume the query on
+    - last_time: the timestamp from the last result of the previous query
+    - last_id: the id from the last result of the previous query
     '''
     def __init__(self, account, start_date, end_date, last_domain, last_time, last_id):
         MAX_DATE_RANGE_DAYS = 100
@@ -194,12 +201,17 @@ class MobileFormSubmissionsQueryFactory(ReportQueryFactoryInterface):
         ]
 
         if last_time and last_id:
+            # The results are first sorted by 'inserted_at', so if the previous query wasn't
+            # the only form  submitted for its timestamp, return the others with a greater doc_id
+            submitted_same_time_as_previous_result = filters.AND(
+                filters.term('inserted_at', es_format_datetime(last_time)),
+                filters.range_filter('doc_id', gt=last_id)
+            ),
+            submitted_prior_to_previous_result = filters.date_range('inserted_at', lt=last_time)
+
             query = query.filter(filters.OR(
-                filters.AND(
-                    filters.term('inserted_at', es_format_datetime(last_time)),
-                    filters.range_filter('doc_id', gt=last_id)
-                ),
-                filters.date_range('inserted_at', lt=last_time)
+                submitted_same_time_as_previous_result,
+                submitted_prior_to_previous_result
             ))
 
         return query
