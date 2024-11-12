@@ -2608,15 +2608,14 @@ def _handle_geospatial_es_index(domain, is_enabled):
         index_es_docs_with_location_props.delay(domain)
 
 
-GEOSPATIAL = StaticToggle(
-    'geospatial',
-    'Allows access to GIS functionality',
+MICROPLANNING = StaticToggle(
+    'microplanning',
+    'Allows access to Microplanning GIS functionality',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description='Additional views will be added allowing for visually viewing '
                 'and assigning cases on a map.',
     save_fn=_handle_geospatial_es_index,
-
 )
 
 COMMCARE_CONNECT = StaticToggle(
@@ -2961,6 +2960,13 @@ APP_TESTING = StaticToggle(
 SMART_LINKS_FOR_WEB_USERS = StaticToggle(
     slug='smart_links_for_web_users',
     label='USH: Allow web users to use smart links without logging in as before',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+MODULE_BADGES = StaticToggle(
+    slug='module_badges',
+    label='USH: Show case counts from CSQL queries as badges on modules',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
