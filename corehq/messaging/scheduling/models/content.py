@@ -244,6 +244,22 @@ class EmailContent(Content):
         return email_address
 
 
+class ProjectNotificationContent(Content):
+    subject = models.JSONField(default=dict)
+    message = models.JSONField(default=dict)
+    html_message = models.JSONField(default=dict, null=True)
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return EmailContent(
+            subject=deepcopy(self.subject),
+            message=deepcopy(self.message),
+            html_message=deepcopy(self.html_message),
+        )
+
+
 class SMSSurveyContent(Content):
     app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126)
