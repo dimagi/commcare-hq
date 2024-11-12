@@ -3,6 +3,7 @@ hqDefine("reports/js/bootstrap3/form_data_main", [
     "hqwebapp/js/initial_page_data",
     "reports/js/bootstrap3/single_form",
     "analytix/js/kissmetrix",
+    "commcarehq",
 ], function (
     $,
     initialPageData,

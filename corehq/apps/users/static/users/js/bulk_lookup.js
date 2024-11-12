@@ -1,6 +1,7 @@
 hqDefine("users/js/bulk_lookup", [
     "jquery",
     "hqwebapp/js/bulk_upload_file",
+    "commcarehq",
 ], function (
     $
 ) {

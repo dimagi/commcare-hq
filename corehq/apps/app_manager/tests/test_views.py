@@ -3,6 +3,7 @@ import doctest
 import json
 import re
 from contextlib import contextmanager
+from unittest import mock
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -447,6 +448,122 @@ class TestViews(ViewsBase):
                 'xpath': None
             }
         ])
+
+    def test_copy_regular_app(self, _):
+        other_domain = Domain.get_or_create_with_name('other-domain', is_active=True)
+        self.addCleanup(other_domain.delete)
+
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+
+        copy_data = {
+            'app': self.app.id,
+            'domain': other_domain.name,
+            'name': 'Copy App',
+            'linked': False,
+        }
+        response = self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+        self.assertEqual(response.status_code, 302)
+
+        copied_app = other_domain.full_applications()[0]
+        self.assertEqual(copied_app.name, 'Copy App')
+        self.assertEqual(copied_app.doc_type, 'Application')
+
+        copied_module = copied_app.modules[0]
+        copied_form = list(copied_module.get_forms())[0]
+        self.assertEqual(copied_module.name['en'], "Module0")
+        self.assertEqual(copied_form.name['en'], "Form0")
+
+        copied_app.delete()
+
+    def test_copy_linked_app_to_different_domain(self, _):
+        other_domain = Domain.get_or_create_with_name('other-domain', is_active=True)
+        self.addCleanup(other_domain.delete)
+
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+        build = self.app.make_build()
+        build.is_released = True
+        build.save()
+
+        copy_data = {
+            'app': self.app.id,
+            'domain': other_domain.name,
+            'name': 'Linked App',
+            'linked': True,
+            'build_id': build.id,
+        }
+        with patch('corehq.apps.app_manager.forms.can_domain_access_linked_domains', return_value=True):
+            response = self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+        self.assertEqual(response.status_code, 302)
+
+        linked_app = other_domain.full_applications()[0]
+        self.assertEqual(linked_app.name, 'Linked App')
+        self.assertEqual(linked_app.doc_type, 'LinkedApplication')
+
+        linked_module = linked_app.modules[0]
+        linked_form = list(linked_module.get_forms())[0]
+        self.assertEqual(linked_module.name['en'], "Module0")
+        self.assertEqual(linked_form.name['en'], "Form0")
+
+        linked_app.delete()
+
+    def test_cannot_copy_linked_app_to_same_domain(self, _):
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+        build = self.app.make_build()
+        build.is_released = True
+        build.save()
+
+        copy_data = {
+            'app': self.app.id,
+            'domain': self.domain,
+            'name': 'Same Domain Link',
+            'linked': True,
+            'build_id': build.id,
+        }
+        with patch('corehq.apps.app_manager.forms.can_domain_access_linked_domains', return_value=True):
+            response = self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            ['Creating linked app failed. '
+             'You cannot create a linked app in the same project space as the upstream app.'],
+            [m.message for m in response.wsgi_request._messages]
+        )
+
+    def test_copy_regular_app_toggles(self, _):
+        other_domain = Domain.get_or_create_with_name('other-domain', is_active=True)
+        self.addCleanup(other_domain.delete)
+
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+
+        from corehq.toggles import NAMESPACE_DOMAIN, StaticToggle, TAG_INTERNAL
+        from corehq.toggles.shortcuts import set_toggle
+
+        TEST_TOGGLE = StaticToggle(
+            'test_toggle',
+            'This is for tests',
+            TAG_INTERNAL,
+            [NAMESPACE_DOMAIN],
+        )
+        set_toggle(TEST_TOGGLE.slug, other_domain.name, False, namespace=NAMESPACE_DOMAIN)
+        copy_data = {
+            'app': self.app.id,
+            'domain': other_domain.name,
+            'name': 'Copy App',
+            'toggles': 'test_toggle',
+        }
+        with patch('corehq.toggles.all_toggles_by_name', return_value={'test_toggle': TEST_TOGGLE}), \
+             mock.patch('corehq.apps.toggle_ui.views.clear_toggle_cache_by_namespace') as mock_clear_cache:
+            self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+            mock_clear_cache.assert_called_once_with(NAMESPACE_DOMAIN, other_domain.name)
+        self.assertTrue(TEST_TOGGLE.enabled(other_domain.name))
 
 
 @contextmanager

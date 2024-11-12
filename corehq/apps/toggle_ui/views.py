@@ -251,7 +251,7 @@ def _call_save_fn_and_clear_cache_and_enable_dependencies(request_username, stat
         enabled = entry in currently_enabled
         namespace, entry = parse_toggle(entry)
         _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled)
-        _clear_cache_for_toggle(namespace, entry)
+        clear_toggle_cache_by_namespace(namespace, entry)
         _enable_dependencies(request_username, static_toggle, entry, namespace, enabled)
 
 
@@ -271,7 +271,6 @@ def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):
         if is_enabled:
             _notify_on_change(static_toggle, [item], request_username)
 
-        _clear_cache_for_toggle(namespace, item)
         _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled)
 
 
@@ -282,7 +281,7 @@ def _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled):
             static_toggle.save_fn(domain, enabled)
 
 
-def _clear_cache_for_toggle(namespace, entry):
+def clear_toggle_cache_by_namespace(namespace, entry):
     if namespace == NAMESPACE_DOMAIN:
         domain = entry
         toggles_enabled_for_domain.clear(domain)
