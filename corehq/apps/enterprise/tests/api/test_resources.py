@@ -29,13 +29,13 @@ class EnterpriseODataAuthenticationTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = cls._create_user('admin@test-domain.com')
-        cls.account = cls._create_enterprise_account_covering_domains(['test-domain'])
+        cls.user = cls._create_user('admin@testing-domain.com')
+        cls.account = cls._create_enterprise_account_covering_domains(['testing-domain'])
         cls.account.enterprise_admin_emails = [cls.user.username]
         cls.account.save()
 
     def test_successful_authentication(self):
-        request = self._create_request(self.user, 'test-domain')
+        request = self._create_request(self.user, 'testing-domain')
 
         auth = EnterpriseODataAuthentication()
         self.assertTrue(auth.is_authenticated(request))
@@ -43,23 +43,23 @@ class EnterpriseODataAuthenticationTests(TestCase):
     def test_parent_failure_returns_parent_results(self):
         self.mock_is_authentication.return_value = False
 
-        request = self._create_request(self.user, 'test-domain')
+        request = self._create_request(self.user, 'testing-domain')
 
         auth = EnterpriseODataAuthentication()
         self.assertFalse(auth.is_authenticated(request))
 
     def test_raises_exception_when_billing_account_does_not_exist(self):
-        request = self._create_request(self.user, 'not-test-domain')
+        request = self._create_request(self.user, 'not-testing-domain')
 
         auth = EnterpriseODataAuthentication()
         with self.assertRaises(Http404):
             auth.is_authenticated(request)
 
     def test_raises_exception_when_not_an_enterprise_admin(self):
-        self.account.enterprise_admin_emails = ['not-this-user@test-domain.com']
+        self.account.enterprise_admin_emails = ['not-this-user@testing-domain.com']
         self.account.save()
 
-        request = self._create_request(self.user, 'test-domain')
+        request = self._create_request(self.user, 'testing-domain')
 
         auth = EnterpriseODataAuthentication()
         with self.assertRaises(ImmediateHttpResponse):
