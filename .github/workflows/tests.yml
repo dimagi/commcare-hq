@@ -19,9 +19,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - {TEST: python, NOSE_DIVIDED_WE_RUN: '05'}
-        - {TEST: python, NOSE_DIVIDED_WE_RUN: '6a'}
-        - {TEST: python, NOSE_DIVIDED_WE_RUN: 'bf'}
+        - {TEST: python, DIVIDED_WE_RUN: '05'}
+        - {TEST: python, DIVIDED_WE_RUN: '6a'}
+        - {TEST: python, DIVIDED_WE_RUN: 'bf'}
         - {TEST: python-sharded-and-javascript}
     env:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
@@ -46,11 +46,11 @@ jobs:
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}
-        NOSE_DIVIDED_WE_RUN: ${{ matrix.NOSE_DIVIDED_WE_RUN }}
+        DIVIDED_WE_RUN: ${{ matrix.DIVIDED_WE_RUN }}
         JS_SETUP: yes
         KAFKA_HOSTNAME: kafka
         STRIPE_PRIVATE_KEY: ${{ secrets.STRIPE_PRIVATE_KEY }}
-      run: scripts/docker test --noinput --stop -v --divided-we-run=${{ matrix.NOSE_DIVIDED_WE_RUN }} --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
+      run: scripts/docker test --exitfirst -vv --reusedb=1 --divided-we-run=${{ matrix.DIVIDED_WE_RUN }} --showlocals --max-test-time=29 -p no:cacheprovider
     - name: "Codecov upload"
       env:
         TOKEN: ${{ secrets.CODECOV_TOKEN }}

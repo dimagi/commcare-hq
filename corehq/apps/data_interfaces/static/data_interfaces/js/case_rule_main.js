@@ -5,7 +5,7 @@ hqDefine("data_interfaces/js/case_rule_main", [
     'data_interfaces/js/case_rule_criteria',
     'data_interfaces/js/case_rule_actions',
     'data_interfaces/js/make_read_only',
-    'commcarehq_b3',
+    'commcarehq',
 ], function (
     $,
     initialPageData,

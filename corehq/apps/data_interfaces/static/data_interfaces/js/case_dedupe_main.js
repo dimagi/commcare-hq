@@ -6,7 +6,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
     'data_interfaces/js/case_property_input',
     'data_interfaces/js/case_rule_criteria',
     'hqwebapp/js/bootstrap3/widgets',
-    'commcarehq_b3',
+    'commcarehq',
 ], function (
     $,
     ko,
