@@ -21,7 +21,7 @@ from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.api.resources.meta import get_hq_throttle
 from corehq.apps.api.keyset_paginator import KeysetPaginator
 from corehq.apps.enterprise.enterprise import EnterpriseReport
-from corehq.apps.enterprise.iterators import IterableEnterpriseFormQuery
+from corehq.apps.enterprise.iterators import IterableEnterpriseFormQuery, EnterpriseFormReportConverter
 
 from corehq.apps.enterprise.tasks import generate_enterprise_report, ReportTaskProgress
 
@@ -379,8 +379,9 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
         account = BillingAccount.get_account_by_domain(request.domain)
 
-        query_kwargs = IterableEnterpriseFormQuery.get_kwargs_from_map(request.GET)
-        return IterableEnterpriseFormQuery(account, start_date, end_date, **query_kwargs)
+        converter = EnterpriseFormReportConverter()
+        query_kwargs = converter.get_kwargs_from_map(request.GET)
+        return IterableEnterpriseFormQuery(account, converter, start_date, end_date, **query_kwargs)
 
     def dehydrate(self, bundle):
         bundle.data['form_id'] = bundle.obj['form_id']

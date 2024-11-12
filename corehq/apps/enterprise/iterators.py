@@ -21,6 +21,8 @@ class IterableEnterpriseFormQuery:
     '''
     A class representing a query that returns its results as an iterator
     The intended use case is to support queries that cross pagination boundaries
+    - form_converter: an instance of a class that knows how to translate the iteration results and interpret
+      the previous progress arguments
     - start_date: a date to start the date range. Can be None
     - end_date: the inclusive date to finish the date range. Can be None
     last_domain, last_time, and last_id are intended to represent the last result from a previous query
@@ -29,10 +31,11 @@ class IterableEnterpriseFormQuery:
     - last_time: the timestamp from the last result of the previous query
     - last_id: the id from the last result of the previous query
     '''
-    def __init__(self, account, start_date, end_date, last_domain, last_time, last_id):
+    def __init__(self, account, form_converter, start_date, end_date, last_domain, last_time, last_id):
         MAX_DATE_RANGE_DAYS = 100
         (self.start_date, self.end_date) = resolve_start_and_end_date(start_date, end_date, MAX_DATE_RANGE_DAYS)
         self.account = account
+        self.form_converter = form_converter
         self.last_domain = last_domain
         self.last_time = last_time
         self.last_id = last_id
@@ -51,29 +54,10 @@ class IterableEnterpriseFormQuery:
             last_id=self.last_id,
         )
 
-        xform_converter = RawFormConverter()
-        return (xform_converter.convert(form) for form in it)
+        return (self.form_converter.convert(form) for form in it)
 
-    @classmethod
-    def get_kwargs_from_map(cls, map):
-        last_domain = map.get('domain', None)
-        last_time = map.get('inserted_at', None)
-        if last_time:
-            last_time = datetime.fromisoformat(last_time).astimezone(timezone.utc)
-        last_id = map.get('id', None)
-        return {
-            'last_domain': last_domain,
-            'last_time': last_time,
-            'last_id': last_id
-        }
-
-    @classmethod
-    def get_query_params(cls, fetched_object):
-        return {
-            'domain': fetched_object['domain'],
-            'inserted_at': fetched_object['inserted_at'],
-            'id': fetched_object['form_id']
-        }
+    def get_query_params(self, fetched_object):
+        return self.form_converter.get_query_params(fetched_object)
 
 
 def resolve_start_and_end_date(start_date, end_date, maximum_date_range):
@@ -94,7 +78,7 @@ def resolve_start_and_end_date(start_date, end_date, maximum_date_range):
     return start_date, end_date
 
 
-class RawFormConverter:
+class EnterpriseFormReportConverter:
     def __init__(self):
         self.app_lookup = AppIdToNameResolver()
 
@@ -111,6 +95,35 @@ class RawFormConverter:
             'app_name': self.app_lookup.resolve_app_id_to_name(domain, form['app_id']) or _('App not found'),
             'username': form['form']['meta']['username'],
             'domain': domain
+        }
+
+    @classmethod
+    def get_query_paraams(cls, fetched_object):
+        '''
+        Takes a fetched, converted object and returns the values from this object that will be necessary
+        to continue where this query left off.
+        '''
+        return {
+            'domain': fetched_object['domain'],
+            'inserted_at': fetched_object['inserted_at'],
+            'id': fetched_object['form_id']
+        }
+
+    @classmethod
+    def get_kwargs_from_map(cls, map):
+        '''
+        Takes a map-like object from a continuation request (generally GET/POST) and extracts
+        the parameters necessary for initializing an IterableEnterpriseFormQuery.
+        '''
+        last_domain = map.get('domain', None)
+        last_time = map.get('inserted_at', None)
+        if last_time:
+            last_time = datetime.fromisoformat(last_time).astimezone(timezone.utc)
+        last_id = map.get('id', None)
+        return {
+            'last_domain': last_domain,
+            'last_time': last_time,
+            'last_id': last_id
         }
 
 
