@@ -13,6 +13,7 @@
 {% initial_page_data 'road_network_algorithm_slug' road_network_algorithm_slug %}
 
   <form id="geospatial-config-form" class="form-horizontal disable-on-submit ko-template" method="post">
+    {% include 'geospatial/partials/index_alert.html' %}
     {% crispy form %}
   </form>
 {% endblock %}
