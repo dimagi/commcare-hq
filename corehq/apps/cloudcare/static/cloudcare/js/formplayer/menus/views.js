@@ -889,19 +889,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
+            const defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
 
             try {
                 const locationIcon = this.fontAwesomeIcon("fa-solid fa-location-dot");
                 const selectedLocationIcon = this.fontAwesomeIcon("fa fa-star");
                 const homeLocationIcon = this.fontAwesomeIcon("fa fa-street-view");
 
-                const lat = 30;
-                const lon = 15;
+                let initialLat = 30;
+                let initialLon = 15;
+                if (defaultGeocoderLocation && defaultGeocoderLocation.coordinates) {
+                    initialLat = defaultGeocoderLocation.coordinates.latitude;
+                    initialLon = defaultGeocoderLocation.coordinates.longitude;
+                }
                 const zoom = 3;
                 const addressMap = L.map(
                     'module-case-list-map', {
                         zoomControl: false,
-                    }).setView([lat, lon], zoom);
+                    }).setView([initialLat, initialLon], zoom);
 
                 L.control.zoom({
                     position: 'bottomright',
@@ -935,13 +940,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 L.mapbox.accessToken = token;
 
                 const allCoordinates = [];
+                const nullCoordinate = ['0', '0'];
                 const markers = [];
                 this.options.collection.models
                     .forEach(model => {
                         const addressCoordinates = model.attributes.data[addressIndex];
                         if (addressCoordinates) {
                             let markerCoordinates = addressCoordinates.split(" ").slice(0,2);
-                            if (markerCoordinates.length > 1) {
+                            if (markerCoordinates.length > 1 && JSON.stringify(markerCoordinates) !== JSON.stringify(nullCoordinate)) {
                                 const rowId = `row-${model.id}`;
                                 const popupText = markdown.render(model.attributes.data[popupIndex]);
                                 let marker = L.marker(markerCoordinates, {icon: locationIcon});
@@ -999,7 +1005,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                         .addTo(addressMap);
                     allCoordinates.push(homeCoordinates);
                 }
-                addressMap.fitBounds(allCoordinates, {maxZoom: 14});
+                if (allCoordinates.length > 0) {
+                    addressMap.fitBounds(allCoordinates, {maxZoom: 14});
+                } else if (defaultGeocoderLocation.bbox) {
+                    const bbox = defaultGeocoderLocation.bbox;
+                    const southWestCorner = L.latLng(bbox[1], bbox[0]);
+                    const northEastCorner = L.latLng(bbox[3], bbox[2]);
+                    const bounds = L.latLngBounds(southWestCorner, northEastCorner);
+                    addressMap.fitBounds(bounds);
+                }
             } catch (error) {
                 console.error(error);
             }
