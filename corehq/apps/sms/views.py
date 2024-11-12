@@ -77,7 +77,7 @@ from corehq.apps.sms.api import (
     get_inbound_phone_entry,
     incoming,
     send_sms,
-    send_sms_to_verified_number,
+    send_message_to_verified_number,
     send_sms_with_backend_name,
 )
 from corehq.apps.sms.forms import (
@@ -543,7 +543,7 @@ def api_send_sms(request, domain):
         if backend_id is not None:
             success = send_sms_with_backend_name(domain, phone_number, text, backend_id, metadata)
         elif vn is not None:
-            success = send_sms_to_verified_number(vn, text, metadata)
+            success = send_message_to_verified_number(vn, text, metadata)
         else:
             success = send_sms(domain, None, phone_number, text, metadata)
 
