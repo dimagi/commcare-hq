@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy
 from dimagi.utils.web import json_response
 
 from corehq import toggles
+from corehq.apps.case_search.forms import CSQLFixtureExpressionForm
 from corehq.apps.case_search.models import case_search_enabled_for_domain, CSQLFixtureExpression
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.case_importer.views import require_can_edit_data
@@ -156,40 +157,29 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseDomainView):
 
     @property
     def page_context(self):
-        expressions = CSQLFixtureExpression.by_domain(self.domain).values('pk', 'name', 'csql')
-        return {'csql_fixture_expressions': expressions}
+        expressions = CSQLFixtureExpression.by_domain(self.domain)
+        return {'csql_fixture_forms': [
+            CSQLFixtureExpressionForm(self.domain, instance=expression) for expression in expressions
+        ]}
 
     @hq_hx_action('post')
-    def new_expression(self, request, *args, **kwargs):
-        return self._render_row(expression=None)
+    def new_expression(self, *args, **kwargs):
+        return HttpResponse(CSQLFixtureExpressionForm(self.domain).render())
 
     @hq_hx_action('post')
     def save_expression(self, request, domain, *args, **kwargs):
-        # TODO error handling
-        name = request.POST['name']
-        csql = request.POST['csql']
-
-        if pk := request.POST['pk']:
+        if pk := request.POST.get('pk'):
             expression = CSQLFixtureExpression.objects.get(domain=domain, pk=pk)
-            expression.name = name
-            expression.csql = csql
-            expression.save()
         else:
-            expression = CSQLFixtureExpression.objects.create(
-                domain=domain,
-                name=name,
-                csql=csql,
-            )
-        return self._render_row(expression)
+            expression = None
+        form = CSQLFixtureExpressionForm(self.domain, request.POST, instance=expression)
+        if form.is_valid():
+            form.save()
+            return HttpResponse(form.render())
+        raise AssertionError("The user shouldn't be able to submit an invalid form")
 
     @hq_hx_action('post')
     def delete_expression(self, request, domain, *args, **kwargs):
-        if pk := request.POST['pk']:
+        if pk := request.POST.get('pk'):
             CSQLFixtureExpression.objects.get(domain=domain, pk=pk).soft_delete()
-        return HttpResponse('deleted')
-
-    def _render_row(self, expression):
-        template = 'case_search/csql_expression_row.html'
-        return self.render_htmx_partial_response(self.request, template, context={
-            'expression': expression,
-        })
+        return self.render_htmx_no_response(request)
