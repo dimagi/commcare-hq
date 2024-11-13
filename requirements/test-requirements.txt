@@ -234,7 +234,7 @@ exceptiongroup==1.1.1
     #   pytest
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==26.0.0
+faker==32.1.0
     # via -r test-requirements.in
 firebase-admin==6.1.0
     # via -r base-requirements.in
@@ -679,6 +679,7 @@ typing-extensions==4.8.0
     #   cattrs
     #   ddtrace
     #   django-countries
+    #   faker
     #   jwcrypto
     #   pydantic
     #   pydantic-core
