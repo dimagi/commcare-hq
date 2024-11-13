@@ -3,10 +3,13 @@
 
 <form hx-post="{{ request.path_info }}"
       hq-hx-action="save_expression"
-      hx-swap="outerHTML">
+      hx-swap="outerHTML"
+      x-data="{ isUnsaved: false }"
+      @change="isUnsaved = true;"
+      @submit="isUnsaved = false;">
   {% if form.instance.pk %}
     <input type="hidden" name="pk" value="{{ form.instance.pk }}" />
-    {% endif %}
+  {% endif %}
   <div class="row pb-3">
     <div class="col-2">
       {{ form.name }}
@@ -15,7 +18,7 @@
       {{ form.csql }}
     </div>
     <div class="col-2">
-      <button type="submit" class="btn btn-outline-primary">
+      <button type="submit" class="btn btn-outline-primary" x-bind:disabled="!isUnsaved">
         <i class="fa-regular fa-save"></i> {% trans "Save" %}
       </button>
       <button class="btn btn-outline-danger"
