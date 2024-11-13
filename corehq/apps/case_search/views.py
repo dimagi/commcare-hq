@@ -20,6 +20,7 @@ from corehq.apps.hqadmin.utils import get_download_url
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from django.http import HttpResponse
 from corehq.util.dates import get_timestamp_for_filename
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
 from corehq.util.view_utils import BadRequest, json_error
@@ -144,7 +145,7 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
     toggles.MODULE_BADGES.required_decorator(),
     require_can_edit_data,
 ], name='dispatch')
-class CSQLFixtureExpressionView(BaseDomainView):
+class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseDomainView):
     urlname = 'csql_fixture_configuration'
     page_title = _('CSQL Fixture Confguration')
     template_name = 'case_search/csql_fixture_configuration.html'
@@ -153,61 +154,42 @@ class CSQLFixtureExpressionView(BaseDomainView):
     def section_url(self):
         return reverse(self.urlname, args=[self.domain])
 
-    def all_module_badge_configurations(self):
-        return CSQLFixtureExpression.by_domain(self.domain)
-
     @property
     def page_context(self):
-        return {
-            'save_url': reverse(self.urlname, args=[self.domain]),
-            'csql_fixture_configurations':
-                list(self.all_module_badge_configurations().values('id', 'name', 'csql')),
-        }
+        expressions = CSQLFixtureExpression.by_domain(self.domain).values('pk', 'name', 'csql')
+        return {'csql_fixture_expressions': expressions}
 
-    def _post_response(self, message, div_class):
-        return HttpResponse((f'<div class="alert {div_class}">' + _(message) + '</div>'),
-                            content_type='text/html')
+    @hq_hx_action('post')
+    def new_expression(self, request, *args, **kwargs):
+        return self._render_row(expression=None)
 
-    @atomic
-    def post(self, request, *args, **kwargs):
-        try:
-            data = request.POST
-            ''' Post data format is:
-                {
-                    'name': ['name1', 'name2', 'name3'],
-                    'id': ['1', '2', ''],  # empty string ID means new expression, missing means delete
-                    'csql': ['asdf', 'asdfg', 'asdfgh'],}
-                }
-            '''
+    @hq_hx_action('post')
+    def save_expression(self, request, domain, *args, **kwargs):
+        # TODO error handling
+        name = request.POST['name']
+        csql = request.POST['csql']
 
-            ids_list = data.getlist('id')
-            name_list = data.getlist('name')
-            csql_list = data.getlist('csql')
+        if pk := request.POST['pk']:
+            expression = CSQLFixtureExpression.objects.get(domain=domain, pk=pk)
+            expression.name = name
+            expression.csql = csql
+            expression.save()
+        else:
+            expression = CSQLFixtureExpression.objects.create(
+                domain=domain,
+                name=name,
+                csql=csql,
+            )
+        return self._render_row(expression)
 
-            name_list_without_blanks = [name for name in name_list if name]
-            if len(name_list_without_blanks) != len(set(name_list_without_blanks)):
-                return self._post_response(
-                    "Configuration not updated, two expressions cannot have the same name.", 'alert-warning')
-            for i in range(0, len(name_list)):
-                if not name_list[i] or not csql_list[i]:
-                    return self._post_response("Configuration not updated, some fields are blank.",
-                                               'alert-warning')
+    @hq_hx_action('post')
+    def delete_expression(self, request, domain, *args, **kwargs):
+        if pk := request.POST['pk']:
+            CSQLFixtureExpression.objects.get(domain=domain, pk=pk).soft_delete()
+        return HttpResponse('deleted')
 
-            id_list_without_blanks = [_id for _id in ids_list if _id]
-            for expression in CSQLFixtureExpression.by_domain(self.domain).exclude(id__in=id_list_without_blanks):
-                expression.soft_delete()
-
-            for _id, name, csql in zip(ids_list, name_list, csql_list):
-                if _id:
-                    module_badge_configuration = CSQLFixtureExpression.by_domain(self.domain).get(id=_id)
-                    if name != module_badge_configuration.name or csql != module_badge_configuration.csql:
-                        module_badge_configuration.name = name
-                        module_badge_configuration.csql = csql
-                        module_badge_configuration.save()
-                else:
-                    CSQLFixtureExpression.objects.create(
-                        domain=self.domain, name=name, csql=csql)
-            return self._post_response("Fixture confugration updated!", 'alert-success')
-        except Exception as e:
-            notify_exception(request, message=str(e))
-            return self._post_response("Configuration not updated, unknown error occurred.", 'alert-danger')
+    def _render_row(self, expression):
+        template = 'case_search/csql_expression_row.html'
+        return self.render_htmx_partial_response(self.request, template, context={
+            'expression': expression,
+        })
