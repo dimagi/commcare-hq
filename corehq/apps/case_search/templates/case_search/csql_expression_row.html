@@ -1,0 +1,39 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+
+<form hx-post="{{ request.path_info }}"
+      hq-hx-action="save_expression"
+      hx-swap="outerHTML">
+  <input type="hidden" name="pk" value="{{ expression.pk }}" />
+  <div class="row pb-3">
+    <div class="col-2">
+      <input name="name"
+             placeholder="name"
+             class="form-control"
+             type="text"
+             maxlength="64"
+             value="{{ expression.name }}"/>
+    </div>
+    <div class="col-8">
+      <textarea name="csql"
+                placeholder="@status = 'open'"
+                class="form-control vertical-resize"
+                spellcheck="false"
+                rows="1"
+      >{{ expression.csql }}</textarea>
+    </div>
+    <div class="col-2">
+      <button type="submit" class="btn btn-outline-primary">
+        <i class="fa-regular fa-save"></i> {% trans "Save" %}
+      </button>
+      <button class="btn btn-outline-danger"
+              hx-post="{{ request.path_info }}"
+              hq-hx-action="delete_expression"
+              hx-swap="delete"
+              hx-target="closest form">
+        <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
+      </button>
+    </div>
+  </div>
+</form>
