@@ -322,7 +322,7 @@ idna==3.7
     #   yarl
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==6.0.0
+importlib-metadata==8.5.0
     # via
     #   markdown
     #   opentelemetry-api
@@ -401,7 +401,7 @@ openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
-opentelemetry-api==1.18.0
+opentelemetry-api==1.28.1
     # via ddtrace
 packaging==23.0
     # via
@@ -719,7 +719,7 @@ xmltodict==0.13.0
     # via ddtrace
 yarl==1.9.4
     # via aiohttp
-zipp==3.19.1
+zipp==3.21.0
     # via importlib-metadata
 zope-event==5.0
     # via gevent
@@ -730,6 +730,5 @@ zope-interface==6.1
 setuptools==72.1.0
     # via
     #   django-websocket-redis
-    #   opentelemetry-api
     #   zope-event
     #   zope-interface
