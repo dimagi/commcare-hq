@@ -2,7 +2,7 @@
 
 <div>
   <div data-bind="foreach: selected_path">
-    <select class="form-control"
+    <select class="form-select"
       {% if attrs.disabled %}
             disabled="disabled"
       {% endif %}
@@ -12,6 +12,10 @@
                        value: selected_child">
     </select>
   </div>
-  <img id="loc_ajax" src="{% static 'formplayer/img/loading_small.gif' %}" style="display: none;">
+  <!--
+      Both B3 hide and B5 d-none are used to avoid needing to split this template.
+      When USE_BOOTSTRAP5 is removed, form-control can be removed.
+  -->
+  <i id="loc_ajax" class="fa fa-spinner fa-spin hide d-none"></i>
   <input name="{{ name }}" type="hidden" data-bind="value: selected_locid" />
 </div>

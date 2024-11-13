@@ -533,6 +533,25 @@ class TestProfileValidator(TestCase):
         validation_result = self.web_user_import_validator.validate_spec(user_spec)
         assert validation_result == ProfileValidator.error_message_original_user_profile_access
 
+    def test_validation_error_when_profile_required(self):
+        self.definition.profile_required_for_user_type = [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER]
+        self.definition.save()
+        self.upload_user.set_role(self.domain, self.edit_p2_profiles_role.get_qualified_id())
+        user_spec = {'username': self.editable_user.username}
+        validation_result = self.web_user_import_validator.validate_spec(user_spec)
+        expected_result = ProfileValidator.error_message_profile_must_be_assigned.format(
+            "Web Users, Mobile Workers"
+        )
+        assert validation_result == expected_result
+
+    def test_no_validation_error_when_profile_required_and_supplied(self):
+        self.definition.profile_required_for_user_type = [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER]
+        self.definition.save()
+        self.upload_user.set_role(self.domain, self.edit_p2_profiles_role.get_qualified_id())
+        user_spec = {'username': self.editable_user.username, 'user_profile': 'p1'}
+        validation_result = self.web_user_import_validator.validate_spec(user_spec)
+        assert validation_result is None
+
     @classmethod
     def tearDownClass(cls):
         super(TestProfileValidator, cls).tearDownClass()

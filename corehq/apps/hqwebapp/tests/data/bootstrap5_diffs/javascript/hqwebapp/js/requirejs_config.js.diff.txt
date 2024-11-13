@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,21 +2,29 @@
+@@ -2,19 +2,27 @@
  requirejs.config({
      baseUrl: '/static/',
      paths: {
@@ -28,11 +28,8 @@
          "underscore": "underscore/underscore",
 +        "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
          "stripe": "https://js.stripe.com/v2/?noext",
--        "commcarehq_b3": "hqwebapp/js/requirejs_webpack_fake",
-+        "commcarehq": "hqwebapp/js/requirejs_webpack_fake",
+         "commcarehq": "hqwebapp/js/requirejs_webpack_fake",
      },
-     shim: {
-         "stripe": { exports: 'Stripe' },
 @@ -26,7 +34,6 @@
          "ace-builds/src-min-noconflict/ext-searchbox": { deps: ["ace-builds/src-min-noconflict/ace"] },
          "At.js/dist/js/jquery.atwho": { deps: ['jquery', 'Caret.js/dist/jquery.caret'] },

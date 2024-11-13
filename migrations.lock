@@ -1267,6 +1267,7 @@ users
  0071_rm_user_data
  0072_remove_invitation_supply_point
  0073_rm_location_from_user_data
+ 0074_alter_sqluserdata_profile
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
