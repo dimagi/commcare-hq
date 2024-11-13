@@ -2382,7 +2382,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.fields['start_date'].initial = datetime.date.today()
             self.fields['end_date'].initial = datetime.date.today() + relativedelta(years=1)
             self.helper.layout = crispy.Layout(
-                hqcrispy.B3TextField('software_plan_edition', plan_edition),
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails'),
