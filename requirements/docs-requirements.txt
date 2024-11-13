@@ -727,7 +727,7 @@ zope-interface==6.1
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==72.1.0
+setuptools==75.4.0
     # via
     #   django-websocket-redis
     #   zope-event
