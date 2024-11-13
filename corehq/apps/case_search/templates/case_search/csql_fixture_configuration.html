@@ -18,8 +18,8 @@
   </p>
 
   <div id="csql-fixture-rows">
-    {% for expression in csql_fixture_expressions %}
-      {% include 'case_search/csql_expression_row.html' %}
+    {% for form in csql_fixture_forms %}
+      {{ form }}
     {% endfor %}
   </div>
   <button type="button"
