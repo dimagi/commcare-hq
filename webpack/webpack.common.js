@@ -82,6 +82,7 @@ module.exports = {
     plugins: [
         new webpack.ProvidePlugin({
             '$': 'jquery',
+            'jQuery': 'jquery',  // needed for bootstrap to work
         }),
         new hqPlugins.EntryChunksPlugin(),
     ],
