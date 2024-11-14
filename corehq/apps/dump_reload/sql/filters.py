@@ -103,7 +103,6 @@ class UserIDFilter(IDFilter):
 class MultimediaBlobMetaFilter(IDFilter):
     """
     BlobMeta for multimedia references the "<shared>" domain which is not the domain being dumped.
-    This borrows from the same logic used in ``run_blob_export`` by the ``ExportMultimedia`` exporter.
     """
     def __init__(self):
         # 'id' is used in query (e.g., ...filter(id__in=blobmeta_ids))
