@@ -78,7 +78,7 @@ hqDefine('registration/js/bootstrap3/password', [
         self.passwordSufficient = ko.computed(function () {
             return self.strength() >= self.minimumZxcvbnScore && self.length() >= self.minimumPasswordLength;
         });
-        self.submitCheck = function (formElement) {
+        self.submitCheck = function () {
             if (self.passwordSufficient()) {
                 return true;
             }
