@@ -39,35 +39,51 @@ module.exports = {
         "nv": false,
         "d3": false,
     },
-
-    // http://eslint.org/docs/rules/
-    // http://eslint.org/docs/user-guide/configuring#configuring-rules
-    "rules": {
-        // First option can be off, warn, or error
-        "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
-        "camelcase": ["error", {"properties": "never"}],
-        "comma-dangle": ["warn", "always-multiline"],
-        "curly": ["error"],
-        "eqeqeq": ["error"],
-        "func-call-spacing": ["error"],
-        "indent": ["warn", 4, {"SwitchCase": 1, "FunctionDeclaration": {"parameters": "first"}}],
-        "linebreak-style": ["error", "unix"],
-        "key-spacing": ["error"],
-        "keyword-spacing": ["error"],
-        "no-implicit-globals": ["error"],
-        "no-irregular-whitespace": ["error"],
-        "no-new-object": ["error"],
-        "no-regex-spaces": ["error"],
-        "no-throw-literal": ["error"],
-        "no-unneeded-ternary": ["error"],
-        "no-whitespace-before-property": ["error"], // match flake8 E201 and E211
-        "one-var-declaration-per-line": ["error"],
-        "semi": ["error", "always"],
-        "space-before-function-paren": ["error", {"anonymous": "always", "named": "never", "asyncArrow": "always"}],
-        "space-before-blocks": ["error"],
-        "space-in-parens": ["error", "never"],
-        "space-infix-ops": ["error"],   // match flake8 E225
-        "strict": ["warn", "global"],
-    },
     "ignorePatterns": ["**/vellum/src/*.js"],
+
+    // lint html files using prettier
+    plugins: ["prettier"],
+    overrides: [
+        {
+            // http://eslint.org/docs/rules/
+            // http://eslint.org/docs/user-guide/configuring#configuring-rules
+            files: ["*.js"],
+            rules: {
+                // First option can be off, warn, or error
+                "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
+                "camelcase": ["error", {"properties": "never"}],
+                "comma-dangle": ["warn", "always-multiline"],
+                "curly": ["error"],
+                "eqeqeq": ["error"],
+                "func-call-spacing": ["error"],
+                "indent": ["warn", 4, {"SwitchCase": 1, "FunctionDeclaration": {"parameters": "first"}}],
+                "linebreak-style": ["error", "unix"],
+                "key-spacing": ["error"],
+                "keyword-spacing": ["error"],
+                "no-implicit-globals": ["error"],
+                "no-irregular-whitespace": ["error"],
+                "no-new-object": ["error"],
+                "no-regex-spaces": ["error"],
+                "no-throw-literal": ["error"],
+                "no-unneeded-ternary": ["error"],
+                "no-whitespace-before-property": ["error"], // match flake8 E201 and E211
+                "one-var-declaration-per-line": ["error"],
+                "semi": ["error", "always"],
+                "space-before-function-paren": ["error", {"anonymous": "always", "named": "never", "asyncArrow": "always"}],
+                "space-before-blocks": ["error"],
+                "space-in-parens": ["error", "never"],
+                "space-infix-ops": ["error"],   // match flake8 E225
+                "strict": ["warn", "global"],
+            },
+        },
+        { // rules for linting html with prettier
+            files: ["*.html"],
+            rules: {
+                "prettier/prettier": ["error"],
+            },
+            // prettier has its own parsers, but eslint wants one too
+            // otherwise it will throw an error just trying to read the file
+            parser: "@html-eslint/parser",
+        },
+    ],
 };
