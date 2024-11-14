@@ -145,7 +145,7 @@ deprecated==1.2.10
     # via
     #   opentelemetry-api
     #   pygithub
-diff-match-patch==20230430
+diff-match-patch==20241021
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
@@ -262,7 +262,7 @@ executing==2.0.1
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==26.0.0
+faker==32.1.0
     # via -r test-requirements.in
 firebase-admin==6.1.0
     # via -r base-requirements.in
@@ -363,7 +363,7 @@ idna==3.7
     #   yarl
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==6.0.0
+importlib-metadata==8.5.0
     # via
     #   markdown
     #   opentelemetry-api
@@ -463,7 +463,7 @@ openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
-opentelemetry-api==1.18.0
+opentelemetry-api==1.28.1
     # via ddtrace
 packaging==23.0
     # via
@@ -805,6 +805,7 @@ typing-extensions==4.8.0
     #   cattrs
     #   ddtrace
     #   django-countries
+    #   faker
     #   jwcrypto
     #   oic
     #   qrcode
@@ -860,7 +861,7 @@ yapf==0.31.0
     # via -r dev-requirements.in
 yarl==1.9.4
     # via aiohttp
-zipp==3.19.1
+zipp==3.21.0
     # via importlib-metadata
 zope-event==5.0
     # via gevent
@@ -873,7 +874,6 @@ pip==23.3
 setuptools==72.1.0
     # via
     #   django-websocket-redis
-    #   opentelemetry-api
     #   pip-tools
     #   zope-event
     #   zope-interface
