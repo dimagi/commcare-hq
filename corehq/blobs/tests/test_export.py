@@ -14,6 +14,17 @@ from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
 
 class TestBlobExporter(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'exporter-test'
+        cls.blob_data = b'binary data not valid utf-8 \xe4\x94'
+        cls.exporter = BlobExporter(cls.domain)
+
+    def setUp(self):
+        super().setUp()
+        self.db = blob_db()
+
     def test_only_blob_in_targeted_domain_is_exported(self):
         # create blob that should be ignored
         self.db.put(BytesIO(self.blob_data), meta=new_meta(domain='random', type_code=CODES.form_xml))
@@ -24,7 +35,7 @@ class TestBlobExporter(TestCase):
         with NamedTemporaryFile() as out:
             self.exporter.migrate(out.name, force=True)
             with tarfile.open(out.name, 'r:gz') as tgzfile:
-                self.assertCountEqual({expected_meta.key}, tgzfile.getnames())
+                self.assertEqual([expected_meta.key], tgzfile.getnames())
 
     def test_different_blob_types_are_exported(self):
         form = self.db.put(BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml))
@@ -37,18 +48,17 @@ class TestBlobExporter(TestCase):
             with tarfile.open(out.name, 'r:gz') as tgzfile:
                 self.assertCountEqual({form.key, multimedia.key}, tgzfile.getnames())
 
-    def test_orphaned_blob_meta_is_not_exported(self):
+    def test_blob_meta_referencing_missing_blob_is_not_exported(self):
         expected_meta = self.db.put(
             BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml)
         )
-        self.addCleanup(self.db.delete, expected_meta.key)
         orphaned_meta = new_meta(domain=self.domain, type_code=CODES.form_xml, content_length=42)
         orphaned_meta.save()
 
         with NamedTemporaryFile() as out:
             self.exporter.migrate(out.name, force=True)
             with tarfile.open(out.name, 'r:gz') as tgzfile:
-                self.assertCountEqual({expected_meta.key}, tgzfile.getnames())
+                self.assertEqual([expected_meta.key], tgzfile.getnames())
 
     def test_exported_blobs_can_be_imported_successfully(self):
         form = self.db.put(BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml))
@@ -59,17 +69,6 @@ class TestBlobExporter(TestCase):
                 ImportCommand.handle(None, out.name)
                 with dest_db.get(meta=form) as fh:
                     self.assertEqual(fh.read(), self.blob_data)
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain = 'exporter-test'
-        cls.blob_data = b'binary data not valid utf-8 \xe4\x94'
-        cls.exporter = BlobExporter(cls.domain)
-
-    def setUp(self):
-        super().setUp()
-        self.db = blob_db()
 
 
 class TestExtendingExport(TestCase):
