@@ -266,6 +266,14 @@ def _delete_sms_content_events_schedules(domain_name):
     ])
 
 
+def _disable_toggles(domain_name):
+    from corehq.toggles import NAMESPACE_DOMAIN, toggles_enabled_for_domain
+    from corehq.toggles.shortcuts import set_toggle
+
+    for slug in toggles_enabled_for_domain(domain_name):
+        set_toggle(slug, domain_name, False, NAMESPACE_DOMAIN)
+
+
 def _delete_django_users(domain_name):
     total, counts = User.objects.filter(
         username__contains=f"@{domain_name}.{HQ_ACCOUNT_ROOT}"
@@ -433,6 +441,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('reports', 'TableauUser', 'server__domain'),
     ModelDeletion('reports', 'QueryStringHash', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
+    CustomDeletion('toggles', _disable_toggles, []),
     ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
     ModelDeletion('translations', 'TransifexBlacklist', 'domain'),
@@ -468,6 +477,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),
     ModelDeletion('fixtures', 'LookupTable', 'domain'),
+    ModelDeletion('case_search', 'CSQLFixtureExpression', 'domain'),
+    ModelDeletion('case_search', 'CSQLFixtureExpressionLog', 'expression__domain'),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'SMSAccountConfirmationSettings', 'domain'),

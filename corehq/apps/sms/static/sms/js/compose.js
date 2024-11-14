@@ -3,6 +3,7 @@ hqDefine("sms/js/compose",[
     "hqwebapp/js/initial_page_data",
     'jquery-ui/ui/widgets/sortable',
     "hqwebapp/js/bootstrap-multi-typeahead",
+    "commcarehq",
 ], function ($, intialPageData) {
     $(function () {
         $("#hint_id_recipients").addClass("alert alert-info");

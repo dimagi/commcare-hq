@@ -3588,13 +3588,13 @@ msgid "Mobile Worker"
 msgstr "Usuario Móvil"
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-msgid "Refreshing Page..."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Refreshing Page..."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
@@ -5475,6 +5475,3 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Error saving user"
-#~ msgstr "Error al guardar el usuario"

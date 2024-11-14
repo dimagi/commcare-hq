@@ -480,6 +480,7 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/forms.py corehq/apps/app_manager/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/users/user_data.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -3066,6 +3067,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
 #: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
@@ -3867,7 +3869,9 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
+#: corehq/apps/case_search/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -8604,10 +8608,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_ucr_v1_warning.html
-#, fuzzy
-#| msgid "Remaining"
 msgid "Warning"
-msgstr "Restant"
+msgstr "Avertissement"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_session_endpoint.html
 msgid ""
@@ -10694,6 +10696,7 @@ msgid "Email when finished (recommended for large applications)"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/models.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
@@ -11354,13 +11357,16 @@ msgstr ""
 #, python-format
 msgid ""
 "The mobile UCR restore version for v%(app_version)s needs to be updated to "
-"V2.0"
+"V2.0. Please refer to the <a href='%(url)s'>migration documentation</a> for "
+"more details."
 msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
 #, python-format
 msgid ""
 "One or more forms for v%(app_version)s contain V1 Mobile UCR references."
+"Please refer to the <a href='%(url)s'>migration documentation</a> for more "
+"details."
 msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
@@ -12356,6 +12362,14 @@ msgstr ""
 msgid "{param} must be a string"
 msgstr ""
 
+#: corehq/apps/case_search/models.py
+#: corehq/apps/events/templates/event_attendees.html
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Create"
+msgstr "Créer"
+
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
 msgid ""
@@ -12476,6 +12490,23 @@ msgid ""
 "              "
 msgstr ""
 
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
+#, fuzzy
+#| msgid "Configuration"
+msgid "CSQL Fixture Configuration"
+msgstr "Configuration"
+
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
+#, fuzzy
+#| msgid "Use xpath expression"
+msgid "Case Search QL Expression"
+msgstr "Utiliser une expression xpath"
+
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+msgid "Add Expression"
+msgstr "Ajouter expression"
+
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
 msgstr ""
@@ -12506,6 +12537,12 @@ msgstr "Recherche de dossier"
 #: corehq/apps/case_search/views.py
 msgid "Profile Case Search"
 msgstr ""
+
+#: corehq/apps/case_search/views.py
+#, fuzzy
+#| msgid "Configuration"
+msgid "CSQL Fixture Confguration"
+msgstr "Configuration"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #, python-brace-format
@@ -13485,25 +13522,17 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#, fuzzy
-#| msgid "Required"
 msgid "Required for"
-msgstr "requise"
+msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                    Change my project's plan\n"
-#| "                                "
+#, python-format
 msgid ""
 "\n"
 "                          Specify which %(entity_string)s type this field is "
 "required for.\n"
 "                          "
 msgstr ""
-"\n"
-"Changer mon plan de projet."
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-brace-format
@@ -13592,6 +13621,30 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/partials/modal_edit.html
 #: corehq/apps/users/templates/users/partials/linked_roles_modal.html
 msgid "Unlock"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid "Make user profiles a requirement for the following user types"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid "Make user profiles a requirement for the following user types."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid ""
+"\n"
+"                      A profile must be provided when creating or editing a "
+"user of the selected user type(s).\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid ""
+"\n"
+"                  Make user profiles a requirement for the following user "
+"types dropdown.\n"
+"                "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -14760,10 +14813,6 @@ msgid ""
 "                      following conditions:\n"
 "                    "
 msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
-msgid "Add Expression"
-msgstr "Ajouter expression"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
@@ -17846,39 +17895,6 @@ msgstr "Destinataires de la facture"
 msgid "Please agree to the Privacy Policy."
 msgstr "Veuillez accepter la politique de confidentialité. "
 
-#: corehq/apps/domain/templates/domain/partials/restrictive_license.html
-msgid ""
-"\n"
-"  This license doesn't cover all your multimedia.\n"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/partials/restrictive_license.html
-msgid "More info..."
-msgstr "Plus d'informations..."
-
-#: corehq/apps/domain/templates/domain/partials/restrictive_license.html
-msgid "Select a more restrictive license"
-msgstr "Choisir une licence plus restrictive"
-
-#: corehq/apps/domain/templates/domain/partials/restrictive_license.html
-msgid ""
-"\n"
-"            Since you've opted to publish your multimedia along with your "
-"app,\n"
-"            you must select a license that is more restrictive than the "
-"multimedia in the app.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/partials/restrictive_license.html
-msgid ""
-"\n"
-"            To satisfy this condition, you can either decide not to publish "
-"the multimedia\n"
-"            or select one of the following licenses:\n"
-"          "
-msgstr ""
-
 #: corehq/apps/domain/templates/domain/pro_bono/page_content.html
 msgid ""
 "Thank you for your submission.  A representative will be in contact with you "
@@ -18891,10 +18907,6 @@ msgstr "Elément de site"
 msgid "Location configuration updated successfully"
 msgstr "Configuration de site mise à jour avec succès"
 
-#: corehq/apps/domain/views/internal.py
-msgid "Test Bootstrap 5 Changes"
-msgstr ""
-
 #: corehq/apps/domain/views/internal.py corehq/tabs/tabclasses.py
 msgid "Project Information"
 msgstr "Informations sur le projet"
@@ -19841,13 +19853,6 @@ msgid "Enable Mobile Worker Attendees"
 msgstr ""
 
 #: corehq/apps/events/templates/event_attendees.html
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Create"
-msgstr "Créer"
-
-#: corehq/apps/events/templates/event_attendees.html
 msgid "New Potential Attendees"
 msgstr ""
 
@@ -20589,14 +20594,7 @@ msgid "Create a Daily Saved Export"
 msgstr "Creer un Enregistrement de Téléchargement Journalière"
 
 #: corehq/apps/export/templates/export/customize_export_new.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                                  Should cases that don't "
-#| "have a value for the sort property\n"
-#| "                                                  appear at the top or "
-#| "the bottom of the case list?\n"
-#| "                                              "
+#, python-format
 msgid ""
 "\n"
 "                                      Daily saved exports are only available "
@@ -20606,9 +20604,6 @@ msgid ""
 "project.\n"
 "                                    "
 msgstr ""
-"\n"
-"Les dossiers sans valeurs pour la propriété de tri devraient-ils figurer en "
-"premier ou en dernier dans la liste de dossiers?"
 
 #: corehq/apps/export/templates/export/customize_export_new.html
 msgid "Generate a Data Export Tool config file"
@@ -24003,17 +23998,6 @@ msgstr ""
 msgid "UCR Domains Data Report"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/authenticate_as.html
-msgid ""
-"\n"
-"          Use this form to log in as a mobile user.\n"
-"          You can fill out the fully qualified username of\n"
-"          a mobile worker in the username box\n"
-"          (&lt;username&gt;@&lt;domain&gt;.commcarehq.org)\n"
-"          or fill the username and domain.\n"
-"        "
-msgstr ""
-
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "Nom du domaine"
@@ -24123,8 +24107,10 @@ msgid "Two Factor Enabled"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
+#, fuzzy
+#| msgid "Are you sure you want to"
 msgid "Are you sure you want to continue?"
-msgstr "Etes-vous sûr que vous voulez continuer ?"
+msgstr "Etes-vous certain de vouloir"
 
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 msgid "If this fails you may have to perform the operation manually!"
@@ -24135,10 +24121,10 @@ msgid ""
 "This may invoke a huge indexing task that could slow down many parts of the "
 "site!"
 msgstr ""
-"Cela peut invoquer une énorme tâche de référencement qui pourrait ralentir "
-"de nombreuses parties du site!"
 
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
+#, fuzzy
+#| msgid "Go"
 msgid "Go!"
 msgstr "Démarrer"
 
@@ -24230,8 +24216,10 @@ msgid "Download GIR"
 msgstr "Télécharger GIR"
 
 #: corehq/apps/hqadmin/views/system.py corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "System"
 msgid "System Info"
-msgstr "Infos sur le système"
+msgstr "Système"
 
 #: corehq/apps/hqadmin/views/system.py
 msgid "Global Usage Thresholds"
@@ -27779,10 +27767,6 @@ msgstr ""
 msgid "Only include selected location"
 msgstr ""
 
-#: corehq/apps/locations/forms.py
-msgid "Active / Archived"
-msgstr ""
-
 #: corehq/apps/locations/forms.py corehq/apps/locations/views.py
 msgid "Filter and Download Locations"
 msgstr ""
@@ -27929,15 +27913,25 @@ msgid "Parent Type"
 msgstr "Type de parent"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                              This controls which parent "
+#| "this organization level\n"
+#| "                                              must have. You can use this "
+#| "to setup a organization\n"
+#| "                                              level that can have "
+#| "different types of children.\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                              This controls which parent "
-"this organization level\n"
-"                                              must have. You can use this to "
-"setup a organization\n"
-"                                              level that can have different "
-"types of children.\n"
-"                                          "
+"                                   This controls which parent this "
+"organization level\n"
+"                                   must have. You can use this to setup a "
+"organization\n"
+"                                   level that can have different types of "
+"children.\n"
+"                                "
 msgstr ""
 "\n"
 "Ceci contrôle quel parent ce niveau d'organisation\n"
@@ -27954,14 +27948,24 @@ msgid "Level to expand from"
 msgstr "Niveau à développer de"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                                        <p>When directly "
+#| "accessing locations in your app, this controls the level below which all "
+#| "possible locations are available.</p>\n"
+#| "                                                        <p>The default is "
+#| "to make the user's location's ancestors and all descendants available</"
+#| "p>\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                                        <p>When directly "
+"                                                    <p>When directly "
 "accessing locations in your app, this controls the level below which all "
 "possible locations are available.</p>\n"
-"                                                        <p>The default is to "
+"                                                    <p>The default is to "
 "make the user's location's ancestors and all descendants available</p>\n"
-"                                          "
+"                                      "
 msgstr ""
 "\n"
 "<p>Lorsque vous accédez directement aux sites à partir de votre application, "
@@ -27975,17 +27979,30 @@ msgid "Level to expand to"
 msgstr "Niveau à étendre à"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                                        <p>When directly "
+#| "accessing locations in your app, this controls the depth of locations "
+#| "available.</p>\n"
+#| "                                                        <p>This can "
+#| "reduce the sync size and time - for example, a user at the State level "
+#| "may not need to see all Cities in that state.</p>\n"
+#| "                                                        <p>The default is "
+#| "to make the user's location's ancestors and all descendants available.</"
+#| "p>\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                                        <p>When directly "
+"                                                    <p>When directly "
 "accessing locations in your app, this controls the depth of locations "
 "available.</p>\n"
-"                                                        <p>This can reduce "
-"the sync size and time - for example, a user at the State level may not need "
-"to see all Cities in that state.</p>\n"
-"                                                        <p>The default is to "
+"                                                    <p>This can reduce the "
+"sync size and time - for example, a user at the State level may not need to "
+"see all Cities in that state.</p>\n"
+"                                                    <p>The default is to "
 "make the user's location's ancestors and all descendants available.</p>\n"
-"                                          "
+"                                      "
 msgstr ""
 "\n"
 "<p>Lorsque vous accédez directement aux sites à partir de votre application, "
@@ -28001,14 +28018,24 @@ msgid "Include without expanding"
 msgstr "Inclure sans développer"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                                        <p>Force sync all "
+#| "locations of this level and their ancestors.</p>\n"
+#| "                                                        <p>This is useful "
+#| "if you require some high level information in your app, like all the "
+#| "state names, but don't want to sync all the descendants of that location</"
+#| "p>\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                                        <p>Force sync all "
+"                                                    <p>Force sync all "
 "locations of this level and their ancestors.</p>\n"
-"                                                        <p>This is useful if "
-"you require some high level information in your app, like all the state "
-"names, but don't want to sync all the descendants of that location</p>\n"
-"                                          "
+"                                                    <p>This is useful if you "
+"require some high level information in your app, like all the state names, "
+"but don't want to sync all the descendants of that location</p>\n"
+"                                      "
 msgstr ""
 "\n"
 "<p>Forcer la synchronisation de tous les sites de ce niveau et de leurs "
@@ -28022,52 +28049,95 @@ msgid "Include only"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                                  Should cases that don't "
+#| "have a value for the sort property\n"
+#| "                                                  appear at the top or "
+#| "the bottom of the case list?\n"
+#| "                                              "
 msgid ""
 "\n"
-"                                              <p>Include only locations of "
-"the specified types.</p>\n"
-"                                              <p>Every type you select must "
-"also have its parent included.</p>\n"
-"                                          "
+"                                          <p>Include only locations of the "
+"specified types.</p>\n"
+"                                          <p>Every type you select must also "
+"have its parent included.</p>\n"
+"                                      "
 msgstr ""
+"\n"
+"Les dossiers sans valeurs pour la propriété de tri devraient-ils figurer en "
+"premier ou en dernier dans la liste de dossiers?"
 
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid "Tracks Stock"
 msgstr "Suit des Stocks"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                              This controls which parent "
+#| "this organization level\n"
+#| "                                              must have. You can use this "
+#| "to setup a organization\n"
+#| "                                              level that can have "
+#| "different types of children.\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                        Does this location keep inventory "
-"and track stock?\n"
-"                                        Note that changing this property "
-"will update all\n"
-"                                        locations of this level "
-"accordingly.\n"
-"                                      "
+"                                    Does this location keep inventory and "
+"track stock?\n"
+"                                    Note that changing this property will "
+"update all\n"
+"                                    locations of this level accordingly.\n"
+"                                  "
 msgstr ""
+"\n"
+"Ceci contrôle quel parent ce niveau d'organisation\n"
+"doit avoir. Vous pouvez l'utiliser pour configurer le niveau d'une "
+"organisation\n"
+"qui peut avoir différents types d'enfants."
 
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid "Owns Cases"
 msgstr "Possède des dossiers"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                              <p>Determines if locations "
+#| "at this level should own cases;\n"
+#| "                                              this will allow sharing of "
+#| "cases among any users assigned to a\n"
+#| "                                              location at this level.</"
+#| "p>\n"
+#| "                                              <p>In order for this to "
+#| "work, you need to make sure you have enabled\n"
+#| "                                              Case Sharing in your App "
+#| "settings.\n"
+#| "                                              Please see the <a "
+#| "href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
+#| "target='_blank'>help site</a>\n"
+#| "                                              for more details.</p>\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                              <p>Determines if locations at "
-"this level should own cases;\n"
-"                                              this will allow sharing of "
-"cases among any users assigned to a\n"
-"                                              location at this level.</p>\n"
-"                                              <p>In order for this to work, "
-"you need to make sure you have enabled\n"
-"                                              Case Sharing in your App "
+"                                          <p>Determines if locations at this "
+"level should own cases;\n"
+"                                          this will allow sharing of cases "
+"among any users assigned to a\n"
+"                                          location at this level.</p>\n"
+"                                          <p>In order for this to work, you "
+"need to make sure you have enabled\n"
+"                                          Case Sharing in your App "
 "settings.\n"
-"                                              Please see the <a "
-"href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
+"                                          Please see the <a href='https://"
+"confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
 "target='_blank'>help site</a>\n"
-"                                              for more details.</p>\n"
-"                                          "
+"                                          for more details.</p>\n"
+"                                      "
 msgstr ""
 "\n"
 "<p>Détermine si les sites à ce niveau devraient être proprietaire de "
@@ -28088,20 +28158,35 @@ msgid "View Child Data"
 msgstr "Voir données enfants"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                              <p>Indicates if users "
+#| "assigned to this level should be able to see and update cases owned by "
+#| "levels below them.</p>\n"
+#| "                                              <p>In order for this to "
+#| "work, you need to make sure you have enabled\n"
+#| "                                              Case Sharing in your App "
+#| "settings.\n"
+#| "                                              Please see the <a "
+#| "href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
+#| "target='_blank'>help site</a>\n"
+#| "                                              for more details.</p>\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                              <p>Indicates if users assigned "
-"to this level should be able to see and update cases owned by levels below "
-"them.</p>\n"
-"                                              <p>In order for this to work, "
-"you need to make sure you have enabled\n"
-"                                              Case Sharing in your App "
+"                                          <p>Indicates if users assigned to "
+"this level should be able to see and update cases owned by levels below them."
+"</p>\n"
+"                                          <p>In order for this to work, you "
+"need to make sure you have enabled\n"
+"                                          Case Sharing in your App "
 "settings.\n"
-"                                              Please see the <a "
-"href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
+"                                          Please see the <a href='https://"
+"confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
 "target='_blank'>help site</a>\n"
-"                                              for more details.</p>\n"
-"                                          "
+"                                          for more details.</p>\n"
+"                                      "
 msgstr ""
 "\n"
 "<p>Indique si les utilisateurs affectés à ce niveau devraient pouvoir voir "
@@ -28122,9 +28207,9 @@ msgstr ""
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid ""
 "\n"
-"                            <p>Only include cases that show up in the user's "
+"                        <p>Only include cases that show up in the user's "
 "restore file down to this level (inclusive).</p>\n"
-"                        "
+"                    "
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -28134,11 +28219,11 @@ msgstr ""
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid ""
 "\n"
-"                            <p>Indicates whether locations of this level can "
+"                        <p>Indicates whether locations of this level can "
 "have users assigned.</p>\n"
-"                            <p>You cannot turn this setting off if there are "
+"                        <p>You cannot turn this setting off if there are "
 "users assigned to one of the locations.</p>\n"
-"                        "
+"                    "
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -28283,10 +28368,6 @@ msgstr "Téléversement en bloc"
 #: corehq/apps/locations/templates/locations/manage/locations.html
 msgid "Edit Location Fields"
 msgstr "Modifier les Champs de Site"
-
-#: corehq/apps/locations/templates/locations/manage/locations.html
-msgid "Clear location selection"
-msgstr ""
 
 #: corehq/apps/locations/templates/locations/manage/locations.html
 msgid "Show Archived Locations"
@@ -28511,6 +28592,10 @@ msgstr "Voici vos clés !"
 #: corehq/motech/generic_inbound/views.py corehq/motech/views.py
 msgid "URL"
 msgstr "URL"
+
+#: corehq/apps/notifications/forms.py
+msgid "Domain-specific"
+msgstr ""
 
 #: corehq/apps/notifications/forms.py
 msgid "This notification is not for all domains"
@@ -37350,6 +37435,20 @@ msgid ""
 "%(expires_on)s"
 msgstr ""
 
+#: corehq/apps/sso/utils/entra.py
+msgid "Please double check your tenant id is correct"
+msgstr ""
+
+#: corehq/apps/sso/utils/entra.py
+msgid "No error description provided"
+msgstr ""
+
+#: corehq/apps/sso/utils/entra.py
+msgid ""
+"Nested applications (ServicePrincipal members) are not supported. Please "
+"include only Users or Groups as members of this SSO application"
+msgstr ""
+
 #: corehq/apps/sso/utils/login_helpers.py
 msgid ""
 "We were unable to create your requested project because the name was already "
@@ -38739,6 +38838,12 @@ msgstr ""
 #: corehq/apps/user_importer/validation.py
 msgid "You do not have permission to assign the profile '{}'"
 msgstr ""
+
+#: corehq/apps/user_importer/validation.py
+#, fuzzy
+#| msgid "format must be one of the following: {}"
+msgid "A profile must be assigned to users of the following type(s): {}"
+msgstr "le format doit être un des suivants: {}"
 
 #: corehq/apps/user_importer/validation.py
 msgid "Group '{}' does not exist (try adding it to your spreadsheet)"
@@ -42321,6 +42426,12 @@ msgstr ""
 msgid "The username email domain '@{}' should be '@{}'."
 msgstr ""
 
+#: corehq/apps/users/validation.py
+#, fuzzy
+#| msgid "A name is required for this new role."
+msgid "A profile assignment is required for Mobile Workers."
+msgstr "Un nom est requis pour ce nouveau rôle."
+
 #: corehq/apps/users/views/__init__.py
 msgid ""
 "There was an error getting data for this user's associated Tableau\n"
@@ -42487,6 +42598,10 @@ msgstr "Éditer les champs de l`utilisateur"
 
 #: corehq/apps/users/views/mobile/custom_data_fields.py
 msgid "Both"
+msgstr ""
+
+#: corehq/apps/users/views/mobile/custom_data_fields.py
+msgid "Neither"
 msgstr ""
 
 #: corehq/apps/users/views/mobile/groups.py
@@ -46775,6 +46890,12 @@ msgid "Explore Data"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Location Fixture"
+msgid "CSQL Fixtures"
+msgstr "Elément de site"
+
+#: corehq/tabs/tabclasses.py
 msgid "Data Manipulation"
 msgstr ""
 
@@ -47956,27 +48077,8 @@ msgstr "Le Score à la Fonctionnalité"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
-#~ msgid "Allow all mobile workers to see all Web Apps applications."
-#~ msgstr ""
-#~ "Autoriser tous les utilisateurs mobiles à voir toutes les applications "
-#~ "web."
+#~ msgid "More info..."
+#~ msgstr "Plus d'informations..."
 
-#~ msgid "Customize each mobile worker's access to Web Apps"
-#~ msgstr ""
-#~ "Personnaliser l'accès de chaque utilisateur mobile aux applications web"
-
-#~ msgid "Select another file"
-#~ msgstr "Sélectionner un autre fichier"
-
-#~ msgid ""
-#~ "There was an issue retrieving the status from the cache. We are looking "
-#~ "into it. Please try uploading again."
-#~ msgstr ""
-#~ "Il y a eu un problème lors de la récupération de l'état à partir de la "
-#~ "cache. Nous tentons de déterminer de quoi il s'agit. Veuillez essayer le "
-#~ "téléversement à nouveau !"
-
-#~ msgid "Please enter number, including international code, in digits only."
-#~ msgstr ""
-#~ "Veuillez entrer le numéro, y compris le code international, en chiffres "
-#~ "uniquement."
+#~ msgid "Select a more restrictive license"
+#~ msgstr "Choisir une licence plus restrictive"
