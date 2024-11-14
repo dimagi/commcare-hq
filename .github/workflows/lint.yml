@@ -69,3 +69,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           annotations: true
+          extensions: 'js,html'
