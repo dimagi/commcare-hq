@@ -60,8 +60,8 @@ class LocationTypeResource(BaseLocationsResource):
         })
 
     def dehydrate_parent(self, bundle):
-        if parent := bundle.obj.parent_type:
-            return self.get_resource_uri(parent)
+        if bundle.obj.parent_type:
+            return self.get_resource_uri(bundle.obj.parent_type)
 
 
 class LocationResource(BaseLocationsResource):
@@ -113,14 +113,14 @@ class LocationResource(BaseLocationsResource):
         })
 
     def dehydrate_location_type(self, bundle):
-        if location_type_id := bundle.obj.location_type_id:
+        if bundle.obj.location_type_id:
             return absolute_reverse('api_dispatch_detail', kwargs={
                 'resource_name': 'location_type',
                 'domain': bundle.obj.domain,
                 'api_name': self.api_name,
-                'pk': location_type_id
+                'pk': bundle.obj.location_type_id,
             })
 
     def dehydrate_parent(self, bundle):
-        if parent := bundle.obj.parent:
-            return self.get_resource_uri(parent)
+        if bundle.obj.parent:
+            return self.get_resource_uri(bundle.obj.parent)
