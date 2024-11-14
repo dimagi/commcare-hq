@@ -11,6 +11,7 @@ hqDefine("locations/js/location", [
     'hqwebapp/js/select_2_ajax_widget',
     'hqwebapp/js/bootstrap5/widgets',       // custom data fields use a .hqwebapp-select2
     'locations/js/widgets',
+    'commcarehq',
 ], function (
     $,
     ko,

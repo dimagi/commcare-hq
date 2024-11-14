@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main_b5 'locations/js/locations' %}
+{% js_entry 'locations/js/locations' %}
 
 {% block page_content %}
   {% registerurl 'archive_location' domain '---' %}
