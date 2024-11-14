@@ -56,7 +56,7 @@ class BaseCommTrackManageView(BaseDomainView):
 class CommTrackSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_settings'
     page_title = gettext_noop("Advanced Settings")
-    template_name = 'domain/admin/commtrack_settings.html'
+    template_name = 'domain/admin/bootstrap3/commtrack_settings.html'
 
     @property
     @memoized
@@ -185,7 +185,7 @@ class DefaultConsumptionView(BaseCommTrackManageView):
 class SMSSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_sms_settings'
     page_title = gettext_noop("SMS")
-    template_name = 'domain/admin/sms_settings.html'
+    template_name = 'domain/admin/bootstrap3/sms_settings.html'
 
     @property
     def page_context(self):

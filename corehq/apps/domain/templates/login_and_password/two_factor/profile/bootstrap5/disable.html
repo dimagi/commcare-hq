@@ -1,0 +1,14 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+
+{% block page_content %}
+  <h1>{% block title %}{% trans "Remove Two-factor Authentication" %}{% endblock %}</h1>
+  <p>{% blocktrans %}You are about to <strong>remove</strong> two-factor authentication. This
+    compromises your account security, are you sure?{% endblocktrans %}</p>
+  <form method="post">
+    {% csrf_token %}
+    <table>{{ form }}</table>
+    <button class="btn btn-outline-danger"
+            type="submit">{% trans "Remove" %}</button>
+  </form>
+{% endblock %}
