@@ -46,7 +46,7 @@ class TestBlobExporter(TestCase):
         with NamedTemporaryFile() as out:
             self.exporter.migrate(out.name, force=True)
             with tarfile.open(out.name, 'r:gz') as tgzfile:
-                self.assertCountEqual({form.key, multimedia.key}, tgzfile.getnames())
+                self.assertEqual({form.key, multimedia.key}, set(tgzfile.getnames()))
 
     def test_blob_meta_referencing_missing_blob_is_not_exported(self):
         expected_meta = self.db.put(
