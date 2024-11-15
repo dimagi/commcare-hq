@@ -2108,7 +2108,7 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
     'domain_permissions_mirror',
     "USH: Enterprise Permissions: mirror a project space's permissions in other project spaces",
-    TAG_DEPRECATED,
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Enterprise+Permissions',
 )
@@ -2156,7 +2156,7 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
 REFER_CASE_REPEATER = StaticToggle(
     'refer_case_repeater',
     'USH: Allow refer case repeaters to be setup',
-    TAG_DEPRECATED,
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
@@ -2196,7 +2196,7 @@ PARALLEL_USER_IMPORTS = StaticToggle(
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
     'USH: Limit allowed users for Log In As',
-    TAG_DEPRECATED,
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Adds a permission that can be set on user roles to allow log in as, but only
@@ -2403,7 +2403,7 @@ FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
 DATA_REGISTRY = StaticToggle(
     'data_registry',
     'USH: Enable Data Registries for sharing data between project spaces',
-    TAG_DEPRECATED,
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/USH/Data+Registry",
 )
