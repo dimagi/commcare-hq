@@ -1,0 +1,10 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% requirejs_main_b5 "domain/js/commtrack_settings" %}
+
+{% block page_content %}
+  {% crispy form %}  {# todo B5: crispy #}
+{% endblock %}
