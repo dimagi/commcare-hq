@@ -17,7 +17,9 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     initialPageData
 ) {
     // https://github.com/Eonasdan/tempus-dominus/discussions/2698
-    window.Popper = Popper;
+    if (!window.USE_WEBPACK) {
+        window.Popper = Popper;
+    }
 
     let createDatePicker = function (el, options) {
         let picker = new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
