@@ -446,6 +446,8 @@ class EditWebUserView(BaseEditUserView):
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
+            'can_access_all_locations': self.request.couch_user.has_permission(self.domain, 'access_all_locations'),
+            'editable_user_can_access_all_locations': self.editable_user.has_permission(self.domain, 'access_all_locations')
         }
 
         original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
