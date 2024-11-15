@@ -5,7 +5,7 @@ hqDefine('accounting/js/widgets', [
     'underscore',
     'hqwebapp/js/utils/email',
     'select2/dist/js/select2.full.min',
-    'commcarehq_b3',
+    'commcarehq',
 ], function (
     $,
     ko,

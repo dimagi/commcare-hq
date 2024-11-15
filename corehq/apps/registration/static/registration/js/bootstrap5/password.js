@@ -5,6 +5,7 @@ hqDefine('registration/js/bootstrap5/password', [
     'zxcvbn/dist/zxcvbn',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko', // password initializeValue binding
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -77,7 +78,7 @@ hqDefine('registration/js/bootstrap5/password', [
         self.passwordSufficient = ko.computed(function () {
             return self.strength() >= self.minimumZxcvbnScore && self.length() >= self.minimumPasswordLength;
         });
-        self.submitCheck = function (formElement) {
+        self.submitCheck = function () {
             if (self.passwordSufficient()) {
                 return true;
             }

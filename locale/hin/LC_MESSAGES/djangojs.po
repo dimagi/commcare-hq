@@ -3445,13 +3445,13 @@ msgid "Mobile Worker"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-msgid "Refreshing Page..."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Refreshing Page..."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js

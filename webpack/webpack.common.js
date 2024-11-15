@@ -7,8 +7,6 @@ const hqPlugins = require('./plugins');
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
-    "commcarehq_b3": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap3/'),
-        'commcarehq'),
     "jquery": "jquery/dist/jquery.min",
 
     // todo after completing requirejs migration,
@@ -84,6 +82,7 @@ module.exports = {
     plugins: [
         new webpack.ProvidePlugin({
             '$': 'jquery',
+            'jQuery': 'jquery',  // needed for bootstrap to work
         }),
         new hqPlugins.EntryChunksPlugin(),
     ],

@@ -37,7 +37,6 @@ class Command(BaseCommand):
             else:
                 domains = find_domains_with_toggle_enabled(toggle)
 
-            print(f"Toggle {toggle.slug}, {len(domains)} domains")
             for domain in domains:
                 if domain not in domain_existence:
                     domain_existence[domain] = bool(Domain.get_by_name(domain))
