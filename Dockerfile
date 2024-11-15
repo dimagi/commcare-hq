@@ -27,10 +27,11 @@ RUN apt-get update \
      git \
      google-chrome-stable \
      libmagic1 \
-     libpq5 \
+     libpq-dev \
      libxml2 \
      libxmlsec1 \
      libxmlsec1-openssl \
+     make \
   && rm -rf /var/lib/apt/lists/* /src/*.deb
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
