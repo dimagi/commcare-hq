@@ -6,6 +6,7 @@ hqDefine("hqwebapp/js/bootstrap5/widgets",[
     'hqwebapp/js/initial_page_data',
     'tempusDominus',
     'select2/dist/js/select2.full.min',
+    'commcarehq',
 ], function ($, _, MapboxGeocoder, initialPageData, tempusDominus) {
     var init = function () {
         var MAPBOX_ACCESS_TOKEN = initialPageData.get(
