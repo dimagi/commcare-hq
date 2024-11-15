@@ -8,7 +8,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.producer import producer
 from corehq.util.test_utils import trap_extra_setup
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.feed.interface import ChangeMeta
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import ChunkedCountProcessor
@@ -30,7 +30,7 @@ class ChunkedProcessingTest(TestCase):
         # setup
         feed = KafkaChangeFeed(topics=[topics.CASE_SQL], client_id='test-kafka-feed')
         pillow_name = 'test-chunked-processing'
-        checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
+        checkpoint = KafkaPillowCheckpoint(pillow_name, feed.topics)
         processor = ChunkedCountProcessor()
         original_process_change = processor.process_change
         original_process_changes_chunk = processor.process_changes_chunk
