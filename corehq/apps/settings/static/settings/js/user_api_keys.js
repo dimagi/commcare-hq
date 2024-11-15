@@ -8,6 +8,7 @@ hqDefine("settings/js/user_api_keys", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/crud_paginated_list",
     "hqwebapp/js/tempus_dominus",
+    "commcarehq",
 ], function (
     $,
     ko,
