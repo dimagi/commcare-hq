@@ -8,7 +8,7 @@
   {{ block.super }}
 {% endblock title %}
 
-{% requirejs_main_b5 'locations/js/location' %}
+{% js_entry 'locations/js/location' %}
 
 {% block page_content %}
   {% initial_page_data 'api_root' api_root %}

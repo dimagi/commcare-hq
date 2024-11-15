@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main_b5 'locations/js/location_types' %}
+{% js_entry 'locations/js/location_types' %}
 
 {% block page_content %}
   {% initial_page_data 'location_types' location_types %}
