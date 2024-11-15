@@ -10,14 +10,16 @@ from corehq.apps.case_search.filter_dsl import SearchFilterContext
 from corehq.apps.case_search.xpath_functions.value_functions import (
     date,
     date_add,
+    datetime_,
+    now,
     today,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 
 
-@freeze_time('2021-08-02T22:00:00Z')
-class TestToday(TestCase):
+@freeze_time('2021-08-02T22:03:16Z')
+class TestDateFunctions(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain_name = "test_today"
@@ -44,9 +46,6 @@ class TestToday(TestCase):
         with self.assertRaises(XPathFunctionException):
             today(node, SearchFilterContext("domain"))
 
-
-@freeze_time('2021-08-02T22:00:00Z')
-class TestDate(TestCase):
     def test_date_string(self):
         the_date = '2021-01-01'
         node = parse_xpath(f"date('{the_date}')")
@@ -62,6 +61,25 @@ class TestDate(TestCase):
         node = parse_xpath("date(today())")
         result = date(node, SearchFilterContext("domain"))
         eq(result, '2021-08-02')
+
+    def test_now(self):
+        node = parse_xpath("now()")
+        result = now(node, SearchFilterContext("domain"))
+        eq(result, '2021-08-02T22:03:16+00:00')
+
+
+@freeze_time('2021-08-02T22:03:16Z')
+@pytest.mark.parametrize("expression, expected", [
+    ("datetime('2021-08-02')", '2021-08-02T00:00:00+00:00'),
+    ("datetime('2021-08-02T11:22:16')", '2021-08-02T11:22:16+00:00'),
+    ("datetime(15)", '1970-01-16T00:00:00+00:00'),
+    ("datetime(20041.614995)", '2024-11-14T14:45:35.568000+00:00'),
+    ("datetime(now())", '2021-08-02T22:03:16+00:00'),
+])
+def test_datetime(expression, expected):
+    node = parse_xpath(expression)
+    result = datetime_(node, SearchFilterContext("domain"))
+    eq(result, expected)
 
 
 @pytest.mark.parametrize("expression, expected", [
