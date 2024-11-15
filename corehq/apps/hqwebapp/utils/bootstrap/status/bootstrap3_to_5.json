@@ -54,6 +54,9 @@
   "dropbox": {
     "is_complete": true
   },
+  "email": {
+    "is_complete": true
+  },
   "enterprise": {
     "is_complete": true
   },
