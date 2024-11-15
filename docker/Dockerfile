@@ -1,4 +1,5 @@
-FROM dimagi/commcarehq_base:latest
+# DO NOT MERGE. TODO: configure automated build on hub.docker.com or revert to commcarehq_base
+FROM dimagi/commcarehq-py39-uv:latest
 
 VOLUME /mnt/commcare-hq-ro /mnt/lib
 RUN ln -s /mnt/commcare-hq-ro/docker/run.sh /mnt/run.sh && \

@@ -36,7 +36,7 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    pip-sync --user requirements/test-requirements.txt
+    uv pip sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in test-requirements.txt
     python_preheat  # preheat the python libs
 

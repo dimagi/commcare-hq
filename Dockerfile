@@ -3,54 +3,45 @@
 # This Dockerfile is built as the `dimagi/commcarehq_base` image, which
 # is used for running tests.
 
-FROM python:3.9
+FROM ghcr.io/astral-sh/uv:0.5.2-python3.9-bookworm-slim
 MAINTAINER Dimagi <devops@dimagi.com>
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUSERBASE=/vendor \
     PATH=/vendor/bin:$PATH \
-    NODE_VERSION=20.11.1
+    NODE_VERSION=20.11.1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
 RUN mkdir /vendor
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends curl gnupg \
+  && curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+  && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends \
+     bzip2 \
+     default-jre \
+     gettext \
+     git \
+     google-chrome-stable \
+     libmagic1 \
+     libpq5 \
+     libxml2 \
+     libxmlsec1 \
+     libxmlsec1-openssl \
+  && rm -rf /var/lib/apt/lists/* /src/*.deb
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-     default-jdk \
-     wget \
-     libxml2-dev \
-     libxmlsec1-dev \
-     libxmlsec1-openssl \
-     gettext
-
-# Install latest chrome dev package and fonts to support major
-# charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
-# Note: this installs the necessary libs to make the bundled version
-# of Chromium that Puppeteer installs, work.
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-  && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends \
-     google-chrome-unstable \
-     fonts-ipafont-gothic \
-     fonts-wqy-zenhei \
-     fonts-thai-tlwg \
-     fonts-kacst \
-     fonts-freefont-ttf
-
-# Deletes all package sources, so don't apt-get install anything after this:
-RUN rm -rf /var/lib/apt/lists/* /src/*.deb
-
 COPY requirements/test-requirements.txt package.json /vendor/
 
-# prefer https for git checkouts made by pip
-RUN git config --global url."https://".insteadOf git:// \
- && pip install --upgrade pip \
- && pip install -r /vendor/test-requirements.txt --user --upgrade \
- && rm -rf /root/.cache/pip
+RUN --mount=type=cache,target=/root/.cache/uv \
+  uv venv --allow-existing /vendor \
+  && uv pip install --prefix=/vendor -r /vendor/test-requirements.txt
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-unstable'
