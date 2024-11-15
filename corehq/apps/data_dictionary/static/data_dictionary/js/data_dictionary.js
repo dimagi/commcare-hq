@@ -244,7 +244,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.deprecateProperty = function () {
-            if (toggles.toggleEnabled('GEOSPATIAL') && self.isGeoCaseProp()) {
+            if (toggles.toggleEnabled('MICROPLANNING') && self.isGeoCaseProp()) {
                 self.confirmGeospatialDeprecation();
             } else {
                 self.deprecated(true);
