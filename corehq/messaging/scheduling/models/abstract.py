@@ -525,6 +525,99 @@ class Content(models.Model):
                 logged_subevent=logged_subevent)
 
 
+class SurveyContent(Content):
+    app_id = models.CharField(max_length=126, null=True)
+    form_unique_id = models.CharField(max_length=126)
+
+    # See corehq.apps.smsforms.models.SQLXFormsSession for an
+    # explanation of these properties
+    expire_after = models.IntegerField()
+    reminder_intervals = models.JSONField(default=list)
+    submit_partially_completed_forms = models.BooleanField(default=False)
+    include_case_updates_in_partial_submissions = models.BooleanField(default=False)
+  
+    class Meta:
+        abstract = True
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return SMSSurveyContent(
+            app_id=None,
+            form_unique_id=None,
+            expire_after=self.expire_after,
+            reminder_intervals=deepcopy(self.reminder_intervals),
+            submit_partially_completed_forms=self.submit_partially_completed_forms,
+            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
+        )
+
+    @memoized
+    def get_memoized_app_module_form(self, domain):
+        try:
+            if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain, toggles.NAMESPACE_DOMAIN):
+                app = get_app(domain, self.app_id)
+            else:
+                app = get_latest_released_app(domain, self.app_id)
+            form = app.get_form(self.form_unique_id)
+            module = form.get_module()
+        except (Http404, FormNotFoundException):
+            return None, None, None, None
+
+        return app, module, form, form_requires_input(form)
+    def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_subevent, workflow,
+            app, form):
+        # Close all currently open sessions
+        SQLXFormsSession.close_all_open_sms_sessions(domain, recipient.get_id)
+
+        # Start the new session
+        try:
+            session, responses = start_session(
+                SQLXFormsSession.create_session_object(
+                    domain,
+                    recipient,
+                    (phone_entry_or_number.phone_number
+                     if isinstance(phone_entry_or_number, PhoneNumber)
+                     else phone_entry_or_number),
+                    app,
+                    form,
+                    expire_after=self.expire_after,
+                    reminder_intervals=self.reminder_intervals,
+                    submit_partially_completed_forms=self.submit_partially_completed_forms,
+                    include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions
+                ),
+                domain,
+                recipient,
+                app,
+                form,
+                case_id,
+                yield_responses=True
+            )
+        except TouchformsError as e:
+            logged_subevent.error(
+                MessagingEvent.ERROR_TOUCHFORMS_ERROR,
+                additional_error_text=get_formplayer_exception(domain, e)
+            )
+
+            if touchforms_error_is_config_error(domain, e):
+                # Don't reraise the exception because this means there are configuration
+                # issues with the form that need to be fixed. The error is logged in the
+                # above lines.
+                return None, None
+
+            # Reraise the exception so that the framework retries it again later
+            raise
+        except Exception:
+            logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR)
+            # Reraise the exception so that the framework retries it again later
+            raise
+
+        session.workflow = workflow
+        session.save()
+
+        return session, responses
+
+
 class Broadcast(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=1000)

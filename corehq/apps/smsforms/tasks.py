@@ -13,7 +13,7 @@ from corehq.apps.sms.api import (
     send_sms,
     send_message_to_verified_number,
 )
-from corehq.apps.sms.models import PhoneNumber
+from corehq.apps.sms.models import ConnectMessagingNumber, PhoneNumber
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.app import (
     _responses_to_text,
@@ -76,7 +76,7 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
             messaging_subevent_id=logged_subevent.pk
         )
 
-        if isinstance(phone_entry_or_number, PhoneNumber):
+        if isinstance(phone_entry_or_number, PhoneNumber) or isinstance(phone_entry_or_number, ConnectMessagingNumber):
             send_message_to_verified_number(
                 phone_entry_or_number,
                 message,
