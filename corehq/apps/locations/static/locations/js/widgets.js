@@ -163,12 +163,12 @@ hqDefine("locations/js/widgets", [
         const requestUserDomainMemberships = initialPageData.get('request_user_domain_memberships');
         const requestUserLocations = _.find(requestUserDomainMemberships, function (dm) {
             if (dm.domain === requestDomain) {
-                return dm.assigned_location_ids
-            };
+                return dm.assigned_location_ids;
+            }
         });
         let shareLocations = false;
-        _.every(selectedLocations, function (location_id) {
-            if (_.contains(requestUserLocations, location_id)) {
+        _.every(selectedLocations, function (locationId) {
+            if (_.contains(requestUserLocations, locationId)) {
                 shareLocations = true;
             }
         });
