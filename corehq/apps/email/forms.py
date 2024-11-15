@@ -6,6 +6,7 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.email.models import EmailSettings
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 
 
@@ -45,14 +46,18 @@ class EmailSMTPSettingsForm(forms.ModelForm):
     use_this_gateway = forms.BooleanField(
         label=_("Use Gateway?"),
         required=False,
-        help_text=_("Select this option to use this email gateway for sending emails")
+        widget=BootstrapCheckboxInput(
+            inline_label=_("Select this option to use this email gateway for sending emails")
+        )
     )
 
     use_tracking_headers = forms.BooleanField(
         label=_("Use Tracking Headers"),
         required=False,
-        help_text=_("Applicable for Amazon's gateway. When selected, "
-                    "emails will be sent with tracking headers along with other headers.")
+        widget=BootstrapCheckboxInput(
+            inline_label=_("Applicable for Amazon's gateway. When selected, "
+                           "emails will be sent with tracking headers along with other headers.")
+        )
     )
 
     sns_secret = forms.CharField(
@@ -100,24 +105,22 @@ class EmailSMTPSettingsForm(forms.ModelForm):
         helper = hqcrispy.HQFormHelper()
         helper.form_id = "email_settings_form"
         helper.layout = crispy.Layout(
-            twbscrispy.PrependedText('use_this_gateway', ''),
+            hqcrispy.CheckboxField('use_this_gateway'),
             crispy.Field('username'),
             crispy.Field('plaintext_password'),
             crispy.Field('server'),
             crispy.Field('port'),
             crispy.Field('from_email'),
             crispy.Field('return_path_email'),
-            twbscrispy.PrependedText('use_tracking_headers', ''),
+            hqcrispy.CheckboxField('use_tracking_headers'),
             crispy.Field('sns_secret'),
             crispy.Field('ses_config_set_name'),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Saved"),
-                    type="submit",
-                    css_class="btn-primary disable-on-submit",
-                    data_bind="text: buttonText, enable: isFormChanged",
-                ),
-            )
+            twbscrispy.StrictButton(
+                _("Saved"),
+                type="submit",
+                css_class="btn-primary disable-on-submit",
+                data_bind="text: buttonText, enable: isFormChanged",
+            ),
         )
         return helper
 

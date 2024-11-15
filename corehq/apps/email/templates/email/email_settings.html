@@ -3,13 +3,13 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% js_entry_b3 'email/js/email_settings' %}
+{% js_entry 'email/js/email_settings' %}
 
 {% block page_content %}
 
   <h2>{% trans "Add Email Gateway Settings" %}</h2>
   <div class="spacer"></div>
 
-  {% crispy form %}  {# todo B5: crispy #}
+  {% crispy form %}
 
 {% endblock %}
