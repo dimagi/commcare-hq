@@ -1,0 +1,9 @@
+--- 
++++ 
+@@ -68,5 +68,5 @@
+       {{ global_error }}
+     </div>
+   {% endfor %}
+-  {% include "login_and_password/two_factor/core/bootstrap3/login_form.html" %}
++  {% include "login_and_password/two_factor/core/bootstrap5/login_form.html" %}
+ {% endblock %}
