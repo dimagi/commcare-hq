@@ -44,7 +44,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
   && uv pip install --prefix=/vendor -r /vendor/test-requirements.txt
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
-#   executablePath: 'google-chrome-unstable'
+#   executablePath: 'google-chrome-stable'
 ENV PUPPETEER_SKIP_DOWNLOAD true
 
 RUN npm -g install \
