@@ -148,33 +148,33 @@ hqDefine("locations/js/widgets", [
     }
 
     function updateScreenReaderNotification(notificationText, notificationElementId) {
-        const srNotification = $(notificationElementId)
+        const srNotification = $(notificationElementId);
         if (notificationText) {
             srNotification.html("<p>" + notificationText + "</p>");
             srNotification.attr("aria-live","assertive");
         } else {
             srNotification.attr("aria-live","off");
         }
-    };
+    }
 
     function handleLocationWarnings(select) {
-        const request_domain = initialPageData.get('domain');
+        const requestDomain = initialPageData.get('domain');
         const selectedLocations = select.val();
         const requestUserDomainMemberships = initialPageData.get('request_user_domain_memberships');
         const requestUserLocations = _.find(requestUserDomainMemberships, function (dm) {
-            if (dm.domain === request_domain){
+            if (dm.domain === requestDomain) {
                 return dm.assigned_location_ids
             };
         });
         let shareLocations = false;
         _.every(selectedLocations, function (location_id) {
-            if(_.contains(requestUserLocations, location_id)) {
+            if (_.contains(requestUserLocations, location_id)) {
                 shareLocations = true;
             }
         });
 
         const noCommonLocationWarning = $(".no-common-location");
-        const noAssignedLocationsWarning = $(".no-assigned-locations")
+        const noAssignedLocationsWarning = $(".no-assigned-locations");
         if (!shareLocations) {
             updateScreenReaderNotification(noCommonLocationWarning.text(), "#sr-no-shared-location-region");
             noCommonLocationWarning.show();
