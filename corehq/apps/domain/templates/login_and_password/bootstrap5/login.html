@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% requirejs_main_b5 'registration/js/login' %}
+{% js_entry 'registration/js/login' %}
 
 {% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
 
