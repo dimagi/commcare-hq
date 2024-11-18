@@ -469,12 +469,12 @@ hqDefine("geospatial/js/case_management", [
     $(document).ajaxComplete(function (event, xhr, settings) {
         // When mobile workers are loaded from the user filtering menu, ajaxComplete will be called again.
         // We don't want to reload the map or cases when this happens, so simply return.
-        const isAfterUserLoad = settings.url.includes('geospatial/get_users_with_gps/');
+        const isAfterUserLoad = settings.url.includes('microplanning/get_users_with_gps/');
         if (isAfterUserLoad) {
             return;
         }
 
-        const isAfterReportLoad = settings.url.includes('geospatial/async/case_management_map/');
+        const isAfterReportLoad = settings.url.includes('microplanning/async/microplanning_map/');
         // This indicates clicking Apply button or initial page load
         if (isAfterReportLoad) {
             initMap();
@@ -497,7 +497,7 @@ hqDefine("geospatial/js/case_management", [
         }
 
         // This indicates that report data is fetched either after apply or after pagination
-        const isAfterDataLoad = settings.url.includes('geospatial/json/case_management_map/');
+        const isAfterDataLoad = settings.url.includes('microplanning/json/microplanning_map/');
         if (!isAfterDataLoad) {
             return;
         }
