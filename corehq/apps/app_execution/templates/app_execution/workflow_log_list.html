@@ -16,7 +16,7 @@
   {% endcompress %}
 {% endblock %}
 
-{% requirejs_main_b5 'app_execution/js/workflow_logs' %}
+{% js_entry 'app_execution/js/workflow_logs' %}
 
 {% block page_content %}
   {% initial_page_data 'total_items' total %}
