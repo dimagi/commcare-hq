@@ -154,7 +154,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
 
 class EventCreateView(BaseEventView):
     urlname = 'add_attendance_tracking_event'
-    template_name = "new_event.html"
+    template_name = "events/new_event.html"
 
     page_title = _("Add Attendance Tracking Event")
 
@@ -220,7 +220,7 @@ class EventCreateView(BaseEventView):
 
 class EventEditView(EventCreateView):
     urlname = 'edit_attendance_tracking_event'
-    template_name = "new_event.html"
+    template_name = "events/new_event.html"
     http_method_names = ['get', 'post']
 
     page_title = _("Edit Attendance Tracking Event")
