@@ -94,7 +94,7 @@ class CaseManagementMap(BaseCaseMapReport):
     slug = "case_management_map"
 
     base_template = "geospatial/case_management_base.html"
-    report_template_path = "case_management.html"
+    report_template_path = "geospatial/case_management.html"
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
