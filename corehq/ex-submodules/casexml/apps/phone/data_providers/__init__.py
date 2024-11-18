@@ -18,11 +18,8 @@ def get_element_providers(timing_context, skip_fixtures=False):
     providers = [
         SyncElementProvider(timing_context),
         RegistrationElementProvider(timing_context),
+        FixtureElementProvider(timing_context, skip_fixtures),
     ]
-
-    if not skip_fixtures:
-        providers.append(FixtureElementProvider(timing_context))
-
     return providers
 
 
@@ -73,6 +70,10 @@ class FixtureElementProvider(RestoreDataProvider):
     Gets any associated fixtures.
     """
 
+    def __init__(self, timing_context, skip_fixtures):
+        self._skip_fixtures = skip_fixtures
+        super().__init__(timing_context)
+
     def get_elements(self, restore_state):
         # fixture block
         providers = generator.get_providers(
@@ -80,6 +81,8 @@ class FixtureElementProvider(RestoreDataProvider):
             version=restore_state.version,
         )
         for provider in providers:
+            if self._skip_fixtures and not getattr(provider, 'ignore_skip_fixtures_flag', False):
+                continue
             with self.timing_context('fixture:{}'.format(provider.id)):
                 elements = provider(restore_state)
                 for element in elements:
