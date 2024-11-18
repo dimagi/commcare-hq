@@ -13,6 +13,7 @@ const aliases = {
     //  remove this file and the yarn modernizr post-install step
     "modernizr": "hqwebapp/js/lib/modernizr",
 
+    "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
     "popper": "@popperjs/core/dist/cjs/popper.js",
     "sentry_browser": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
         'sentry/js/sentry.browser.7.28.0.min'),
