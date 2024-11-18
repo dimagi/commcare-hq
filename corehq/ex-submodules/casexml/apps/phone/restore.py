@@ -50,7 +50,7 @@ from .exceptions import (
     RestoreException,
     SyncLogUserMismatch,
 )
-from .fixtures import generator as fixture_generator
+from .fixtures import get_fixture_elements
 from .models import (
     LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
@@ -734,14 +734,8 @@ class RestoreConfig(object):
                 content.append(get_registration_element(self.restore_state.restore_user))
 
             with self.timing_context('FixtureElementProvider'):
-                for provider in fixture_generator.get_providers(
-                        self.restore_state.restore_user, version=self.restore_state.version
-                ):
-                    if self.skip_fixtures and not getattr(provider, 'ignore_skip_fixtures_flag', False):
-                        continue
-                    with self.timing_context('fixture:{}'.format(provider.id)):
-                        for element in provider(self.restore_state):
-                            content.append(element)
+                for element in get_fixture_elements(self.restore_state, self.timing_context, self.skip_fixtures):
+                    content.append(element)
 
             with self.timing_context('CasePayloadProvider'):
                 do_livequery(self.timing_context, self.restore_state, content, async_task)
