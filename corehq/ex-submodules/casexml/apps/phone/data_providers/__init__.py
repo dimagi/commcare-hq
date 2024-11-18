@@ -1,5 +1,4 @@
 from casexml.apps.phone import xml
-from casexml.apps.phone.data_providers.case.livequery import do_livequery
 from casexml.apps.phone.fixtures import generator
 
 
@@ -19,17 +18,6 @@ def get_element_providers(timing_context, skip_fixtures=False):
         SyncElementProvider(timing_context),
         RegistrationElementProvider(timing_context),
         FixtureElementProvider(timing_context, skip_fixtures),
-    ]
-
-
-def get_async_providers(timing_context, async_task=None):
-    """
-    Get restore providers that return their own fully formed responses
-
-    They can optionally take an async task to update progress
-    """
-    return [
-        CasePayloadProvider(timing_context, async_task),
     ]
 
 
@@ -86,27 +74,3 @@ class FixtureElementProvider(RestoreDataProvider):
                 elements = provider(restore_state)
                 for element in elements:
                     yield element
-
-
-class AsyncDataProvider(TimedProvider):
-    """
-    Base class for things that deal with their own response.
-    """
-    def __init__(self, timing_context, async_task=None):
-        super().__init__(timing_context)
-        self.async_task = async_task
-
-    def extend_response(self, restore_state, response):
-        raise NotImplementedError('Need to implement this method')
-
-
-class CasePayloadProvider(AsyncDataProvider):
-    """Async provider responsible for generating the case and stock payloads."""
-
-    def extend_response(self, restore_state, response):
-        do_livequery(
-            self.timing_context,
-            restore_state,
-            response,
-            self.async_task,
-        )
