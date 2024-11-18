@@ -43,7 +43,6 @@ from .const import (
     INITIAL_SYNC_CACHE_THRESHOLD,
     INITIAL_SYNC_CACHE_TIMEOUT,
 )
-from .data_providers import get_element_providers
 from .data_providers.case.livequery import do_livequery
 from .exceptions import (
     BadStateException,
@@ -51,6 +50,7 @@ from .exceptions import (
     RestoreException,
     SyncLogUserMismatch,
 )
+from .fixtures import generator as fixture_generator
 from .models import (
     LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
@@ -60,7 +60,11 @@ from .models import (
 from .restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from .tasks import ASYNC_RESTORE_SENT, get_async_restore_payload
 from .utils import get_cached_items_with_count
-from .xml import get_progress_element, get_sync_element
+from .xml import (
+    get_progress_element,
+    get_registration_element,
+    get_sync_element,
+)
 
 logger = logging.getLogger('restore')
 
@@ -723,9 +727,21 @@ class RestoreConfig(object):
         username = self.restore_user.username
         count_items = self.params.include_item_count
         with RestoreContent(username, count_items) as content:
-            for provider in get_element_providers(self.timing_context, skip_fixtures=self.skip_fixtures):
-                with self.timing_context(provider.__class__.__name__):
-                    content.extend(provider.get_elements(self.restore_state))
+            with self.timing_context('SyncElementProvider'):
+                content.append(get_sync_element(self.restore_state.current_sync_log._id))
+
+            with self.timing_context('RegistrationElementProvider'):
+                content.append(get_registration_element(self.restore_state.restore_user))
+
+            with self.timing_context('FixtureElementProvider'):
+                for provider in fixture_generator.get_providers(
+                        self.restore_state.restore_user, version=self.restore_state.version
+                ):
+                    if self.skip_fixtures and not getattr(provider, 'ignore_skip_fixtures_flag', False):
+                        continue
+                    with self.timing_context('fixture:{}'.format(provider.id)):
+                        for element in provider(self.restore_state):
+                            content.append(element)
 
             with self.timing_context('CasePayloadProvider'):
                 do_livequery(self.timing_context, self.restore_state, content, async_task)
