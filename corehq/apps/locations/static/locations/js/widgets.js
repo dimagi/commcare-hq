@@ -173,8 +173,8 @@ hqDefine("locations/js/widgets", [
             }
         });
 
-        const noCommonLocationWarning = $(".no-common-location");
-        const noAssignedLocationsWarning = $(".no-assigned-locations");
+        const noCommonLocationWarning = $("#no-common-location");
+        const noAssignedLocationsWarning = $("#no-assigned-locations");
         if (!shareLocations) {
             updateScreenReaderNotification(noCommonLocationWarning.text(), "#sr-no-shared-location-region");
             noCommonLocationWarning.show();
