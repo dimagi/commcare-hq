@@ -59,6 +59,7 @@ def _get_indicator_nodes(restore_state, indicators):
 
 class CaseSearchFixtureProvider(FixtureProvider):
     id = 'case-search-fixture'
+    ignore_skip_fixtures_flag = True
 
     def __call__(self, restore_state):
         if not MODULE_BADGES.enabled(restore_state.domain):
