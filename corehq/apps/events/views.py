@@ -276,7 +276,7 @@ class EventEditView(EventCreateView):
 
 class AttendeesListView(JSONResponseMixin, BaseEventView):
     urlname = "event_attendees"
-    template_name = 'event_attendees.html'
+    template_name = 'events/event_attendees.html'
     page_title = _("Attendees")
 
     limit_text = _("Attendees per page")
