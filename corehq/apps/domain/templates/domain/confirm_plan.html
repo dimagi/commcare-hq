@@ -1,7 +1,8 @@
 {% extends "domain/base_change_plan.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% requirejs_main 'accounting/js/confirm_plan' %}
+
+{% js_entry_b3 'accounting/js/confirm_plan' %}
 
 {% block form_content %}
   {% initial_page_data 'is_upgrade' is_upgrade %}
