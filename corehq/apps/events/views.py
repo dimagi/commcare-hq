@@ -503,7 +503,7 @@ def poll_mobile_worker_attendee_progress(request, domain, download_id):
             'custom_message': _("Disabling mobile worker attendees in progress. This may take a while..."),
         })
 
-    template = "partials/attendee_conversion_status.html"
+    template = "events/partials/attendee_conversion_status.html"
     return render(request, template, context)
 
 
