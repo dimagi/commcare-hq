@@ -314,6 +314,10 @@ class EditCommCareUserView(BaseEditUserView):
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'show_deactivate_after_date': self.form_user_update.user_form.show_deactivate_after_date,
             'can_create_groups': can_edit_groups and can_access_all_locations,
+            'can_access_all_locations': can_access_all_locations,
+            'editable_user_can_access_all_locations': self.editable_user.has_permission(
+                self.domain, 'access_all_locations'
+            ),
             'needs_to_downgrade_locations': locations_present and not request_has_locations_privilege,
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
