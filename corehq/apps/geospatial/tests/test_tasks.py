@@ -5,6 +5,7 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory
 
 from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import INDEX_ES_TASK_HELPER_BASE_KEY
 from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
@@ -47,6 +48,8 @@ class TestIndexESDocsWithLocationProps(TestCase):
 
     def test_index_docs(self):
         index_es_docs_with_location_props.apply(args=[self.domain])
+        manager.index_refresh(case_search_adapter.index_name)
+
         doc_count = case_query_for_missing_geopoint_val(self.domain, self.gps_prop_name).count()
         self.assertEqual(doc_count, 0)
         expected_output = {

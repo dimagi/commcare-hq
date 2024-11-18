@@ -5,7 +5,6 @@ from django.core.management.base import BaseCommand
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.es import case_search_adapter
-from corehq.apps.es.client import manager
 from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
 from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.form_processor.models import CommCareCase
@@ -66,4 +65,3 @@ def _index_case_ids(domain, case_ids, chunk_size, with_progress):
     for case_id_chunk in chunked(ids, chunk_size):
         case_chunk = CommCareCase.objects.get_cases(list(case_id_chunk), domain)
         case_search_adapter.bulk_index(case_chunk)
-    manager.index_refresh(case_search_adapter.index_name)
