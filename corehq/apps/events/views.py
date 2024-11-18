@@ -334,7 +334,7 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
 
 class AttendeeEditView(BaseEventView):
     urlname = 'edit_attendee'
-    template_name = "edit_attendee.html"
+    template_name = "events/edit_attendee.html"
 
     page_title = _("Edit Attendee")
 
