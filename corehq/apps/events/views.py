@@ -60,7 +60,7 @@ class BaseEventView(BaseDomainView):
 
 class EventsView(BaseEventView, CRUDPaginatedViewMixin):
     urlname = "events_page"
-    template_name = 'events_list.html'
+    template_name = 'events/events_list.html'
 
     page_title = _("Attendance Tracking Events")
 
