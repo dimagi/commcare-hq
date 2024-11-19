@@ -126,4 +126,5 @@ class EmailSMTPSettingsForm(forms.ModelForm):
 
     def save(self, commit=True):
         self.instance.plaintext_password = self.cleaned_data['plaintext_password']
+        self.instance.plaintext_password_cbc = self.cleaned_data['plaintext_password']
         return super().save(commit)

@@ -14,7 +14,6 @@ class EmailSettings(models.Model):
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
     password_cbc = models.CharField(max_length=255)
-    cbc_encrypted_password = models.CharField(max_length=255)
     server = models.CharField(max_length=255)
     port = models.IntegerField(default=0)
     from_email = models.EmailField()
