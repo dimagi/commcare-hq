@@ -1,0 +1,19 @@
+name: Check type hints
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  mypy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - run: pip install mypy
+      - run: mypy --install-types --non-interactive --explicit-package-bases @mypy_modules.txt
