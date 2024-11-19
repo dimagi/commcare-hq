@@ -2,7 +2,7 @@ import hashlib
 import json
 import logging
 import re
-from xml.dom.minidom import parseString
+from defusedxml.minidom import parseString
 
 from django.conf import settings
 from django.contrib import messages
