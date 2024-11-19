@@ -1,0 +1,34 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+
+{% block page_content %}
+  <div class="row">
+    <div class="col-md-12">
+      <h4>
+        {% blocktrans with username=transfer.to_username %}
+          You have a pending transfer with {{ username }}
+        {% endblocktrans %}
+      </h4>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-2">
+      <a href="{% url 'transfer_domain_view' domain %}?resend=true" class="btn btn-primary">
+        {% blocktrans %}
+          Resend Transfer Request
+        {% endblocktrans %}
+      </a>
+    </div>
+    <div class="col-md-2">
+      <form action="{{ transfer.deactivate_url }}" method="POST">
+        {% csrf_token %}
+        <input class="btn btn-outline-danger" type="submit" value="{% trans "Cancel Transfer" %}" />
+      </form>
+    </div>
+  </div>
+{% endblock %}
+
+
