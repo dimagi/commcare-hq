@@ -136,6 +136,21 @@ def b64_aes_cbc_decrypt(message):
     plaintext_bytes = unpad(padded_plaintext_bytes)
     return plaintext_bytes.decode('utf8')
 
+# Only needed for migration from ECB to CBC mode.
+def reencrypt_ecb_to_cbc_mode(encrypted_text, prefix=None):
+    """
+    Re-encrypt a message that was encrypted using ECB mode to CBC mode.
+    """
+    if prefix and encrypted_text.startswith(prefix):
+        ciphertext = encrypted_text[len(prefix):]
+    else:
+        ciphertext = encrypted_text
+
+    new_ciphertext = b64_aes_cbc_encrypt(b64_aes_decrypt(ciphertext))
+    if prefix:
+        return prefix + new_ciphertext
+    return new_ciphertext
+
 
 def unpad(bytestring):
     """

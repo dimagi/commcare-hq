@@ -1,13 +1,20 @@
 from django.db import models
 
 from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES
-from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
+from corehq.motech.utils import (
+    b64_aes_cbc_decrypt,
+    b64_aes_cbc_encrypt,
+    b64_aes_decrypt,
+    b64_aes_encrypt,
+)
 
 
 class EmailSettings(models.Model):
     domain = models.CharField(max_length=255, unique=True)
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
+    password_cbc = models.CharField(max_length=255)
+    cbc_encrypted_password = models.CharField(max_length=255)
     server = models.CharField(max_length=255)
     port = models.IntegerField(default=0)
     from_email = models.EmailField()
@@ -29,8 +36,21 @@ class EmailSettings(models.Model):
             return b64_aes_decrypt(ciphertext)
         return self.password
 
+    @property
+    def plaintext_password_cbc(self):
+        if self.password_cbc.startswith(f'${ALGO_AES}$'):
+            ciphertext = self.password_cbc.split('$', 2)[2]
+            return b64_aes_cbc_decrypt(ciphertext)
+        return self.password_cbc
+
     @plaintext_password.setter
     def plaintext_password(self, plaintext):
         if plaintext != PASSWORD_PLACEHOLDER:
             ciphertext = b64_aes_encrypt(plaintext)
             self.password = f'${ALGO_AES}${ciphertext}'
+
+    @plaintext_password_cbc.setter
+    def plaintext_password_cbc(self, plaintext):
+        if plaintext != PASSWORD_PLACEHOLDER:
+            ciphertext = b64_aes_cbc_encrypt(plaintext)
+            self.password_cbc = f'${ALGO_AES}${ciphertext}'
