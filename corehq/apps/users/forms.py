@@ -1418,7 +1418,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
 
 class AddPhoneNumberForm(forms.Form):
     phone_number = forms.CharField(
-        max_length=50, help_text=gettext_lazy('Please enter number, including country code, in digits only.')
+        max_length=20, help_text=gettext_lazy('Please enter number, including country code, in digits only.')
     )
 
     form_type = forms.CharField(initial='add-phonenumber', widget=forms.HiddenInput)

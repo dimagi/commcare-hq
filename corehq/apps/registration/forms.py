@@ -40,6 +40,7 @@ class RegisterWebUserForm(forms.Form):
     phone_number = forms.CharField(
         label=_("Phone Number"),
         required=False,
+        max_length=20,
     )
     persona = forms.ChoiceField(
         label=_("I will primarily be using CommCare to..."),
