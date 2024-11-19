@@ -12,7 +12,7 @@ from corehq.motech.utils import (
 class EmailSettings(models.Model):
     domain = models.CharField(max_length=255, unique=True)
     username = models.CharField(max_length=255)
-    password = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)  # This will be replaced by password_cbc after migration is done
     password_cbc = models.CharField(max_length=255)
     server = models.CharField(max_length=255)
     port = models.IntegerField(default=0)
