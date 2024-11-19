@@ -177,14 +177,14 @@ def double(node, context):
         try:
             parsed_date = parse_date(value)
         except ValueError:
-            ...
+            parsed_date = None
         if parsed_date:
             return float((parsed_date - datetime.date(1970, 1, 1)).days)
 
         try:
             parsed_datetime = parse_datetime(value)
         except ValueError:
-            ...
+            parsed_datetime = None
         if parsed_datetime:
             elapsed = parsed_datetime - datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC)
             return elapsed.total_seconds() / (24 * 3600)
