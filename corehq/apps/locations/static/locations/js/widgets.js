@@ -1,11 +1,13 @@
 'use strict';
 hqDefine("locations/js/widgets", [
     'jquery',
+    'hqwebapp/js/initial_page_data',
     'underscore',
     'hqwebapp/js/toggles',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
+    initialPageData,
     _,
     toggles
 ) {
@@ -145,6 +147,50 @@ hqDefine("locations/js/widgets", [
         $select.trigger('select-ready');
     }
 
+    function updateScreenReaderNotification(notificationText, notificationElementId) {
+        const srNotification = $(notificationElementId);
+        if (notificationText) {
+            srNotification.html("<p>" + notificationText + "</p>");
+            srNotification.attr("aria-live","assertive");
+        } else {
+            srNotification.attr("aria-live","off");
+        }
+    }
+
+    function handleLocationWarnings(select) {
+        const requestDomain = initialPageData.get('domain');
+        const selectedLocations = select.val();
+        const requestUserDomainMemberships = initialPageData.get('request_user_domain_memberships');
+        const requestUserLocations = _.find(requestUserDomainMemberships, function (dm) {
+            if (dm.domain === requestDomain) {
+                return dm.assigned_location_ids;
+            }
+        });
+        let shareLocations = false;
+        _.every(selectedLocations, function (locationId) {
+            if (_.contains(requestUserLocations, locationId)) {
+                shareLocations = true;
+            }
+        });
+
+        const noCommonLocationWarning = $("#no-common-location");
+        const noAssignedLocationsWarning = $("#no-assigned-locations");
+        if (!shareLocations) {
+            updateScreenReaderNotification(noCommonLocationWarning.text(), "#sr-no-shared-location-region");
+            noCommonLocationWarning.show();
+        } else {
+            updateScreenReaderNotification(null, "#sr-no-shared-location-region");
+            noCommonLocationWarning.hide();
+        }
+        if (selectedLocations.length < 1) {
+            updateScreenReaderNotification(noAssignedLocationsWarning.text(), "#sr-no-locations-assigned-region");
+            noAssignedLocationsWarning.show();
+        } else {
+            updateScreenReaderNotification(null, "#sr-no-locations-assigned-region");
+            noAssignedLocationsWarning.hide();
+        }
+    }
+
     $(function () {
         $(".locations-widget-autocomplete").each(function () {
             initAutocomplete($(this));
@@ -177,6 +223,7 @@ hqDefine("locations/js/widgets", [
 
             // Change options/value for css_id based on what's chosen for source_css_id
             $source.on('change', function () {
+                handleLocationWarnings($source);
                 updateSelect2($source, $select);
                 var sourceOptions = $source.select2('data'),
                     newValue;
