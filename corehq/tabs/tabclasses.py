@@ -1812,16 +1812,25 @@ class EnterpriseSettingsTab(UITab):
         enterprise_user_management_views = []
 
         if has_privilege(self._request, privileges.PROJECT_ACCESS):
-            enterprise_views.extend([
+            enterprise_views.append(
                 {
                     'title': _('Enterprise Dashboard'),
                     'url': reverse('enterprise_dashboard', args=[self.domain]),
-                },
+                }
+            )
+            if toggles.ENTERPRISE_DASHBOARD_IMPROVEMENTS.enabled_for_request(self._request):
+                enterprise_views.append(
+                    {
+                        'title': _('Security Watchtower'),
+                        'url': reverse('security_watchtower', args=[self.domain]),
+                    }
+                )
+            enterprise_views.append(
                 {
                     'title': _('Enterprise Settings'),
                     'url': reverse('enterprise_settings', args=[self.domain]),
-                },
-            ])
+                }
+            )
         enterprise_views.append({
             'title': _('Billing Statements'),
             'url': reverse('enterprise_billing_statements',

@@ -13,6 +13,7 @@ from corehq.apps.enterprise.views import (
     enterprise_permissions,
     enterprise_settings,
     remove_enterprise_permissions_domain,
+    security_watchtower,
     update_enterprise_permissions_source_domain,
     ManageEnterpriseMobileWorkersView,
 )
@@ -43,6 +44,7 @@ domain_specific = [
         name='remove_enterprise_permissions_domain'),
     url(r'^permissions/source/$', update_enterprise_permissions_source_domain,
         name='update_enterprise_permissions_source_domain'),
+    url(r'^security_watchtower/$', security_watchtower, name='security_watchtower'),
     url(r'^settings/$', enterprise_settings, name='enterprise_settings'),
     url(r'^settings/edit/$', edit_enterprise_settings, name='edit_enterprise_settings'),
     url(r'^billing_statements/$', EnterpriseBillingStatementsView.as_view(),

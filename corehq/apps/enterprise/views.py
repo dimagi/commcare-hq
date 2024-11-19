@@ -59,6 +59,7 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 
 from corehq.const import USER_DATE_FORMAT
+from corehq import toggles
 
 
 @use_tempusdominus
@@ -71,7 +72,6 @@ def enterprise_dashboard(request, domain):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
 
     context = {
-        'account': request.account,
         'domain': domain,
         'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
         'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
@@ -84,7 +84,32 @@ def enterprise_dashboard(request, domain):
         'current_page': {
             'page_name': _('Enterprise Dashboard'),
             'title': _('Enterprise Dashboard'),
-        }
+        },
+        'header_title': request.account.name,
+        'metric_type': 'Enterprise Dashboard',
+    }
+    return render(request, "enterprise/enterprise_dashboard.html", context)
+
+
+@use_tempusdominus
+@use_bootstrap5
+@always_allow_project_access
+@require_enterprise_admin
+@login_and_domain_required
+@toggles.ENTERPRISE_DASHBOARD_IMPROVEMENTS.required_decorator()
+def security_watchtower(request, domain):
+    if not has_privilege(request, privileges.PROJECT_ACCESS):
+        return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
+
+    context = {
+        'domain': domain,
+        'reports': [],
+        'current_page': {
+            'page_name': _('Security Watchtower'),
+            'title': _('Security Watchtower'),
+        },
+        'header_title': _('Security Watchtower'),
+        'metric_type': 'Security Watchtower',
     }
     return render(request, "enterprise/enterprise_dashboard.html", context)
 

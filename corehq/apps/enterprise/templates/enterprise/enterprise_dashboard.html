@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block page_title %}{{ account.name }}{% endblock %}
+{% block page_title %}{{ header_title }}{% endblock %}
 
 {% requirejs_main_b5 'enterprise/js/enterprise_dashboard' %}
 
@@ -11,6 +11,7 @@
   {% registerurl "enterprise_dashboard_total" domain "---" %}
 
   {% initial_page_data 'max_date_range_days' max_date_range_days %}
+  {% initial_page_data 'metric_type' metric_type %}
 
   <div class="row">
     {% for report in reports %}
