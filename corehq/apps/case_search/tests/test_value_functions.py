@@ -11,6 +11,7 @@ from corehq.apps.case_search.xpath_functions.value_functions import (
     date,
     date_add,
     datetime_,
+    datetime_add,
     now,
     today,
 )
@@ -82,6 +83,7 @@ def test_datetime(expression, expected):
     eq(result, expected)
 
 
+@freeze_time('2021-08-02T22:03:16Z')
 @pytest.mark.parametrize("expression, expected", [
     ("date-add('2020-02-29', 'years', 1)", "2021-02-28"),
     ("date-add('2020-02-29', 'years', 1.0)", "2021-02-28"),
@@ -93,14 +95,23 @@ def test_datetime(expression, expected):
     ("date-add('2022-01-01', 'days', -1)", "2021-12-31"),
     ("date-add('2022-01-01', 'days', 1.5)", "2022-01-02"),
     ("date-add('2022-01-01', 'days', '5')", "2022-01-06"),
+    ("date-add('2022-01-01', 'hours', 27)", "2022-01-02"),
     ("date-add(0, 'days', '5')", "1970-01-06"),
     ("date-add(365, 'years', '5')", "1976-01-01"),
     ("date-add(date('2021-01-01'), 'years', '5')", "2026-01-01"),
     ("date-add(date(5), 'months', '1')", "1970-02-06"),
+    ("date-add(today(), 'days', '2')", "2021-08-04"),
+    ("datetime-add(now(), 'days', '-1')", "2021-08-01T22:03:16+00:00"),
+    ("datetime-add(now(), 'hours', '-3')", "2021-08-02T19:03:16+00:00"),
+    ("datetime-add(now(), 'minutes', '-5')", "2021-08-02T21:58:16+00:00"),
+    ("datetime-add(now(), 'seconds', '-17')", "2021-08-02T22:02:59+00:00"),
+    ("datetime-add(now(), 'seconds', '0.5')", "2021-08-02T22:03:16.500000+00:00"),
+    ("datetime-add(today(), 'days', '1')", "2021-08-03T00:00:00+00:00"),
 ])
 def test_date_add(expression, expected):
     node = parse_xpath(expression)
-    result = date_add(node, SearchFilterContext("domain"))
+    fn = date_add if expression.startswith('date-add') else datetime_add
+    result = fn(node, SearchFilterContext("domain"))
     eq(result, expected)
 
 
@@ -108,6 +119,7 @@ def test_date_add(expression, expected):
     # bad date
     "date-add('2020-02-31', 'years', 1)",
     "date-add(1.5, 'years', 1)",
+    "date-add(now(), 'days', '-1')",  # now() is a datetime, not date
 
     # non-integer quantity
     "date-add('2020-02-01', 'years', 1.5)",
@@ -130,4 +142,5 @@ def test_date_add(expression, expected):
 def test_date_add_errors(expression):
     node = parse_xpath(expression)
     with assert_raises(XPathFunctionException):
-        date_add(node, SearchFilterContext("domain"))
+        fn = date_add if expression.startswith('date-add') else datetime_add
+        fn(node, SearchFilterContext("domain"))

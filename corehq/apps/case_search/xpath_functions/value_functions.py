@@ -99,14 +99,35 @@ def now(node, context):
 
 def date_add(node, context):
     assert node.name == 'date-add'
+    result = _date_or_datetime_add(node, context, value_to_date)
+    return result.strftime(ISO_DATE_FORMAT)
 
+
+def datetime_add(node, context):
+    assert node.name == 'datetime-add'
+    result = _date_or_datetime_add(node, context, _value_to_datetime)
+    return result.isoformat()
+
+
+def _date_or_datetime_add(node, context, converter_fn):
     confirm_args_count(node, 3)
-
     date_arg = unwrap_value(node.args[0], context)
-    date_value = value_to_date(node, date_arg)
+    date_value = converter_fn(node, date_arg)
 
-    interval_type = unwrap_value(node.args[1], context)
-    interval_types = ("days", "weeks", "months", "years")
+    timedelta = _get_timedelta(
+        node,
+        unwrap_value(node.args[1], context),
+        unwrap_value(node.args[2], context),
+    )
+    try:
+        return date_value + timedelta
+    except Exception as e:
+        # catchall in case of an unexpected error
+        raise XPathFunctionException(str(e), serialize(node))
+
+
+def _get_timedelta(node, interval_type, quantity):
+    interval_types = ("seconds", "minutes", "hours", "days", "weeks", "months", "years")
     if interval_type not in interval_types:
         raise XPathFunctionException(
             _("The \"date-add\" function expects the 'interval' argument to be one of {types}").format(
@@ -115,7 +136,6 @@ def date_add(node, context):
             serialize(node)
         )
 
-    quantity = unwrap_value(node.args[2], context)
     if isinstance(quantity, str):
         try:
             quantity = float(quantity)
@@ -137,13 +157,7 @@ def date_add(node, context):
             serialize(node)
         )
 
-    try:
-        result = date_value + relativedelta(**{interval_type: quantity})
-    except Exception as e:
-        # catchall in case of an unexpected error
-        raise XPathFunctionException(str(e), serialize(node))
-
-    return result.strftime(ISO_DATE_FORMAT)
+    return relativedelta(**{interval_type: quantity})
 
 
 def unwrap_list(node, context):

@@ -12,12 +12,21 @@ from .query_functions import (
     within_distance,
 )
 from .subcase_functions import subcase
-from .value_functions import date, date_add, datetime_, now, today, unwrap_list
+from .value_functions import (
+    date,
+    date_add,
+    datetime_,
+    datetime_add,
+    now,
+    today,
+    unwrap_list,
+)
 
 # functions that transform or produce a value
 XPATH_VALUE_FUNCTIONS = {
     'date': date,
     'date-add': date_add,
+    'datetime-add': datetime_add,
     'today': today,
     'datetime': datetime_,
     'now': now,
