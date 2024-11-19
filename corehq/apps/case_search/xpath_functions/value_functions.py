@@ -166,3 +166,30 @@ def unwrap_list(node, context):
 
     value = node.args[0]
     return json.loads(value)
+
+
+def double(node, context):
+    assert node.name == 'double'
+    confirm_args_count(node, 1)
+    value = unwrap_value(node.args[0], context)
+
+    if isinstance(value, str):
+        try:
+            parsed_date = parse_date(value)
+        except ValueError:
+            ...
+        if parsed_date:
+            return float((parsed_date - datetime.date(1970, 1, 1)).days)
+
+        try:
+            parsed_datetime = parse_datetime(value)
+        except ValueError:
+            ...
+        if parsed_datetime:
+            elapsed = parsed_datetime - datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC)
+            return elapsed.total_seconds() / (24 * 3600)
+
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        raise XPathFunctionException(_("Cannot convert {} to a double").format(value), serialize(node))

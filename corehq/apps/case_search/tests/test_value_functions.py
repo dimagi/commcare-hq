@@ -12,6 +12,7 @@ from corehq.apps.case_search.xpath_functions.value_functions import (
     date_add,
     datetime_,
     datetime_add,
+    double,
     now,
     today,
 )
@@ -144,3 +145,23 @@ def test_date_add_errors(expression):
     with assert_raises(XPathFunctionException):
         fn = date_add if expression.startswith('date-add') else datetime_add
         fn(node, SearchFilterContext("domain"))
+
+
+@freeze_time('2021-08-02T22:03:16Z')
+@pytest.mark.parametrize("expression, expected", [
+    ("double('1.3')", 1.3),
+    ("double('13')", 13.0),
+    ("double(now())", 18841.918935185186),
+    ("double(today())", 18841.0),
+    ("double('2021-01-01')", 18628.0),
+])
+def test_double(expression, expected):
+    node = parse_xpath(expression)
+    result = double(node, SearchFilterContext("domain"))
+    eq(result, expected)
+
+
+def test_double_random_string():
+    node = parse_xpath("double('not double-able')")
+    with assert_raises(XPathFunctionException):
+        double(node, SearchFilterContext("domain"))

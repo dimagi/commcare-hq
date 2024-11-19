@@ -17,6 +17,7 @@ from .value_functions import (
     date_add,
     datetime_,
     datetime_add,
+    double,
     now,
     today,
     unwrap_list,
@@ -26,10 +27,11 @@ from .value_functions import (
 XPATH_VALUE_FUNCTIONS = {
     'date': date,
     'date-add': date_add,
-    'datetime-add': datetime_add,
-    'today': today,
     'datetime': datetime_,
+    'datetime-add': datetime_add,
+    'double': double,
     'now': now,
+    'today': today,
     'unwrap-list': unwrap_list,
 }
 
