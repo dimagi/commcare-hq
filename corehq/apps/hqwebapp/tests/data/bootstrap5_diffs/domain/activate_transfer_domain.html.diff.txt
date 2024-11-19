@@ -1,0 +1,38 @@
+--- 
++++ 
+@@ -1,14 +1,14 @@
+-{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
++{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+ {% block content %}
+   <div class="container" id="hq-content">
+     <div class="row">
+-      <div class="page-header">
++      <div class="page-header">  {# todo B5: css-page-header #}
+         <h1>{% trans "Transfer project ownership" %}</h1>
+       </div>
+-      <div class="col-md-8 col-xs-12">
++      <div class="col-lg-8 col-sm-12">
+         {% if transfer %}
+           <p class="lead">
+             {% blocktrans with domain=transfer.domain%}
+@@ -18,14 +18,14 @@
+             {% endblocktrans %}
+           </p>
+           <div class="row">
+-            <div class="col-md-2">
++            <div class="col-lg-2">
+               <form action="{{ transfer.activate_url }}" method="POST">{% csrf_token %}
+                 <input type="submit" value="{% trans "Accept" %}" class="btn btn-primary"/>
+               </form>
+             </div>
+-            <div class="col-md-2">
++            <div class="col-lg-2">
+               <form action="{{ transfer.deactivate_url }}" method="POST">{% csrf_token %}
+-                <input type="submit" value="{% trans "Decline" %}" class="btn btn-danger"/>
++                <input type="submit" value="{% trans "Decline" %}" class="btn btn-outline-danger"/>
+               </form>
+             </div>
+           </div>

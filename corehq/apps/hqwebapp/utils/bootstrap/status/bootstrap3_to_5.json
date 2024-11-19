@@ -51,6 +51,9 @@
   "dashboard": {
     "is_complete": true
   },
+  "domain": {
+    "in_progress": true
+  },
   "dropbox": {
     "is_complete": true
   },
