@@ -1,8 +1,6 @@
 import hashlib
 import json
 import logging
-import re
-from defusedxml.minidom import parseString
 
 from django.conf import settings
 from django.contrib import messages
@@ -334,17 +332,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
-
-            if request.POST.get('cleanup', False):
-                try:
-                    # First, we strip all newlines and reformat the DOM.
-                    px = parseString(xform.replace('\r\n', '')).toprettyxml()
-                    # Then we remove excess newlines from the DOM output.
-                    text_re = re.compile(r'>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-                    prettyXml = text_re.sub(r'>\g<1></', px)
-                    xform = prettyXml
-                except Exception:
-                    pass
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
