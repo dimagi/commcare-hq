@@ -4,6 +4,7 @@ from casexml.apps.case.mock import CaseFactory
 
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
 from corehq.apps.geospatial.management.commands.index_geolocation_case_properties import index_case_docs
@@ -54,6 +55,7 @@ class TestGetFormCases(TestCase):
 
     def test_cases_correctly_indexed(self):
         index_case_docs(self.domain, case_type=self.secondary_case_type)
+        manager.index_refresh(case_search_adapter.index_name)
         query = case_query_for_missing_geopoint_val(self.domain, self.gps_prop_name, self.secondary_case_type)
         case_count = query.count()
         self.assertEqual(case_count, 0)
