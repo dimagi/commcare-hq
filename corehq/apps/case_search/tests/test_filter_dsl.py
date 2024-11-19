@@ -358,9 +358,9 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             case_search_adapter.index(case, refresh=True)
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases()
-        super(TestFilterDslLookups, self).tearDownClass()
+        super().tearDownClass()
 
     def test_parent_lookups(self):
         parsed = parse_xpath("father/name = 'Mace'")

@@ -143,11 +143,11 @@ def _create_system_datetime_query(domain, meta_property, op, value, node):
     return case_property_date_range(meta_property.key, **range_kwargs)
 
 
-def adjust_input_date_by_timezone(date, timezone, op):
-    date = datetime(date.year, date.month, date.day)
+def adjust_input_date_by_timezone(date_, timezone, op):
+    date_ = datetime(date_.year, date_.month, date_.day)
     if op == '>' or op == '<=':
-        date += timedelta(days=1)
-    return UserTime(date, tzinfo=timezone).server_time().done()
+        date_ += timedelta(days=1)
+    return UserTime(date_, tzinfo=timezone).server_time().done()
 
 
 def _create_system_query(meta_property, op, value):
