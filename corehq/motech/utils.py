@@ -87,11 +87,6 @@ def b64_aes_cbc_encrypt(message):
     AES-encrypt and base64-encode `message` using CBC mode.
 
     Uses Django SECRET_KEY as AES key and generates a random IV.
-
-    >>> settings.SECRET_KEY = 'xyzzy'
-    >>> b64_aes_cbc_encrypt('Around you is a forest.')
-    # Returns a base64-encoded string of the encrypted message.
-
     """
     if isinstance(settings.SECRET_KEY, bytes):
         secret_key_bytes = settings.SECRET_KEY
@@ -118,7 +113,7 @@ def b64_aes_cbc_decrypt(message):
     Uses Django SECRET_KEY as AES key.
 
     >>> settings.SECRET_KEY = 'xyzzy'
-    >>> b64_aes_cbc_decrypt('...')  # Replace with a valid base64-encoded string
+    >>> b64_aes_cbc_decrypt('6WbQuezOKqp4AMOCoUOndVnAUDL13e0fl3cpxcgHX/AlcPwN4+poaetdjwgikz0F')
     'Around you is a forest.'
     """
     if isinstance(settings.SECRET_KEY, bytes):
@@ -135,6 +130,7 @@ def b64_aes_cbc_decrypt(message):
     padded_plaintext_bytes = aes.decrypt(ciphertext_bytes)
     plaintext_bytes = unpad(padded_plaintext_bytes)
     return plaintext_bytes.decode('utf8')
+
 
 # Only needed for migration from ECB to CBC mode.
 def reencrypt_ecb_to_cbc_mode(encrypted_text, prefix=None):
