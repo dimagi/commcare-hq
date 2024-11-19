@@ -131,7 +131,10 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
         msg.backend_message_id = message.sid
         msg.save()
 
-    def from_or_messaging_service_sid(self, phone_number: str) -> (Optional[str], Optional[str]):
+    def from_or_messaging_service_sid(
+        self,
+        phone_number: str,
+    ) -> tuple[Optional[str], Optional[str]]:
         if self.phone_number_is_messaging_service_sid(phone_number):
             return None, phone_number
         else:

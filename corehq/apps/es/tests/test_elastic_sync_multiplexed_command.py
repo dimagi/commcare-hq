@@ -95,7 +95,7 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
 
     def tearDown(self) -> None:
         manager.cluster_routing(enabled=True)
-        return super().tearDown()
+        super().tearDown()
 
     def test_invalid_index_canonical_raises(self):
         with self.assertRaises(CommandError):
