@@ -1270,6 +1270,9 @@ class RepeatRecord(models.Model):
             Repeat record is a new record for a synchronous case repeater
             See corehq.motech.repeaters.signals.fire_synchronous_case_repeaters
             """
+            # This will also return True if a user clicked "Resend" on a
+            # Pending repeat record in the Repeat Records Report. This
+            # is not intended, but it's also not harmful.
             return fire_synchronously and self.state == State.Pending
 
         if (
