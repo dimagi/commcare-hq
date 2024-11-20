@@ -163,8 +163,7 @@ to
     ...
 
 Note that ``import "commcarehq";`` has been moved to the top of the file. The ordering is
-for consistency purposes, but it's important that either ``import "commcarehq";`` or
-``import "commcarehq_b3";`` (for Bootstrap 3 / ``js_entry_b3``) is present in the list
+for consistency purposes, but it's important that either ``import "commcarehq";`` is present in the list
 of imports for Webpack Entry Point modules. If this import is not present in an entry point,
 then site-wide navigation, notifications, modals, and other global widgets will not
 work on that page.

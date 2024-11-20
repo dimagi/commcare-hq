@@ -961,7 +961,7 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
 USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     'ush_dont_close_patient_extensions',
     'USH: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Suppress the normal behaviour of 'closing host cases closes its extension cases'.
@@ -2172,7 +2172,7 @@ WIDGET_DIALER = StaticToggle(
 HMAC_CALLOUT = StaticToggle(
     'hmac_callout',
     'USH: Enable signed messaging url callouts in cloudcare',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
 )
@@ -2180,7 +2180,7 @@ HMAC_CALLOUT = StaticToggle(
 GAEN_OTP_SERVER = StaticToggle(
     'gaen_otp_server',
     'USH: Enable retrieving OTPs from a GAEN Server',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
 )
@@ -2250,7 +2250,7 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
 ENTERPRISE_USER_MANAGEMENT = StaticToggle(
     'enterprise_user_management',
     'USH: UI for managing all web users in an enterprise',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/USH%3A+UI+for+managing+all+web+users+in+an+enterprise",
 )
@@ -2608,8 +2608,8 @@ def _handle_geospatial_es_index(domain, is_enabled):
         index_es_docs_with_location_props.delay(domain)
 
 
-GEOSPATIAL = StaticToggle(
-    'geospatial',
+MICROPLANNING = StaticToggle(
+    'microplanning',
     'Allows access to GIS functionality',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
@@ -2961,6 +2961,13 @@ APP_TESTING = StaticToggle(
 SMART_LINKS_FOR_WEB_USERS = StaticToggle(
     slug='smart_links_for_web_users',
     label='USH: Allow web users to use smart links without logging in as before',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+MODULE_BADGES = StaticToggle(
+    slug='module_badges',
+    label='USH: Show case counts from CSQL queries as badges on modules',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )

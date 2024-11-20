@@ -49,7 +49,7 @@ class TestGetMaxDocCount(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        with flag_enabled('GEOSPATIAL'):
+        with flag_enabled('MICROPLANNING'):
             case_search_es_setup(DOMAIN, cls._get_case_blocks())
 
     @staticmethod

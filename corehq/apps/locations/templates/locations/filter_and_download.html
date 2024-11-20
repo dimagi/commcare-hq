@@ -1,9 +1,9 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main 'locations/js/filtered_download' %}
+{% js_entry 'locations/js/filtered_download' %}
 
 {% block page_content %}
   {% initial_page_data 'locations_count_url' locations_count_url %}

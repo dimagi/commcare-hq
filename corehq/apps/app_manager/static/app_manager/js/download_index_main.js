@@ -8,6 +8,7 @@ hqDefine('app_manager/js/download_index_main',[
     'app_manager/js/multimedia_size_util',
     'app_manager/js/download_async_modal',
     'app_manager/js/source_files',
+    'commcarehq',
 ], function ($, _, ko, baseAce, initialPageData, multimediaSizeUtil) {
     $(function () {
         var elements = $('.prettyprint');

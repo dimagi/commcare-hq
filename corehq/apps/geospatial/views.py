@@ -99,7 +99,7 @@ class CaseDisbursementAlgorithm(BaseDomainView):
         })
 
 
-@method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
+@method_decorator(toggles.MICROPLANNING.required_decorator(), name="dispatch")
 class GeoPolygonListView(BaseDomainView):
     urlname = 'geo_polygons'
 
@@ -153,7 +153,7 @@ class GeoPolygonListView(BaseDomainView):
             )
 
 
-@method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
+@method_decorator(toggles.MICROPLANNING.required_decorator(), name="dispatch")
 class GeoPolygonDetailView(BaseDomainView):
     urlname = 'geo_polygon'
 
@@ -182,7 +182,7 @@ class GeoPolygonDetailView(BaseDomainView):
 class BaseConfigView(BaseGeospatialView):
     section_name = _("Data")
 
-    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    @method_decorator(toggles.MICROPLANNING.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(BaseConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -259,7 +259,7 @@ class GeospatialConfigPage(BaseConfigView):
 
 class GPSCaptureView(BaseGeospatialView):
     urlname = 'gps_capture'
-    template_name = 'gps_capture_view.html'
+    template_name = 'geospatial/gps_capture_view.html'
 
     page_name = _("Manage GPS Data")
     section_name = _("Data")
@@ -274,7 +274,7 @@ class GPSCaptureView(BaseGeospatialView):
 
     @use_datatables
     @use_jquery_ui
-    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    @method_decorator(toggles.MICROPLANNING.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(GPSCaptureView, self).dispatch(*args, **kwargs)
 
@@ -321,7 +321,7 @@ class GPSCaptureView(BaseGeospatialView):
         timezone = get_timezone(self.request, self.domain)
         return get_filter_classes(self.fields, self.request, self.domain, timezone)
 
-    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    @method_decorator(toggles.MICROPLANNING.required_decorator())
     def post(self, request, *args, **kwargs):
         json_data = json.loads(request.body)
         data_type = json_data.get('data_type', None)
@@ -477,7 +477,7 @@ def get_users_with_gps(request, domain):
     return json_response({'user_data': user_data})
 
 
-@method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
+@method_decorator(toggles.MICROPLANNING.required_decorator(), name="dispatch")
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
     REQUEST_CASES_LIMIT = 100

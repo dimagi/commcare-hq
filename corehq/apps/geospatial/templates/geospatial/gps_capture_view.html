@@ -1,4 +1,4 @@
-{% extends "base_template.html" %}
+{% extends "geospatial/base_template.html" %}
 {% load compress %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -34,11 +34,11 @@
 <div class="tab-content">
   <div class="tab-pane fade in active" id="tabs-cases">
     {% include "reports/standard/partials/bootstrap3/filter_panel.html" %}
-    {% include 'gps_capture.html' with data_type='case' %}
+    {% include 'geospatial/gps_capture.html' with data_type='case' %}
   </div>
 
   <div class="tab-pane fade" id="tabs-users">
-    {% include 'gps_capture.html' with data_type='user' %}
+    {% include 'geospatial/gps_capture.html' with data_type='user' %}
       <div class="alert alert-info">
         <span>
           {% blocktrans %}

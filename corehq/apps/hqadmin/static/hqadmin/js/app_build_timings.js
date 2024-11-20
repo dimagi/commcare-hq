@@ -1,7 +1,7 @@
 hqDefine('hqadmin/js/app_build_timings', [
     "jquery",
     "jquery-treetable/jquery.treetable",
-    "commcarehq_b3",
+    "commcarehq",
 ], function ($) {
     $(function () {
         $("#timingTable").treetable({
