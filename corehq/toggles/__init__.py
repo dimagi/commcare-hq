@@ -2573,6 +2573,13 @@ WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+ENTERPRISE_DASHBOARD_IMPROVEMENTS = StaticToggle(
+    'enterprise_dashboard_improvements',
+    'Shows an improved version of enterprise dashboard during development',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER]
+)
+
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege
@@ -2600,14 +2607,13 @@ ATTENDANCE_TRACKING = StaticToggle(
     save_fn=_handle_attendance_tracking_role,
 )
 
-GEOSPATIAL = StaticToggle(
-    'geospatial',
-    'Allows access to GIS functionality',
+MICROPLANNING = StaticToggle(
+    'microplanning',
+    'Allows access to Microplanning GIS functionality',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description='Additional views will be added allowing for visually viewing '
                 'and assigning cases on a map.'
-
 )
 
 COMMCARE_CONNECT = StaticToggle(

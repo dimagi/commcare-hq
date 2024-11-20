@@ -1,6 +1,7 @@
 hqDefine("domain/js/internal_calculations", [
     'jquery',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     initialPageData
