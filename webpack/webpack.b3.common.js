@@ -14,6 +14,7 @@ module.exports = Object.assign({}, commonDefault, {
         new webpack.ProvidePlugin({
             '$': 'jquery',
             'jQuery': 'jquery',  // needed for bootstrap 3 to work
+            'window.jQuery': 'jquery',
         }),
         new hqPlugins.EntryChunksPlugin({
             filename: 'manifest_b3.json',
