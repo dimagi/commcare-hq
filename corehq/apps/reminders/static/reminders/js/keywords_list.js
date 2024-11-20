@@ -3,6 +3,7 @@ hqDefine('reminders/js/keywords_list', [
     "knockout",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/crud_paginated_list",
+    "commcarehq",
 ], function ($, ko, initialPageData, CRUDPaginatedList) {
     $(function () {
         var paginatedListModel = CRUDPaginatedList.CRUDPaginatedListModel(
