@@ -1,9 +1,10 @@
-hqDefine("smsbillables/js/smsbillables.rate_calc", [
+hqDefine("smsbillables/js/rate_calc", [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/select2_handler',
     'hqwebapp/js/bootstrap3/widgets',  // the public sms page uses a .hqwebapp-select2 for country input
+    'commcarehq',
 ], function (
     $,
     ko,
