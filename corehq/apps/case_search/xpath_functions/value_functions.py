@@ -18,6 +18,12 @@ from .utils import confirm_args_count
 
 
 def date(node, context):
+    """Coerce the arg to a valid datestring
+
+    Integers are interpreted as days since Jan 1, 1970
+      date('2021-01-01') => '2021-01-01'
+      date(5) => '1970-01-06'
+    """
     assert node.name == 'date'
     confirm_args_count(node, 1)
     arg = node.args[0]
@@ -51,6 +57,10 @@ def value_to_date(node, value):
 
 
 def datetime_(node, context):
+    """Coerce the arg is a valid IS0 8601 datetime string
+
+    Numeric values are interpreted as days since Jan 1, 1970
+    """
     assert node.name == 'datetime'
     confirm_args_count(node, 1)
     arg = node.args[0]
@@ -82,6 +92,7 @@ def _value_to_datetime(node, value):
 
 
 def today(node, context):
+    """today() => '2024-11-20'"""
     assert node.name == 'today'
 
     confirm_args_count(node, 0)
@@ -92,18 +103,29 @@ def today(node, context):
 
 
 def now(node, context):
+    """now() => '2024-11-20T20:16:29.422120+00:00'"""
     assert node.name == 'now'
     confirm_args_count(node, 0)
     return datetime.datetime.now(pytz.UTC).isoformat()
 
 
 def date_add(node, context):
+    """Add a time interval to an input date
+
+        date-add('2022-01-01', 'days', -1) => '2021-12-31'
+        date-add('2020-03-31', 'weeks', 4) => '2020-04-28'
+        date-add('2020-04-30', 'months', -2) => '2020-02-29'
+        date-add('2020-02-29', 'years', 1) => '2021-02-28'
+
+    Valid intervals are seconds, minutes, hours, days, weeks, months, years
+    """
     assert node.name == 'date-add'
     result = _date_or_datetime_add(node, context, value_to_date)
     return result.strftime(ISO_DATE_FORMAT)
 
 
 def datetime_add(node, context):
+    """Same as date-add, but with datetimes"""
     assert node.name == 'datetime-add'
     result = _date_or_datetime_add(node, context, _value_to_datetime)
     return result.isoformat()
@@ -169,6 +191,11 @@ def unwrap_list(node, context):
 
 
 def double(node, context):
+    """Coerce the argument to a float where possible
+
+    Mirrors the CommCare XPath function `double`. Dates and datetimes are
+    converted to days since Jan 1, 1970.
+    """
     assert node.name == 'double'
     confirm_args_count(node, 1)
     value = unwrap_value(node.args[0], context)
