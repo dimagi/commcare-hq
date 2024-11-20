@@ -229,7 +229,7 @@ class BaseEnterpriseAdminView(BaseDomainView):
 
 @method_decorator(require_enterprise_admin, name='dispatch')
 class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
-    template_name = 'domain/billing_statements.html'
+    template_name = 'domain/bootstrap3/billing_statements.html'
     urlname = 'enterprise_billing_statements'
     page_title = gettext_lazy("Billing Statements")
 

@@ -1,0 +1,70 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% js_entry 'app_manager/js/manage_releases_by_app_profile' %}
+
+{% block page_content %}
+  {% initial_page_data 'app_releases_by_app_profile' app_releases_by_app_profile %}
+  {% initial_page_data 'appVersionSelectInitialValue' selected_build_details %}
+  {% initial_page_data 'appBuildProfileInitialValues' initial_app_build_profile_details %}
+  {% initial_page_data 'appVersionOnlyShowReleased' True %}
+  {% initial_page_data 'buildProfilesPerApp' build_profiles_per_app %}
+  {% registerurl 'toggle_release_restriction_by_app_profile' domain '---'%}
+  {% registerurl "paginate_releases" domain '---' %}
+    <ul class="nav nav-tabs sticky-tabs">  {# todo B5: css-nav #}
+      <li><a data-bs-toggle="tab" href="#search-form" id="search-tab">{% trans "Search" %}</a></li>
+      <li><a data-bs-toggle="tab" href="#creation-form" id="create-tab">{% trans "Add" %}</a></li>
+    </ul>
+    <div class="spacer"></div>
+    <div class="tab-content">
+      <div id="search-form" class="tab-pane">
+        <form class="form form-horizontal" method="post" id="search-manage-app-releases">
+          {% crispy search_form %}  {# todo B5: crispy #}
+        </form>
+      </div>
+      <div id="creation-form" class="tab-pane">
+        <form class="form form-horizontal disable-on-submit" method="post" id="create-manage-app-releases">
+          {% crispy creation_form %}  {# todo B5: crispy #}
+        </form>
+      </div>
+    </div>
+
+    {% if app_releases_by_app_profile %}
+      <table id="managed-releases" class="table">
+        <thead>
+        <tr>
+          <th class="col-md-2">{% trans 'Application' %}</th>
+          <th class="col-md-2">{% trans 'Profile' %}</th>
+          <th class="col-md-2">{% trans 'Version' %}</th>
+          <th class="col-md-2">{% trans 'Status' %}</th>
+          <th class="col-md-2">{% trans 'Action' %}</th>
+        </tr>
+        </thead>
+        <tbody data-bind="foreach: appReleasesByAppProfile, visible: appReleasesByAppProfile">
+        <tr data-bind="attr: {id: domId}, css: {'bg-success': active }">
+          <td data-bind="text: appName"></td>
+          <td data-bind="text: profileName"></td>
+          <td data-bind="text: version"></td>
+          <td data-bind="text: status"></td>
+          <td>
+            <button type="button" class="btn btn-outline-primary"
+                    data-bind="click: toggleRestriction, css: buttonClass,
+                                      disable: ajaxInProgress">
+              <span data-bind="text: actionText"></span>
+              <i class="spinner fa-spin fa fa-refresh"
+                 data-bind="visible: ajaxInProgress"></i>
+            </button>
+            <br/>
+            <span class="error-message badge text-bg-danger" data-bind="visible: error">
+              {% trans 'Could not update!' %}
+              <span data-bind="text: errorMessage"></span>
+            </span>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    {% endif %}
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% js_entry_b3 'domain/js/bootstrap3/info_basic' %}
+
+{% block stylesheets %}{{ block.super }}
+   <link rel="stylesheet" href="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css' %}" type="text/css" />
+{% endblock stylesheets %}
+
+{% block page_content %}
+    {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
+  {% crispy basic_info_form %}
+{% endblock %}
