@@ -100,11 +100,3 @@ class KeysetPaginator(Paginator):
             self.collection_name: objects,
             'meta': meta,
         }
-
-
-class PageableQueryInterface:
-    def execute(limit=None):
-        '''
-        Should return an iterable that exposes a `.get_query_params()` method
-        '''
-        raise NotImplementedError()
