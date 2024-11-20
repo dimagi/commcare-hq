@@ -1,5 +1,4 @@
 import datetime
-from unittest.mock import patch
 
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
@@ -9,6 +8,7 @@ from corehq.apps.accounting.invoicing import (
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
+    DomainUserHistory,
     SoftwarePlanEdition,
     Subscription,
 )
@@ -126,21 +126,39 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(community_ranges, [(self.invoice_start, self.invoice_end + datetime.timedelta(days=1))])
 
+    def test_community_plan_generates_invoice(self):
+        """
+        Ensure that Community plans can generate invoices.
+        """
+        community_plan = DefaultProductPlan.get_default_plan_version()
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, community_plan,
+            date_start=self.invoice_start,
+            date_end=self.invoice_end + datetime.timedelta(days=1),
+        )
+        DomainUserHistory.objects.create(
+            domain=self.domain.name, record_date=self.invoice_end, num_users=10)
+
+        self.invoice_factory.create_invoices()
+        invoice_count = subscription.invoice_set.count()
+        self.assertEqual(invoice_count, 1)
+
     def test_paused_plan_generates_no_invoice(self):
         """
-        Ensure that paused plans do not generate invoices.
+        Ensure that Paused plans do not generate invoices.
         """
         paused_plan = generator.subscribable_plan_version(
             edition=SoftwarePlanEdition.PAUSED
         )
-        Subscription.new_domain_subscription(
+        subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, paused_plan,
             date_start=self.invoice_start,
             date_end=self.invoice_end + datetime.timedelta(days=1),
         )
-        with patch.object(self.invoice_factory, '_create_invoice_for_subscription') as mock_create_invoice:
-            self.invoice_factory.create_invoices()
-            mock_create_invoice.assert_not_called()
+
+        self.invoice_factory.create_invoices()
+        invoice_count = subscription.invoice_set.count()
+        self.assertEqual(invoice_count, 0)
 
 
 class TestInvoicingMethods(BaseAccountingTest):
