@@ -158,6 +158,11 @@ hqDefine("locations/js/widgets", [
     }
 
     function handleLocationWarnings(select) {
+        const editor_can_access_all_locations = initialPageData.get("can_access_all_locations");
+        const editable_can_access_all_locations = initialPageData.get("editable_user_can_access_all_locations");
+        if (editable_can_access_all_locations && editor_can_access_all_locations) {
+            return
+        }
         const requestDomain = initialPageData.get('domain');
         const selectedLocations = select.val();
         const requestUserDomainMemberships = initialPageData.get('request_user_domain_memberships');
