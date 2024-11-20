@@ -15,6 +15,7 @@ from ..backends.sql.processor import FormProcessorSQL
 from ..exceptions import AttachmentNotFound, XFormNotFound
 from ..interfaces.processor import ProcessedForms
 from ..models import CaseTransaction, XFormInstance, XFormOperation
+from ..models.forms import TempFormCache
 from ..tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
 from ..parsers.form import apply_deprecation
 from ..utils import get_simple_form_xml, get_simple_wrapped_form
@@ -431,6 +432,34 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
     def setUp(self):
         self.domain = 'test_hard_delete_forms_before_cutoff'
         self.cutoff = datetime(2020, 1, 1, 12, 30)
+
+
+class TempFormCacheTests(TestCase):
+    def setUp(self):
+        self.domain = 'cached_form_test'
+
+    def test_no_db_hit_if_cached(self):
+        cache_obj = TempFormCache()
+        cache_form = create_form_for_test(self.domain, xmlns="not_cached_form")
+        self.addCleanup(cache_form.delete)
+        cache_form.xmlns = "cached_form"
+        cache_obj.cache[cache_form.form_id] = cache_form
+        retrieved_form = cache_obj.get_forms([cache_form.form_id])[0]
+        self.assertEqual(retrieved_form.xmlns, "cached_form")
+
+    def test_retrieves_form_if_not_cached(self):
+        cache_obj = TempFormCache()
+        not_cache_form = create_form_for_test(self.domain, xmlns="not_cached_form")
+        self.addCleanup(not_cache_form.delete)
+        retrieved_form = cache_obj.get_forms([not_cache_form.form_id])[0]
+        self.assertEqual(retrieved_form.xmlns, "not_cached_form")
+
+    def test_caches_form_if_not_cached(self):
+        cache_obj = TempFormCache()
+        not_cache_form = create_form_for_test(self.domain, xmlns="not_cached_form")
+        self.addCleanup(not_cache_form.delete)
+        cache_obj.get_forms([not_cache_form.form_id])
+        self.assertEqual(cache_obj.cache[not_cache_form.form_id], not_cache_form)
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
