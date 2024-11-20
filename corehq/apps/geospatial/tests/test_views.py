@@ -9,7 +9,7 @@ from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_adapter, case_search_adapter, user_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY, GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.models import GeoConfig, GeoPolygon
 from corehq.apps.geospatial.views import (
     CasesReassignmentView,
@@ -481,6 +481,14 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         )
 
     @flag_enabled('GEOSPATIAL')
+    def test_empty_name_validation(self):
+        response = self._make_post_request({'geo_json': _sample_geojson_data(name='')})
+        self._assert_error_message(
+            response,
+            message='Please specify a name for the GeoPolygon area.'
+        )
+
+    @flag_enabled('GEOSPATIAL')
     def test_name_validation(self):
         GeoPolygon.objects.create(
             domain=self.domain,
@@ -645,6 +653,14 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         response = self.client.post(self.endpoint)
         self.assertEqual(response.status_code, 404)
 
+    def _assert_for_assigned_cases_flag_disabled(self, cases):
+        for case in cases:
+            self.assertIsNone(case.case_json.get(ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY))
+
+    def _assert_for_assigned_cases_flag_enabled(self, cases):
+        for case in cases:
+            self.assertTrue(case.case_json.get(ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY))
+
     @flag_enabled('GEOSPATIAL')
     def test_cases_reassignment(self):
         case_id_to_owner_id = {
@@ -664,6 +680,29 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self._assert_for_request_cases_success(response)
         self.assertEqual(self.related_case_1.owner_id, self.user_a.user_id)
         self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
+        self._assert_for_assigned_cases_flag_disabled([self.case_1, self.case_2])
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.apps.geospatial.views.get_flag_assigned_cases_config', return_value=True)
+    def test_cases_reassignment_with_assigned_cases_flag_enabled(self, *args):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+            }
+        )
+
+        self._refresh_cases()
+        self._assert_for_request_cases_success(response)
+        self.assertEqual(self.related_case_1.owner_id, self.user_a.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
+        self._assert_for_assigned_cases_flag_enabled([self.case_1, self.case_2])
 
     @flag_enabled('GEOSPATIAL')
     def test_cases_reassignment_with_related_cases(self):
@@ -685,6 +724,34 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self._assert_for_request_cases_success(response)
         self.assertEqual(self.related_case_1.owner_id, self.user_b.user_id)
         self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
+        self._assert_for_assigned_cases_flag_disabled(
+            [self.case_1, self.case_2, self.related_case_1, self.related_case_2]
+        )
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.apps.geospatial.views.get_flag_assigned_cases_config', return_value=True)
+    def test_cases_reassignment_with_related_cases_and_assigned_cases_flag_enabled(self, *args):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+                'include_related_cases': True,
+            }
+        )
+
+        self._refresh_cases()
+        self._assert_for_request_cases_success(response)
+        self.assertEqual(self.related_case_1.owner_id, self.user_b.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
+        self._assert_for_assigned_cases_flag_enabled(
+            [self.case_1, self.case_2, self.related_case_1, self.related_case_2]
+        )
 
     @flag_enabled('GEOSPATIAL')
     def test_cases_reassignment_with_related_case_in_request(self):
@@ -821,6 +888,31 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self._assert_for_request_cases_success(response)
         self.assertEqual(self.related_case_1.owner_id, self.user_a.user_id)
         self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
+        self._assert_for_assigned_cases_flag_disabled([self.case_1, self.case_2, self.related_case_1])
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.apps.geospatial.tasks.get_flag_assigned_cases_config', return_value=True)
+    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.geospatial.views.CeleryTaskTracker.is_active', return_value=False)
+    def test_cases_reassignment_async_with_assigned_cases_flag_enabled(self, *args):
+        case_id_to_owner_id = {
+            self.case_1.case_id: self.user_b.user_id,
+            self.case_2.case_id: self.user_a.user_id,
+            self.related_case_1.case_id: self.user_a.user_id,
+        }
+
+        response = self.client.post(
+            self.endpoint,
+            content_type='application/json',
+            data={
+                'case_id_to_owner_id': case_id_to_owner_id,
+            }
+        )
+        self._refresh_cases()
+        self._assert_for_request_cases_success(response)
+        self.assertEqual(self.related_case_1.owner_id, self.user_a.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
+        self._assert_for_assigned_cases_flag_enabled([self.case_1, self.case_2, self.related_case_1])
 
     @flag_enabled('GEOSPATIAL')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)

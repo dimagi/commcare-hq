@@ -9,7 +9,7 @@
      "jquery",
      "knockout",
      "underscore",
-@@ -344,7 +344,7 @@
+@@ -345,7 +345,7 @@
              model = DataCorrectionsModel(options);
              $modal.koApplyBindings(model);
              $trigger.click(function () {

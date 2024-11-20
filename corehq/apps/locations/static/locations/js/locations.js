@@ -2,20 +2,21 @@ hqDefine('locations/js/locations', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'locations/js/location_tree',
+    'commcarehq',
 ], function (
     $,
     initialPageData,
     locationModels
 ) {
     $(function () {
-        var locs = initialPageData.get('locations'),
-            can_edit_root = initialPageData.get('can_edit_root'),
+        const locs = initialPageData.get('locations'),
+            canEditRoot = initialPageData.get('can_edit_root'),
             hierarchy = initialPageData.get('hierarchy'),
-            show_inactive = initialPageData.get('show_inactive');
+            showInactive = initialPageData.get('show_inactive');
 
         var options = {
-            show_inactive: show_inactive,
-            can_edit_root: can_edit_root,
+            show_inactive: showInactive,
+            can_edit_root: canEditRoot,
         };
 
         var treeModel = locationModels.locationTreeViewModel(hierarchy, options);

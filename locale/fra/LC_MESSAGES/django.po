@@ -57,8 +57,7 @@ msgstr "Type de Compte"
 #: corehq/apps/accounting/filters.py
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/filters.py
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
 #: corehq/apps/linked_domain/filters.py
@@ -173,8 +172,7 @@ msgstr "Afficher seulement les inscriptions en versions d'essai"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/filter_configs.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
@@ -482,6 +480,7 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/forms.py corehq/apps/app_manager/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/users/user_data.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -493,8 +492,7 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/apps/enterprise/enterprise.py corehq/apps/events/forms.py
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/events/views.py
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/locations/forms.py
@@ -509,6 +507,7 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/apps/settings/views.py corehq/apps/sms/forms.py
 #: corehq/apps/sso/forms.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
@@ -1022,8 +1021,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
 #: corehq/apps/domain/templates/domain/admin/commtrack_action_table.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/disable.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/locations/templates/locations/location_types.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -1067,7 +1065,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
@@ -1083,18 +1080,12 @@ msgstr ""
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/events/templates/edit_attendee.html
 #: corehq/apps/events/templates/event_attendees.html
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/bulk_delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/bulk_delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/customize_export_new.html
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/templates/geospatial/partials/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
@@ -3076,7 +3067,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
 #: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
@@ -3203,8 +3194,7 @@ msgstr "Raison de \"Non Facturation\""
 #: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
@@ -3338,6 +3328,7 @@ msgstr "Messages SMS"
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/apps/users/views/mobile/custom_data_fields.py
 #: corehq/apps/users/views/mobile/users.py
 msgid "Mobile Workers"
 msgstr "Utilisateurs mobiles"
@@ -3346,6 +3337,7 @@ msgstr "Utilisateurs mobiles"
 #: corehq/apps/export/forms.py corehq/apps/reports/models.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/__init__.py
+#: corehq/apps/users/views/mobile/custom_data_fields.py
 msgid "Web Users"
 msgstr ""
 
@@ -3877,7 +3869,9 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
+#: corehq/apps/case_search/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -3889,10 +3883,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
@@ -3940,7 +3932,6 @@ msgstr ""
 #: corehq/apps/app_execution/templates/app_execution/workflow_log.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
 #: corehq/motech/generic_inbound/reports.py
 msgid "Details"
 msgstr "Détails"
@@ -4236,8 +4227,7 @@ msgstr "Dossier"
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 #: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
+#: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
 #: corehq/apps/reports/filters/forms.py corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
@@ -4336,8 +4326,7 @@ msgstr "Applications"
 #: corehq/apps/app_manager/fields.py
 #: corehq/apps/app_manager/views/app_summary.py
 #: corehq/apps/export/models/new.py
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/linked_domain/views.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/message_event_display.py
@@ -5168,8 +5157,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqadmin/forms.py
 msgid "Disable"
 msgstr "Désactiver"
@@ -5197,8 +5185,7 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqadmin/forms.py
 msgid "Enable"
 msgstr "Permettre"
@@ -5427,8 +5414,7 @@ msgstr "Non"
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -5504,6 +5490,12 @@ msgstr ""
 msgid ""
 "Oops! This setting has been discontinued. We recommend you change this "
 "setting to Version 2, and it will no longer appear on your settings page."
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"This setting has been discontinued. We recommend you change this setting to "
+"Version 2. Upon doing so this setting will no longer appear on this page."
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -6318,6 +6310,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 #: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Value"
 msgstr "Valeur"
 
@@ -6633,10 +6626,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/domain/templates/domain/billing_statements.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_progress.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
@@ -6681,22 +6672,14 @@ msgstr "Installer CommCare"
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
 #: corehq/apps/events/templates/event_attendees.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deleted_questions.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deprecated_properties.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deleted_questions.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deprecated_properties.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/odata_feed_limit_reached_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/odata_feed_limit_reached_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/templates/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
@@ -6712,6 +6695,7 @@ msgstr "Installer CommCare"
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/standard/bootstrap3/submission_error_report.html
 #: corehq/apps/reports/templates/reports/standard/bootstrap5/submission_error_report.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -7591,8 +7575,7 @@ msgid "Form Changes"
 msgstr "Modifications de formulaire"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Display"
 msgstr "Afficher"
 
@@ -7818,10 +7801,8 @@ msgstr "Étiquette de dossier"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/customize_export_new.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/cases/basic.py
@@ -7998,8 +7979,7 @@ msgstr "Charger les propriétés suivantes dans les questions de formulaire"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/add_property_button.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/sensitive_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
@@ -8009,8 +7989,7 @@ msgid "Property"
 msgstr "Propriété"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
 msgid "Question"
@@ -8455,8 +8434,7 @@ msgid "Disable manual linking"
 msgstr "Désactiver la liaison manuelle"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deprecated_properties.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deprecated_properties.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 msgid "Refresh"
 msgstr "Reactualiser"
 
@@ -8628,6 +8606,10 @@ msgid ""
 "                This action will also delete all forms in this %(menu)s.\n"
 "                "
 msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/mobile_ucr_v1_warning.html
+msgid "Warning"
+msgstr "Avertissement"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_session_endpoint.html
 msgid ""
@@ -9621,6 +9603,7 @@ msgstr "Message de validation"
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/inactivity_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/get_demo_modals.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/main.html
 #: corehq/apps/users/views/mobile/users.py
 msgid "Done"
 msgstr "Terminé"
@@ -9852,8 +9835,7 @@ msgstr "Rapport"
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
+#: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/download_data_files.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/products/templates/products/manage/products.html
@@ -9865,6 +9847,7 @@ msgstr "Rapport"
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
 #: corehq/apps/sms/forms.py corehq/apps/sms/views.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
@@ -10148,15 +10131,6 @@ msgid "Set Path"
 msgstr "Définir un chemin"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
-msgid ""
-"\n"
-"            To hear audio on Java Phones, you must be in CommCare Sense\n"
-"            mode or Numeric Selection Mode. (On Android it will always "
-"work.)\n"
-"          "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
 #, python-format
 msgid ""
 "\n"
@@ -10427,8 +10401,7 @@ msgid "Send to phone via SMS"
 msgstr "Envoyer au téléphone via SMS"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_progress.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
 msgid "Download Multimedia"
 msgstr "Télécharger multimédia"
 
@@ -10723,6 +10696,7 @@ msgid "Email when finished (recommended for large applications)"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/models.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
@@ -10836,36 +10810,6 @@ msgid "This application currently does not contain any multimedia references."
 msgstr ""
 "Cette application ne contient pas de références multimédia actuellement."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "Set Password"
-msgstr "Définir un mot de passe"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "The passwords don't match. Please try again."
-msgstr "Les mots de passe ne correspondent pas. Veuillez réessayer."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "Please enter a password or cancel."
-msgstr "Veuillez entrer un mot de passe ou annuler."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
-#: corehq/apps/hqwebapp/forms.py
-#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
-#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-#: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
-#: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
-#: corehq/messaging/smsbackends/mach/forms.py
-#: corehq/messaging/smsbackends/push/forms.py
-#: corehq/messaging/smsbackends/start_enterprise/forms.py
-#: corehq/motech/forms.py corehq/motech/openmrs/forms.py
-msgid "Password"
-msgstr "Mot de passe"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-msgid "Repeat Password"
-msgstr "Répéter le mot de passe"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/supported_languages.html
 msgid "Set as default"
 msgstr ""
@@ -10905,8 +10849,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Select All"
 msgstr "Tout sélectionner"
 
@@ -11408,6 +11351,22 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
 msgid "Unable to validate forms."
+msgstr ""
+
+#: corehq/apps/app_manager/views/releases.py
+#, python-format
+msgid ""
+"The mobile UCR restore version for v%(app_version)s needs to be updated to "
+"V2.0. Please refer to the <a href='%(url)s'>migration documentation</a> for "
+"more details."
+msgstr ""
+
+#: corehq/apps/app_manager/views/releases.py
+#, python-format
+msgid ""
+"One or more forms for v%(app_version)s contain V1 Mobile UCR references."
+"Please refer to the <a href='%(url)s'>migration documentation</a> for more "
+"details."
 msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
@@ -12084,8 +12043,7 @@ msgstr ""
 #: corehq/apps/domain/templates/error.html
 #: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
+#: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/registration/forms.py corehq/apps/settings/forms.py
 msgid "Back"
 msgstr "Retour"
@@ -12211,8 +12169,7 @@ msgstr "Attente du démarrage"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form_navigation.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_progress.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
 #: corehq/ex-submodules/soil/templates/soil/partials/download_in_progress.html
 #: corehq/messaging/smsbackends/telerivet/templates/telerivet/partials/finish.html
 msgid "Complete"
@@ -12405,6 +12362,14 @@ msgstr ""
 msgid "{param} must be a string"
 msgstr ""
 
+#: corehq/apps/case_search/models.py
+#: corehq/apps/events/templates/event_attendees.html
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Create"
+msgstr "Créer"
+
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
 msgid ""
@@ -12525,6 +12490,23 @@ msgid ""
 "              "
 msgstr ""
 
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
+#, fuzzy
+#| msgid "Configuration"
+msgid "CSQL Fixture Configuration"
+msgstr "Configuration"
+
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
+#, fuzzy
+#| msgid "Use xpath expression"
+msgid "Case Search QL Expression"
+msgstr "Utiliser une expression xpath"
+
+#: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+msgid "Add Expression"
+msgstr "Ajouter expression"
+
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
 msgstr ""
@@ -12555,6 +12537,12 @@ msgstr "Recherche de dossier"
 #: corehq/apps/case_search/views.py
 msgid "Profile Case Search"
 msgstr ""
+
+#: corehq/apps/case_search/views.py
+#, fuzzy
+#| msgid "Configuration"
+msgid "CSQL Fixture Confguration"
+msgstr "Configuration"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #, python-brace-format
@@ -12714,21 +12702,76 @@ msgid ""
 "      <br /><br />\n"
 "      Please avoid using <em>both</em> this configuration and Roles & "
 "Permissions to manage access.\n"
-"      Please contact <a href=\"mailto:%(SUPPORT_EMAIL)s\">CommCare Support</"
-"a> if you need assistance\n"
-"      setting up access via Roles & Permissions.\n"
+"      <br/><br/>\n"
+"      <h5>Transitioning from the Deprecated Feature to Roles & Permissions</"
+"h5>\n"
+"\n"
+"      <p>\n"
+"        For the simplest case where each mobile worker belongs to only one "
+"group, follow the steps below.\n"
+"        For more complex cases, please contact <a href=\"mailto:"
+"%(SUPPORT_EMAIL)s\">CommCare Support</a> for assistance\n"
+"        setting up access via Roles & Permissions.\n"
+"      </p>\n"
+"\n"
+"      <ol>\n"
+"        <li>\n"
+"          <strong>Set up a role for each group</strong><br/>\n"
+"          Create a corresponding role in the <a target=\"_blank\" "
+"href=\"%(roles_url)s\">Roles & Permissions</a> page for every existing "
+"group.\n"
+"        </li>\n"
+"        <li>\n"
+"          <strong>Configure permissions for each role</strong><br/>\n"
+"          Ensure that each role is granted the same permissions and access "
+"to apps that were previously available to the corresponding group.\n"
+"        </li>\n"
+"        <li>\n"
+"          <strong>Assign mobile workers to their new roles</strong><br/>\n"
+"          Map each <a target=\"_blank\" "
+"href=\"%(mobile_workers_url)s\">mobile worker</a> to the appropriate role "
+"that matches their previous group membership.\n"
+"        </li>\n"
+"        <li>\n"
+"          <strong>Enable Roles & Permissions for Web Apps access</strong><br/"
+">\n"
+"          On this page, select the option to \"Use Roles & Permissions to "
+"manage Web Apps access\" and click <strong>Save</strong>.\n"
+"        </li>\n"
+"        <li>\n"
+"          <strong>Test access for mobile workers</strong><br/>\n"
+"          Verify that all mobile workers can access the apps as expected, "
+"based on their assigned roles.\n"
+"        </li>\n"
+"        <li>\n"
+"          <strong>(Optional) Deactivate the deprecated feature</strong><br/"
+">\n"
+"          Disable this feature to avoid accidentally re-enabling it in the "
+"future.\n"
+"          Simply check the box to turn it off and click <strong>Save</"
+"strong>.\n"
+"        </li>\n"
+"      </ol>\n"
 "    "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
-msgid "Allow all mobile workers to see all Web Apps applications."
+msgid "Use Roles & Permissions to manage Web Apps access"
 msgstr ""
-"Autoriser tous les utilisateurs mobiles à voir toutes les applications web."
 
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
-msgid "Customize each mobile worker's access to Web Apps"
+msgid ""
+"\n"
+"          Web Apps permissions have been transferred to \"Roles & "
+"Permissions\", and this deprecated feature can be turned off.\n"
+"          Please note that once you \"save\", you will no longer have access "
+"to this page.\n"
+"          "
 msgstr ""
-"Personnaliser l'accès de chaque utilisateur mobile aux applications web"
+
+#: corehq/apps/cloudcare/templates/cloudcare/config.html
+msgid "Manage Web Apps access for each mobile worker based on their group"
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/hqwebapp/doc_info.py
@@ -12783,8 +12826,7 @@ msgid "Show Full Menu"
 msgstr "Montrer tout le menu"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/motech/repeaters/views/repeat_records.py
@@ -12875,6 +12917,10 @@ msgid ""
 "            This question will appear as follows in data exports.\n"
 "          "
 msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_unsupported.html
+msgid "OK"
+msgstr "OK"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid ""
@@ -13476,6 +13522,19 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Required for"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#, python-format
+msgid ""
+"\n"
+"                          Specify which %(entity_string)s type this field is "
+"required for.\n"
+"                          "
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-brace-format
 msgid ""
 "\n"
@@ -13562,6 +13621,30 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/partials/modal_edit.html
 #: corehq/apps/users/templates/users/partials/linked_roles_modal.html
 msgid "Unlock"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid "Make user profiles a requirement for the following user types"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid "Make user profiles a requirement for the following user types."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid ""
+"\n"
+"                      A profile must be provided when creating or editing a "
+"user of the selected user type(s).\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+msgid ""
+"\n"
+"                  Make user profiles a requirement for the following user "
+"types dropdown.\n"
+"                "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -13687,6 +13770,10 @@ msgstr "Rubrique d'Aide"
 msgid "Visit CommCare's knowledge base"
 msgstr "Visiter la base de connaissance de CommCare"
 
+#: corehq/apps/dashboard/views.py
+msgid "Subscribed to Community Edition."
+msgstr ""
+
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
 "The multi-choice sheets (ending in \"-vl\") in the uploaded Excel file were "
@@ -13754,6 +13841,19 @@ msgstr "Choix multiple"
 msgid "GPS"
 msgstr "GPS"
 
+#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
+#: corehq/apps/hqwebapp/forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
+#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+#: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
+#: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
+#: corehq/messaging/smsbackends/mach/forms.py
+#: corehq/messaging/smsbackends/push/forms.py
+#: corehq/messaging/smsbackends/start_enterprise/forms.py
+#: corehq/motech/forms.py corehq/motech/openmrs/forms.py
+msgid "Password"
+msgstr "Mot de passe"
+
 #: corehq/apps/data_dictionary/models.py
 msgid "No Type Currently Selected"
 msgstr ""
@@ -13772,8 +13872,7 @@ msgstr "Dictionnaire de données"
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
+#: corehq/apps/export/templates/export/partials/table.html
 msgid "deprecated"
 msgstr ""
 
@@ -14569,6 +14668,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Match Type"
 msgstr "Type de correspondance"
 
@@ -14715,13 +14815,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
-msgid "Add Expression"
-msgstr "Ajouter expression"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
 #: corehq/apps/translations/forms.py
 msgid "Add"
@@ -14736,8 +14831,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/odata_feed_limit_reached_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/odata_feed_limit_reached_modal.html
+#: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
 msgid "Ok"
 msgstr ""
 
@@ -15120,6 +15214,7 @@ msgid "Requires System Admin"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Add Filter"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
@@ -15884,6 +15979,18 @@ msgid ""
 "moving\n"
 "            the only assigned mobile worker out of the location owning that "
 "cases.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Use elasticsearch when fetching apps for exports"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            (Internal) Fetches apps using elasticsearch instead of couch in "
+"exports\n"
 "            "
 msgstr ""
 
@@ -17788,39 +17895,6 @@ msgstr "Destinataires de la facture"
 msgid "Please agree to the Privacy Policy."
 msgstr "Veuillez accepter la politique de confidentialité. "
 
-#: corehq/apps/domain/templates/domain/partials/restrictive_license.html
-msgid ""
-"\n"
-"  This license doesn't cover all your multimedia.\n"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/partials/restrictive_license.html
-msgid "More info..."
-msgstr "Plus d'informations..."
-
-#: corehq/apps/domain/templates/domain/partials/restrictive_license.html
-msgid "Select a more restrictive license"
-msgstr "Choisir une licence plus restrictive"
-
-#: corehq/apps/domain/templates/domain/partials/restrictive_license.html
-msgid ""
-"\n"
-"            Since you've opted to publish your multimedia along with your "
-"app,\n"
-"            you must select a license that is more restrictive than the "
-"multimedia in the app.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/partials/restrictive_license.html
-msgid ""
-"\n"
-"            To satisfy this condition, you can either decide not to publish "
-"the multimedia\n"
-"            or select one of the following licenses:\n"
-"          "
-msgstr ""
-
 #: corehq/apps/domain/templates/domain/pro_bono/page_content.html
 msgid ""
 "Thank you for your submission.  A representative will be in contact with you "
@@ -17910,6 +17984,7 @@ msgstr "Plan actuel"
 
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/apps/domain/views/accounting.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/pending_plan_notice.html
 msgid "Select Plan"
 msgstr "Sélectionnez un plan"
 
@@ -18832,10 +18907,6 @@ msgstr "Elément de site"
 msgid "Location configuration updated successfully"
 msgstr "Configuration de site mise à jour avec succès"
 
-#: corehq/apps/domain/views/internal.py
-msgid "Test Bootstrap 5 Changes"
-msgstr ""
-
 #: corehq/apps/domain/views/internal.py corehq/tabs/tabclasses.py
 msgid "Project Information"
 msgstr "Informations sur le projet"
@@ -19221,10 +19292,8 @@ msgid "past {} days"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Remote apps are not supported"
 msgid "Date ranges with more than {} days are not supported"
-msgstr "Les applications à distance ne sont pas supportées"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Form ID"
@@ -19313,8 +19382,7 @@ msgid "Excel Date & Multimedia Format"
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
+#: corehq/apps/export/templates/export/customize_export_new.html
 msgid "Automatically convert dates and multimedia links for Excel"
 msgstr ""
 
@@ -19330,8 +19398,7 @@ msgid "Excel Cell Format"
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
+#: corehq/apps/export/templates/export/customize_export_new.html
 msgid "Automatically format cells for Excel 2007+"
 msgstr ""
 
@@ -19784,13 +19851,6 @@ msgstr ""
 #: corehq/apps/events/templates/event_attendees.html
 msgid "Enable Mobile Worker Attendees"
 msgstr ""
-
-#: corehq/apps/events/templates/event_attendees.html
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Create"
-msgstr "Créer"
 
 #: corehq/apps/events/templates/event_attendees.html
 msgid "New Potential Attendees"
@@ -20440,288 +20500,6 @@ msgstr ""
 msgid "Link to this case"
 msgstr ""
 
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid ""
-"\n"
-"          These options allow you to configure how CommCare exports data "
-"from multi-select questions.\n"
-"          If you do not want to split the options into multiple columns "
-"select the 'plain' option.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid ""
-"\n"
-"          Each item that is selected in the select list will appear as a "
-"column in the exported data.\n"
-"          Any options not selected will be in an \"extra\" column.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "More info"
-msgstr "En savoir plus"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Default file type"
-msgstr "Type de fichier par défaut"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-#, python-format
-msgid ""
-"\n"
-"                Excel Dashboard Integration is only available on the "
-"Standard Plan or higher.\n"
-"                Click <a href=\"%(software_plan_url)s\">here</a> to manage "
-"the software plan for your project.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid ""
-"\n"
-"                    Leaving this checked will ensure dates appear in excel "
-"format.\n"
-"                    Otherwise they will appear as a normal text format. This "
-"also allows for\n"
-"                    hyperlinks to the multimedia captured by your form "
-"submission.\n"
-"                  "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid ""
-"\n"
-"                    If this setting is not selected, your export will be in "
-"Excel’s general format.\n"
-"                    If you enable this setting, Excel will format dates, "
-"integers, decimals,\n"
-"                    Boolean values (True/False) and currencies.\n"
-"                  "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Create a Daily Saved Export"
-msgstr "Creer un Enregistrement de Téléchargement Journalière"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-#, python-format
-msgid ""
-"\n"
-"                                        Daily saved exports are only "
-"available on the Standard Plan or higher.\n"
-"                                        Click <a "
-"href=\"%(software_plan_url)s\">here</a> to manage the software plan for your "
-"project.\n"
-"                                      "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Generate a Data Export Tool config file"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Download a Data Export Tool configuration file for this export"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid ""
-"\n"
-"                                    <p>Checking this will add a button to "
-"download a configuration file\n"
-"                                       for the <a href=\"https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/"
-"CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
-"                                       CommCare Data Export Tool</a> for the "
-"export.</p>\n"
-"                                   "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-#, python-format
-msgid ""
-"\n"
-"                                    <p>The Data Export Tool requires API "
-"access, which is only available on the Pro Plan or higher.\n"
-"                                       Click <a "
-"href=\"%(software_plan_url)s\">here</a> to manage the software plan for your "
-"project.</p>\n"
-"                                  "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Include duplicates and other unprocessed forms"
-msgstr "Inclut des doublons et autres formulaires non traités"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Expand Checkbox Questions"
-msgstr "Développer les questions avec case à cocher"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Sharing"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-#, python-format
-msgid ""
-"\n"
-"                    This export was created by <strong>%(owner_name)s</"
-"strong>.\n"
-"                    If you change the sharing settings for this export you "
-"will lose the ability\n"
-"                    to view and edit the export.\n"
-"                    Only <strong>%(owner_name)s</strong> will have access to "
-"it.\n"
-"                  "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-#, python-format
-msgid ""
-"\n"
-"                    This export was created by <strong>%(owner_name)s</"
-"strong>.\n"
-"                    If you change the sharing settings for this export you "
-"will lose the ability\n"
-"                    to edit the export.\n"
-"                    Only <strong>%(owner_name)s</strong> will be able to "
-"edit it.\n"
-"                  "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Add custom table configuration "
-msgstr "Ajouter configuration personnalisée de tableau"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Privacy Settings"
-msgstr "Paramètres de confidentialité"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Publish as De-Identified"
-msgstr "Publier anonymement"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Check only if this export has been fully and safely de-identified."
-msgstr ""
-"Vérifiez uniquement si cette exportation a été anonymisée complètement et en "
-"toute sécurité."
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Allow me to mark sensitive data"
-msgstr "Me permettre d'identifier les données sensibles"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Saving"
-msgstr "Enregistrement"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-#: corehq/apps/reports/templates/reports/async/bootstrap3/default.html
-#: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
-msgid "Try Again"
-msgstr "Essayer de nouveau"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Saved!"
-msgstr "Sauvegardé!"
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid "Copy this Export"
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid ""
-"\n"
-"                  Column labels must be unique. '<span data-bind=\"text: "
-"duplicateLabel\"></span>'\n"
-"                  has been used more than once.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/customize_export_new.html
-#: corehq/apps/export/templates/export/bootstrap5/customize_export_new.html
-msgid ""
-"There are errors with your configuration. Please fix them before creating "
-"the export."
-msgstr ""
-"Il y des erreurs dans votre configuration. Veuillez les réparer avant de "
-"procéder à l'exportation. "
-
-#: corehq/apps/export/templates/export/bootstrap3/download_export.html
-#: corehq/apps/export/templates/export/bootstrap5/download_export.html
-msgid ""
-"\n"
-"          You are downloading the following exports:\n"
-"        "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/download_export.html
-#: corehq/apps/export/templates/export/bootstrap5/download_export.html
-msgid "No submissions available."
-msgstr "Aucune soumission disponible"
-
-#: corehq/apps/export/templates/export/bootstrap3/download_export.html
-#: corehq/apps/export/templates/export/bootstrap5/download_export.html
-msgid ""
-"\n"
-"            It seems your project doesn't have any submissions\n"
-"            from its applications. Please submit data before\n"
-"            using the export tool.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/export/templates/export/bootstrap3/download_export.html
-#: corehq/apps/export/templates/export/bootstrap5/download_export.html
-msgid ""
-"\n"
-"            To get started, please\n"
-"            <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
-"commcarepublic/pages/2143947269/Publish+Your+Application\"\n"
-"               target=\"_blank\">deploy</a>\n"
-"            your application and submit data from a phone. You may also\n"
-"            <a href=\"https://help.commcarehq.org/display/commcarepublic/"
-"Web+Apps\"\n"
-"               target=\"_blank\">submit data via Web Apps\n"
-"            </a>\n"
-"            , depending on your project's\n"
-"            <a href=\"https://www.commcarehq.org/pricing/\" "
-"target=\"_blank\">plan level</a>.\n"
-"          "
-msgstr ""
-
 #: corehq/apps/export/templates/export/commcare_analytics.html
 #: corehq/apps/export/views/list.py
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -20750,6 +20528,216 @@ msgid ""
 "  "
 msgstr ""
 
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid ""
+"\n"
+"          These options allow you to configure how CommCare exports data "
+"from multi-select questions.\n"
+"          If you do not want to split the options into multiple columns "
+"select the 'plain' option.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid ""
+"\n"
+"          Each item that is selected in the select list will appear as a "
+"column in the exported data.\n"
+"          Any options not selected will be in an \"extra\" column.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "More info"
+msgstr "En savoir plus"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Default file type"
+msgstr "Type de fichier par défaut"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+#, python-format
+msgid ""
+"\n"
+"              Excel Dashboard Integration is only available on the Standard "
+"Plan or higher.\n"
+"              Click <a href=\"%(software_plan_url)s\">here</a> to manage the "
+"software plan for your project.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid ""
+"\n"
+"                  Leaving this checked will ensure dates appear in excel "
+"format.\n"
+"                  Otherwise they will appear as a normal text format. This "
+"also allows for\n"
+"                  hyperlinks to the multimedia captured by your form "
+"submission.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid ""
+"\n"
+"                  If this setting is not selected, your export will be in "
+"Excel’s general format.\n"
+"                  If you enable this setting, Excel will format dates, "
+"integers, decimals,\n"
+"                  Boolean values (True/False) and currencies.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Create a Daily Saved Export"
+msgstr "Creer un Enregistrement de Téléchargement Journalière"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+#, python-format
+msgid ""
+"\n"
+"                                      Daily saved exports are only available "
+"on the Standard Plan or higher.\n"
+"                                      Click <a "
+"href=\"%(software_plan_url)s\">here</a> to manage the software plan for your "
+"project.\n"
+"                                    "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Generate a Data Export Tool config file"
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Download a Data Export Tool configuration file for this export"
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid ""
+"\n"
+"                                  <p>Checking this will add a button to "
+"download a configuration file\n"
+"                                     for the <a href=\"https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/"
+"CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
+"                                     CommCare Data Export Tool</a> for the "
+"export.</p>\n"
+"                                 "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+#, python-format
+msgid ""
+"\n"
+"                                  <p>The Data Export Tool requires API "
+"access, which is only available on the Pro Plan or higher.\n"
+"                                     Click <a "
+"href=\"%(software_plan_url)s\">here</a> to manage the software plan for your "
+"project.</p>\n"
+"                                "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Include duplicates and other unprocessed forms"
+msgstr "Inclut des doublons et autres formulaires non traités"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Expand Checkbox Questions"
+msgstr "Développer les questions avec case à cocher"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Sharing"
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+#, python-format
+msgid ""
+"\n"
+"                  This export was created by <strong>%(owner_name)s</"
+"strong>.\n"
+"                  If you change the sharing settings for this export you "
+"will lose the ability\n"
+"                  to view and edit the export.\n"
+"                  Only <strong>%(owner_name)s</strong> will have access to "
+"it.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+#, python-format
+msgid ""
+"\n"
+"                  This export was created by <strong>%(owner_name)s</"
+"strong>.\n"
+"                  If you change the sharing settings for this export you "
+"will lose the ability\n"
+"                  to edit the export.\n"
+"                  Only <strong>%(owner_name)s</strong> will be able to edit "
+"it.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Add custom table configuration "
+msgstr "Ajouter configuration personnalisée de tableau"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Privacy Settings"
+msgstr "Paramètres de confidentialité"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Publish as De-Identified"
+msgstr "Publier anonymement"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Check only if this export has been fully and safely de-identified."
+msgstr ""
+"Vérifiez uniquement si cette exportation a été anonymisée complètement et en "
+"toute sécurité."
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Allow me to mark sensitive data"
+msgstr "Me permettre d'identifier les données sensibles"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Saving"
+msgstr "Enregistrement"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+#: corehq/apps/reports/templates/reports/async/bootstrap3/default.html
+#: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
+msgid "Try Again"
+msgstr "Essayer de nouveau"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Saved!"
+msgstr "Sauvegardé!"
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid "Copy this Export"
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid ""
+"\n"
+"              Column labels must be unique. '<span data-bind=\"text: "
+"duplicateLabel\"></span>'\n"
+"              has been used more than once.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/export/templates/export/customize_export_new.html
+msgid ""
+"There are errors with your configuration. Please fix them before creating "
+"the export."
+msgstr ""
+"Il y des erreurs dans votre configuration. Veuillez les réparer avant de "
+"procéder à l'exportation. "
+
 #: corehq/apps/export/templates/export/datasource_export_view.html
 #: corehq/apps/export/views/download.py
 msgid "Export Data Source Data"
@@ -20770,8 +20758,7 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/bulk_delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/bulk_delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 msgid ""
 "\n"
 "                Delete <!-- ko text: bulkExportDownloadCount() --><!-- /ko --"
@@ -20779,13 +20766,11 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/bulk_delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/bulk_delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 msgid "Delete 1 Feed"
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/bulk_delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/bulk_delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 msgid ""
 "\n"
 "                Delete <!-- ko text: bulkExportDownloadCount() --><!-- /ko --"
@@ -20793,13 +20778,11 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/bulk_delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/bulk_delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 msgid "Delete 1 Export"
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/bulk_delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/bulk_delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 msgid ""
 "\n"
 "                Are you sure you want to permanently delete these "
@@ -20808,8 +20791,7 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/bulk_delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/bulk_delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 msgid ""
 "\n"
 "                Are you sure you want to permanently delete this <strong>1 "
@@ -20817,8 +20799,7 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/bulk_delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/bulk_delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 msgid ""
 "\n"
 "                Are you sure you want to permanently delete these "
@@ -20827,8 +20808,7 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/bulk_delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/bulk_delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 msgid ""
 "\n"
 "                Are you sure you want to permanently delete this <strong>1 "
@@ -20836,54 +20816,45 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 msgid ""
 "\n"
 "              Delete Feed for \"<!-- ko text: name --><!-- /ko -->\"?\n"
 "            "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 msgid ""
 "\n"
 "              Delete Export for \"<!-- ko text: name --><!-- /ko -->\"?\n"
 "            "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 msgid ""
 "\n"
 "                Are you sure you want to delete this feed?\n"
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 msgid ""
 "\n"
 "                Are you sure you want to delete this export?\n"
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deleted_questions.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deleted_questions.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
+#: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Show Deleted Questions"
 msgstr "Afficher les questions supprimées"
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deleted_questions.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deleted_questions.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
+#: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Show Deleted Properties"
 msgstr "Afficher les propriétés supprimées"
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deleted_questions.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deleted_questions.html
+#: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 msgid ""
 "\n"
 "              In order to show you your deleted questions, we need to "
@@ -20893,8 +20864,7 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deleted_questions.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deleted_questions.html
+#: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 msgid ""
 "\n"
 "              In order to show you your deleted properties, we need to "
@@ -20904,27 +20874,22 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deleted_questions.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deleted_questions.html
+#: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 msgid "Unable to process applications. Please report an issue if this persists"
 msgstr ""
 "Impossible de traiter les applications. Veuillez signaler un problème si "
 "cela persiste"
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deleted_questions.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deleted_questions.html
+#: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 msgid "Process"
 msgstr "Processus"
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deprecated_properties.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deprecated_properties.html
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Show Deprecated Properties"
 msgstr "Afficher les propriétés obsolètes"
 
-#: corehq/apps/export/templates/export/dialogs/bootstrap3/process_deprecated_properties.html
-#: corehq/apps/export/templates/export/dialogs/bootstrap5/process_deprecated_properties.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 msgid ""
 "\n"
 "            In order to show you your deprecated properties, we need to "
@@ -20966,840 +20931,42 @@ msgstr ""
 msgid "3 days"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/bootstrap3/delete_bulk_notice.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/delete_bulk_notice.html
-msgid "Delete Selected Feeds"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/delete_bulk_notice.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/delete_bulk_notice.html
-msgid "Delete Selected Feed"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/delete_bulk_notice.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/delete_bulk_notice.html
-msgid "Delete Selected Exports"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/delete_bulk_notice.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/delete_bulk_notice.html
-msgid "Delete Selected Export"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_bulk_notice.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_bulk_notice.html
-msgid "Bulk Export"
-msgstr "Téléchargement en bloc"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_prepare.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_prepare.html
-msgid "Filters inactive while download in progress. "
-msgstr "Les filtres sont inactifs pendant le téléchargement."
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_prepare.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_prepare.html
-msgid "Prepare Export"
-msgstr "Préparer le téléchargement"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_prepare.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_prepare.html
-msgid "Preparing Export"
-msgstr "Préparation du téléchargement en cours"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_prepare.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_prepare.html
-msgid "Prepare Multimedia"
-msgstr "Préparer le multimédia"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_prepare.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_prepare.html
-msgid "Preparing Multimedia"
-msgstr "Préparation de multimédia en cours"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_progress.html
+#: corehq/apps/export/templates/export/download_export.html
 msgid ""
 "\n"
-"                If the problem persists, please\n"
-"                <a href=\"#modalReportIssue\" data-toggle=\"modal\"> Report "
-"an Issue</a>.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_progress.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
-msgid "Collecting Data"
-msgstr "Collection de données"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_progress.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
-msgid "Collecting Multimedia"
-msgstr "Collection de multimédia"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_progress.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
-msgid ""
-"For exports that may take a while to prepare, email a link when download is "
-"ready"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_progress.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
-msgid "Email me when ready"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_progress.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
-msgid "Something went wrong!"
-msgstr "Il y a eu un problème!"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_download_progress.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
-msgid "Update Filters"
-msgstr "Mettre à jour les filtres"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_controller.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_controller.html
-#, python-format
-msgid ""
-"\n"
-"      These exports are paginated. That means exports that have over "
-"%(max_rows)s rows will be split into multiple files.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_controller.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_controller.html
-#, python-format
-msgid ""
-"\n"
-"      These %(export_type_plural)s are <strong>De-Identified</strong>, "
-"meaning that\n"
-"      the administrator of this domain has removed all personally-"
-"identifying\n"
-"      properties from the exported data.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_controller.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_controller.html
-#, python-format
-msgid ""
-"\n"
-"          Add %(export_type_caps)s\n"
+"          You are downloading the following exports:\n"
 "        "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-msgid "Loading Form"
-msgstr "Chargement du formulaire"
+#: corehq/apps/export/templates/export/download_export.html
+msgid "No submissions available."
+msgstr "Aucune soumission disponible"
 
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-msgid ""
-"If this problem persists, please <a href=\"#modalReportIssue\" data-"
-"toggle=\"modal\">Report an Issue</a>."
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
+#: corehq/apps/export/templates/export/download_export.html
 msgid ""
 "\n"
-"              This application does not appear to be using\n"
-"              <a href=\"https://wiki.commcarehq.org/display/commcarepublic/"
-"Case+Management\"\n"
-"                 target=\"_blank\"><i class=\"fa fa-info-circle\"></i> case "
-"management</a>.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-msgid "Mislabeled"
-msgstr "Mal étiqueté"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-msgid "Suggestions"
-msgstr "Suggestions "
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-msgid ""
-"These form submissions are tagged as if they belong to an application that "
-"doesn't exist."
-msgstr ""
-"Ces soumissions de formulaires sont étiquetées comme si elles appartenaient "
-"à une application qui n'existe pas."
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-msgid "These submissions could belong to one of the following forms:"
-msgstr "Ces soumissions pourraient appartenir à un des formulaires suivants :"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-msgid "App was deleted."
-msgstr "L'application a été supprimée."
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-#, python-format
-msgid ""
-"\n"
-"              Preparing %(export_type_caps)s Data...\n"
-"            "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-msgid ""
-"\n"
-"              Please note that this may take several minutes.\n"
-"              Thank you for your patience!\n"
-"            "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-msgid ""
-"\n"
-"              If this problem persists, please <a "
-"href=\"#modalReportIssue\"\n"
-"                                                  data-"
-"toggle=\"modal\">Report an Issue</a> and include this error\n"
-"              message in the description.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-#, python-format
-msgid ""
-"\n"
-"              It seems as though you haven't submitted any data to CommCare "
-"HQ.\n"
-"              Please deploy an application and submit data before creating "
-"any %(export_type_plural)s.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-msgid "How to Create and Deploy a CommCare Application."
-msgstr "Comment créer et utiliser une application CommCare."
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/export_list_create_export_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-#, python-format
-msgid ""
-"\n"
-"              Add %(export_type_caps)s\n"
-"            "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/feed_filter_modal.html
-msgid "Filter Feed"
-msgstr "Filtrer le fil"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/feed_filter_modal.html
-msgid "Location-Limited Data"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/feed_filter_modal.html
-msgid "This export is limited to the following locations:"
-msgstr "Ce téléchargement est limité aux sites suivants:"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/feed_filter_modal.html
-msgid "There was an unknown error saving the filters"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/feed_filter_modal.html
-msgid "Save filters"
-msgstr "Enregistrer les filtres"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/feed_filter_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/feed_filter_modal.html
-#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-msgid "Saving..."
-msgstr "En train d'enregistrer"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-#: corehq/apps/locations/views.py
-msgid "deleted"
-msgstr "supprimé"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Sheet Name"
-msgstr "Nom de feuille"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Custom Path"
-msgstr "Chemin personnalisé"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Select geo property"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid ""
-"\n"
-"              You can drag and drop fields to reorder them.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid ""
-"\n"
-"                To drag multiple fields, select by clicking while holding\n"
-"                the CTRL key on a PC, or the Command key on a Mac.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid ""
-"\n"
-"                To select a range of fields hold the Shift key and select\n"
-"                the first and last field in the range.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid ""
-"\n"
-"                To unselect a field hold the CTRL key on a PC, or the\n"
-"                Command key on a Mac, and click.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid ""
-"\n"
-"                You can also rename fields, which will update the headers\n"
-"                in the export file.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid ""
-"\n"
-"                You can also rename fields, which will update the column\n"
-"                headers in Power BI or Tableau.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Include?"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Select None"
-msgstr "Sélectionner aucun"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Send to Bottom"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Send to Top"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Show Advanced Questions"
-msgstr "Afficher les questions avancées"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Hide Advanced Questions"
-msgstr "Masquer les questions avancées"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Hide Deleted Questions"
-msgstr "Masquer les questions supprimées"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Hide Deleted Properties"
-msgstr "Masquer les propriétés supprimées"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Hide Deprecated Properties"
-msgstr "Masquer les propriétés obsolètes"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Use question labels"
-msgstr "Utiliser des étiquettes de questions"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Use question ids"
-msgstr "Utiliser des identifiants de questions"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Split multi-select data"
-msgstr "Séparer données venant de questions à choix multiples. "
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-#: corehq/apps/reports/templates/reports/filters/bootstrap3/sensitive_columns.html
-#: corehq/apps/reports/templates/reports/filters/bootstrap5/sensitive_columns.html
-msgid "Sensitivity"
-msgstr "Niveau de confidentialité"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Add custom export property"
-msgstr "Ajouter une propriété personnalisée d'exportation"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Required for OData"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Show Options"
-msgstr "Montrer les options"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/new_customize_export_templates.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/new_customize_export_templates.html
-msgid "Hide Options"
-msgstr "Masquer les options"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/odata_feed_limit_reached_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/odata_feed_limit_reached_modal.html
-msgid ""
-"\n"
-"            Maximum number of OData feeds reached.\n"
+"            It seems your project doesn't have any submissions\n"
+"            from its applications. Please submit data before\n"
+"            using the export tool.\n"
 "          "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/bootstrap3/odata_feed_limit_reached_modal.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/odata_feed_limit_reached_modal.html
-#, python-format
+#: corehq/apps/export/templates/export/download_export.html
 msgid ""
 "\n"
-"          At this time we allow a maximum of %(odata_feed_limit)s OData "
-"feeds per project space.\n"
-"          Please consider deleting the feeds that you don't need anymore.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-#: corehq/apps/users/templates/users/accept_invite.html
-msgid "or"
-msgstr "ou"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Filters and Files"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Enable/Disable"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-#: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
-#: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
-msgid "Edit Columns"
-msgstr "Modifier les colonnes"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"            Copy &amp; Edit Feed\n"
+"            To get started, please\n"
+"            <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143947269/Publish+Your+Application\"\n"
+"               target=\"_blank\">deploy</a>\n"
+"            your application and submit data from a phone. You may also\n"
+"            <a href=\"https://help.commcarehq.org/display/commcarepublic/"
+"Web+Apps\"\n"
+"               target=\"_blank\">submit data via Web Apps\n"
+"            </a>\n"
+"            , depending on your project's\n"
+"            <a href=\"https://www.commcarehq.org/pricing/\" "
+"target=\"_blank\">plan level</a>.\n"
 "          "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Share"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Shared By"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Enter name here"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "De-Identified"
-msgstr "Anonymisé"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Form:"
-msgstr "Formulaire: "
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Enter description here"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"              This export is filtered to data you don't have access to.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Copy OData Feed Link"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Show additional feeds for Repeat Group data."
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Show additional feeds for linking Parent and Child Cases."
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Additional Feeds"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                        Click to copy feeds for <strong>Repeat Group</"
-"strong> data:\n"
-"                      "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                        Click to copy feeds for linking <strong>Parent</"
-"strong>\n"
-"                        and <strong>Child Cases</strong>:\n"
-"                      "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-#, python-format
-msgid ""
-"\n"
-"            Automatic updates for this saved %(export_type)s have been "
-"disabled. Click 'Enable'\n"
-"            to re-enable automatic updates.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Size:"
-msgstr "Taille:"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Last Updated:"
-msgstr "Dernière mise à jour"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Just now"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Last Downloaded:"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Last Build Duration:"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Update Data"
-msgstr "Mise à jour de Données"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Updating Data, please wait..."
-msgstr "Mise à jour des données, veuillez patienter..."
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Copy Dashboard Feed Link"
-msgstr "Copier le lien du fil du tableau de bord"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-#, python-format
-msgid ""
-"\n"
-"                This saved %(export_type)s has expired because it has not "
-"been used in\n"
-"                the last 35 days. To renew daily updates, click the 'Update "
-"Data'\n"
-"                button and download the file.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#, python-format
-msgid ""
-"\n"
-"                Your export exceeds the limit of %(max_rows)s rows. Please "
-"see <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2337669143/Setting+up+a+Data+Pipeline+via+CommCare\" data-"
-"toggle=\"modal\">documentation</a> for more information.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Data update complete"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Data update failed!"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-msgid ""
-"\n"
-"                If this problem persists, please <a "
-"href=\"#modalReportIssue\" data-toggle=\"modal\">Report an Issue</a>.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                  No data is available yet.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                Please click 'update data' if the automatic scheduler hasn't "
-"picked up the changes in a while.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Confirm data updates"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                      To renew daily updates, click the Update Data button "
-"below and check back in a little\n"
-"                      bit once the updates have finished processing.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                          Once the data is updated, a data refresh should\n"
-"                          occur automatically on a daily basis.\n"
-"                        "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                        To download data now, please click the Export button "
-"instead.\n"
-"                      "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Confirm data updates."
-msgstr "Confirmez les mises à jour des données."
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                        This will enable the daily automatic updates of this "
-"export.\n"
-"                      "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                        This will disable the daily automatic updates of "
-"this export.\n"
-"                      "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Disable auto update"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Enable auto update"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Edit Filters"
-msgstr "Modifier les filtres"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "DET Config"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                      Copy &amp; Edit Feed\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#: corehq/apps/locations/templates/locations/manage/location_template.html
-#: corehq/apps/reports/standard/monitoring.py
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
-#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
-#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
-msgid "View"
-msgstr "Visualiser"
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "View Columns"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "View Feed"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                    Copy &amp; Edit Feed\n"
-"                  "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Private"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Export Only"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap3/table.html
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid "Edit & Export"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_download_progress.html
-msgid ""
-"\n"
-"                If the problem persists, please\n"
-"                <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"> "
-"Report an Issue</a>.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-msgid ""
-"If this problem persists, please <a href=\"#modalReportIssue\" data-bs-"
-"toggle=\"modal\">Report an Issue</a>."
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap5/export_list_create_export_modal.html
-msgid ""
-"\n"
-"              If this problem persists, please <a "
-"href=\"#modalReportIssue\"\n"
-"                                                  data-bs-"
-"toggle=\"modal\">Report an Issue</a> and include this error\n"
-"              message in the description.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-#, python-format
-msgid ""
-"\n"
-"                Your export exceeds the limit of %(max_rows)s rows. Please "
-"see <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2337669143/Setting+up+a+Data+Pipeline+via+CommCare\" data-bs-"
-"toggle=\"modal\">documentation</a> for more information.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/bootstrap5/table.html
-msgid ""
-"\n"
-"                If this problem persists, please <a "
-"href=\"#modalReportIssue\" data-bs-toggle=\"modal\">Report an Issue</a>.\n"
-"              "
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/customize_export_header.html
@@ -21812,6 +20979,236 @@ msgid ""
 "project\n"
 "        "
 msgstr ""
+
+#: corehq/apps/export/templates/export/partials/delete_bulk_notice.html
+msgid "Delete Selected Feeds"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/delete_bulk_notice.html
+msgid "Delete Selected Feed"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/delete_bulk_notice.html
+msgid "Delete Selected Exports"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/delete_bulk_notice.html
+msgid "Delete Selected Export"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_bulk_notice.html
+msgid "Bulk Export"
+msgstr "Téléchargement en bloc"
+
+#: corehq/apps/export/templates/export/partials/export_bulk_notice.html
+msgid ""
+"All of the selected exports will be collected for download to a single Excel "
+"file, with each export as a separate sheet."
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_download_prepare.html
+msgid "Filters inactive while download in progress. "
+msgstr "Les filtres sont inactifs pendant le téléchargement."
+
+#: corehq/apps/export/templates/export/partials/export_download_prepare.html
+msgid "Prepare Export"
+msgstr "Préparer le téléchargement"
+
+#: corehq/apps/export/templates/export/partials/export_download_prepare.html
+msgid "Preparing Export"
+msgstr "Préparation du téléchargement en cours"
+
+#: corehq/apps/export/templates/export/partials/export_download_prepare.html
+msgid "Prepare Multimedia"
+msgstr "Préparer le multimédia"
+
+#: corehq/apps/export/templates/export/partials/export_download_prepare.html
+msgid "Preparing Multimedia"
+msgstr "Préparation de multimédia en cours"
+
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
+msgid ""
+"\n"
+"                If the problem persists, please\n"
+"                <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"> "
+"Report an Issue</a>.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
+msgid "Collecting Data"
+msgstr "Collection de données"
+
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
+msgid "Collecting Multimedia"
+msgstr "Collection de multimédia"
+
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
+msgid ""
+"For exports that may take a while to prepare, email a link when download is "
+"ready"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
+msgid "Email me when ready"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
+msgid "Something went wrong!"
+msgstr "Il y a eu un problème!"
+
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
+msgid "Update Filters"
+msgstr "Mettre à jour les filtres"
+
+#: corehq/apps/export/templates/export/partials/export_list_controller.html
+#, python-format
+msgid ""
+"\n"
+"      These exports are paginated. That means exports that have over "
+"%(max_rows)s rows will be split into multiple files.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_list_controller.html
+#, python-format
+msgid ""
+"\n"
+"      These %(export_type_plural)s are <strong>De-Identified</strong>, "
+"meaning that\n"
+"      the administrator of this domain has removed all personally-"
+"identifying\n"
+"      properties from the exported data.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_list_controller.html
+#, python-format
+msgid ""
+"\n"
+"          Add %(export_type_caps)s\n"
+"        "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid "Loading Form"
+msgstr "Chargement du formulaire"
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid ""
+"If this problem persists, please <a href=\"#modalReportIssue\" data-bs-"
+"toggle=\"modal\">Report an Issue</a>."
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid ""
+"\n"
+"              This application does not appear to be using\n"
+"              <a href=\"https://wiki.commcarehq.org/display/commcarepublic/"
+"Case+Management\"\n"
+"                 target=\"_blank\"><i class=\"fa fa-info-circle\"></i> case "
+"management</a>.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid "Mislabeled"
+msgstr "Mal étiqueté"
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid "Suggestions"
+msgstr "Suggestions "
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid ""
+"These form submissions are tagged as if they belong to an application that "
+"doesn't exist."
+msgstr ""
+"Ces soumissions de formulaires sont étiquetées comme si elles appartenaient "
+"à une application qui n'existe pas."
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid "These submissions could belong to one of the following forms:"
+msgstr "Ces soumissions pourraient appartenir à un des formulaires suivants :"
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid "App was deleted."
+msgstr "L'application a été supprimée."
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+#, python-format
+msgid ""
+"\n"
+"              Preparing %(export_type_caps)s Data...\n"
+"            "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid ""
+"\n"
+"              Please note that this may take several minutes.\n"
+"              Thank you for your patience!\n"
+"            "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid ""
+"\n"
+"              If this problem persists, please <a "
+"href=\"#modalReportIssue\"\n"
+"                                                  data-bs-"
+"toggle=\"modal\">Report an Issue</a> and include this error\n"
+"              message in the description.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+#, python-format
+msgid ""
+"\n"
+"              It seems as though you haven't submitted any data to CommCare "
+"HQ.\n"
+"              Please deploy an application and submit data before creating "
+"any %(export_type_plural)s.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+msgid "How to Create and Deploy a CommCare Application."
+msgstr "Comment créer et utiliser une application CommCare."
+
+#: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
+#, python-format
+msgid ""
+"\n"
+"              Add %(export_type_caps)s\n"
+"            "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html
+msgid "Filter Feed"
+msgstr "Filtrer le fil"
+
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html
+msgid "Location-Limited Data"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html
+msgid "This export is limited to the following locations:"
+msgstr "Ce téléchargement est limité aux sites suivants:"
+
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html
+msgid "There was an unknown error saving the filters"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html
+msgid "Save filters"
+msgstr "Enregistrer les filtres"
+
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+msgid "Saving..."
+msgstr "En train d'enregistrer"
 
 #: corehq/apps/export/templates/export/partials/loading_exports.html
 msgid ""
@@ -21855,6 +21252,456 @@ msgid ""
 "\n"
 "      No %(export_type_caps_plural)s to display\n"
 "    "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+#: corehq/apps/locations/views.py
+msgid "deleted"
+msgstr "supprimé"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Sheet Name"
+msgstr "Nom de feuille"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Custom Path"
+msgstr "Chemin personnalisé"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Select geo property"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"              You can drag and drop fields to reorder them.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"                To drag multiple fields, select by clicking while holding\n"
+"                the CTRL key on a PC, or the Command key on a Mac.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"                To select a range of fields hold the Shift key and select\n"
+"                the first and last field in the range.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"                To unselect a field hold the CTRL key on a PC, or the\n"
+"                Command key on a Mac, and click.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"                You can also rename fields, which will update the headers\n"
+"                in the export file.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"                You can also rename fields, which will update the column\n"
+"                headers in Power BI or Tableau.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Include?"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Select None"
+msgstr "Sélectionner aucun"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Send to Bottom"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Send to Top"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Show Advanced Questions"
+msgstr "Afficher les questions avancées"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Hide Advanced Questions"
+msgstr "Masquer les questions avancées"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Hide Deleted Questions"
+msgstr "Masquer les questions supprimées"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Hide Deleted Properties"
+msgstr "Masquer les propriétés supprimées"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Hide Deprecated Properties"
+msgstr "Masquer les propriétés obsolètes"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Use question labels"
+msgstr "Utiliser des étiquettes de questions"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Use question ids"
+msgstr "Utiliser des identifiants de questions"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Split multi-select data"
+msgstr "Séparer données venant de questions à choix multiples. "
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap3/sensitive_columns.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap5/sensitive_columns.html
+msgid "Sensitivity"
+msgstr "Niveau de confidentialité"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Add custom export property"
+msgstr "Ajouter une propriété personnalisée d'exportation"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Required for OData"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Show Options"
+msgstr "Montrer les options"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Hide Options"
+msgstr "Masquer les options"
+
+#: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
+msgid ""
+"\n"
+"            Maximum number of OData feeds reached.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
+#, python-format
+msgid ""
+"\n"
+"          At this time we allow a maximum of %(odata_feed_limit)s OData "
+"feeds per project space.\n"
+"          Please consider deleting the feeds that you don't need anymore.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/users/templates/users/accept_invite.html
+msgid "or"
+msgstr "ou"
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Filters and Files"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Enable/Disable"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
+msgid "Edit Columns"
+msgstr "Modifier les colonnes"
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"            Copy &amp; Edit\n"
+"          "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Share"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Shared By"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Enter name here"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "De-Identified"
+msgstr "Anonymisé"
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Form:"
+msgstr "Formulaire: "
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Enter description here"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"              This export is filtered to data you don't have access to.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Copy OData Feed Link"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Show additional feeds for Repeat Group data."
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Show additional feeds for linking Parent and Child Cases."
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Additional Feeds"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                        Click to copy feeds for <strong>Repeat Group</"
+"strong> data:\n"
+"                      "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                        Click to copy feeds for linking <strong>Parent</"
+"strong>\n"
+"                        and <strong>Child Cases</strong>:\n"
+"                      "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+#, python-format
+msgid ""
+"\n"
+"            Automatic updates for this saved %(export_type)s have been "
+"disabled. Click 'Enable'\n"
+"            to re-enable automatic updates.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Size:"
+msgstr "Taille:"
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Last Updated:"
+msgstr "Dernière mise à jour"
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Just now"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Last Downloaded:"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Last Build Duration:"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Update Data"
+msgstr "Mise à jour de Données"
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Updating Data, please wait..."
+msgstr "Mise à jour des données, veuillez patienter..."
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Copy Dashboard Feed Link"
+msgstr "Copier le lien du fil du tableau de bord"
+
+#: corehq/apps/export/templates/export/partials/table.html
+#, python-format
+msgid ""
+"\n"
+"                This saved %(export_type)s has expired because it has not "
+"been used in\n"
+"                the last 35 days. To renew daily updates, click the 'Update "
+"Data'\n"
+"                button and download the file.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+#, python-format
+msgid ""
+"\n"
+"                Your export exceeds the limit of %(max_rows)s rows. Please "
+"see <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2337669143/Setting+up+a+Data+Pipeline+via+CommCare\" data-bs-"
+"toggle=\"modal\">documentation</a> for more information.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Data update complete"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Data update failed!"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                If this problem persists, please <a "
+"href=\"#modalReportIssue\" data-bs-toggle=\"modal\">Report an Issue</a>.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                  No data is available yet.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                Please click 'update data' if the automatic scheduler hasn't "
+"picked up the changes in a while.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Confirm data updates"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                      To renew daily updates, click the Update Data button "
+"below and check back in a little\n"
+"                      bit once the updates have finished processing.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                          Once the data is updated, a data refresh should\n"
+"                          occur automatically on a daily basis.\n"
+"                        "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                        To download data now, please click the Export button "
+"instead.\n"
+"                      "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Confirm data updates."
+msgstr "Confirmez les mises à jour des données."
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                        This will enable the daily automatic updates of this "
+"export.\n"
+"                      "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                        This will disable the daily automatic updates of "
+"this export.\n"
+"                      "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Disable auto update"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Enable auto update"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Edit Filters"
+msgstr "Modifier les filtres"
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "DET Config"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                      Copy &amp; Edit\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+#: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/reports/standard/monitoring.py
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
+#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
+#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
+msgid "View"
+msgstr "Visualiser"
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "View Columns"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "View Feed"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid ""
+"\n"
+"                    Copy &amp; Edit\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Private"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Export Only"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "Edit & Export"
 msgstr ""
 
 #: corehq/apps/export/templates/export/paywall.html
@@ -22066,10 +21913,6 @@ msgid "Export Case Data"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
-msgid "Export De-Identified Cases"
-msgstr "Exporter les dossiers anonymisés "
-
-#: corehq/apps/export/views/list.py
 msgid "Populating tables for <strong>{}</strong>. ({}%)"
 msgstr ""
 
@@ -22115,6 +21958,10 @@ msgid "Export De-Identified Form Data"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
+msgid "Export De-Identified Case Data"
+msgstr ""
+
+#: corehq/apps/export/views/list.py
 msgid "Export De-Identified Daily Saved Exports"
 msgstr "Exporter un Enregistrement de Téléchargement Journalière Anonymisée"
 
@@ -22135,7 +21982,7 @@ msgid "Feed Type"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
-msgid "Select field type"
+msgid "Select feed type"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
@@ -22193,8 +22040,8 @@ msgstr "Paramètres du téléchargement "
 msgid ""
 "\n"
 "                Learn more about exports on our <a\n"
-"                href=\"https://help.commcarehq.org/display/commcarepublic/"
-"Data+Export+Overview\"\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143954661/Data+Exports\"\n"
 "                target=\"_blank\">Help Site</a>.\n"
 "            "
 msgstr ""
@@ -23019,6 +22866,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
+msgid "Flag assigned cases"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"When enabled, cases that are assigned through disbursement from the Case "
+"Management page will include a case property '{}' with value as True."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
 msgid "Case Grouping Parameters"
 msgstr ""
 
@@ -23531,6 +23388,26 @@ msgid ""
 "\n"
 "            Navigate there.\n"
 "            "
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "POST Body must be a valid json in {\"geo_json\": <geo_json>} format"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "Empty geo_json POST field"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "Please specify a name for the GeoPolygon area."
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "GeoPolygon with given name already exists! Please use a different name."
 msgstr ""
 
 #: corehq/apps/geospatial/views.py
@@ -24121,17 +23998,6 @@ msgstr ""
 msgid "UCR Domains Data Report"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/authenticate_as.html
-msgid ""
-"\n"
-"          Use this form to log in as a mobile user.\n"
-"          You can fill out the fully qualified username of\n"
-"          a mobile worker in the username box\n"
-"          (&lt;username&gt;@&lt;domain&gt;.commcarehq.org)\n"
-"          or fill the username and domain.\n"
-"        "
-msgstr ""
-
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "Nom du domaine"
@@ -24241,8 +24107,10 @@ msgid "Two Factor Enabled"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
+#, fuzzy
+#| msgid "Are you sure you want to"
 msgid "Are you sure you want to continue?"
-msgstr "Etes-vous sûr que vous voulez continuer ?"
+msgstr "Etes-vous certain de vouloir"
 
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 msgid "If this fails you may have to perform the operation manually!"
@@ -24253,10 +24121,10 @@ msgid ""
 "This may invoke a huge indexing task that could slow down many parts of the "
 "site!"
 msgstr ""
-"Cela peut invoquer une énorme tâche de référencement qui pourrait ralentir "
-"de nombreuses parties du site!"
 
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
+#, fuzzy
+#| msgid "Go"
 msgid "Go!"
 msgstr "Démarrer"
 
@@ -24348,8 +24216,10 @@ msgid "Download GIR"
 msgstr "Télécharger GIR"
 
 #: corehq/apps/hqadmin/views/system.py corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "System"
 msgid "System Info"
-msgstr "Infos sur le système"
+msgstr "Système"
 
 #: corehq/apps/hqadmin/views/system.py
 msgid "Global Usage Thresholds"
@@ -24468,10 +24338,6 @@ msgid "Error encountered processing Zip File. File doesn't look valid."
 msgstr ""
 "Une erreur est survenue lors du traitement du fichier zip. Le fichier ne "
 "semble pas être valide."
-
-#: corehq/apps/hqmedia/controller.py
-msgid "zip"
-msgstr "zip"
 
 #: corehq/apps/hqmedia/controller.py
 msgid "image"
@@ -24601,82 +24467,91 @@ msgstr ""
 msgid "Transifex"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid ""
-"Use this tool to upload ZIP files of your multimedia, so you don't have to\n"
-"    upload each file one-by-one."
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid ""
-"The bulk uploader will compare the file paths in your form with the file "
-"paths\n"
-"    in your zip to find a matching file."
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid ""
-"For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your "
-"zip's\n"
-"    <code>commcare/images/hin/image.jpg</code> file would match, but it "
-"would <strong>not</strong> match\n"
-"    <code>commcare/images/image.jpg</code>."
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload.html
 msgid ""
 "\n"
-"          Your browser does not support this uploader.\n"
-"          We recommend <a href=\"https://www.google.com/intl/en/chrome/"
-"browser/\">Google Chrome</a>.\n"
-"        "
+"    <p>\n"
+"      Use this tool to upload ZIP files of your multimedia.\n"
+"      The bulk uploader will compare the file paths in your form with the "
+"file paths\n"
+"      in your zip to find a matching file.\n"
+"    </p>\n"
+"    <p>\n"
+"      For example, <code>jr://file/commcare/images/hin/image.jpg</code> and "
+"your zip's\n"
+"      <code>commcare/images/hin/image.jpg</code> file would match, but it "
+"would <strong>not</strong> match\n"
+"      <code>commcare/images/image.jpg</code>.\n"
+"    </p>\n"
+"  "
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Select Files"
-msgstr "Sélectionner des fichiers"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+#, python-format
+msgid ""
+"\n"
+"        One match found.\n"
+"      "
+msgid_plural ""
+"\n"
+"        %(matched_count)s matches found.\n"
+"      "
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Begin Upload"
-msgstr "Démarrer le chargement"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "No Matches Found"
+msgstr "Aucune correspondance trouvée"
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Bulk Upload File Queue"
-msgstr "File d'attente de fichier de téléversement en bloc"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "No Matches"
+msgstr "Aucune correspondance"
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Filename"
-msgstr "Filename"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "Matched Images"
+msgstr "Images correspondantes"
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Size"
-msgstr "Taille"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+#: corehq/apps/reports/standard/users/reports.py
+msgid "Updated"
+msgstr "Mis à jour"
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Upload Progress"
-msgstr "Progression du téléversement"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "View Full Image"
+msgstr "Visualiser l'image complète"
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Match Status"
-msgstr "État de correspondance"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "Matched Audio"
+msgstr "Audio correspondant"
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Queued Files"
-msgstr "Fichiers dans la file d'attente"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "Playing audio directly on this page is currently not supported."
+msgstr ""
+"La lecture de l'audio directement à partir de cette page n'est pas prise en "
+"charge actuellement."
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Select files above to add to the queue."
-msgstr "Sélectionnez les fichiers ci-haut à ajouter à la file d'attente."
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
+msgid "Listen to Audio"
+msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Processing Upload"
-msgstr "Traitement du téléversement"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "Matched Video"
+msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-msgid "Uploaded Files"
-msgstr "Fichiers téléversés"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+msgid "Watching video directly on this page is not supported. Opens a new tab."
+msgstr ""
+"La visualisation de la vidéo directement à partir de cette page n'est pas "
+"prise en charge. Ouvre un nouvel onglet."
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_video_single.html
+msgid "Watch Video"
+msgstr "Visualiser la vidéo"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/manage_paths.html
 msgid "Include only paths where the multimedia file is missing?"
@@ -24687,22 +24562,16 @@ msgid "Upload Icon Image"
 msgstr "Télécharger l'image de l'icône "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Upload Menu Audio"
 msgid "Upload Audio"
-msgstr "Téléchargez Fichier du Audio pour le Menu"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Upload file"
 msgid "Upload Video"
-msgstr "Uploader un fichier"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Upload file"
 msgid "Upload File"
-msgstr "Uploader un fichier"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Select Icon Image"
@@ -24713,16 +24582,12 @@ msgid "Select Menu Audio"
 msgstr "Sélectionnez le Fichier Audio pour le Menu"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Select File"
 msgid "Select Video"
-msgstr "Sélectionner un fichier"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Delete Logo"
 msgid "Select Logo"
-msgstr "Supprimer le logo"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 msgid "Select File"
@@ -24737,22 +24602,20 @@ msgid "Current Audio"
 msgstr "Fichier Audio Actuel"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Current Audio"
 msgid "Current Video"
-msgstr "Fichier Audio Actuel"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Current Icon"
 msgid "Current Logo"
-msgstr "L'icône courant"
+msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-#, fuzzy
-#| msgid "Current Price"
 msgid "Current File"
-msgstr "Prix Actuel"
+msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+msgid "Begin Upload"
+msgstr "Démarrer le chargement"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
 msgid ""
@@ -24782,6 +24645,10 @@ msgstr "Télécharger le fichier ZIP"
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 msgid "Menu or Form"
 msgstr ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+msgid "Size"
+msgstr "Taille"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 msgid "Path in Application"
@@ -24826,18 +24693,6 @@ msgstr ""
 msgid "Open file in new tab"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
-msgid "Listen to Audio"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_video_single.html
-msgid "Watch Video"
-msgstr "Visualiser la vidéo"
-
 #: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
 #, python-format
 msgid ""
@@ -24871,43 +24726,6 @@ msgstr ""
 msgid "Check for missing media"
 msgstr ""
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "No Matches"
-msgstr "Aucune correspondance"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "Matched Images"
-msgstr "Images correspondantes"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "View Full Image"
-msgstr "Visualiser l'image complète"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-#: corehq/apps/reports/standard/users/reports.py
-msgid "Updated"
-msgstr "Mis à jour"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "Matched Audio"
-msgstr "Audio correspondant"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "Playing audio directly on this page is currently not supported."
-msgstr ""
-"La lecture de l'audio directement à partir de cette page n'est pas prise en "
-"charge actuellement."
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "Matched Videos"
-msgstr "Vidéos correspondants"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html
-msgid "Watching video directly on this page is not supported. Opens a new tab."
-msgstr ""
-"La visualisation de la vidéo directement à partir de cette page n'est pas "
-"prise en charge. Ouvre un nouvel onglet."
-
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/errors.html
 msgid "Errors found"
 msgstr "Erreurs trouvées"
@@ -24932,42 +24750,6 @@ msgstr "Téléversement d'une nouvelle image réussi"
 msgid "New Video Uploaded Successfully"
 msgstr "Téléversement d'une nouvelle vidéo réussi"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Added to queue. Click <strong>Begin Upload</strong> above to start."
-msgstr ""
-"Ajouté à la file d'attente. Cliquez sur <strong>Démarrer le téléversement</"
-"strong> ci-dessus pour démarrer."
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Queued for processing. Please wait."
-msgstr "Ajouté à la file d'attente pour être traité. Veuillez patienter."
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Files"
-msgstr "Fichier"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Processing upload, please wait."
-msgstr "Traitement du téléversement, veuillez patienter."
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Upload Finished"
-msgstr "Téléversement terminé"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
-msgid "There were errors"
-msgstr "Des erreurs sont survenues"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-msgid "Remove from queue"
-msgstr "Retirer de la file d'attente"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
-msgid "Cancel Upload"
-msgstr "Annuler le téléversement"
-
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
 msgid "Ready to upload. Click <strong>Begin Upload</strong> below to start."
 msgstr ""
@@ -24975,21 +24757,12 @@ msgstr ""
 "dessous pour démarrer."
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
-msgid "Select another file"
-msgstr "Sélectionner un autre fichier"
+msgid "There were errors"
+msgstr "Des erreurs sont survenues"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html
-msgid "1 Match Found"
-msgstr "1 correspondance trouvée"
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html
-#, python-format
-msgid "<%%- num %%> Matches Found"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html
-msgid "No Matches Found"
-msgstr "Aucune correspondance trouvée"
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+msgid "Cancel Upload"
+msgstr "Annuler le téléversement"
 
 #: corehq/apps/hqmedia/view_helpers.py
 #, python-brace-format
@@ -25037,6 +24810,37 @@ msgstr ""
 
 #: corehq/apps/hqmedia/views.py
 msgid "Bulk Upload Multimedia"
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py corehq/apps/users/views/mobile/users.py
+msgid "CommCare Help Site"
+msgstr "Site d'aide de CommCare"
+
+#: corehq/apps/hqmedia/views.py
+msgid "multimedia"
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py
+msgid "multimedia files"
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py
+msgid "Bulk Upload Multimedia Status"
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py
+msgid "Importing your multimedia. This may take some time..."
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py corehq/apps/locations/views.py
+#: corehq/apps/products/views.py corehq/apps/users/views/__init__.py
+#: corehq/apps/users/views/mobile/users.py
+msgid "Problem importing data! Please try again or report an issue."
+msgstr ""
+"Problème d'importation des données! Veuillez réessayer ou faire un rapport."
+
+#: corehq/apps/hqmedia/views.py
+msgid "Return to multimedia reference checker"
 msgstr ""
 
 #: corehq/apps/hqmedia/views.py
@@ -25122,15 +24926,6 @@ msgstr ""
 "Le type de fichier du {name} de '{ext}' ne correspond pas au type de fichier "
 "média original '{orig_ext}'. Pour changer les types de fichiers, veuillez "
 "les charger directement par l’éditeur de formulaires."
-
-#: corehq/apps/hqmedia/views.py
-msgid ""
-"There was an issue retrieving the status from the cache. We are looking into "
-"it. Please try uploading again."
-msgstr ""
-"Il y a eu un problème lors de la récupération de l'état à partir de la "
-"cache. Nous tentons de déterminer de quoi il s'agit. Veuillez essayer le "
-"téléversement à nouveau !"
 
 #: corehq/apps/hqwebapp/crispy.py
 msgid "Step {} of {}"
@@ -25631,6 +25426,10 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/crispy/bootstrap5/multi_inline_field.html
 msgid "Errors"
 msgstr "Erreurs"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
+msgid "Server Error Encountered"
+msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/domain_list_dropdown.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/domain_list_dropdown.html
@@ -26239,7 +26038,7 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      %(plural_noun)s using Excel\n"
+"      %(plural_noun)s\n"
 "    "
 msgstr ""
 
@@ -26257,7 +26056,7 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"          Download your current %(adjective)s Excel file.\n"
+"          Download your current %(adjective)s file.\n"
 "        "
 msgstr ""
 
@@ -26280,8 +26079,8 @@ msgstr "Mettre-à-jour le fichier télécharger."
 #, python-format
 msgid ""
 "\n"
-"              Check the <a href=\"%(address)s\">%(name)s</a> for "
-"instructions.\n"
+"              Check the <a target=\"_blank\" href=\"%(address)s\">%(name)s</"
+"a> for instructions.\n"
 "            "
 msgstr ""
 
@@ -26570,6 +26369,33 @@ msgid ""
 "  to learn more!\n"
 msgstr ""
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/pending_plan_notice.html
+msgid ""
+"\n"
+"          Your subscription is pending plan selection.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/pending_plan_notice.html
+#, python-format
+msgid ""
+"\n"
+"          Please <a href=\"%(change_plan_url)s\">select a plan</a> to get "
+"started with your CommCare subscription.\n"
+"          <br/>\n"
+"          For now, enjoy free Community Edition access to CommCare with "
+"limited features.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/pending_plan_notice.html
+msgid "Prefer to stay with Community Edition instead?"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/pending_plan_notice.html
+msgid "Don't show this banner again."
+msgstr ""
+
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/shared_download_status.html
 msgid "Your download is ready."
 msgstr "Votre téléchargement est prêt."
@@ -26688,6 +26514,7 @@ msgid "You have no items."
 msgstr "Vous n'avez aucun élément."
 
 #: corehq/apps/hqwebapp/views.py
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html
 msgid "Loading..."
 msgstr "Téléchargement en cours..."
@@ -26780,10 +26607,6 @@ msgid "A subtitle for the Dialer Page header"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
-msgid "Telephony Services"
-msgstr ""
-
-#: corehq/apps/integration/forms.py
 msgid "Enable GAEN OTP server integration"
 msgstr ""
 
@@ -26812,11 +26635,7 @@ msgid "Server Auth Token"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
-msgid "OTP Callouts"
-msgstr ""
-
-#: corehq/apps/integration/forms.py
-msgid "Enable Signed Callout in Web Apps"
+msgid "Enable in Web Apps"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
@@ -26834,7 +26653,7 @@ msgid "API Key"
 msgstr "Clé API"
 
 #: corehq/apps/integration/forms.py
-msgid "API Key for CommCare in the external System"
+msgid "API Key for CommCare in the external system"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
@@ -26842,11 +26661,7 @@ msgid "API Secret"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
-msgid "API Secret for message Signing"
-msgstr ""
-
-#: corehq/apps/integration/forms.py
-msgid "Signed Callout Config"
+msgid "API secret for message signing"
 msgstr ""
 
 #: corehq/apps/integration/forms.py
@@ -26861,11 +26676,6 @@ msgstr "Identifiant de projet"
 
 #: corehq/apps/integration/forms.py
 msgid "Module ID"
-msgstr ""
-
-#: corehq/apps/integration/forms.py
-#: corehq/apps/integration/templates/integration/biometric.html
-msgid "Simprints Integration"
 msgstr ""
 
 #: corehq/apps/integration/templates/integration/web_app_dialer.html
@@ -27957,10 +27767,6 @@ msgstr ""
 msgid "Only include selected location"
 msgstr ""
 
-#: corehq/apps/locations/forms.py
-msgid "Active / Archived"
-msgstr ""
-
 #: corehq/apps/locations/forms.py corehq/apps/locations/views.py
 msgid "Filter and Download Locations"
 msgstr ""
@@ -28107,15 +27913,25 @@ msgid "Parent Type"
 msgstr "Type de parent"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                              This controls which parent "
+#| "this organization level\n"
+#| "                                              must have. You can use this "
+#| "to setup a organization\n"
+#| "                                              level that can have "
+#| "different types of children.\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                              This controls which parent "
-"this organization level\n"
-"                                              must have. You can use this to "
-"setup a organization\n"
-"                                              level that can have different "
-"types of children.\n"
-"                                          "
+"                                   This controls which parent this "
+"organization level\n"
+"                                   must have. You can use this to setup a "
+"organization\n"
+"                                   level that can have different types of "
+"children.\n"
+"                                "
 msgstr ""
 "\n"
 "Ceci contrôle quel parent ce niveau d'organisation\n"
@@ -28132,14 +27948,24 @@ msgid "Level to expand from"
 msgstr "Niveau à développer de"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                                        <p>When directly "
+#| "accessing locations in your app, this controls the level below which all "
+#| "possible locations are available.</p>\n"
+#| "                                                        <p>The default is "
+#| "to make the user's location's ancestors and all descendants available</"
+#| "p>\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                                        <p>When directly "
+"                                                    <p>When directly "
 "accessing locations in your app, this controls the level below which all "
 "possible locations are available.</p>\n"
-"                                                        <p>The default is to "
+"                                                    <p>The default is to "
 "make the user's location's ancestors and all descendants available</p>\n"
-"                                          "
+"                                      "
 msgstr ""
 "\n"
 "<p>Lorsque vous accédez directement aux sites à partir de votre application, "
@@ -28153,17 +27979,30 @@ msgid "Level to expand to"
 msgstr "Niveau à étendre à"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                                        <p>When directly "
+#| "accessing locations in your app, this controls the depth of locations "
+#| "available.</p>\n"
+#| "                                                        <p>This can "
+#| "reduce the sync size and time - for example, a user at the State level "
+#| "may not need to see all Cities in that state.</p>\n"
+#| "                                                        <p>The default is "
+#| "to make the user's location's ancestors and all descendants available.</"
+#| "p>\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                                        <p>When directly "
+"                                                    <p>When directly "
 "accessing locations in your app, this controls the depth of locations "
 "available.</p>\n"
-"                                                        <p>This can reduce "
-"the sync size and time - for example, a user at the State level may not need "
-"to see all Cities in that state.</p>\n"
-"                                                        <p>The default is to "
+"                                                    <p>This can reduce the "
+"sync size and time - for example, a user at the State level may not need to "
+"see all Cities in that state.</p>\n"
+"                                                    <p>The default is to "
 "make the user's location's ancestors and all descendants available.</p>\n"
-"                                          "
+"                                      "
 msgstr ""
 "\n"
 "<p>Lorsque vous accédez directement aux sites à partir de votre application, "
@@ -28179,14 +28018,24 @@ msgid "Include without expanding"
 msgstr "Inclure sans développer"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                                        <p>Force sync all "
+#| "locations of this level and their ancestors.</p>\n"
+#| "                                                        <p>This is useful "
+#| "if you require some high level information in your app, like all the "
+#| "state names, but don't want to sync all the descendants of that location</"
+#| "p>\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                                        <p>Force sync all "
+"                                                    <p>Force sync all "
 "locations of this level and their ancestors.</p>\n"
-"                                                        <p>This is useful if "
-"you require some high level information in your app, like all the state "
-"names, but don't want to sync all the descendants of that location</p>\n"
-"                                          "
+"                                                    <p>This is useful if you "
+"require some high level information in your app, like all the state names, "
+"but don't want to sync all the descendants of that location</p>\n"
+"                                      "
 msgstr ""
 "\n"
 "<p>Forcer la synchronisation de tous les sites de ce niveau et de leurs "
@@ -28200,52 +28049,95 @@ msgid "Include only"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                                  Should cases that don't "
+#| "have a value for the sort property\n"
+#| "                                                  appear at the top or "
+#| "the bottom of the case list?\n"
+#| "                                              "
 msgid ""
 "\n"
-"                                              <p>Include only locations of "
-"the specified types.</p>\n"
-"                                              <p>Every type you select must "
-"also have its parent included.</p>\n"
-"                                          "
+"                                          <p>Include only locations of the "
+"specified types.</p>\n"
+"                                          <p>Every type you select must also "
+"have its parent included.</p>\n"
+"                                      "
 msgstr ""
+"\n"
+"Les dossiers sans valeurs pour la propriété de tri devraient-ils figurer en "
+"premier ou en dernier dans la liste de dossiers?"
 
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid "Tracks Stock"
 msgstr "Suit des Stocks"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                              This controls which parent "
+#| "this organization level\n"
+#| "                                              must have. You can use this "
+#| "to setup a organization\n"
+#| "                                              level that can have "
+#| "different types of children.\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                        Does this location keep inventory "
-"and track stock?\n"
-"                                        Note that changing this property "
-"will update all\n"
-"                                        locations of this level "
-"accordingly.\n"
-"                                      "
+"                                    Does this location keep inventory and "
+"track stock?\n"
+"                                    Note that changing this property will "
+"update all\n"
+"                                    locations of this level accordingly.\n"
+"                                  "
 msgstr ""
+"\n"
+"Ceci contrôle quel parent ce niveau d'organisation\n"
+"doit avoir. Vous pouvez l'utiliser pour configurer le niveau d'une "
+"organisation\n"
+"qui peut avoir différents types d'enfants."
 
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid "Owns Cases"
 msgstr "Possède des dossiers"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                              <p>Determines if locations "
+#| "at this level should own cases;\n"
+#| "                                              this will allow sharing of "
+#| "cases among any users assigned to a\n"
+#| "                                              location at this level.</"
+#| "p>\n"
+#| "                                              <p>In order for this to "
+#| "work, you need to make sure you have enabled\n"
+#| "                                              Case Sharing in your App "
+#| "settings.\n"
+#| "                                              Please see the <a "
+#| "href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
+#| "target='_blank'>help site</a>\n"
+#| "                                              for more details.</p>\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                              <p>Determines if locations at "
-"this level should own cases;\n"
-"                                              this will allow sharing of "
-"cases among any users assigned to a\n"
-"                                              location at this level.</p>\n"
-"                                              <p>In order for this to work, "
-"you need to make sure you have enabled\n"
-"                                              Case Sharing in your App "
+"                                          <p>Determines if locations at this "
+"level should own cases;\n"
+"                                          this will allow sharing of cases "
+"among any users assigned to a\n"
+"                                          location at this level.</p>\n"
+"                                          <p>In order for this to work, you "
+"need to make sure you have enabled\n"
+"                                          Case Sharing in your App "
 "settings.\n"
-"                                              Please see the <a "
-"href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
+"                                          Please see the <a href='https://"
+"confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
 "target='_blank'>help site</a>\n"
-"                                              for more details.</p>\n"
-"                                          "
+"                                          for more details.</p>\n"
+"                                      "
 msgstr ""
 "\n"
 "<p>Détermine si les sites à ce niveau devraient être proprietaire de "
@@ -28266,20 +28158,35 @@ msgid "View Child Data"
 msgstr "Voir données enfants"
 
 #: corehq/apps/locations/templates/locations/location_types.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                              <p>Indicates if users "
+#| "assigned to this level should be able to see and update cases owned by "
+#| "levels below them.</p>\n"
+#| "                                              <p>In order for this to "
+#| "work, you need to make sure you have enabled\n"
+#| "                                              Case Sharing in your App "
+#| "settings.\n"
+#| "                                              Please see the <a "
+#| "href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
+#| "target='_blank'>help site</a>\n"
+#| "                                              for more details.</p>\n"
+#| "                                          "
 msgid ""
 "\n"
-"                                              <p>Indicates if users assigned "
-"to this level should be able to see and update cases owned by levels below "
-"them.</p>\n"
-"                                              <p>In order for this to work, "
-"you need to make sure you have enabled\n"
-"                                              Case Sharing in your App "
+"                                          <p>Indicates if users assigned to "
+"this level should be able to see and update cases owned by levels below them."
+"</p>\n"
+"                                          <p>In order for this to work, you "
+"need to make sure you have enabled\n"
+"                                          Case Sharing in your App "
 "settings.\n"
-"                                              Please see the <a "
-"href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
+"                                          Please see the <a href='https://"
+"confluence.dimagi.com/display/commcarepublic/Case+Sharing' "
 "target='_blank'>help site</a>\n"
-"                                              for more details.</p>\n"
-"                                          "
+"                                          for more details.</p>\n"
+"                                      "
 msgstr ""
 "\n"
 "<p>Indique si les utilisateurs affectés à ce niveau devraient pouvoir voir "
@@ -28300,9 +28207,9 @@ msgstr ""
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid ""
 "\n"
-"                            <p>Only include cases that show up in the user's "
+"                        <p>Only include cases that show up in the user's "
 "restore file down to this level (inclusive).</p>\n"
-"                        "
+"                    "
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -28312,11 +28219,11 @@ msgstr ""
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid ""
 "\n"
-"                            <p>Indicates whether locations of this level can "
+"                        <p>Indicates whether locations of this level can "
 "have users assigned.</p>\n"
-"                            <p>You cannot turn this setting off if there are "
+"                        <p>You cannot turn this setting off if there are "
 "users assigned to one of the locations.</p>\n"
-"                        "
+"                    "
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -28365,10 +28272,6 @@ msgid "Default monthly consumption values"
 msgstr "Valeurs mensuelles de consommation par défaut"
 
 #: corehq/apps/locations/templates/locations/manage/location.html
-msgid "Create Mobile Worker at this Location"
-msgstr ""
-
-#: corehq/apps/locations/templates/locations/manage/location.html
 msgid ""
 "\n"
 "                    Your permissions allow you to <strong>create, update, "
@@ -28378,10 +28281,6 @@ msgid ""
 "                    administrator has not granted you access to change "
 "workers at locations.\n"
 "                  "
-msgstr ""
-
-#: corehq/apps/locations/templates/locations/manage/location.html
-msgid "New Mobile Worker at This Location"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/manage/location_template.html
@@ -28469,10 +28368,6 @@ msgstr "Téléversement en bloc"
 #: corehq/apps/locations/templates/locations/manage/locations.html
 msgid "Edit Location Fields"
 msgstr "Modifier les Champs de Site"
-
-#: corehq/apps/locations/templates/locations/manage/locations.html
-msgid "Clear location selection"
-msgstr ""
 
 #: corehq/apps/locations/templates/locations/manage/locations.html
 msgid "Show Archived Locations"
@@ -28624,12 +28519,6 @@ msgstr ""
 msgid "Organization Structure Import Status"
 msgstr "Statut d'importation de la hiérarchie géographique"
 
-#: corehq/apps/locations/views.py corehq/apps/products/views.py
-#: corehq/apps/users/views/__init__.py corehq/apps/users/views/mobile/users.py
-msgid "Problem importing data! Please try again or report an issue."
-msgstr ""
-"Problème d'importation des données! Veuillez réessayer ou faire un rapport."
-
 #: corehq/apps/locations/views.py
 msgid "Upload Organization Structure From Excel"
 msgstr "Télécharger la hiérarchie géographique à partir d'Excel"
@@ -28703,6 +28592,10 @@ msgstr "Voici vos clés !"
 #: corehq/motech/generic_inbound/views.py corehq/motech/views.py
 msgid "URL"
 msgstr "URL"
+
+#: corehq/apps/notifications/forms.py
+msgid "Domain-specific"
+msgstr ""
 
 #: corehq/apps/notifications/forms.py
 msgid "This notification is not for all domains"
@@ -29184,7 +29077,7 @@ msgstr "Créer votre compte"
 msgid "Name Your First Project"
 msgstr "Nommer votre premier projet"
 
-#: corehq/apps/registration/forms.py corehq/apps/users/forms.py
+#: corehq/apps/registration/forms.py
 #, python-format
 msgid "%s is an invalid phone number."
 msgstr "%s n'est pas un numéro de téléphone valide."
@@ -32708,7 +32601,6 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
 #: corehq/apps/reports/templates/reports/bootstrap3/tabular.html
 #: corehq/apps/reports/templates/reports/bootstrap5/tabular.html
-#: custom/champ/templates/champ/knockout/base_async_template.html
 msgid "Loading Report"
 msgstr "Chargement du rapport"
 
@@ -36866,6 +36758,7 @@ msgid "This certificate has already expired!"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Please specify a value."
 msgstr ""
 
@@ -37542,6 +37435,20 @@ msgid ""
 "%(expires_on)s"
 msgstr ""
 
+#: corehq/apps/sso/utils/entra.py
+msgid "Please double check your tenant id is correct"
+msgstr ""
+
+#: corehq/apps/sso/utils/entra.py
+msgid "No error description provided"
+msgstr ""
+
+#: corehq/apps/sso/utils/entra.py
+msgid ""
+"Nested applications (ServicePrincipal members) are not supported. Please "
+"include only Users or Groups as members of this SSO application"
+msgstr ""
+
 #: corehq/apps/sso/utils/login_helpers.py
 msgid ""
 "We were unable to create your requested project because the name was already "
@@ -37745,6 +37652,40 @@ msgstr ""
 msgid "Examples of Readonly Fields"
 msgstr ""
 
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is exactly"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is not"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "contains"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is empty"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
+msgid "Column"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
+msgid "Color"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "Hint: select 'is empty' to watch the Value field below disappear"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_hq_hx_action.py
+msgid "New Item"
+msgstr ""
+
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
 msgid "Team"
 msgstr ""
@@ -37887,10 +37828,6 @@ msgid "Create Menu"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
-msgid "Color"
-msgstr ""
-
-#: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
 msgid "What is your favorite primary color"
 msgstr ""
 
@@ -37982,6 +37919,29 @@ msgstr ""
 #: corehq/apps/styleguide/tabs.py
 msgid "Examples"
 msgstr "Exemples"
+
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
+msgid ""
+"\n"
+"        Added filter!\n"
+"      "
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/item.html
+msgid "Edit Value"
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/main.html
+msgid "To-Do"
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/main.html
+msgid "Add Item"
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/main.html
+msgid "Trigger Error"
+msgstr ""
 
 #: corehq/apps/styleguide/views/bootstrap5_data.py
 msgid "This username is already taken. Please try another one."
@@ -38878,6 +38838,12 @@ msgstr ""
 #: corehq/apps/user_importer/validation.py
 msgid "You do not have permission to assign the profile '{}'"
 msgstr ""
+
+#: corehq/apps/user_importer/validation.py
+#, fuzzy
+#| msgid "format must be one of the following: {}"
+msgid "A profile must be assigned to users of the following type(s): {}"
+msgstr "le format doit être un des suivants: {}"
 
 #: corehq/apps/user_importer/validation.py
 msgid "Group '{}' does not exist (try adding it to your spreadsheet)"
@@ -40387,6 +40353,12 @@ msgstr "Source de Données \"{}\" enregistrée!"
 
 #: corehq/apps/userreports/views.py
 msgid ""
+"This data source will be built/rebuilt automatically the next time a row is "
+"added."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+msgid ""
 "Data source \"{}\" has no associated table.\n"
 "Click \"Rebuild Data Source\" to recreate the table."
 msgstr ""
@@ -40618,20 +40590,6 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid "Reset Password for Mobile Worker"
 msgstr "Réinitialiser le mot de passe pour l'utilisateur mobile "
-
-#: corehq/apps/users/forms.py
-msgid "Password (reenter)"
-msgstr ""
-
-#: corehq/apps/users/forms.py
-msgid "Please enter number, including international code, in digits only."
-msgstr ""
-"Veuillez entrer le numéro, y compris le code international, en chiffres "
-"uniquement."
-
-#: corehq/apps/users/forms.py
-msgid "Mobile Worker's Primary Information"
-msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "Username contains invalid characters."
@@ -41602,7 +41560,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#: corehq/apps/users/templates/users/new_mobile_worker_modal.html
 msgid "Create Mobile Worker"
 msgstr "Créer utilisateur mobile"
 
@@ -42198,6 +42155,17 @@ msgid "Allow this role to manage project alerts."
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#, python-format
+msgid ""
+"\n"
+"            This permission is already configured via <a target=\"_blank\" "
+"href=\"%(manage_web_apps_permissions_url)s\">Manage Web Apps Permissions</"
+"a>.\n"
+"            Please remove this configuration before updating access here.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Please select at least one item."
 msgstr ""
 
@@ -42458,6 +42426,12 @@ msgstr ""
 msgid "The username email domain '@{}' should be '@{}'."
 msgstr ""
 
+#: corehq/apps/users/validation.py
+#, fuzzy
+#| msgid "A name is required for this new role."
+msgid "A profile assignment is required for Mobile Workers."
+msgstr "Un nom est requis pour ce nouveau rôle."
+
 #: corehq/apps/users/views/__init__.py
 msgid ""
 "There was an error getting data for this user's associated Tableau\n"
@@ -42621,6 +42595,14 @@ msgstr "Vérification du workflow lancé"
 #: corehq/tabs/tabclasses.py
 msgid "Edit User Fields"
 msgstr "Éditer les champs de l`utilisateur"
+
+#: corehq/apps/users/views/mobile/custom_data_fields.py
+msgid "Both"
+msgstr ""
+
+#: corehq/apps/users/views/mobile/custom_data_fields.py
+msgid "Neither"
+msgstr ""
 
 #: corehq/apps/users/views/mobile/groups.py
 #, python-format
@@ -42800,20 +42782,6 @@ msgstr "Désactiver"
 #: corehq/apps/users/views/mobile/users.py
 msgid "Pending Confirmation"
 msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid ""
-"\n"
-"                    Cannot add new worker due to usage of user field "
-"profiles.\n"
-"                    Please add your new worker from the mobile workers "
-"page.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "CommCare Help Site"
-msgstr "Site d'aide de CommCare"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Bulk Upload Mobile Workers"
@@ -43949,7 +43917,11 @@ msgid "The Case's Child Cases"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-msgid "User Specified via Case Property"
+msgid "Username Specified via Case Property"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "User ID Specified via Case Property"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -43978,6 +43950,10 @@ msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Username Case Property"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "User ID Case Property"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -44639,7 +44615,8 @@ msgstr "Paramètre de numéro de téléphone"
 msgid "Include '+' in Phone Number"
 msgstr "Inclure '+' dans le numéro de téléphone"
 
-#: corehq/messaging/smsbackends/http/forms.py corehq/motech/repeaters/forms.py
+#: corehq/messaging/smsbackends/http/forms.py
+#: corehq/motech/repeaters/expression/forms.py corehq/motech/repeaters/forms.py
 msgid "HTTP Request Method"
 msgstr "Méthode de demande HTTP"
 
@@ -45383,10 +45360,6 @@ msgstr ""
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a href=\"https://github."
 "com/dimagi/commcare-hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
-msgstr ""
-
-#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
-msgid "Column"
 msgstr ""
 
 #: corehq/motech/dhis2/forms.py
@@ -46145,6 +46118,12 @@ msgstr ""
 
 #: corehq/motech/repeaters/expression/forms.py
 msgid ""
+"This expression is used to generate the request payload. It is required for "
+"POST, and PUT requests."
+msgstr ""
+
+#: corehq/motech/repeaters/expression/forms.py
+msgid ""
 "Items to add to the end of the URL. Please see the documentation for more "
 "information."
 msgstr ""
@@ -46167,6 +46146,11 @@ msgstr ""
 
 #: corehq/motech/repeaters/expression/forms.py
 #, python-brace-format
+msgid "This field is required for {request_method} requests."
+msgstr ""
+
+#: corehq/motech/repeaters/expression/forms.py
+#, python-brace-format
 msgid "This field is required when '{other}' is provided"
 msgstr ""
 
@@ -46180,6 +46164,10 @@ msgstr ""
 
 #: corehq/motech/repeaters/expression/repeaters.py
 msgid "Configurable ArcGIS Form Repeater"
+msgstr ""
+
+#: corehq/motech/repeaters/expression/repeaters.py
+msgid "[No error message given by ArcGIS]"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/views.py
@@ -46454,10 +46442,8 @@ msgid "Failure"
 msgstr "Echec"
 
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
-#, fuzzy
-#| msgid "Invalid URL"
 msgid "Invalid"
-msgstr "URL non valide"
+msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 msgid "You haven't configured any services to forward to yet."
@@ -46859,6 +46845,10 @@ msgstr ""
 msgid "Custom domain banners"
 msgstr ""
 
+#: corehq/privileges.py
+msgid "App Dependencies"
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Rapports de l'Éditeur de Rapports"
@@ -46898,6 +46888,12 @@ msgstr "Configuration de CommCare Supply"
 #: corehq/tabs/tabclasses.py
 msgid "Explore Data"
 msgstr ""
+
+#: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Location Fixture"
+msgid "CSQL Fixtures"
+msgstr "Elément de site"
 
 #: corehq/tabs/tabclasses.py
 msgid "Data Manipulation"
@@ -48081,44 +48077,8 @@ msgstr "Le Score à la Fonctionnalité"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
-#~ msgid "Multimedia Sharing Options"
-#~ msgstr "Options de partage multimédia"
+#~ msgid "More info..."
+#~ msgstr "Plus d'informations..."
 
-#~ msgid "License"
-#~ msgstr "Licence"
-
-#~ msgid "Creative Commons Attribution, Non-Commercial (CC BY-NC)"
-#~ msgstr "Creative Commons Attribution, Non-Commerciale (CC BY-NC)"
-
-#~ msgid "Creative Commons Attribution, No Derivatives (CC BY-ND)"
-#~ msgstr "Creative Commons Attribution, Aucun Dérivé (CC BY-NC)"
-
-#~ msgid "Creative Commons Attribution (CC BY)"
-#~ msgstr "Creative Commons Attribution (CC BY)"
-
-#~ msgid ""
-#~ "Creative Commons Attribution, Non-Commercial, and Share Alike (CC BY-NC-"
-#~ "SA)"
-#~ msgstr ""
-#~ "Creative Commons Attribution, Non-Commerciale, et de Partage (CC BY-NC)"
-
-#~ msgid ""
-#~ "Creative Commons Attribution, Non-Commercial, and No Derivatives (CC BY-"
-#~ "NC-ND)"
-#~ msgstr ""
-#~ "Creative Commons Attribution, Non-Commerciale, et Aucun Dérivé (CC BY-NC)"
-
-#~ msgid "Creative Commons Attribution, Share Alike (CC BY-SA)"
-#~ msgstr "Creative Commons Attribution,  de Partage (CC BY-NC)"
-
-#~ msgid "Author"
-#~ msgstr "Auteur"
-
-#~ msgid "Enter the name of the author"
-#~ msgstr "Entrez le nom de l'auteur"
-
-#~ msgid "Attribution Notes"
-#~ msgstr "Notes d'attribution"
-
-#~ msgid "Select New"
-#~ msgstr "Sélectionner un élément nouveau"
+#~ msgid "Select a more restrictive license"
+#~ msgstr "Choisir une licence plus restrictive"

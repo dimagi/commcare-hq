@@ -4,7 +4,8 @@ hqDefine("scheduling/js/conditional_alert_list", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components.ko',    // pagination and search box widgets
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
 ], function (
     $,
     ko,
@@ -12,8 +13,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
     assertProperties,
     initialPageData
 ) {
-    var table = null;
-
     var rule = function (options) {
         var self = ko.mapping.fromJS(options);
         self.requestInProgress = ko.observable(false);

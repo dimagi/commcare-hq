@@ -49,7 +49,6 @@ from corehq.apps.domain.views.internal import (
     FlagsAndPrivilegesView,
     ProjectLimitsView,
     TransferDomainView,
-    TestBootstrap5DomainView,
     calculated_properties,
     toggle_diff,
 )
@@ -193,7 +192,6 @@ domain_settings = [
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
-    url(r'^internal/bootstrap5/$', TestBootstrap5DomainView.as_view(), name=TestBootstrap5DomainView.urlname),
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(),
         name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),

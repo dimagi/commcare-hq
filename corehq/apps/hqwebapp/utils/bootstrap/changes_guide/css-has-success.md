@@ -1,5 +1,7 @@
 Form validation markup has been reworked, which includes dropping `has-success`.
 In general, replace `has-success` and `help-block` with `is-valid` and `valid-feedback`.
+Note that `valid-feedback` must be a **sibling** of an input with `is_valid`, or it will be hidden.
+This is a change from `has-success`, which was used on containers and would apply to all descendants.
 
 An EXAMPLE for how to apply this change is provided below.
 Please see docs for further details.

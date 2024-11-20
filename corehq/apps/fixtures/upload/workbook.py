@@ -10,7 +10,10 @@ from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
 )
-from corehq.util.workbook_json.excel import get_workbook as excel_get_workbook
+from corehq.util.workbook_json.excel import (
+    JSONReaderError,
+    get_workbook as excel_get_workbook
+)
 
 from ..models import (
     Field,
@@ -45,6 +48,8 @@ class _FixtureWorkbook(object):
             return self.get_data_sheet("types")
         except WorksheetNotFound:
             raise FixtureUploadError([FAILURE_MESSAGES['no_types_sheet']])
+        except JSONReaderError as e:
+            raise FixtureUploadError(e.args)
 
     def get_data_sheet(self, tag):
         # Cache all rows in memory in order to traverse them more than

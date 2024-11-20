@@ -1,0 +1,19 @@
+{% load i18n %}
+<span class="d-inline-block ms-2 float-end" data-bind="visible: bulkExportDownloadCount()">
+  <form class="form d-inline" method="post"
+        data-bind="submit: submitBulkExportDownload"
+        action="{{ bulk_download_url }}">
+    {% csrf_token %}
+    <input name="export_list" type="hidden" data-bind="value: bulkExportList" />
+    <button type="submit"
+            class="btn btn-primary">
+      {% trans 'Bulk Export' %}
+      (<!-- ko text: bulkExportDownloadCount() --><!-- /ko -->)
+    </button>
+    <span class="hq-help-template"
+          data-title="{% trans "Bulk Export" %}"
+          data-content="{% trans "All of the selected exports will be collected for download to a single Excel file, with each export as a separate sheet." %}"
+          data-placement="left"
+    ></span>
+  </form>
+</span>

@@ -34,12 +34,14 @@ hqDefine('hqwebapp/js/components/pagination', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',
 ], function (
     ko,
     _,
-    initialPageData
+    initialPageData,
+    koComponents
 ) {
-    return {
+    const component = {
         viewModel: function (params) {
             var self = {};
 
@@ -124,4 +126,8 @@ hqDefine('hqwebapp/js/components/pagination', [
         },
         template: '<div data-bind="template: { name: \'ko-pagination-template\' }"></div>',
     };
+
+    koComponents.register('pagination', component);
+
+    return component;
 });

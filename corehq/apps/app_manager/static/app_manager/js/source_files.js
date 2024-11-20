@@ -5,6 +5,7 @@ hqDefine('app_manager/js/source_files', [
     'hqwebapp/js/initial_page_data',
     'app_manager/js/multimedia_size_util',
     'app_manager/js/widgets',       // version dropdown
+    'commcarehq',
 ], function ($, _, ko, initialPageData, multimediaSizeUtil) {
     $(function () {
         $('.toggle-next').click(function (e) {

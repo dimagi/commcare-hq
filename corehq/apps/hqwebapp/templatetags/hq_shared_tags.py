@@ -746,6 +746,9 @@ class WebpackMainNode(RequireJSMainNode):
 
 @register.filter
 def webpack_bundles(entry_name):
+    if settings.UNIT_TESTING:
+        return []
+
     from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
     from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
     bootstrap_version = get_bootstrap_version()

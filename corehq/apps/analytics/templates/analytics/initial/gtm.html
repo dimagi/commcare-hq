@@ -12,6 +12,7 @@
   {% initial_analytics_data 'gtm.hqInstance' ANALYTICS_CONFIG.HQ_INSTANCE %}
 {% endif %}
 {% if request.project and ANALYTICS_IDS.GTM_ID %}
+  {% initial_analytics_data 'gtm.projectGAOptOut' request.project.ga_opt_out|yesno:"yes,no,none" %}
   {% if request.project.is_test == 'true' %}
     {% initial_analytics_data 'gtm.isTestDomain' 'yes' %}
   {% elif request.project.is_test == 'false' %}

@@ -4179,7 +4179,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     has_submissions = BooleanProperty(default=False)
 
     mobile_ucr_restore_version = StringProperty(
-        default=const.MOBILE_UCR_VERSION_1, choices=const.MOBILE_UCR_VERSIONS, required=False
+        default=const.MOBILE_UCR_VERSION_2, choices=const.MOBILE_UCR_VERSIONS, required=False
     )
     location_fixture_restore = StringProperty(
         default=const.DEFAULT_LOCATION_FIXTURE_OPTION, choices=const.LOCATION_FIXTURE_OPTIONS,
@@ -4922,6 +4922,12 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
+
+        if not domain_has_privilege(self.domain, privileges.APP_DEPENDENCIES):
+            # remove any previous dependencies if privilege was revoked
+            if 'dependencies' in app_profile['features']:
+                del app_profile['features']['dependencies']
+
         apk_heartbeat_url = self.heartbeat_url(build_profile_id)
         locale = self.get_build_langs(build_profile_id)[0]
         target_package_id = {

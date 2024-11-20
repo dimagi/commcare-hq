@@ -10,7 +10,8 @@ hqDefine("users/js/web_users_list", [
     "knockout",
     "underscore",
     "hqwebapp/js/assert_properties",
-    "hqwebapp/js/components.ko",    // pagination and search box widgets
+    "hqwebapp/js/components/pagination",
+    "hqwebapp/js/components/search_box",
 ], function (
     $,
     ko,

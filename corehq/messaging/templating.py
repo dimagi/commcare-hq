@@ -142,6 +142,22 @@ class SimpleDictTemplateParam(object):
         return SimpleMessagingTemplateParam(UNKNOWN_VALUE)
 
 
+class NestedDictTemplateParam(SimpleDictTemplateParam):
+
+    def __init__(self, dict_of_values):
+        self.__dict_of_values = dict_of_values
+
+    def __getattr__(self, item):
+        """Works just like SimpleDictTemplateParam but it can contain nested dicts"""
+        if val := self.__dict_of_values.get(item):
+            if isinstance(val, dict):
+                return NestedDictTemplateParam(val)
+
+            return SimpleMessagingTemplateParam(val)
+
+        return SimpleMessagingTemplateParam(UNKNOWN_VALUE)
+
+
 class CaseMessagingTemplateParam(SimpleDictTemplateParam):
 
     def __init__(self, case):

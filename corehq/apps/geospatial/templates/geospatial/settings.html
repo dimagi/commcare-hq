@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main 'geospatial/js/geo_config' %}
+{% js_entry_b3 'geospatial/js/geo_config' %}
 
 {% block page_content %}
 {% initial_page_data 'config' config %}

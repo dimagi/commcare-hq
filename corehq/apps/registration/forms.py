@@ -73,6 +73,7 @@ class RegisterWebUserForm(forms.Form):
             """)))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
+    is_self_signup = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         self.is_sso = kwargs.pop('is_sso', False)
@@ -215,6 +216,7 @@ class RegisterWebUserForm(forms.Form):
                                   "disable: disableNextStepTwo"
                     )
                 ),
+                hqcrispy.InlineField('is_self_signup'),
                 css_class="form-bubble form-step step-2",
                 style="display: none;"
             ),
@@ -492,7 +494,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
                  custom_data=None, *, domain, **kwargs):
-        self.custom_data = custom_data if WEB_USER_INVITE_ADDITIONAL_FIELDS.enabled(domain) else None
+        self.custom_data = custom_data
         if data and self.custom_data:
             data = data.copy()
             custom_data_post_dict = self.custom_data.form.data
@@ -504,8 +506,12 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         self.fields['role'].choices = [('', _("Select a role"))] + role_choices
         if domain_obj:
             if self.custom_data:
-                prefixed_fields = []
-                prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
+                prefixed_fields = {}
+                if WEB_USER_INVITE_ADDITIONAL_FIELDS.enabled(domain):
+                    prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
+                elif PROFILE_SLUG in self.custom_data.form.fields:
+                    prefixed_profile_key = with_prefix(PROFILE_SLUG, self.custom_data.prefix)
+                    prefixed_fields[prefixed_profile_key] = self.custom_data.form.fields[PROFILE_SLUG]
                 self.fields.update(prefixed_fields)
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
@@ -533,7 +539,6 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                     data_bind="textInput: email",
                 ),
                 'role',
-                'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
             )
         ]
         if self.custom_data:
@@ -585,7 +590,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
     def _validate_profile(self, profile_id):
         valid_profile_ids = {choice[0] for choice in self.custom_data.form.fields[PROFILE_SLUG].widget.choices}
-        if profile_id not in valid_profile_ids:
+        if profile_id and profile_id not in valid_profile_ids:
             raise forms.ValidationError(
                 _('Invalid profile selected. Please select a valid profile.'),
             )

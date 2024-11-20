@@ -132,11 +132,6 @@ def _get_form_designer_view(request, domain, app, module, form):
 
     send_hubspot_form(HUBSPOT_FORM_BUILDER_FORM_ID, request)
 
-    def _form_too_large(_app, _form):
-        # form less than 0.1MB, anything larger starts to have
-        # performance issues with fullstory
-        return _app.blobs['{}.xml'.format(_form.unique_id)]['content_length'] > 102400
-
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
 
@@ -151,7 +146,6 @@ def _get_form_designer_view(request, domain, app, module, form):
         'nav_form': form,
         'formdesigner': True,
 
-        'include_fullstory': not _form_too_large(app, form),
         'CKEDITOR_BASEPATH': "app_manager/js/vellum/lib/ckeditor/",
         'show_live_preview': should_show_preview_app(
             request,

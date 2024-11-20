@@ -22,6 +22,7 @@ def get_navigation_context(current_page):
                     Page("Code Guidelines", 'styleguide_code_guidelines_b5'),
                     Page("Bootstrap Migration Guide", 'styleguide_migration_guide_b5'),
                     Page("Javascript Guide", 'styleguide_javascript_guide_b5'),
+                    Page("HTMX + Alpine.JS", 'styleguide_htmx_and_alpine_b5'),
                 ],
             ),
             NavigationGroup(
