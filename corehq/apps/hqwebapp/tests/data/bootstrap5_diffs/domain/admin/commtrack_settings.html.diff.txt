@@ -1,7 +1,11 @@
 --- 
 +++ 
-@@ -6,5 +6,5 @@
- {% requirejs_main_b5 "domain/js/commtrack_settings" %}
+@@ -3,8 +3,8 @@
+ {% load i18n %}
+ {% load crispy_forms_tags %}
+ 
+-{% js_entry "domain/js/commtrack_settings" %}
++{% requirejs_main_b5 "domain/js/commtrack_settings" %}
  
  {% block page_content %}
 -  {% crispy form %}

@@ -6,8 +6,8 @@
  {% load hq_shared_tags %}
  {% load i18n %}
  
--{% requirejs_main "domain/js/internal_calculations" %}
-+{% requirejs_main_b5 "domain/js/internal_calculations" %}
+-{% js_entry_b3 "domain/js/internal_calculations" %}
++{% js_entry "domain/js/internal_calculations" %}
  
  {% block page_content %}
    {% registerurl 'calculated_properties' domain %}

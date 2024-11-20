@@ -1,5 +1,14 @@
 --- 
 +++ 
+@@ -2,7 +2,7 @@
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% requirejs_main_b5 'commtrack/js/sms' %}
++{% js_entry 'commtrack/js/sms' %}
+ 
+ {% block page_content %}
+   {% initial_page_data "settings" settings %}
 @@ -12,7 +12,7 @@
      <fieldset>
        <legend>{% trans 'Stock Actions' %}</legend>

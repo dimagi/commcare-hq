@@ -7,8 +7,8 @@
  {% load i18n %}
  {% load menu_tags %}
  
--{% requirejs_main 'accounting/js/pricing_table' %}
-+{% requirejs_main_b5 'accounting/js/pricing_table' %}
+-{% js_entry_b3 'accounting/js/pricing_table' %}
++{% js_entry 'accounting/js/pricing_table' %}
  
  {% block form_content %}
    {% initial_page_data 'editions' editions %}
