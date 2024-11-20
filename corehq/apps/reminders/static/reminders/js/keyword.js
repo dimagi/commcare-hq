@@ -1,8 +1,9 @@
-hqDefine("reminders/js/reminders.keywords.ko", [
+hqDefine("reminders/js/keyword", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/widgets",      // .hqwebapp-select2 for survey dropdown
+    "commcarehq",
 ], function (
     $,
     ko,
