@@ -98,7 +98,7 @@ class EnterpriseFormReportConverter:
         }
 
     @classmethod
-    def get_query_paraams(cls, fetched_object):
+    def get_query_params(cls, fetched_object):
         '''
         Takes a fetched, converted object and returns the values from this object that will be necessary
         to continue where this query left off.
