@@ -23,13 +23,13 @@ class IterableEnterpriseFormQuery:
     The intended use case is to support queries that cross pagination boundaries
     - form_converter: an instance of a class that knows how to translate the iteration results and interpret
       the previous progress arguments
-    - start_date: a date to start the date range. Can be None
-    - end_date: the inclusive date to finish the date range. Can be None
-    last_domain, last_time, and last_id are intended to represent the last result from a previous query
+    - `start_date`: a date to start the date range. Can be None
+    - `end_date`: the inclusive date to finish the date range. Can be None
+    `last_domain`, `last_time`, and `last_id` are intended to represent the last result from a previous query
     that should now be resumed.
-    - last_domain: the domain to resume the query on
-    - last_time: the timestamp from the last result of the previous query
-    - last_id: the id from the last result of the previous query
+    - `last_domain`: the domain to resume the query on
+    - `last_time`: the timestamp from the last result of the previous query
+    - `last_id`: the id from the last result of the previous query
     '''
     def __init__(self, account, form_converter, start_date, end_date, last_domain, last_time, last_id):
         MAX_DATE_RANGE_DAYS = 100
@@ -113,7 +113,7 @@ class EnterpriseFormReportConverter:
     def get_kwargs_from_map(cls, map):
         '''
         Takes a map-like object from a continuation request (generally GET/POST) and extracts
-        the parameters necessary for initializing an IterableEnterpriseFormQuery.
+        the parameters necessary for initializing an `IterableEnterpriseFormQuery`.
         '''
         last_domain = map.get('domain', None)
         last_time = map.get('inserted_at', None)
@@ -184,7 +184,7 @@ class ReportQueryFactoryInterface:
     '''
     def get_query(self, **kwargs):
         '''
-        Returns an ElasticSearch query, configured by **kwargs
+        Returns an ElasticSearch query, configured by `**kwargs`
         '''
         raise NotImplementedError()
 
