@@ -148,7 +148,7 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
 ], name='dispatch')
 class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseDomainView):
     urlname = 'csql_fixture_configuration'
-    page_title = _('CSQL Fixture Confguration')
+    page_title = _('CSQL Fixture Configuration')
     template_name = 'case_search/csql_fixture_configuration.html'
 
     @property
