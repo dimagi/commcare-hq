@@ -22,12 +22,14 @@
       {{ form }}
     {% endfor %}
   </div>
-  <button type="button"
-          class="btn btn-default"
-          hx-post="{{ request.path_info }}"
-          hq-hx-action="new_expression"
-          hx-target="#csql-fixture-rows"
-          hx-swap="beforeend">
+  <button
+    type="button"
+    class="btn btn-default"
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="new_expression"
+    hx-target="#csql-fixture-rows"
+    hx-swap="beforeend"
+  >
     <i class="fa fa-plus"></i> {% trans "Add Expression" %}
   </button>
 
