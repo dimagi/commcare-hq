@@ -6,6 +6,7 @@ hqDefine('accounting/js/pricing_table', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/main',
     "hqwebapp/js/assert_properties",
+    'commcarehq',
 ], function (
     $,
     ko,
