@@ -5,7 +5,7 @@
 
 {% block title %}{% trans "Your session has expired" %}{% endblock %}
 
-{% requirejs_main_b5 'registration/js/login' %}
+{% js_entry 'registration/js/login' %}
 
 {% block background_content %}
   <div class="bg-container">
@@ -48,7 +48,7 @@
          id="user-login-form"
          class="ko-template"
          {% endif %}>
-      {% include "login_and_password/partials/login_full.html" %}
+      {% include "login_and_password/partials/bootstrap5/login_full.html" %}
     </div>
   {% endblock %}
 {% endblock content %}
