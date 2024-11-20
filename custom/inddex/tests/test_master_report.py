@@ -1,6 +1,7 @@
 import csv
 import doctest
 import os
+from contextlib import ExitStack
 from datetime import date
 
 from django.test import SimpleTestCase, TestCase
@@ -8,19 +9,21 @@ from django.utils.functional import cached_property
 
 from memoized import memoized
 from unittest.mock import patch
+from unmagic import fixture
 
 from dimagi.utils.dates import DateSpan
 
 import custom.inddex.reports.r4_nutrient_stats
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.models import LookupTable
+from corehq.apps.userreports.util import get_indicator_adapter, get_ucr_datasource_config_by_id
 from corehq.form_processor.models import CommCareCase
-from corehq.util.test_utils import require_db_context
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 from ..example_data.data import (
     FOOD_CASE_TYPE,
     FOODRECALL_CASE_TYPE,
+    _get_or_create_user,
     populate_inddex_domain,
 )
 from ..fixtures import FixtureAccessor
@@ -64,22 +67,36 @@ def _overwrite_report(filename, actual_report):
         writer.writerows(rows)
 
 
-@require_db_context
-def setUpModule():
-    create_domain(name=DOMAIN)
-    try:
-        with patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: []):
-            populate_inddex_domain(DOMAIN)
-    except Exception:
-        tearDownModule()
-        raise
+@fixture(scope='module', autouse=__file__)
+def inddex_domain():
+    def on_exit(callback):
+        cleanup.callback(with_db, callback)
 
+    def with_db(func):
+        with db_blocker.unblock():
+            func()
 
-@require_db_context
-def tearDownModule():
-    Domain.get_by_name(DOMAIN).delete()
-    get_food_data.reset_cache()
-    _get_case_ids_by_external_id.reset_cache()
+    db_blocker = fixture("django_db_blocker")()
+    with ExitStack() as cleanup:
+        cleanup.callback(_get_case_ids_by_external_id.reset_cache)
+        cleanup.callback(get_food_data.reset_cache)
+
+        with db_blocker.unblock():
+            domain = create_domain(name=DOMAIN)
+            on_exit(domain.delete)
+
+            with patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: []):
+                datasource_config_id = populate_inddex_domain(DOMAIN)
+                config = get_ucr_datasource_config_by_id(datasource_config_id)
+
+        on_exit(lambda: _get_or_create_user(domain.name, create=False).delete(None, None))
+        on_exit(LookupTable.objects.filter(domain=domain.name).delete)
+        on_exit(get_indicator_adapter(config).drop_table)
+
+        for dbname in get_db_aliases_for_partitioned_query():
+            on_exit(CommCareCase.objects.using(dbname).filter(domain=domain.name).delete)
+
+        yield
 
 
 @memoized

@@ -244,7 +244,7 @@ class GeospatialConfigPage(BaseConfigView):
 
 class GPSCaptureView(BaseDomainView):
     urlname = 'gps_capture'
-    template_name = 'gps_capture_view.html'
+    template_name = 'geospatial/gps_capture_view.html'
 
     page_name = _("Manage GPS Data")
     section_name = _("Data")

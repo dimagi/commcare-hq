@@ -20,7 +20,7 @@ def _get_user_template_info(restore_user):
         "username": restore_user.username,
         "uuid": restore_user.user_id,
         "user_data": restore_user.user_session_data,
-        "location_ids": restore_user.get_location_ids(restore_user.domain),
+        "location_ids": " ".join(restore_user.get_location_ids(restore_user.domain)),
     }
 
 
@@ -59,6 +59,7 @@ def _get_indicator_nodes(restore_state, indicators):
 
 class CaseSearchFixtureProvider(FixtureProvider):
     id = 'case-search-fixture'
+    ignore_skip_fixtures_flag = True
 
     def __call__(self, restore_state):
         if not MODULE_BADGES.enabled(restore_state.domain):

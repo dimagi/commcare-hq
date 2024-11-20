@@ -94,7 +94,7 @@ class CaseManagementMap(BaseCaseMapReport):
     slug = "microplanning_map"
 
     base_template = "geospatial/case_management_base.html"
-    report_template_path = "case_management.html"
+    report_template_path = "geospatial/case_management.html"
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
@@ -137,7 +137,7 @@ class CaseGroupingReport(BaseCaseMapReport):
     slug = 'case_clustering_map'
 
     base_template = 'geospatial/case_grouping_map_base.html'
-    report_template_path = 'case_grouping_map.html'
+    report_template_path = 'geospatial/case_grouping_map.html'
 
     default_rows = 1
     force_page_size = True

@@ -137,7 +137,7 @@ module’s encompassing function:
       "jquery",
       "otherApp/js/utils",
       "commcarehq"  // REQUIRED: always list this module that imports all site-level dependencies
-                    // This can be at the end of the list. Use ``commcarehq_b3`` for Bootstrap 3 pages.
+                    // This can be at the end of the list.
    ], function(
       $,
       otherUtils

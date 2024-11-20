@@ -5,6 +5,10 @@ from itertools import groupby
 
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+
+import requests
 
 from pillowtop.utils import force_seq_int
 
@@ -23,6 +27,65 @@ def check_for_rewind(checkpoint):
     store_seq = historical_checkpoint.seq_int
     has_rewound = force_seq_int(db_seq) < store_seq - EPSILON
     return has_rewound, historical_checkpoint.seq
+
+
+def get_celery_stats():
+
+    def get_stats(celery_monitoring, status_only=False, refresh=False):
+        params = {'refresh': 'true'} if refresh else {}
+        if status_only:
+            params['status'] = 'true'
+        try:
+            return requests.get(
+                celery_monitoring + '/api/workers',
+                params=params,
+                timeout=3,
+            ).json()
+        except Exception:
+            return {}
+
+    def get_task_html(detailed_stats, worker_name):
+        tasks_ok = 'label-success'
+        tasks_full = 'label-warning'
+
+        tasks_html = format_html('<span class="label {}">unknown</span>', tasks_full)
+        try:
+            worker_stats = detailed_stats[worker_name]
+            pool_stats = worker_stats['stats']['pool']
+            running_tasks = pool_stats['writes']['inqueues']['active']
+            concurrency = pool_stats['max-concurrency']
+            completed_tasks = pool_stats['writes']['total']
+
+            tasks_class = tasks_full if running_tasks == concurrency else tasks_ok
+            tasks_html = format_html(
+                '<span class="label {}">{} / {}</span> :: {}',
+                tasks_class,
+                running_tasks,
+                concurrency,
+                completed_tasks
+            )
+        except KeyError:
+            pass
+
+        return tasks_html
+
+    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
+    worker_status = ""
+    if celery_monitoring:
+        worker_ok = '<span class="label label-success">OK</span>'
+        worker_bad = '<span class="label label-important">Down</span>'
+
+        worker_info = []
+        worker_stats = get_stats(celery_monitoring, status_only=True)
+        detailed_stats = get_stats(celery_monitoring, refresh=True)
+        for worker_name, status in worker_stats.items():
+            status_html = worker_ok if status else worker_bad
+            tasks_html = get_task_html(detailed_stats, worker_name)
+            worker_info.append(' '.join([worker_name, status_html, tasks_html]))
+        worker_status = '<br>'.join(worker_info)
+    # This is used by the system status admin page, and it doesn't look like celery is displayed
+    # properly on any environment, so this is likely not even used
+    return mark_safe(worker_status)  # nosec: the joined elements are safe
 
 
 def parse_celery_pings(worker_responses):

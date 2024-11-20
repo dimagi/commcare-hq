@@ -5,7 +5,7 @@ from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.couch.bulk import get_docs
 
 from corehq.apps.api.exceptions import UpdateUserException
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG, CustomDataFieldsProfile
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -14,6 +14,7 @@ from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.user_data import UserDataError
+from corehq.apps.users.validation import validate_profile_required
 
 
 def update(user, field, value, user_change_logger=None):
@@ -117,7 +118,16 @@ def _update_user_data(user, new_user_data, user_change_logger):
         changed = user.get_user_data(user.domain).update(new_user_data, profile_id=profile_id)
     except UserDataError as e:
         raise UpdateUserException(str(e))
-
+    try:
+        if profile_id != ...:
+            profile = CustomDataFieldsProfile.objects.get(id=profile_id)
+            if profile:
+                profile_name = profile.name
+        else:
+            profile_name = None
+        validate_profile_required(profile_name, user.domain)
+    except ValidationError as e:
+        raise UpdateUserException(_(e.message))
     if user_change_logger and changed:
         user_change_logger.add_changes({
             'user_data': user.get_user_data(user.domain).raw

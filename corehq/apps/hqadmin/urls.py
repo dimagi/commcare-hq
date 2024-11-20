@@ -13,9 +13,12 @@ from corehq.apps.hqadmin.views.reports import (
     DownloadMALTView,
 )
 from corehq.apps.hqadmin.views.system import (
+    SystemInfoView,
     branches_on_staging,
     GlobalThresholds,
     check_services,
+    pillow_operation_api,
+    system_ajax,
 )
 from corehq.apps.hqadmin.views.users import (
     AdminRestoreView,
@@ -33,6 +36,8 @@ from corehq.apps.reports.dispatcher import AdminReportDispatcher
 
 urlpatterns = [
     url(r'^$', default, name="default_admin_report"),
+    url(r'^system/$', SystemInfoView.as_view(), name=SystemInfoView.urlname),
+    url(r'^system/system_ajax$', system_ajax, name="system_ajax"),
     url(r'^system/check_services$', check_services, name="check_services"),
     url(r'^system/autostaging/$', branches_on_staging, name="branches_on_staging"),
     url(r'^global_thresholds/$', GlobalThresholds.as_view(), name=GlobalThresholds.urlname),
@@ -47,6 +52,7 @@ urlpatterns = [
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
     url(r'^app_build_timings/$', AppBuildTimingsView.as_view(), name="app_build_timings"),
+    url(r'^do_pillow_op/$', pillow_operation_api, name="pillow_operation_api"),
     url(r'^web_user_lookup/$', web_user_lookup, name='web_user_lookup'),
     url(r'^disable_two_factor/$', DisableTwoFactorView.as_view(), name=DisableTwoFactorView.urlname),
     url(r'^disable_account/$', DisableUserView.as_view(), name=DisableUserView.urlname),

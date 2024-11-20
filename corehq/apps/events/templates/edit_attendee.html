@@ -4,7 +4,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'events/js/edit_attendee' %}
+{% js_entry_b3 'events/js/edit_attendee' %}
 
 {% block page_content %}
   {% initial_page_data "attendee_id" attendee_id %}
