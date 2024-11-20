@@ -1,0 +1,63 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block page_content %}
+  <div class="row">
+    <div class="col-md-10">
+
+      {% for app_name, measures in measures_by_app %}
+        <table class="table table-striped">
+          <caption>{{ app_name }}</caption>
+
+          <thead>
+          <th>{% trans "Measure" %}</th>
+          <th>{% trans "Sequence Number" %}</th>
+          <th>{% trans "App Versions" %}</th>
+          <th>{% trans "CC Versions" %}</th>
+          <th>{% trans "Created On" %}</th>
+          <th>{% trans "User" %}</th>
+          <th class="col-md-4">{% trans "Notes" %}</th>
+          </thead>
+
+          <tbody>
+
+          {% for measure in measures %}
+            <tr>
+              <td>{{ measure.get_measure_display }}</td>
+              <td>{{ measure.sequence_number }}</td>
+              <td>
+                {% if measure.app_all_versions %}
+                  {% trans "All" %}
+                {% else %}
+                  {{ measure.app_version_min }} - {{ measure.app_version_max }}
+                {% endif %}
+              </td>
+              <td>
+                {% if measure.cc_all_versions %}
+                  {% trans "All" %}
+                {% else %}
+                  {{ measure.cc_version_min }} - {{ measure.cc_version_max }}
+                {% endif %}
+              </td>
+              <td>{{ measure.created_on }}</td>
+              <td>{{ measure.username }}</td>
+              <td>{{ measure.notes }}</td>
+            </tr>
+          {% endfor %}
+
+          {% if not measures %}
+            <tr>
+              <td colspan="7">
+                {% trans "No measures have been initiated for this application" %}
+              </td>
+            </tr>
+          {% endif %}
+
+          </tbody>
+        </table>
+      {% endfor %}
+
+    </div>
+  </div>
+{% endblock %}

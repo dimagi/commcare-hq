@@ -1,0 +1,21 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% js_entry 'domain/js/my_project_settings' %}
+
+{% block stylesheets %}
+  <style>
+    #id_user_timezone {
+      width: 50%;
+      display: inline;
+    }
+  </style>
+{% endblock %}
+
+{% block page_content %}
+  {% initial_page_data "override_global_tz" override_global_tz %}
+  {% initial_page_data "no_domain_membership" no_domain_membership %}
+  {% crispy my_project_settings_form %}  {# todo B5: crispy #}
+{% endblock %}
