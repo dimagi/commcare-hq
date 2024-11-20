@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 
 
-{% requirejs_main_b5 'domain/js/bootstrap5/info_basic' %}
+{% js_entry 'domain/js/bootstrap5/info_basic' %}
 
 {% block stylesheets %}{{ block.super }}
    <link rel="stylesheet" href="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css' %}" type="text/css" />

@@ -4,7 +4,7 @@
 
 {% block title %}{% trans "My Projects" %}{% endblock title %}
 
-{% requirejs_main_b5 'domain/js/select' %}
+{% js_entry 'domain/js/select' %}
 
 {% block page_content %}
   {% initial_page_data 'invitation_links' invitation_links %}
