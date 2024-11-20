@@ -37,7 +37,7 @@ hqDefine('cloudcare/js/utils', [
         showSpinner: false,
     });
 
-    var showError = function (message, $el, reportToHq) {
+    var showError = function (message, $el, reportToHq, additionalData) {
         message = getErrorMessage(message);
         // Make message more user friendly since html isn't useful here
         if (message.includes('500') && message.includes('<!DOCTYPE html>')) {
@@ -46,10 +46,10 @@ hqDefine('cloudcare/js/utils', [
         }
         _show(message, $el, null, "alert-danger");
         if (reportToHq === undefined || reportToHq) {
-            reportFormplayerErrorToHQ({
+            reportFormplayerErrorToHQ(Object.assign({
                 type: 'show_error_notification',
                 message: message,
-            });
+            }, (additionalData || {})));
         }
     };
 
