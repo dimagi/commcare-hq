@@ -3,6 +3,7 @@ hqDefine("domain/js/bootstrap3/info_basic", [
     'hqwebapp/js/select_2_ajax_widget', // for call center case owner
     'select2/dist/js/select2.full.min',
     'hqwebapp/js/bootstrap3/widgets',
+    'commcarehq',
 ], function (
     $
 ) {

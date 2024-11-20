@@ -14,15 +14,11 @@ def get_element_providers(timing_context, skip_fixtures=False):
     """
     # note that ordering matters in this list as this is the order that the items
     # will appear in the XML, and have access to the RestoreState object
-    providers = [
+    return [
         SyncElementProvider(timing_context),
         RegistrationElementProvider(timing_context),
+        FixtureElementProvider(timing_context, skip_fixtures),
     ]
-
-    if not skip_fixtures:
-        providers.append(FixtureElementProvider(timing_context))
-
-    return providers
 
 def get_async_providers(timing_context, async_task=None):
     """

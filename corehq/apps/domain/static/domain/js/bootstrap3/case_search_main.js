@@ -3,6 +3,7 @@ hqDefine('domain/js/bootstrap3/case_search_main', [
     'hqwebapp/js/initial_page_data',
     'domain/js/bootstrap3/case_search',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko',     // save button
+    'commcarehq',
 ], function (
     $,
     initialPageData,

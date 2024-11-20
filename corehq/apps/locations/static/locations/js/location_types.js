@@ -7,6 +7,7 @@ hqDefine('locations/js/location_types', [
     'analytix/js/google',
     'select2/dist/js/select2.full.min',
     'hqwebapp/js/bootstrap5/hq.helpers',
+    'commcarehq',
 ], function (
     $,
     ko,
