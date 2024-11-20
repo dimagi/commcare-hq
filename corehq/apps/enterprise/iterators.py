@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from itertools import dropwhile, chain, islice
 from datetime import datetime, timedelta, timezone
 from django.utils.translation import gettext as _
@@ -21,8 +22,8 @@ class IterableEnterpriseFormQuery:
     '''
     A class representing a query that returns its results as an iterator
     The intended use case is to support queries that cross pagination boundaries
-    - form_converter: an instance of a class that knows how to translate the iteration results and interpret
-      the previous progress arguments
+    - form_converter: an instance of a `EnterpriseDataConverter`
+    that knows how to translate the iteration results and interpret the previous progress arguments
     - `start_date`: a date to start the date range. Can be None
     - `end_date`: the inclusive date to finish the date range. Can be None
     `last_domain`, `last_time`, and `last_id` are intended to represent the last result from a previous query
@@ -78,7 +79,34 @@ def resolve_start_and_end_date(start_date, end_date, maximum_date_range):
     return start_date, end_date
 
 
-class EnterpriseFormReportConverter:
+class EnterpriseDataConverter(ABC):
+    @abstractmethod
+    def convert(self, data):
+        '''
+        Converts the provided `data` into a different format.
+        '''
+        pass
+
+    @classmethod
+    @abstractmethod
+    def get_query_params(cls, fetched_object):
+        '''
+        Takes a fetched, converted object and returns the values from this object that will be necessary
+        to continue where this query left off.
+        '''
+        pass
+
+    @classmethod
+    @abstractmethod
+    def get_kwargs_from_map(cls, map):
+        '''
+        Takes a map-like object from a continuation request (generally GET/POST) and extracts
+        the parameters necessary for initializing an `IterableEnterpriseFormQuery`.
+        '''
+        pass
+
+
+class EnterpriseFormReportConverter(EnterpriseDataConverter):
     def __init__(self):
         self.app_lookup = AppIdToNameResolver()
 
@@ -99,10 +127,6 @@ class EnterpriseFormReportConverter:
 
     @classmethod
     def get_query_params(cls, fetched_object):
-        '''
-        Takes a fetched, converted object and returns the values from this object that will be necessary
-        to continue where this query left off.
-        '''
         return {
             'domain': fetched_object['domain'],
             'inserted_at': fetched_object['inserted_at'],
@@ -111,10 +135,6 @@ class EnterpriseFormReportConverter:
 
     @classmethod
     def get_kwargs_from_map(cls, map):
-        '''
-        Takes a map-like object from a continuation request (generally GET/POST) and extracts
-        the parameters necessary for initializing an `IterableEnterpriseFormQuery`.
-        '''
         last_domain = map.get('domain', None)
         last_time = map.get('inserted_at', None)
         if last_time:
@@ -178,16 +198,18 @@ def run_query_over_domain(query_factory, domain, limit=None, **kwargs):
             next_query_args = query_factory.get_next_query_args(next_query_args, last_hit)
 
 
-class ReportQueryFactoryInterface:
+class ReportQueryFactoryInterface(ABC):
     '''
     A generic interface for any report queries.
     '''
+    @abstractmethod
     def get_query(self, **kwargs):
         '''
         Returns an ElasticSearch query, configured by `**kwargs`
         '''
         raise NotImplementedError()
 
+    @abstractmethod
     def get_next_query_args(self, previous_args, last_hit):
         '''
         Modifies the `previous_args` dictionary with information from `last_hit` to create
