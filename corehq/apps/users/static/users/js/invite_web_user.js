@@ -6,6 +6,7 @@ hqDefine('users/js/invite_web_user',[
     'hqwebapp/js/toggles',
     'hqwebapp/js/bootstrap3/validators.ko',
     'locations/js/widgets',
+    'commcarehq',
 ], function (
     $,
     ko,
