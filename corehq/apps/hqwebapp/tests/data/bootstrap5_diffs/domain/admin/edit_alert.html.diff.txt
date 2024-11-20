@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
+ 
+@@ -6,7 +6,7 @@
+   <form class="form form-horizontal" method="post">
+     <fieldset>
+       <legend>{% trans 'Edit Alert' %}</legend>
+-      {% crispy form %}
++      {% crispy form %}  {# todo B5: crispy #}
+     </fieldset>
+   </form>
+ {% endblock %}
