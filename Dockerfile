@@ -12,7 +12,9 @@ ENV PYTHONUNBUFFERED=1 \
     NODE_VERSION=20.11.1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
-# UV_COMPILE_BYTECODE: Compile bytecode during installation.
+# UV_COMPILE_BYTECODE: Compile bytecode during installation to improve module
+#   load performance. Also suppresses a couchdbkit syntax error that happens
+#   during bytecode compilation.
 # UV_LINK_MODE: Copy from the cache instead of linking since it's a mounted volume
 
 RUN mkdir /vendor
