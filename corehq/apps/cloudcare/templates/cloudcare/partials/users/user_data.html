@@ -1,7 +1,8 @@
 {% load i18n %}
 
 <script type="text/template" id="user-data-template">
-  <table class="table module-table module-table-case-detail">
+  <div class="module-table-case-detail-wrapper">
+    <table class="table module-table module-table-case-detail">
     <tbody>
     <tr>
       <th>{% trans "Name" %}</th>
@@ -31,4 +32,5 @@
     <% }) %>
     </tbody>
   </table>
+  </div>
 </script>

@@ -146,8 +146,10 @@ button.clickable-icon {
   margin-bottom: 0;
 }
 
-.module-table-case-detail {
+.module-table-case-detail-wrapper {
   margin-top: 10px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
 }
 
 .module-table-case-detail tbody tr {
