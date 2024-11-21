@@ -487,7 +487,7 @@ msgstr ""
 #: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
 #: corehq/apps/locations/forms.py
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
@@ -1030,8 +1030,8 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html
 #: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/partials/delete_saved_area_modal.html
-#: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
@@ -2142,8 +2142,8 @@ msgstr ""
 #: corehq/apps/accounting/views.py corehq/apps/app_execution/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/geospatial/templates/case_management.html
-#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
@@ -2875,7 +2875,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/forms.py
-#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
@@ -3035,7 +3035,7 @@ msgstr "Gerando relatório"
 
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
@@ -3603,7 +3603,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
@@ -6398,7 +6398,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
@@ -7523,7 +7523,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
 #: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/v2/filters/case_report.py
@@ -11312,6 +11312,11 @@ msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr ""
 
 #: corehq/apps/case_importer/exceptions.py
+#, python-brace-format
+msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+msgstr ""
+
+#: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
 msgstr ""
 
@@ -13977,15 +13982,15 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/views.py corehq/apps/geospatial/reports.py
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/reports/v2/reports/explore_case_data.py
 msgid "Case Name"
 msgstr "Nome do Caso"
 
 #: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -14768,7 +14773,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
 #: corehq/apps/events/forms.py corehq/apps/events/views.py
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
@@ -15017,7 +15022,7 @@ msgid "You have no cases in your group."
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
 msgid "Loading cases..."
 msgstr ""
 
@@ -22398,51 +22403,51 @@ msgstr ""
 msgid "Link"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Lock Case Grouping for Me"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Unlock Case Grouping for Me"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Export Groups"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Summary of Case Grouping"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Total number of clusters"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Maximum cases per cluster"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Minimum cases per cluster"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Select Case Groups to View"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Show Only Selected Groups on Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Show All Groups"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Mobile Worker Filters"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
 "                <strong>There was an issue retrieving mobile workers from "
@@ -22453,11 +22458,11 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Show mobile workers on the map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
 "                            Only users at this location will be shown on the "
@@ -22465,23 +22470,23 @@ msgid ""
 "                        "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
 msgid "Hide Filter Options"
 msgstr "Ocultar Opções de Filtro"
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
 msgid "Show Filter Options"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Running disbursement algorithm..."
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
 "    We couldn't match every case to a user with the current disbursement "
@@ -22496,51 +22501,181 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
 "        Previous disbursement was cleared.\n"
 "    "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Disbursement parameters"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Layers"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Review Results"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Accept Results"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Selected Mobile Workers"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Mobile Workers on Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "All Mobile Workers on Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Selected Cases"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Cases on Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "All Cases on Map"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid ""
+"\n"
+"                    Mobile workers that do not have any associated GPS "
+"data.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid ""
+"\n"
+"            Changes have been saved successfully!\n"
+"        "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Users without GPS Data"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Latitude"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Longitude"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Enter latitude..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid ""
+"\n"
+"                                        The value should be a number between "
+"-90 and 90\n"
+"                                    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Enter longitude..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid ""
+"\n"
+"                                        The value should be a number between "
+"-180 and 180\n"
+"                                    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Capture on Map"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Loading users..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid ""
+"\n"
+"                  <strong>There was an issue retrieving data from the server."
+"</strong>\n"
+"                  Please check your internet connection.\n"
+"                  If this problem continues, please\n"
+"                  <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
+"an issue</a>.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid ""
+"\n"
+"                  <strong>There was an issue submitting data to the server.</"
+"strong>\n"
+"                  Please check your internet connection.\n"
+"                  If this problem continues, please\n"
+"                  <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
+"an issue</a>.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Create New Case"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Save Case"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Capturing location for:"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "Enter new case name..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "A case name is required"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+msgid "A case type is required"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture_view.html
+msgid "Update Case Data"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture_view.html
+msgid "Update Mobile Worker Data"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture_view.html
+msgid ""
+"\n"
+"            To create new Mobile Workers navigate to the Mobile Workers page "
+"under the Users tab.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/gps_capture_view.html
+msgid ""
+"\n"
+"            Navigate there.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/delete_saved_area_modal.html
@@ -22651,136 +22786,6 @@ msgid ""
 "refreshing the page, otherwise the\n"
 "          newly added polygons will be lost.\n"
 "        "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid ""
-"\n"
-"                    Mobile workers that do not have any associated GPS "
-"data.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid ""
-"\n"
-"            Changes have been saved successfully!\n"
-"        "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Users without GPS Data"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Latitude"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Longitude"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Enter latitude..."
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid ""
-"\n"
-"                                        The value should be a number between "
-"-90 and 90\n"
-"                                    "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Enter longitude..."
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid ""
-"\n"
-"                                        The value should be a number between "
-"-180 and 180\n"
-"                                    "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Capture on Map"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Loading users..."
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid ""
-"\n"
-"                  <strong>There was an issue retrieving data from the server."
-"</strong>\n"
-"                  Please check your internet connection.\n"
-"                  If this problem continues, please\n"
-"                  <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
-"an issue</a>.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid ""
-"\n"
-"                  <strong>There was an issue submitting data to the server.</"
-"strong>\n"
-"                  Please check your internet connection.\n"
-"                  If this problem continues, please\n"
-"                  <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
-"an issue</a>.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Create New Case"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Save Case"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Capturing location for:"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Enter new case name..."
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "A case name is required"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "A case type is required"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture_view.html
-msgid "Update Case Data"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture_view.html
-msgid "Update Mobile Worker Data"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture_view.html
-msgid ""
-"\n"
-"            To create new Mobile Workers navigate to the Mobile Workers page "
-"under the Users tab.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture_view.html
-msgid ""
-"\n"
-"            Navigate there.\n"
-"            "
 msgstr ""
 
 #: corehq/apps/geospatial/views.py
@@ -23589,7 +23594,7 @@ msgstr ""
 
 #: corehq/apps/hqadmin/views/system.py corehq/tabs/tabclasses.py
 msgid "System Info"
-msgstr ""
+msgstr "Informação do Sistema"
 
 #: corehq/apps/hqadmin/views/system.py
 msgid "Global Usage Thresholds"
@@ -28730,11 +28735,20 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Mobile Workers can log into applications in this project "
+#| "space and submit data.\n"
+#| "          "
 msgid ""
 "\n"
-"            For organizations exploring CommCare.\n"
+"            For organizations managing projects.\n"
 "          "
 msgstr ""
+"\n"
+"Trabalhadores Móveis podem entrar nas aplicações nesta área de projeto e "
+"enviar dados."
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
@@ -28745,17 +28759,32 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Upload Lookup Tables\n"
+#| "        "
 msgid ""
 "\n"
-"              Request Custom Trial\n"
+"              Request a Trial\n"
 "            "
 msgstr ""
+"\n"
+"Carregar Tabelas de Pesquisa"
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
 "                Watch Demo\n"
 "              "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid "Know what you need?"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid "Get started here!"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
@@ -28984,7 +29013,7 @@ msgid "Field staff reports"
 msgstr ""
 
 #: corehq/apps/registration/views.py
-msgid "Unlimited mobile users"
+msgid "125+ mobile users"
 msgstr ""
 
 #: corehq/apps/registration/views.py
@@ -42341,6 +42370,16 @@ msgid ""
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+#, fuzzy
+#| msgid "Filter Forms"
+msgid "Filter on"
+msgstr "Filtrar Formulários"
+
+#: corehq/messaging/scheduling/forms.py
+msgid "User data filter: whole json"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
 msgid "User data filter: property name"
 msgstr ""
 
@@ -42360,8 +42399,9 @@ msgstr ""
 msgid "Form not found in latest released app build"
 msgstr ""
 
-#: corehq/messaging/scheduling/forms.py
-msgid "JSON: list of strings"
+#: corehq/messaging/scheduling/forms.py corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/repeater_generators.py
+msgid "JSON"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -42520,7 +42560,19 @@ msgid "Please select the applicable day(s) of the month."
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Invalid JSON value. Expected a list of strings."
+msgid ""
+"Invalid JSON: Needs to be an object with valid properties as keys and list "
+"of strings as values"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+#, python-format
+msgid "Invalid JSON: Keys are not valid user case property names: %s"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+#, python-format
+msgid "Invalid JSON: Values for keys are not lists of strings: %s"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -44439,11 +44491,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py corehq/tabs/tabclasses.py
 msgid "Filters and Expressions"
-msgstr ""
-
-#: corehq/motech/generic_inbound/models.py
-#: corehq/motech/repeaters/repeater_generators.py
-msgid "JSON"
 msgstr ""
 
 #: corehq/motech/generic_inbound/models.py
