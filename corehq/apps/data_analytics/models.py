@@ -157,3 +157,10 @@ class GIRRow(models.Model):
             experienced_threshold=self.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD,
             performance_threshold=self.performance_threshold or DEFAULT_PERFORMANCE_THRESHOLD,
         )
+
+
+class DomainStats(models.Model):
+    domain = models.TextField(unique=True, db_index=True)
+    stats = models.JSONField()
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
