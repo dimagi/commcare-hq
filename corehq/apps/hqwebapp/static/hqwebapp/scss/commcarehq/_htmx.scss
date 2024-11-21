@@ -8,7 +8,7 @@
 }
 
 form.htmx-request {
-  .htmx-loading {
+  button[type="submit"] {
     position: relative;
     &::before {
       content: " ";
@@ -20,7 +20,7 @@ form.htmx-request {
       @include htmx-spinner(18px);
     }
   }
-  .input-group .btn.htmx-loading::before {
+  .input-group button[type="submit"]::before {
     vertical-align: -0.28em;
   }
 }
