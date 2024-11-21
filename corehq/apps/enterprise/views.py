@@ -54,6 +54,7 @@ from corehq.apps.enterprise.tasks import email_enterprise_report
 
 from corehq.apps.export.utils import get_default_export_settings_if_available
 
+from corehq.apps.hqwebapp.context import get_page_context, Section
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
@@ -71,8 +72,18 @@ def enterprise_dashboard(request, domain):
     if not has_privilege(request, privileges.PROJECT_ACCESS):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
 
-    context = {
-        'domain': domain,
+    context = get_page_context(
+        page_url=reverse('enterprise_dashboard', args=(domain,)),
+        page_title=_('Enterprise Dashboard for {}').format(request.account.name),
+        page_name=_('Enterprise Dashboard'),
+        domain=domain,
+        section=Section(
+            _('Enterprise Console'),
+            reverse('enterprise_dashboard', args=(domain,)),
+        ),
+    )
+
+    context.update({
         'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
         'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
             EnterpriseReport.DOMAINS,
@@ -81,13 +92,9 @@ def enterprise_dashboard(request, domain):
             EnterpriseReport.FORM_SUBMISSIONS,
             EnterpriseReport.ODATA_FEEDS,
         )],
-        'current_page': {
-            'page_name': _('Enterprise Dashboard'),
-            'title': _('Enterprise Dashboard'),
-        },
-        'header_title': request.account.name,
         'metric_type': 'Enterprise Dashboard',
-    }
+    })
+
     return render(request, "enterprise/enterprise_dashboard.html", context)
 
 
@@ -101,16 +108,22 @@ def security_watchtower(request, domain):
     if not has_privilege(request, privileges.PROJECT_ACCESS):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
 
-    context = {
-        'domain': domain,
+    context = get_page_context(
+        page_url=reverse('security_watchtower', args=(domain,)),
+        page_title=_('Security Watchtower for {}').format(request.account.name),
+        page_name=_('Security Watchtower'),
+        domain=domain,
+        section=Section(
+            _('Enterprise Console'),
+            reverse('enterprise_dashboard', args=(domain,)),
+        ),
+    )
+
+    context.update({
         'reports': [],
-        'current_page': {
-            'page_name': _('Security Watchtower'),
-            'title': _('Security Watchtower'),
-        },
-        'header_title': _('Security Watchtower'),
         'metric_type': 'Security Watchtower',
-    }
+    })
+
     return render(request, "enterprise/enterprise_dashboard.html", context)
 
 

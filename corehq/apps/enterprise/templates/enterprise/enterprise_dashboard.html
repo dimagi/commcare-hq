@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block page_title %}{{ header_title }}{% endblock %}
+{% block page_title %}{{ current_page.title }}{% endblock %}
 
 {% requirejs_main_b5 'enterprise/js/enterprise_dashboard' %}
 
