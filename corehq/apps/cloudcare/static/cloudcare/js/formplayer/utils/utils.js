@@ -453,26 +453,24 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     };
 
     Utils.setSyncInterval = function (appId, restartInterval) {
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            const currentApp = AppsAPI.getAppEntity(appId);
-            let customProperties = {};
-            if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
-                customProperties = currentApp.attributes.profile.custom_properties || {};
-            }
+        const currentApp = AppsAPI.getAppEntity(appId);
+        let customProperties = {};
+        if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
+            customProperties = currentApp.attributes.profile.custom_properties || {};
+        }
 
-            const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
-            if (!useAggressiveSyncTiming) {
-                return;
-            }
+        const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+        if (!useAggressiveSyncTiming) {
+            return;
+        }
 
-            const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
-            if (restartInterval) {
-                stopSyncInterval();
-                startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
-            } else {
-                startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
-            }
-        });
+        const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
+        if (restartInterval) {
+            stopSyncInterval();
+            startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
+        } else {
+            startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
+        }
     };
 
     function startSyncInterval(delayInMilliseconds) {
