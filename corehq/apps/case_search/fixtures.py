@@ -70,7 +70,7 @@ class CaseSearchFixtureProvider(FixtureProvider):
     def _should_sync(self, restore_state, indicator):
         return not restore_state.use_cached_fixture(
             self._fixture_id(indicator.name),
-            is_too_old=lambda last_sync_time: datetime.now() - last_sync_time > timedelta(minutes=10)
+            is_too_old=get_is_too_old_fn(indicator),
         )
 
     def _fixture_id(self, name):
@@ -82,6 +82,23 @@ class CaseSearchFixtureProvider(FixtureProvider):
 
 def _get_indicators(domain):
     return list(CSQLFixtureExpression.by_domain(domain))
+
+
+def get_is_too_old_fn(indicator):
+    """Returns a fn that returns True if the fixture for `indicator` needs to be included"""
+
+    def default_fn(last_sync_time):
+        return datetime.now() - last_sync_time > timedelta(minutes=10)
+
+    for is_too_old in custom_csql_fixture_expiration(indicator):
+        return is_too_old
+
+    return default_fn
+
+
+@extensions.extension_point
+def custom_csql_fixture_expiration(domain, indicator):
+    '''Register custom template params to be available in CSQL templates'''
 
 
 case_search_fixture_generator = CaseSearchFixtureProvider()
