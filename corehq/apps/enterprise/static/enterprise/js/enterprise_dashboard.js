@@ -205,7 +205,7 @@ hqDefine("enterprise/js/enterprise_dashboard", [
             const maxDateRangeDays = initialPageData.get("max_date_range_days");
             dateRangeModal = DateRangeModal(datePicker, dateRangePresetOptions, maxDateRangeDays, formSubmissionsDisplay);
 
-            $("#dateRangeDisplay").koApplyBindings(formSubmissionsDisplay);
+            $dateRangeDisplay.koApplyBindings(formSubmissionsDisplay);
             $("#enterpriseFormsDaterange").koApplyBindings(
                 dateRangeModal
             );
