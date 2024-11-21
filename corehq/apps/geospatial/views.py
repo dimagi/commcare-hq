@@ -50,7 +50,7 @@ from corehq.util.timezones.utils import get_timezone
 from .const import (
     GPS_POINT_CASE_PROPERTY,
     POLYGON_COLLECTION_GEOJSON_SCHEMA,
-    INDEX_ES_TASK_HELPER_BASE_KEY,
+    ES_INDEX_TASK_HELPER_BASE_KEY,
 )
 from .models import GeoConfig, GeoPolygon
 from .utils import (
@@ -77,7 +77,7 @@ class BaseGeospatialView(BaseDomainView):
     @property
     def main_context(self):
         context = super().main_context
-        celery_task_tracker = get_celery_task_tracker(self.domain, task_slug=INDEX_ES_TASK_HELPER_BASE_KEY)
+        celery_task_tracker = get_celery_task_tracker(self.domain, task_slug=ES_INDEX_TASK_HELPER_BASE_KEY)
         context['task_status'] = celery_task_tracker.get_status()
         return context
 
