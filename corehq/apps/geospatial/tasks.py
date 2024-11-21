@@ -3,7 +3,11 @@ import math
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.celery import task
-from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
+from corehq.apps.geospatial.const import (
+    ES_INDEX_TASK_HELPER_BASE_KEY,
+    DEFAULT_QUERY_LIMIT,
+    DEFAULT_CHUNK_SIZE
+)
 from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
 from corehq.apps.geospatial.utils import (
     get_celery_task_tracker,
@@ -12,11 +16,7 @@ from corehq.apps.geospatial.utils import (
     update_cases_owner,
     get_geo_case_property,
 )
-from corehq.apps.geospatial.management.commands.index_geolocation_case_properties import (
-    process_batch,
-    DEFAULT_QUERY_LIMIT,
-    DEFAULT_CHUNK_SIZE,
-)
+from corehq.apps.geospatial.management.commands.index_utils import process_batch
 
 from settings import MAX_GEOSPATIAL_INDEX_DOC_LIMIT
 
