@@ -62,8 +62,11 @@ def index_es_docs_with_location_props(domain):
         celery_task_tracker.mark_as_error(error_slug='CELERY')
         notify_exception(
             None,
-            'Something went wrong with index_es_docs_with_location_props()',
-            details={'error': str(e)}
+            'Something went wrong while indexing ES docs with location props.',
+            details={
+                'error': str(e),
+                'domain': domain
+            }
         )
     else:
         celery_task_tracker.mark_completed()
