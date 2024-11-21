@@ -68,18 +68,18 @@ from corehq import toggles
 @always_allow_project_access
 @require_enterprise_admin
 @login_and_domain_required
-def enterprise_dashboard(request, domain):
+def platform_overview(request, domain):
     if not has_privilege(request, privileges.PROJECT_ACCESS):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
 
     context = get_page_context(
-        page_url=reverse('enterprise_dashboard', args=(domain,)),
-        page_title=_('Enterprise Dashboard for {}').format(request.account.name),
-        page_name=_('Enterprise Dashboard'),
+        page_url=reverse('platform_overview', args=(domain,)),
+        page_title=_('Platform Overview for {}').format(request.account.name),
+        page_name=_('Platform Overview'),
         domain=domain,
         section=Section(
             _('Enterprise Console'),
-            reverse('enterprise_dashboard', args=(domain,)),
+            reverse('platform_overview', args=(domain,)),
         ),
     )
 
@@ -92,10 +92,10 @@ def enterprise_dashboard(request, domain):
             EnterpriseReport.FORM_SUBMISSIONS,
             EnterpriseReport.ODATA_FEEDS,
         )],
-        'metric_type': 'Enterprise Dashboard',
+        'metric_type': 'Platform Overview',
     })
 
-    return render(request, "enterprise/enterprise_dashboard.html", context)
+    return render(request, "enterprise/project_dashboard.html", context)
 
 
 @use_tempusdominus
@@ -104,27 +104,27 @@ def enterprise_dashboard(request, domain):
 @require_enterprise_admin
 @login_and_domain_required
 @toggles.ENTERPRISE_DASHBOARD_IMPROVEMENTS.required_decorator()
-def security_watchtower(request, domain):
+def security_center(request, domain):
     if not has_privilege(request, privileges.PROJECT_ACCESS):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
 
     context = get_page_context(
-        page_url=reverse('security_watchtower', args=(domain,)),
-        page_title=_('Security Watchtower for {}').format(request.account.name),
-        page_name=_('Security Watchtower'),
+        page_url=reverse('security_center', args=(domain,)),
+        page_title=_('Security Center for {}').format(request.account.name),
+        page_name=_('Security Center'),
         domain=domain,
         section=Section(
             _('Enterprise Console'),
-            reverse('enterprise_dashboard', args=(domain,)),
+            reverse('platform_overview', args=(domain,)),
         ),
     )
 
     context.update({
         'reports': [],
-        'metric_type': 'Security Watchtower',
+        'metric_type': 'Security Center',
     })
 
-    return render(request, "enterprise/enterprise_dashboard.html", context)
+    return render(request, "enterprise/project_dashboard.html", context)
 
 
 @require_enterprise_admin
@@ -258,7 +258,7 @@ class BaseEnterpriseAdminView(BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse('enterprise_dashboard', args=(self.domain,))
+        return reverse('platform_overview', args=(self.domain,))
 
     @property
     def page_url(self):

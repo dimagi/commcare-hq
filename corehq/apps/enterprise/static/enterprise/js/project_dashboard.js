@@ -1,4 +1,4 @@
-hqDefine("enterprise/js/enterprise_dashboard", [
+hqDefine("enterprise/js/project_dashboard", [
     'jquery',
     'knockout',
     'underscore',
