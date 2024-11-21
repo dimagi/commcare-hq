@@ -3,7 +3,6 @@ hqDefine('users/js/invite_web_user',[
     'knockout',
     'hqwebapp/js/initial_page_data',
     'users/js/custom_data_fields',
-    'hqwebapp/js/toggles',
     'hqwebapp/js/bootstrap3/validators.ko',
     'locations/js/widgets',
     'commcarehq',
@@ -11,8 +10,7 @@ hqDefine('users/js/invite_web_user',[
     $,
     ko,
     initialPageData,
-    customDataFields,
-    toggles
+    customDataFields
 ) {
     'use strict';
 
