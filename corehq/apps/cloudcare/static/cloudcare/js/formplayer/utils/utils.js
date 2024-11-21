@@ -490,7 +490,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             if (!FormplayerFrontend.syncInterval) {
                 FormplayerFrontend.syncInterval = setInterval(function () {
                     const urlObject = Utils.currentUrlToObject(),
-                        currentApp = AppsAPI.getAppEntity(appId);
+                        currentApp = AppsAPI.getAppEntity(urlObject.appId);
                     let customProperties = {};
                     if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
                         customProperties = currentApp.attributes.profile.custom_properties || {};
