@@ -58,7 +58,11 @@ def index_es_docs_with_location_props(domain):
                 chunk_size=DEFAULT_CHUNK_SIZE,
                 offset=i * DEFAULT_QUERY_LIMIT,
             )
-            celery_task_tracker.update_progress(current=i + 1, total=batch_count)
+            current_batch = i + 1
+            celery_task_tracker.update_progress(
+                current=current_batch * min(DEFAULT_CHUNK_SIZE, doc_count),
+                total=doc_count
+            )
     except Exception as e:
         celery_task_tracker.mark_as_error(error_slug='CELERY')
         notify_exception(
