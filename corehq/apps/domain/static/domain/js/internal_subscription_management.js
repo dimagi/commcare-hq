@@ -2,6 +2,7 @@ hqDefine('domain/js/internal_subscription_management', [
     'jquery',
     'knockout',
     'hqwebapp/js/bootstrap3/widgets',
+    'commcarehq',
 ], function (
     $,
     ko

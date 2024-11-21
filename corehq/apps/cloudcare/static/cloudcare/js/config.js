@@ -5,6 +5,7 @@ hqDefine("cloudcare/js/config", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap5/main',
+    'commcarehq',
 ], function (
     $,
     _,

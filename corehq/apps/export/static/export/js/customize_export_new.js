@@ -6,6 +6,7 @@ hqDefine('export/js/customize_export_new', [
     'export/js/models',
     'hqwebapp/js/toggles',
     'export/js/const',
+    'commcarehq',
 ], function (
     $,
     ko,

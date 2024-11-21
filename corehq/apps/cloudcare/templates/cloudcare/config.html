@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main_b5 "cloudcare/js/config" %}
+{% js_entry "cloudcare/js/config" %}
 
 {% block page_content %}
   {% initial_page_data 'access' access %}

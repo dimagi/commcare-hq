@@ -7,6 +7,7 @@ hqDefine("dashboard/js/dashboard", [
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/bootstrap5/main',     // post-link function
     'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // popover
+    'commcarehq',
 ], function (
     $,
     ko,

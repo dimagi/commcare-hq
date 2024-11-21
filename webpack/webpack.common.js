@@ -7,7 +7,7 @@ const hqPlugins = require('./plugins');
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
-    "jquery": "jquery/dist/jquery.min",
+    "jquery": require.resolve('jquery'),
 
     // todo after completing requirejs migration,
     //  remove this file and the yarn modernizr post-install step
