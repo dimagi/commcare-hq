@@ -34,9 +34,6 @@ def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict, task_k
 @task(queue='geospatial_queue', ignore_result=True)
 def index_es_docs_with_location_props(domain):
     celery_task_tracker = get_celery_task_tracker(domain, ES_INDEX_TASK_HELPER_BASE_KEY)
-    if celery_task_tracker.is_active():
-        return
-
     geo_case_prop = get_geo_case_property(domain)
     query = case_query_for_missing_geopoint_val(domain, geo_case_prop)
     doc_count = query.count()
