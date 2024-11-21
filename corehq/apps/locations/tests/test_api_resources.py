@@ -1,12 +1,101 @@
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.locations.resources.v0_6 import LocationResource
-from corehq.util.view_utils import absolute_reverse
+from corehq.apps.locations.resources import v0_5, v0_6
+
+from .util import setup_locations_and_types
 
 
-class LocationV6Test(APIResourceTest):
+class LocationTypeV0_5Test(APIResourceTest):
+    api_name = 'v0.5'
+    resource = v0_5.LocationTypeResource
+    location_type_names = ['state', 'city']
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.location_types, _ = setup_locations_and_types(
+            cls.domain.name, cls.location_type_names, [], [],)
+
+    def test_location_type_serialization(self):
+        city = self.location_types['city']
+        res = self.get_detail(city.pk)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json(), {
+            'administrative': True,
+            'code': 'city',
+            'domain': self.domain.name,
+            'id': city.pk,
+            'name': 'city',
+            'parent': f'http://localhost:8000/a/qwerty/api/v0.5/location_type/{city.parent_type_id}/',
+            'resource_uri': f'http://localhost:8000/a/qwerty/api/v0.5/location_type/{city.pk}/',
+            'shares_cases': False,
+            'view_descendants': False,
+        })
+
+    def test_get_list(self):
+        res = self.get_list()
+        self.assertEqual(res.status_code, 200)
+        self.assertItemsEqual(
+            ['state', 'city'],
+            [lt['name'] for lt in res.json()['objects']],
+        )
+
+
+class LocationV0_5Test(APIResourceTest):
+    api_name = 'v0.5'
+    resource = v0_5.LocationResource
+    location_type_names = ['state', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Somerville', []),
+            ('Boston', []),
+        ])
+    ]
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.location_types, cls.locations = setup_locations_and_types(
+            cls.domain.name,
+            cls.location_type_names,
+            [],
+            cls.location_structure,
+        )
+
+    def test_location_serialization(self):
+        somerville = self.locations['Somerville']
+        res = self.get_detail(somerville.location_id)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json(), {
+            'created_at': somerville.created_at.isoformat(),
+            'domain': self.domain.name,
+            'external_id': None,
+            'id': somerville.pk,
+            'last_modified': somerville.last_modified.isoformat(),
+            'latitude': None,
+            'location_data': {},
+            'location_id': somerville.location_id,
+            'location_type': ('http://localhost:8000/a/qwerty/api/v0.5/location_type/'
+                              f'{somerville.location_type_id}/'),
+            'longitude': None,
+            'name': 'Somerville',
+            'parent': f'http://localhost:8000/a/qwerty/api/v0.5/location/{somerville.parent.location_id}/',
+            'resource_uri': f'http://localhost:8000/a/qwerty/api/v0.5/location/{somerville.location_id}/',
+            'site_code': 'somerville',
+        })
+
+    def test_get_list(self):
+        res = self.get_list()
+        self.assertEqual(res.status_code, 200)
+        self.assertItemsEqual(
+            ['Massachusetts', 'Somerville', 'Boston'],
+            [loc['name'] for loc in res.json()['objects']],
+        )
+
+
+class LocationV0_6Test(APIResourceTest):
     api_name = 'v0.6'
-    resource = LocationResource
+    resource = v0_6.LocationResource
 
     def setUp(self):
         self.parent_type = LocationType.objects.create(
@@ -55,14 +144,6 @@ class LocationV6Test(APIResourceTest):
             site_code="south_park",
             location_type=self.county
         )
-
-    def single_endpoint(self, location_id):
-        return absolute_reverse('api_dispatch_detail', kwargs={
-            'resource_name': self.resource._meta.resource_name,
-            'domain': self.domain.name,
-            'api_name': self.api_name,
-            'location_id': location_id
-        })
 
     def test_list(self):
         response = self._assert_auth_get_resource(self.list_endpoint)
@@ -161,13 +242,13 @@ class LocationV6Test(APIResourceTest):
                                                    put_data, method='PUT')
         self.assertEqual(response.status_code, 200)
 
-        self.location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
-        self.assertEqual(self.location2_updated.name, "New Denver")
-        self.assertEqual(self.location2_updated.site_code, "new_denver")
-        self.assertEqual(float(self.location2_updated.longitude), 33.9012)
+        location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
+        self.assertEqual(location2_updated.name, "New Denver")
+        self.assertEqual(location2_updated.site_code, "new_denver")
+        self.assertEqual(float(location2_updated.longitude), 33.9012)
 
     def test_successful_put2(self):
-        self.kansas = SQLLocation.objects.create(
+        kansas = SQLLocation.objects.create(
             domain=self.domain.name,
             location_id="4",
             name="Kansas",
@@ -175,18 +256,18 @@ class LocationV6Test(APIResourceTest):
             location_type=self.parent_type
         )
         put_data = {
-            "parent_location_id": self.kansas.location_id,
+            "parent_location_id": kansas.location_id,
             "location_type_code": self.county.code
         }
         response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
                                                    put_data, method='PUT')
         self.assertEqual(response.status_code, 200)
 
-        self.location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
-        self.assertEqual(self.location2_updated.location_type.code, self.county.code)
+        location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
+        self.assertEqual(location2_updated.location_type.code, self.county.code)
 
     def test_change_location_type_with_children(self):
-        self.kansas = SQLLocation.objects.create(
+        kansas = SQLLocation.objects.create(
             domain=self.domain.name,
             location_id="4",
             name="Kansas",
@@ -194,7 +275,7 @@ class LocationV6Test(APIResourceTest):
             location_type=self.parent_type
         )
         put_data = {
-            "parent_location_id": self.kansas.location_id,
+            "parent_location_id": kansas.location_id,
             "location_type_code": self.county.code
         }
         response = self._assert_auth_post_resource(self.single_endpoint(self.location1.location_id),

@@ -2,6 +2,7 @@ hqDefine('commtrack/js/sms', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     ko,

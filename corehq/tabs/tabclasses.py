@@ -462,7 +462,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
-        '/a/{domain}/geospatial/',
+        '/a/{domain}/microplanning/',
     )
 
     @property
@@ -583,7 +583,7 @@ class ProjectDataTab(UITab):
 
     @property
     def _can_view_geospatial(self):
-        return toggles.GEOSPATIAL.enabled(self.domain)
+        return toggles.MICROPLANNING.enabled(self.domain)
 
     @property
     def _is_viewable(self):
@@ -1010,7 +1010,7 @@ class ProjectDataTab(UITab):
                 'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
             },
             {
-                'title': _("Configure Geospatial Settings"),
+                'title': _("Configure Microplanning Settings"),
                 'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
             }
         ]

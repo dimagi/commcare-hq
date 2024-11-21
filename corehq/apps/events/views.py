@@ -60,7 +60,7 @@ class BaseEventView(BaseDomainView):
 
 class EventsView(BaseEventView, CRUDPaginatedViewMixin):
     urlname = "events_page"
-    template_name = 'events_list.html'
+    template_name = 'events/events_list.html'
 
     page_title = _("Attendance Tracking Events")
 
@@ -154,7 +154,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
 
 class EventCreateView(BaseEventView):
     urlname = 'add_attendance_tracking_event'
-    template_name = "new_event.html"
+    template_name = "events/new_event.html"
 
     page_title = _("Add Attendance Tracking Event")
 
@@ -220,7 +220,7 @@ class EventCreateView(BaseEventView):
 
 class EventEditView(EventCreateView):
     urlname = 'edit_attendance_tracking_event'
-    template_name = "new_event.html"
+    template_name = "events/new_event.html"
     http_method_names = ['get', 'post']
 
     page_title = _("Edit Attendance Tracking Event")
@@ -276,7 +276,7 @@ class EventEditView(EventCreateView):
 
 class AttendeesListView(JSONResponseMixin, BaseEventView):
     urlname = "event_attendees"
-    template_name = 'event_attendees.html'
+    template_name = 'events/event_attendees.html'
     page_title = _("Attendees")
 
     limit_text = _("Attendees per page")
@@ -334,7 +334,7 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
 
 class AttendeeEditView(BaseEventView):
     urlname = 'edit_attendee'
-    template_name = "edit_attendee.html"
+    template_name = "events/edit_attendee.html"
 
     page_title = _("Edit Attendee")
 
@@ -503,7 +503,7 @@ def poll_mobile_worker_attendee_progress(request, domain, download_id):
             'custom_message': _("Disabling mobile worker attendees in progress. This may take a while..."),
         })
 
-    template = "partials/attendee_conversion_status.html"
+    template = "events/partials/attendee_conversion_status.html"
     return render(request, template, context)
 
 

@@ -9,6 +9,7 @@ hqDefine("enterprise/js/project_dashboard", [
     'moment',
     'hqwebapp/js/bootstrap5/hq.helpers',
     'hqwebapp/js/components/select_toggle',
+    'commcarehq',
 ], function (
     $,
     ko,

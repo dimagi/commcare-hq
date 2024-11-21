@@ -541,7 +541,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
-            const isAfterReportLoad = settings.url.includes('geospatial/async/case_grouping_map/');
+            const isAfterReportLoad = settings.url.includes('microplanning/async/case_clustering_map/');
             if (isAfterReportLoad) {
                 $("#export-controls").koApplyBindings(exportModelInstance);
                 $("#lock-groups-controls").koApplyBindings(groupLockModelInstance);
@@ -557,7 +557,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                 return;
             }
 
-            const isAfterDataLoad = settings.url.includes('geospatial/json/case_grouping_map/');
+            const isAfterDataLoad = settings.url.includes('microplanning/json/case_clustering_map/');
             if (!isAfterDataLoad) {
                 return;
             }

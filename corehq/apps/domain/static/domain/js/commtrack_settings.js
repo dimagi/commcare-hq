@@ -1,4 +1,4 @@
-hqDefine("domain/js/commtrack_settings", ['jquery'], function ($) {
+hqDefine("domain/js/commtrack_settings", ['jquery', 'commcarehq'], function ($) {
     $(function () {
         $("#id_use_auto_consumption").change(function () {
             $("#id_consumption_min_transactions, " +
