@@ -2,7 +2,9 @@ from corehq.apps.sms.api import incoming
 from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.push.models import PushBackend
 from django.http import HttpResponse, HttpResponseBadRequest
-from lxml import etree
+
+from defusedxml.minidom import parseString
+from xml.parsers.expat import ExpatError
 from xml.sax.saxutils import unescape
 
 
@@ -24,16 +26,16 @@ class PushIncomingView(IncomingBackendView):
         number = None
         text = None
         try:
-            xml = etree.fromstring(request.body)
-        except etree.XMLSyntaxError:
+            xml = parseString(request.body).documentElement.childNodes
+        except (ExpatError, ValueError):
             return None, None
 
         for element in xml:
-            name = element.get('name')
+            name = element.getAttribute('name')
             if name == 'MobileNumber':
-                number = self.clean_value(element.text)
+                number = self.clean_value(element.childNodes[0].nodeValue)
             elif name == 'Text':
-                text = self.clean_value(element.text)
+                text = self.clean_value(element.childNodes[0].nodeValue)
 
         return number, text
 
