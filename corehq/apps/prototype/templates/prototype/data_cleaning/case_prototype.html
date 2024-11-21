@@ -1,0 +1,47 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load hq_shared_tags %}
+{% load django_tables2 %}
+{% load i18n %}
+
+{% js_entry "prototype/js/data_cleaning/main" %}
+
+{% block content %}
+  <div class="d-flex align-items-center m-3">
+    <h1 class="fs-3 pe-3 py-3 m-0">
+      {% trans "Case Type" %} "{{ case_type }}"
+    </h1>
+    <div>
+      {% include "prototype/data_cleaning/partials/button_bar.html" %}
+    </div>
+    <div class="ps-3">
+      <div class="form-check form-switch">
+        <input
+          class="form-check-input" id="showWhitespacesSwitch" type="checkbox" role="switch"
+          name="show_whitespaces"
+          hx-post="{{ request.path }}"
+          hq-hx-action="toggle_whitespace"
+          hx-swap="none"
+          hx-disabled-elt="this"
+          x-init="$store.whitespaces.show = {{ show_whitespaces|BOOL }}"
+          x-model="$store.whitespaces.show"
+        />
+        <label class="form-check-label" for="showWhitespacesSwitch">
+          {% trans "Show Whitespaces" %}
+        </label>
+      </div>
+    </div>
+  </div>
+  <div
+    class="mx-3"
+    hx-get="{% url "prototype_data_cleaning_htmx" %}{% querystring %}"
+    hx-trigger="load"
+  >
+    {% include "prototype/data_cleaning/partials/htmx_loading_indicator.html" %}
+  </div>
+  {% include "prototype/data_cleaning/partials/offcanvas.html" %}
+{% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock %}

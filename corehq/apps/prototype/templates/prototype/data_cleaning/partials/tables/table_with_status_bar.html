@@ -1,0 +1,280 @@
+{% extends "hqwebapp/tables/bootstrap5_htmx.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+{% load hq_shared_tags %}
+
+{% block table-container-attrs %}
+  hx-get="{{ request.path_info }}{% querystring %}"
+  hx-trigger="hqRefresh"
+  hx-swap="outerHTML"
+  x-data="{
+    numRecordsSelected: {{ table.num_selected_records }},
+    totalRecords: {{ table.page.paginator.count }},
+    pageTotalRecords: {{ table.paginated_rows|length }},
+    pageNumRecordsSelected: 0,
+  }"
+  x-init="
+    $dispatch('numRecordsSelectedChanged', numRecordsSelected);
+    $watch('numRecordsSelected', value => $dispatch('numRecordsSelectedChanged', value));
+  "
+{% endblock %}
+
+{% block before_table %}
+  <div class="d-flex align-items-center pb-2">
+    <div
+      class="pe-2"
+      x-data="{
+        hasEdits: {{ table.column_manager.has_edits|BOOL }},
+      }"
+      x-show="hasEdits"
+      @update-apply-edits-button.camel.window="hasEdits = $event.detail"
+    >
+      <div class="input-group">
+        <div class="input-group-text">
+          <i class="fa-solid fa-pencil me-2"></i>
+          {% trans "Edits" %}:
+        </div>
+        <button
+          class="btn btn-outline-danger" type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#clearEditsModal"
+        >
+          <i class="fa-solid fa-close"></i> {% trans "Clear" %}
+        </button>
+        {% if table.column_manager.has_history %}
+          <button
+            class="btn btn-outline-secondary" type="button"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="rollback_history"
+            hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+            hx-swap="outerHTML"
+            hx-disable-elt="this"
+            hq-hx-loading="{{ table.loading_indicator_id  }}"
+          >
+            <i class="fa-solid fa-undo"></i> {% trans "Undo" %}
+          </button>
+        {% endif %}
+        <button
+          class="btn btn-success" type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#applyChangesModal"
+        >
+          <i class="fa-solid fa-check-double"></i> {% trans "Apply" %}
+        </button>
+      </div>
+    </div>
+
+    {%  if table.column_manager.has_filters %}
+      <div class="pe-2">
+        <div class="input-group">
+          <div class="input-group-text">
+            <i class="fa-solid fa-filter me-2"></i>
+            {% blocktrans with table.page.paginator.count as num_records %}
+              Filters Applied: {{ num_records }} Matching Records
+            {% endblocktrans %}
+          </div>
+          <button
+            class="btn btn-outline-danger" type="button"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="clear_filters"
+            hx-swap="none"
+            hx-disable-elt="this"
+            hq-hx-loading="{{ table.loading_indicator_id  }}"
+            hx-on::after-request="refreshFilters('#{{ table.column_manager.filter_form_id }}');"
+          >
+            <i class="fa-solid fa-close"></i>
+            <span class="visually-hidden">{% trans "Clear Filters" %}</span>
+          </button>
+        </div>
+      </div>
+    {% endif %}
+
+    <div>
+      <div class="input-group">
+        <div
+          class="input-group-text"
+          :class="(numRecordsSelected > 0) || 'rounded-end'"
+        >
+          <i class="fa-solid fa-circle-check me-2"></i>
+          {% blocktrans %}
+            <span
+              class="me-1"
+              x-text="numRecordsSelected"
+            ></span> Records Selected
+          {% endblocktrans %}
+        </div>
+        <button
+          class="btn btn-outline-danger" type="button"
+          hx-post="{{ request.path_info }}{% querystring %}"
+          hq-hx-action="select_all"
+          hx-vals='{
+            "selectAll": false
+          }'
+          hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+          hx-swap="outerHTML"
+          hx-disable-elt="this"
+          hq-hx-loading="{{ table.loading_indicator_id  }}"
+          x-show="numRecordsSelected > 0"
+          :class="(numRecordsSelected > 0 && numRecordsSelected < totalRecords) || 'rounded-end'"
+        >
+          <i class="fa fa-close"></i>
+          <span class="visually-hidden">{% trans "Cancel Selection" %}</span>
+        </button>
+        <button
+          class="btn btn-outline-primary" type="button"
+          hx-post="{{ request.path_info }}{% querystring %}"
+          hq-hx-action="select_all"
+          hx-vals='{
+            "selectAll": true
+          }'
+          hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+          hx-swap="outerHTML"
+          hx-disable-elt="this"
+          hq-hx-loading="{{ table.loading_indicator_id  }}"
+          x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords"
+        >
+          {% trans "Select All" %} ({{ table.page.paginator.count }})
+        </button>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block after_table %}
+  {{ block.super }}
+  <div class="table-loading-indicator" id="simulate-apply-changes-loader">
+    <div id="apply-changes-progress"></div>
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">{% trans "Loading..." %}</span>
+    </div>
+  </div>
+
+  <div
+    class="modal fade" id="clearEditsModal" tabindex="-1"
+    aria-labelledby="clearEditsModalLabel" aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="clearEditsModalLabel">
+            {% trans "Clear Changes" %}
+          </h1>
+          <button
+            class="btn-close" type="button" aria-label="{% trans "Close" %}"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <p x-show="numRecordsSelected > 0">
+            {% blocktrans with table.column_manager.total_records as total_records %}
+              Proceeding will either clear changes to
+              <strong><span x-text="numRecordsSelected"></span> selected records</strong> or
+              clear changes to <strong>all {{ total_records }} records</strong>.
+            {% endblocktrans %}
+          </p>
+          <p x-show="numRecordsSelected == 0">
+            {% blocktrans with table.column_manager.total_records as total_records %}
+              Proceeding will clear changes made to <strong>all {{ total_records }} records</strong>,
+              and data cleaning will start over.
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">
+            {% trans "Cancel" %}
+          </button>
+          <button
+            class="btn btn-outline-danger" type="button" data-bs-dismiss="modal"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="clear_selected_edits"
+            hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+            hx-swap="outerHTML"
+            hq-hx-loading="{{ table.loading_indicator_id  }}"
+            x-show="numRecordsSelected > 0"
+          >
+            {% blocktrans %}
+              Clear Changes for <span x-text="numRecordsSelected"></span> Selected Records
+            {% endblocktrans %}
+          </button>
+          <button
+            class="btn btn-danger" type="button" data-bs-dismiss="modal"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="clear_all_edits"
+            hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+            hx-swap="outerHTML"
+            hq-hx-loading="{{ table.loading_indicator_id  }}"
+          >
+            {% trans "Clear All Changes" %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="modal fade" id="applyChangesModal" tabindex="-1"
+    aria-labelledby="applyChangesModalLabel" aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="applyChangesModalLabel">
+            {% trans "Apply Changes" %}
+          </h1>
+          <button
+            class="btn-close" type="button" aria-label="{% trans "Close" %}"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <p x-show="numRecordsSelected > 0">
+            {% blocktrans with table.column_manager.total_records as total_records %}
+              Proceeding will apply changes to
+              <strong><span x-text="numRecordsSelected"></span> selected records</strong> or
+              apply changes to <strong>all {{ total_records }} records</strong>.
+            {% endblocktrans %}
+          </p>
+          <p x-show="numRecordsSelected == 0">
+            {% blocktrans with table.column_manager.total_records as total_records %}
+              Proceeding will apply changes made to <strong>all {{ total_records }} records</strong>.
+            {% endblocktrans %}
+          </p>
+          <p>
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {% blocktrans %}
+              This process may take a long time.
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">
+            {% trans "Cancel" %}
+          </button>
+          <button
+            class="btn btn-outline-success" type="button" data-bs-dismiss="modal"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="apply_selected_changes"
+            hx-swap="outerHTML"
+            hx-target="#apply-changes-progress"
+            hq-hx-loading="simulate-apply-changes-loader"
+            x-show="numRecordsSelected > 0"
+          >
+            {% blocktrans %}
+              Apply Changes to <span x-text="numRecordsSelected"></span> Selected Records
+            {% endblocktrans %}
+          </button>
+          <button
+            class="btn btn-success" type="button" data-bs-dismiss="modal"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="apply_all_changes"
+            hx-swap="outerHTML"
+            hx-target="#apply-changes-progress"
+            hq-hx-loading="simulate-apply-changes-loader"
+          >
+            {% trans "Apply All Changes" %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
