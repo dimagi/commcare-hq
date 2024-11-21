@@ -32,21 +32,17 @@ class Command(BaseCommand):
 
 
 def index_case_docs(domain, query_limit=DEFAULT_QUERY_LIMIT, chunk_size=DEFAULT_CHUNK_SIZE, case_type=None):
+    assert query_limit > 0, "query_limit should be a positive number greater than 0"
+
     geo_case_property = get_geo_case_property(domain)
     query = case_query_for_missing_geopoint_val(domain, geo_case_property, case_type)
     count = query.count()
     print(f'{count} case(s) to process')
-    batch_count = get_batch_count(count, query_limit)
+    batch_count = math.ceil(count / query_limit)
     print(f"Cases will be processed in {batch_count} batches")
     for i in range(batch_count):
         print(f'Processing {i+1}/{batch_count}')
         process_batch(domain, geo_case_property, case_type, query_limit, chunk_size, with_progress=True)
-
-
-def get_batch_count(doc_count, query_limit):
-    if not query_limit:
-        return 1
-    return math.ceil(doc_count / query_limit)
 
 
 def process_batch(domain, geo_case_property, case_type, query_limit, chunk_size, with_progress=False, offset=0):

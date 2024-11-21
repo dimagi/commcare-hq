@@ -1,3 +1,5 @@
+import math
+
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.celery import task
@@ -11,7 +13,6 @@ from corehq.apps.geospatial.utils import (
     get_geo_case_property,
 )
 from corehq.apps.geospatial.management.commands.index_geolocation_case_properties import (
-    get_batch_count,
     process_batch,
     DEFAULT_QUERY_LIMIT,
     DEFAULT_CHUNK_SIZE,
@@ -44,7 +45,7 @@ def index_es_docs_with_location_props(domain):
         return
 
     celery_task_tracker.mark_requested()
-    batch_count = get_batch_count(doc_count, DEFAULT_QUERY_LIMIT)
+    batch_count = math.ceil(doc_count / DEFAULT_QUERY_LIMIT)
     try:
         for i in range(batch_count):
             docs_left = doc_count - (DEFAULT_QUERY_LIMIT * i)
