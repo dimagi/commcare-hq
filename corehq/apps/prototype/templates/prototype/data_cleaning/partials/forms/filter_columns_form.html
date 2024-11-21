@@ -1,0 +1,75 @@
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<div
+  id="{{ container_id }}"
+  hx-get="{{ request.path_info }}"
+  hx-swap="outerHTML"
+  hx-trigger="refreshFilters"
+  hq-hx-refresh="{{ table_selector }}"
+>
+  {% if column_filters %}
+    <div class="mb-3">
+      <h5>
+        {% trans "Active Filters" %}
+      </h5>
+      <form
+        hx-post="{{ request.path_info }}"
+        hx-target="#{{ container_id }}"
+        hq-hx-loading="{{ table_loading_id }}"
+        hx-trigger="end"
+      >
+        <ul class="list-group sortable">
+          {% for column_filter in column_filters %}
+            <li class="list-group-item d-flex">
+              <a class="link p-1 flex-grow-1">
+                <i class="fa-solid fa-up-down"></i>
+                <input
+                  type="hidden"
+                  name="column_filters"
+                  value="{{ column_filter.slug }}"
+                />
+                <span class="ps-2">
+                  {{ column_filter.column_name }}
+                </span>
+                <span class="ms-2 badge text-bg-secondary">
+                  {{ column_filter.match_name }}
+                  {% if column_filter.use_regex %}
+                    (regex)
+                  {% endif %}
+                </span>
+                <span class="ps-2">
+                  {{ column_filter.value }}
+                </span>
+              </a>
+              <button
+                class="btn btn-outline-danger btn-sm" id="delete-column-filter-{{ column_filter.slug }}"
+                hx-delete="{{ request.path_info }}?index={{ forloop.counter0 }}"
+                hx-target="#{{ container_id }}"
+                hx-disabled-elt="this"
+                hq-hx-loading="{{ table_loading_id }}"
+              >
+                <i class="fa-solid fa-close"></i>
+              </button>
+            </li>
+          {% endfor %}
+        </ul>
+      </form>
+    </div>
+  {% endif %}
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5>
+        {% trans "Add Filter" %}
+      </h5>
+      <form
+        hx-put="{{ request.path_info }}"
+        hx-target="#{{ container_id }}"
+        hx-disabled-elt="find button"
+        hq-hx-loading="{{ table_loading_id }}"
+      >
+        {% crispy add_filter_form %}
+      </form>
+    </div>
+  </div>
+</div>
