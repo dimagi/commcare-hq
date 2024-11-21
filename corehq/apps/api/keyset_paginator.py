@@ -1,7 +1,9 @@
 from itertools import islice
+from django.conf import settings
 from django.http.request import QueryDict
-from urllib.parse import urlencode
+from tastypie.exceptions import BadRequest
 from tastypie.paginator import Paginator
+from urllib.parse import urlencode
 
 
 class KeysetPaginator(Paginator):
@@ -23,6 +25,7 @@ class KeysetPaginator(Paginator):
             max_limit=max_limit,
             collection_name=collection_name
         )
+        self.max_page_size = self.max_limit
 
     def get_offset(self):
         raise NotImplementedError()
@@ -36,10 +39,7 @@ class KeysetPaginator(Paginator):
     def get_previous(self, limit, offset):
         raise NotImplementedError()
 
-    def get_next(self, limit, **next_params):
-        return self._generate_uri(limit, **next_params)
-
-    def _generate_uri(self, limit, **next_params):
+    def get_next(self, **next_params):
         if self.resource_uri is None:
             return None
 
@@ -47,13 +47,11 @@ class KeysetPaginator(Paginator):
             # Because QueryDict allows multiple values for the same key, we need to remove existing values
             # prior to updating
             request_params = self.request_data.copy()
-            if 'limit' in request_params:
-                del request_params['limit']
             for key in next_params:
                 if key in request_params:
                     del request_params[key]
 
-            request_params.update({'limit': str(limit), **next_params})
+            request_params.update(next_params)
             encoded_params = request_params.urlencode()
         else:
             request_params = {}
@@ -63,7 +61,7 @@ class KeysetPaginator(Paginator):
                 else:
                     request_params[k] = v
 
-            request_params.update({'limit': limit, **next_params})
+            request_params.update(next_params)
             encoded_params = urlencode(request_params)
 
         return '%s?%s' % (
@@ -71,15 +69,59 @@ class KeysetPaginator(Paginator):
             encoded_params
         )
 
+    def get_page_size(self):
+        page_size = self.request_data.get('page_size', None)
+
+        if page_size is None:
+            page_size = getattr(settings, 'API_LIMIT_PER_PAGE', 20)
+
+        try:
+            page_size = int(page_size)
+        except ValueError:
+            raise BadRequest("Invalid limit '%s' provided. Please provide a positive integer." % page_size)
+
+        if page_size < 0:
+            raise BadRequest("Invalid limit '%s' provided. Please provide a positive integer >= 0." % page_size)
+
+        if self.max_page_size and (not page_size or page_size > self.max_page_size):
+            # If it's more than the max, we're only going to return the max.
+            # This is to prevent excessive DB (or other) load.
+            return self.max_page_size
+
+        return page_size
+
+    def get_limit(self):
+        limit = self.request_data.get('limit', 0)
+
+        try:
+            limit = int(limit)
+        except ValueError:
+            raise BadRequest("Invalid limit '%s' provided. Please provide a positive integer." % limit)
+
+        if limit < 0:
+            raise BadRequest("Invalid limit '%s' provided. Please provide a positive integer >= 0." % limit)
+        return limit
+
     def page(self):
         """
         Generates all pertinent data about the requested page.
         """
         limit = self.get_limit()
-        padded_limit = limit + 1 if limit else limit
-        # Fetch 1 more record than requested to allow us to determine if further queries will be needed
-        it = iter(self.objects.execute(limit=padded_limit))
-        objects = list(islice(it, limit))
+        page_size = self.get_page_size()
+        upper_bound = None
+        remaining = 0
+
+        # If we have a page size and no limit was provided, or the page size is less than the limit...
+        if page_size and ((not limit) or (limit and page_size < limit)):
+            # Fetch 1 more record than requested to allow us to determine if further queries will be needed
+            upper_bound = page_size
+            it = iter(self.objects.execute(limit=page_size + 1))
+            remaining = limit - page_size if limit else 0
+        else:
+            upper_bound = limit if limit else None
+            it = iter(self.objects.execute(limit=upper_bound))
+
+        objects = list(islice(it, upper_bound))
 
         try:
             next(it)
@@ -91,10 +133,12 @@ class KeysetPaginator(Paginator):
             'limit': limit,
         }
 
-        if limit and has_more:
+        if upper_bound and has_more:
             last_fetched = objects[-1]
             next_page_params = self.objects.get_query_params(last_fetched)
-            meta['next'] = self.get_next(limit, **next_page_params)
+            if remaining:
+                next_page_params['limit'] = remaining
+            meta['next'] = self.get_next(**next_page_params)
 
         return {
             self.collection_name: objects,
