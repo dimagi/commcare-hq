@@ -4,7 +4,7 @@
 
 {% block page_title %}{{ account.name }}{% endblock %}
 
-{% requirejs_main_b5 'enterprise/js/enterprise_dashboard' %}
+{% js_entry 'enterprise/js/enterprise_dashboard' %}
 
 {% block page_content %}
   {% registerurl "enterprise_dashboard_email" domain "---" %}
