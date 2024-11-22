@@ -4,7 +4,6 @@ import shutil
 import tempfile
 import uuid
 from datetime import datetime, timedelta
-from looseversion import LooseVersion
 from io import BytesIO
 from typing import Optional
 from uuid import uuid4
@@ -17,6 +16,7 @@ from django.utils.text import slugify
 
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
+from looseversion import LooseVersion
 from memoized import memoized
 
 from casexml.apps.case.xml import V1, check_version
@@ -25,6 +25,7 @@ from couchforms.openrosa_response import (
     get_response_element,
     get_simple_response_xml,
 )
+from dimagi.utils.logging import notify_error
 
 from corehq.apps.app_manager.exceptions import CannotRestoreException
 from corehq.apps.domain.models import Domain
@@ -34,7 +35,6 @@ from corehq.const import LOADTEST_HARD_LIMIT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext
-from dimagi.utils.logging import notify_error
 
 from .checksum import CaseStateHash
 from .const import (
@@ -43,13 +43,14 @@ from .const import (
     INITIAL_SYNC_CACHE_THRESHOLD,
     INITIAL_SYNC_CACHE_TIMEOUT,
 )
-from .data_providers import get_async_providers, get_element_providers
+from .data_providers.case.livequery import do_livequery
 from .exceptions import (
     BadStateException,
     InvalidSyncLogException,
     RestoreException,
     SyncLogUserMismatch,
 )
+from .fixtures import get_fixture_elements
 from .models import (
     LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
@@ -59,7 +60,11 @@ from .models import (
 from .restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from .tasks import ASYNC_RESTORE_SENT, get_async_restore_payload
 from .utils import get_cached_items_with_count
-from .xml import get_progress_element, get_sync_element
+from .xml import (
+    get_progress_element,
+    get_registration_element,
+    get_sync_element,
+)
 
 logger = logging.getLogger('restore')
 
@@ -722,13 +727,18 @@ class RestoreConfig(object):
         username = self.restore_user.username
         count_items = self.params.include_item_count
         with RestoreContent(username, count_items) as content:
-            for provider in get_element_providers(self.timing_context, skip_fixtures=self.skip_fixtures):
-                with self.timing_context(provider.__class__.__name__):
-                    content.extend(provider.get_elements(self.restore_state))
+            with self.timing_context('SyncElementProvider'):
+                content.append(get_sync_element(self.restore_state.current_sync_log._id))
 
-            for provider in get_async_providers(self.timing_context, async_task):
-                with self.timing_context(provider.__class__.__name__):
-                    provider.extend_response(self.restore_state, content)
+            with self.timing_context('RegistrationElementProvider'):
+                content.append(get_registration_element(self.restore_state.restore_user))
+
+            with self.timing_context('FixtureElementProvider'):
+                for element in get_fixture_elements(self.restore_state, self.timing_context, self.skip_fixtures):
+                    content.append(element)
+
+            with self.timing_context('CasePayloadProvider'):
+                do_livequery(self.timing_context, self.restore_state, content, async_task)
 
             return content.get_fileobj()
 
