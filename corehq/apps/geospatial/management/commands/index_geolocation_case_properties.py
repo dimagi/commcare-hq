@@ -36,4 +36,12 @@ def index_case_docs(domain, query_limit=DEFAULT_QUERY_LIMIT, chunk_size=DEFAULT_
     print(f"Cases will be processed in {batch_count} batches")
     for i in range(batch_count):
         print(f'Processing {i+1}/{batch_count}')
-        process_batch(domain, geo_case_property, case_type, query_limit, chunk_size, with_progress=True)
+        process_batch(
+            domain,
+            geo_case_property,
+            case_type,
+            query_limit,
+            chunk_size,
+            with_progress=True,
+            total_count=count
+        )

@@ -6,9 +6,17 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.log import with_progress_bar
 
 
-def process_batch(domain, geo_case_property, case_type, query_limit, chunk_size, with_progress=False, offset=0):
+def process_batch(
+    domain, geo_case_property, case_type,
+    query_limit,
+    chunk_size,
+    total_count,
+    with_progress=False,
+    offset=0,
+):
+    should_sort = bool(total_count > query_limit)
     query = case_query_for_missing_geopoint_val(
-        domain, geo_case_property, case_type, size=query_limit, offset=offset
+        domain, geo_case_property, case_type, size=query_limit, offset=offset, should_sort=should_sort
     )
     case_ids = query.get_ids()
     _index_case_ids(domain, case_ids, chunk_size, with_progress)

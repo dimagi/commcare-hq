@@ -54,6 +54,7 @@ def index_es_docs_with_location_props(domain):
                 query_limit=limit,
                 chunk_size=DEFAULT_CHUNK_SIZE,
                 offset=i * DEFAULT_QUERY_LIMIT,
+                total_count=doc_count
             )
             current_batch = i + 1
             celery_task_tracker.update_progress(
