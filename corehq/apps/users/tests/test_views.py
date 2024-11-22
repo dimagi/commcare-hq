@@ -541,6 +541,53 @@ class BulkUserUploadAPITest(TestCase):
             'success': False
         })
 
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    def test_tableau_role_and_groups_headers(self):
+        workbook = Workbook()
+        users_sheet = workbook.create_sheet(title='users')
+        users_sheet.append(['username', 'email', 'password', 'tableau_role', 'tableau_groups'])
+        users_sheet.append(['test_user', 'test@example.com', 'password', 'fakerole', 'fakegroup'])
+
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'users.xlsx'
+
+        # Test user with permission to edit Tableau Configs
+        self.user.is_superuser = False
+        role_with_upload_and_edit_tableau_permission = UserRole.create(
+            self.domain, 'edit-tableau', permissions=HqPermissions(edit_web_users=True,
+                                                                   edit_user_tableau_config=True)
+        )
+        self.user.set_role(self.domain_name,
+                        role_with_upload_and_edit_tableau_permission.get_qualified_id())
+        self.user.save()
+
+        with patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users'):
+            response = self._make_post_request(file)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json(), {'success': True})
+
+        # Test user without permission to edit Tableau Configs
+        role_with_upload_permission = UserRole.create(
+            self.domain, 'edit-web-users', permissions=HqPermissions(edit_web_users=True)
+        )
+        self.user.set_role(self.domain_name, role_with_upload_permission.get_qualified_id())
+        self.user.save()
+
+        file.seek(0)
+        response = self._make_post_request(file)
+        self.assertEqual(response.status_code, 400)
+        expected_response = {
+            'success': False,
+            'message': (
+                "Only users with 'Manage Tableau Configuration' edit permission in domains where Tableau "
+                "User Syncing is enabled can upload files with 'Tableau Role' and/or 'Tableau Groups' fields."
+                "\nThe following are illegal column headers: tableau_groups, tableau_role."
+            ),
+        }
+        self.assertEqual(response.json(), expected_response)
+
     @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
     def test_user_upload_error(self, mock_upload_users):
         mock_upload_users.side_effect = UserUploadError('User upload error')
