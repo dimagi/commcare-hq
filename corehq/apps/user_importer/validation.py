@@ -505,17 +505,28 @@ class LocationValidator(ImportValidator):
         self.location_cache = location_cache
         self.is_web_user_import = is_web_user_import
 
-    def _get_locs_being_assigned(self, spec):
+    def validate_spec(self, spec):
+        locs_being_assigned = self._get_locs_ids_being_assigned(spec)
+        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
+
+        user_access_error = self._validate_uploading_user_access(locs_being_assigned, user_result)
+        location_cannot_have_users_error = None
+        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
+            location_cannot_have_users_error = self._validate_location_has_users(locs_being_assigned)
+        return user_access_error or location_cannot_have_users_error
+
+    def _get_locs_ids_being_assigned(self, spec):
         from corehq.apps.user_importer.importer import find_location_id
-        location_codes = (spec['location_code'] if isinstance(spec['location_code'], list)
-                          else [spec['location_code']])
-        locs_ids_being_assigned = find_location_id(location_codes, self.location_cache)
+        locs_ids_being_assigned = []
+        if 'location_code' in spec:
+            location_codes = (spec['location_code'] if isinstance(spec['location_code'], list)
+                              else [spec['location_code']])
+            locs_ids_being_assigned = find_location_id(location_codes, self.location_cache)
         return locs_ids_being_assigned
 
-    def _validate_uploading_user_access(self, spec):
+    def _validate_uploading_user_access(self, locs_ids_being_assigned, user_result):
         # 1. Get current locations for user or user invitation and ensure user can edit it
         current_locs = []
-        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
         if user_result.invitation:
             if not user_can_access_invite(self.domain, self.upload_user, user_result.invitation):
                 return self.error_message_user_access.format(user_result.invitation.email)
@@ -527,30 +538,22 @@ class LocationValidator(ImportValidator):
 
         # 2. Ensure the user is only adding the user to/removing from *new locations* that they have permission
         # to access.
-        if 'location_code' in spec:
-            locs_being_assigned = self._get_locs_being_assigned(spec)
+        if locs_ids_being_assigned:
             problem_location_ids = user_can_change_locations(self.domain, self.upload_user,
-                                                            current_locs, locs_being_assigned)
+                                                            current_locs, locs_ids_being_assigned)
             if problem_location_ids:
                 return self.error_message_location_access.format(
                     ', '.join(SQLLocation.objects.filter(
                         location_id__in=problem_location_ids).values_list('site_code', flat=True)))
 
-    def _validate_location_has_users(self, spec):
-        if 'location_code' not in spec:
+    def _validate_location_has_users(self, locs_ids_being_assigned):
+        if not locs_ids_being_assigned:
             return
-        locs_being_assigned = SQLLocation.objects.filter(location_id__in=self._get_locs_being_assigned(spec))
+        locs_being_assigned = SQLLocation.objects.filter(location_id__in=locs_ids_being_assigned)
         problem_locations = locs_being_assigned.filter(location_type__has_users=False)
         if problem_locations:
             return self.error_message_location_not_has_users.format(
                 ', '.join(problem_locations.values_list('site_code', flat=True)))
-
-    def validate_spec(self, spec):
-        user_access_error = self._validate_uploading_user_access(spec)
-        location_cannot_have_users_error = None
-        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
-            location_cannot_have_users_error = self._validate_location_has_users(spec)
-        return user_access_error or location_cannot_have_users_error
 
 
 class UserRetrievalResult(NamedTuple):
