@@ -4,6 +4,7 @@ from corehq.messaging.smsbackends.push.models import PushBackend
 from django.http import HttpResponse, HttpResponseBadRequest
 
 from defusedxml.minidom import parseString
+from xml.dom import Node
 from xml.parsers.expat import ExpatError
 from xml.sax.saxutils import unescape
 
@@ -31,11 +32,12 @@ class PushIncomingView(IncomingBackendView):
             return None, None
 
         for element in xml:
-            name = element.getAttribute('name')
-            if name == 'MobileNumber':
-                number = self.clean_value(element.childNodes[0].nodeValue)
-            elif name == 'Text':
-                text = self.clean_value(element.childNodes[0].nodeValue)
+            if element.nodeType == Node.ELEMENT_NODE:
+                name = element.getAttribute('name')
+                if name == 'MobileNumber':
+                    number = self.clean_value(element.childNodes[0].nodeValue)
+                elif name == 'Text':
+                    text = self.clean_value(element.childNodes[0].nodeValue)
 
         return number, text
 
