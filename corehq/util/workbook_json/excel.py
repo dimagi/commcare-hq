@@ -8,33 +8,14 @@ from django.utils.translation import gettext as _
 
 from corehq.util.workbook_json.const import MAX_WORKBOOK_ROWS
 
-class InvalidExcelFileException(Exception):
-    pass
-
-
-class JSONReaderError(Exception):
-    pass
-
-
-class HeaderValueError(Exception):
-    pass
-
-
-class StringTypeRequiredError(Exception):
-    pass
-
-
-class WorkbookJSONError(Exception):
-    pass
-
-
-class WorkbookTooManyRows(Exception):
-    """Workbook row count exceeds MAX_WORKBOOK_ROWS"""
-
-    def __init__(self, max_row_count, actual_row_count):
-        super().__init__()
-        self.max_row_count = max_row_count
-        self.actual_row_count = actual_row_count
+from .exceptions import (
+    HeaderValueError,
+    InvalidExcelFileException,
+    JSONReaderError,
+    StringTypeRequiredError,
+    WorkbookJSONError,
+    WorkbookTooManyRows,
+)
 
 
 class IteratorJSONReader(object):
