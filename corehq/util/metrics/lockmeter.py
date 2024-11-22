@@ -56,6 +56,12 @@ class MeteredLock(object):
             self.lock_trace.finish()
             self.lock_trace = None
 
+    @property
+    def local(self):
+        # Used for setting lock token
+        # Raises AttributeError if lock does not have a `local` attribute
+        return self.lock.local
+
     def __enter__(self):
         self.acquire(blocking=True)
         return self
