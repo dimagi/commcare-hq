@@ -1,0 +1,100 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 'domain/js/bootstrap3/toggles' %}
++{% js_entry_b3 'domain/js/bootstrap5/toggles' %}
+ 
+ {% block page_content %}
+ 
+@@ -12,7 +12,7 @@
+   {% registerurl 'edit_toggle' '---' %}
+ 
+   <div class="row">
+-    <div class="col-sm-10">
++    <div class="col-md-10">
+       <p>
+         Features can be enabled or disabled based on feature flags or privileges. This page
+         is intended to provide a list of what features a domain has access to.
+@@ -21,7 +21,7 @@
+   </div>
+ 
+   <div class="row">
+-    <div class="col-sm-10">
++    <div class="col-md-10">
+       <h1>Privileges</h1>
+       <p>
+         {% url "domain_subscription_view" domain as software_plan_url %}
+@@ -30,7 +30,7 @@
+         <a href="{{ software_plan_url }}">Current Subscription</a>
+       </p>
+     </div>
+-    <div class="col-sm-10">
++    <div class="col-md-10">
+       <table class="table table-striped">
+         <thead>
+         <th>Privilege</th>
+@@ -55,7 +55,7 @@
+   </div>
+ 
+   <div class="row">
+-    <div class="col-sm-10">
++    <div class="col-md-10">
+       <h1>Feature Flags</h1>
+       <p>
+         {% url 'toggle_list' as toggle_url %}
+@@ -68,7 +68,7 @@
+         This does not include any flags set for other users in this domain.
+       </p>
+     </div>
+-    <div class="col-sm-10">
++    <div class="col-md-10">
+       <table class="table table-striped ko-template" id="toggles-table">
+         <thead>
+         <th>Tag</th>
+@@ -82,16 +82,16 @@
+           <td>
+                             <span data-bind="css: ('label-' + tagCssClass),
+                                              text: tag"
+-                                  class="label"></span>
++                                  class="badge"></span>
+           </td>
+ 
+           <td>
+             <i class="fa fa-flag" data-bind="visible: isEnabled"></i>
+           </td>
+ 
+-          <td data-bind="css: {'text-muted': !isEnabled()}" >
++          <td data-bind="css: {'text-body-secondary': !isEnabled()}" >
+             <div class="row clickable" data-bind="click: showHideDescription">
+-              <!--ko text: label --><!--/ko-->
++              <!--ko text: badge --><!--/ko-->
+ 
+               <span data-bind="visible: description || helpLink">&hellip;</span>
+             </div>
+@@ -107,10 +107,10 @@
+ 
+               <span data-bind="css: ('label-' + tagCssClass),
+                                                     text: tag"
+-                    class="label"></span>
++                    class="badge"></span>
+               <span data-bind="html: tagDescription"></span>
+ 
+-              <div class="text-right">
++              <div class="text-end">
+                 <small><a class="text-uppercase" data-bind="attr: {href: editLink}, text: slug"></a></small>
+               </div>
+             </div>
+@@ -123,7 +123,7 @@
+           <td class="text-center">
+             <div data-bind="visible: hasDomainNamespace">
+               <button type="button"
+-                      class="btn btn-default"
++                      class="btn btn-outline-primary"
+                       data-bind="click: toggleEnabledState,
+                                  disable: setTogglePending,
+                                  css: {
