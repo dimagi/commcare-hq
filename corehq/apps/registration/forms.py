@@ -598,11 +598,6 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
     def clean(self):
         cleaned_data = super(AdminInvitesUserForm, self).clean()
-
-        if (('tableau_role' in cleaned_data or 'tableau_group_indices' in cleaned_data)
-        and not self.can_edit_tableau_config):
-            raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
-
         if 'tableau_group_indices' in cleaned_data:
             cleaned_data['tableau_group_ids'] = [
                 self.tableau_form.allowed_tableau_groups[int(i)].id
@@ -624,6 +619,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 cleaned_data['profile'] = profile_id
             cleaned_data['custom_user_data'] = get_prefixed(custom_user_data, self.custom_data.prefix)
 
+        errors = self._validator.validate_parameters(cleaned_data.keys())
+        if errors:
+            raise forms.ValidationError(errors)
         return cleaned_data
 
     def _initialize_tableau_fields(self, data, domain):
