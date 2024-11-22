@@ -34,6 +34,14 @@ module.exports = {
                 test: /\.js$/,
                 loader: 'babel-loader',
             },
+            {
+                test: /\.css$/,
+                loader: 'css-loader',
+            },
+            {
+                test: /\.svg$/,
+                loader: 'svg-inline-loader',
+            },
 
             // this rule ensures that hqDefine is renamed to define AMD module
             // definition syntax that webpack understands

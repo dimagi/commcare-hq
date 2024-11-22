@@ -6,6 +6,7 @@
 
 {% block js %}{{ block.super }}
   {% if request|toggle_enabled:"RICH_TEXT_EMAILS" %}
+    <!-- TODO -->
     <script src="{% static 'ckeditor5/build/ckeditor5-dll.js' %}"></script>
     <script src="{% static '@ckeditor/ckeditor5-editor-classic/build/editor-classic.js' %}"></script>
     <script src="{% static '@ckeditor/ckeditor5-autoformat/build/autoformat.js' %}"></script>
