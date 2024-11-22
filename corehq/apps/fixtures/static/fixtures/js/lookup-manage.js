@@ -9,6 +9,7 @@ hqDefine("fixtures/js/lookup-manage", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap3/hq.helpers",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",
+    "commcarehq",
 ], function (
     $,
     _,
