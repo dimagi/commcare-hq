@@ -14,13 +14,13 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('--case_type', required=False)
-        parser.add_argument('--query_limit', required=False, default=DEFAULT_QUERY_LIMIT)
+        parser.add_argument('--query_limit', type=int, required=False, default=DEFAULT_QUERY_LIMIT)
         parser.add_argument('--chunk_size', required=False)
 
     def handle(self, *args, **options):
         domain = options['domain']
         case_type = options.get('case_type')
-        query_limit = int(options.get('query_limit'))
+        query_limit = options.get('query_limit')
         chunk_size = options.get('chunk_size')
         index_case_docs(domain, query_limit, chunk_size, case_type)
 
