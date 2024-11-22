@@ -421,7 +421,7 @@ def _setup_couch_blocker():
 
     def mock_couch(app):
         dbname = dbs.get(app, main_db_url).rsplit("/", 1)[1]
-        return Mock(name=dbname, dbname=dbname, spec_set=CouchSpec)
+        return BlockedMock(name=dbname, dbname=dbname, spec_set=CouchSpec)
 
     # register our dbs with the extension document classes
     main_db_url = settings.COUCH_DATABASE
@@ -440,6 +440,17 @@ def _setup_couch_blocker():
             pch.stop()
 
     return block, unblock
+
+
+class BlockedMock(Mock):
+    def __getattr__(self, name):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            raise RuntimeError(
+                'Database access not allowed, use the "django_db" mark, or '
+                'the "db" or "transactional_db" fixtures to enable it.'
+            )
 
 
 _db_context = DeferredDatabaseContext()
