@@ -33,7 +33,7 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
         } else {
             var ucr = "userreports/js/configurable_report";
             // This check doesn't work in a requirejs environment. Part of migrating UCR is going to be updating this.
-            if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
+            if (!window.USE_WEBPACK && typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
                 // UCRs
                 standardReport = hqImport(ucr).getStandardHQReport();
             } else {

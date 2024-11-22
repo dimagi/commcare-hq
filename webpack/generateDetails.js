@@ -123,6 +123,7 @@ if (require.main === module) {
         "hqwebapp",
         "notifications",
         "registration",
+        "reports_core",
     ];
     const aliases = {};
     const appsWithEntries = [];
