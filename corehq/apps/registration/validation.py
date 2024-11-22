@@ -6,6 +6,7 @@ from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.user_importer.validation import (
     RoleValidator,
     ProfileValidator,
+    EmailValidator
 )
 from corehq.apps.users.models import Invitation, WebUser
 
@@ -60,3 +61,7 @@ class AdminInvitesUserValidator():
             web_user = WebUser.get_by_username(email)
             if web_user and not web_user.is_active:
                 return _("A user with this email address is deactivated. ")
+
+        email_validator = EmailValidator(self.domain, 'email')
+        spec = {'email': email}
+        return email_validator.validate_spec(spec)
