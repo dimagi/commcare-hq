@@ -25,7 +25,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('type_', help="either xform or case")
-        parser.add_argument('case_type_or_xmlns')
+        parser.add_argument('case_type_or_xmlns', type=lambda s: [item.strip() for item in s.split(',')])
         parser.add_argument('data_source_ids', nargs=argparse.REMAINDER)
         parser.add_argument('--bulk', action='store_true', dest='bulk',
                             help='bulk create. Only use if you know the implications')
@@ -102,7 +102,7 @@ class Command(BaseCommand):
             cases = (
                 CommCareCase.objects
                 .using(db)
-                .filter(domain=self.domain, type=self.case_type_or_xmlns)
+                .filter(domain=self.domain, type__in=self.case_type_or_xmlns)
             )
             if start_date:
                 cases = cases.filter(server_modified_on__gte=start_date)
@@ -111,7 +111,7 @@ class Command(BaseCommand):
             forms = (
                 XFormInstance.objects
                 .using(db)
-                .filter(domain=self.domain, xmlns=self.case_type_or_xmlns)
+                .filter(domain=self.domain, xmlns__in=self.case_type_or_xmlns)
             )
             if start_date:
                 forms = forms.filter(received_on__gte=start_date)
