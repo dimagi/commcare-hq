@@ -408,7 +408,6 @@
     {% if request.use_multiselect and not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
-        <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
       {% endcompress %}
     {% endif %}
