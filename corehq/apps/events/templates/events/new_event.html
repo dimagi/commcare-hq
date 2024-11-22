@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main 'events/js/new_event' %}
+{% js_entry_b3 'events/js/new_event' %}
 
 {% block page_content %}
   {% initial_page_data 'current_values' form.current_values %}

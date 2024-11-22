@@ -32,6 +32,7 @@ hqDefine("users/js/mobile_workers",[
     'hqwebapp/js/components/search_box',
     'hqwebapp/js/bootstrap3/validators.ko', // email address validation
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
+    'commcarehq',
 ], function (
     $,
     ko,
