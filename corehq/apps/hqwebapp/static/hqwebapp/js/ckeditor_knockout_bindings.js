@@ -1,5 +1,4 @@
 'use strict';
-/* global CKEditor5 */
 
 // When adding a ckeditor binding, be sure to also add the name of an image upload url. 
 // For example <textarea data-bind="ckeditor: message" data-image-upload-url="upload_messaging_image"></textarea>
@@ -19,7 +18,7 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
         init: function (element, valueAccessor) {
             var options = {
                     plugins: [
-                        CKEditor5.alignment.Alignment,
+                        /*CKEditor5.alignment.Alignment,
                         CKEditor5.link.AutoLink,
                         CKEditor5.autoformat.Autoformat,
                         CKEditor5.basicStyles.Bold,
@@ -44,7 +43,7 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                         CKEditor5.paragraph.Paragraph,
                         CKEditor5.pasteFromOffice.PasteFromOffice,
                         CKEditor5.restrictedEditing.RestrictedEditingMode,
-                        CKEditor5.upload.SimpleUploadAdapter,
+                        CKEditor5.upload.SimpleUploadAdapter,*/
                     ],
                     toolbar: {
                         items: [
@@ -161,7 +160,7 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                         valueAccessor()(editorInstance.getData());
                         isEditorChange = false;
                     }
-                    
+
                 });
 
                 // Update the document whenever the observable changes
