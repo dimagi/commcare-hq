@@ -24,7 +24,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.programs.models import Program
 from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
 from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import CouchUser
 
 
 class RegisterWebUserForm(forms.Form):
@@ -492,7 +492,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, is_add_user=None,
+    def __init__(self, data=None, is_add_user=None,
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
                  custom_data=None, *, domain, **kwargs):
         self.custom_data = custom_data
@@ -501,6 +501,8 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             custom_data_post_dict = self.custom_data.form.data
             data.update({k: v for k, v in custom_data_post_dict.items() if k not in data})
         self.request = kwargs.get('request')
+        from corehq.apps.registration.validation import AdminInvitesUserValidator
+        self._validator = AdminInvitesUserValidator(domain, self.request.couch_user)
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
         self.can_edit_tableau_config = can_edit_tableau_config
         domain_obj = Domain.get_by_name(domain)
@@ -519,8 +521,6 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 programs = Program.by_domain(domain_obj.name)
                 choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
                 self.fields['program'].choices = choices
-
-        self.excluded_emails = [x.lower() for x in excluded_emails] if excluded_emails else []
 
         if self.can_edit_tableau_config:
             self._initialize_tableau_fields(data, domain)
@@ -591,12 +591,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
-        if email.lower() in self.excluded_emails:
-            raise forms.ValidationError(_("A user with this email address is already in "
-                                          "this project or has a pending invitation."))
-        web_user = WebUser.get_by_username(email)
-        if web_user and not web_user.is_active:
-            raise forms.ValidationError(_("A user with this email address is deactivated. "))
+        errors = self._validator.validate_email(email, self.request.method == 'POST')
+        if errors:
+            raise forms.ValidationError(errors)
         return email
 
     def clean(self):

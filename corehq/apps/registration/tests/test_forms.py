@@ -60,7 +60,6 @@ def create_form(data=None, **kw):
     defaults = {
         "domain": "test",
         "request": request,
-        "excluded_emails": [],
         "role_choices": [("admin", "admin")],
     }
     return AdminInvitesUserForm(request.POST, **(defaults | kw))

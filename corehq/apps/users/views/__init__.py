@@ -1146,11 +1146,8 @@ class InviteWebUserView(BaseManageWebUserView):
         can_edit_tableau_config = (self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config')
                                 and toggles.TABLEAU_USER_SYNCING.enabled(self.domain))
         if self.request.method == 'POST':
-            current_users = [user.username for user in WebUser.by_domain(self.domain)]
-            pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
             return AdminInvitesUserForm(
                 self.request.POST,
-                excluded_emails=current_users + pending_invites,
                 role_choices=role_choices,
                 domain=self.domain,
                 is_add_user=is_add_user,
