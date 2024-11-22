@@ -148,7 +148,7 @@ hqDefine("fixtures/js/lookup-manage", [
                 error: function (data) {
                     var errorMessage;
                     if (data.responseText === "DuplicateFixture") {
-                        errorMessage = _.template(gettext("Can not create table with ID '<% tag %>'. Table IDs should be unique."))({ tag: self.tag() });
+                        errorMessage = _.template(gettext("Can not create table with ID '<%= tag %>'. Table IDs should be unique."))({ tag: self.tag() });
                     } else {
                         errorMessage = somethingWentWrong;
                     }
