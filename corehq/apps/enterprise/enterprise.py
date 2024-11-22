@@ -1,4 +1,6 @@
 import re
+from django.db.models import OuterRef, Subquery, Count
+from django.db.models.functions import Coalesce
 from datetime import datetime, timedelta
 
 from django.utils.translation import gettext as _
@@ -20,6 +22,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
+from corehq.apps.sms.models import SMS, OUTGOING, INCOMING
 from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
     get_mobile_user_count,
@@ -34,6 +37,7 @@ class EnterpriseReport:
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
+    SMS = 'sms'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
@@ -67,6 +71,8 @@ class EnterpriseReport:
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
+        elif slug == cls.SMS:
+            report = EnterpriseSMSReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
@@ -383,3 +389,85 @@ class EnterpriseODataReport(EnterpriseReport):
             )
 
         return rows
+
+
+class EnterpriseSMSReport(EnterpriseReport):
+    title = gettext_lazy('SMS Sent')
+    MAX_DATE_RANGE_DAYS = 90
+
+    def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30):
+        super().__init__(account, couch_user)
+
+        if not end_date:
+            end_date = datetime.utcnow()
+        elif isinstance(end_date, str):
+            end_date = datetime.fromisoformat(end_date)
+
+        if start_date:
+            if isinstance(start_date, str):
+                start_date = datetime.fromisoformat(start_date)
+            self.datespan = DateSpan(start_date, end_date)
+            self.subtitle = _("{} to {}").format(
+                start_date.date(),
+                end_date.date(),
+            )
+        else:
+            self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
+            self.subtitle = _("past {} days").format(num_days)
+
+        if self.datespan.enddate - self.datespan.startdate > timedelta(days=self.MAX_DATE_RANGE_DAYS):
+            raise TooMuchRequestedDataError(
+                _('Date ranges with more than {} days are not supported').format(self.MAX_DATE_RANGE_DAYS)
+            )
+
+    def total_for_domain(self, domain_obj):
+        query = SMS.objects.filter(
+            domain=domain_obj.name,
+            direction=OUTGOING,
+            date__gte=self.datespan.startdate,
+            date__lt=self.datespan.enddate_adjusted
+        )
+
+        return query.count()
+
+    def create_count_subquery(self, **kwargs):
+        return Coalesce(
+            Subquery(
+                SMS.objects.filter(
+                    domain=OuterRef('domain'),
+                    date__gte=self.datespan.startdate,
+                    date__lt=self.datespan.enddate_adjusted,
+                    **kwargs
+                )
+                .values('domain')
+                .annotate(count=Count('pk'))
+                .values('count')
+            ),
+            0
+        )
+
+    @property
+    def headers(self):
+        headers = super().headers
+        headers = [_('Project Space Name'), _('# Sent'), _('# Received'), _('# Errors')]
+
+        return headers
+
+    def rows_for_domain(self, domain_obj):
+        sent_subquery = self.create_count_subquery(direction=OUTGOING, processed=True)
+        received_subquery = self.create_count_subquery(direction=INCOMING, processed=True)
+        sent_subquery = self.create_count_subquery(direction=OUTGOING)
+        received_subquery = self.create_count_subquery(direction=INCOMING)
+        error_subquery = self.create_count_subquery(error=True)
+
+        return (
+            SMS.objects
+            .filter(
+                domain=domain_obj.name,
+            )
+            .values('domain').distinct()
+            .annotate(sent_count=sent_subquery)
+            .annotate(received_count=received_subquery)
+            .annotate(error_count=error_subquery)
+            .values_list('domain', 'sent_count', 'received_count', 'error_count')
+        )
