@@ -35,6 +35,14 @@ module.exports = {
                 test: /\.js$/,
                 loader: 'babel-loader',
             },
+            {
+                test: /\.css$/,
+                loader: 'css-loader',
+            },
+            {
+                test: /\.svg$/,
+                loader: 'svg-inline-loader',
+            },
 
             // this rule ensures that hqDefine is renamed to define AMD module
             // definition syntax that webpack understands
@@ -79,6 +87,28 @@ module.exports = {
                     },
                 },
             },
+            {
+                test: /^@ckeditor\/ckeditor5-editor-classic\/src\/index\.js$/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "ClassicEditor",
+                    },
+                },
+            },
+            /*{
+                test: /^ckeditor.*js$/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "multiple",
+                        exports: ["ClassicEditor", "Alignment"],
+                    },
+                },
+            },*/
         ],
     },
 

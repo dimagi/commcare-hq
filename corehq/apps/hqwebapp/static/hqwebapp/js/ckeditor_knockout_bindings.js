@@ -9,17 +9,49 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    // maybe these should go in hqwebapp/js/ckeditor_knockout_bindings...but this page doesn't depend on that?
+
+
+
+    //'ckeditor5/build/ckeditor5-dll',
+    //'ckeditor5/browser/ckeditor5.umd.js',
+
+    //'@ckeditor/ckeditor5-editor-classic/build/editor-classic',
+    '@ckeditor/ckeditor5-editor-classic/',
+
+    /*'@ckeditor/ckeditor5-alignment',
+    '@ckeditor/ckeditor5-autoformat/build/autoformat',
+    '@ckeditor/ckeditor5-basic-styles/build/basic-styles',
+    '@ckeditor/ckeditor5-block-quote/build/block-quote',
+    '@ckeditor/ckeditor5-essentials/build/essentials',
+    '@ckeditor/ckeditor5-font/build/font',
+    '@ckeditor/ckeditor5-heading/build/heading',
+    '@ckeditor/ckeditor5-html-support/build/html-support',
+    '@ckeditor/ckeditor5-horizontal-line/build/horizontal-line',
+    '@ckeditor/ckeditor5-image/build/image',
+    '@ckeditor/ckeditor5-indent/build/indent',
+    '@ckeditor/ckeditor5-link',
+    '@ckeditor/ckeditor5-list',
+    '@ckeditor/ckeditor5-paste-from-office',
+    '@ckeditor/ckeditor5-restricted-editing',*/
 ], function (
     $,
     _,
     ko,
-    initialPageData
+    initialPageData,
+    //CKEditor5,
+    //CKEditor5EditorClassic
+    ClassicEditor,
 ) {
+//console.log(CKEditor5);
+//debugger;
+//console.log(CKEditor5EditorClassic);
+console.log(ClassicEditor);
     ko.bindingHandlers.ckeditor = {
         init: function (element, valueAccessor) {
             var options = {
                     plugins: [
-                        CKEditor5.alignment.Alignment,
+                        /*CKEditor5.alignment.Alignment,
                         CKEditor5.link.AutoLink,
                         CKEditor5.autoformat.Autoformat,
                         CKEditor5.basicStyles.Bold,
@@ -44,7 +76,7 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                         CKEditor5.paragraph.Paragraph,
                         CKEditor5.pasteFromOffice.PasteFromOffice,
                         CKEditor5.restrictedEditing.RestrictedEditingMode,
-                        CKEditor5.upload.SimpleUploadAdapter,
+                        CKEditor5.upload.SimpleUploadAdapter,*/
                     ],
                     toolbar: {
                         items: [
@@ -146,7 +178,9 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                 },
                 editorInstance = undefined;
 
-            CKEditor5.editorClassic.ClassicEditor.create(element, options).then(function (editor) {
+//debugger;
+            //CKEditor5.editorClassic.ClassicEditor.create(element, options).then(function (editor) {
+            ClassicEditor.create(element, options).then(function (editor) {
                 var isSubscriberChange = false,
                     isEditorChange = false,
                     editorInstance = editor;
@@ -161,7 +195,7 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                         valueAccessor()(editorInstance.getData());
                         isEditorChange = false;
                     }
-                    
+
                 });
 
                 // Update the document whenever the observable changes
