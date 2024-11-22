@@ -342,13 +342,16 @@ class ProfileValidator(ImportValidator):
         if spec_profile_name and spec_profile_name not in self.all_user_profile_ids_by_name.keys():
             return self.error_message_nonexisting_profile.format(spec_profile_name)
 
-        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
-        original_profile_id = None
-        if user_result.invitation:
-            original_profile_id = user_result.invitation.profile.id if user_result.invitation.profile else None
-        elif user_result.editable_user:
-            original_profile_id = user_result.editable_user.get_user_data(self.domain).profile_id
+        profile_assignment_required_error = self._validate_profile_assignment_required(spec_profile_name)
+        if profile_assignment_required_error:
+            return profile_assignment_required_error
 
+        original_profile_id = self._get_original_profile_id(spec)
+        profile_access_error = self._validate_profile_access(original_profile_id, spec_profile_name)
+        if profile_access_error:
+            return profile_access_error
+
+    def _validate_profile_assignment_required(self, spec_profile_name):
         profile_required_for_user_type_list = CustomDataFieldsDefinition.get_profile_required_for_user_type_list(
             self.domain,
             UserFieldsView.field_type
@@ -362,6 +365,15 @@ class ProfileValidator(ImportValidator):
                 [self.user_types[required_for] for required_for in profile_required_for_user_type_list]
             ))
 
+    def _get_original_profile_id(self, spec):
+        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
+        if user_result.invitation:
+            return user_result.invitation.profile.id if user_result.invitation.profile else None
+        elif user_result.editable_user:
+            return user_result.editable_user.get_user_data(self.domain).profile_id
+        return None
+
+    def _validate_profile_access(self, original_profile_id, spec_profile_name):
         spec_profile_id = self.all_user_profile_ids_by_name.get(spec_profile_name)
         spec_profile_same_as_original = original_profile_id == spec_profile_id
         if spec_profile_same_as_original:
@@ -370,8 +382,10 @@ class ProfileValidator(ImportValidator):
         upload_user_accessible_profiles = (
             UserFieldsView.get_user_accessible_profiles(self.domain, self.upload_user))
         accessible_profile_ids = {p.id for p in upload_user_accessible_profiles}
+
         if original_profile_id and original_profile_id not in accessible_profile_ids:
             return self.error_message_original_user_profile_access
+
         if spec_profile_id and spec_profile_id not in accessible_profile_ids:
             return self.error_message_new_user_profile_access.format(spec_profile_name)
 
