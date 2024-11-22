@@ -51,6 +51,13 @@
   "dashboard": {
     "is_complete": true
   },
+  "domain": {
+    "in_progress": true,
+    "templates": [
+      "admin/commtrack_settings.html",
+      "admin/sms_settings.html"
+    ]
+  },
   "dropbox": {
     "is_complete": true
   },

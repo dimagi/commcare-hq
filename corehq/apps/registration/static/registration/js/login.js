@@ -5,6 +5,7 @@ hqDefine('registration/js/login', [
     'registration/js/user_login_form',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/captcha', // shows captcha
+    'commcarehq',
 ], function (
     $,
     blazy,

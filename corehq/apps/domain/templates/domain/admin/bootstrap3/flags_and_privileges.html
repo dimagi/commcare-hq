@@ -1,0 +1,145 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% js_entry_b3 'domain/js/bootstrap3/toggles' %}
+
+{% block page_content %}
+
+  {% initial_page_data 'domain' domain %}
+  {% initial_page_data 'toggles' toggles %}
+  {% registerurl 'set_toggle' '---' %}
+  {% registerurl 'edit_toggle' '---' %}
+
+  <div class="row">
+    <div class="col-sm-10">
+      <p>
+        Features can be enabled or disabled based on feature flags or privileges. This page
+        is intended to provide a list of what features a domain has access to.
+      </p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-10">
+      <h1>Privileges</h1>
+      <p>
+        {% url "domain_subscription_view" domain as software_plan_url %}
+        Access to some features is dependent on a the software plan to which the domain
+        is subscribed.
+        <a href="{{ software_plan_url }}">Current Subscription</a>
+      </p>
+    </div>
+    <div class="col-sm-10">
+      <table class="table table-striped">
+        <thead>
+        <th>Privilege</th>
+        <th class="text-center text-nowrap">Enabled for domain?</th>
+        </thead>
+        <tbody>
+        {% for privilege_name, enabled_for_domain in privileges %}
+          <tr class="{% if enabled_for_domain %}success{% else %}warning{% endif %}">
+            <td>{{ privilege_name }}</td>
+            <td class="text-center">
+              {% if enabled_for_domain %}
+                <i class="fa fa-check"></i>
+              {% else %}
+                <i class="fa fa-ban"></i>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-10">
+      <h1>Feature Flags</h1>
+      <p>
+        {% url 'toggle_list' as toggle_url %}
+        Feature Flags turn on features for individual users or projects. They are editable only by
+        super users, in the <a href="{{ toggle_url }}">Feature Flag edit UI</a>.
+        In addition, some feature flags are randomly enabled by domain.
+      </p>
+      <p>
+        Following are all flags enabled for this domain and/or for you.
+        This does not include any flags set for other users in this domain.
+      </p>
+    </div>
+    <div class="col-sm-10">
+      <table class="table table-striped ko-template" id="toggles-table">
+        <thead>
+        <th>Tag</th>
+        <th class="text-center text-nowrap"><!-- placeholder for flag icon --></th>
+        <th>Feature</th>
+        <th class="text-center text-nowrap">Enabled for me?</th>
+        <th class="text-center text-nowrap">Enabled for domain?</th>
+        </thead>
+        <tbody data-bind="foreach: toggles">
+        <tr>
+          <td>
+                            <span data-bind="css: ('label-' + tagCssClass),
+                                             text: tag"
+                                  class="label"></span>
+          </td>
+
+          <td>
+            <i class="fa fa-flag" data-bind="visible: isEnabled"></i>
+          </td>
+
+          <td data-bind="css: {'text-muted': !isEnabled()}" >
+            <div class="row clickable" data-bind="click: showHideDescription">
+              <!--ko text: label --><!--/ko-->
+
+              <span data-bind="visible: description || helpLink">&hellip;</span>
+            </div>
+
+            <div class="row" data-bind="slideVisible: expanded()">
+              <br />
+              <p data-bind="visible: description, html: description"></p>
+              <span data-bind="visible: helpLink">
+                                    <a data-bind="attr: {href: helpLink}">Documentation</a>
+                                </span>
+
+              <hr data-bind="visible: description || helpLink" />
+
+              <span data-bind="css: ('label-' + tagCssClass),
+                                                    text: tag"
+                    class="label"></span>
+              <span data-bind="html: tagDescription"></span>
+
+              <div class="text-right">
+                <small><a class="text-uppercase" data-bind="attr: {href: editLink}, text: slug"></a></small>
+              </div>
+            </div>
+          </td>
+
+          <td class="text-center">
+            <i class="fa fa-user" data-bind="visible: userEnabled"></i>
+          </td>
+
+          <td class="text-center">
+            <div data-bind="visible: hasDomainNamespace">
+              <button type="button"
+                      class="btn btn-default"
+                      data-bind="click: toggleEnabledState,
+                                 disable: setTogglePending,
+                                 css: {
+                                    'active': domainEnabled(),
+                                 }">
+                <i class="fa" data-bind="css: domainEnabled() ? 'fa-rocket' : 'fa-ban', hidden: setTogglePending"></i>
+                <i class="fa fa-spin fa-refresh" data-bind="visible: setTogglePending"></i>
+                <!--ko text: domainEnabled() ? 'Enabled' : 'Not Enabled' --><!--/ko-->
+              </button>
+            </div>
+            <div data-bind="visible: !hasDomainNamespace">---</div>
+          </td>
+
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
