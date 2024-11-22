@@ -100,9 +100,10 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                     selectionSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selection.ms-selected';
 
                 const _search = function (query, itemSelector) {
+                    query = query.toLowerCase();
                     $(itemSelector).each(function (index, item) {
                         const $item = $(item);
-                        if (!query || $item.text().indexOf(query) !== -1) {
+                        if (!query || $item.text().toLowerCase().indexOf(query) !== -1) {
                             $item.removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
                         } else {
                             $item.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
