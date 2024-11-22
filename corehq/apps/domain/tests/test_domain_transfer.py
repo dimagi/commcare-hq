@@ -174,7 +174,7 @@ class TestTransferDomainViews(BaseDomainTest):
         # No one logged in
         resp = self.client.post(reverse('activate_transfer_domain',
                                         args=[self.transfer.transfer_guid]), follow=True)
-        self.assertEqual(resp.template_name, ['login_and_password/login.html'],
+        self.assertEqual(resp.template_name, ['login_and_password/bootstrap3/login.html'],
                          'Should redirect to login page')
 
         # Initiator logged in
@@ -193,7 +193,7 @@ class TestTransferDomainViews(BaseDomainTest):
         # No one logged in
         resp = self.client.post(reverse('deactivate_transfer_domain',
                                         args=[self.transfer.transfer_guid]), follow=True)
-        self.assertEqual(resp.template_name, ['login_and_password/login.html'],
+        self.assertEqual(resp.template_name, ['login_and_password/bootstrap3/login.html'],
                          'Should redirect to login page')
 
         # Random user who belongs to the domain
@@ -212,8 +212,8 @@ class TestTransferDomainViews(BaseDomainTest):
         # No one logged in
         resp = self.client.get(reverse('transfer_domain_view',
                                        args=[self.domain.name]), follow=True)
-        self.assertRedirects(resp, reverse('domain_login', kwargs={'domain': self.domain.name}) +
-            '?next=' + reverse('transfer_domain_view', args=[self.domain.name]))
+        self.assertRedirects(resp, reverse('domain_login', kwargs={'domain': self.domain.name})
+            + '?next=' + reverse('transfer_domain_view', args=[self.domain.name]))
 
         # Random user who belongs to the domain but not an admin
         self.client.login(username=self.rando.username, password=self.password)
