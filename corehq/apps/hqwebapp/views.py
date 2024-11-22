@@ -207,7 +207,7 @@ def redirect_to_default(req, domain=None):
     if domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
-            template='two_factor/core/otp_required.html',
+            template='two_factor/core/bootstrap3/otp_required.html',
             status=403,
         )
 
