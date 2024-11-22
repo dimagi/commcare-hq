@@ -85,7 +85,7 @@ module.exports = {
         new webpack.ProvidePlugin({
             '$': 'jquery',
             'jQuery': 'jquery',  // needed for bootstrap to work
-            'window.jQuery': 'jquery',
+            'window.jQuery': 'jquery',  // needed for some third-party libraries that depend on jQuery, such as multiselect
         }),
         new hqPlugins.EntryChunksPlugin(),
     ],
