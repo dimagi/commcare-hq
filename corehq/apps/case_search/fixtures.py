@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from lxml.builder import E
 
 from casexml.apps.phone.fixtures import FixtureProvider
@@ -48,15 +50,6 @@ def _run_query(domain, csql):
                .count())
 
 
-def _get_indicator_nodes(restore_state, indicators):
-    with restore_state.timing_context('_get_template_renderer'):
-        renderer = _get_template_renderer(restore_state.restore_user)
-    for name, csql_template in indicators:
-        with restore_state.timing_context(name):
-            value = _run_query(restore_state.domain, renderer.render(csql_template))
-        yield E.value(value, name=name)
-
-
 class CaseSearchFixtureProvider(FixtureProvider):
     id = 'case-search-fixture'
     ignore_skip_fixtures_flag = True
@@ -66,12 +59,46 @@ class CaseSearchFixtureProvider(FixtureProvider):
             return
         indicators = _get_indicators(restore_state.domain)
         if indicators:
-            nodes = _get_indicator_nodes(restore_state, indicators)
-            yield E.fixture(E.values(*nodes), id=self.id)
+            with restore_state.timing_context('_get_template_renderer'):
+                renderer = _get_template_renderer(restore_state.restore_user)
+            for indicator in indicators:
+                if self._should_sync(restore_state, indicator):
+                    with restore_state.timing_context(indicator.name):
+                        value = _run_query(restore_state.domain, renderer.render(indicator.csql))
+                    yield self._to_xml(indicator.name, value)
+
+    def _should_sync(self, restore_state, indicator):
+        return not restore_state.use_cached_fixture(
+            self._fixture_id(indicator.name),
+            is_too_old=get_is_too_old_fn(indicator),
+        )
+
+    def _fixture_id(self, name):
+        return f"{self.id}:{name}"
+
+    def _to_xml(self, name, value):
+        return E.fixture(E.value(value), id=self._fixture_id(name))
 
 
 def _get_indicators(domain):
-    return list(CSQLFixtureExpression.by_domain(domain).values_list('name', 'csql'))
+    return list(CSQLFixtureExpression.by_domain(domain))
+
+
+def get_is_too_old_fn(indicator):
+    """Returns a fn that returns True if the fixture for `indicator` needs to be included"""
+
+    def default_fn(last_sync_time):
+        return datetime.now() - last_sync_time > timedelta(minutes=10)
+
+    for is_too_old in custom_csql_fixture_expiration(indicator):
+        return is_too_old
+
+    return default_fn
+
+
+@extensions.extension_point
+def custom_csql_fixture_expiration(domain, indicator):
+    '''Register custom template params to be available in CSQL templates'''
 
 
 case_search_fixture_generator = CaseSearchFixtureProvider()
