@@ -1,5 +1,4 @@
 'use strict';
-/* global CKEditor5 */
 
 // When adding a ckeditor binding, be sure to also add the name of an image upload url. 
 // For example <textarea data-bind="ckeditor: message" data-image-upload-url="upload_messaging_image"></textarea>
@@ -9,42 +8,46 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'ckeditor5/ckeditor5.js',   // This needs the .js extension to differentiate it from ckeditor.css
+                                // and similar files in the same directory
 ], function (
     $,
     _,
     ko,
-    initialPageData
+    initialPageData,
+    CKEditor5
 ) {
     ko.bindingHandlers.ckeditor = {
         init: function (element, valueAccessor) {
             var options = {
+                    licenseKey: 'GPL',
                     plugins: [
-                        CKEditor5.alignment.Alignment,
-                        CKEditor5.link.AutoLink,
-                        CKEditor5.autoformat.Autoformat,
-                        CKEditor5.basicStyles.Bold,
-                        CKEditor5.basicStyles.Italic,
-                        CKEditor5.essentials.Essentials,
-                        CKEditor5.font.Font,
-                        CKEditor5.font.FontColor,
-                        CKEditor5.heading.Heading,
-                        CKEditor5.horizontalLine.HorizontalLine,
-                        CKEditor5.htmlSupport.GeneralHtmlSupport,
-                        CKEditor5.image.Image,
-                        CKEditor5.image.ImageCaption,
-                        CKEditor5.image.ImageStyle,
-                        CKEditor5.image.ImageResize,
-                        CKEditor5.image.ImageResizeButtons,
-                        CKEditor5.image.ImageToolbar,
-                        CKEditor5.image.ImageUpload,
-                        CKEditor5.indent.Indent,
-                        CKEditor5.link.Link,
-                        CKEditor5.link.LinkImage,
-                        CKEditor5.list.List,
-                        CKEditor5.paragraph.Paragraph,
-                        CKEditor5.pasteFromOffice.PasteFromOffice,
-                        CKEditor5.restrictedEditing.RestrictedEditingMode,
-                        CKEditor5.upload.SimpleUploadAdapter,
+                        CKEditor5.Alignment,
+                        CKEditor5.AutoLink,
+                        CKEditor5.Autoformat,
+                        CKEditor5.Bold,
+                        CKEditor5.Italic,
+                        CKEditor5.Essentials,
+                        CKEditor5.Font,
+                        CKEditor5.FontColor,
+                        CKEditor5.Heading,
+                        CKEditor5.HorizontalLine,
+                        CKEditor5.GeneralHtmlSupport,
+                        CKEditor5.Image,
+                        CKEditor5.ImageCaption,
+                        CKEditor5.ImageStyle,
+                        CKEditor5.ImageResize,
+                        CKEditor5.ImageResizeButtons,
+                        CKEditor5.ImageToolbar,
+                        CKEditor5.ImageUpload,
+                        CKEditor5.Indent,
+                        CKEditor5.Link,
+                        CKEditor5.LinkImage,
+                        CKEditor5.List,
+                        CKEditor5.Paragraph,
+                        CKEditor5.PasteFromOffice,
+                        CKEditor5.RestrictedEditingMode,
+                        CKEditor5.SimpleUploadAdapter,
                     ],
                     toolbar: {
                         items: [
@@ -146,7 +149,7 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                 },
                 editorInstance = undefined;
 
-            CKEditor5.editorClassic.ClassicEditor.create(element, options).then(function (editor) {
+            CKEditor5.ClassicEditor.create(element, options).then(function (editor) {
                 var isSubscriberChange = false,
                     isEditorChange = false,
                     editorInstance = editor;
@@ -161,7 +164,7 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                         valueAccessor()(editorInstance.getData());
                         isEditorChange = false;
                     }
-                    
+
                 });
 
                 // Update the document whenever the observable changes
@@ -181,7 +184,7 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
 
             // handle disposal (if KO removes by the template binding)
             ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
-                CKEditor5.editorClassic.ClassicEditor.remove(editorInstance);
+                CKEditor5.ClassicEditor.remove(editorInstance);
             });
 
         },

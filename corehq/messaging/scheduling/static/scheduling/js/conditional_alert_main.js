@@ -8,6 +8,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
     'hqwebapp/js/bootstrap3/widgets',
     'scheduling/js/create_schedule',
     'data_interfaces/js/make_read_only',
+    'commcarehq',
 ], function (
     $,
     _,
