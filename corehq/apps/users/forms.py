@@ -1121,7 +1121,7 @@ class SelectUserLocationForm(forms.Form):
         if locations.filter(location_type__has_users=False).exists():
             raise forms.ValidationError(
                 _('One or more of the locations you specified cannot have users assigned.'))
-        return [location.location_id for location in locations]
+        return location_ids
 
     def _user_has_permission_to_access_locations(self, new_location_ids):
         assigned_locations = SQLLocation.objects.filter(location_id__in=new_location_ids)
