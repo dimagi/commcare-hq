@@ -8,7 +8,9 @@ from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.user_importer.validation import (
     RoleValidator,
     ProfileValidator,
-    EmailValidator
+    EmailValidator,
+    LocationValidator,
+    SiteCodeToLocationCache,
 )
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.toggles import TABLEAU_USER_SYNCING
@@ -47,6 +49,11 @@ class AdminInvitesUserValidator():
         pending_invites = [di.email.lower() for di in Invitation.by_domain(self.domain)]
         return current_users + pending_invites
 
+    @property
+    @memoized
+    def location_cache(self):
+        return SiteCodeToLocationCache(self.domain)
+
     def validate_parameters(self, parameters):
         can_edit_tableau_config = (self.upload_user.has_permission(self.domain, 'edit_user_tableau_config')
                         and TABLEAU_USER_SYNCING.enabled(self.domain))
@@ -57,6 +64,11 @@ class AdminInvitesUserValidator():
         has_profile_privilege = domain_has_privilege(self.domain, privileges.APP_USER_PROFILES)
         if 'profile' in parameters and not has_profile_privilege:
             return _("This domain does not have user profile privileges.")
+
+        has_locations_privilege = domain_has_privilege(self.domain, privileges.LOCATIONS)
+        if (('primary_location' in parameters or 'assigned_locations' in parameters)
+        and not has_locations_privilege):
+            return _("This domain does not have locations privileges.")
 
     def validate_role(self, role):
         spec = {'role': role}
@@ -79,3 +91,23 @@ class AdminInvitesUserValidator():
         email_validator = EmailValidator(self.domain, 'email')
         spec = {'email': email}
         return email_validator.validate_spec(spec)
+
+    def validate_locations(self, editable_user, assigned_location_codes, primary_location_code):
+        if primary_location_code:
+            if primary_location_code not in assigned_location_codes:
+                return (
+                    'primary_location',
+                    _("Primary location must be one of the user's locations")
+                )
+        if assigned_location_codes and not primary_location_code:
+            return (
+                'primary_location',
+                _("Primary location can't be empty if the user has any "
+                  "locations set")
+            )
+
+        location_validator = LocationValidator(self.domain, self.upload_user, self.location_cache, True)
+        location_codes = assigned_location_codes + [primary_location_code]
+        spec = {'location_code': location_codes,
+                'username': editable_user}
+        return location_validator.validate_spec(spec)
