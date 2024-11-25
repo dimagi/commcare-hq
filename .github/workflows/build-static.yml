@@ -1,0 +1,70 @@
+name: Build Static Files
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install Python Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/dev-requirements.txt
+
+      - name: Install JavaScript Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Static Files
+        run: |
+          ./manage.py resource_static
+          ./manage.py collectstatic --noinput -v 0
+          ./manage.py fix_less_imports_collectstatic
+          ./manage.py compilejsi18n
+          ./manage.py build_requirejs
+          ./manage.py generate_webpack_settings
+          yarn build
+          ./manage.py compress --force -v 0
+          ./manage.py purge_compressed_files
+          ./manage.py update_manifest
+
+      - name: Upload Static Files (PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: staticfiles-pr-${{ github.event.pull_request.number }}
+          path: staticfiles/
+          retention-days: 7
+
+      - name: Upload Static Files (Merge)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v4
+        with:
+          name: staticfiles-${{ github.sha }}
+          path: staticfiles/
+          retention-days: 90  # Keep merged artifacts longer
+
+      - name: Generate Static URL
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          echo "Static files URL pattern:"
+          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/staticfiles-${{ github.sha }}"
