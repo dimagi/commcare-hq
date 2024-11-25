@@ -49,7 +49,7 @@ class HqHtmxActionMixin:
     Example docs here: commcarehq.org/styleguide/b5/htmx_alpine/
     See working demo here: commcarehq.org/styleguide/demo/htmx_todo/
     """
-    default_htmx_error_template = ""
+    default_htmx_error_template = "hqwebapp/htmx/htmx_action_error.html"
 
     def get_htmx_error_context(self, action, htmx_error, **kwargs):
         """
