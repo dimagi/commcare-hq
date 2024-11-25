@@ -9,6 +9,7 @@ hqDefine("fixtures/js/lookup-manage", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap3/hq.helpers",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",
+    "commcarehq",
 ], function (
     $,
     _,
@@ -62,7 +63,7 @@ hqDefine("fixtures/js/lookup-manage", [
 
     function makeDataType(o, app) {
         var self = ko.mapping.fromJS(o),
-            raw_fields = self.fields();
+            rawFields = self.fields();
         self.original_tag = self.tag();
         self.original_visibility = self.is_global();
         self.isVisible = ko.observable(true);
@@ -76,7 +77,7 @@ hqDefine("fixtures/js/lookup-manage", [
         }, self);
         self.aboutToDelete = ko.observable(false);
         self.addField = function (data, event, o) {
-            var i, field;
+            var field;
             if (o) {
                 field = {
                     tag: ko.observable(o.tag),
@@ -97,7 +98,8 @@ hqDefine("fixtures/js/lookup-manage", [
                 };
             }
             field.isDuplicate = ko.computed(function () {
-                var j, noRepeats = true;
+                var j,
+                    noRepeats = true;
                 var curVal = field.tag();
                 for (j = 0; j < self.fields().length; j += 1) {
                     var thatField = self.fields()[j];
@@ -116,18 +118,18 @@ hqDefine("fixtures/js/lookup-manage", [
                 return curVal.startsWith('xml');
             });
             field.remove_if_new = function () {
-                if (field.is_new() == true) {
+                if (field.is_new()) {
                     self.fields.remove(field);
                 }
             };
             self.fields.push(field);
         };
-        for (var i = 0; i < raw_fields.length; i += 1) {
-            var tag = raw_fields[i].name();
-            var with_props = !!raw_fields[i].properties().length;
+        for (var i = 0; i < rawFields.length; i += 1) {
+            var tag = rawFields[i].name();
+            var withProps = !!rawFields[i].properties().length;
             self.addField(undefined, undefined, {
                 tag: tag,
-                with_props: with_props,
+                with_props: withProps,
             });
         }
 
@@ -144,13 +146,13 @@ hqDefine("fixtures/js/lookup-manage", [
                 data: JSON.stringify(self.serialize()),
                 dataType: 'json',
                 error: function (data) {
-                    var error_message;
-                    if (data.responseText == "DuplicateFixture") {
-                        error_message = "Can not create table with ID '" + self.tag() + "'. Table IDs should be unique.";
+                    var errorMessage;
+                    if (data.responseText === "DuplicateFixture") {
+                        errorMessage = _.template(gettext("Can not create table with ID '<%= tag %>'. Table IDs should be unique."))({ tag: self.tag() });
                     } else {
-                        error_message = somethingWentWrong;
+                        errorMessage = somethingWentWrong;
                     }
-                    $("#FailText").text(error_message);
+                    $("#FailText").text(errorMessage);
                     $("#editFailure").removeClass('hide');
                     self.cancel();
                     self.saveState('saved');
@@ -222,13 +224,14 @@ hqDefine("fixtures/js/lookup-manage", [
                 is_global: self.is_global(),
                 description: self.description(),
                 fields: (function () {
-                    var fields = {},
-                        i;
-                    for (i = 0; i < self.fields().length; i += 1) {
+                    var fields = {};
+                    for (var i = 0; i < self.fields().length; i += 1) {
                         var field = self.fields()[i];
                         var patch;
-                        if (field.is_new() == true) {
-                            if (field.remove() == true) continue;
+                        if (field.is_new()) {
+                            if (field.remove()) {
+                                continue;
+                            }
                             patch = {
                                 "is_new": 1,
                             };
@@ -308,19 +311,20 @@ hqDefine("fixtures/js/lookup-manage", [
                 }
             }
             if ($elem.hasClass("select-bulk")) {
-                var table_id = $elem[0].value;
+                const tableId = $elem[0].value;
                 if ($elem[0].checked) {
-                    self.selectedTables.push(table_id);
+                    self.selectedTables.push(tableId);
                 } else {
-                    self.selectedTables.splice(self.selectedTables().indexOf(table_id), 1);
+                    self.selectedTables.splice(self.selectedTables().indexOf(tableId), 1);
                 }
             }
         };
 
-        self.downloadExcels = function (element, event) {
+        self.downloadExcels = function () {
             var tables = [];
-            if (self.selectedTables().length < 1)
+            if (self.selectedTables().length < 1) {
                 return;
+            }
             for (var i in self.selectedTables()) {
                 tables.push(self.selectedTables()[i]);
             }
@@ -337,7 +341,7 @@ hqDefine("fixtures/js/lookup-manage", [
                     success: function (response) {
                         self.setupDownload(response.download_url);
                     },
-                    error: function (response) {
+                    error: function () {
                         self.downloadError();
                     },
                 });
@@ -345,10 +349,10 @@ hqDefine("fixtures/js/lookup-manage", [
         };
 
         self.setupDownload = function (downloadUrl) {
-            var keep_polling = true;
+            var keepPolling = true;
             var serverSlowRetries = 0;
             function poll() {
-                if (keep_polling) {
+                if (keepPolling) {
                     $.ajax({
                         url: downloadUrl,
                         dataType: 'text',
@@ -358,21 +362,20 @@ hqDefine("fixtures/js/lookup-manage", [
                                 $("#downloading").addClass('hide');
                                 progress.removeClass('hide').html(resp);
                                 if (progress.find(".alert-success").length) {
-                                    keep_polling = false;
+                                    keepPolling = false;
                                 }
                             }
-                            if (keep_polling) {
+                            if (keepPolling) {
                                 setTimeout(poll, 2000);
                             }
                         },
                         error: function (resp) {
-                            if (resp.status === 502 && serverSlowRetries < 5){
+                            if (resp.status === 502 && serverSlowRetries < 5) {
                                 serverSlowRetries += 1;
                                 setTimeout(poll, 2000);
-                            }
-                            else {
+                            } else {
                                 self.downloadError();
-                                keep_polling = false;
+                                keepPolling = false;
                             }
                         },
                     });
@@ -380,7 +383,7 @@ hqDefine("fixtures/js/lookup-manage", [
             }
             $("#fixture-download").on("hide.bs.modal", function () {
                 // stop polling if dialog is closed
-                keep_polling = false;
+                keepPolling = false;
             });
             $("#download-progress").addClass('hide');
             $("#downloading").removeClass('hide');
@@ -388,9 +391,9 @@ hqDefine("fixtures/js/lookup-manage", [
         };
 
         self.downloadError = function () {
-            var error_message = gettext("Sorry, something went wrong with the download. If you see this repeatedly please report an issue.");
+            var errorMessage = gettext("Sorry, something went wrong with the download. If you see this repeatedly please report an issue.");
             $("#fixture-download").modal("hide");
-            $("#FailText").text(error_message);
+            $("#FailText").text(errorMessage);
             $("#editFailure").removeClass('hide');
         };
 
@@ -430,7 +433,7 @@ hqDefine("fixtures/js/lookup-manage", [
         $("#download-progress").addClass('hide');
         $("#download-complete").addClass('hide');
     });
-    $('.alert .close').on("click", function (e) {
+    $('.alert .close').on("click", function () {
         $(this).parent().addClass('hide');
     });
 });
