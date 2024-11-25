@@ -6,6 +6,7 @@ hqDefine('registration/js/register_new_user', [
     'hqwebapp/js/initial_page_data',
     'analytix/js/kissmetrix',
     'registration/js/login',
+    'commcarehq',
 ], function (
     $,
     ko,

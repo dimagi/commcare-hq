@@ -8,6 +8,7 @@ const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
     "jquery": require.resolve('jquery'),
+    "langcodes/js/langcodes": path.resolve("submodules/langcodes/static/langcodes/js/langcodes"),
 
     // todo after completing requirejs migration,
     //  remove this file and the yarn modernizr post-install step
