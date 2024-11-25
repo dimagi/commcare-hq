@@ -172,12 +172,16 @@ class TableauGroupsValidator(ImportValidator):
         tableau_groups = spec.get('tableau_groups') or []
         if tableau_groups:
             tableau_groups = tableau_groups.split(',')
+        return self.validate_tableau_groups(self.allowed_groups_for_domain, tableau_groups)
+
+    @classmethod
+    def validate_tableau_groups(cls, allowed_groups_for_domain, tableau_groups):
         invalid_groups = []
         for group in tableau_groups:
-            if group not in self.allowed_groups_for_domain:
+            if group not in allowed_groups_for_domain:
                 invalid_groups.append(group)
         if invalid_groups:
-            return self._error_message.format(', '.join(invalid_groups), ', '.join(self.allowed_groups_for_domain))
+            return cls._error_message.format(', '.join(invalid_groups), ', '.join(allowed_groups_for_domain))
 
 
 class DuplicateValidator(ImportValidator):
