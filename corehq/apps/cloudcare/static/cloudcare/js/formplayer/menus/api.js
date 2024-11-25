@@ -176,6 +176,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 };
                 var casesPerPage = parseInt($.cookie("cases-per-page-limit"))
                     || (window.innerWidth <= constants.SMALL_SCREEN_WIDTH_PX ? 5 : 10);
+                var formplayerSessionPreferredLang = $.cookie("formplayer_session_lang");
                 const data = {
                     "username": user.username,
                     "restoreAs": user.restoreAs,
@@ -183,7 +184,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     "app_id": appId,
                     "endpoint_id": params.endpointId,
                     "endpoint_args": params.endpointArgs,
-                    "locale": params.changeLang || displayOptions.language,
+                    "locale": params.changeLang || formplayerSessionPreferredLang || displayOptions.language,
                     "selections": params.selections,
                     "offset": params.page * casesPerPage,
                     "search_text": params.search,
