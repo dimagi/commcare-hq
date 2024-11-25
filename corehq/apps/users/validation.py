@@ -74,3 +74,11 @@ def validate_assigned_locations_has_users(domain, assigned_location_ids):
     if problem_locations:
         return error_message_location_not_has_users.format(
             ', '.join(problem_locations.values_list('site_code', flat=True)))
+
+
+def validate_primary_location_assignment(primary_location, assigned_locations):
+    if primary_location:
+        if primary_location not in assigned_locations:
+            return _("Primary location must be one of the user's locations")
+    if assigned_locations and not primary_location:
+        return _("Primary location can't be empty if the user has any locations set")

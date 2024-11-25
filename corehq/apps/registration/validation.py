@@ -13,6 +13,7 @@ from corehq.apps.user_importer.validation import (
     SiteCodeToLocationCache,
 )
 from corehq.apps.users.models import Invitation, WebUser
+from corehq.apps.users.validation import validate_primary_location_assignment
 from corehq.toggles import TABLEAU_USER_SYNCING
 
 
@@ -93,18 +94,9 @@ class AdminInvitesUserValidator():
         return email_validator.validate_spec(spec)
 
     def validate_locations(self, editable_user, assigned_location_codes, primary_location_code):
-        if primary_location_code:
-            if primary_location_code not in assigned_location_codes:
-                return (
-                    'primary_location',
-                    _("Primary location must be one of the user's locations")
-                )
-        if assigned_location_codes and not primary_location_code:
-            return (
-                'primary_location',
-                _("Primary location can't be empty if the user has any "
-                  "locations set")
-            )
+        error = validate_primary_location_assignment(primary_location_code, assigned_location_codes)
+        if error:
+            return error
 
         location_validator = LocationValidator(self.domain, self.upload_user, self.location_cache, True)
         location_codes = assigned_location_codes + [primary_location_code]

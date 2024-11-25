@@ -1132,18 +1132,11 @@ class SelectUserLocationForm(forms.Form):
                 'assigned_locations',
                 _("You do not have permissions to assign one of those locations.")
             )
-        if primary_location_id:
-            if primary_location_id not in assigned_location_ids:
-                self.add_error(
-                    'primary_location',
-                    _("Primary location must be one of the user's locations")
-                )
-        if assigned_location_ids and not primary_location_id:
-            self.add_error(
-                'primary_location',
-                _("Primary location can't be empty if the user has any "
-                  "locations set")
-            )
+        from corehq.apps.users.validation import validate_primary_location_assignment
+        error = validate_primary_location_assignment(primary_location_id, assigned_location_ids)
+        if error:
+            self.add_error('primary_location', error)
+
         return self.cleaned_data
 
 
