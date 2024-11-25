@@ -2626,13 +2626,27 @@ ATTENDANCE_TRACKING = StaticToggle(
     save_fn=_handle_attendance_tracking_role,
 )
 
+
+def _handle_geospatial_es_index(domain, is_enabled):
+    from corehq.apps.geospatial.tasks import index_es_docs_with_location_props
+    from corehq.apps.geospatial.utils import get_celery_task_tracker
+    from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
+
+    if is_enabled:
+        celery_task_tracker = get_celery_task_tracker(domain, ES_INDEX_TASK_HELPER_BASE_KEY)
+        if not celery_task_tracker.is_active():
+            index_es_docs_with_location_props.delay(domain)
+
+
 MICROPLANNING = StaticToggle(
     'microplanning',
-    'Allows access to Microplanning GIS functionality',
+    'Allows access to GIS functionality',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description='Additional views will be added allowing for visually viewing '
-                'and assigning cases on a map.'
+                'and assigning cases on a map.',
+    save_fn=_handle_geospatial_es_index,
+
 )
 
 COMMCARE_CONNECT = StaticToggle(
