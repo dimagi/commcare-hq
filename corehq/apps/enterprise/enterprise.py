@@ -1,6 +1,5 @@
 import re
-from django.db.models import OuterRef, Subquery, Count
-from django.db.models.functions import Coalesce
+from django.db.models import Count
 from datetime import datetime, timedelta
 
 from django.utils.translation import gettext as _
@@ -430,22 +429,6 @@ class EnterpriseSMSReport(EnterpriseReport):
 
         return query.count()
 
-    def create_count_subquery(self, **kwargs):
-        return Coalesce(
-            Subquery(
-                SMS.objects.filter(
-                    domain=OuterRef('domain'),
-                    date__gte=self.datespan.startdate,
-                    date__lt=self.datespan.enddate_adjusted,
-                    **kwargs
-                )
-                .values('domain')
-                .annotate(count=Count('pk'))
-                .values('count')
-            ),
-            0
-        )
-
     @property
     def headers(self):
         headers = [_('Project Space Name'), _('# Sent'), _('# Received'), _('# Errors')]
@@ -453,24 +436,11 @@ class EnterpriseSMSReport(EnterpriseReport):
         return headers
 
     def rows_for_domain(self, domain_obj):
-        sent_subquery = self.create_count_subquery(direction=OUTGOING, processed=True)
-        received_subquery = self.create_count_subquery(direction=INCOMING, processed=True)
-        error_subquery = self.create_count_subquery(error=True)
+        results = SMS.objects.filter(domain=domain_obj.name) \
+            .values('direction', 'error').annotate(direction_count=Count('pk'))
 
-        query = (
-            SMS.objects
-            .filter(
-                domain=domain_obj.name,
-            )
-            .values('domain').distinct()
-            .annotate(sent_count=sent_subquery)
-            .annotate(received_count=received_subquery)
-            .annotate(error_count=error_subquery)
-            .values_list('domain', 'sent_count', 'received_count', 'error_count')
-        )
+        num_sent = sum([result['direction_count'] for result in results if result['direction'] == OUTGOING])
+        num_received = sum([result['direction_count'] for result in results if result['direction'] == INCOMING])
+        num_errors = sum([result['direction_count'] for result in results if result['error']])
 
-        domain_results = list(query)
-        if domain_results:
-            return domain_results
-        else:
-            return [(domain_obj.name, 0, 0, 0),]
+        return [(domain_obj.name, num_sent, num_received, num_errors), ]
