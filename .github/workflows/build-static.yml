@@ -67,9 +67,6 @@ jobs:
           echo "Starting purge_compressed_files..."
           ./manage.py purge_compressed_files
           echo "Finished purge_compressed_files."
-          echo "Starting update_manifest..."
-          ./manage.py update_manifest
-          echo "Finished update_manifest."
 
       - name: Upload Static Files (PR)
         if: github.event_name == 'pull_request'
