@@ -3835,12 +3835,10 @@ interpret@~1.1.0:
   resolved "https://registry.yarnpkg.com/interpret/-/interpret-1.1.0.tgz#7ed1b1410c6a0e0f78cf95d3b8440c63f78b8614"
   integrity sha1-ftGxQQxqDg94z5XTuEQMY/eLhhQ=
 
-intl-tel-input@9.0.7:
-  version "9.0.7"
-  resolved "https://registry.yarnpkg.com/intl-tel-input/-/intl-tel-input-9.0.7.tgz#2e33f5c3c65162909c72efc5d545c49073972911"
-  integrity sha1-LjP1w8ZRYpCccu/F1UXEkHOXKRE=
-  dependencies:
-    jquery ">=1.7"
+intl-tel-input@24.7.0:
+  version "24.7.0"
+  resolved "https://registry.yarnpkg.com/intl-tel-input/-/intl-tel-input-24.7.0.tgz#8975df176659f8a3a16b97759add1ca24486e480"
+  integrity sha512-OjkhKen4SJUI2kN9OHpb8ReNN619sB9gECPq51dn3zKEWvif3mnSjmrtWhm8ABIb7Ijs+AAYSS5sI33Sb4YqvQ==
 
 ip-address@^9.0.5:
   version "9.0.5"
