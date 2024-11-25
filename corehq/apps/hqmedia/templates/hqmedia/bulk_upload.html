@@ -1,7 +1,7 @@
 {% extends "hqmedia/uploader_base.html" %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "hqmedia/js/bulk_upload" %}
+{% js_entry_b3 "hqmedia/js/bulk_upload" %}
 
 {% block page_content %}
   {% include "hqmedia/partials/bulk_upload.html" with include_modal=True %}
