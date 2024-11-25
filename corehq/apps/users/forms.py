@@ -1110,17 +1110,11 @@ class SelectUserLocationForm(forms.Form):
         )
 
     def clean_assigned_locations(self):
-        from corehq.apps.locations.models import SQLLocation
-        from corehq.apps.locations.util import get_locations_from_ids
-
+        from corehq.apps.users.validation import validate_assigned_locations_has_users
         location_ids = self.data.getlist('assigned_locations')
-        try:
-            locations = get_locations_from_ids(location_ids, self.domain)
-        except SQLLocation.DoesNotExist:
-            raise forms.ValidationError(_('One or more of the locations was not found.'))
-        if locations.filter(location_type__has_users=False).exists():
-            raise forms.ValidationError(
-                _('One or more of the locations you specified cannot have users assigned.'))
+        error = validate_assigned_locations_has_users(self.domain, location_ids)
+        if error:
+            raise forms.ValidationError(error)
         return location_ids
 
     def _user_has_permission_to_access_locations(self, new_location_ids):

@@ -22,6 +22,7 @@ from corehq.apps.users.dbaccessors import get_existing_usernames
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import normalize_username, raw_username
+from corehq.apps.users.validation import validate_assigned_locations_has_users
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.views.utils import (
     user_can_access_invite
@@ -549,11 +550,7 @@ class LocationValidator(ImportValidator):
     def _validate_location_has_users(self, locs_ids_being_assigned):
         if not locs_ids_being_assigned:
             return
-        locs_being_assigned = SQLLocation.objects.filter(location_id__in=locs_ids_being_assigned)
-        problem_locations = locs_being_assigned.filter(location_type__has_users=False)
-        if problem_locations:
-            return self.error_message_location_not_has_users.format(
-                ', '.join(problem_locations.values_list('site_code', flat=True)))
+        return validate_assigned_locations_has_users(self.domain, locs_ids_being_assigned)
 
 
 class UserRetrievalResult(NamedTuple):
