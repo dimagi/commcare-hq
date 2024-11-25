@@ -460,7 +460,7 @@ class EnterpriseSMSReport(EnterpriseReport):
         received_subquery = self.create_count_subquery(direction=INCOMING)
         error_subquery = self.create_count_subquery(error=True)
 
-        return (
+        query = (
             SMS.objects
             .filter(
                 domain=domain_obj.name,
@@ -471,3 +471,9 @@ class EnterpriseSMSReport(EnterpriseReport):
             .annotate(error_count=error_subquery)
             .values_list('domain', 'sent_count', 'received_count', 'error_count')
         )
+
+        domain_results = list(query)
+        if domain_results:
+            return domain_results
+        else:
+            return [(domain_obj.name, 0, 0, 0),]
