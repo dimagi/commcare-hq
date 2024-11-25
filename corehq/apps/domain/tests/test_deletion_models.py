@@ -54,7 +54,6 @@ IGNORE_MODELS = {
     'cleanup.DeletedCouchDoc',
     'cleanup.DeletedSQLDoc',
     'domain.DomainAuditRecordEntry',
-    'domain.ProjectLimit',
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
