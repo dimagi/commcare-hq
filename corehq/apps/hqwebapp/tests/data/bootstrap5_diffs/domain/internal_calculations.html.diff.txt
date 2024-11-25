@@ -1,0 +1,32 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 "domain/js/internal_calculations" %}
++{% js_entry "domain/js/internal_calculations" %}
+ 
+ {% block page_content %}
+   {% registerurl 'calculated_properties' domain %}
+@@ -10,13 +10,13 @@
+     <p><button type="button" id="load-all-btn" class="btn btn-primary">{% trans 'Load EVERYTHING' %}</button></p>
+     <hr />
+     {% for calc_tag in order %}
+-      <div class="form-group calc-group">
+-        <label class="control-label col-sm-2">{{ calcs|dict_lookup:calc_tag }}</label>
+-        <div class="col-sm-8">
++      <div class="form-group calc-group">  {# todo B5: css-form-group #}
++        <label class="form-label col-md-2">{{ calcs|dict_lookup:calc_tag }}</label>
++        <div class="col-md-8">
+           <div id="calc-{{ calc_tag }}"
+-               class="well well-small calc-display"></div>
++               class="card well-small calc-display"></div>  {# todo B5: css-well #}
+         </div>
+-        <div class="col-sm-2">
++        <div class="col-md-2">
+           <button class="btn btn-primary load-calc-btn" data-calc-tag="{{ calc_tag }}">
+             {% trans "Load Property" %}
+           </button>
