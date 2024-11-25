@@ -448,7 +448,6 @@ class EnterpriseSMSReport(EnterpriseReport):
 
     @property
     def headers(self):
-        headers = super().headers
         headers = [_('Project Space Name'), _('# Sent'), _('# Received'), _('# Errors')]
 
         return headers
@@ -456,8 +455,6 @@ class EnterpriseSMSReport(EnterpriseReport):
     def rows_for_domain(self, domain_obj):
         sent_subquery = self.create_count_subquery(direction=OUTGOING, processed=True)
         received_subquery = self.create_count_subquery(direction=INCOMING, processed=True)
-        sent_subquery = self.create_count_subquery(direction=OUTGOING)
-        received_subquery = self.create_count_subquery(direction=INCOMING)
         error_subquery = self.create_count_subquery(error=True)
 
         query = (
