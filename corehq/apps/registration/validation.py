@@ -5,12 +5,14 @@ from django.utils.translation import gettext_lazy as _
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
 from corehq.apps.user_importer.validation import (
     RoleValidator,
     ProfileValidator,
     EmailValidator,
     LocationValidator,
     SiteCodeToLocationCache,
+    TableauGroupsValidator
 )
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.apps.users.validation import validate_primary_location_assignment
@@ -103,3 +105,7 @@ class AdminInvitesUserValidator():
         spec = {'location_code': location_codes,
                 'username': editable_user}
         return location_validator.validate_spec(spec)
+
+    def validate_tableau_group(self, tableau_groups):
+        allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(self.domain) or []
+        return TableauGroupsValidator.validate_tableau_groups(allowed_groups_for_domain, tableau_groups)
