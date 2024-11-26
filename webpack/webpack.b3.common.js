@@ -14,6 +14,7 @@ module.exports = Object.assign({}, commonDefault, {
         new webpack.ProvidePlugin({
             '$': 'jquery',
             'jQuery': 'jquery',  // needed for bootstrap 3 to work
+            'window.jQuery': 'jquery',  // needed for some third-party libraries that depend on jQuery, such as multiselect
         }),
         new hqPlugins.EntryChunksPlugin({
             filename: 'manifest_b3.json',
@@ -23,6 +24,8 @@ module.exports = Object.assign({}, commonDefault, {
     resolve: {
         alias: Object.assign({}, commonDefault.resolve.alias, {
             "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap3/'), 'commcarehq'),
+            "datatables": "datatables.net/js/jquery.dataTables.min",
+            "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
         }),
     },
 

@@ -3,11 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
-  {% endcompress js %}
-{% endblock js %}
+{% js_entry_b3 'hqwebapp/js/bootstrap3/widgets' %}
 
 {% block page_content %}
   <p class="lead">{{ current_page.page_name }}</p>
