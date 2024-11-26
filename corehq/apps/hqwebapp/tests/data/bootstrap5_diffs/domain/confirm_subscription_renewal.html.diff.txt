@@ -7,8 +7,8 @@
  {% load hq_shared_tags %}
  {% load i18n %}
  
--{% requirejs_main 'accounting/js/widgets' %}
-+{% requirejs_main_b5 'accounting/js/widgets' %}
+-{% js_entry_b3 'accounting/js/widgets' %}
++{% js_entry 'accounting/js/widgets' %}
  
  {% block plan_breadcrumbs %}{% endblock %}
  
