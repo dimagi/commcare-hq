@@ -13,7 +13,8 @@ from corehq.apps.user_importer.validation import (
     LocationValidator,
     SiteCodeToLocationCache,
     TableauGroupsValidator,
-    TableauRoleValidator
+    TableauRoleValidator,
+    CustomDataValidator,
 )
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.apps.users.validation import validate_primary_location_assignment
@@ -82,6 +83,11 @@ class AdminInvitesUserValidator():
         profile_validator = ProfileValidator(self.domain, self.upload_user, True, self.profiles_by_name())
         spec = {'user_profile': new_profile_name}
         return profile_validator.validate_spec(spec)
+
+    def validate_custom_data(self, custom_data, profile_name):
+        custom_data_validator = CustomDataValidator(self.domain, self.profiles_by_name())
+        spec = {'data': custom_data, 'user_profile': profile_name}
+        return custom_data_validator.validate_spec(spec)
 
     def validate_email(self, email, is_post):
         if is_post:
