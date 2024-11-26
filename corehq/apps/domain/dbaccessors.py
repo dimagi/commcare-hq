@@ -110,13 +110,15 @@ def get_domain_ids_by_names(names):
     )}
 
 
-def iter_domains():
+def iter_domains(exclude_test_domains=False):
     for row in paginate_view(
             Domain.get_db(),
             'domain/domains',
             100,
             reduce=False,
-            include_docs=False):
+            include_docs=exclude_test_domains):
+        if exclude_test_domains and row['doc']['is_test'] == 'true':
+            continue
         yield row['key']
 
 
