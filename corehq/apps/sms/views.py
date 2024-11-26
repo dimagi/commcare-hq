@@ -204,7 +204,7 @@ class ComposeMessageView(BaseMessagingSectionView):
         return page_context
 
 
-def get_sms_autocomplete_context(request, domain):
+def get_sms_autocomplete_context(domain):
     """A helper view for sms autocomplete"""
     phone_users = CouchUser.view("users/phone_users_by_domain",
         startkey=[domain], endkey=[domain, {}], include_docs=True
@@ -219,7 +219,7 @@ def get_sms_autocomplete_context(request, domain):
             continue
         contacts.append(user.username)
         user_id = user._id
-    return {"sms_contacts": contacts}
+    return contacts
 
 
 @login_and_domain_required

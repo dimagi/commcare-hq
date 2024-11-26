@@ -1307,7 +1307,9 @@ class ComposeMessageForm(forms.Form):
         super(ComposeMessageForm, self).__init__(*args, **kwargs)
 
         from corehq.apps.sms.views import get_sms_autocomplete_context
-        self.fields['recipients'].choices = [(contact, contact) for contact in get_sms_autocomplete_context(None, domain)['sms_contacts']]
+        self.fields['recipients'].choices = [
+            (contact, contact) for contact in get_sms_autocomplete_context(domain)
+        ]
 
         self.helper = HQFormHelper()
         self.helper.form_action = reverse('send_to_recipients', args=[domain])
