@@ -2,7 +2,10 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.celery import task
 from celery.utils.log import get_task_logger
+from celery.schedules import crontab
 
+from corehq.util.metrics.const import MPM_MAX
+from corehq.util.metrics import metrics_gauge_task
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_auto_generated_built_apps,
@@ -12,6 +15,9 @@ from corehq.apps.app_manager.exceptions import (
     AppValidationError,
     SavedAppBuildException,
 )
+from corehq.apps.app_manager.dbaccessors import get_all_apps
+from corehq.apps.domain.dbaccessors import iter_domains
+
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 from corehq.util.decorators import serial_task
@@ -91,3 +97,22 @@ def update_linked_app_and_notify_task(domain, app_id, master_app_id, user_id, em
 def load_appcues_template_app(domain, username, app_slug):
     from corehq.apps.app_manager.views.apps import load_app_from_slug
     load_app_from_slug(domain, username, app_slug)
+
+
+def count_historic_app_dependencies_usage():
+    from corehq.apps.app_manager.util import application_dependencies_was_disabled
+
+    disabled_feature_usage_count = 0
+    for domain in iter_domains(exclude_test_domains=True):
+        for app in get_all_apps(domain):
+            if application_dependencies_was_disabled(app):
+                disabled_feature_usage_count += 1
+    return disabled_feature_usage_count
+
+
+metrics_gauge_task(
+    'commcare.app_dependencies.historic_usage',
+    count_historic_app_dependencies_usage,
+    run_every=crontab(minute=0),
+    multiprocess_mode=MPM_MAX
+)
