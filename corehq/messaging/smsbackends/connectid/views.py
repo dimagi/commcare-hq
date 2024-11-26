@@ -89,7 +89,7 @@ def messaging_callback_url(request, *args, **kwargs):
         backend_id="connectid"
     )
     for message_obj in message_objs:
-        received_on = message_data.get(message_obj.message_id)
+        received_on = message_data.get(str(message_obj.message_id))
         if received_on is None:
             continue
         message_obj.received_on = received_on
