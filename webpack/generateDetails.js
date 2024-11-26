@@ -124,6 +124,7 @@ if (require.main === module) {
     // these apps, but there are no existing webpack entries from these apps (yet).
     const alwaysIncludeApps = [
         "analytix",
+        "case",
         "hqwebapp",
         "notifications",
         "registration",
