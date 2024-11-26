@@ -36,15 +36,7 @@ class AdminInvitesUserValidator():
     @memoized
     def profiles_by_name(self):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        definition = CustomDataFieldsDefinition.get(self.domain, UserFieldsView.field_type)
-        if definition:
-            profiles = definition.get_profiles()
-            return {
-                profile.name: profile
-                for profile in profiles
-            }
-        else:
-            return {}
+        return CustomDataFieldsDefinition.get_profiles_by_name(self.domain, UserFieldsView.field_type)
 
     @property
     def current_users_and_pending_invites(self):
