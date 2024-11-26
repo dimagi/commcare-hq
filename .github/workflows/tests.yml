@@ -55,6 +55,7 @@ jobs:
         --exitfirst
         --verbosity=2
         --reusedb=1
+        --no-migrations
         --divided-we-run=${{ matrix.DIVIDED_WE_RUN }}
         --showlocals
         --max-test-time=29
