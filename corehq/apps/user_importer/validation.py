@@ -151,12 +151,16 @@ class TableauRoleValidator(ImportValidator):
 
     def __init__(self, domain):
         super().__init__(domain)
-        self.valid_role_options = [e.value for e in TableauUser.Roles]
 
     def validate_spec(self, spec):
         tableau_role = spec.get('tableau_role')
-        if tableau_role is not None and tableau_role not in self.valid_role_options:
-            return self._error_message.format(tableau_role, ', '.join(self.valid_role_options))
+        return self.validate_tableau_role(tableau_role)
+
+    @classmethod
+    def validate_tableau_role(cls, tableau_role):
+        valid_role_options = [e.value for e in TableauUser.Roles]
+        if tableau_role is not None and tableau_role not in valid_role_options:
+            return cls._error_message.format(tableau_role, ', '.join(valid_role_options))
 
 
 class TableauGroupsValidator(ImportValidator):
