@@ -12,7 +12,7 @@ from corehq.apps.es.case_search import (
     PROPERTY_GEOPOINT_VALUE,
     PROPERTY_KEY,
 )
-from corehq.apps.geospatial.const import MAX_GEOHASH_DOC_COUNT
+from corehq.apps.geospatial.const import MAX_GEOHASH_DOC_COUNT, DEFAULT_QUERY_LIMIT
 
 CASE_PROPERTIES_AGG = 'case_properties'
 CASE_PROPERTY_AGG = 'case_property'
@@ -137,12 +137,13 @@ def mid(lower, upper):
 
 
 def case_query_for_missing_geopoint_val(
-        domain, geo_case_property, case_type=None, size=None, offset=0, should_sort=False
+        domain, geo_case_property, case_type=None, offset=0, should_sort=False
 ):
     query = (
         CaseSearchES()
         .domain(domain)
         .filter(_geopoint_value_missing_for_property(geo_case_property))
+        .size(DEFAULT_QUERY_LIMIT)
     )
     if case_type:
         query = query.case_type(case_type)
@@ -150,8 +151,6 @@ def case_query_for_missing_geopoint_val(
         query.sort('opened_on')
     if offset:
         query.start(offset)
-    if size:
-        query = query.size(size)
     return query
 
 

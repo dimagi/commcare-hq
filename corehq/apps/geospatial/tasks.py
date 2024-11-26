@@ -45,14 +45,10 @@ def index_es_docs_with_location_props(domain):
     batch_count = math.ceil(doc_count / DEFAULT_QUERY_LIMIT)
     try:
         for i in range(batch_count):
-            docs_left = doc_count - (DEFAULT_QUERY_LIMIT * i)
-            limit = min(DEFAULT_QUERY_LIMIT, docs_left)
             process_batch(
                 domain,
                 geo_case_prop,
                 case_type=None,
-                query_limit=limit,
-                chunk_size=DEFAULT_CHUNK_SIZE,
                 offset=i * DEFAULT_QUERY_LIMIT,
                 total_count=doc_count
             )
