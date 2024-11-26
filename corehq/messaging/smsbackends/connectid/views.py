@@ -23,7 +23,7 @@ def receive_message(request, *args, **kwargs):
     user_link = ConnectIDUserLink.objects.get(channel_id=channel_id)
     phone_obj = ConnectMessagingNumber(user_link)
     for message in data["messages"]:
-        key = base64.b64decode(user_link.conectidmessagingkey_set.first())
+        key = base64.b64decode(user_link.connectidmessagingkey_set.first())
         cipher = AES.new(key, AES.MODE_GCM, nonce=data["nonce"])
         text = cipher.decrypt_and_verify(data["ciphertext"], data["tag"]).decode("utf-8")
         timestamp = data["timestamp"]
