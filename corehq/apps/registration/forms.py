@@ -501,8 +501,6 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             custom_data_post_dict = self.custom_data.form.data
             data.update({k: v for k, v in custom_data_post_dict.items() if k not in data})
         self.request = kwargs.get('request')
-        from corehq.apps.registration.validation import AdminInvitesUserValidator
-        self._validator = AdminInvitesUserValidator(domain, self.request.couch_user)
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
         self.can_edit_tableau_config = can_edit_tableau_config
         domain_obj = Domain.get_by_name(domain)
@@ -591,7 +589,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
-        errors = self._validator.validate_email(email, self.request.method == 'POST')
+
+        from corehq.apps.registration.validation import AdminInvitesUserFormValidator
+        errors = AdminInvitesUserFormValidator.validate_email(self.domain, email, self.request.method == 'POST')
         if errors:
             raise forms.ValidationError(errors)
         return email
@@ -619,7 +619,12 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 cleaned_data['profile'] = profile_id
             cleaned_data['custom_user_data'] = get_prefixed(custom_user_data, self.custom_data.prefix)
 
-        errors = self._validator.validate_parameters(cleaned_data.keys())
+        from corehq.apps.registration.validation import AdminInvitesUserFormValidator
+        errors = AdminInvitesUserFormValidator.validate_parameters(
+            self.domain,
+            self.request.couch_user,
+            cleaned_data.keys()
+        )
         if errors:
             raise forms.ValidationError(errors)
         return cleaned_data
