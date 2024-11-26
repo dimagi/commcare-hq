@@ -230,14 +230,13 @@ def send_to_recipients(request, domain):
     # Currently the permission to publish an app is just the login_and_domain_required
     # decorator, and this view matches that.
 
-    recipients = request.POST.get('recipients')
+    recipients = request.POST.getlist('recipients')
     message = request.POST.get('message')
     if not recipients:
         messages.error(request, _("You didn't specify any recipients"))
     elif not message:
         messages.error(request, _("You can't send an empty message"))
     else:
-        recipients = [x.strip() for x in recipients.split(',') if x.strip()]
         phone_numbers = []
         # formats: GroupName (group), "Username", +15555555555
         group_names = []
@@ -332,14 +331,9 @@ def send_to_recipients(request, domain):
 
         logged_event.completed()
 
-        def comma_reminder():
-            messages.error(request, _("Please remember to separate recipients"
-                " with a comma."))
-
         if empty_groups or failed_numbers or unknown_usernames or no_numbers:
             if empty_groups:
                 messages.error(request, _("The following groups don't exist: ") + (', '.join(empty_groups)))
-                comma_reminder()
             if no_numbers:
                 messages.error(request,
                     _("The following users don't have phone numbers: ") + (', '.join(no_numbers)))
@@ -349,7 +343,6 @@ def send_to_recipients(request, domain):
             if unknown_usernames:
                 messages.error(request,
                     _("Couldn't find the following user(s): ") + (', '.join(unknown_usernames)))
-                comma_reminder()
             if sent:
                 messages.success(request, _("Successfully sent: ") + (', '.join(sent)))
             else:
