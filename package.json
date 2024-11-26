@@ -81,7 +81,6 @@
         "select2": "4.1.0-rc.0",
         "signature_pad": "^5.0.4",
         "string-replace-loader": "3.1.0",
-        "topojson": "3.0.2",
         "uglify-js": "3",
         "ui-select": "npm:ui-select#0.13.2",
         "underscore": "1.13.1",
