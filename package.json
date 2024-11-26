@@ -32,7 +32,6 @@
         "bootstrap": "3.4.1",
         "bootstrap-daterangepicker": "3.0.3",
         "bootstrap-timepicker": "0.5.1",
-        "bootstrap3-typeahead": "bassjobsen/Bootstrap-3-Typeahead#~3.1.1",
         "bootstrap5": "npm:bootstrap@5.3.1",
         "calendars": "kbwood/calendars#2.1.2",
         "clipboard": "1.5.15",
