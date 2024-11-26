@@ -405,13 +405,13 @@ class UCRRebuildRestrictionTable:
 
     @staticmethod
     def _case_count_by_domain(domains):
-        return CaseES().domain(domains).aggregation(
+        return CaseES().domain(domains).size(0).aggregation(
             TermsAggregation('domain', 'domain.exact')
         ).run().aggregations.domain.buckets_dict
 
     @staticmethod
     def _forms_count_by_domain(domains):
-        return FormES().domain(domains).aggregation(
+        return FormES().domain(domains).size(0).aggregation(
             TermsAggregation('domain', 'domain.exact')
         ).run().aggregations.domain.buckets_dict
 
