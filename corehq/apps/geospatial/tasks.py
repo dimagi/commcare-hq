@@ -6,7 +6,6 @@ from corehq.apps.celery import task
 from corehq.apps.geospatial.const import (
     ES_INDEX_TASK_HELPER_BASE_KEY,
     DEFAULT_QUERY_LIMIT,
-    DEFAULT_CHUNK_SIZE
 )
 from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
 from corehq.apps.geospatial.utils import (
@@ -54,7 +53,7 @@ def index_es_docs_with_location_props(domain):
             )
             current_batch = i + 1
             celery_task_tracker.update_progress(
-                current=current_batch * min(DEFAULT_CHUNK_SIZE, doc_count),
+                current=current_batch * min(DEFAULT_QUERY_LIMIT, doc_count),
                 total=doc_count
             )
     except Exception as e:
