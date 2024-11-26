@@ -2608,6 +2608,7 @@ def _handle_geospatial_es_index(domain, is_enabled):
 
     if is_enabled:
         celery_task_tracker = get_celery_task_tracker(domain, ES_INDEX_TASK_HELPER_BASE_KEY)
+        # This check simply enforces that each domain's task is handled in serial.
         if not celery_task_tracker.is_active():
             index_es_docs_with_location_props.delay(domain)
 
