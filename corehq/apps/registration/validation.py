@@ -12,7 +12,8 @@ from corehq.apps.user_importer.validation import (
     EmailValidator,
     LocationValidator,
     SiteCodeToLocationCache,
-    TableauGroupsValidator
+    TableauGroupsValidator,
+    TableauRoleValidator
 )
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.apps.users.validation import validate_primary_location_assignment
@@ -109,3 +110,6 @@ class AdminInvitesUserValidator():
     def validate_tableau_group(self, tableau_groups):
         allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(self.domain) or []
         return TableauGroupsValidator.validate_tableau_groups(allowed_groups_for_domain, tableau_groups)
+
+    def validate_tableau_role(self, tableau_role):
+        return TableauRoleValidator.validate_tableau_role(tableau_role)
