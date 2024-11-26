@@ -33,7 +33,7 @@ def index_case_docs(domain, case_type=None):
         process_batch(
             domain,
             geo_case_property,
-            case_type,
+            total_count=count,
+            case_type=case_type,
             with_progress=True,
-            total_count=count
         )
