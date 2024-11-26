@@ -644,7 +644,7 @@ class ConnectMessagingNumber(AbstractNumber):
 
     @property
     def domain(self):
-        self.user_link.domain
+        return self.user_link.domain
 
     @property
     def is_sms(self):
