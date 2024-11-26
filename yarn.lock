@@ -1930,10 +1930,6 @@ bootstrap-timepicker@0.5.1:
   resolved "https://registry.yarnpkg.com/bootstrap-timepicker/-/bootstrap-timepicker-0.5.1.tgz#1ee36b4a7c27904c7c96da0988b711c9ee9e99b7"
   integrity sha1-HuNrSnwnkEx8ltoJiLcRye6embc=
 
-bootstrap3-typeahead@bassjobsen/Bootstrap-3-Typeahead#~3.1.1:
-  version "3.1.1"
-  resolved "https://codeload.github.com/bassjobsen/Bootstrap-3-Typeahead/tar.gz/c65c829fe8411f6eadb88415d09c1e85bb4603d0"
-
 "bootstrap5@npm:bootstrap@5.3.1":
   version "5.3.1"
   resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-5.3.1.tgz#8ca07040ad15d7f75891d1504cf14c5dedfb1cfe"
