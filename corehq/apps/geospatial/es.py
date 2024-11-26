@@ -137,7 +137,7 @@ def mid(lower, upper):
 
 
 def case_query_for_missing_geopoint_val(
-        domain, geo_case_property, case_type=None, offset=0, should_sort=False
+        domain, geo_case_property, case_type=None, offset=0, sort_by=None
 ):
     query = (
         CaseSearchES()
@@ -147,8 +147,8 @@ def case_query_for_missing_geopoint_val(
     )
     if case_type:
         query = query.case_type(case_type)
-    if should_sort:
-        query.sort('opened_on')
+    if sort_by:
+        query.sort(sort_by)
     if offset:
         query.start(offset)
     return query

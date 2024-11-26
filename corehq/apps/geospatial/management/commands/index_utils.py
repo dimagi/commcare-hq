@@ -14,9 +14,9 @@ def process_batch(
     with_progress=False,
     offset=0,
 ):
-    should_sort = bool(total_count > DEFAULT_QUERY_LIMIT)
+    sort_by = 'opened_on' if total_count > DEFAULT_QUERY_LIMIT else None
     query = case_query_for_missing_geopoint_val(
-        domain, geo_case_property, case_type, size=DEFAULT_QUERY_LIMIT, offset=offset, should_sort=should_sort
+        domain, geo_case_property, case_type, size=DEFAULT_QUERY_LIMIT, offset=offset, sort_by=sort_by
     )
     case_ids = query.get_ids()
     _index_case_ids(domain, case_ids, with_progress)
