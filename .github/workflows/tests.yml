@@ -53,7 +53,7 @@ jobs:
       run: >-
         scripts/docker test
         --exitfirst
-        -vv
+        --verbosity=2
         --reusedb=1
         --divided-we-run=${{ matrix.DIVIDED_WE_RUN }}
         --showlocals
