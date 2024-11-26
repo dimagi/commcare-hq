@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -24,6 +26,7 @@ from corehq.apps.users.dbaccessors import get_all_user_search_query
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.es.cases import CaseES
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.forms import FormES
 from corehq.toggles import USER_CONFIGURABLE_REPORTS, RESTRICT_DATA_SOURCE_REBUILD
 from corehq.motech.repeaters.const import UCRRestrictionFFStatus
@@ -495,3 +498,64 @@ class UCRDataLoadReport(AdminReport):
     @property
     def rows(self):
         return self.table_data.rows
+
+
+class StaleCasesTable:
+
+    STALE_DATE_THRESHOLD_DAYS = 365
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(gettext_lazy("Domain")),
+            DataTablesColumn(gettext_lazy("Case count"))
+        )
+
+    @property
+    def rows(self):
+        rows = []
+        case_count_by_domain = self._stale_case_count()
+        for bucket in case_count_by_domain.values():
+            rows.append([bucket.key, bucket.doc_count])
+        return rows
+
+    def _stale_case_count(self):
+        return (
+            CaseSearchES()
+            .is_closed(False)
+            .server_modified_range(lt=self._get_stale_date())
+            .size(0)
+            .aggregation(
+                TermsAggregation('domain', 'domain.exact')
+            )
+        ).run().aggregations.domain.buckets_dict
+
+    def _get_stale_date(self):
+        current_date = datetime.now()
+        stale_threshold_date = current_date - timedelta(days=self.STALE_DATE_THRESHOLD_DAYS)
+        return stale_threshold_date
+
+    @staticmethod
+    def format_as_table(row_data, data_tables_header):
+        """
+        Formats a given set of `row_data` with `headers` into a str formatted table that looks as follows:
+
+        ```
+        Header_1 | Header_2 | etc...
+        ---------------------------------
+        Alice    | 25       | New York
+        Bob      | 30       | Los Angeles
+        Charlie  | 35       | Chicago
+        ```
+        """
+        # Calculate width of each col
+        headers = [str(header.html) for header in data_tables_header]
+        col_widths = [max(len(str(row[i])) for row in [headers] + row_data) for i in range(len(headers))]
+        row_format = " | ".join(f"{{:<{w}}}" for w in col_widths)
+
+        lines = []
+        lines.append(row_format.format(*headers))
+        lines.append("-" * (sum(col_widths) + 3 * (len(headers) - 1)))  # Divider
+        for row in row_data:
+            lines.append(row_format.format(*row))
+        return '\n'.join(lines)
