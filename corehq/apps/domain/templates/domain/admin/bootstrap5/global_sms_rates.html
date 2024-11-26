@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main_b5 'smsbillables/js/smsbillables.rate_calc' %}
+{% js_entry 'smsbillables/js/rate_calc' %}
 
 {% block title %}{% trans "SMS Pricing" %}{% endblock %}
 
