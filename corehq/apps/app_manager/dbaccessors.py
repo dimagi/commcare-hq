@@ -329,20 +329,29 @@ def get_build_ids_after_version(domain, app_id, version):
     return [result['id'] for result in results]
 
 
-def get_build_ids(domain, app_id):
-    """
-    Returns all the built apps for an application id, in descending order of time built.
-    """
+def _get_builds_by_app_id(domain, app_id):
     from .models import Application
-    results = Application.get_db().view(
+    return Application.get_db().view(
         'app_manager/saved_app',
         startkey=[domain, app_id, {}],
         endkey=[domain, app_id],
         descending=True,
         reduce=False,
-        include_docs=False,
+        include_docs=True,
     ).all()
-    return [result['id'] for result in results]
+
+def get_build_docs(domain, app_id):
+    """
+    Returns all the built app documents for an application id, in descending order of time built.
+    """
+    return [result['doc'] for result in _get_builds_by_app_id(domain, app_id)]
+
+
+def get_build_ids(domain, app_id):
+    """
+    Returns all the built app ids for an application id, in descending order of time built.
+    """
+    return [result['id'] for result in _get_builds_by_app_id(domain, app_id)]
 
 
 def get_built_app_ids_with_submissions_for_app_id(domain, app_id, version=None):
