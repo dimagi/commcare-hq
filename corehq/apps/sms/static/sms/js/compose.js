@@ -1,8 +1,8 @@
 hqDefine("sms/js/compose",[
     "jquery",
     "hqwebapp/js/initial_page_data",
-    'jquery-ui/ui/widgets/sortable',
-    "hqwebapp/js/bootstrap-multi-typeahead",
+    "hqwebapp/js/bootstrap3/widgets",
+    "jquery-ui/ui/widgets/sortable",
     "commcarehq",
 ], function ($, intialPageData) {
     $(function () {
@@ -26,9 +26,5 @@ hqDefine("sms/js/compose",[
             message = message + " (" + maxChar + " max)";
             $charCount.text(message);
         });
-
-        $('.sms-typeahead').multiTypeahead({
-            source: intialPageData.get('sms_contacts'),
-        }).focus();
     });
 });

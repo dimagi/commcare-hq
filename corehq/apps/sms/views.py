@@ -67,7 +67,6 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
     use_timepicker,
-    use_typeahead,
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -202,12 +201,7 @@ class ComposeMessageView(BaseMessagingSectionView):
             'timezone_now': datetime.now(tz=tz),
             'form': ComposeMessageForm(domain=self.domain)
         })
-        page_context.update(get_sms_autocomplete_context(self.request, self.domain))
         return page_context
-
-    @use_typeahead
-    def dispatch(self, *args, **kwargs):
-        return super(ComposeMessageView, self).dispatch(*args, **kwargs)
 
 
 def get_sms_autocomplete_context(request, domain):
