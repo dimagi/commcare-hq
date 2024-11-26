@@ -27,7 +27,6 @@ class AdminInvitesUserValidator():
         self.upload_user = upload_user
 
     @property
-    @memoized
     def roles_by_name(self):
         from corehq.apps.users.views.utils import get_editable_role_choices
         return {role[1]: role[0] for role in get_editable_role_choices(self.domain, self.upload_user,
@@ -48,14 +47,12 @@ class AdminInvitesUserValidator():
             return {}
 
     @property
-    @memoized
     def current_users_and_pending_invites(self):
         current_users = [user.username.lower() for user in WebUser.by_domain(self.domain)]
         pending_invites = [di.email.lower() for di in Invitation.by_domain(self.domain)]
         return current_users + pending_invites
 
     @property
-    @memoized
     def location_cache(self):
         return SiteCodeToLocationCache(self.domain)
 
