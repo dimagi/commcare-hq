@@ -49,14 +49,20 @@ class HqHtmxActionMixin:
     Example docs here: commcarehq.org/styleguide/b5/htmx_alpine/
     See working demo here: commcarehq.org/styleguide/demo/htmx_todo/
     """
-    default_htmx_error_template = "prototype/htmx/partials/htmx_action_error.html"
+    default_htmx_error_template = "hqwebapp/htmx/htmx_action_error.html"
 
-    def get_htmx_error_context(self, **kwargs):
+    def get_htmx_error_context(self, action, htmx_error, **kwargs):
         """
         Use this method to return the context for the HTMX error template.
+
+        :param action: string (the slug for the HTMX action taken)
+        :param htmx_error: HtmxResponseException
         :return: dict
         """
-        return {}
+        return {
+            "action": action,
+            "htmx_error": htmx_error,
+        }
 
     def get_htmx_error_template(self, action, htmx_error):
         """
@@ -117,8 +123,7 @@ class HqHtmxActionMixin:
         try:
             response = handler(request, *args, **kwargs)
         except HtmxResponseException as err:
-            context = self.get_htmx_error_context(**kwargs)
-            context["htmx_error"] = err
+            context = self.get_htmx_error_context(action, err, **kwargs)
             self.template_name = self.get_htmx_error_template(action, err)
             return self.render_to_response(context)
         return response
