@@ -1,3 +1,7 @@
+import os
+import json
+from memoized import memoized
+
 from django.http import Http404
 from django.test.testcases import TestCase, SimpleTestCase
 
@@ -7,6 +11,7 @@ from corehq.apps.app_manager.models import (
     BuildProfile,
     GlobalAppConfig,
     LatestEnabledBuildProfiles,
+    import_app,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -14,7 +19,11 @@ from corehq.apps.app_manager.tests.util import (
     patch_validate_xform,
     SuiteMixin,
 )
-from corehq.apps.app_manager.util import split_path, does_app_have_mobile_ucr_v1_refs
+from corehq.apps.app_manager.util import (
+    split_path,
+    does_app_have_mobile_ucr_v1_refs,
+    application_dependencies_was_disabled,
+)
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
@@ -237,3 +246,64 @@ class TestDoesAppHaveMobileUCRV1Refs(TestCase, SuiteMixin):
         self.assertTrue(does_app_have_mobile_ucr_v1_refs(app_with_refs))
         app_without_refs = self._create_app_with_form('normal-suite')
         self.assertFalse(does_app_have_mobile_ucr_v1_refs(app_without_refs))
+
+
+@patch_validate_xform()
+class TestApplicationDependenciesWasDisabled(TestCase):
+
+    domain = "test-domain"
+
+    def _create_app(self):
+        app = import_app(self._yesno_source, self.domain)
+        for module in app.modules:
+            module.get_or_create_unique_id()
+        app.save()
+        return app
+
+    @property
+    @memoized
+    def _yesno_source(self):
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json'), encoding='utf-8') as f:
+            return json.load(f)
+
+    def test_no_build_has_dependencies(self):
+        app = self._create_app()
+        build1 = app.make_build()
+        build1.save()
+        assert not application_dependencies_was_disabled(app)
+
+    def test_latest_build_has_dependencies(self):
+        app = self._create_app()
+
+        build1 = app.make_build()
+        build1.save()
+
+        # modify first form
+        app.get_module(0).get_form(0).source = get_simple_form(xmlns='xmlns-0.1')
+        app.profile = {'features': {'dependencies': ['my.custom.dependency']}}
+        app.save()
+
+        # make second build
+        build2 = app.make_build()
+        build2.save()
+
+        assert not application_dependencies_was_disabled(app)
+
+    def test_dependencies_feature_was_disabled(self):
+        app = self._create_app()
+
+        app.profile = {'features': {'dependencies': ['my.custom.dependency']}}
+        app.save()
+
+        build1 = app.make_build()
+        build1.save()
+
+        # Disable feature
+        app.profile = {'features': {'dependencies': []}}
+        app.save()
+
+        # make second build
+        build2 = app.make_build()
+        build2.save()
+
+        assert application_dependencies_was_disabled(app)

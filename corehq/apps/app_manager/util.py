@@ -31,7 +31,7 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_V1_ALL_REFERENCES,
     MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN,
 )
-from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain, get_build_docs
 from corehq.apps.app_manager.exceptions import (
     AppManagerException,
     PracticeUserException,
@@ -773,5 +773,27 @@ def does_app_have_mobile_ucr_v1_refs(app):
             MOBILE_UCR_V1_FIXTURE_IDENTIFIER in form.source
             or re_mobile_ucr_v1_all_refs.search(form.source)
         ):
+            return True
+    return False
+
+
+def application_dependencies_was_disabled(app):
+    """
+    This function checks whether the app_dependencies feature was used in the past but is
+    no longer being used.
+    """
+    def get_app_dependencies(build):
+        return build.get('profile', {}).get('features', {}).get('dependencies')
+
+    app_builds = get_build_docs(app.domain, app.id)
+
+    if not app_builds:
+        return False
+
+    if get_app_dependencies(app_builds[0]):
+        return False
+
+    for build_doc in app_builds[1:]:
+        if get_app_dependencies(build_doc):
             return True
     return False
