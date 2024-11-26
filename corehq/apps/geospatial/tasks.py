@@ -47,7 +47,6 @@ def index_es_docs_with_location_props(domain):
             process_batch(
                 domain,
                 geo_case_prop,
-                case_type=None,
                 offset=i * DEFAULT_QUERY_LIMIT,
                 total_count=doc_count
             )

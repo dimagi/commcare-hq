@@ -11,6 +11,7 @@ def process_batch(
     domain,
     geo_case_property,
     total_count,
+    case_type=None,
     with_progress=False,
     offset=0,
 ):
