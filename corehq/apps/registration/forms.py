@@ -594,9 +594,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         email = self.cleaned_data['email'].strip()
 
         from corehq.apps.registration.validation import AdminInvitesUserFormValidator
-        errors = AdminInvitesUserFormValidator.validate_email(self.domain, email, self.request.method == 'POST')
-        if errors:
-            raise forms.ValidationError(errors)
+        error = AdminInvitesUserFormValidator.validate_email(self.domain, email, self.request.method == 'POST')
+        if error:
+            raise forms.ValidationError(error)
         return email
 
     def clean(self):
@@ -623,13 +623,13 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             cleaned_data['custom_user_data'] = get_prefixed(custom_user_data, self.custom_data.prefix)
 
         from corehq.apps.registration.validation import AdminInvitesUserFormValidator
-        errors = AdminInvitesUserFormValidator.validate_parameters(
+        error = AdminInvitesUserFormValidator.validate_parameters(
             self.domain,
             self.request.couch_user,
             cleaned_data.keys()
         )
-        if errors:
-            raise forms.ValidationError(errors)
+        if error:
+            raise forms.ValidationError(error)
         return cleaned_data
 
     def _initialize_tableau_fields(self, data, domain):
