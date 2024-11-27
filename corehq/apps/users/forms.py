@@ -1125,7 +1125,7 @@ class SelectUserLocationForm(forms.Form):
     def clean(self):
         self.cleaned_data = super(SelectUserLocationForm, self).clean()
 
-        primary_location_id = self.cleaned_data['primary_location']
+        primary_location_id = self.cleaned_data.get('primary_location', '')
         assigned_location_ids = self.cleaned_data.get('assigned_locations', [])
         if not self._user_has_permission_to_access_locations(assigned_location_ids):
             self.add_error(

@@ -552,6 +552,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                     'primary_location',
                 )
             )
+        else:
+            self.fields.pop('assigned_locations', None)
+            self.fields.pop('primary_location', None)
         if self.can_edit_tableau_config:
             fields.append(
                 crispy.Fieldset(
