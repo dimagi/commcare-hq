@@ -3,7 +3,6 @@ import json
 import re
 import requests
 import time
-from urllib.parse import quote_plus, unquote_plus
 
 from django.conf import settings
 from django.contrib import messages
@@ -1770,9 +1769,9 @@ def deliver_connectid_invite(user):
         data={
             "phone_number": user.default_phone_number,
             "callback_url": absolute_reverse("confirm_connectid_user", args=[user.domain]),
-            "user_domain": quote_plus(user.domain),
-            "username": quote_plus(user.raw_username),
-            "invite_code": quote_plus(invite_code),
+            "user_domain": user.domain,
+            "username": user.raw_username,
+            "invite_code": invite_code,
         },
         auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
     )
@@ -1786,7 +1785,7 @@ def confirm_connectid_user(request, domain):
     try:
         token = request.POST["token"]
         invite_code = request.POST["invite_code"]
-        invite = json.loads(b64_aes_decrypt(unquote_plus(invite_code)))
+        invite = json.loads(b64_aes_decrypt(invite_code))
         user_id = invite['user_id']
         expiry_time = invite['time']
     except ValueError:
