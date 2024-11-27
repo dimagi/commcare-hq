@@ -237,23 +237,23 @@ class IsResponseTests(SimpleTestCase):
 
     def test_has_text(self):
         resp = Unknown()
-        resp.text = '<h1>Hello World</h1>'  # type: ignore
+        resp.text = '<h1>Hello World</h1>'
         self.assertFalse(is_response(resp))
 
     def test_has_status_code(self):
         resp = Unknown()
-        resp.status_code = 504  # type: ignore
+        resp.status_code = 504
         self.assertFalse(is_response(resp))
 
     def test_has_reason(self):
         resp = Unknown()
-        resp.reason = 'Gateway Timeout'  # type: ignore
+        resp.reason = 'Gateway Timeout'
         self.assertFalse(is_response(resp))
 
     def test_has_status_code_and_reason(self):
         resp = Unknown()
-        resp.status_code = 504  # type: ignore
-        resp.reason = 'Gateway Timeout'  # type: ignore
+        resp.status_code = 504
+        resp.reason = 'Gateway Timeout'
         self.assertTrue(is_response(resp))
 
 
