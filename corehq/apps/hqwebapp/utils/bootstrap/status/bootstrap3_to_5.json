@@ -54,6 +54,7 @@
   "domain": {
     "in_progress": true,
     "templates": [
+      "admin/commtrack_action_table.html",
       "admin/commtrack_settings.html",
       "admin/sms_settings.html"
     ]
