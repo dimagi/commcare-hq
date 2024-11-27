@@ -742,6 +742,7 @@ def _process_incoming(msg, phone=None):
         verified_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(msg)
     else:
         verified_number = phone
+        has_domain_two_way_scope = phone.is_two_way
     is_two_way = verified_number is not None and verified_number.is_two_way
 
     if verified_number:
@@ -810,6 +811,7 @@ def _process_incoming(msg, phone=None):
         not settings.SMS_QUEUE_ENABLED
         and msg.domain
         and domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+        and not isinstance(msg, ConnectMessage)
     ):
         create_billable_for_sms(msg)
 

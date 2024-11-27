@@ -9,6 +9,8 @@ from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 
 class ConnectBackend:
     couch_id = "connectid"
+    opt_out_keywords = []
+    opt_in_keywords = []
 
     def send(self, message):
         user = CouchUser.get_by_user_id(message.couch_recipient).get_django_user()

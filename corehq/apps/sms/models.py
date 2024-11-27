@@ -617,6 +617,7 @@ class AbstractNumber(ABC):
 class ConnectMessagingNumber(AbstractNumber):
     owner_doc_type = "CommCareUser"
     is_two_way = True
+    pending_verification = False
 
     def __init__(self, user):
         self.user = user
@@ -2756,3 +2757,7 @@ class ConnectMessage(Log):
     text = models.CharField(max_length=300)
     received_on = models.DateTimeField(null=True, blank=True)
     message_id = models.UUIDField(default=uuid4)
+
+    @property
+    def outbound_backend(self):
+        return ConnectBackend()

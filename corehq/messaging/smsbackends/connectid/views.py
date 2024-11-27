@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from corehq.apps.domain.auth import connectid_token_auth
-from corehq.apps.users.models import ConnectIDMessagingKey, ConnectIDUserLink
+from corehq.apps.users.models import ConnectIDMessagingKey, ConnectIDUserLink, CouchUser
 from corehq.apps.sms.models import ConnectMessagingNumber, ConnectMessage, INCOMING
 from corehq.apps.sms.api import process_incoming
 from corehq.util.hmac_request import validate_request_hmac
@@ -19,13 +19,18 @@ from corehq.apps.mobile_auth.utils import generate_aes_key
 @validate_request_hmac("CONNECTID_SECRET_KEY")
 def receive_message(request, *args, **kwargs):
     data = json.loads(request.body.decode("utf-8"))
-    channel_id = data["channel"]
+    channel_id = data["channel_id"]
     user_link = ConnectIDUserLink.objects.get(channel_id=channel_id)
-    phone_obj = ConnectMessagingNumber(user_link)
+    username = user_link.commcare_user.username
+    couch_user = CouchUser.get_by_username(username)
+    phone_obj = ConnectMessagingNumber(couch_user)
     for message in data["messages"]:
-        key = base64.b64decode(user_link.connectidmessagingkey_set.first())
-        cipher = AES.new(key, AES.MODE_GCM, nonce=data["nonce"])
-        text = cipher.decrypt_and_verify(data["ciphertext"], data["tag"]).decode("utf-8")
+        key = base64.b64decode(user_link.connectidmessagingkey_set.first().key)
+        ciphertext = base64.b64decode(data["ciphertext"])
+        tag = base64.b64decode(data["tag"])
+        nonce = base64.b64decode(data["nonce"])
+        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+        text = cipher.decrypt_and_verify(ciphertext, tag).decode("utf-8")
         timestamp = data["timestamp"]
         message_id = data["message_id"]
         msg = ConnectMessage(
@@ -34,8 +39,9 @@ def receive_message(request, *args, **kwargs):
             text=text,
             domain_scope=user_link.domain,
             backend_id="connectid",
-            message_id=message_id
+            message_id=message_id,
         )
+        msg.save()
         process_incoming(msg, phone_obj)
     return HttpResponse(status=200)
 
