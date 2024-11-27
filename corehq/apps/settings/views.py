@@ -265,7 +265,6 @@ class MyAccountSettingsView(BaseMyAccountView):
 
             res = redirect(reverse(MyAccountSettingsView.urlname))
             res.set_cookie(settings.LANGUAGE_COOKIE_NAME, self.request.couch_user.language)
-            res.set_cookie('formplayer_session_lang', self.request.couch_user.language)
             return res
 
         return self.get(request, *args, **kwargs)
