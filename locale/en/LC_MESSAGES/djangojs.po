@@ -3086,24 +3086,28 @@ msgstr ""
 msgid "Sorry, it looks like the upload failed."
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/billing_statements.js
+#: corehq/apps/domain/static/domain/js/bootstrap3/billing_statements.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/billing_statements.js
 msgid "Submit Payment"
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/billing_statements.js
+#: corehq/apps/domain/static/domain/js/bootstrap3/billing_statements.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/billing_statements.js
 msgid "Submit Invoice Request"
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/case_search.js
+#: corehq/apps/domain/static/domain/js/bootstrap3/case_search.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/case_search.js
 msgid "You have unchanged settings"
+msgstr ""
+
+#: corehq/apps/domain/static/domain/js/bootstrap3/info_basic.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/info_basic.js
+msgid "Select a Timezone..."
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
-msgstr ""
-
-#: corehq/apps/domain/static/domain/js/info_basic.js
-msgid "Select a Timezone..."
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
@@ -3335,6 +3339,10 @@ msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "Sensitive Date"
+msgstr ""
+
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
+msgid "Can not create table with ID '<%= tag %>'. Table IDs should be unique."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
@@ -4089,35 +4097,6 @@ msgstr ""
 msgid "label-info-light"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-msgid "Keywords"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-msgid "Keywords to copy"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-msgid "Search keywords"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Linked Project Spaces"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Projects to copy to"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Search projects"
-msgstr ""
-
 #: corehq/apps/reports/static/reports/js/bootstrap3/base.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/base.js
 #: corehq/apps/userreports/static/userreports/js/configurable_report.js
@@ -4439,11 +4418,11 @@ msgstr ""
 msgid "(filtered from _MAX_ total contacts)"
 msgstr ""
 
-#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js
+#: corehq/apps/smsbillables/static/smsbillables/js/rate_calc.js
 msgid "There was an error fetching the SMS rate."
 msgstr ""
 
-#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js
+#: corehq/apps/smsbillables/static/smsbillables/js/rate_calc.js
 msgid "Please Select a Country Code"
 msgstr ""
 
@@ -4600,6 +4579,16 @@ msgstr ""
 #: corehq/apps/userreports/static/userreports/js/configure_report.js
 #: corehq/apps/userreports/static/userreports/js/edit_report_config.js
 msgid "Linked projects"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Projects to copy to"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Search projects"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js
@@ -4903,6 +4892,10 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Multi-Environment Release Management"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Linked Project Spaces"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
