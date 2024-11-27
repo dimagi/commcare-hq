@@ -324,10 +324,11 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class CaseSearchConfigView(BaseAdminProjectSettingsView):
     urlname = 'case_search_config'
     page_title = gettext_lazy('Case Search')
-    template_name = 'domain/admin/bootstrap3/case_search.html'
+    template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
     @method_decorator(toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator())
