@@ -726,6 +726,7 @@ class RequireJSMainNode(template.Node):
     def __init__(self, name, value):
         self.name = name
         self.value = value
+        self.origin = None
 
     def __repr__(self):
         return "<RequireJSMain Node: %r>" % (self.value,)
@@ -733,6 +734,12 @@ class RequireJSMainNode(template.Node):
     def render(self, context):
         if self.name not in context and self.value:
             # set name in block parent context
+            other_name = "js_entry" if self.name == "requirejs_main" else "requirejs_main"
+            other_values = [d.get(other_name) for d in context.dicts if other_name in d]
+            if any(other_values):
+                raise TemplateSyntaxError(f"""
+                    Cannot use both {self.name} ({self.value}) and {other_name} ({other_values[0]})
+                """.strip())
             context.dicts[-2]['use_js_bundler'] = True
             context.dicts[-2][self.name] = self.value
         return ''

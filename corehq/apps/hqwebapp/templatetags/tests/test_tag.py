@@ -240,3 +240,14 @@ class TagTest(SimpleTestCase):
                 {% load hq_shared_tags %}
                 {% js_entry 'x" %}
             """)
+
+    def test_requirejs_main_js_entry_conflict(self):
+        with self.assertRaises(TemplateSyntaxError) as e:
+            self.render("""
+                {% load hq_shared_tags %}
+                {% requirejs_main "module/one" %}
+                {% js_entry "module/two" %}
+            """)
+        self.assertEqual("""
+            Cannot use both js_entry (module/two) and requirejs_main (module/one)
+        """.strip(), str(e.exception))
