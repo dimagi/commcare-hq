@@ -36,4 +36,5 @@ def index_case_docs(domain, case_type=None):
             total_count=count,
             case_type=case_type,
             with_progress=True,
+            offset=i * DEFAULT_QUERY_LIMIT,
         )
