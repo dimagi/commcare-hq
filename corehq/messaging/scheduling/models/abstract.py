@@ -248,6 +248,8 @@ class ContentForeignKeyMixin(models.Model):
                                                  on_delete=models.CASCADE)
     connect_message_content = models.ForeignKey('scheduling.ConnectMessageContent', null=True,
                                                 on_delete=models.CASCADE)
+    connect_survey_content = models.ForeignKey('scheduling.ConnectMessageSurveyContent', null=True,
+                                                on_delete=models.CASCADE)
 
     class Meta(object):
         abstract = True
@@ -270,6 +272,8 @@ class ContentForeignKeyMixin(models.Model):
             return self.fcm_notification_content
         elif self.connect_message_content:
             return self.connect_message_content
+        elif self.connect_survey_content:
+            return self.connect_survey_content
 
         raise NoAvailableContent()
 
@@ -285,7 +289,8 @@ class ContentForeignKeyMixin(models.Model):
     @content.setter
     def content(self, value):
         from corehq.messaging.scheduling.models import (SMSContent, EmailContent, SMSSurveyContent,
-            IVRSurveyContent, CustomContent, SMSCallbackContent, FCMNotificationContent, ConnectMessageContent)
+            IVRSurveyContent, CustomContent, SMSCallbackContent, FCMNotificationContent,
+            ConnectMessageContent, ConnectMessageSurveyContent)
 
         self.sms_content = None
         self.email_content = None
@@ -294,6 +299,7 @@ class ContentForeignKeyMixin(models.Model):
         self.custom_content = None
         self.sms_callback_content = None
         self.connect_message_content = None
+        self.connect_survey_content = None
 
         if isinstance(value, SMSContent):
             self.sms_content = value
@@ -311,6 +317,8 @@ class ContentForeignKeyMixin(models.Model):
             self.fcm_notification_content = value
         elif isinstance(value, ConnectMessageContent):
             self.connect_message_content = value
+        elif isinstance(value, ConnectMessageSurveyContent):
+            self.connect_survey_content = value
         else:
             raise UnknownContentType()
 

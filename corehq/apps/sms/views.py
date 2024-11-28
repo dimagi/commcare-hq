@@ -2074,7 +2074,7 @@ class ConnectMessagingUserView(BaseMessagingSectionView):
     def page_context(self):
         page_context = super(ConnectMessagingUserView, self).page_context
         page_context.update({
-            "create_channel_url": reverse(("create_channels", args=[self.domain]))
+            "create_channel_url": reverse("create_channels", args=[self.domain])
         })
 
 

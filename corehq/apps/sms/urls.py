@@ -61,7 +61,7 @@ urlpatterns = [
     url(r'^translations/upload/$', upload_sms_translations, name='upload_sms_translations'),
     url(r'^telerivet/', include(telerivet_urls)),
     url(r'^whatsapp_templates/$', WhatsAppTemplatesView.as_view(), name=WhatsAppTemplatesView.urlname),
-    url(r'^connect_messaging_user/$', ConnectMessagingUserView.as_view(), name=ConnectMessagingUserView),
+    url(r'^connect_messaging_user/$', ConnectMessagingUserView.as_view(), name=ConnectMessagingUserView.urlname),
     url(r'^create_channels/$', create_channels, name='create_channels'),
 ]
 

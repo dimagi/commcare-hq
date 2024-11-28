@@ -1045,6 +1045,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_EMAIL = 'EML'
     CONTENT_FCM_Notification = 'FCM'
     CONTENT_CONNECT = 'CON'
+    CONTENT_CONNECT_SURVEY = 'CSY'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, gettext_noop('None')),
@@ -1059,6 +1060,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_EMAIL, gettext_noop('Email')),
         (CONTENT_FCM_Notification, gettext_noop('FCM Push Notification')),
         (CONTENT_CONNECT, gettext_noop('Connect Message')),
+        (CONTENT_CONNECT_SURVEY, gettext_noop('Connect Message Survey')),
     )
 
     CONTENT_TYPE_SLUGS = {
@@ -1074,6 +1076,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         CONTENT_EMAIL: "email",
         CONTENT_FCM_Notification: "fcm-notification",
         CONTENT_CONNECT: "connect",
+        CONTENT_CONNECT_SURVEY: "connect-survey",
     }
 
     RECIPIENT_CASE = 'CAS'
@@ -1403,7 +1406,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         elif isinstance(content, ConnectMessageContent):
             return cls.CONTENT_CONNECT, None, None, None
         elif isinstance(content, ConnectMessageSurveyContent):
-            return cls.CONTENT_CONNECT, None, None, None
+            app, module, form, requires_input = content.get_memoized_app_module_form(domain)
+            form_name = form.full_path_name if form else None
+            return cls.CONTENT_CONNECT_SURVEY, content.app_id, content.form_unique_id, form_name
         else:
             return cls.CONTENT_NONE, None, None, None
 
