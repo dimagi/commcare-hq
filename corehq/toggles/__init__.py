@@ -2615,7 +2615,7 @@ def _handle_geospatial_es_index(domain, is_enabled):
 
 MICROPLANNING = StaticToggle(
     'microplanning',
-    'Allows access to GIS functionality',
+    'Allows access to Microplanning GIS functionality',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description='Additional views will be added allowing for visually viewing '
