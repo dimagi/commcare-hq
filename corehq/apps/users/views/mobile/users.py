@@ -811,7 +811,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         if self.new_mobile_worker_form.cleaned_data['account_invite_by_cid']:
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             couch_user.set_default_phone_number(phone_number)
-            deliver_connectid_invite(couch_user)
+            deliver_connectid_invite(couch_user, self.request)
 
         plan_limit, user_count = Subscription.get_plan_and_user_count_by_domain(self.domain)
         check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
@@ -1747,7 +1747,6 @@ def link_connectid_user(request, domain):
 @require_can_edit_commcare_users
 @location_safe
 def send_connectid_invite(request, domain, user_id):
-    # Currently same as what send_confirmation_sms does
     user = CommCareUser.get_by_user_id(user_id, domain)
     if user.domain != domain:
         return HttpResponse(status=400)
@@ -1757,10 +1756,11 @@ def send_connectid_invite(request, domain, user_id):
     return HttpResponse(status=200)
 
 
-def deliver_connectid_invite(user):
+def deliver_connectid_invite(user, request=None):
     # ConnectID server delivers the invite to user
     if user.is_account_confirmed or not user.is_commcare_user():
-        messages.error(request, "The user is already confirmed or is not a mobile user")
+        if request:
+            messages.error(request, "The user is already confirmed or is not a mobile user")
         return False
 
     invite_code = encrypt_account_confirmation_info(user)
