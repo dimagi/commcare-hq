@@ -1386,7 +1386,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             EmailContent,
             CustomContent,
             FCMNotificationContent,
-            ConnectMessageContent
+            ConnectMessageContent,
+            ConnectMessageSurveyContent
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
@@ -1400,6 +1401,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         elif isinstance(content, FCMNotificationContent):
             return cls.CONTENT_FCM_Notification, None, None, None
         elif isinstance(content, ConnectMessageContent):
+            return cls.CONTENT_CONNECT, None, None, None
+        elif isinstance(content, ConnectMessageSurveyContent):
             return cls.CONTENT_CONNECT, None, None, None
         else:
             return cls.CONTENT_NONE, None, None, None

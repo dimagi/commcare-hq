@@ -1448,6 +1448,17 @@ class MessagingTab(UITab):
         return whatsapp_urls
 
     @property
+    def connect_urls(self):
+        from corehq.apps.sms.views import ConnectMessagingUserView
+
+        connect_urls = []
+        if toggles.COMMCARE_CONNECT.enabled(self.domain):
+            connect_urls.append({
+                'title': _('User Consent'),
+                'url': reverse(ConnectMesssagingUserView.urlname, args=[self.domain]),
+            })
+
+    @property
     def dropdown_items(self):
         result = []
 

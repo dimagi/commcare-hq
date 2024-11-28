@@ -2059,3 +2059,29 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
                     + _(" failed to fetch templates. Please make sure the gateway is configured properly.")
                 )
         return context
+
+
+class ConnectMessagingUserView(BaseMessagingSectionView):
+    urlname = 'connect_messaging_user'
+    template_name = 'sms/connect_messaging_user.html'
+    page_title = _("Connect Messaging Users")
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ConnectMessagingUserView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        page_context = super(ConnectMessagingUserView, self).page_context
+        page_context.update({
+            "create_channel_url": reverse(("create_channels", args=[self.domain]))
+        })
+
+
+@domain_admin_required
+def create_channels(self, request, *args, **kwargs):
+    user_links = ConnectIDUserLink.objects.filter(domain=request.domain)
+    backend = ConnectBackend()
+    for link in user_links:
+        backend.create_channel(link)
+    return HttpResponseRedirect(reverse(ConnectMessagingUserView.urlname, args=[domain]))
