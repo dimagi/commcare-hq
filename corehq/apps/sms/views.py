@@ -2076,6 +2076,7 @@ class ConnectMessagingUserView(BaseMessagingSectionView):
         page_context.update({
             "create_channel_url": reverse("create_channels", args=[self.domain])
         })
+        return page_context
 
 
 @domain_admin_required
