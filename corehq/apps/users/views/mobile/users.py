@@ -1033,7 +1033,7 @@ def paginate_mobile_workers(request, domain):
             commcare_user__username__in=usernames
         ).annotate(commcare_username=F("commcare_user__username")).all()
         return {
-            link.commcare_username.split("@")[0]: link
+            raw_username(link.commcare_username): link
             for link in links
         }
 
