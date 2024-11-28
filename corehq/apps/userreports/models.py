@@ -228,6 +228,8 @@ class DataSourceBuildInformation(DocumentSchema):
             return args[0] == data_source_config_id
 
         def iter_tasks():
+            if not flower_url:
+                return
             task_names = (
                 'corehq.apps.userreports.tasks.rebuild_indicators',
                 'corehq.apps.userreports.tasks.rebuild_indicators_in_place',
