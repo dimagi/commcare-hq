@@ -86,6 +86,7 @@ from corehq.messaging.scheduling.models import (
     AlertSchedule,
     CasePropertyTimedEvent,
     ConnectMessageContent,
+    ConnectMessageSurveyContent,
     CustomContent,
     EmailContent,
     FCMNotificationContent,
@@ -341,7 +342,7 @@ class ContentForm(Form):
         return value
 
     def clean_app_and_form_unique_id(self):
-        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_SMS_SURVEY:
+        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS_SURVEY, ScheduleForm.CONTENT_CONNECT_SURVEY):
             return None
 
         value = self.cleaned_data.get('app_and_form_unique_id')
@@ -352,7 +353,7 @@ class ContentForm(Form):
         return value
 
     def clean_survey_expiration_in_hours(self):
-        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_SMS_SURVEY:
+        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS_SURVEY, ScheduleForm.CONTENT_CONNECT_SURVEY):
             return None
 
         value = self.cleaned_data.get('survey_expiration_in_hours')
@@ -362,7 +363,7 @@ class ContentForm(Form):
         return value
 
     def clean_survey_reminder_intervals(self):
-        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_SMS_SURVEY:
+        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS_SURVEY, ScheduleForm.CONTENT_CONNECT_SURVEY):
             return None
 
         if self.cleaned_data.get('survey_reminder_intervals_enabled') != 'Y':
@@ -463,6 +464,19 @@ class ContentForm(Form):
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_CONNECT_MESSAGE:
             return ConnectMessageContent(
                 message=self.cleaned_data['message'],
+            )
+        elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_CONNECT_SURVEY:
+            combined_id = self.cleaned_data['app_and_form_unique_id']
+            app_id, form_unique_id = split_combined_id(combined_id)
+            return ConnectMessageSurveyContent(
+                app_id=app_id,
+                form_unique_id=form_unique_id,
+                expire_after=self.cleaned_data['survey_expiration_in_hours'] * 60,
+                reminder_intervals=self.cleaned_data['survey_reminder_intervals'],
+                submit_partially_completed_forms=self.schedule_form.cleaned_data[
+                    'submit_partially_completed_forms'],
+                include_case_updates_in_partial_submissions=self.schedule_form.cleaned_data[
+                    'include_case_updates_in_partial_submissions']
             )
         else:
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
@@ -586,8 +600,7 @@ class ContentForm(Form):
                     css_class="hqwebapp-select2",
                 ),
                 data_bind=(
-                    "visible: $root.content() === '%s' || $root.content() === '%s'" %
-                    (ScheduleForm.CONTENT_SMS_SURVEY, ScheduleForm.CONTENT_IVR_SURVEY)
+                    "visible:  $root.content() === '{ScheduleForm.CONTENT_SMS_SURVEY}' || $root.content() === '{ScheduleForm.CONTENT_CONNECT_SURVEY} || $root.content() === '{ScheduleForm.CONTENT_IVR_SURVEY}"
                 ),
             ),
             crispy.Div(
@@ -627,7 +640,7 @@ class ContentForm(Form):
                     ),
                     data_bind="visible: survey_reminder_intervals_enabled() === 'Y'",
                 ),
-                data_bind="visible: $root.content() === '%s'" % ScheduleForm.CONTENT_SMS_SURVEY,
+                data_bind=f"visible: $root.content() === '{ScheduleForm.CONTENT_SMS_SURVEY}' || $root.content() === '{ScheduleForm.CONTENT_CONNECT_SURVEY}",
             ),
             crispy.Div(
                 crispy.Field('ivr_intervals'),
@@ -693,6 +706,23 @@ class ContentForm(Form):
             result['fcm_message_type'] = content.message_type
         elif isinstance(content, ConnectMessageContent):
             result['message'] = content.message
+        elif isinstance(content, ConnectMessageSurveyContent):
+            result['app_and_form_unique_id'] = get_combined_id(
+                content.app_id,
+                content.form_unique_id
+            )
+            result['survey_expiration_in_hours'] = content.expire_after // 60
+            if (content.expire_after % 60) != 0:
+                # The old framework let you enter minutes. If it's not an even number of hours, round up.
+                result['survey_expiration_in_hours'] += 1
+
+            if content.reminder_intervals:
+                result['survey_reminder_intervals_enabled'] = 'Y'
+                result['survey_reminder_intervals'] = \
+                    ', '.join(str(i) for i in content.reminder_intervals)
+            else:
+                result['survey_reminder_intervals_enabled'] = 'N'
+
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -1168,6 +1198,7 @@ class ScheduleForm(Form):
     CONTENT_CUSTOM_SMS = 'custom_sms'
     CONTENT_FCM_NOTIFICATION = 'fcm_notification'
     CONTENT_CONNECT_MESSAGE = 'connect_message'
+    CONTENT_CONNECT_SURVEY = 'connect_survey'
 
     YES = 'Y'
     NO = 'N'
@@ -1578,6 +1609,11 @@ class ScheduleForm(Form):
             initial['content'] = self.CONTENT_FCM_NOTIFICATION
         elif isinstance(content, ConnectMessageContent):
             initial['conent'] = self.CONTENT_CONNECT_MESSAGE
+        elif isinstance(content, ConnectMessageSurveyContent):
+            initial['content'] = self.CONTENT_CONNECT_SURVEY
+            initial['submit_partially_completed_forms'] = content.submit_partially_completed_forms
+            initial['include_case_updates_in_partial_submissions'] = \
+                content.include_case_updates_in_partial_submissions
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -1797,6 +1833,7 @@ class ScheduleForm(Form):
         if self.can_use_connect:
             self.fields['content'].choices += [
                 (self.CONTENT_CONNECT_MESSAGE, _("Connect Message")),
+                (self.CONTENT_CONNECT_SURVEY, _("Connect Survey"))
             ]
 
     def enable_json_user_data_filter(self, initial):
@@ -1844,8 +1881,7 @@ class ScheduleForm(Form):
                 _("Advanced Survey Options"),
                 *self.get_advanced_survey_layout_fields(),
                 data_bind=(
-                    "visible: content() === '%s' || content() === '%s'" %
-                    (self.CONTENT_SMS_SURVEY, self.CONTENT_IVR_SURVEY)
+                    f"visible: content() === '{self.CONTENT_SMS_SURVEY}' || content() === '{self.CONTENT_IVR_SURVEY}' || content() === '{self.CONTENT_CONNECT_SURVEY}"
                 )
             ),
             crispy.Fieldset(

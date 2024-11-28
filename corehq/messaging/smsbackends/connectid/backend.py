@@ -35,8 +35,7 @@ class ConnectBackend:
         return response.status_code == requests.codes.OK
 
 
-    def create_channel(self, user):
-        user_link = ConnectIDUserLink.objects.get(commcare_user=user)
+    def create_channel(self, user_link):
         response = requests.post(
             settings.CONNECTID_CHANNEL_URL,
             data={
