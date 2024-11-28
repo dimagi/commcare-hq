@@ -127,11 +127,12 @@ from corehq.apps.smsforms.models import (
 )
 from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, CouchUser, HqPermissions
+from corehq.apps.users.models import CommCareUser, ConnectIDUserLink, CouchUser, HqPermissions
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
+from corehq.messaging.smsbackends.connectid.backend import ConnectBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
