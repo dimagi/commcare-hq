@@ -4474,13 +4474,18 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def check_build_dependencies(self, new_build):
         """
-        This method reports whether the app dependencies have been removed.
+        Reports whether the app dependencies have been removed.
         """
 
         def has_dependencies(build):
-            return bool(build['profile']['features']['dependencies'])
+            return bool(
+                build.get('profile', {}).get('features', {}).get('dependencies')
+            )
 
         latest_build = get_latest_build_doc(self.domain, self.id)
+        if not latest_build:
+            return
+
         if has_dependencies(latest_build) and not has_dependencies(new_build):
             metrics_counter('commcare.app_build.dependencies_removed')
 
