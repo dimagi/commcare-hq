@@ -51,8 +51,9 @@ def index_es_docs_with_location_props(domain):
                 total_count=doc_count
             )
             current_batch = i + 1
+            processed_count = min(current_batch * DEFAULT_QUERY_LIMIT, doc_count)
             celery_task_tracker.update_progress(
-                current=current_batch * min(DEFAULT_QUERY_LIMIT, doc_count),
+                current=processed_count,
                 total=doc_count
             )
     except Exception as e:
