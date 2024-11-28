@@ -45,8 +45,8 @@ from corehq.apps.events.views import (
     AttendeesListView,
     EventsView,
 )
+from corehq.apps.case_search.views import CSQLFixtureExpressionView
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
-
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
     DeviceLogSoftAssertReport,
@@ -462,7 +462,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
-        '/a/{domain}/geospatial/',
+        '/a/{domain}/microplanning/',
     )
 
     @property
@@ -583,7 +583,7 @@ class ProjectDataTab(UITab):
 
     @property
     def _can_view_geospatial(self):
-        return toggles.GEOSPATIAL.enabled(self.domain)
+        return toggles.MICROPLANNING.enabled(self.domain)
 
     @property
     def _is_viewable(self):
@@ -624,6 +624,12 @@ class ProjectDataTab(UITab):
             )
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
+
+        if (toggles.MODULE_BADGES.enabled(self.domain) and self.couch_user.can_edit_data()):
+            items.append([_('CSQL Fixtures'), [{
+                'title': _(CSQLFixtureExpressionView.page_title),
+                'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
+            }]])
 
         if self._can_view_data_dictionary:
             items.append([DataDictionaryView.page_title, [{
@@ -1004,7 +1010,7 @@ class ProjectDataTab(UITab):
                 'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
             },
             {
-                'title': _("Configure Geospatial Settings"),
+                'title': _("Configure Microplanning Settings"),
                 'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
             }
         ]

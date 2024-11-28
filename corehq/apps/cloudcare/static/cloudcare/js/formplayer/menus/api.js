@@ -16,6 +16,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/layout/views/progress_bar',
+    'cloudcare/js/utils',
 ], function (
     $,
     _,
@@ -29,7 +30,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     AppsAPI,
     UsersModels,
     formplayerUtils,
-    ProgressBar
+    ProgressBar,
+    cloudcareUtils,
 ) {
     let currentSelections = null,
         ongoingRequests = [];
@@ -48,25 +50,38 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 menus;
 
             $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
+                var appIdType;
                 const app = appCollection.find(function (app) {
                     const currPrimaryAppId = app.get('copy_of');
                     // Prevents breaking if a web apps session spans pre and post deploy. Can remove post deploy.
                     if (app.id && app.id === params.appId) {
+                        appIdType = 'build';
                         return app;
                     }
                     if (currPrimaryAppId && currPrimaryAppId === params.appId) {
+                        appIdType = 'canonical';
                         return app;
                     }
                     if (currPrimaryAppId && (currPrimaryAppId === params.copyOf)) {
+                        appIdType = 'copyOf';
                         return app;
                     }
                 });
+                const additionalSentryData = {
+                    appIdType: appIdType,
+                    appIDsFromURL: params.appId + ' / ' + params.copyOf,
+                    appCollection: appCollection.models.map(
+                        appItem => appItem.attributes._id + ' / ' + appItem.attributes.copy_of),
+                }
                 if (!params.preview) {
                     // Make sure the user has access to the app
                     if (!app) {
                         FormplayerFrontend.trigger(
                             'showError',
-                            gettext('The application could not be found')
+                            gettext('The application could not be found'),
+                            false,
+                            true,
+                            additionalSentryData
                         );
                         FormplayerFrontend.trigger('navigateHome');
                         defer.reject();
@@ -137,7 +152,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
-                            if (!(response.session_id)) {
+                            if (!(response.session_id) && (UsersModels.getCurrentUser().isAppPreview
+                                    || !cloudcareUtils.smallScreenIsEnabled())) {
                                 FormplayerFrontend.trigger('configureDebugger');
                             }
                         }

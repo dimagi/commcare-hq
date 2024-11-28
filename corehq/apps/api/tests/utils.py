@@ -106,10 +106,18 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
                             resource_name=cls.resource._meta.resource_name))
 
     def single_endpoint(self, id):
-        return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
-                                                          api_name=self.api_name,
-                                                          resource_name=self.resource._meta.resource_name,
-                                                          pk=id))
+        return reverse('api_dispatch_detail', kwargs={
+            'domain': self.domain.name,
+            'api_name': self.api_name,
+            'resource_name': self.resource._meta.resource_name,
+            self.resource._meta.detail_uri_name: id,
+        })
+
+    def get_list(self):
+        return self.client.get(self.list_endpoint, **self._get_api_key_auth_headers())
+
+    def get_detail(self, id):
+        return self.client.get(self.single_endpoint(id), **self._get_api_key_auth_headers())
 
     def _get_api_key_auth_headers(self, headers=None, username=None):
         if headers and 'HTTP_AUTHORIZATION' in headers:

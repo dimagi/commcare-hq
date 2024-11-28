@@ -6,6 +6,7 @@ hqDefine("export/js/export_list_main", [
     'export/js/create_export',
     'export/js/export_list',
     'hqwebapp/js/select_2_ajax_widget',  // for case owner & user filters in DashboardFeedFilterForm
+    'commcarehq',
 ], function (
     $,
     initialPageData,

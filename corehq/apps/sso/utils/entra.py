@@ -1,6 +1,8 @@
 import json
 import requests
 
+from django.utils.translation import gettext_lazy as _
+
 from corehq.apps.sso.exceptions import EntraVerificationFailed, EntraUnsupportedType
 
 
@@ -26,10 +28,17 @@ def get_all_usernames_of_the_idp_from_entra(idp):
     config = _configure_idp(idp)
 
     # Create a preferably long-lived app instance which maintains a token cache.
-    app = msal.ConfidentialClientApplication(
-        config["client_id"], authority=config["authority"],
-        client_credential=config["secret"],
-    )
+    try:
+        app = msal.ConfidentialClientApplication(
+            config["client_id"], authority=config["authority"],
+            client_credential=config["secret"],
+        )
+    except ValueError as e:
+        if "check your tenant name" in str(e):
+            raise EntraVerificationFailed(error="invalid_tenant",
+                                          message=_("Please double check your tenant id is correct"))
+        else:
+            raise e
 
     token = _get_access_token(app, config)
 
@@ -110,7 +119,7 @@ def _get_access_token(app, config):
         result = app.acquire_token_for_client(scopes=config["scope"])
     if "access_token" not in result:
         raise EntraVerificationFailed(result.get('error', {}),
-                                      result.get('error_description', 'No error description provided'))
+                                      result.get('error_description', _('No error description provided')))
     return result.get("access_token")
 
 
@@ -135,8 +144,8 @@ def _get_all_user_ids_in_app(token, app_id):
         elif assignment["principalType"] == "Group":
             group_queue.append(assignment["principalId"])
         else:
-            raise EntraUnsupportedType("Nested applications (ServicePrincipal members) are not supported. "
-                                       "Please include only Users or Groups as members of this SSO application")
+            raise EntraUnsupportedType(_("Nested applications (ServicePrincipal members) are not supported. "
+                                       "Please include only Users or Groups as members of this SSO application"))
 
     for group_id in group_queue:
         members_data = _get_group_members(group_id, token)

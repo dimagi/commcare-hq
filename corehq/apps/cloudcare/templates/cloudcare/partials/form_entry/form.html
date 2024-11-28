@@ -45,10 +45,7 @@
       <div id="submit-button" class="form-actions noprint-sub-container"
            data-bind="
               visible: showSubmitButton,
-              css: { 'sticky-submit': isAnchoredSubmitStyle },
-              style: {
-                'bottom':isAnchoredSubmitStyle && {{ request.couch_user.can_edit_data|yesno:'true,false' }} {% if environment != "web-apps" %} && false {% endif %} ? '30px' : '0' {# data preview bar #}
-              }"
+              css: { 'sticky-submit': isAnchoredSubmitStyle }"
       >
         <div class="col-12 text-center submit">
           <button class="submit btn btn-primary"
@@ -64,7 +61,7 @@
     </form>
   </div>
   <div data-bind="visible: erroredQuestions().length > 0">
-    <div id="next-error" class="btn btn-outline-danger" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors">
+    <div id="next-error" class="btn btn-outline-danger m-2" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors">
       <i class='fa fa-fast-forward'></i>
       {% trans "Next Error" %}
     </div>

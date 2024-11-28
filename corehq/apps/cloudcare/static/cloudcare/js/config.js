@@ -5,6 +5,7 @@ hqDefine("cloudcare/js/config", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap5/main',
+    'commcarehq',
 ], function (
     $,
     _,
@@ -45,6 +46,7 @@ hqDefine("cloudcare/js/config", [
             self.restrict = addJsonAccess(ko.observable());
             self.app_groups = ko.observableArray();
             self._lock = ko.observable(false);
+            self.disable_feature_flag = ko.observable(false);
         };
         ApplicationAccess.wrap = function (o) {
             var self = new ApplicationAccess();
@@ -91,6 +93,9 @@ hqDefine("cloudcare/js/config", [
                         data: ko.mapping.toJSON(self.applicationAccess),
                         success: function (data) {
                             self.applicationAccess._rev = data._rev;
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url;
+                            }
                         },
                     });
                 },

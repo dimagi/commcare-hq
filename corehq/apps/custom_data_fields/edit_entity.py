@@ -109,9 +109,10 @@ class CustomDataEditor(object):
 
     def _make_field(self, field):
         safe_label = escape(field.label)
+        is_required_field = self.field_view.is_field_required(field)
         if field.regex:
             validator = RegexValidator(field.regex, field.regex_msg)
-            return forms.CharField(label=safe_label, required=field.is_required,
+            return forms.CharField(label=safe_label, required=is_required_field,
                                    validators=[validator])
         elif field.choices:
             # If form uses knockout, knockout must have control over the select2.
@@ -129,12 +130,12 @@ class CustomDataEditor(object):
 
             return forms.ChoiceField(
                 label=safe_label,
-                required=field.is_required,
+                required=is_required_field,
                 choices=placeholder_choices + [(c, c) for c in field.choices],
                 widget=forms.Select(attrs=attrs)
             )
         else:
-            return forms.CharField(label=safe_label, required=field.is_required)
+            return forms.CharField(label=safe_label, required=is_required_field)
 
     def make_fieldsets(self, form_fields, is_post, field_name_includes_prefix=False):
         if self.ko_model:
@@ -143,8 +144,8 @@ class CustomDataEditor(object):
                 data_bind_field_name = (
                     without_prefix(field_name, self.prefix) if field_name_includes_prefix else field_name)
                 data_binds = [
-                    f"value: {self.ko_model}.{data_bind_field_name}.value",
-                    f"disable: {self.ko_model}.{data_bind_field_name}.disable",
+                    f"value: {self.ko_model}['{data_bind_field_name}'].value",
+                    f"disable: {self.ko_model}['{data_bind_field_name}'].disable",
                 ]
                 if hasattr(field, 'choices') or without_prefix(field_name, self.prefix) == PROFILE_SLUG:
                     data_binds.append("select2: " + json.dumps([
@@ -171,15 +172,19 @@ class CustomDataEditor(object):
     @property
     @memoized
     def fields(self):
-        return list(self.model.get_fields(required_only=self.required_only))
+        field_filter_config = CustomDataFieldsDefinition.FieldFilterConfig(
+            required_only=self.required_only,
+            is_required_check_func=self.field_view.is_field_required
+        )
+        return list(self.model.get_fields(field_filter_config=field_filter_config))
 
     def init_form(self, post_dict=None):
         form_fields = OrderedDict()
 
-        from corehq.apps.users.views.mobile import UserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         has_profile_privilege_and_is_user_fields_view = (
             domain_has_privilege(self.domain, privileges.APP_USER_PROFILES)
-            and self.field_view is UserFieldsView
+            and issubclass(self.field_view, UserFieldsView)
         )
         if has_profile_privilege_and_is_user_fields_view:
             original_profile_id = None
@@ -189,6 +194,12 @@ class CustomDataEditor(object):
             profiles, can_edit_original_profile = self.field_view.get_displayable_profiles_and_edit_permission(
                 original_profile_id, self.domain, self.request_user
             )
+
+            def profile_selection_required():
+                user_type = self.field_view.user_type
+                profile_required_list_user_types = self.model.profile_required_for_user_type or []
+
+                return user_type in profile_required_list_user_types
 
             def validate_profile_slug(value):
                 from django.core.exceptions import ValidationError
@@ -206,7 +217,7 @@ class CustomDataEditor(object):
                     attrs.update({'class': 'hqwebapp-select2'})
                 form_fields[PROFILE_SLUG] = forms.IntegerField(
                     label=_('Profile'),
-                    required=False,
+                    required=profile_selection_required(),
                     widget=Select(choices=[
                         (p.id, p.name)
                         for p in profiles

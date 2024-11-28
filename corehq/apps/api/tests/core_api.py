@@ -240,8 +240,10 @@ class TestToManyDictField(TestCase):
         }
 
         source_objs = [
-            ToManyDictSourceModel(other_model_ids={ 'first_other': 'foo', 'second_other': 'bar'}, other_model_dict=dest_objs),
-            ToManyDictSourceModel(other_model_ids={ 'first_other': 'bar', 'second_other': 'baz'}, other_model_dict=dest_objs)
+            ToManyDictSourceModel(other_model_ids={'first_other': 'foo', 'second_other': 'bar'},
+                                  other_model_dict=dest_objs),
+            ToManyDictSourceModel(other_model_ids={'first_other': 'bar', 'second_other': 'baz'},
+                                  other_model_dict=dest_objs)
         ]
 
         source_resource = ToManyDictSourceResource(source_objs)
@@ -733,11 +735,62 @@ class TestApiThrottle(APIResourceTest):
         with patch('corehq.apps.api.resources.meta.HQThrottle.should_be_throttled') as hq_should_be_throttled:
 
             self.client.get(self.endpoint)
-            hq_should_be_throttled.assert_called_with(ApiIdentifier(domain=self.domain.name, username=self.user.username))
+            hq_should_be_throttled.assert_called_with(
+                ApiIdentifier(domain=self.domain.name, username=self.user.username))
 
             with patch('corehq.apps.api.resources.meta.API_THROTTLE_WHITELIST.enabled') as toggle_patch:
                 toggle_patch.return_value = True
 
                 self.client.get(self.endpoint)
 
-                hq_should_be_throttled.assert_called_with(ApiIdentifier(domain=self.domain.name, username=self.user.username))
+                hq_should_be_throttled.assert_called_with(
+                    ApiIdentifier(domain=self.domain.name, username=self.user.username))
+
+
+class TestUrls(APIResourceTest):
+    resource = v0_5.CommCareUserResource
+    api_name = 'v0.5'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        commcare_user = CommCareUser.create(domain=cls.domain.name, username='fake_user', password='*****',
+                                            created_by=None, created_via=None)
+        cls.addClassCleanup(commcare_user.delete, cls.domain.name, deleted_by=None)
+        cls.user_id = commcare_user.user_id
+
+    def test_v0_5(self):
+        url = reverse('api_dispatch_detail', kwargs={
+            'resource_name': 'user',
+            'domain': self.domain.name,
+            'api_name': 'v0.5',
+            'pk': self.user_id,
+        })
+        self.assertEqual(url, f'/a/qwerty/api/v0.5/user/{self.user_id}/')
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.json()['resource_uri'],
+                         f'/a/qwerty/api/v0.5/user/{self.user_id}/')
+
+    def test_v1(self):
+        url = reverse('api_dispatch_detail', kwargs={
+            'resource_name': 'user',
+            'domain': self.domain.name,
+            'api_name': 'v1',
+            'pk': self.user_id,
+        })
+        self.assertEqual(url, f'/a/qwerty/api/user/v1/{self.user_id}/')
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.json()['resource_uri'],
+                         f'/a/qwerty/api/user/v1/{self.user_id}/')
+
+    def test_user_scoped_api(self):
+        for version, expected_url in [
+                ('v0.5', '/api/v0.5/identity/'),
+                ('v1', '/api/identity/v1/'),
+        ]:
+            url = reverse('api_dispatch_list', kwargs={
+                'resource_name': 'identity',
+                'api_name': version,
+            })
+            self.assertEqual(url, expected_url)
+            self.assertEqual(self._assert_auth_get_resource(url).status_code, 200)

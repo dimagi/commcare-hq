@@ -80,6 +80,9 @@ Then, in the file itself, we add the ``commcarehq`` dependency to the list of de
     ) {
         ...
 
+`Here is an example commit of a migrated Bootstrap 5 entry point
+<https://github.com/dimagi/commcare-hq/pull/35186/commits/029854e14ef08ef29d87293da5970bf35fb5ffca>`__.
+
 
 Bootstrap 3 Entry Points
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -91,7 +94,7 @@ tag to ``js_entry_b3``, so that the final usage looks like:
 
     {% js_entry_b3 "domain/js/my_project_settings" %}
 
-Then, in the file itself, we add the ``commcarehq_b3`` dependency to the list of dependencies:
+Then, in the file itself, we add the ``commcarehq`` dependency to the list of dependencies:
 
 ::
 
@@ -99,13 +102,16 @@ Then, in the file itself, we add the ``commcarehq_b3`` dependency to the list of
         'jquery',
         'knockout',
         'hqwebapp/js/initial_page_data',
-        'commcarehq_b3',  // <--- dependency added for webpack
+        'commcarehq',  // <--- dependency added for webpack
     ], function (
         $,
         ko,
         initialPageData
     ) {
         ...
+
+`Here is an example commit of a migrated Bootstrap 3 entry point
+<https://github.com/dimagi/commcare-hq/pull/35186/commits/9153f3cedc550b518f537bc6783d06754fd35577>`__.
 
 
 Step 2: Verify Webpack Build

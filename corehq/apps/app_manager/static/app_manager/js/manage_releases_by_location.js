@@ -7,6 +7,7 @@ hqDefine('app_manager/js/manage_releases_by_location', [
     'locations/js/search',
     'hqwebapp/js/bootstrap3/widgets', // using select2/dist/js/select2.full.min for ko-select2 on location select
     'translations/js/app_translations',
+    'commcarehq',
 ], function (
     $,
     ko,

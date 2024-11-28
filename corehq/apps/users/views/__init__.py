@@ -10,7 +10,7 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
@@ -132,6 +132,10 @@ from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
     get_workbook,
+)
+from corehq.apps.users.permissions import (
+    COMMCARE_ANALYTICS_SQL_LAB,
+    COMMCARE_ANALYTICS_DATASET_EDITOR,
 )
 
 from dimagi.utils.logging import notify_exception
@@ -442,6 +446,12 @@ class EditWebUserView(BaseEditUserView):
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
+            'can_access_all_locations': self.request.couch_user.has_permission(
+                self.domain, 'access_all_locations'
+            ),
+            'editable_user_can_access_all_locations': self.editable_user.has_permission(
+                self.domain, 'access_all_locations'
+            )
         }
 
         original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
@@ -779,21 +789,21 @@ class ListRolesView(BaseRoleAccessView):
             'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
             'commcare_analytics_roles': _commcare_analytics_roles_options(),
+            'has_restricted_application_access': (
+                get_application_access_for_domain(self.domain).restrict
+                and toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(self.domain)
+            ),
         }
 
 
 def _commcare_analytics_roles_options():
     return [
         {
-            'slug': 'gamma',
-            'name': 'Gamma'
-        },
-        {
-            'slug': 'sql_lab',
+            'slug': COMMCARE_ANALYTICS_SQL_LAB,
             'name': 'SQL Lab'
         },
         {
-            'slug': 'dataset_editor',
+            'slug': COMMCARE_ANALYTICS_DATASET_EDITOR,
             'name': 'Dataset Editor'
         }
     ]
@@ -1162,12 +1172,12 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @cached_property
     def custom_data(self):
-        from corehq.apps.users.views.mobile import UserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
         post_dict = None
         if self.request.method == 'POST':
             post_dict = self.request.POST
         custom_data = CustomDataEditor(
-            field_view=UserFieldsView,
+            field_view=WebUserFieldsView,
             domain=self.domain,
             post_dict=post_dict,
             ko_model="custom_fields",

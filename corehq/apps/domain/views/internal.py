@@ -41,7 +41,7 @@ from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
 )
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_bootstrap5
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import domain_case_rate_limiter, submission_rate_limiter
@@ -72,17 +72,10 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
         return format_html("{} <small>Internal</small>", self.page_title)
 
 
-@method_decorator(use_bootstrap5, name='dispatch')
-class TestBootstrap5DomainView(BaseInternalDomainSettingsView):
-    urlname = 'test_bootstrap5_domain_view'
-    page_title = gettext_lazy("Test Bootstrap 5 Changes")
-    template_name = 'domain/test_bootstrap5.html'
-
-
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
     page_title = gettext_lazy("Project Information")
-    template_name = 'domain/internal_settings.html'
+    template_name = 'domain/bootstrap3/internal_settings.html'
     strict_domain_fetching = True
 
     @method_decorator(always_allow_project_access)
@@ -229,7 +222,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 class EditInternalCalculationsView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_calculations'
     page_title = gettext_lazy("Calculated Properties")
-    template_name = 'domain/internal_calculations.html'
+    template_name = 'domain/bootstrap3/internal_calculations.html'
 
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
@@ -250,7 +243,7 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
 class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     urlname = 'feature_flags_and_privileges'
     page_title = gettext_lazy("Feature Flags and Privileges")
-    template_name = 'domain/admin/flags_and_privileges.html'
+    template_name = 'domain/admin/bootstrap3/flags_and_privileges.html'
 
     def _get_toggles(self):
 
@@ -296,7 +289,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
 class ProjectLimitsView(BaseAdminProjectSettingsView):
     urlname = 'internal_project_limits_summary'
     page_title = gettext_lazy("Project Limits")
-    template_name = 'domain/admin/project_limits.html'
+    template_name = 'domain/admin/bootstrap3/project_limits.html'
 
     @property
     def page_context(self):
@@ -329,7 +322,7 @@ def _get_rate_limits(scope, rate_limiter):
 class TransferDomainView(BaseAdminProjectSettingsView):
     urlname = 'transfer_domain_view'
     page_title = gettext_lazy("Transfer Project")
-    template_name = 'domain/admin/transfer_domain.html'
+    template_name = 'domain/admin/bootstrap3/transfer_domain.html'
 
     @property
     @memoized
@@ -347,7 +340,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
     def get(self, request, *args, **kwargs):
 
         if self.active_transfer:
-            self.template_name = 'domain/admin/transfer_domain_pending.html'
+            self.template_name = 'domain/admin/bootstrap3/transfer_domain_pending.html'
 
             if request.GET.get('resend', None):
                 self.active_transfer.send_transfer_request()
@@ -384,7 +377,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
 class ActivateTransferDomainView(BasePageView):
     urlname = 'activate_transfer_domain'
     page_title = 'Activate Domain Transfer'
-    template_name = 'domain/activate_transfer_domain.html'
+    template_name = 'domain/bootstrap3/activate_transfer_domain.html'
 
     @property
     @memoized

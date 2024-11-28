@@ -96,14 +96,6 @@ button.clickable-icon {
   }
 }
 
-.query-button-container {
-  padding: 8px;
-  text-align: center;
-}
-.query-button-container .btn{
-  width: 48%;
-}
-
 .module-table .module-case-list-header {
   background-color: $cc-brand-low;
   color: white;
@@ -154,8 +146,10 @@ button.clickable-icon {
   margin-bottom: 0;
 }
 
-.module-table-case-detail {
+.module-table-case-detail-wrapper {
   margin-top: 10px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
 }
 
 .module-table-case-detail tbody tr {

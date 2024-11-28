@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from dateutil.parser import isoparse
 from freezegun import freeze_time
-from nose.tools import assert_in, assert_raises
+from nose.tools import assert_in
 
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeater_helpers import RepeaterResponse
@@ -229,38 +229,45 @@ def set_next_attempt_at(repeater, when):
         repeater.save()
 
 
-class ResponseMock:
+class Unknown:
     pass
 
 
 class IsResponseTests(SimpleTestCase):
 
     def test_has_text(self):
-        resp = ResponseMock()
+        resp = Unknown()
         resp.text = '<h1>Hello World</h1>'
         self.assertFalse(is_response(resp))
 
     def test_has_status_code(self):
-        resp = ResponseMock()
+        resp = Unknown()
         resp.status_code = 504
         self.assertFalse(is_response(resp))
 
     def test_has_reason(self):
-        resp = ResponseMock()
+        resp = Unknown()
         resp.reason = 'Gateway Timeout'
         self.assertFalse(is_response(resp))
 
     def test_has_status_code_and_reason(self):
-        resp = ResponseMock()
+        resp = Unknown()
         resp.status_code = 504
         resp.reason = 'Gateway Timeout'
         self.assertTrue(is_response(resp))
 
 
+class ResponseMock:
+    status_code = 0
+    reason = ''
+    text = ''
+    url = ''
+
+
 class FormatResponseTests(SimpleTestCase):
 
     def test_non_response(self):
-        resp = ResponseMock()
+        resp = Unknown()
         self.assertEqual(format_response(resp), '')
 
     def test_no_text(self):
@@ -276,6 +283,14 @@ class FormatResponseTests(SimpleTestCase):
         resp.text = '<h1>Hello World</h1>'
         self.assertEqual(format_response(resp), '200: OK\n'
                                                 '<h1>Hello World</h1>')
+
+    def test_with_url(self):
+        resp = ResponseMock()
+        resp.status_code = 200
+        resp.reason = 'OK'
+        resp.text = '<h1>Hello World</h1>'
+        resp.url = 'https://test.com'
+        self.assertEqual(format_response(resp), 'https://test.com\n200: OK\n<h1>Hello World</h1>')
 
 
 class AttemptsTests(RepeaterTestCase):
@@ -498,12 +513,6 @@ class TestRepeaterConnectionSettings(RepeaterTestCase):
             ConnectionSettings.objects.filter(id=self.conn.id).delete()
         with self.assertRaises(ProtectedError):
             ConnectionSettings.all_objects.filter(id=self.conn.id).delete()
-
-
-def test_attempt_forward_now_kwargs():
-    rr = RepeatRecord()
-    with assert_raises(TypeError):
-        rr.attempt_forward_now(True)
 
 
 @patch("corehq.motech.repeaters.tasks.retry_process_repeat_record")

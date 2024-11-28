@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
+from requests import JSONDecodeError as RequestsJSONDecodeError
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 
@@ -38,7 +39,10 @@ class MockResponse:
     reason: str = "success"
 
     def json(self):
-        return json.loads(self.text)
+        try:
+            return json.loads(self.text)
+        except json.JSONDecodeError as e:
+            raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
 
 
 class BaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
@@ -421,6 +425,46 @@ class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
         self.repeater.handle_response(response, repeat_record)
         case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertEqual(case.get_case_property('prop_from_response'), 'aResponseValue')
+
+    @flag_enabled("UCR_EXPRESSION_REGISTRY")
+    def test_custom_url(self):
+        self.repeater.url_template = "/?type={case_type}"
+
+        # Using a related doc expression here to test that the expression is evaluated
+        # with the evaluation context (it fails without)
+        UCRExpression.objects.create(
+            name='case_type',
+            domain=self.domain,
+            expression_type="named_expression",
+            definition={
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "type": "jsonpath",
+                    "jsonpath": "form.case.@case_id"
+                },
+                "value_expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                }
+            }
+        )
+
+        case_id = uuid.uuid4().hex
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            uuid.uuid4().hex,
+            self._create_case_block(case_id),
+        )
+        submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+
+        expected_url = self.connection.url + "/?type=person"
+
+        self.assertEqual(
+            self.repeater.get_url(repeat_record),
+            expected_url
+        )
 
 
 class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):

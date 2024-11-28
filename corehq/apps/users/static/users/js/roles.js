@@ -206,6 +206,7 @@ hqDefine('users/js/roles',[
                 self.preventRoleDelete = data.preventRoleDelete;
                 self.hasUnpermittedLocationRestriction = data.has_unpermitted_location_restriction || false;
 
+
                 self.restrictRoleChecked = ko.computed(function () {
                     return data.manageRoleAssignments.specific.some(role => role.value() && !role.access_all_locations);
                 });
@@ -578,8 +579,7 @@ hqDefine('users/js/roles',[
                         }
                     ),
                 ];
-
-                self.webAppsPermissions = selectPermissionModel(
+                let webAppsPermissions = selectPermissionModel(
                     'access_web_apps',
                     self.accessWebAppsPermission,
                     {
@@ -587,6 +587,8 @@ hqDefine('users/js/roles',[
                         listHeading: gettext("Select which web apps the role has access to:"),
                     }
                 );
+                webAppsPermissions.hasRestrictedApplicationAccess = root.hasRestrictedApplicationAccess;
+                self.webAppsPermissions = webAppsPermissions;
 
                 // Automatically disable "Access APIs" when "Full Organization Access" is disabled
                 self.permissions.access_all_locations.subscribe(() => {
@@ -666,6 +668,7 @@ hqDefine('users/js/roles',[
         self.attendanceTrackingPrivilege = o.attendanceTrackingPrivilege;
         self.unlockLinkedRoles = ko.observable(false);
         self.canEditLinkedData = o.canEditLinkedData;
+        self.hasRestrictedApplicationAccess = o.hasRestrictedApplicationAccess;
 
         self.userRoles = ko.observableArray(ko.utils.arrayMap(o.userRoles, function (userRole) {
             return UserRole.wrap(userRole);

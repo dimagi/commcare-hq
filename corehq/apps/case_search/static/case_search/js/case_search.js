@@ -6,6 +6,7 @@ hqDefine('case_search/js/case_search', [
     'knockout',
     'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     _,

@@ -9,6 +9,7 @@ from dimagi.utils.parsing import string_to_boolean
 from django.utils.translation import gettext as _
 
 from corehq import toggles
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.reports.models import TableauUser
@@ -21,6 +22,7 @@ from corehq.apps.users.dbaccessors import get_existing_usernames
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import normalize_username, raw_username
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.views.utils import (
     user_can_access_invite
 )
@@ -40,7 +42,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
         UsernameTypeValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
         UsernameLengthValidator(domain),
-        CustomDataValidator(domain, all_user_profiles_by_name),
+        CustomDataValidator(domain, all_user_profiles_by_name, is_web_user_import),
         EmailValidator(domain, 'email'),
         RoleValidator(domain, allowed_roles),
         ExistingUserValidator(domain, all_specs),
@@ -269,10 +271,14 @@ class PasswordValidator(ImportValidator):
 
 
 class CustomDataValidator(ImportValidator):
-    def __init__(self, domain, all_user_profiles_by_name):
+    def __init__(self, domain, all_user_profiles_by_name, is_web_user_import):
         super().__init__(domain)
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        self.custom_data_validator = UserFieldsView.get_validator(domain)
+        if is_web_user_import:
+            from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
+            self.custom_data_validator = WebUserFieldsView.get_validator(domain)
+        else:
+            from corehq.apps.users.views.mobile.custom_data_fields import CommcareUserFieldsView
+            self.custom_data_validator = CommcareUserFieldsView.get_validator(domain)
         self.all_user_profiles_by_name = all_user_profiles_by_name
 
     def validate_spec(self, spec):
@@ -320,6 +326,11 @@ class ProfileValidator(ImportValidator):
     error_message_original_user_profile_access = _("You do not have permission to edit the profile for this user "
                                                    "or user invitation")
     error_message_new_user_profile_access = _("You do not have permission to assign the profile '{}'")
+    error_message_profile_must_be_assigned = _("A profile must be assigned to users of the following type(s): {}")
+    user_types = {
+        "web_user": "Web Users",
+        "commcare_user": "Mobile Workers",
+    }
 
     def __init__(self, domain, upload_user, is_web_user_import, all_user_profiles_by_name):
         super().__init__(domain)
@@ -339,12 +350,24 @@ class ProfileValidator(ImportValidator):
         elif user_result.editable_user:
             original_profile_id = user_result.editable_user.get_user_data(self.domain).profile_id
 
+        profile_required_for_user_type_list = CustomDataFieldsDefinition.get_profile_required_for_user_type_list(
+            self.domain,
+            UserFieldsView.field_type
+        )
+        if self.is_web_user_import:
+            profile_assginment_required = UserFieldsView.WEB_USER in profile_required_for_user_type_list
+        else:
+            profile_assginment_required = UserFieldsView.COMMCARE_USER in profile_required_for_user_type_list
+        if profile_assginment_required and not spec_profile_name:
+            return self.error_message_profile_must_be_assigned.format(', '.join(
+                [self.user_types[required_for] for required_for in profile_required_for_user_type_list]
+            ))
+
         spec_profile_id = self.all_user_profile_ids_by_name.get(spec_profile_name)
         spec_profile_same_as_original = original_profile_id == spec_profile_id
         if spec_profile_same_as_original:
             return
 
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         upload_user_accessible_profiles = (
             UserFieldsView.get_user_accessible_profiles(self.domain, self.upload_user))
         accessible_profile_ids = {p.id for p in upload_user_accessible_profiles}
