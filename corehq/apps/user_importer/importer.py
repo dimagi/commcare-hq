@@ -99,8 +99,8 @@ def check_headers(user_specs, domain, upload_couch_user, is_web_upload=False):
         conditionally_allowed_headers.update({'tableau_role', 'tableau_groups'})
     elif "tableau_role" in headers or "tableau_groups" in headers:
         messages.append(_(
-            "Only users with 'Manage Tableau Configuration' edit permission in domains where Tableau"
-            "User Syncing is enabled can upload files with 'Tableau Role and/or 'Tableau Groups' fields."
+            "Only users with 'Manage Tableau Configuration' edit permission in domains where Tableau "
+            "User Syncing is enabled can upload files with 'Tableau Role' and/or 'Tableau Groups' fields."
         ))
 
     illegal_headers = headers - allowed_headers - conditionally_allowed_headers
