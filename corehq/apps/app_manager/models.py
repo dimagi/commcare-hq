@@ -181,6 +181,7 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.util import bitly, view_utils
+from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
@@ -4467,7 +4468,26 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         assert copy._id
         prune_auto_generated_builds.delay(self.domain, self._id)
 
+        self.check_build_dependencies(new_build=copy)
+
         return copy
+
+    def check_build_dependencies(self, new_build):
+        """
+        Reports whether the app dependencies have been removed.
+        """
+
+        def has_dependencies(build):
+            return bool(
+                build.get('profile', {}).get('features', {}).get('dependencies')
+            )
+
+        latest_build = get_latest_build_doc(self.domain, self.id)
+        if not latest_build:
+            return
+
+        if has_dependencies(latest_build) and not has_dependencies(new_build):
+            metrics_counter('commcare.app_build.dependencies_removed')
 
     def convert_app_to_build(self, copy_of, user_id, comment=None):
         self.copy_of = copy_of
