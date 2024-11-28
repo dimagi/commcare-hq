@@ -445,6 +445,7 @@ class DownloadNewFormExportView(BaseDownloadExportView):
 
 @require_POST
 @login_and_domain_required
+@location_safe
 def prepare_form_multimedia(request, domain):
     """Gets the download_id for the multimedia zip and sends it to the
     exportDownloadService in download_export.ng.js to begin polling for the
