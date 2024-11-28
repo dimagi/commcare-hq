@@ -2081,8 +2081,8 @@ class ConnectMessagingUserView(BaseMessagingSectionView):
 
 
 @domain_admin_required
-def create_channels(self, request, *args, **kwargs):
-    user_links = ConnectIDUserLink.objects.filter(domain=request.domain)
+def create_channels(request, domain, *args, **kwargs):
+    user_links = ConnectIDUserLink.objects.filter(domain=domain)
     backend = ConnectBackend()
     for link in user_links:
         backend.create_channel(link)
