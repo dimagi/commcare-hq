@@ -52,7 +52,11 @@ from corehq.apps.users.models import (
     InvitationStatus
 )
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, TABLEAU_USER_SYNCING
+from corehq.toggles import (
+    DOMAIN_PERMISSIONS_MIRROR,
+    TABLEAU_USER_SYNCING,
+    COMMCARE_CONNECT,
+)
 from corehq.apps.sms.util import validate_phone_number
 
 from dimagi.utils.logging import notify_error
@@ -95,6 +99,9 @@ def check_headers(user_specs, domain, is_web_upload=False):
 
     if TABLEAU_USER_SYNCING.enabled(domain):
         allowed_headers.update({'tableau_role', 'tableau_groups'})
+
+    if COMMCARE_CONNECT.enabled(domain):
+        allowed_headers.add('send_connectid_invite')
 
     illegal_headers = headers - allowed_headers
 
@@ -497,6 +504,9 @@ class CCUserRow(BaseUserRow):
 
     def _parse_password(self):
         from corehq.apps.user_importer.validation import is_password
+        if self.column_values["send_connectid_invite"]:
+            # password login is disabled for connectid
+            password = ''
         if self.row.get('password'):
             password = str(self.row.get('password'))
         elif self.column_values["send_confirmation_sms"]:
@@ -530,10 +540,10 @@ class CCUserRow(BaseUserRow):
         }
 
         for v in ['is_active', 'is_account_confirmed', 'send_confirmation_email',
-                  'remove_web_user', 'send_confirmation_sms']:
+                  'remove_web_user', 'send_confirmation_sms', 'send_connectid_invite']:
             values[v] = spec_value_to_boolean_or_none(self.row, v)
 
-        if values["send_confirmation_sms"] and not values["user_id"]:
+        if (values["send_confirmation_sms"] or values["send_connectid_invite"]) and not values["user_id"]:
             values["is_account_confirmed"] = False
         else:
             values["is_account_confirmed"] = values["is_account_confirmed"]
@@ -691,6 +701,9 @@ class CCUserRow(BaseUserRow):
                 send_account_confirmation_if_necessary(self.user)
             if cv["send_confirmation_sms"]:
                 send_account_confirmation_sms_if_necessary(self.user)
+            elif cv["send_connectid_invite"]:
+                from corehq.apps.users.views.mobile.users import deliver_connectid_invite
+                deliver_connectid_invite(self.user)
 
 
 class WebUserRow(BaseUserRow):
