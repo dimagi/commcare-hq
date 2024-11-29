@@ -1,15 +1,18 @@
 from math import ceil
 
-from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
-from corehq.apps.es import filters
+from corehq.apps.es import filters, queries, CaseSearchES
 from corehq.apps.es.aggregations import (
     FilterAggregation,
     GeoBoundsAggregation,
     GeohashGridAggregation,
     NestedAggregation,
 )
-from corehq.apps.es.case_search import PROPERTY_GEOPOINT_VALUE, PROPERTY_KEY
-from corehq.apps.geospatial.const import MAX_GEOHASH_DOC_COUNT
+from corehq.apps.es.case_search import (
+    CASE_PROPERTIES_PATH,
+    PROPERTY_GEOPOINT_VALUE,
+    PROPERTY_KEY,
+)
+from corehq.apps.geospatial.const import MAX_GEOHASH_DOC_COUNT, DEFAULT_QUERY_LIMIT
 
 CASE_PROPERTIES_AGG = 'case_properties'
 CASE_PROPERTY_AGG = 'case_property'
@@ -131,3 +134,37 @@ def mid(lower, upper):
     """
     assert lower <= upper
     return ceil(lower + (upper - lower) / 2)
+
+
+def case_query_for_missing_geopoint_val(
+        domain, geo_case_property, case_type=None, offset=0, sort_by=None
+):
+    query = (
+        CaseSearchES()
+        .domain(domain)
+        .filter(_geopoint_value_missing_for_property(geo_case_property))
+        .size(DEFAULT_QUERY_LIMIT)
+    )
+    if case_type:
+        query = query.case_type(case_type)
+    if sort_by:
+        query.sort(sort_by)
+    if offset:
+        query.start(offset)
+    return query
+
+
+def _geopoint_value_missing_for_property(geo_case_property_name):
+    """
+    Query to find docs with missing 'geopoint_value' for the given case property.
+    """
+    return queries.nested(
+        CASE_PROPERTIES_PATH,
+        queries.filtered(
+            queries.match_all(),
+            filters.AND(
+                filters.term(PROPERTY_KEY, geo_case_property_name),
+                filters.missing(PROPERTY_GEOPOINT_VALUE)
+            )
+        )
+    )
