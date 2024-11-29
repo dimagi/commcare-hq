@@ -629,6 +629,13 @@ class BulkUserUploadAPITest(TestCase):
 
 
 class BaseUploadUserTest(TestCase):
+
+    mock_couch_user = WebUser(
+        username="testuser",
+        _id="user123",
+        domain="test-domain",
+    )
+
     def setUp(self):
         self.domain = 'test-domain'
         self.factory = RequestFactory()
@@ -651,6 +658,7 @@ class BaseUploadUserTest(TestCase):
         mock_reverse.return_value = '/success/'
 
         request = self.factory.post('/', {'bulk_upload_file': Mock()})
+        request.couch_user = self.mock_couch_user
         response = self.view.post(request)
 
         mock_reverse.assert_called_once_with(
