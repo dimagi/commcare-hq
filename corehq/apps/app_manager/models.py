@@ -4478,8 +4478,13 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         """
 
         def has_dependencies(build):
+            if isinstance(build, Application):
+                profile = build.profile
+            else:
+                profile = build.get('profile', {})
+
             return bool(
-                build.get('profile', {}).get('features', {}).get('dependencies')
+                profile.get('features', {}).get('dependencies')
             )
 
         latest_build = get_latest_build_doc(self.domain, self.id)
