@@ -2,11 +2,11 @@ from memoized import memoized
 
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
+from corehq.apps.user_importer.importer import SiteCodeToLocationCache
 from corehq.apps.user_importer.validation import (
     RoleValidator,
     ProfileValidator,
     LocationValidator,
-    SiteCodeToLocationCache,
     TableauGroupsValidator,
     TableauRoleValidator,
     CustomDataValidator,
