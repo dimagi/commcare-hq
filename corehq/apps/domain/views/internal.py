@@ -290,7 +290,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
 class ProjectLimitsView(BaseAdminProjectSettingsView):
     urlname = 'internal_project_limits_summary'
     page_title = gettext_lazy("Project Limits")
-    template_name = 'domain/admin/bootstrap5/project_limits.html'
+    template_name = 'domain/admin/project_limits.html'
 
     @property
     def page_context(self):
