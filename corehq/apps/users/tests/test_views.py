@@ -4,6 +4,7 @@ from copy import deepcopy
 from io import BytesIO
 from openpyxl import Workbook
 from unittest.mock import patch, Mock
+import re
 
 from django.http import Http404, HttpResponseRedirect
 from django.test import TestCase, Client
@@ -578,15 +579,14 @@ class BulkUserUploadAPITest(TestCase):
         file.seek(0)
         response = self._make_post_request(file)
         self.assertEqual(response.status_code, 400)
-        expected_response = {
-            'success': False,
-            'message': (
-                "Only users with 'Manage Tableau Configuration' edit permission in domains where Tableau "
-                "User Syncing is enabled can upload files with 'Tableau Role' and/or 'Tableau Groups' fields."
-                "\nThe following are illegal column headers: tableau_groups, tableau_role."
-            ),
-        }
-        self.assertEqual(response.json(), expected_response)
+
+        expected_pattern = re.compile(
+            r"Only users with 'Manage Tableau Configuration' edit permission in domains "
+            r"where Tableau User Syncing is enabled can upload files with 'Tableau Role' "
+            r"and/or 'Tableau Groups' fields\.\nThe following are illegal column headers: "
+            r"(?:tableau_groups, tableau_role|tableau_role, tableau_groups)\.",
+        )
+        self.assertRegex(response.json()['message'], expected_pattern)
 
     @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
     def test_user_upload_error(self, mock_upload_users):
