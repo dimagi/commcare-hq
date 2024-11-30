@@ -37,7 +37,12 @@ class WebUserResourceValidator():
         return SiteCodeToLocationCache(self.domain)
 
     def validate_parameters(self, parameters):
-        AdminInvitesUserFormValidator.validate_parameters(self.domain, self.requesting_user, parameters)
+        allowed_params = ['email', 'role', 'primary_location', 'assigned_locations',
+                          'profile', 'custom_user_data', 'tableau_role', 'tableau_groups']
+        invalid_params = [param for param in parameters if param not in allowed_params]
+        if invalid_params:
+            return f"Invalid parameter(s): {', '.join(invalid_params)}"
+        return AdminInvitesUserFormValidator.validate_parameters(self.domain, self.requesting_user, parameters)
 
     def validate_role(self, role):
         spec = {'role': role}
@@ -62,7 +67,7 @@ class WebUserResourceValidator():
             return error
 
         location_validator = LocationValidator(self.domain, self.requesting_user, self.location_cache, True)
-        location_codes = assigned_location_codes + [primary_location_code]
+        location_codes = list(set(assigned_location_codes + [primary_location_code]))
         spec = {'location_code': location_codes,
                 'username': editable_user}
         return location_validator.validate_spec(spec)
