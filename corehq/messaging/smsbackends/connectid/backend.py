@@ -44,5 +44,7 @@ class ConnectBackend:
             },
             auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
+        if response.status_code == 404:
+            return
         user_link.channel_id = response.json()["channel_id"]
         user_link.save()
