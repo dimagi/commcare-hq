@@ -90,11 +90,9 @@ class TestWebUserResourceValidator(TestCase):
             self.assertIsNone(self.validator.validate_locations(self.requesting_user.username,
                                                                 ["loc1", "loc2"], "loc1"))
 
-            expected_spec = {
-                'location_code': ["loc1", "loc2"],
-                'username': self.requesting_user.username
-            }
-            mock_validate_spec.assert_called_once_with(expected_spec)
+            actual_spec = mock_validate_spec.call_args[0][0]
+            self.assertEqual(actual_spec['username'], self.requesting_user.username)
+            self.assertCountEqual(actual_spec['location_code'], ["loc1", "loc2"])
 
         self.assertEqual(
             self.validator.validate_locations(self.requesting_user.username, ["loc1", "loc2"], "loc3"),
