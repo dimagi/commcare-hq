@@ -80,6 +80,7 @@ def enterprise_dashboard(request, domain):
             EnterpriseReport.MOBILE_USERS,
             EnterpriseReport.FORM_SUBMISSIONS,
             EnterpriseReport.ODATA_FEEDS,
+            EnterpriseReport.DATA_EXPORTS,
         )],
         'current_page': {
             'page_name': _('Enterprise Dashboard'),
