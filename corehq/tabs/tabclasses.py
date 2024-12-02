@@ -1510,6 +1510,7 @@ class MessagingTab(UITab):
             (_("Contacts"), self.contacts_urls),
             (_("Settings"), self.settings_urls),
             (_("WhatsApp Settings"), self.whatsapp_urls),
+            (_("Connect Messsaging"), self.connect_urls),
         ):
             if urls:
                 items.append((title, urls))
