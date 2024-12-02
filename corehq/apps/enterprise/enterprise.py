@@ -422,7 +422,9 @@ class EnterpriseSMSReport(EnterpriseReport):
     def total_for_domain(self, domain_obj):
         query = SMS.objects.filter(
             domain=domain_obj.name,
+            processed=True,
             direction=OUTGOING,
+            error=False,
             date__gte=self.datespan.startdate,
             date__lt=self.datespan.enddate_adjusted
         )
@@ -436,11 +438,17 @@ class EnterpriseSMSReport(EnterpriseReport):
         return headers
 
     def rows_for_domain(self, domain_obj):
-        results = SMS.objects.filter(domain=domain_obj.name) \
-            .values('direction', 'error').annotate(direction_count=Count('pk'))
+        results = SMS.objects.filter(
+            domain=domain_obj.name,
+            processed=True,
+            date__gte=self.datespan.startdate,
+            date__lt=self.datespan.enddate_adjusted
+        ).values('direction', 'error').annotate(direction_count=Count('pk'))
 
-        num_sent = sum([result['direction_count'] for result in results if result['direction'] == OUTGOING])
-        num_received = sum([result['direction_count'] for result in results if result['direction'] == INCOMING])
+        num_sent = sum([result['direction_count'] for result in results
+                        if result['direction'] == OUTGOING and not result['error']])
+        num_received = sum([result['direction_count'] for result in results
+                            if result['direction'] == INCOMING and not result['error']])
         num_errors = sum([result['direction_count'] for result in results if result['error']])
 
         return [(domain_obj.name, num_sent, num_received, num_errors), ]
