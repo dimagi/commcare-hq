@@ -391,7 +391,7 @@ class EnterpriseODataReport(EnterpriseReport):
 
 
 class EnterpriseSMSReport(EnterpriseReport):
-    title = gettext_lazy('SMS Sent')
+    title = gettext_lazy('SMS Usage')
     MAX_DATE_RANGE_DAYS = 90
 
     def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30):
