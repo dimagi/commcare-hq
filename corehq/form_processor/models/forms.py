@@ -1,8 +1,10 @@
 import logging
+from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
 
+from django.conf import settings
 from django.db import InternalError, models, transaction
 from django.db.models import Q
 
@@ -19,6 +21,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.cleanup.models import create_deleted_sql_doc, DeletedSQLDoc
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -192,25 +195,6 @@ class XFormInstanceManager(RequireDBManager):
                 .values_list('form_id', flat=True)
             )
         return result
-
-    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
-        """
-        Permanently deletes forms with deleted_on set to a datetime earlier than
-        the specified cutoff datetime
-        :param cutoff: datetime used to obtain the forms to be hard deleted
-        :param dry_run: if True, no changes will be committed to the database
-        and this method is effectively read-only
-        :return: dictionary of count of deleted objects per table
-        """
-        counts = {}
-        for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
-            if dry_run:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            else:
-                deleted_counts = queryset.delete()[1]
-            counts.update(deleted_counts)
-        return counts
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
@@ -389,13 +373,31 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *, publish_changes=True):
-        """Delete forms permanently
+    def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *,
+                          publish_changes=True, leave_tombstone=None):
+        """Delete forms permanently. Currently only used for tests, domain deletion and to delete system forms,
+        none of which need to leave tombstones.
 
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
+        :param leave_tombstone: See below error message for details.
         """
         assert isinstance(form_ids, list)
+
+        if leave_tombstone:
+            forms = XFormInstance.objects.get_forms(form_ids)
+            form_tombstones = [DeletedSQLDoc(doc_id=form.form_id, object_class_path='form_processor.XFormInstance',
+                                             domain=domain, deleted_on=form.deleted_on)
+                               for form in forms]
+            for chunk in chunked(form_tombstones, 1000, list):
+                DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True)
+        elif leave_tombstone is None and not settings.UNIT_TESTING:
+            raise NotImplementedError(
+                """You seem to have forgotten to specify the leave_tombstone value.
+                hard_delete_forms is currently only used for tests, domain deletion and to delete specific
+                system forms. If you are trying to hard delete forms for any other reason, please double check
+                whether or not those forms needs to be tombstoned here."""
+            )
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
@@ -422,6 +424,34 @@ class XFormInstanceManager(RequireDBManager):
             self.publish_deleted_forms(domain, form_ids)
 
         return deleted_count
+
+    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
+        """
+        Permanently deletes forms with deleted_on set to a datetime earlier than
+        the specified cutoff datetime and creates a tombstone record of the deletion.
+        :param cutoff: datetime used to obtain the forms to be hard deleted
+        :param dry_run: if True, no changes will be committed to the database
+        and this method is effectively read-only
+        :return: dictionary of count of deleted objects per table
+        """
+        counts = defaultdict(lambda: 0)
+        class_path = 'form_processor.XFormInstance'
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
+            if dry_run:
+                counts[class_path] += queryset.count()
+            else:
+                while forms := queryset[:2000]:
+                    chunk = [DeletedSQLDoc(doc_id=form.form_id, object_class_path=class_path,
+                                           domain=form.domain, deleted_on=form.deleted_on)
+                             for form in forms]
+                    tombstone_count = len(DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True))
+                    counts['tombstone'] += tombstone_count
+                    chunked_queryset = self.using(db_name).filter(form_id__in=[doc.doc_id for doc in chunk])
+                    deleted_counts = chunked_queryset.delete()[1]
+                    for obj_class, count in deleted_counts.items():
+                        counts[obj_class] += count
+        return counts
 
     @staticmethod
     def publish_deleted_forms(domain, form_ids):
@@ -725,6 +755,16 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     def unarchive(self, user_id=None, trigger_signals=True):
         if self.is_archived:
             type(self).objects.do_archive(self, False, user_id, trigger_signals)
+
+    def delete(self, leave_tombstone=True):
+        if not settings.UNIT_TESTING:
+            if not leave_tombstone:
+                raise ValueError(
+                    'Cannot delete form without leaving a tombstone except during testing, domain deletion or '
+                    'when deleting system forms')
+            create_deleted_sql_doc(self.form_id, 'form_processor.XFormInstance', self.domain, self.deleted_on)
+
+        super().delete()
 
     def __str__(self):
         return (

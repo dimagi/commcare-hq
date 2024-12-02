@@ -3,9 +3,10 @@ import json
 import mimetypes
 import os
 import uuid
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict, namedtuple, defaultdict
 from datetime import datetime
 
+from django.conf import settings
 from django.db import DatabaseError, models, transaction
 from django.db.models import F
 
@@ -20,6 +21,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.cleanup.models import create_deleted_sql_doc, DeletedSQLDoc
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
@@ -278,14 +280,32 @@ class CommCareCaseManager(RequireDBManager):
             publish_case_saved(case)
         return undeleted_count
 
-    def hard_delete_cases(self, domain, case_ids, *, publish_changes=True):
-        """Permanently delete cases in domain
+    def hard_delete_cases(self, domain, case_ids, *, publish_changes=True, leave_tombstone=None):
+        """Permanently delete cases in domain. Currently only used for tests, domain deletion
+        and to delete system cases, none of which need to leave tombstones.
 
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
+        :param leave_tombstone: See below error message for details.
         :returns: Number of deleted cases.
         """
         assert isinstance(case_ids, list), type(case_ids)
+
+        if leave_tombstone:
+            cases = CommCareCase.objects.get_cases(case_ids)
+            case_tombstones = [DeletedSQLDoc(doc_id=case.case_id, object_class_path='form_processor.CommCareCase',
+                                             domain=domain, deleted_on=case.deleted_on)
+                               for case in cases]
+            for chunk in chunked(case_tombstones, 1000, list):
+                DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True)
+        elif leave_tombstone is None and not settings.UNIT_TESTING:
+            raise NotImplementedError(
+                """You seem to have forgotten to specify the leave_tombstone value.
+                hard_delete_cases is currently only used for tests, domain deletion and to delete specific
+                system cases. If you are trying to hard delete cases for any other reason, please double check
+                whether or not those cases needs to be tombstoned here."""
+            )
+
         with self.model.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s)', [domain, case_ids])
             deleted_count = sum(row[0] for row in cursor)
@@ -294,6 +314,34 @@ class CommCareCaseManager(RequireDBManager):
             self.publish_deleted_cases(domain, case_ids)
 
         return deleted_count
+
+    def hard_delete_cases_before_cutoff(self, cutoff, dry_run=True):
+        """
+        Permanently deletes cases with deleted_on set to a datetime earlier than
+        the specified cutoff datetime and creates a tombstone record of the deletion.
+        :param cutoff: datetime used to obtain the cases to be hard deleted
+        :param dry_run: if True, no changes will be committed to the database
+        and this method is effectively read-only
+        :return: dictionary of count of deleted objects per table
+        """
+        counts = defaultdict(lambda: 0)
+        class_path = 'form_processor.CommCareCase'
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
+            if dry_run:
+                counts[class_path] += queryset.count()
+            else:
+                while cases := queryset[:2000]:
+                    chunk = [DeletedSQLDoc(doc_id=case.case_id, object_class_path=class_path,
+                                           domain=case.domain, deleted_on=case.deleted_on)
+                             for case in cases]
+                    tombstone_count = len(DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True))
+                    counts['tombstone'] += tombstone_count
+                    chunked_queryset = self.using(db_name).filter(case_id__in=[doc.doc_id for doc in chunk])
+                    deleted_counts = chunked_queryset.delete()[1]
+                    for obj_class, count in deleted_counts.items():
+                        counts[obj_class] += count
+        return counts
 
     @staticmethod
     def publish_deleted_cases(domain, case_ids):
@@ -810,6 +858,15 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
                 self.clear_tracked_models()
         except DatabaseError as e:
             raise CaseSaveError(e)
+
+    def delete(self, leave_tombstone=True):
+        if not settings.UNIT_TESTING:
+            if not leave_tombstone:
+                raise ValueError(
+                    'Cannot delete case without leaving a tombstone except during testing, domain deletion or '
+                    'when deleting system cases')
+            create_deleted_sql_doc(self.case_id, 'form_processor.CommCareCase', self.domain, self.deleted_on)
+        super().delete()
 
     def __str__(self):
         return (
