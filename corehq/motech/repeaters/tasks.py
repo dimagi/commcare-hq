@@ -456,6 +456,13 @@ def update_repeater(repeat_record_states, repeater_id, lock_token):
             repeater.reset_backoff()
         else:
             # All the payloads that were sent failed. Try again later.
+            metrics_counter(
+                'commcare.repeaters.process_repeaters.repeater_backoff',
+                tags={
+                    'domain': repeater.domain,
+                    'repeater': f'{repeater.domain}: {repeater.name}',
+                },
+            )
             repeater.set_backoff()
     finally:
         lock = get_repeater_lock(repeater_id)
