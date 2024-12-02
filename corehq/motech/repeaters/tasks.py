@@ -1,3 +1,76 @@
+"""
+check_repeaters() and process_repeaters()
+=========================================
+
+check_repeaters()
+-----------------
+
+The ``check_repeaters()`` task is how repeat records are sent, and its
+workflow was shaped by the fact that repeaters and repeat records were
+stored in CouchDB.
+
+``check_repeaters()`` iterates all **repeat records** where the value of
+``RepeatRecord.next_check`` is in the past.
+
+We iterate them in parallel by dividing them into partitions (four
+partitions in production). Repeat records are partitioned using their
+ID. (``partition = RepeatRecord.id % num_partitions``.)
+
+For each repeat record, ``check_repeaters_in_partition()`` calls
+``RepeatRecord.attempt_forward_now(is_retry=True)``. (``is_retry`` is
+set to ``True`` because when a repeat record is registered,
+``RepeatRecord.attempt_forward_now()`` is called immediately, and the
+repeat record is only enqueued if sending fails.)
+
+Execution ends up back in the ``tasks`` module when
+``RepeatRecord.attempt_forward_now()`` calls
+``_process_repeat_record()``. It runs a battery of checks, and if they
+all succeed, ``RepeatRecord.fire()`` is called.
+
+This process has several disadvantages:
+
+* It iterates many repeat records that will not be sent. It has no way
+  to filter out the repeat records of paused or deleted repeaters.
+
+* It attempts to forward all the repeat records of a repeater, even if
+  every previous repeat record has failed.
+
+
+process_repeaters()
+-------------------
+
+The ``process_repeaters()`` task sends repeat records, but does so in a
+way that takes advantage of foreign keys between repeaters and their
+repeat records.
+
+This process is enabled using the ``PROCESS_REPEATERS`` feature flag.
+
+The ``iter_ready_repeater_ids_once()`` generator yields the IDs of
+repeaters that have repeat records ready to be sent. It does so in a
+round-robin fashion, cycling through the domains. It does this so that:
+
+* Domains and repeaters are not rate-limited unnecessarily.
+* Remote APIs are not unintentionally DDoS-attacked by CommCare HQ.
+* No domain has to wait while another domain consumes all the repeat
+  record queue workers.
+
+As long as there are repeat records ready to be sent, the
+``iter_ready_repeater_ids_forever()`` generator will continue to yield
+from ``iter_ready_repeater_ids_once()``. The ``process_repeaters()``
+task iterates these repeater IDs, and passes each one to the
+``process_repeater()`` task.
+
+``process_repeater()`` fetches a batch of repeat records (the number is
+set per repeater) and spawns tasks to send them in parallel. The results
+of all the send attempts are passed to ``update_repeater()``. If all the
+send attempts failed, the **repeater** (not the repeat record) is backed
+off. If any send attempts succeeded, the backoff is reset.
+
+The intention of this process is not only to share repeat record queue
+workers fairly across domains, but also to optimise workers by not
+trying to send repeat records that are unlikely to succeed.
+
+"""
 import random
 import uuid
 from datetime import datetime, timedelta
