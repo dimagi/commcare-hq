@@ -7,6 +7,7 @@
         <username>someuser</username>
         <userID>ad38211be256653bceac8e2156475665</userID>
         <instanceID>ad38211be256653bceac8e2156475666</instanceID>
+        <formLoadTime>111</formLoadTime>
     </meta>
 	<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="ad38211be256653bceac8e2156475667" user_id="ad38211be256653bceac8e2156475665" date_modified="2010-06-29T13:42:50" >
 	    <create>
