@@ -176,8 +176,8 @@ class TestLogLongRequestMiddlewareReports(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = Domain(name="long_request", is_active=True)
-        cls.addClassCleanup(cls.domain.delete)
         cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
 
         cls.username = 'fingile'
         cls.password = '*******'
