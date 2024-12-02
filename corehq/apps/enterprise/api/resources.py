@@ -324,13 +324,7 @@ class SMSResource(ODataEnterpriseReportResource):
     REPORT_SLUG = EnterpriseReport.SMS
 
     def get_report_task(self, request):
-        start_date = request.GET.get('startdate', None)
-        if start_date:
-            start_date = str(datetime.fromisoformat(start_date).astimezone(timezone.utc))
-
-        end_date = request.GET.get('enddate', None)
-        if end_date:
-            end_date = str(datetime.fromisoformat(end_date).astimezone(timezone.utc))
+        start_date, end_date = get_date_range_from_request(request.GET)
 
         account = BillingAccount.get_account_by_domain(request.domain)
         return generate_enterprise_report.s(
@@ -351,6 +345,18 @@ class SMSResource(ODataEnterpriseReportResource):
 
     def get_primary_keys(self):
         return ('domain',)
+
+
+def get_date_range_from_request(request_dict):
+    start_date = request_dict.get('startdate', None)
+    if start_date:
+        start_date = str(datetime.fromisoformat(start_date).astimezone(timezone.utc))
+
+    end_date = request_dict.get('enddate', None)
+    if end_date:
+        end_date = str(datetime.fromisoformat(end_date).astimezone(timezone.utc))
+
+    return (start_date, end_date,)
 
 
 class ODataFeedResource(ODataEnterpriseReportResource):
