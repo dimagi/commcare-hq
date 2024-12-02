@@ -431,7 +431,7 @@ class EnterpriseSMSReport(EnterpriseReport):
 
     @property
     def headers(self):
-        headers = [_('Project Space Name'), _('# Sent'), _('# Received'), _('# Errors')]
+        headers = [_('Project Space'), _('# Sent'), _('# Received'), _('# Errors')]
 
         return headers
 
