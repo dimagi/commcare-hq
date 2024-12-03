@@ -15,7 +15,7 @@
   hx-replace-url="{% querystring %}"
   hx-swap="outerHTML"
   hx-trigger="hqRefresh"
-  hq-hx-loading="{{ table.loading_indicator_id  }}"
+  hq-hx-loading="{{ table.loading_indicator_id }}"
 {% endblock %}
 
 {% block after_table %}
@@ -36,7 +36,7 @@
   hx-get="{{ request.path_info }}"
   hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
   hx-swap="outerHTML"
-  hq-hx-loading="{{ table.loading_indicator_id  }}"
+  hq-hx-loading="{{ table.loading_indicator_id }}"
 {% endblock %}
 
 {% block prev-page-link-attr %}
@@ -45,7 +45,7 @@
   hx-trigger="click"
   hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
   hx-swap="outerHTML"
-  hq-hx-loading="{{ table.loading_indicator_id  }}"
+  hq-hx-loading="{{ table.loading_indicator_id }}"
 {% endblock %}
 
 {% block next-page-link-attr %}
@@ -54,7 +54,7 @@
   hx-trigger="click"
   hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
   hx-swap="outerHTML"
-  hq-hx-loading="{{ table.loading_indicator_id  }}"
+  hq-hx-loading="{{ table.loading_indicator_id }}"
 {% endblock %}
 
 {% block pagination.range %}
@@ -68,7 +68,7 @@
           hx-trigger="click"
           hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
           hx-swap="outerHTML"
-          hq-hx-loading="{{ table.loading_indicator_id  }}"
+          hq-hx-loading="{{ table.loading_indicator_id }}"
         {% endif %}
       >
         {{ p }}
