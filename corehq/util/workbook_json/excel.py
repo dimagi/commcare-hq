@@ -194,6 +194,8 @@ class WorksheetJSONReader(IteratorJSONReader):
                 break
             else:
                 width += 1
+
+        # ensure _max_row and _max_column properties are set
         self.worksheet.calculate_dimension(force=True)
 
         def iterator():
