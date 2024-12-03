@@ -8,6 +8,7 @@ from testil import assert_raises
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase, restrict_user_by_location
+from corehq.apps.reports.models import TableauUser, TableauServer
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.importer import SiteCodeToLocationCache
 from corehq.apps.user_importer.validation import (
@@ -27,6 +28,8 @@ from corehq.apps.user_importer.validation import (
     LocationValidator,
     _get_invitation_or_editable_user,
     CustomDataValidator,
+    TableauRoleValidator,
+    TableauGroupsValidator,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, HqPermissions, Invitation, WebUser
@@ -689,3 +692,63 @@ class TestUtil(TestCase):
         spec = {}
         self.assertEqual(None, _get_invitation_or_editable_user(spec, True, self.domain).editable_user)
         self.assertEqual(None, _get_invitation_or_editable_user(spec, False, self.domain).editable_user)
+
+
+class TestTableauRoleValidator(TestCase):
+    domain = 'test-domain'
+
+    def test_valid_role(self):
+        validator = TableauRoleValidator(self.domain)
+        spec = {'tableau_role': TableauUser.Roles.EXPLORER.value}
+        self.assertIsNone(validator.validate_spec(spec))
+
+    def test_invalid_role(self):
+        validator = TableauRoleValidator(self.domain)
+        spec = {'tableau_role': 'invalid_role'}
+        expected_error = TableauRoleValidator._error_message.format(
+            'invalid_role', ', '.join([e.value for e in TableauUser.Roles])
+        )
+        self.assertEqual(validator.validate_spec(spec), expected_error)
+
+    def test_no_role(self):
+        validator = TableauRoleValidator(self.domain)
+        spec = {}
+        self.assertIsNone(validator.validate_spec(spec))
+
+
+class TestTableauGroupsValidator(TestCase):
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.allowed_groups = ['group1', 'group2']
+        cls.tableau_server = TableauServer.objects.create(
+            domain=cls.domain,
+            allowed_tableau_groups=cls.allowed_groups
+        )
+        cls.addClassCleanup(cls.tableau_server.delete)
+        cls.all_specs = [{'tableau_groups': 'group1,group2'}]
+
+    def test_valid_groups(self):
+        validator = TableauGroupsValidator(self.domain, self.all_specs)
+        spec = {'tableau_groups': 'group1,group2'}
+        self.assertIsNone(validator.validate_spec(spec))
+
+    def test_invalid_groups(self):
+        validator = TableauGroupsValidator(self.domain, self.all_specs)
+        spec = {'tableau_groups': 'group1,invalid_group'}
+        expected_error = TableauGroupsValidator._error_message.format(
+            'invalid_group', ', '.join(self.allowed_groups)
+        )
+        self.assertEqual(validator.validate_spec(spec), expected_error)
+
+    def test_no_groups(self):
+        validator = TableauGroupsValidator(self.domain, self.all_specs)
+        spec = {}
+        self.assertIsNone(validator.validate_spec(spec))
+
+    def test_empty_groups(self):
+        validator = TableauGroupsValidator(self.domain, self.all_specs)
+        spec = {'tableau_groups': ''}
+        self.assertIsNone(validator.validate_spec(spec))
