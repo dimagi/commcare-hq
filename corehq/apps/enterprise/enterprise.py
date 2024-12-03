@@ -18,6 +18,8 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.calculations import sms_in_last
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
+from corehq.apps.es import filters
+from corehq.apps.es.apps import AppES
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.users.dbaccessors import (
@@ -383,3 +385,66 @@ class EnterpriseODataReport(EnterpriseReport):
             )
 
         return rows
+
+
+class EnterpriseCaseManagementReport(EnterpriseReport):
+    title = gettext_lazy('Case Management')
+
+    @property
+    def headers(self):
+        return [_('Project Space'), _('# Applications'), _('# Surveys Only'), _('# Cases Only'), _('# Mixed')]
+
+    def rows_for_domain(self, domain_obj):
+        app_query = self.app_query(domain_obj.name)
+        app_count = app_query.count()
+
+        if app_count == 0:
+            survey_only_count = 0
+            case_only_count = 0
+            mixed_count = 0
+        else:
+            has_surveys = filters.nested('modules', filters.empty('modules.case_type.exact'))
+            has_cases = filters.nested('modules', filters.non_null('modules.case_type.exact'))
+
+            survey_only_count = app_query.filter(filters.AND(has_surveys, filters.NOT(has_cases))).count()
+            case_only_count = app_query.filter(filters.AND(has_cases, filters.NOT(has_surveys))).count()
+            mixed_count = app_query.filter(filters.AND(has_surveys, has_cases)).count()
+
+        return [[domain_obj.name, app_count, survey_only_count, case_only_count, mixed_count],]
+
+    @property
+    def total(self):
+        num_domains_with_apps = 0
+        num_domains_using_case_management = 0
+
+        for domain_obj in self.domains():
+            (app_count, uses_case_management) = self.total_for_domain(domain_obj)
+            if app_count > 0:
+                if uses_case_management:
+                    num_domains_using_case_management += 1
+                num_domains_with_apps += 1
+
+        if num_domains_with_apps == 0:
+            return '--'
+
+        case_management_percent = num_domains_using_case_management / num_domains_with_apps * 100
+
+        return "{:.1f}%".format(case_management_percent)
+
+    def total_for_domain(self, domain_obj):
+        app_query = self.app_query(domain_obj.name)
+        app_count = app_query.count()
+        if app_count > 0:
+            has_cases = filters.nested('modules', filters.non_null('modules.case_type.exact'))
+            uses_case_management = app_query.filter(has_cases).count() > 0
+        else:
+            uses_case_management = False
+
+        return [app_count, uses_case_management]
+
+    def app_query(self, domain):
+        return (
+            AppES().domain(domain)
+            .filter(filters.term('doc_type', 'Application'))
+            .is_build(False)
+        )
