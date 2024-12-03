@@ -23,8 +23,8 @@ or otherwise intended for a non-English-only audience, it should be translated.
           <td>{{ rate_info.key }}</td>
           <td>
             {{ rate_info.percent_usage }}%
-            <div class="progress">  {# todo B5: css-progress #}
-              <div class="progress-bar progress-bar-striped" style="width: {{ rate_info.percent_usage }}%"></div>  {# todo B5: inline-style #}
+            <div class="progress" role="progressbar" aria-label="Percent Usage" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar progress-bar-striped" style="width: {{ rate_info.percent_usage }}%"></div>
             </div>
           </td>
           <td>{{ rate_info.current_usage }}</td>

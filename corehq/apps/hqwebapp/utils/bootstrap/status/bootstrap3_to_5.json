@@ -57,6 +57,7 @@
       "admin/case_search.html",
       "admin/commtrack_settings.html",
       "admin/partials/case_search_templates.html",
+      "admin/project_limits.html",
       "admin/sms_settings.html"
     ]
   },
