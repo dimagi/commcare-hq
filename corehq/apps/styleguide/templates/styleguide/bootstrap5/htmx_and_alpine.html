@@ -259,22 +259,19 @@
     Loading Indicators
   </h2>
   <p>
-    You can use the <code>hx-indicator</code> attribute
-    (<a href="https://htmx.org/attributes/hx-indicator/" target="_blank">see docs here</a>)
-    to mark which element gets the <code>htmx-request</code> class appended to it during a request.
-    We've added custom styling to <code>_htmx.scss</code> to support the common states outlined
+    By default, if an element triggers an HTMX request, it will automatically get an <code>htmx-request</code>
+    CSS class applied to it. We've added custom styling to <code>_htmx.scss</code> to support the common states outlined
     later in this section.
   </p>
   <p>
-    By default, if an element triggers an HTMX request, it will automatically get the <code>htmx-request</code>
-    CSS class applied to it. No extra usage of the <code>hx-indicator</code> attribute is necessary. The
-    example submitting elements below showcase this default behavior <strong>without</strong> the need for
-    specific <code>hx-indicator</code> usage.
+    If you want to create new types of loading indicators for non-standard elements, you can explore using
+    the <code>hx-indicator</code> attribute
+    (<a href="https://htmx.org/attributes/hx-indicator/" target="_blank">see docs here</a>).
   </p>
   <p>
     It's often a great idea to pair button requests with <code>hx-disabled-elt="this"</code>
     (<a href="https://htmx.org/attributes/hx-disabled-elt/" target="_blank`">see docs for hx-disabled-elt</a>),
-    like the examples below, so that the requesting element or related element is disabled during the request.
+    like the examples below, so that the requesting <code>button</code> is disabled during the request.
   </p>
   <h3 id="button-loading" class="pt-4">
     Buttons
