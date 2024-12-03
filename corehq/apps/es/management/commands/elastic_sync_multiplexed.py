@@ -297,7 +297,7 @@ class ESSyncUtil:
 
     def estimate_disk_space_for_reindex(self, stdout=None):
         indices_info = es_manager.indices_info()
-        index_cname_map = self._get_index_name_cname_map()
+        index_cname_map = self._get_index_name_cname_map(ignore_subindices=True)
         index_size_rows = []
         total_size = 0
         for index_name in index_cname_map.keys():
@@ -314,8 +314,13 @@ class ESSyncUtil:
         print("\n\n")
         print(f"Minimum free disk space recommended before starting the reindex: {recommended_disk}")
 
-    def _get_index_name_cname_map(self):
-        return {adapter.index_name: cname for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items()}
+    def _get_index_name_cname_map(self, ignore_subindices=False):
+        index_name_cname_map = {}
+        for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items():
+            if ignore_subindices and adapter.parent_index_cname:
+                continue
+            index_name_cname_map[adapter.index_name] = cname
+        return index_name_cname_map
 
     def _format_bytes(self, size):
         units = ['B', 'KB', 'MB', 'GB', 'TB']
