@@ -451,5 +451,7 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             if domain_mobile_workers:
                 total_mobile_workers += domain_mobile_workers
                 total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_obj))
-        percentage = (total_up_to_date / total_mobile_workers) if total_mobile_workers else 0
+        if not total_mobile_workers:
+            return '--'
+        percentage = (total_up_to_date / total_mobile_workers)
         return f"{percentage * 100:.0f}%"
