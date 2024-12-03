@@ -1324,7 +1324,7 @@ def undelete_data_source(request, domain, config_id):
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
 
-    if toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
+    if not config.asynchronous and toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
         number_of_records = _number_of_records_to_be_iterated_for_rebuild(datasource_configuration=config)
         if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
             messages.error(
@@ -1386,8 +1386,7 @@ def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
         'Rebuilt was not initiated due to high number of records this data source is expected to '
         'iterate during a rebuild. Expected records to be processed is currently {number_of_records} '
         'which is above the limit of {rebuild_limit}. '
-        'Please consider creating a new data source instead or reach out to support if '
-        'you need to rebuild this data source.'
+        'Please update the data source to have asynchronous processing.'
     ).format(
         number_of_records=number_of_records_to_be_iterated,
         rebuild_limit=DATA_SOURCE_REBUILD_RESTRICTED_AT

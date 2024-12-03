@@ -533,8 +533,7 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
                     'Rebuilt was not initiated due to high number of records this data source is expected to '
                     'iterate during a rebuild. Expected records to be processed is currently 3 '
                     'which is above the limit of 2. '
-                    'Please consider creating a new data source instead or reach out to support if '
-                    'you need to rebuild this data source.'
+                    'Please update the data source to have asynchronous processing.'
                 )
             )
 
