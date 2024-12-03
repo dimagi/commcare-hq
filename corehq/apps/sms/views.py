@@ -2067,6 +2067,7 @@ class ConnectMessagingUserView(BaseMessagingSectionView):
     template_name = 'sms/connect_messaging_user.html'
     page_title = _("Connect Messaging Users")
 
+    @method_decorator(toggles.COMMCARE_CONNECT.required_decorator())
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
         return super(ConnectMessagingUserView, self).dispatch(*args, **kwargs)
@@ -2080,6 +2081,7 @@ class ConnectMessagingUserView(BaseMessagingSectionView):
         return page_context
 
 
+@toggles.COMMCARE_CONNECT.required_decorator()
 @domain_admin_required
 def create_channels(request, domain, *args, **kwargs):
     user_links = ConnectIDUserLink.objects.filter(domain=domain)
