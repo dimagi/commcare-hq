@@ -271,10 +271,10 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         return cleaned_data
 
     def _check_for_asynchronous(self, config):
-        from corehq.apps.userreports.views import _number_of_records_to_be_iterated_for_rebuild
+        from corehq.apps.userreports.views import number_of_records_to_be_processed
 
         if not config.asynchronous and toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(self.domain):
-            number_of_records = _number_of_records_to_be_iterated_for_rebuild(
+            number_of_records = number_of_records_to_be_processed(
                 datasource_configuration=config
             )
             if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
