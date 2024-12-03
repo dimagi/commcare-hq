@@ -1,4 +1,4 @@
-hqDefine("enterprise/js/enterprise_dashboard", [
+hqDefine("enterprise/js/project_dashboard", [
     'jquery',
     'knockout',
     'underscore',
@@ -192,22 +192,27 @@ hqDefine("enterprise/js/enterprise_dashboard", [
     }
 
     $(function () {
-        const datePicker = tempusDominus.createDefaultDateRangePicker(
-            document.getElementById("id_date_range"),
-            moment().subtract(30, "days"),
-            moment()
-        );
+        const metricType = initialPageData.get('metric_type');
+        const $dateRangeDisplay = $("#dateRangeDisplay");
+        let dateRangeModal = null;
+        if ($dateRangeDisplay.length) {
+            const datePicker = tempusDominus.createDefaultDateRangePicker(
+                document.getElementById("id_date_range"),
+                moment().subtract(30, "days"),
+                moment()
+            );
 
-        const formSubmissionsDisplay = MobileFormSubmissionsTile(datePicker);
-        const maxDateRangeDays = initialPageData.get("max_date_range_days");
-        const dateRangeModal = DateRangeModal(datePicker, dateRangePresetOptions, maxDateRangeDays, formSubmissionsDisplay);
+            const formSubmissionsDisplay = MobileFormSubmissionsTile(datePicker);
+            const maxDateRangeDays = initialPageData.get("max_date_range_days");
+            dateRangeModal = DateRangeModal(datePicker, dateRangePresetOptions, maxDateRangeDays, formSubmissionsDisplay);
 
-        $("#dateRangeDisplay").koApplyBindings(formSubmissionsDisplay);
-        $("#enterpriseFormsDaterange").koApplyBindings(
-            dateRangeModal
-        );
+            $dateRangeDisplay.koApplyBindings(formSubmissionsDisplay);
+            $("#enterpriseFormsDaterange").koApplyBindings(
+                dateRangeModal
+            );
+        }
 
-        kissmetrics.track.event("[Enterprise Dashboard] Visited page");
+        kissmetrics.track.event(`[${metricType}] Visited page`);
         $(".report-panel").each(function () {
             var $element = $(this),
                 slug = $element.data("slug");
@@ -215,7 +220,7 @@ hqDefine("enterprise/js/enterprise_dashboard", [
             updateDisplayTotal($element);
 
             $element.find(".btn-primary").click(function () {
-                kissmetrics.track.event("[Enterprise Dashboard] Clicked Email Report for " + slug);
+                kissmetrics.track.event(`[${metricType}] Clicked Email Report for ` + slug);
                 var $button = $(this);
                 $button.disableButton();
                 const requestParams = {
