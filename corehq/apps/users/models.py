@@ -3110,14 +3110,14 @@ class HQApiKey(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.plaintext_key:
-            self.plaintext_key = self.generate_key()
+            self.plaintext_key = self._generate_key()
             if 'update_fields' in kwargs:
                 kwargs['update_fields'].append('key')
                 kwargs['update_fields'].append('encrypted_key')
 
         return super().save(*args, **kwargs)
 
-    def generate_key(self):
+    def _generate_key(self):
         # From tastypie
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()

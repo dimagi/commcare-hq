@@ -776,7 +776,6 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         cls.web_user_api_key = HQApiKey.objects.get_or_create(
             user=cls.web_user.get_django_user()
         )[0]
-        cls.web_user_api_key.plaintext_key = cls.web_user_api_key.generate_key()
         cls.web_user_api_key.save()
 
         # The URL that tests in this class will use.
