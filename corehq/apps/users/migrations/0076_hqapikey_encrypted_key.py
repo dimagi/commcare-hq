@@ -25,7 +25,7 @@ def reverse_copy_key_to_hashed_key(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0074_alter_sqluserdata_profile'),
+        ('users', '0075_connectiduserlink_messaging_consent_and_more'),
     ]
 
     operations = [
