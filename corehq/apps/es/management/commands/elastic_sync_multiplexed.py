@@ -57,7 +57,8 @@ class ESSyncUtil:
 
         logger.info("Starting ReIndex process")
         task_id = es_manager.reindex(
-            source_index, destination_index, requests_per_second=requests_per_second
+            source_index, destination_index,
+            requests_per_second=requests_per_second, batch_size=reindex_batch_size
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_number = task_id.split(':')[1]
@@ -462,7 +463,7 @@ class Command(BaseCommand):
 
     For getting current count of both the indices
         ```bash
-        /manage.py elastic_sync_multiplexed display_doc_counts <index_cname>
+        ./manage.py elastic_sync_multiplexed display_doc_counts <index_cname>
         ```
 
     For getting current shard allocation status for the cluster
