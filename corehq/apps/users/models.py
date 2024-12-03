@@ -88,6 +88,7 @@ from corehq.apps.users.util import (
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
+from corehq.motech.utils import b64_aes_cbc_encrypt
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
@@ -3110,8 +3111,10 @@ class HQApiKey(models.Model):
     def save(self, *args, **kwargs):
         if not self.key:
             self.key = self.generate_key()
+            self.encrypted_key = b64_aes_cbc_encrypt(self.key)
             if 'update_fields' in kwargs:
                 kwargs['update_fields'].append('key')
+                kwargs['update_fields'].append('encrypted_key')
 
         return super().save(*args, **kwargs)
 
