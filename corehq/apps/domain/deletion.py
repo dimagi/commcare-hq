@@ -366,7 +366,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', [
         'CustomDataFieldsProfile', 'Field',
     ]),
-    ModelDeletion('data_analytics', 'DomainStats', 'domain'),
+    ModelDeletion('data_analytics', 'DomainMetrics', 'domain'),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain', [
