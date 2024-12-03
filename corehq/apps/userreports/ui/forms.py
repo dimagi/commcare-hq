@@ -13,6 +13,7 @@ from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
+from corehq.apps.userreports.const import DATA_SOURCE_REBUILD_RESTRICTED_AT
 from corehq.apps.userreports.models import guess_data_source_type
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import JsonField, ReportDataSourceField
@@ -252,6 +253,21 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                       ' ids must be unique')
                 )
         return table_id
+
+    def clean_asynchronous(self):
+        from corehq.apps.userreports.views import number_of_records_to_be_processed
+
+        asynchronous = self.cleaned_data['asynchronous']
+        if not asynchronous and toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(self.domain):
+            number_of_records = number_of_records_to_be_processed(
+                datasource_configuration=self.instance
+            )
+            if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
+                raise ValidationError(
+                    _('This data source covers a lot of data. '
+                      'Please mark it for asynchronous processing for effective building/rebuilding')
+                )
+        return asynchronous
 
     def clean(self):
         cleaned_data = super(ConfigurableDataSourceEditForm, self).clean()
