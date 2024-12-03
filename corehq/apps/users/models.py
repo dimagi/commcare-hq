@@ -88,7 +88,7 @@ from corehq.apps.users.util import (
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
-from corehq.motech.utils import b64_aes_cbc_encrypt
+from corehq.motech.utils import b64_aes_cbc_encrypt, b64_aes_cbc_decrypt
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
@@ -3109,9 +3109,8 @@ class HQApiKey(models.Model):
         unique_together = ('user', 'name')
 
     def save(self, *args, **kwargs):
-        if not self.key:
-            self.key = self.generate_key()
-            self.encrypted_key = b64_aes_cbc_encrypt(self.key)
+        if not self.plaintext_key:
+            self.plaintext_key = self.generate_key()
             if 'update_fields' in kwargs:
                 kwargs['update_fields'].append('key')
                 kwargs['update_fields'].append('encrypted_key')
@@ -3122,6 +3121,18 @@ class HQApiKey(models.Model):
         # From tastypie
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
+
+    @property
+    def plaintext_key(self):
+        try:
+            return b64_aes_cbc_decrypt(self.encrypted_key)
+        except Exception:
+            return self.key
+
+    @plaintext_key.setter
+    def plaintext_key(self, plaintext):
+        self.key = plaintext
+        self.encrypted_key = b64_aes_cbc_encrypt(plaintext)
 
     @property
     @memoized
