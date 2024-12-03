@@ -1325,7 +1325,7 @@ def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
 
     if not config.asynchronous and toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
-        number_of_records = _number_of_records_to_be_iterated_for_rebuild(datasource_configuration=config)
+        number_of_records = number_of_records_to_be_processed(datasource_configuration=config)
         if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
             messages.error(
                 request,
@@ -1352,7 +1352,7 @@ def rebuild_data_source(request, domain, config_id):
     ))
 
 
-def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
+def number_of_records_to_be_processed(datasource_configuration):
     if datasource_configuration.referenced_doc_type == 'CommCareCase':
         es_query = CaseSearchES().domain(datasource_configuration.domain)
         case_types = [
