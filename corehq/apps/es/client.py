@@ -1118,6 +1118,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
     def mapping(self):
         return self.primary.mapping
 
+    @property
+    def parent_index_cname(self):
+        return self.primary.parent_index_cname
+
     def export_adapter(self):
         adapter = copy.copy(self)
         adapter.primary = adapter.primary.export_adapter()
