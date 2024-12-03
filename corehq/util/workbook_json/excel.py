@@ -217,15 +217,6 @@ class WorksheetJSONReader(IteratorJSONReader):
                 yield cell_values
         super(WorksheetJSONReader, self).__init__(iterator())
 
-    def row_count(self):
-        def parse_dimension(dimension):
-            import re
-            match = re.search(r'(\d+)', dimension)
-            if match:
-                return int(match.group(1))
-            return 0
-        return parse_dimension(self.worksheet.calculate_dimension())
-
 
 class WorkbookJSONReader(object):
 
@@ -253,7 +244,7 @@ class WorkbookJSONReader(object):
                 except IndexError:
                     raise JSONReaderError('This Excel file has unrecognised formatting. Please try downloading '
                                         'the lookup table first, and then add data to it.')
-                total_row_count += ws.row_count()
+                total_row_count += worksheet.max_row
                 if total_row_count > max_row_count:
                     raise WorkbookTooManyRows(max_row_count, total_row_count)
                 self.worksheets_by_title[worksheet.title] = ws
