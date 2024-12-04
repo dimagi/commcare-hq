@@ -404,17 +404,16 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             _('Project Space'),
             _('Latest Version Available at Submission'),
             _('Version in Use'),
-
         ]
 
     def rows_for_domain(self, domain_obj):
         rows = []
 
         for user in get_all_user_rows(domain_obj.name,
-                                    include_web_users=False,
-                                    include_mobile_users=True,
-                                    include_inactive=False,
-                                    include_docs=True):
+                                      include_web_users=False,
+                                      include_mobile_users=True,
+                                      include_inactive=False,
+                                      include_docs=True):
             user = CouchUser.wrap_correctly(user['doc'])
             last_submission = user.reporting_metadata.last_submission_for_user
             last_used_device = user.last_device

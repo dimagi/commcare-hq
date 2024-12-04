@@ -47,7 +47,7 @@ def get_latest_version_at_time(target_time):
     Get the latest CommCare version that was available at a given time.
     Excludes superuser-only versions.
     Menu items are already in chronological order (newest last).
-    If no target time is provided, return the latest version at now.
+    If no target time is provided, return the latest version available now.
     """
     config = CommCareBuildConfig.fetch()
 
