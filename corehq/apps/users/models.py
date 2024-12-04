@@ -88,6 +88,7 @@ from corehq.apps.users.util import (
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
+from corehq.motech.utils import b64_aes_cbc_encrypt, b64_aes_cbc_decrypt
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
@@ -1550,7 +1551,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
             if by_username and by_username['id'] != self._id:
-                raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
+                raise self.Inconsistent("User with username %s already exists" % self.username)
 
             if update_django_user and self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
@@ -3089,6 +3090,7 @@ class ApiKeyManager(models.Manager):
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
     key = models.CharField(max_length=128, blank=True, default='', db_index=True)
+    encrypted_key = models.CharField(max_length=128, blank=True, default='', db_index=True)
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
@@ -3107,17 +3109,36 @@ class HQApiKey(models.Model):
         unique_together = ('user', 'name')
 
     def save(self, *args, **kwargs):
-        if not self.key:
-            self.key = self.generate_key()
+        if not self.plaintext_key:
+            self.plaintext_key = self._generate_key()
             if 'update_fields' in kwargs:
                 kwargs['update_fields'].append('key')
+                kwargs['update_fields'].append('encrypted_key')
 
         return super().save(*args, **kwargs)
 
-    def generate_key(self):
+    def _generate_key(self):
         # From tastypie
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
+
+    @property
+    def plaintext_key(self):
+        try:
+            decrypted_key = b64_aes_cbc_decrypt(self.encrypted_key)
+            if decrypted_key == self.key:
+                return decrypted_key
+            else:
+                logging.warning("Decrypted key does not match stored key for %s", self.name)
+                return self.key
+        except Exception as e:
+            logging.exception(f'Error getting decrypted key for {self.name}. {e}')
+            return self.key
+
+    @plaintext_key.setter
+    def plaintext_key(self, plaintext):
+        self.key = plaintext
+        self.encrypted_key = b64_aes_cbc_encrypt(plaintext)
 
     @property
     @memoized
@@ -3294,6 +3315,16 @@ class ConnectIDUserLink(models.Model):
     connectid_username = models.TextField()
     commcare_user = models.ForeignKey(User, related_name='connectid_user', on_delete=models.CASCADE)
     domain = models.TextField()
+    messaging_consent = models.BooleanField(default=False)
+    channel_id = models.CharField(null=True, blank=True)
 
     class Meta:
         unique_together = ('domain', 'commcare_user')
+
+
+class ConnectIDMessagingKey(models.Model):
+    domain = models.TextField()
+    connectid_user_link = models.ForeignKey(ConnectIDUserLink, on_delete=models.CASCADE)
+    key = models.CharField(max_length=44, null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
