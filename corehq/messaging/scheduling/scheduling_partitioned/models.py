@@ -271,11 +271,8 @@ class ScheduleInstance(PartitionedModel):
         else:
             user_data = contact.get_user_data(self.domain)
         for key, value_or_property_name in self.memoized_schedule.user_data_filter.items():
-            if key not in user_data:
-                return False
-
             allowed_values_set = {self._get_filter_value(v) for v in self.convert_to_set(value_or_property_name)}
-            actual_values_set = self.convert_to_set(user_data[key])
+            actual_values_set = self.convert_to_set(user_data.get(key, ""))
 
             if actual_values_set.isdisjoint(allowed_values_set):
                 return False
