@@ -68,6 +68,14 @@ def get_latest_version_at_time(target_time):
     return None
 
 
+def is_out_of_date(version_in_use, latest_version):
+    version_in_use_tuple = _parse_version(version_in_use)
+    latest_version_tuple = _parse_version(latest_version)
+    if not version_in_use_tuple or not latest_version_tuple:
+        return False
+    return version_in_use_tuple < latest_version_tuple
+
+
 def _parse_version(version_str):
     """Convert version string to comparable tuple"""
     if version_str:
@@ -76,11 +84,3 @@ def _parse_version(version_str):
         except (ValueError, AttributeError):
             return None
     return None
-
-
-def is_out_of_date(version_in_use, latest_version):
-    version_in_use_tuple = _parse_version(version_in_use)
-    latest_version_tuple = _parse_version(latest_version)
-    if not version_in_use_tuple or not latest_version_tuple:
-        return False
-    return version_in_use_tuple < latest_version_tuple
