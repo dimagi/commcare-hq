@@ -740,7 +740,6 @@ class TestTableauGroupsValidator(TestCase):
             domain=cls.domain,
             allowed_tableau_groups=cls.allowed_groups
         )
-        cls.addClassCleanup(cls.tableau_server.delete)
         cls.all_specs = [{'tableau_groups': 'group1,group2'}]
 
     def test_valid_groups(self):
