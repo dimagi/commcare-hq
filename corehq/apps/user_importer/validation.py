@@ -505,8 +505,6 @@ class LocationValidator(ImportValidator):
     error_message_user_access = _("Based on your locations you do not have permission to edit this user or user "
                                   "invitation")
     error_message_location_access = _("You do not have permission to assign or remove these locations: {}")
-    error_message_location_not_has_users = _("These locations cannot have users assigned because of their "
-                                             "organization level settings: {}.")
 
     def __init__(self, domain, upload_user, location_cache, is_web_user_import):
         super().__init__(domain)
