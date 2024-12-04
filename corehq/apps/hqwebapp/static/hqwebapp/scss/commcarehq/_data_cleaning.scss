@@ -1,0 +1,181 @@
+.dc-spaces {
+  opacity: .5;
+  background-color: transparent;
+  font-weight: bold;
+  font-size: $font-size-base * 1.5;
+  line-height: $font-size-base * 1.5;
+  position: relative;
+  vertical-align: middle;
+  transition: .5s ease-in-out background-color;
+
+  &::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: $font-size-lg;
+    display: none;
+  }
+
+  &:hover {
+    cursor: help;
+    color: $white;
+    background-color: rgba(0, 0, 0, .5);
+    opacity: 1.0;
+  }
+}
+
+.dc-value {
+  border: 1px solid rgba(0, 0, 0, .1);
+  display: inline-block;
+  font-family: $font-family-monospace;
+  letter-spacing: 1px;
+  line-height: 12px;
+  padding: $spacer *.25 $spacer *.5;
+  vertical-align: middle;
+}
+
+.dc-diff-view {
+  font-family: $font-family-monospace;
+  letter-spacing: 1px;
+}
+
+.dc-diff-before,
+.dc-diff-after {
+  border: 1px solid white;
+  display: inline-block;
+  margin: $spacer *.13;
+  padding-right: $spacer *.5;
+  vertical-align: middle;
+
+  &::before {
+    display: inline-block;
+    color: $white;
+    line-height: 12px;
+    padding: $spacer *.25 $spacer *.5;
+  }
+}
+
+.dc-diff-before {
+  background-color: $red-100;
+  border-color: $red-500;
+
+  &::before {
+    background-color: $red-500;
+    content: "-";
+  }
+
+  .dc-spaces {
+    color: $red-800;
+
+    &:hover {
+      color: $white;
+    }
+  }
+}
+
+.dc-diff-after {
+  background-color: $green-100;
+  border-color: $green-500;
+
+  &::before {
+    background-color: $green-500;
+    content: "+";
+  }
+
+  .dc-spaces {
+    color: $green-800;
+  }
+}
+
+.dc-null-value {
+  display: block;
+  position: relative;
+
+  .dc-info {
+    background-color: $gray-800;
+    color: $white;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    padding: 0 $spacer * .25;
+    transition: opacity .5s ease-in-out;
+  }
+  &:hover .dc-info {
+    display: block;
+    opacity: 1;
+  }
+}
+
+.dc-diff-before .dc-null-value,
+.dc-diff-after .dc-null-value {
+  display: inline-block;
+
+  .dc-info {
+    top: -2px;
+    left: -9px;
+    font-size: $font-size-sm;
+    padding: 3px 6.5px;
+  }
+}
+
+.dc-diff-before .dc-null-value {
+  color: $red-500;
+
+  .dc-info {
+    background-color: $red-500;
+  }
+}
+
+.dc-diff-after .dc-null-value {
+  color: $green-500;
+
+  .dc-info {
+    background-color: $green-500;
+  }
+}
+
+.table tbody tr td .inline-edit-block {
+  display: block;
+  background-color: transparent;
+  cursor: text;
+  transition: background-color .5s ease-in-out;
+  position: relative;
+  padding: $spacer * 0.5;
+  margin: $spacer * -0.5;
+
+  .inline-edit-action {
+    position: absolute;
+    right: 0;
+    top: calc(50% - 12px);
+    opacity: 0;
+    transition: opacity .5s ease-in-out;
+  }
+
+  .inline-edit-action-text {
+    background-color: $white;
+    padding: $spacer * .25;
+    white-space: nowrap;
+    $_offset: $spacer * .6;
+    top: calc(50% - $_offset);
+    right: $spacer * 0.25;
+    font-size: 10px;
+    line-height: $spacer * .75;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+
+  &:hover {
+    background-color: rgba(0, 0, 0, .06);
+  }
+
+  &:hover .inline-edit-action {
+    display: block;
+    opacity: 1;
+
+    &.inline-edit-action-text {
+      opacity: 1;
+    }
+  }
+}
