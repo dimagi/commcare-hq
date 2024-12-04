@@ -1985,7 +1985,6 @@ DOMAIN_MODULE_MAP = {
     'kenya-vca': 'custom.abt',
     'pmievolve-ethiopia-1': 'custom.abt',
     'pmievolve-ghana': 'custom.abt',
-    'pmievolve-kenya': 'custom.abt',
     'pmievolve-madagascar': 'custom.abt',
     'pmievolve-malawi': 'custom.abt',
     'pmievolve-mozambique': 'custom.abt',

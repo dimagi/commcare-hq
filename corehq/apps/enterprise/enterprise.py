@@ -1,5 +1,4 @@
 import re
-from django.db.models import Count
 from datetime import datetime, timedelta
 
 from django.utils.translation import gettext as _
@@ -8,9 +7,11 @@ from django.conf import settings
 
 from memoized import memoized
 
+from corehq.apps.reports.standard.deployments import format_commcare_version
 from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
 from corehq.apps.enterprise.exceptions import EnterpriseReportError, TooMuchRequestedDataError
 from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.accounting.models import BillingAccount
@@ -21,7 +22,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
-from corehq.apps.sms.models import SMS, OUTGOING, INCOMING
 from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
     get_mobile_user_count,
@@ -36,11 +36,11 @@ class EnterpriseReport:
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
-    SMS = 'sms'
+    COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
-    title = _('Enterprise Report')
+    title = gettext_lazy('Enterprise Report')
     subtitle = ''
 
     def __init__(self, account, couch_user, **kwargs):
@@ -70,8 +70,8 @@ class EnterpriseReport:
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
-        elif slug == cls.SMS:
-            report = EnterpriseSMSReport(account, couch_user, **kwargs)
+        elif slug == cls.COMMCARE_VERSION_COMPLIANCE:
+            report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
@@ -115,7 +115,7 @@ class EnterpriseReport:
 
 
 class EnterpriseDomainReport(EnterpriseReport):
-    title = _('Project Spaces')
+    title = gettext_lazy('Project Spaces')
 
     @property
     def headers(self):
@@ -138,7 +138,7 @@ class EnterpriseDomainReport(EnterpriseReport):
 
 
 class EnterpriseWebUserReport(EnterpriseReport):
-    title = _('Web Users')
+    title = gettext_lazy('Web Users')
 
     @property
     def headers(self):
@@ -184,7 +184,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
 
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
-    title = _('Mobile Workers')
+    title = gettext_lazy('Mobile Workers')
 
     @property
     def headers(self):
@@ -215,7 +215,7 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 
 class EnterpriseFormReport(EnterpriseReport):
-    title = _('Mobile Form Submissions')
+    title = gettext_lazy('Mobile Form Submissions')
     MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
     MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
     MAX_DATE_RANGE_DAYS = 90
@@ -390,65 +390,67 @@ class EnterpriseODataReport(EnterpriseReport):
         return rows
 
 
-class EnterpriseSMSReport(EnterpriseReport):
-    title = gettext_lazy('SMS Usage')
-    MAX_DATE_RANGE_DAYS = 90
-
-    def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30):
-        super().__init__(account, couch_user)
-
-        if not end_date:
-            end_date = datetime.utcnow()
-        elif isinstance(end_date, str):
-            end_date = datetime.fromisoformat(end_date)
-
-        if start_date:
-            if isinstance(start_date, str):
-                start_date = datetime.fromisoformat(start_date)
-            self.datespan = DateSpan(start_date, end_date)
-            self.subtitle = _("{} to {}").format(
-                start_date.date(),
-                end_date.date(),
-            )
-        else:
-            self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
-            self.subtitle = _("past {} days").format(num_days)
-
-        if self.datespan.enddate - self.datespan.startdate > timedelta(days=self.MAX_DATE_RANGE_DAYS):
-            raise TooMuchRequestedDataError(
-                _('Date ranges with more than {} days are not supported').format(self.MAX_DATE_RANGE_DAYS)
-            )
-
-    def total_for_domain(self, domain_obj):
-        query = SMS.objects.filter(
-            domain=domain_obj.name,
-            processed=True,
-            direction=OUTGOING,
-            error=False,
-            date__gte=self.datespan.startdate,
-            date__lt=self.datespan.enddate_adjusted
-        )
-
-        return query.count()
+class EnterpriseCommCareVersionReport(EnterpriseReport):
+    title = gettext_lazy('CommCare Client Version Compliance')
+    description = gettext_lazy('%% of mobile workers on the latest commcare client version ')
 
     @property
     def headers(self):
-        headers = [_('Project Space'), _('# Sent'), _('# Received'), _('# Errors')]
-
-        return headers
+        return [
+            _('Mobile Worker'),
+            _('Project Space'),
+            _('Latest Version Available at Submission'),
+            _('Version in Use'),
+        ]
 
     def rows_for_domain(self, domain_obj):
-        results = SMS.objects.filter(
-            domain=domain_obj.name,
-            processed=True,
-            date__gte=self.datespan.startdate,
-            date__lt=self.datespan.enddate_adjusted
-        ).values('direction', 'error').annotate(direction_count=Count('pk'))
+        rows = []
 
-        num_sent = sum([result['direction_count'] for result in results
-                        if result['direction'] == OUTGOING and not result['error']])
-        num_received = sum([result['direction_count'] for result in results
-                            if result['direction'] == INCOMING and not result['error']])
-        num_errors = sum([result['direction_count'] for result in results if result['error']])
+        for user in get_all_user_rows(domain_obj.name,
+                                      include_web_users=False,
+                                      include_mobile_users=True,
+                                      include_inactive=False,
+                                      include_docs=True):
+            user = CouchUser.wrap_correctly(user['doc'])
+            last_submission = user.reporting_metadata.last_submission_for_user
+            last_used_device = user.last_device
 
-        return [(domain_obj.name, num_sent, num_received, num_errors), ]
+            version_in_use = _('Unknown')
+            date_of_use = None
+
+            # If the user hasn't submitted a form, we use the last used device
+            if last_submission and last_submission.commcare_version:
+                version_in_use = format_commcare_version(last_submission.commcare_version)
+                date_of_use = last_submission.submission_date
+            elif last_used_device and last_used_device.commcare_version:
+                version_in_use = format_commcare_version(last_used_device['commcare_version'])
+                date_of_use = last_used_device.last_used
+
+            latest_version_at_time_of_use = get_latest_version_at_time(date_of_use)
+
+            if is_out_of_date(version_in_use, latest_version_at_time_of_use):
+                rows.append([
+                    user.username,
+                    domain_obj.name,
+                    latest_version_at_time_of_use,
+                    version_in_use,
+                ])
+
+        return rows
+
+    @property
+    def total(self):
+        total_mobile_workers = 0
+        total_up_to_date = 0
+        for domain_obj in self.domains():
+            domain_mobile_workers = get_mobile_user_count(domain_obj.name, include_inactive=False)
+            if domain_mobile_workers:
+                total_mobile_workers += domain_mobile_workers
+                total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_obj))
+        return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
+
+
+def _format_percentage_for_enterprise_tile(dividend, divisor):
+    if not divisor:
+        return '--'
+    return f"{dividend / divisor * 100:.1f}%"

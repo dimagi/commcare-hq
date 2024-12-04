@@ -2976,11 +2976,3 @@ MODULE_BADGES = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
-
-INCLUDE_ALL_LOCATIONS = StaticToggle(
-    slug='include_all_locations',
-    label='USH: When sending conditional alerts that target locations expand them to users that are assigned to '
-          'the location no matter if it is their primary location or not.',
-    tag=TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)

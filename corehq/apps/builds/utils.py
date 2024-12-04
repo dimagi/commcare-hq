@@ -40,3 +40,47 @@ def extract_build_info_from_filename(content_disposition):
     else:
         raise ValueError('Could not find filename like {!r} in {!r}'.format(
             pattern, content_disposition))
+
+
+def get_latest_version_at_time(target_time):
+    """
+    Get the latest CommCare version that was available at a given time.
+    Excludes superuser-only versions.
+    Menu items are already in chronological order (newest last).
+    If no target time is provided, return the latest version available now.
+    """
+    config = CommCareBuildConfig.fetch()
+
+    if not target_time:
+        return config.get_default().version
+
+    # Iterate through menu items in reverse (newest to oldest)
+    for item in reversed(config.menu):
+        if item.superuser_only:
+            continue
+        try:
+            build = CommCareBuild.get_build(item.build.version, latest=True)
+            if build and build.time and build.time <= target_time:
+                return item.build.version
+        except KeyError:
+            continue
+
+    return None
+
+
+def is_out_of_date(version_in_use, latest_version):
+    version_in_use_tuple = _parse_version(version_in_use)
+    latest_version_tuple = _parse_version(latest_version)
+    if not version_in_use_tuple or not latest_version_tuple:
+        return False
+    return version_in_use_tuple < latest_version_tuple
+
+
+def _parse_version(version_str):
+    """Convert version string to comparable tuple"""
+    if version_str:
+        try:
+            return tuple(int(n) for n in version_str.split('.'))
+        except (ValueError, AttributeError):
+            return None
+    return None
