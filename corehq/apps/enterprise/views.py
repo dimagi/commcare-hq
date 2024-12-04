@@ -91,6 +91,7 @@ def platform_overview(request, domain):
             EnterpriseReport.MOBILE_USERS,
             EnterpriseReport.FORM_SUBMISSIONS,
             EnterpriseReport.ODATA_FEEDS,
+            EnterpriseReport.SMS,
         )],
         'metric_type': 'Platform Overview',
     })
@@ -131,8 +132,9 @@ def security_center(request, domain):
 @login_and_domain_required
 def enterprise_dashboard_total(request, domain, slug):
     kwargs = {}
-    if slug == EnterpriseReport.FORM_SUBMISSIONS:
-        kwargs = get_form_submission_report_kwargs(request)
+    date_range_slugs = [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS]
+    if slug in date_range_slugs:
+        kwargs = get_date_range_kwargs(request)
     try:
         report = EnterpriseReport.create(slug, request.account.id, request.couch_user, **kwargs)
     except TooMuchRequestedDataError as e:
@@ -179,8 +181,9 @@ def _get_export_filename(request, slug):
 @login_and_domain_required
 def enterprise_dashboard_email(request, domain, slug):
     kwargs = {}
-    if slug == EnterpriseReport.FORM_SUBMISSIONS:
-        kwargs = get_form_submission_report_kwargs(request)
+    date_range_slugs = [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS]
+    if slug in date_range_slugs:
+        kwargs = get_date_range_kwargs(request)
     try:
         report = EnterpriseReport.create(slug, request.account.id, request.couch_user, **kwargs)
     except TooMuchRequestedDataError as e:
@@ -196,7 +199,7 @@ def enterprise_dashboard_email(request, domain, slug):
     return JsonResponse({'message': message})
 
 
-def get_form_submission_report_kwargs(request):
+def get_date_range_kwargs(request):
     kwargs = {}
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
