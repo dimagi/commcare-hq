@@ -63,7 +63,7 @@ def validate_profile_required(profile_name, domain):
         )
 
 
-def validate_assigned_locations_has_users(domain, assigned_location_ids):
+def validate_assigned_locations_allow_users(domain, assigned_location_ids):
     error_message_location_not_has_users = _("These locations cannot have users assigned because of their "
                                              "organization level settings: {}.")
     try:

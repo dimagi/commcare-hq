@@ -22,7 +22,7 @@ from corehq.apps.users.dbaccessors import get_existing_usernames
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import normalize_username, raw_username
-from corehq.apps.users.validation import validate_assigned_locations_has_users
+from corehq.apps.users.validation import validate_assigned_locations_allow_users
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.views.utils import (
     user_can_access_invite
@@ -520,7 +520,7 @@ class LocationValidator(ImportValidator):
             user_access_error = self._validate_uploading_user_access(locs_being_assigned, user_result)
             location_cannot_have_users_error = None
             if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
-                location_cannot_have_users_error = self._validate_location_has_users(locs_being_assigned)
+                location_cannot_have_users_error = self._validate_locations_allow_users(locs_being_assigned)
             return user_access_error or location_cannot_have_users_error
 
     def _get_locs_ids_being_assigned(self, spec):
@@ -551,10 +551,10 @@ class LocationValidator(ImportValidator):
                 ', '.join(SQLLocation.objects.filter(
                     location_id__in=problem_location_ids).values_list('site_code', flat=True)))
 
-    def _validate_location_has_users(self, locs_ids_being_assigned):
+    def _validate_locations_allow_users(self, locs_ids_being_assigned):
         if not locs_ids_being_assigned:
             return
-        return validate_assigned_locations_has_users(self.domain, locs_ids_being_assigned)
+        return validate_assigned_locations_allow_users(self.domain, locs_ids_being_assigned)
 
 
 class UserRetrievalResult(NamedTuple):

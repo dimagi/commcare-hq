@@ -1110,9 +1110,9 @@ class SelectUserLocationForm(forms.Form):
         )
 
     def clean_assigned_locations(self):
-        from corehq.apps.users.validation import validate_assigned_locations_has_users
+        from corehq.apps.users.validation import validate_assigned_locations_allow_users
         location_ids = self.data.getlist('assigned_locations')
-        error = validate_assigned_locations_has_users(self.domain, location_ids)
+        error = validate_assigned_locations_allow_users(self.domain, location_ids)
         if error:
             raise forms.ValidationError(error)
         return location_ids
