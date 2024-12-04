@@ -513,22 +513,21 @@ class LocationValidator(ImportValidator):
         self.is_web_user_import = is_web_user_import
 
     def validate_spec(self, spec):
-        locs_being_assigned = self._get_locs_ids_being_assigned(spec)
-        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
+        if 'location_code' in spec:
+            locs_being_assigned = self._get_locs_ids_being_assigned(spec)
+            user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
 
-        user_access_error = self._validate_uploading_user_access(locs_being_assigned, user_result)
-        location_cannot_have_users_error = None
-        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
-            location_cannot_have_users_error = self._validate_location_has_users(locs_being_assigned)
-        return user_access_error or location_cannot_have_users_error
+            user_access_error = self._validate_uploading_user_access(locs_being_assigned, user_result)
+            location_cannot_have_users_error = None
+            if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
+                location_cannot_have_users_error = self._validate_location_has_users(locs_being_assigned)
+            return user_access_error or location_cannot_have_users_error
 
     def _get_locs_ids_being_assigned(self, spec):
         from corehq.apps.user_importer.importer import find_location_id
-        locs_ids_being_assigned = []
-        if 'location_code' in spec:
-            location_codes = (spec['location_code'] if isinstance(spec['location_code'], list)
-                              else [spec['location_code']])
-            locs_ids_being_assigned = find_location_id(location_codes, self.location_cache)
+        location_codes = (spec['location_code'] if isinstance(spec['location_code'], list)
+                          else [spec['location_code']])
+        locs_ids_being_assigned = find_location_id(location_codes, self.location_cache)
         return locs_ids_being_assigned
 
     def _validate_uploading_user_access(self, locs_ids_being_assigned, user_result):
@@ -545,13 +544,12 @@ class LocationValidator(ImportValidator):
 
         # 2. Ensure the user is only adding the user to/removing from *new locations* that they have permission
         # to access.
-        if locs_ids_being_assigned:
-            problem_location_ids = user_can_change_locations(self.domain, self.upload_user,
-                                                            current_locs, locs_ids_being_assigned)
-            if problem_location_ids:
-                return self.error_message_location_access.format(
-                    ', '.join(SQLLocation.objects.filter(
-                        location_id__in=problem_location_ids).values_list('site_code', flat=True)))
+        problem_location_ids = user_can_change_locations(self.domain, self.upload_user,
+                                                        current_locs, locs_ids_being_assigned)
+        if problem_location_ids:
+            return self.error_message_location_access.format(
+                ', '.join(SQLLocation.objects.filter(
+                    location_id__in=problem_location_ids).values_list('site_code', flat=True)))
 
     def _validate_location_has_users(self, locs_ids_being_assigned):
         if not locs_ids_being_assigned:
