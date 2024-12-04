@@ -600,7 +600,7 @@ class ContentForm(Form):
                     css_class="hqwebapp-select2",
                 ),
                 data_bind=(
-                    "visible:  $root.content() === '{ScheduleForm.CONTENT_SMS_SURVEY}' || $root.content() === '{ScheduleForm.CONTENT_CONNECT_SURVEY} || $root.content() === '{ScheduleForm.CONTENT_IVR_SURVEY}"
+                    f"visible:  $root.content() === '{ScheduleForm.CONTENT_SMS_SURVEY}' || $root.content() === '{ScheduleForm.CONTENT_CONNECT_SURVEY}' || $root.content() === '{ScheduleForm.CONTENT_IVR_SURVEY}'"
                 ),
             ),
             crispy.Div(
@@ -640,7 +640,7 @@ class ContentForm(Form):
                     ),
                     data_bind="visible: survey_reminder_intervals_enabled() === 'Y'",
                 ),
-                data_bind=f"visible: $root.content() === '{ScheduleForm.CONTENT_SMS_SURVEY}' || $root.content() === '{ScheduleForm.CONTENT_CONNECT_SURVEY}",
+                data_bind=f"visible: $root.content() === '{ScheduleForm.CONTENT_SMS_SURVEY}' || $root.content() === '{ScheduleForm.CONTENT_CONNECT_SURVEY}'",
             ),
             crispy.Div(
                 crispy.Field('ivr_intervals'),

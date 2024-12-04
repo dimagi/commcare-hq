@@ -1455,7 +1455,7 @@ class MessagingTab(UITab):
         if toggles.COMMCARE_CONNECT.enabled(self.domain):
             connect_urls.append({
                 'title': _('User Consent'),
-                'url': reverse(ConnectMesssagingUserView.urlname, args=[self.domain]),
+                'url': reverse(ConnectMessagingUserView.urlname, args=[self.domain]),
             })
 
     @property
