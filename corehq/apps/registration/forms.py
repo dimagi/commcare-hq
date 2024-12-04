@@ -594,7 +594,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         email = self.cleaned_data['email'].strip()
 
         from corehq.apps.registration.validation import AdminInvitesUserFormValidator
-        error = AdminInvitesUserFormValidator.validate_email(self.domain, email, self.request.method == 'POST')
+        error = AdminInvitesUserFormValidator.validate_email(self.domain, email)
         if error:
             raise forms.ValidationError(error)
         return email

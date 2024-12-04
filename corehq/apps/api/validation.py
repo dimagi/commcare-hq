@@ -10,6 +10,7 @@ from corehq.apps.user_importer.validation import (
     TableauGroupsValidator,
     TableauRoleValidator,
     CustomDataValidator,
+    EmailValidator,
 )
 from corehq.apps.users.validation import validate_primary_location_assignment
 from corehq.apps.registration.validation import AdminInvitesUserFormValidator
@@ -59,7 +60,13 @@ class WebUserResourceValidator():
         return custom_data_validator.validate_spec(spec)
 
     def validate_email(self, email, is_post):
-        return AdminInvitesUserFormValidator.validate_email(self.domain, email, is_post)
+        if is_post:
+            error = AdminInvitesUserFormValidator.validate_email(self.domain, email, is_post)
+            if error:
+                return error
+        email_validator = EmailValidator(self.domain, 'email')
+        spec = {'email': email}
+        return email_validator.validate_spec(spec)
 
     def validate_locations(self, editable_user, assigned_location_codes, primary_location_code):
         error = validate_primary_location_assignment(primary_location_code, assigned_location_codes)
