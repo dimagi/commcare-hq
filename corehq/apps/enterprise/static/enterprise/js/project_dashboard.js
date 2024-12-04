@@ -175,7 +175,11 @@ hqDefine("enterprise/js/project_dashboard", [
         const requestParams = {
             url: initialPageData.reverse("enterprise_dashboard_total", slug),
             success: function (data) {
-                $display.html(Number(data.total).toLocaleString());
+                if (typeof data.total === 'number') {
+                    $display.html(Number(data.total).toLocaleString());
+                } else {
+                    $display.html(data.total);
+                }
             },
             error: function (request) {
                 if (request.responseJSON) {
