@@ -148,6 +148,7 @@ class RequiredWebFieldsValidator(ImportValidator):
 
 class TableauRoleValidator(ImportValidator):
     _error_message = _("Invalid tableau role: '{}'. Please choose one of the following: {}")
+    valid_role_options = [e.value for e in TableauUser.Roles]
 
     def __init__(self, domain):
         super().__init__(domain)
@@ -158,9 +159,8 @@ class TableauRoleValidator(ImportValidator):
 
     @classmethod
     def validate_tableau_role(cls, tableau_role):
-        valid_role_options = [e.value for e in TableauUser.Roles]
-        if tableau_role is not None and tableau_role not in valid_role_options:
-            return cls._error_message.format(tableau_role, ', '.join(valid_role_options))
+        if tableau_role is not None and tableau_role not in cls.valid_role_options:
+            return cls._error_message.format(tableau_role, ', '.join(cls.valid_role_options))
 
 
 class TableauGroupsValidator(ImportValidator):
