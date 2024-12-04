@@ -353,10 +353,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                     device_app_meta = self.get_data_for_app(device.get('app_meta'), last_build.get('app_id'))
 
             if last_sub and last_sub.get('commcare_version'):
-                commcare_version = _format_commcare_version(last_sub.get('commcare_version'))
+                commcare_version = format_commcare_version(last_sub.get('commcare_version'))
             else:
                 if device and device.get('commcare_version', None):
-                    commcare_version = _format_commcare_version(device['commcare_version'])
+                    commcare_version = format_commcare_version(device['commcare_version'])
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
@@ -547,7 +547,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return format_html(f'<div>{"".join(html_nodes)}</div>')
 
 
-def _format_commcare_version(app_version_info):
+def format_commcare_version(app_version_info):
     commcare_version = (
         'CommCare {}'.format(app_version_info)
         if app_version_info
