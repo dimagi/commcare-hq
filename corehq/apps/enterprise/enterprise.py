@@ -447,7 +447,10 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             if domain_mobile_workers:
                 total_mobile_workers += domain_mobile_workers
                 total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_obj))
-        if not total_mobile_workers:
-            return '--'
-        percentage = (total_up_to_date / total_mobile_workers)
-        return f"{percentage * 100:.0f}%"
+        return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
+
+
+def _format_percentage_for_enterprise_tile(dividend, divisor):
+    if not divisor:
+        return '--'
+    return f"{dividend / divisor * 100:.1f}%"
