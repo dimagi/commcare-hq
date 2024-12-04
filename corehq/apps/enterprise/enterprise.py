@@ -7,9 +7,11 @@ from django.conf import settings
 
 from memoized import memoized
 
+from corehq.apps.reports.standard.deployments import _format_commcare_version
 from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
 from corehq.apps.enterprise.exceptions import EnterpriseReportError, TooMuchRequestedDataError
 from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.accounting.models import BillingAccount
@@ -34,6 +36,7 @@ class EnterpriseReport:
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
+    COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
@@ -67,6 +70,8 @@ class EnterpriseReport:
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
+        elif slug == cls.COMMCARE_VERSION_COMPLIANCE:
+            report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
@@ -383,3 +388,70 @@ class EnterpriseODataReport(EnterpriseReport):
             )
 
         return rows
+
+
+class EnterpriseCommCareVersionReport(EnterpriseReport):
+    title = _('CommCare Client Version Compliance')
+    metric = _('%% of mobile workers on the latest commcare client version ')
+
+    def __init__(self, account, couch_user, **kwargs):
+        super().__init__(account, couch_user, **kwargs)
+
+    @property
+    def headers(self):
+        return [
+            _('Mobile Worker'),
+            _('Project Space'),
+            _('Latest Version Available at Submission'),
+            _('Version in Use'),
+
+        ]
+
+    def rows_for_domain(self, domain_obj):
+        rows = []
+
+        for user in get_all_user_rows(domain_obj.name,
+                                    include_web_users=False,
+                                    include_mobile_users=True,
+                                    include_inactive=False,
+                                    include_docs=True):
+            user = CouchUser.wrap_correctly(user['doc'])
+            last_submission = user.reporting_metadata.last_submission_for_user
+            last_used_device = user.last_device
+
+            version_in_use = _('Unknown')
+            date_of_use = None
+
+            # If the user hasn't submitted a form, we use the last used device
+            if last_submission and last_submission.commcare_version:
+                version_in_use = _format_commcare_version(last_submission.commcare_version)
+                date_of_use = last_submission.submission_date
+            elif last_used_device and last_used_device.commcare_version:
+                version_in_use = _format_commcare_version(last_used_device['commcare_version'])
+                date_of_use = last_used_device.last_used
+
+            latest_version_at_time_of_use = get_latest_version_at_time(date_of_use)
+
+            if is_out_of_date(version_in_use, latest_version_at_time_of_use):
+                rows.append([
+                    user.username,
+                    domain_obj.name,
+                    latest_version_at_time_of_use,
+                    version_in_use,
+                ])
+
+        return rows
+
+    @property
+    def total(self):
+        total_mobile_workers = 0
+        total_up_to_date = 0
+        for domain_obj in self.domains():
+            domain_mobile_workers = get_mobile_user_count(domain_obj.name, include_inactive=False)
+            if domain_mobile_workers:
+                total_mobile_workers += domain_mobile_workers
+                total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_obj))
+        if not total_mobile_workers:
+            return '--'
+        percentage = (total_up_to_date / total_mobile_workers)
+        return f"{percentage * 100:.0f}%"
