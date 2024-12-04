@@ -1,28 +1,8 @@
 from django.test import SimpleTestCase
-from corehq.apps.builds.utils import _parse_version, is_out_of_date
+from corehq.apps.builds.utils import is_out_of_date
 
 
 class TestVersionUtils(SimpleTestCase):
-    def test_parse_version(self):
-        test_cases = [
-            ('2.53.0', (2, 53, 0)),
-            ('2.53', (2, 53)),
-            ('1.0.0', (1, 0, 0)),
-            ('7', (7,)),
-            ('', None),
-            (None, None),
-            ('2.53.0.invalid', None),
-            ('not_a_version', None),
-        ]
-
-        for version, expected in test_cases:
-            with self.subTest(version=version, expected=expected):
-                result = _parse_version(version)
-                self.assertEqual(
-                    result,
-                    expected,
-                    f"Failed to parse '{version}'. Expected {expected}, got {result}"
-                )
 
     def test_is_out_of_date(self):
         test_cases = [
