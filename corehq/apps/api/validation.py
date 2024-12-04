@@ -61,7 +61,7 @@ class WebUserResourceValidator():
 
     def validate_email(self, email, is_post):
         if is_post:
-            error = AdminInvitesUserFormValidator.validate_email(self.domain, email, is_post)
+            error = AdminInvitesUserFormValidator.validate_email(self.domain, email)
             if error:
                 return error
         email_validator = EmailValidator(self.domain, 'email')
