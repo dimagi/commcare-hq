@@ -41,6 +41,7 @@ class Command(DomainAppsOperationCommand):
             return
 
         if self._has_app_dependencies(app_builds[0]['value']):
+            metrics_counter('commcare.app_build.dependencies_added')
             return
 
         for build_doc in app_builds[1:]:
