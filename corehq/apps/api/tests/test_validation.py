@@ -48,7 +48,7 @@ class TestWebUserResourceValidator(TestCase):
         params = {"email": "test@example.com", "role": "Admin", "profile": "some_profile"}
         self.assertIsNone(self.validator.validate_parameters(params))
 
-    @patch('corehq.apps.accounting.utils.domain_has_privilege', return_value=False)
+    @patch('corehq.apps.registration.validation.domain_has_privilege', return_value=False)
     def test_validate_parameters_without_profile_permission(self, mock_domain_has_privilege):
         params = {"email": "test@example.com", "role": "Admin", "profile": "some_profile"}
         self.assertEqual(self.validator.validate_parameters(params),
