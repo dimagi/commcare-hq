@@ -1705,7 +1705,6 @@ DATA_MIGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
 DISABLE_MOBILE_ENDPOINTS = StaticToggle(
     'disable_mobile_endpoints',
     'Disable mobile endpoints for form submissions and restores',
@@ -1719,6 +1718,12 @@ DISABLE_MOBILE_ENDPOINTS = StaticToggle(
     )
 )
 
+OPEN_SUBMISSION_ENDPOINT = StaticToggle(
+    'open_submission_endpoint',
+    'Leave submission endpoint open to let old APIs keep working',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+)
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
@@ -2467,17 +2472,6 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     """
 )
 
-GOOGLE_SHEETS_INTEGRATION = StaticToggle(
-    'google-sheet-integration',
-    'Unlock the Google Sheets view in Exports',
-    TAG_SAAS_CONDITIONAL,
-    namespaces=[NAMESPACE_USER],
-    description="""
-    Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
-    on the Exports page.
-    """
-)
-
 APP_DEPENDENCIES = StaticToggle(
     slug='app-dependencies',
     label='Set Android app dependencies that must be installed before using a CommCare app',
@@ -2607,13 +2601,28 @@ ATTENDANCE_TRACKING = StaticToggle(
     save_fn=_handle_attendance_tracking_role,
 )
 
+
+def _handle_geospatial_es_index(domain, is_enabled):
+    from corehq.apps.geospatial.tasks import index_es_docs_with_location_props
+    from corehq.apps.geospatial.utils import get_celery_task_tracker
+    from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
+
+    if is_enabled:
+        celery_task_tracker = get_celery_task_tracker(domain, ES_INDEX_TASK_HELPER_BASE_KEY)
+        # This check simply enforces that each domain's task is handled in serial.
+        if not celery_task_tracker.is_active():
+            index_es_docs_with_location_props.delay(domain)
+
+
 MICROPLANNING = StaticToggle(
     'microplanning',
     'Allows access to Microplanning GIS functionality',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description='Additional views will be added allowing for visually viewing '
-                'and assigning cases on a map.'
+                'and assigning cases on a map.',
+    save_fn=_handle_geospatial_es_index,
+
 )
 
 COMMCARE_CONNECT = StaticToggle(

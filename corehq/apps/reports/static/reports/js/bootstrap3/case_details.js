@@ -14,6 +14,7 @@ hqDefine("reports/js/bootstrap3/case_details", [
     'reports/js/bootstrap3/readable_form',
     'bootstrap',    // needed for $.tab
     'jquery-memoized-ajax/jquery.memoized.ajax.min',
+    'commcarehq',
 ], function (
     $,
     ko,

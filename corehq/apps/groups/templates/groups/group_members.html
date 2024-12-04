@@ -11,7 +11,7 @@
   </style>
 {% endblock %}
 
-{% requirejs_main_b5 "groups/js/group_members" %}
+{% js_entry "groups/js/group_members" %}
 
 {% block page_title %}
   {% if request.is_view_only %}
@@ -81,7 +81,7 @@
                   data-html="true"
                   data-content="{% blocktrans %}
                         For all active mobile workers in this group, and for each phone number, this will
-                        initiate an SMS verification workflow. When a user replies to the SMS< their phone
+                        initiate an SMS verification workflow. When a user replies to the SMS, their phone
                         number will be verified.<br><br>If the phone number is already verified or
                         if the phone number is already in use by another contact in the system, nothing
                         will happen. If the phone number is pending verification, the verification SMS

@@ -1,4 +1,4 @@
-hqDefine("enterprise/js/enterprise_dashboard", [
+hqDefine("enterprise/js/project_dashboard", [
     'jquery',
     'knockout',
     'underscore',
@@ -232,6 +232,7 @@ hqDefine("enterprise/js/enterprise_dashboard", [
     }
 
     $(function () {
+        const metricType = initialPageData.get('metric_type');
         const datePicker = tempusDominus.createDefaultDateRangePicker(
             document.getElementById("id_date_range"),
             moment().subtract(30, "days"),
@@ -256,7 +257,7 @@ hqDefine("enterprise/js/enterprise_dashboard", [
             dateRangeModal
         );
 
-        kissmetrics.track.event("[Enterprise Dashboard] Visited page");
+        kissmetrics.track.event(`[${metricType}] Visited page`);
         $(".report-panel").each(function () {
             var $element = $(this),
                 slug = $element.data("slug");
@@ -264,7 +265,7 @@ hqDefine("enterprise/js/enterprise_dashboard", [
             updateDisplayTotal($element);
 
             $element.find(".btn-primary").click(function () {
-                kissmetrics.track.event("[Enterprise Dashboard] Clicked Email Report for " + slug);
+                kissmetrics.track.event(`[${metricType}] Clicked Email Report for ` + slug);
                 var $button = $(this);
                 $button.disableButton();
                 const requestParams = {

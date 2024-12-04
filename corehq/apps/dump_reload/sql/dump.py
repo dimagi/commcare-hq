@@ -215,7 +215,6 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('domain.AllowedUCRExpressionSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.DomainAuditRecordEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.OperatorCallLimitSettings', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('domain.ProjectLimit', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.SMSAccountConfirmationSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.SuperuserProjectEntryRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.TransferDomainRequest', SimpleFilter('domain')),

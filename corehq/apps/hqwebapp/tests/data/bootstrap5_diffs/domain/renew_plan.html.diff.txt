@@ -8,8 +8,8 @@
  {% load compress %}
  {% load menu_tags %}
  
--{% requirejs_main 'accounting/js/renew_plan_selection' %}
-+{% requirejs_main_b5 'accounting/js/renew_plan_selection' %}
+-{% js_entry_b3 'accounting/js/renew_plan_selection' %}
++{% js_entry 'accounting/js/renew_plan_selection' %}
  
  {% block plan_breadcrumbs %}{% endblock %}
  

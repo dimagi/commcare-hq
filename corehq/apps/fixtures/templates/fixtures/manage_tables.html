@@ -1,7 +1,8 @@
 {% extends 'fixtures/fixtures_base.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% requirejs_main "fixtures/js/lookup-manage" %}
+
+{% js_entry_b3 "fixtures/js/lookup-manage" %}
 
 {% block page_title %}
   {% trans 'Manage Tables' %}
