@@ -392,7 +392,7 @@ class EnterpriseODataReport(EnterpriseReport):
 
 class EnterpriseCommCareVersionReport(EnterpriseReport):
     title = gettext_lazy('CommCare Client Version Compliance')
-    metric = gettext_lazy('%% of mobile workers on the latest commcare client version ')
+    description = gettext_lazy('%% of mobile workers on the latest commcare client version ')
 
     @property
     def headers(self):
