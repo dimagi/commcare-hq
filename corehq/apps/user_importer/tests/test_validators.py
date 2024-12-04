@@ -407,7 +407,11 @@ class TestLocationValidator(LocationHierarchyTestCase):
                      'location_code': [self.locations['Cambridge'].site_code,
                                        self.locations['Middlesex'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_location_not_has_users.format(
+        error_message_location_not_has_users = (
+            "These locations cannot have users assigned because of their "
+            "organization level settings: {}."
+        )
+        assert validation_result == error_message_location_not_has_users.format(
             self.locations['Cambridge'].site_code)
 
     @classmethod
