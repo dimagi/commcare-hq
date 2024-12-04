@@ -4487,11 +4487,14 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                 profile.get('features', {}).get('dependencies')
             )
 
-        last_build = get_latest_build_doc(self.domain, self.id)
-        if not last_build:
-            return
+        new_build_has_dependencies = has_dependencies(new_build)
 
-        if has_dependencies(last_build) and not has_dependencies(new_build):
+        last_build = get_latest_build_doc(self.domain, self.id)
+        last_build_has_dependencies = has_dependencies(last_build) if last_build else False
+
+        if not last_build_has_dependencies and new_build_has_dependencies:
+            metrics_counter('commcare.app_build.dependencies_added')
+        elif last_build_has_dependencies and not new_build_has_dependencies:
             metrics_counter('commcare.app_build.dependencies_removed')
 
     def convert_app_to_build(self, copy_of, user_id, comment=None):
