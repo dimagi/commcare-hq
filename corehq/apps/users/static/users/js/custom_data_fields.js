@@ -32,11 +32,12 @@ hqDefine("users/js/custom_data_fields", [
         self.profile_slug = options.profile_slug;
         self.slugs = options.slugs;
         self.can_edit_original_profile = options.can_edit_original_profile;
+        self.initVals = options.initial_values;
 
         var originalProfileFields = {},
             originalProfileId,
             originalProfile;
-        if (options.user_data) {
+        if (Object.keys(options.user_data).length) {
             originalProfileId = options.user_data[options.profile_slug];
             if (originalProfileId) {
                 originalProfile = self.profiles[originalProfileId];
@@ -44,11 +45,19 @@ hqDefine("users/js/custom_data_fields", [
                     originalProfileFields = originalProfile.fields;
                 }
             }
+        } else if (Object.keys(self.initVals).length) {
+            originalProfileId = self.initVals['profile_id'];
+            originalProfile = self.profiles[originalProfileId];
+            if (originalProfile) {
+                originalProfileFields = originalProfile.fields;
+            }
         }
         _.each(self.slugs, function (slug) {
-            self[slug] = fieldModel({
-                value: options.user_data[slug] || originalProfileFields[slug],
-            });
+            var value = options.user_data[slug] || originalProfileFields[slug];
+            if (!value) {
+                value = self.initVals[slug];
+            }
+            self[slug] = fieldModel({value: value});
         });
 
         self.serialize = function () {
