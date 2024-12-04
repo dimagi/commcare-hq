@@ -394,9 +394,6 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
     title = _('CommCare Client Version Compliance')
     metric = _('%% of mobile workers on the latest commcare client version ')
 
-    def __init__(self, account, couch_user, **kwargs):
-        super().__init__(account, couch_user, **kwargs)
-
     @property
     def headers(self):
         return [
