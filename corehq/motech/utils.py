@@ -137,10 +137,14 @@ def reencrypt_ecb_to_cbc_mode(encrypted_text, existing_prefix=None):
     """
     Re-encrypt a message that was encrypted using ECB mode to CBC mode.
     """
+    if not encrypted_text:
+        return encrypted_text
+
     if existing_prefix and encrypted_text.startswith(existing_prefix):
         ciphertext = encrypted_text[len(existing_prefix):]
     else:
         ciphertext = encrypted_text
+
     new_ciphertext = b64_aes_cbc_encrypt(b64_aes_decrypt(ciphertext))
     return f'${ALGO_AES_CBC}${new_ciphertext}'
 

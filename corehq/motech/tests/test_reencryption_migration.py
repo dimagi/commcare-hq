@@ -14,16 +14,23 @@ class TestReencryptionMigration(SimpleTestCase):
             domain='example.com',
             username='testuser',
         )
-        self.plaintext_password = 'testpassword'
-        self.email_settings.password = self.plaintext_ecb_password(self.plaintext_password)
 
     def plaintext_ecb_password(self, plaintext):
         ciphertext = b64_aes_encrypt(plaintext)
         return f'${ALGO_AES}${ciphertext}'
 
     def test_reencrypt_ecb_to_cbc_mode_match_plaintext(self):
+        plaintext_password = 'testpassword'
+        self.email_settings.password = self.plaintext_ecb_password(plaintext_password)
         reencrypted_password = reencrypt_ecb_to_cbc_mode(self.email_settings.password, f'${ALGO_AES}$')
 
         self.email_settings.password = reencrypted_password
 
-        self.assertEqual(self.plaintext_password, self.email_settings.plaintext_password)
+        self.assertEqual(plaintext_password, self.email_settings.plaintext_password)
+
+    def test_empty_password_reencrypt_cbc_to_ecb_mode_match_plaintext(self):
+        plaintext_password = ''
+        self.email_settings.password = plaintext_password
+        reencrypted_password = reencrypt_ecb_to_cbc_mode(self.email_settings.password, f'${ALGO_AES}$')
+        self.email_settings.password = reencrypted_password
+        self.assertEqual(plaintext_password, reencrypted_password)
