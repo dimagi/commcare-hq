@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
                 ('forms_submitted_in_last_90_days', models.IntegerField()),
                 ('first_form_submission', models.DateTimeField()),
                 ('most_recent_form_submission', models.DateTimeField()),
-                ('three_hundreth_form_submission', models.DateTimeField()),
+                ('three_hundredth_form_submission', models.DateTimeField()),
                 ('total_sms', models.IntegerField()),
                 ('has_used_sms', models.BooleanField()),
                 ('has_used_sms_in_last_30_days', models.BooleanField()),

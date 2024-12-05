@@ -211,7 +211,7 @@ class DomainMetrics(models.Model):
 
     first_form_submission = models.DateTimeField()
     most_recent_form_submission = models.DateTimeField()
-    three_hundreth_form_submission = models.DateTimeField()
+    three_hundredth_form_submission = models.DateTimeField()
 
     # SMS Metrics
     total_sms = models.IntegerField()
