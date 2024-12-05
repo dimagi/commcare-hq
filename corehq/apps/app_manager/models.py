@@ -4478,18 +4478,14 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         """
 
         def has_dependencies(build):
-            if isinstance(build, Application):
-                profile = build.profile
-            else:
-                profile = build.get('profile', {})
-
             return bool(
-                profile.get('features', {}).get('dependencies')
+                build.profile.get('features', {}).get('dependencies')
             )
 
         new_build_has_dependencies = has_dependencies(new_build)
 
         last_build = get_latest_build_doc(self.domain, self.id)
+        last_build = ApplicationBase.wrap(last_build) if last_build else None
         last_build_has_dependencies = has_dependencies(last_build) if last_build else False
 
         if not last_build_has_dependencies and new_build_has_dependencies:
