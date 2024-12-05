@@ -58,6 +58,7 @@ def test_setup_tolerates_existing_index():
 
     @es_test(requires=[cats_adapter])
     class TestCatsRequired(SimpleTestCase):
+
         def test_index_exists(self):
             assert_index_exists(cats_adapter)
 
@@ -94,6 +95,11 @@ def test_setup_cleanup_class_index():
 
     @es_test(requires=[pigs_adapter])
     class Test(SimpleTestCase):
+
+        @classmethod
+        def setUpClass(cls):
+            pass
+
         def test_index_exists(self):
             assert_index_exists(pigs_adapter)
 
