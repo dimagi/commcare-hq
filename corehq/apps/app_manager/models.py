@@ -4474,7 +4474,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def check_build_dependencies(self, new_build):
         """
-        Reports whether the app dependencies have been removed.
+        Reports whether the app dependencies have been added or removed.
         """
 
         def has_dependencies(build):
