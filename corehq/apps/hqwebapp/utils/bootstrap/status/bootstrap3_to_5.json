@@ -58,7 +58,8 @@
       "admin/commtrack_settings.html",
       "admin/partials/case_search_templates.html",
       "admin/project_limits.html",
-      "admin/sms_settings.html"
+      "admin/sms_settings.html",
+      "internal_settings.html"
     ]
   },
   "dropbox": {
