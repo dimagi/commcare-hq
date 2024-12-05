@@ -57,7 +57,7 @@ class Command(DomainAppsOperationCommand):
             endkey=[domain, app_id],
             descending=True,
             reduce=False,
-            include_docs=False,
+            include_docs=True,
         ).all()
 
     def _has_app_dependencies(self, app_build):
