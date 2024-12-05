@@ -256,6 +256,23 @@ class SchedulingRecipientTest(TestCase):
     def user_ids(self, users):
         return [user.get_id for user in users]
 
+    def _create_schedule(self,
+                         include_descendant_locations=False,
+                         location_type_filter=None,
+                         user_data_filter=None):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'})
+        )
+        schedule.include_descendant_locations = include_descendant_locations
+        if location_type_filter:
+            schedule.location_type_filter = location_type_filter
+        if user_data_filter:
+            schedule.user_data_filter = user_data_filter
+        schedule.save()
+        return schedule
+
     def test_specific_case_recipient(self):
         with create_case(self.domain, 'person') as case:
             instance = ScheduleInstance(
@@ -558,13 +575,7 @@ class SchedulingRecipientTest(TestCase):
                 self.assertIsNone(instance.recipient)
 
     def test_expand_location_recipients_without_descendants(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.include_descendant_locations = False
-        schedule.save()
+        schedule = self._create_schedule()
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
@@ -589,13 +600,7 @@ class SchedulingRecipientTest(TestCase):
         )
 
     def test_expand_location_recipients_with_descendants(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.include_descendant_locations = True
-        schedule.save()
+        schedule = self._create_schedule(include_descendant_locations=True)
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
@@ -609,14 +614,10 @@ class SchedulingRecipientTest(TestCase):
         )
 
     def test_expand_location_recipients_with_location_type_filter(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
+        schedule = self._create_schedule(
+            include_descendant_locations=True,
+            location_type_filter=[self.city_location.location_type_id]
         )
-        schedule.include_descendant_locations = True
-        schedule.location_type_filter = [self.city_location.location_type_id]
-        schedule.save()
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
@@ -630,13 +631,7 @@ class SchedulingRecipientTest(TestCase):
         )
 
     def test_expand_location_recipients_secondary_does_not_match(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.include_descendant_locations = False
-        schedule.save()
+        schedule = self._create_schedule()
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
@@ -651,13 +646,7 @@ class SchedulingRecipientTest(TestCase):
 
     @flag_enabled('INCLUDE_ALL_LOCATIONS')
     def test_expand_location_recipients_secondary_matches(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.include_descendant_locations = False
-        schedule.save()
+        schedule = self._create_schedule()
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
@@ -671,11 +660,7 @@ class SchedulingRecipientTest(TestCase):
         )
 
     def test_expand_group_recipients(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
+        schedule = self._create_schedule()
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
             timed_schedule_id=schedule.schedule_id,
@@ -688,7 +673,9 @@ class SchedulingRecipientTest(TestCase):
         )
 
     def test_mobile_worker_recipients_with_user_data_filter(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
+        schedule = self._create_schedule(user_data_filter={'role': ['nurse']})
+
+        TimedSchedule.create_simple_daily_schedule(
             self.domain,
             TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'})
@@ -708,13 +695,7 @@ class SchedulingRecipientTest(TestCase):
         )
 
     def test_web_user_recipient_with_user_data_filter(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.user_data_filter = {'role': ['nurse']}
-        schedule.save()
+        schedule = self._create_schedule(user_data_filter={'role': ['nurse']})
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
@@ -738,14 +719,7 @@ class SchedulingRecipientTest(TestCase):
     def test_case_group_recipient_with_user_data_filter(self):
         # The user data filter should have no effect here because all
         # the recipients are cases.
-
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.user_data_filter = {'role': ['nurse']}
-        schedule.save()
+        schedule = self._create_schedule(user_data_filter={'role': ['nurse']})
 
         with create_case(self.domain, 'person') as case:
             case_group = CommCareCaseGroup(domain=self.domain, cases=[case.case_id])
