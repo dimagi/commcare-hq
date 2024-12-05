@@ -178,7 +178,6 @@ class DomainMetrics(models.Model):
     apps = models.IntegerField()
     apps_with_icon = models.IntegerField()
     apps_with_multiple_languages = models.IntegerField()
-    has_app = models.BooleanField()  # duplicate of bool(apps)
 
     # User Metrics
     mobile_workers = models.IntegerField()
@@ -215,8 +214,6 @@ class DomainMetrics(models.Model):
 
     # SMS Metrics
     total_sms = models.IntegerField()
-    has_used_sms = models.BooleanField()  # duplicate of bool(total_sms)
-    has_used_sms_in_last_30_days = models.BooleanField()
     sms_in_last_30_days = models.IntegerField()
     sms_in_last_60_days = models.IntegerField()
     sms_in_last_90_days = models.IntegerField()
@@ -238,3 +235,16 @@ class DomainMetrics(models.Model):
     custom_exports = models.IntegerField()
     deid_exports = models.IntegerField()
     saved_exports = models.IntegerField()
+
+    # Calculated properties
+    @property
+    def has_app(self):
+        return bool(self.apps)
+
+    @property
+    def has_used_sms(self):
+        return bool(self.total_sms)
+
+    @property
+    def has_used_sms_in_last_30_days(self):
+        return bool(self.sms_in_last_30_days)
