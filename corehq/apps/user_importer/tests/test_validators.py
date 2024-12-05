@@ -355,6 +355,10 @@ class TestLocationValidator(LocationHierarchyTestCase):
         validation_result = self.validator.validate_spec(user_spec)
         assert validation_result == self.validator.error_message_user_access
 
+        user_spec = {'username': self.editable_user.username}
+        validation_result = self.validator.validate_spec(user_spec)
+        assert validation_result == self.validator.error_message_user_access
+
     def test_cant_edit_commcare_user(self):
         self.cc_user_validator = LocationValidator(self.domain, self.upload_user,
                                                 SiteCodeToLocationCache(self.domain), False)
@@ -363,6 +367,10 @@ class TestLocationValidator(LocationHierarchyTestCase):
         user_spec = {'user_id': self.editable_cc_user._id,
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
+        validation_result = self.cc_user_validator.validate_spec(user_spec)
+        assert validation_result == self.validator.error_message_user_access
+
+        user_spec = {'user_id': self.editable_cc_user._id}
         validation_result = self.cc_user_validator.validate_spec(user_spec)
         assert validation_result == self.validator.error_message_user_access
 
