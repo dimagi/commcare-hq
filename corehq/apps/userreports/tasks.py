@@ -97,8 +97,17 @@ def rebuild_indicators(
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     send = limit == -1
+    rows_count_before_rebuild = None
+    table_exists_before_rebuild = None
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         adapter = get_indicator_adapter(config)
+
+        print(f"BEFORE REBUILD: Datasource ID: {config.get_id}, domain: {config.domain}")
+        table_exists_before_rebuild = adapter.table_exists
+        print("table_exists", table_exists_before_rebuild)
+        if adapter.table_exists:
+            rows_count_before_rebuild = adapter.get_query_object().count()
+            print(f"Rows Count: {rows_count_before_rebuild}")
 
         if engine_id:
             if getattr(adapter, 'all_adapters', None):
@@ -120,6 +129,49 @@ def rebuild_indicators(
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
         adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
         _iteratively_build_table(config, limit=limit)
+        # TODO THIS is called by multiple places, we want only for ucr ones
+        _capture_ucr_metrics(config, adapter, table_exists_before_rebuild, rows_count_before_rebuild)
+
+
+def _capture_ucr_metrics(config, adapter, table_exists_before_rebuild, rows_count_before_rebuild):
+    try:
+        print(f"AFTER REBUILD: Datasource ID: {config.get_id}, domain: {config.domain}")
+
+        # NOTE1 The rebuild_indicators method is also called during first time creation from Report Builder UI.
+        # This is most probably because of the preview thing (temp table).
+        # Not called when directly adding data source. In this case, when a new row is added or
+        # a datasource is rebuild manually then it is called.
+        # We need to ignore in this case
+
+        # This indicates that this is a true rebuild i.e.
+        # table is not being built for first time after datasource creation
+        if table_exists_before_rebuild:
+            # Metric 1- Number of Days between Data Data Source Created and Last Rebuild Date - domain tag.
+            # TODO Need to check if we can create datasource from elsewhere where we do not store action log
+            from corehq.apps.userreports.models import DataSourceActionLog
+            date_created = DataSourceActionLog.objects.filter(indicator_config_id=config.get_id).earliest(
+                'date_created')
+            no_of_days = (datetime.utcnow() - date_created.date_created).days
+            print(f"Number of Days between Data Data Source Created and Last Rebuild Date", no_of_days)
+            print(f"initiated {config.meta.build.initiated} , Finished: {config.meta.build.finished},"
+                  f" finished_in_place: {config.meta.build.finished_in_place},"
+                  f" Rows Count: {adapter.get_query_object().count()}")
+
+            # Metric 3 - Number of Reports using the data source. Gauge Metric. Domain tag
+            # Use the current logic here
+            # TODO - figure out the right place for this
+
+            # Metric 5 - Number of failures per Data Source. Gauge Metric. Domain tag
+            # TODO Figure out how to do this
+
+            # Metric 8 - Count of data sources when there is rows increase after a rebuild. Domain tag
+            # Can do only for non synchronous rebuild
+            if not config.asynchronous:
+                rows_count_after_rebuild = adapter.get_query_object().count()
+                if rows_count_after_rebuild > rows_count_before_rebuild:
+                    metrics_counter('commcare.ucr.datasource_increase_in_rows', tags={'domain': config.domain})
+    except Exception as err:
+        print(err)
 
 
 @serial_task(

@@ -17,6 +17,7 @@ from corehq.apps.userreports.models import guess_data_source_type
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import JsonField, ReportDataSourceField
 from corehq.apps.userreports.util import get_table_name
+from corehq.util.metrics import metrics_gauge
 
 
 class DocumentFormBase(forms.Form):
@@ -129,8 +130,19 @@ class ConfigurableReportEditForm(DocumentFormBase):
         self.instance.report_meta.edited_manually = True
         if toggles.AGGREGATE_UCRS.enabled(self.instance.domain):
             self.instance.data_source_type = guess_data_source_type(self.instance.config_id)
-
+        if 'config_id' in self.changed_data:
+            self._ucr_datadog_metrics()
         return super(ConfigurableReportEditForm, self).save(commit)
+
+    def _ucr_datadog_metrics(self):
+        # TODO Ignore exceptions
+        from corehq.apps.userreports.util import get_configurable_and_static_reports_by_datasource
+        # Old Datasource
+        reports = get_configurable_and_static_reports_by_datasource(self.instance.domain, data_source_id=self.instance.config.get_id)
+        metrics_gauge('commcare.ucr.data_source_reports_count', len(reports)-1,tags={'domain': self.instance.domain})
+        # New Datasource
+        reports = get_configurable_and_static_reports_by_datasource(self.instance.domain, data_source_id=self.data['config_id'])
+        metrics_gauge('commcare.ucr.data_source_reports_count', len(reports)+1, tags={'domain': self.instance.domain})
 
 
 DOC_TYPE_CHOICES = (

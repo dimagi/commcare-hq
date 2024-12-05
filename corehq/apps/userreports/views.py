@@ -27,6 +27,7 @@ from no_exceptions.exceptions import HttpException
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -327,7 +328,6 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
                 'edit_configurable_report', args=[self.domain, self.config._id])
             )
         return self.get(request, *args, **kwargs)
-
 
 class EditConfigReportView(BaseEditConfigReportView):
     urlname = 'edit_configurable_report'
@@ -1262,6 +1262,30 @@ class EditDataSourceView(BaseEditDataSourceView):
     def page_name(self):
         return "Edit {}".format(self.config.display_name)
 
+    def post(self, request, *args, **kwargs):
+        # TODO Make sure this is only for ucr edits
+        print("SAVING DATASOURCE")
+        old_filters = self.config.configured_filter
+        old_columns_count = len(self.config.columns_by_id)
+        print("Before: Count of Columns", len(self.config.columns_by_id))
+        print("Before: Filters", self.config.configured_filter)
+
+        return_value = super().post(request, *args, **kwargs)
+        new_config = get_datasource_config_or_404(self.config_id, self.domain)[0]
+        print("After: Columns count", len(new_config.columns_by_id))
+        print("After: Filters", new_config.configured_filter)
+        print("filters changes", old_filters != new_config.configured_filter)
+        print("Checking for Memoized cols length",  len(self.config.columns_by_id))
+
+        # Metric 6 - Count of data sources with a configured filter change after a rebuild. Counter Metric. Domain tag
+        if old_filters != new_config.configured_filter:
+            metrics_counter('commcare.ucr.datasource_change_in_filters', tags={'domain': self.domain})
+        # Metric 7 - Count of data sources when there is columns increase after a rebuild. Counter Metric. Domain tag
+        if len(new_config.columns_by_id) > old_columns_count:
+            metrics_counter('commcare.ucr.datasource_increase_in_columns', tags={'domain': self.domain})
+
+        return return_value
+
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
@@ -1343,12 +1367,30 @@ def rebuild_data_source(request, domain, config_id):
             config.display_name
         )
     )
-
+    existing_rows_count = _get_rows_count(config)
     rebuild_indicators.delay(config_id, request.user.username, domain=domain)
+    _ucr_metrics_datadog(domain, config, existing_rows_count)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
 
+
+def _get_rows_count(config):
+    adapter = get_indicator_adapter(config)
+    if adapter.table_exists:
+        return adapter.get_query_object().count()
+
+
+def _ucr_metrics_datadog(domain, config, existing_rows_count):
+    # TODO Ignore exception
+    # Metric 2 - Data Source Rebuild Count by Date - Simple send count event. Counter Metric. Domain tag
+    metrics_counter('commcare.ucr.rebuild_datasource_count', tags={'domain': domain})
+    # Metric 4 - Number of columns during each rebuild. Gauge Metric. Domain tag
+    metrics_gauge(
+        'commcare.ucr.rebuild_datasource_columns_count',
+        len(config.columns_by_id),
+        tags={'domain': domain}
+    )
 
 def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
     if datasource_configuration.referenced_doc_type == 'CommCareCase':
