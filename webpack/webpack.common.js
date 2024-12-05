@@ -7,7 +7,8 @@ const hqPlugins = require('./plugins');
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
-    "jquery": "jquery/dist/jquery.min",
+    "jquery": require.resolve('jquery'),
+    "langcodes/js/langcodes": path.resolve("submodules/langcodes/static/langcodes/js/langcodes"),
 
     // todo after completing requirejs migration,
     //  remove this file and the yarn modernizr post-install step
@@ -85,6 +86,7 @@ module.exports = {
         new webpack.ProvidePlugin({
             '$': 'jquery',
             'jQuery': 'jquery',  // needed for bootstrap to work
+            'window.jQuery': 'jquery',  // needed for some third-party libraries that depend on jQuery, such as multiselect
         }),
         new hqPlugins.EntryChunksPlugin(),
     ],

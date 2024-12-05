@@ -108,7 +108,9 @@ def login_and_domain_required(view_func):
 
         if couch_user.is_member_of(domain_obj, allow_enterprise=True):
             if _is_missing_two_factor(view_func, req):
-                return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
+                return TemplateResponse(request=req,
+                                        template='two_factor/core/bootstrap3/otp_required.html',
+                                        status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
             elif is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj):

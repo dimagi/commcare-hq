@@ -1,4 +1,5 @@
 import re
+from django.db.models import Count
 from datetime import datetime, timedelta
 
 from django.utils.translation import gettext as _
@@ -20,6 +21,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
+from corehq.apps.sms.models import SMS, OUTGOING, INCOMING
 from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
     get_mobile_user_count,
@@ -34,6 +36,7 @@ class EnterpriseReport:
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
+    SMS = 'sms'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
@@ -67,6 +70,8 @@ class EnterpriseReport:
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
+        elif slug == cls.SMS:
+            report = EnterpriseSMSReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
@@ -383,3 +388,67 @@ class EnterpriseODataReport(EnterpriseReport):
             )
 
         return rows
+
+
+class EnterpriseSMSReport(EnterpriseReport):
+    title = gettext_lazy('SMS Usage')
+    MAX_DATE_RANGE_DAYS = 90
+
+    def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30):
+        super().__init__(account, couch_user)
+
+        if not end_date:
+            end_date = datetime.utcnow()
+        elif isinstance(end_date, str):
+            end_date = datetime.fromisoformat(end_date)
+
+        if start_date:
+            if isinstance(start_date, str):
+                start_date = datetime.fromisoformat(start_date)
+            self.datespan = DateSpan(start_date, end_date)
+            self.subtitle = _("{} to {}").format(
+                start_date.date(),
+                end_date.date(),
+            )
+        else:
+            self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
+            self.subtitle = _("past {} days").format(num_days)
+
+        if self.datespan.enddate - self.datespan.startdate > timedelta(days=self.MAX_DATE_RANGE_DAYS):
+            raise TooMuchRequestedDataError(
+                _('Date ranges with more than {} days are not supported').format(self.MAX_DATE_RANGE_DAYS)
+            )
+
+    def total_for_domain(self, domain_obj):
+        query = SMS.objects.filter(
+            domain=domain_obj.name,
+            processed=True,
+            direction=OUTGOING,
+            error=False,
+            date__gte=self.datespan.startdate,
+            date__lt=self.datespan.enddate_adjusted
+        )
+
+        return query.count()
+
+    @property
+    def headers(self):
+        headers = [_('Project Space'), _('# Sent'), _('# Received'), _('# Errors')]
+
+        return headers
+
+    def rows_for_domain(self, domain_obj):
+        results = SMS.objects.filter(
+            domain=domain_obj.name,
+            processed=True,
+            date__gte=self.datespan.startdate,
+            date__lt=self.datespan.enddate_adjusted
+        ).values('direction', 'error').annotate(direction_count=Count('pk'))
+
+        num_sent = sum([result['direction_count'] for result in results
+                        if result['direction'] == OUTGOING and not result['error']])
+        num_received = sum([result['direction_count'] for result in results
+                            if result['direction'] == INCOMING and not result['error']])
+        num_errors = sum([result['direction_count'] for result in results if result['error']])
+
+        return [(domain_obj.name, num_sent, num_received, num_errors), ]

@@ -13,7 +13,7 @@ from corehq.apps.locations.models import LocationFixtureConfiguration
 class LocationFixtureConfigView(BaseAdminProjectSettingsView):
     urlname = 'location_fixture_config'
     page_title = gettext_lazy('Location Fixture')
-    template_name = 'domain/admin/location_fixture.html'
+    template_name = 'domain/admin/bootstrap3/location_fixture.html'
 
     @method_decorator(domain_admin_required)
     @method_decorator(toggles.HIERARCHICAL_LOCATION_FIXTURE.required_decorator())

@@ -87,7 +87,7 @@ from corehq.motech.repeaters.views import (
 )
 
 PASSWORD_RESET_KWARGS = {
-    'template_name': 'login_and_password/password_reset_form.html',
+    'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
     'extra_context': {'current_page': {'page_name': _('Password Reset')}}
@@ -123,7 +123,7 @@ urlpatterns = [
         name='password_reset_done'),
     url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
         CustomPasswordResetView.as_view(
-            template_name='login_and_password/password_reset_confirm.html',
+            template_name='login_and_password/bootstrap3/password_reset_confirm.html',
             form_class=HQSetPasswordForm,
             extra_context={'current_page': {'page_name': _('Password Reset Confirmation')}},
         ),

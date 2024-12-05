@@ -1,0 +1,8 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+
+{% js_entry 'domain/js/pro-bono' %}
+
+{% block page_content %}
+  {% include 'domain/pro_bono/bootstrap5/page_content.html' %}
+{% endblock %}
