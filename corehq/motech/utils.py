@@ -10,7 +10,7 @@ from Crypto.Util.Padding import unpad as crypto_unpad
 from Crypto.Util.py3compat import bord
 from Crypto.Random import get_random_bytes
 
-from corehq.motech.const import AUTH_PRESETS, OAUTH2_PWD
+from corehq.motech.const import AUTH_PRESETS, OAUTH2_PWD, ALGO_AES_CBC
 
 AES_BLOCK_SIZE = 16
 AES_KEY_MAX_LEN = 32  # AES key must be either 16, 24, or 32 bytes long
@@ -133,19 +133,16 @@ def b64_aes_cbc_decrypt(message):
 
 
 # Only needed for migration from ECB to CBC mode.
-def reencrypt_ecb_to_cbc_mode(encrypted_text, prefix=None):
+def reencrypt_ecb_to_cbc_mode(encrypted_text, existing_prefix=None):
     """
     Re-encrypt a message that was encrypted using ECB mode to CBC mode.
     """
-    if prefix and encrypted_text.startswith(prefix):
-        ciphertext = encrypted_text[len(prefix):]
+    if existing_prefix and encrypted_text.startswith(existing_prefix):
+        ciphertext = encrypted_text[len(existing_prefix):]
     else:
         ciphertext = encrypted_text
-
     new_ciphertext = b64_aes_cbc_encrypt(b64_aes_decrypt(ciphertext))
-    if prefix:
-        return prefix + new_ciphertext
-    return new_ciphertext
+    return f'${ALGO_AES_CBC}${new_ciphertext}'
 
 
 def unpad(bytestring):
