@@ -36,6 +36,7 @@ class EnterpriseReport:
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
+    CASE_MANAGEMENT = 'case_management'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
@@ -69,6 +70,8 @@ class EnterpriseReport:
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
+        elif slug == cls.CASE_MANAGEMENT:
+            report = EnterpriseCaseManagementReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
