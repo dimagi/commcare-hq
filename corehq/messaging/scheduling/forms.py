@@ -1881,7 +1881,7 @@ class ScheduleForm(Form):
                 _("Advanced Survey Options"),
                 *self.get_advanced_survey_layout_fields(),
                 data_bind=(
-                    f"visible: content() === '{self.CONTENT_SMS_SURVEY}' || content() === '{self.CONTENT_IVR_SURVEY}' || content() === '{self.CONTENT_CONNECT_SURVEY}"
+                    f"visible: content() === '{self.CONTENT_SMS_SURVEY}' || content() === '{self.CONTENT_IVR_SURVEY}' || content() === '{self.CONTENT_CONNECT_SURVEY}'"
                 )
             ),
             crispy.Fieldset(
