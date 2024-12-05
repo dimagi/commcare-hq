@@ -388,3 +388,33 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
     def get_primary_keys(self):
         return ('form_id', 'submitted',)
+
+
+class CaseManagementResource(ODataEnterpriseReportResource):
+    domain = fields.CharField()
+    num_applications = fields.IntegerField()
+    num_surveys_only = fields.IntegerField()
+    num_cases_only = fields.IntegerField()
+    num_mixed = fields.IntegerField()
+
+    REPORT_SLUG = EnterpriseReport.CASE_MANAGEMENT
+
+    def get_report_task(self, request):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+        )
+
+    def dehydrate(self, bundle):
+        bundle.data['domain'] = bundle.obj[0]
+        bundle.data['num_applications'] = bundle.obj[1]
+        bundle.data['num_surveys_only'] = bundle.obj[2]
+        bundle.data['num_cases_only'] = bundle.obj[3]
+        bundle.data['num_mixed'] = bundle.obj[4]
+
+        return bundle
+
+    def get_primary_keys(self):
+        return ('domain',)  # very odd report that makes coming up with an actual key challenging
