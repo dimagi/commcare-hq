@@ -433,7 +433,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         return data
 
 
-class WebUserInvitationForm(BaseUserInvitationForm):
+class AcceptedWebUserInvitationForm(BaseUserInvitationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
