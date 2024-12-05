@@ -388,6 +388,10 @@ class TestLocationValidator(LocationHierarchyTestCase):
         validation_result = self.validator.validate_spec(user_spec)
         assert validation_result == self.validator.error_message_user_access
 
+        user_spec = {'username': self.invitation.email}
+        validation_result = self.validator.validate_spec(user_spec)
+        assert validation_result == self.validator.error_message_user_access
+
     def test_cant_add_location(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
         user_spec = {'username': self.editable_user.username,
