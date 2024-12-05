@@ -267,7 +267,10 @@ class ScheduleInstance(PartitionedModel):
 
         if self.memoized_schedule.use_user_case_for_filter:
             user_case = contact.get_usercase_by_domain(self.domain)
-            user_data = user_case.case_json
+            if user_case:
+                user_data = user_case.case_json
+            else:
+                return False
         else:
             user_data = contact.get_user_data(self.domain)
         for key, value_or_property_name in self.memoized_schedule.user_data_filter.items():

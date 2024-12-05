@@ -150,6 +150,13 @@ class PassesUserDataFilterTest(TestCase):
         self.assertTrue(ScheduleInstance(domain=self.domain, schedule=schedule)
                         ._passes_user_data_filter(self.mobile_user))
 
+    def test_fails_if_filter_on_case_but_no_case(self):
+        schedule = AlertSchedule()
+        schedule.use_user_case_for_filter = True
+        schedule.user_data_filter = {"wants_email": ["yes"]}
+        self.assertFalse(ScheduleInstance(schedule=schedule)
+                        ._passes_user_data_filter(self.mobile_user))
+
 
 @es_test(requires=[user_adapter], setup_class=True)
 class SchedulingRecipientTest(TestCase):
