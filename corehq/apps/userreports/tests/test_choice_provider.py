@@ -427,7 +427,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
         )
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class UserUserDataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     domain = 'user-meta-choice-provider'
 

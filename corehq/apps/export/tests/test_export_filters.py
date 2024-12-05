@@ -44,8 +44,7 @@ class ExportFilterTest(SimpleTestCase):
 
 
 @es_test(
-    requires=[case_adapter, form_adapter, group_adapter],
-    setup_class=True
+    requires=[case_adapter, form_adapter, group_adapter]
 )
 class ExportFilterResultTest(SimpleTestCase):
 

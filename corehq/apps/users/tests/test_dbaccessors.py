@@ -35,7 +35,7 @@ from corehq.apps.users.models import (
 from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class AllCommCareUsersTest(TestCase):
 
     @classmethod

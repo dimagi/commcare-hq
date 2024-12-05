@@ -19,7 +19,7 @@ from corehq.apps.users.models import (
 from corehq.apps.locations.tests.util import setup_locations_and_types
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class BaseEnterpriseUserFilterTest(TestCase):
     @classmethod
     def setUpClass(cls):

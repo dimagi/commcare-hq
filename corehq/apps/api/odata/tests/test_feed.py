@@ -20,7 +20,7 @@ from corehq.apps.es.users import user_adapter
 from corehq.util.test_utils import flag_enabled
 
 
-@es_test(requires=[case_adapter, user_adapter], setup_class=True)
+@es_test(requires=[case_adapter, user_adapter])
 @flag_enabled('API_THROTTLE_WHITELIST')
 class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
 
@@ -106,7 +106,7 @@ class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
         )
 
 
-@es_test(requires=[form_adapter, user_adapter], setup_class=True)
+@es_test(requires=[form_adapter, user_adapter])
 @flag_enabled('API_THROTTLE_WHITELIST')
 class TestODataFormFeed(TestCase, FormOdataTestMixin):
 

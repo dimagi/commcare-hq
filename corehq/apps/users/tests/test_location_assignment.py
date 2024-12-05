@@ -12,7 +12,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.es.testing import sync_users_to_es
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class CCUserLocationAssignmentTest(TestCase):
 
     @classmethod

@@ -58,7 +58,7 @@ def test_validate_geometry_schema():
 
 
 @flag_enabled('MICROPLANNING')
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestCaseGroupingReport(BaseReportTest):
 
     @classmethod

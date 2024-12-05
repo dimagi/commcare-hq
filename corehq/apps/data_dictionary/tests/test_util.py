@@ -347,7 +347,7 @@ class MiscUtilTest(TestCase):
         )
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class UsedPropsByCaseTypeTest(TestCase):
 
     domain = uuid.uuid4().hex

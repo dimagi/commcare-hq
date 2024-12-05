@@ -368,7 +368,7 @@ class TestDeletePhoneNumberView(TestCase):
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 @patch('corehq.apps.users.decorators.can_use_filtered_user_download', return_value=True)
 class TestCountWebUsers(TestCase):
 

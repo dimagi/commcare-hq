@@ -22,7 +22,7 @@ from corehq.util.test_utils import privilege_enabled, flag_enabled
 from corehq import privileges
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestCaseCopyAPI(TestCase):
     domain = 'test-domain'
     url_name = 'copy_cases'

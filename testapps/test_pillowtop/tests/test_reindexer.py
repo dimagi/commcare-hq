@@ -201,7 +201,7 @@ def test_no_checkpoint_creation(self, reindexer_factory, pillow_name):
         )
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class UserReindexerTest(TestCase):
 
     def setUp(self):
@@ -237,7 +237,7 @@ class UserReindexerTest(TestCase):
             self.assertEqual('WebUser', user_doc['doc_type'])
 
 
-@es_test(requires=[group_adapter], setup_class=True)
+@es_test(requires=[group_adapter])
 class GroupReindexerTest(TestCase):
 
     def setUp(self):

@@ -60,7 +60,7 @@ def _get_fake_number_of_submissions(domain, _year, _month):
     }[domain]
 
 
-@es_test(requires=[user_adapter, form_adapter], setup_class=True)
+@es_test(requires=[user_adapter, form_adapter])
 class TestPartnerAnalyticsDataUtils(TestCase):
 
     @classmethod

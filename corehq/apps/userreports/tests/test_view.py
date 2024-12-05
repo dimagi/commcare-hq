@@ -474,7 +474,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(can_edit_view.page_context['can_edit_report'], True)
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
     @classmethod
     def setUpClass(cls):

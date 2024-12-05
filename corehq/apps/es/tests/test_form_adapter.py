@@ -5,7 +5,7 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.tests.utils import create_form_for_test
 
 
-@es_test(requires=[form_adapter], setup_class=True)
+@es_test(requires=[form_adapter])
 class TestFromPythonInForms(TestCase):
 
     @classmethod

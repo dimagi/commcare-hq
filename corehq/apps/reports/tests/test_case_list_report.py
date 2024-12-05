@@ -17,7 +17,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled
 
 
-@es_test(requires=[case_adapter, group_adapter, user_adapter], setup_class=True)
+@es_test(requires=[case_adapter, group_adapter, user_adapter])
 class TestCaseListReport(TestCase):
     @classmethod
     def setUpClass(cls):

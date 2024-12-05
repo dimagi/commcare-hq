@@ -75,7 +75,7 @@ class GetQuestionIdTests(SimpleTestCase):
         self.assertIsNone(result)
 
 
-@es_test(requires=[domain_adapter, form_adapter], setup_class=True)
+@es_test(requires=[domain_adapter, form_adapter])
 class TestGetDomainsToUpdateESFilter(TestCase):
     def test_calculated_properties_never_updated_is_included(self):
         domain = self.index_domain('never-updated')

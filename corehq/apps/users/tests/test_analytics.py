@@ -14,7 +14,7 @@ from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser, WebUser
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class UserAnalyticsTest(TestCase):
 
     @classmethod

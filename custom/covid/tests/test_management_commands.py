@@ -378,7 +378,7 @@ class CaseCommandsTest(TestCase):
         self.assertEqual(patient2_case.get_case_property('owner_id'), '-')
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestUpdateAllActivityCompleteDate(TestCase):
     domain = 'all_activity_complete_date'
 

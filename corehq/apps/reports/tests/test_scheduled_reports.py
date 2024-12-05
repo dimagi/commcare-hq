@@ -21,7 +21,7 @@ from corehq.util.test_utils import disable_quickcache, privilege_enabled, flag_e
     case_search_adapter,
     form_adapter,
     user_adapter,
-], setup_class=True)
+])
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
 class TestLocationRestrictedScheduledReportViews(TestCase):

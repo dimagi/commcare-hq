@@ -49,7 +49,7 @@ class BulkTest(SimpleTestCase):
 
 
 @sharded
-@es_test(requires=[case_adapter], setup_class=True)
+@es_test(requires=[case_adapter])
 class TestBulkDocOperations(TestCase):
     @classmethod
     def setUpClass(cls):

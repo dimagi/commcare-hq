@@ -71,7 +71,7 @@ class TestAttendeeCaseManager(TestCase):
             self.assertCountEqual(case_ids, [open_case_id, closed_case_id])
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestByLocationId(TestCase):
 
     @classmethod

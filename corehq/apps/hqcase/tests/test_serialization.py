@@ -15,7 +15,7 @@ from ..api.core import serialize_case, serialize_es_case
 from ..utils import submit_case_blocks
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestAPISerialization(TestCase):
     domain = 'test-update-cases'
     maxDiff = None

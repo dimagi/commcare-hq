@@ -189,7 +189,7 @@ def _group_to_change_meta(group):
     )
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class GroupsToUserReindexerTest(TestCase):
 
     def setUp(self):

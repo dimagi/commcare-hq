@@ -308,8 +308,7 @@ class TestESSyncUtil(SimpleTestCase):
     requires=[
         _get_patched_adapter(case_adapter, True, False, 'test_cases_secondary'),
         _get_patched_adapter(case_search_adapter, True, False, 'test_casesearch_secondary')
-    ],
-    setup_class=True
+    ]
 )
 class TestCopyCheckpointsBeforeIndexSwap(TestCase):
 

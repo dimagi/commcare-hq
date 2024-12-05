@@ -22,7 +22,7 @@ CASE_TYPE = "cc-case-type"
 LOCATION_TYPE = "my-location"
 
 
-@es_test(requires=[group_adapter, user_adapter], setup_class=True)
+@es_test(requires=[group_adapter, user_adapter])
 class CallCenterLocationOwnerOptionsViewTest(TestCase):
 
     @classmethod

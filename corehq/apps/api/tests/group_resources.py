@@ -8,7 +8,7 @@ from corehq.apps.groups.models import Group
 from .utils import APIResourceTest
 
 
-@es_test(requires=[group_adapter], setup_class=True)
+@es_test(requires=[group_adapter])
 class TestGroupResource(APIResourceTest):
 
     resource = v0_5.GroupResource

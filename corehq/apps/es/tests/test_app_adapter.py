@@ -5,7 +5,7 @@ from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test
 
 
-@es_test(requires=[app_adapter], setup_class=True)
+@es_test(requires=[app_adapter])
 class TestFromPythonInApplication(TestCase):
 
     @classmethod

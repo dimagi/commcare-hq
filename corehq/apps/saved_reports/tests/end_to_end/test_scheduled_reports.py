@@ -19,7 +19,7 @@ from ...models import ReportConfig, ReportNotification
 
 @patch('corehq.apps.reports.standard.monitoring.util.get_simplified_users',
        new=lambda q: [])
-@es_test(requires=[case_adapter, form_adapter], setup_class=True)
+@es_test(requires=[case_adapter, form_adapter])
 class TestScheduledReports(TestCase):
 
     def test_scheduled_reports_sends_to_recipients(self):

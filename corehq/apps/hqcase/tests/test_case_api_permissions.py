@@ -33,7 +33,7 @@ from corehq.util.test_utils import (
     form_adapter,
     user_adapter,
     case_adapter,
-], setup_class=True)
+])
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')

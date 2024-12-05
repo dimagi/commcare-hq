@@ -25,7 +25,7 @@ GOOD_GUYS_ID = str(uuid.uuid4())
 BAD_GUYS_ID = str(uuid.uuid4())
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
     domain = 'test-case-list-api'

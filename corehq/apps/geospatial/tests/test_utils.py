@@ -55,7 +55,7 @@ class TestGetGeoProperty(TestCase):
         self.assertEqual(get_geo_user_property(None), GPS_POINT_CASE_PROPERTY)
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestSetGPSProperty(TestCase):
     DOMAIN = 'test-domain'
 

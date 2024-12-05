@@ -670,7 +670,7 @@ class WriterTest(SimpleTestCase):
         self.assertTrue(export_save.called)
 
 
-@es_test(requires=[case_adapter], setup_class=True)
+@es_test(requires=[case_adapter])
 class ExportTest(SimpleTestCase):
 
     @classmethod

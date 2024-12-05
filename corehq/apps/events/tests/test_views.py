@@ -38,7 +38,7 @@ from ..views import (
 from corehq.apps.users.models import CommCareUser
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class BaseEventViewTestClass(TestCase):
 
     domain = 'test-domain'
@@ -449,7 +449,7 @@ class TestAttendeesDeleteView(BaseEventViewTestClass):
             )
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestGetAttendeesAndAttendanceTakersView(BaseEventViewTestClass):
 
     urlname = 'get_attendees_and_attendance_takers'

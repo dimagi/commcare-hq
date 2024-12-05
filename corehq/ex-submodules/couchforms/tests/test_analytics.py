@@ -36,7 +36,7 @@ from corehq.util.test_utils import (
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-@es_test(requires=[form_adapter, app_adapter], setup_class=True)
+@es_test(requires=[form_adapter, app_adapter])
 @disable_quickcache
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     maxDiff = None
@@ -165,7 +165,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         }])
 
 
-@es_test(requires=[form_adapter, user_adapter], setup_class=True)
+@es_test(requires=[form_adapter, user_adapter])
 @disable_quickcache
 class CouchformsESAnalyticsTest(TestCase):
     domain = 'hqadmin-es-accessor'

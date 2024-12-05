@@ -19,7 +19,7 @@ from corehq.form_processor.utils import TestFormMetadata, get_simple_form_xml
 from corehq.pillows.xform import get_xform_pillow
 
 
-@es_test(requires=[form_adapter, user_adapter], setup_class=True)
+@es_test(requires=[form_adapter, user_adapter])
 class FormPillowTest(TestCase):
     domain = 'test-form-pillow-domain'
 

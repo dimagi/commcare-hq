@@ -19,7 +19,7 @@ from ..fixtures import _get_template_renderer, case_search_fixture_generator
 
 
 @flag_enabled('MODULE_BADGES')
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestCaseSearchFixtures(TestCase):
     domain_name = 'test-case-search-fixtures'
 

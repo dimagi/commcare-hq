@@ -92,7 +92,7 @@ def test_setup_cleanup_index():
 
 def test_setup_cleanup_class_index():
 
-    @es_test(requires=[pigs_adapter], setup_class=True)
+    @es_test(requires=[pigs_adapter])
     class Test(SimpleTestCase):
         def test_index_exists(self):
             assert_index_exists(pigs_adapter)
@@ -149,7 +149,7 @@ def assert_not_index_exists(adapter):
 @es_test_attr
 def test_setup_class_expects_classmethod():
     with assert_raises(ValueError, msg=re.compile("^'setup_class' expects a classmethod")):
-        @es_test(requires=[pigs_adapter], setup_class=True)
+        @es_test(requires=[pigs_adapter])
         class TestExpectsClassmethod:
             def setUpClass(self):
                 pass

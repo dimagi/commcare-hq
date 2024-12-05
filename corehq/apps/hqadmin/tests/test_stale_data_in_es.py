@@ -29,7 +29,7 @@ class ExitEarlyException(Exception):
     pass
 
 
-@es_test(requires=[case_search_adapter, case_adapter, form_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter, case_adapter, form_adapter])
 class TestStaleDataInESSQL(TestCase):
 
     project_name = 'sql-project'

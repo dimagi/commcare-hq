@@ -527,7 +527,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertEqual(case_filters, [])
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class TestFormExportFilterBuilder(TestCase):
     @classmethod
     @patch('corehq.apps.users.tasks.remove_users_test_cases')

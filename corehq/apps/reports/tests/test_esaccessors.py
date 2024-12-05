@@ -77,7 +77,7 @@ from corehq.util.test_utils import make_es_ready_form
 
 
 @es_test(requires=[form_adapter])
-@es_test(requires=[group_adapter], setup_class=True)
+@es_test(requires=[group_adapter])
 class TestFormESAccessors(TestCase):
 
     @classmethod
@@ -1121,7 +1121,7 @@ class TestGroupESAccessors(SimpleTestCase):
 
 
 @es_test(requires=[case_adapter])
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class TestCaseESAccessors(TestCase):
 
     def setUp(self):

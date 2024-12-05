@@ -16,7 +16,7 @@ from .utils import (
 )
 
 
-@es_test(requires=[case_adapter], setup_class=True)
+@es_test(requires=[case_adapter])
 @mock.patch('corehq.apps.api.odata.views.get_document_or_404', new=mock.MagicMock)
 class TestOdataAuth(TestCase, CaseOdataTestMixin):
 

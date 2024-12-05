@@ -14,7 +14,7 @@ from corehq.apps.reports.tests.test_tableau_api_util import _mock_create_session
 from corehq.util.test_utils import disable_quickcache, flag_enabled
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class TestDownloadWebUsers(TestCase):
 
     @classmethod

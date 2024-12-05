@@ -96,7 +96,7 @@ class ElasticTestMixin(object):
 
 
 @nottest
-def es_test(test=None, requires=None, setup_class=False):
+def es_test(test=None, requires=None):
     """Decorator for Elasticsearch tests.
     The decorator sets the ``es_test`` pytest marker and optionally performs
     index setup/cleanup before and after the test(s).
@@ -105,17 +105,12 @@ def es_test(test=None, requires=None, setup_class=False):
         ``@decorator`` format (i.e. not the ``@decorator(...)`` format).
     :param requires: A list of document adapters whose indexes are required by
         the test(s).
-    :param setup_class: Optional (default: ``False``). Set to ``True`` to
-        perform index setup/add-cleanup in the ``setUpClass`` method (instead of
-        ``setUp``). Invalid if true when decorating non-class objects (raises
-        ValueError).
-    :raises: ``ValueError``
 
     See test_test_utils.py for examples.
     """
     if test is None:
         def es_test_decorator(test):
-            return es_test(test, requires, setup_class)
+            return es_test(test, requires)
         return es_test_decorator
 
     if not requires:
@@ -124,10 +119,9 @@ def es_test(test=None, requires=None, setup_class=False):
     comment = f"created for {test.__module__}.{test.__qualname__}"
     operations = _index_operations(requires, comment)
     if isclass(test):
+        setup_class = hasattr(test, "setUpClass") and callable(getattr(test, "setUpClass"))
         test = _add_setup_and_cleanup(test, setup_class, operations)
     else:
-        if setup_class:
-            raise ValueError(f"keyword 'setup_class' is for class decorators, test={test}")
         test = _decorate_test_function(test, operations)
     return es_test_attr(test)
 

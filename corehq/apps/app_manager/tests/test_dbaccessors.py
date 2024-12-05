@@ -236,7 +236,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(len([abv for abv in app_build_versions if abv.app_id != '1234']), 0)
 
 
-@es_test(requires=[app_adapter], setup_class=True)
+@es_test(requires=[app_adapter])
 class TestAppGetters(TestCase):
     domain = 'test-app-getters'
 

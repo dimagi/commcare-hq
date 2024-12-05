@@ -4,7 +4,7 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.domains import domain_adapter
 
 
-@es_test(requires=[domain_adapter], setup_class=True)
+@es_test(requires=[domain_adapter])
 class TestFromPythonInDomain(TestCase):
     @classmethod
     def setUpClass(cls):

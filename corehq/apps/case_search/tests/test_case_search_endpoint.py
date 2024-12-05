@@ -24,7 +24,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from ..utils import get_case_search_results
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestCaseSearchEndpoint(TestCase):
     domain = "TestCaseSearchEndpoint"
 

@@ -28,7 +28,7 @@ from .util import make_loc, delete_all_locations
 from ..dbaccessors import get_filtered_locations_count
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class TestUsersByLocation(TestCase):
 
     @classmethod

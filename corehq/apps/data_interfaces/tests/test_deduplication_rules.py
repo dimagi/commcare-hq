@@ -14,7 +14,7 @@ from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.tests.utils import es_test
 
 
-@es_test(requires=[case_adapter], setup_class=True)
+@es_test(requires=[case_adapter])
 class DeduplicationRuleCreateViewTest(TestCase):
 
     @classmethod
@@ -95,7 +95,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
         return res.id
 
 
-@es_test(requires=[case_adapter], setup_class=True)
+@es_test(requires=[case_adapter])
 class DeduplicationRuleEditViewTest(TestCase):
 
     @classmethod

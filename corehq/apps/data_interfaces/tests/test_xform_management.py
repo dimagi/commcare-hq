@@ -10,7 +10,7 @@ from corehq.apps.es.users import user_adapter
 from corehq.apps.es.forms import form_adapter
 
 
-@es_test(requires=[form_adapter, user_adapter], setup_class=True)
+@es_test(requires=[form_adapter, user_adapter])
 class XFormManagementTest(TestCase):
 
     @classmethod

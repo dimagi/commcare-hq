@@ -63,7 +63,7 @@ class TestUserSignals(SimpleTestCase):
 @patch('corehq.apps.analytics.signals.update_hubspot_properties')
 @patch('corehq.apps.callcenter.tasks.sync_usercases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class TestUserSyncToEs(SimpleTestCase):
 
     def setUp(self):

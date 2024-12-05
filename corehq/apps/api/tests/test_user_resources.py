@@ -43,7 +43,7 @@ from ..resources.v0_5 import BadRequest, UserDomainsResource
 from .utils import APIResourceTest
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class TestCommCareUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_5.CommCareUserResource

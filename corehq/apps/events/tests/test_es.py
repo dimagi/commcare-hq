@@ -16,7 +16,7 @@ from ...case_search.models import CaseSearchConfig
 DOMAIN = 'test-domain'
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestAttendeeLocationFilter(TestCase):
 
     @classmethod
@@ -168,7 +168,7 @@ class TestAttendeeLocationFilter(TestCase):
         self.assertEqual(case_ids, [])
 
 
-@es_test(requires=[case_adapter], setup_class=True)
+@es_test(requires=[case_adapter])
 class TestGetPaginatedAttendees(TestCase):
 
     @classmethod

@@ -39,7 +39,7 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 
 
 @es_test(requires=[case_search_adapter])
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class FindingDuplicatesQueryTest(TestCase):
     def setUp(self):
         super().setUp()
@@ -1192,7 +1192,7 @@ class TestDeduplicationRuleRuns(TestCase):
 
 
 @flag_enabled('CASE_DEDUPE_UPDATES')
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class DeduplicationBackfillTest(TestCase):
     @classmethod
     def setUpClass(cls):

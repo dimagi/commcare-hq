@@ -25,7 +25,7 @@ from corehq.util.test_utils import (
 from corehq.apps.data_dictionary.models import CaseType
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')

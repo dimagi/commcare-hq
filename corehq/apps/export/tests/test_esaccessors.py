@@ -8,7 +8,7 @@ from corehq.apps.export.esaccessors import get_groups_user_ids
 from corehq.apps.groups.models import Group
 
 
-@es_test(requires=[group_adapter], setup_class=True)
+@es_test(requires=[group_adapter])
 class TestGroupUserIds(SimpleTestCase):
     domain = 'group-es-domain'
 

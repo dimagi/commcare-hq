@@ -11,7 +11,7 @@ from corehq.apps.geospatial.management.commands.index_geolocation_case_propertie
 from corehq.apps.geospatial.models import GeoConfig
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestGetFormCases(TestCase):
     domain = 'foobar'
     primary_case_type = 'primary'

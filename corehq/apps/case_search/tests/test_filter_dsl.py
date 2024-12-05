@@ -279,7 +279,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestFilterDslLookups(ElasticTestMixin, TestCase):
     maxDiff = None
 

@@ -6,7 +6,7 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.views import get_domain_languages
 
 
-@es_test(requires=[app_adapter], setup_class=True)
+@es_test(requires=[app_adapter])
 class TestDomainLanguages(TestCase):
 
     @classmethod

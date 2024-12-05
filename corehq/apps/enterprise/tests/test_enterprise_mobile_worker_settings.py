@@ -21,7 +21,7 @@ from corehq.form_processor.utils import TestFormMetadata
 from corehq.util.test_utils import make_es_ready_form
 
 
-@es_test(requires=[user_adapter, form_adapter], setup_class=True)
+@es_test(requires=[user_adapter, form_adapter])
 class TestEnterpriseMobileWorkerSettings(TestCase):
 
     @classmethod

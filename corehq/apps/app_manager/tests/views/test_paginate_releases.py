@@ -14,7 +14,7 @@ from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 
-@es_test(requires=[app_adapter], setup_class=True)
+@es_test(requires=[app_adapter])
 class TestPaginateReleases(TestCase):
     @classmethod
     @patch_validate_xform()

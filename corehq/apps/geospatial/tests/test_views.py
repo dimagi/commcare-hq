@@ -219,7 +219,7 @@ class GeoConfigViewTestClass(TestCase):
         self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
 
 
-@es_test(requires=[case_adapter], setup_class=True)
+@es_test(requires=[case_adapter])
 class TestGPSCaptureView(BaseGeospatialViewClass):
     urlname = GPSCaptureView.urlname
 
@@ -240,7 +240,7 @@ class TestGPSCaptureView(BaseGeospatialViewClass):
 
 
 @flag_enabled('MICROPLANNING')
-@es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter, user_adapter])
 class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
     urlname = 'get_paginated_cases_or_users'
 
@@ -327,7 +327,7 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
         self.assertEqual(response.json(), expected_output)
 
 
-@es_test(requires=[user_adapter], setup_class=True)
+@es_test(requires=[user_adapter])
 class TestGetUsersWithGPS(BaseGeospatialViewClass):
     urlname = 'get_users_with_gps'
 

@@ -508,7 +508,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
 
-@es_test(requires=[form_adapter], setup_class=True)
+@es_test(requires=[form_adapter])
 class TestDateHistogram(SimpleTestCase):
     domain = str(uuid.uuid4())
 

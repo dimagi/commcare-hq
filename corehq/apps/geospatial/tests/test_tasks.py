@@ -14,7 +14,7 @@ from corehq.apps.geospatial.tasks import index_es_docs_with_location_props
 from corehq.apps.geospatial.utils import get_celery_task_tracker
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestIndexESDocsWithLocationProps(TestCase):
     domain = 'test'
     gps_prop_name = 'gps-stuff'

@@ -35,7 +35,7 @@ def test_find_precision():
         assert_equal(precision, 4)
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter])
 class TestGetMaxDocCount(TestCase):
     """
     Verify ``get_max_doc_count()`` using an example pulled from

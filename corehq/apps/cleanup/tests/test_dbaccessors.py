@@ -79,8 +79,7 @@ class TestFindSQLCasesForDeletedDomains(TestCase):
     requires=[
         form_adapter, case_adapter, group_adapter,
         user_adapter, case_search_adapter, app_adapter
-    ],
-    setup_class=True
+    ]
 )
 class TestFindESDocsForDeletedDomains(TestCase):
 
