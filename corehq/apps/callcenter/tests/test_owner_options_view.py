@@ -58,7 +58,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
         cls.locations = [
             make_loc('loc{}'.format(i), type=LOCATION_TYPE, domain=TEST_DOMAIN) for i in range(4)
         ]
-        cls.location_ids = {l._id for l in cls.locations}
+        cls.location_ids = {location._id for location in cls.locations}
 
         # Create users
         cls.users = [CommCareUser.create(TEST_DOMAIN, 'user{}'.format(i), '***', None, None) for i in range(3)]

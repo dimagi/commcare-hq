@@ -77,8 +77,8 @@ class TestGroupResource(APIResourceTest):
             "reporting": True,
         }
         response = self._assert_auth_post_resource(self.list_endpoint,
-                                    json.dumps(group_json),
-                                    content_type='application/json')
+                                                   json.dumps(group_json),
+                                                   content_type='application/json')
         self.assertEqual(response.status_code, 201)
         [group_back] = Group.by_domain(self.domain.name)
         self.addCleanup(group_back.delete)
