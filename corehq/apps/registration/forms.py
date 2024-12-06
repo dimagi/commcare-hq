@@ -496,6 +496,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
                  custom_data=None, invitation=None, *, domain, **kwargs):
         self.custom_data = custom_data
+        self.invite = invitation
         if data and self.custom_data:
             data = data.copy()
             custom_data_post_dict = self.custom_data.form.data
@@ -519,12 +520,12 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 programs = Program.by_domain(domain_obj.name)
                 choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
                 self.fields['program'].choices = choices
-                if invitation:
+                if self.invite:
                     # not sure if this works - remove this comment after testing on staging
-                    self.fields['program'].initial = invitation.program
+                    self.fields['program'].initial = self.invite.program
 
         if self.can_edit_tableau_config:
-            self._initialize_tableau_fields(data, domain, invitation)
+            self._initialize_tableau_fields(data, domain, self.invite)
 
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
@@ -534,7 +535,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         save_button_text = "Send Invite"
-        if invitation:
+        if self.invite:
             self.fields['email'].widget.attrs["readonly"] = True
             save_button_text = "Update Invite"
 
@@ -602,7 +603,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         email = self.cleaned_data['email'].strip()
 
         from corehq.apps.registration.validation import AdminInvitesUserFormValidator
-        error = AdminInvitesUserFormValidator.validate_email(self.domain, email)
+        error = AdminInvitesUserFormValidator.validate_email(self.domain, email, bool(self.invite))
         if error:
             raise forms.ValidationError(error)
         return email

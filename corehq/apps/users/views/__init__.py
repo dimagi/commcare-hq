@@ -1166,7 +1166,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 should_show_location=self.request.project.uses_locations,
                 can_edit_tableau_config=can_edit_tableau_config,
                 request=self.request,
-                custom_data=self.custom_data
+                custom_data=self.custom_data,
+                invitation=invitation
             )
         return AdminInvitesUserForm(
             initial=initial,
