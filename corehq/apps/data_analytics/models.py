@@ -165,10 +165,10 @@ class DomainMetrics(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
-    first_domain_for_creating_user = models.BooleanField()
     has_project_icon = models.BooleanField()
     has_security_settings = models.BooleanField()
     is_active = models.BooleanField()
+    is_first_domain_for_creating_user = models.BooleanField()
 
     lookup_tables = models.IntegerField()
     repeaters = models.IntegerField()
@@ -184,7 +184,7 @@ class DomainMetrics(models.Model):
     web_users = models.IntegerField()
 
     active_mobile_workers = models.IntegerField()
-    active_mobile_workers_in_past_year = models.IntegerField()
+    active_mobile_workers_in_last_365_days = models.IntegerField()
     case_sharing_groups = models.IntegerField()
     case_sharing_locations = models.IntegerField()
     has_custom_roles = models.BooleanField()
@@ -200,7 +200,7 @@ class DomainMetrics(models.Model):
     cases_modified_in_last_60_days = models.IntegerField()
     cases_modified_in_last_90_days = models.IntegerField()
     inactive_cases = models.IntegerField()
-    user_cases_modified_in_last_30_days = models.IntegerField()
+    usercases_modified_in_last_30_days = models.IntegerField()
 
     # Form Metrics
     forms = models.IntegerField()
@@ -208,9 +208,9 @@ class DomainMetrics(models.Model):
     forms_submitted_in_last_60_days = models.IntegerField()
     forms_submitted_in_last_90_days = models.IntegerField()
 
-    first_form_submission = models.DateTimeField()
-    most_recent_form_submission = models.DateTimeField()
-    three_hundredth_form_submission = models.DateTimeField()
+    first_form_submission = models.DateTimeField(null=True)
+    most_recent_form_submission = models.DateTimeField(null=True)
+    three_hundredth_form_submission = models.DateTimeField(null=True)
 
     # SMS Metrics
     total_sms = models.IntegerField()
