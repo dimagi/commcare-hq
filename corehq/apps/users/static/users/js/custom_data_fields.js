@@ -32,7 +32,7 @@ hqDefine("users/js/custom_data_fields", [
         self.profile_slug = options.profile_slug;
         self.slugs = options.slugs;
         self.can_edit_original_profile = options.can_edit_original_profile;
-        self.initVals = options.initial_values;
+        self.initVals = options.initial_values || {};
 
         var originalProfileFields = {},
             originalProfileId,
