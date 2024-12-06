@@ -11,10 +11,11 @@ from corehq.motech.utils import reencrypt_ecb_to_cbc_mode, reencrypt_cbc_to_ecb_
 def copy_and_reencrypt_password_to_password_cbc(apps, schema_editor):
     EmailSettings = apps.get_model('email', 'EmailSettings')
 
-    for email_settings in EmailSettings.objects.all():
-        if email_settings.password.startswith(f'${ALGO_AES_CBC}$'):
-            continue
+    email_settings_to_update = EmailSettings.objects.exclude(
+        password__startswith=f'${ALGO_AES_CBC}$'
+    )
 
+    for email_settings in email_settings_to_update:
         if email_settings.password.startswith(f'${ALGO_AES}$'):
             prefix = f'${ALGO_AES}$'
         else:
@@ -26,10 +27,11 @@ def copy_and_reencrypt_password_to_password_cbc(apps, schema_editor):
 def revert_password_cbc_to_password(apps, schema_editor):
     EmailSettings = apps.get_model('email', 'EmailSettings')
 
-    for email_settings in EmailSettings.objects.all():
-        if email_settings.password.startswith(f'${ALGO_AES}$'):
-            continue
+    email_settings_to_update = EmailSettings.objects.exclude(
+        password__startswith=f'${ALGO_AES}$'
+    )
 
+    for email_settings in email_settings_to_update:
         if email_settings.password.startswith(f'${ALGO_AES_CBC}$'):
             prefix = f'${ALGO_AES_CBC}$'
         else:
