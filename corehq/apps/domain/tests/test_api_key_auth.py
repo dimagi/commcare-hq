@@ -51,7 +51,7 @@ class AuthenticationTestBase(TestCase):
         domain_obj = create_domain(name=cls.domain)
         cls.addClassCleanup(domain_obj.delete)
         cls.user = WebUser.create(cls.domain, USERNAME, 'password', None, None)
-        cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user()).key
+        cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user()).plaintext_key
 
     def call_api(self, request, allow_creds_in_data):
 

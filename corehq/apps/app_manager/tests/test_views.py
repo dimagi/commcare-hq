@@ -776,7 +776,6 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         cls.web_user_api_key = HQApiKey.objects.get_or_create(
             user=cls.web_user.get_django_user()
         )[0]
-        cls.web_user_api_key.key = cls.web_user_api_key.generate_key()
         cls.web_user_api_key.save()
 
         # The URL that tests in this class will use.
@@ -803,7 +802,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         """Sending a correct API key returns a response with the case summary file."""
         response = self.client.get(
             self.url,
-            HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:{self.web_user_api_key.key}",
+            HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:{self.web_user_api_key.plaintext_key}",
         )
 
         self.assertEqual(response.status_code, 200)
@@ -819,7 +818,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
 
         with self.subTest("Missing username"):
             response = self.client.get(
-                self.url, HTTP_AUTHORIZATION=f"ApiKey :{self.web_user_api_key.key}"
+                self.url, HTTP_AUTHORIZATION=f"ApiKey :{self.web_user_api_key.plaintext_key}"
             )
             self.assertEqual(response.status_code, 401)
 

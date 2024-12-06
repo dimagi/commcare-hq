@@ -127,6 +127,6 @@ class EnterprisePermissionsTest(TestCase):
             'resource_name': InternalFixtureResource._meta.resource_name,
         })
         username = self.web_user_non_admin.username
-        api_params = urlencode({'username': username, 'api_key': self.api_key.key})
+        api_params = urlencode({'username': username, 'api_key': self.api_key.plaintext_key})
         response = self.client.get(f"{url}?{api_params}")
         self.assertEqual(response.status_code, 200)

@@ -35,7 +35,7 @@ class TestZapierCreateCaseAction(TestCase):
         cls.data = {'case_name': 'test1', 'price': '11'}
         cls.user = WebUser.create(cls.domain, 'test', '******', None, None)
         api_key_object, _ = HQApiKey.objects.get_or_create(user=cls.user.get_django_user())
-        cls.api_key = api_key_object.key
+        cls.api_key = api_key_object.plaintext_key
 
     @classmethod
     def tearDownClass(cls):

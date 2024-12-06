@@ -24,4 +24,4 @@ def bootrap_domain_for_zapier(domain_name):
 
     web_user = WebUser.create(domain_name, 'test', '******', None, None)
     api_key_object, _ = HQApiKey.objects.get_or_create(user=web_user.get_django_user())
-    return ZapierDomainConfig(domain_object, web_user, api_key_object.key)
+    return ZapierDomainConfig(domain_object, web_user, api_key_object.plaintext_key)

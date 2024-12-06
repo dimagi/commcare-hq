@@ -580,7 +580,7 @@ class TestSubscribeToDataSource(TestCase):
         super().tearDownClass()
 
     def _construct_api_auth_header(self, api_key):
-        return f'ApiKey {self.USERNAME}:{api_key.key}'
+        return f'ApiKey {self.USERNAME}:{api_key.plaintext_key}'
 
     def _post_request(self, domain, data_source_id, data, **extras):
         path = reverse("subscribe_to_configurable_data_source", args=(domain, data_source_id,))
@@ -746,7 +746,7 @@ class TestUnsubscribeFromDataSource(TestCase):
         super().tearDownClass()
 
     def _construct_api_auth_header(self, api_key):
-        return f'ApiKey {self.USERNAME}:{api_key.key}'
+        return f'ApiKey {self.USERNAME}:{api_key.plaintext_key}'
 
     def _post_request(self, domain, data_source_id, data=None, **extras):
         path = reverse("unsubscribe_from_configurable_data_source", args=(domain, data_source_id,))
