@@ -280,8 +280,9 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
                 self.add_error(
                     'asynchronous',
-                    _('This data source covers a lot of data. '
-                      'Please mark it for asynchronous processing for effective building/rebuilding')
+                    _('This data source covers more than {record_limit} records. '
+                      'Please mark it for asynchronous processing for effective building/rebuilding'
+                      ).format(record_limit=DATA_SOURCE_REBUILD_RESTRICTED_AT)
                 )
 
     def save(self, commit=False):
