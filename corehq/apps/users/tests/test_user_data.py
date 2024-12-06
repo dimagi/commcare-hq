@@ -38,7 +38,6 @@ class TestUserData(TestCase):
     def test_user_data_accessor(self):
         user = self.make_commcare_user()
         user_data = user.get_user_data(self.domain)
-        self.assertEqual(user_data['commcare_project'], self.domain)
         user_data.update({
             'cruise': 'control',
             'this': 'road',
@@ -61,12 +60,10 @@ class TestUserData(TestCase):
 
         # Each domain has a separate user_data object
         self.assertEqual(web_user.get_user_data(self.domain).to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': '',
             'what_domain_is_it': 'domain 1',
         })
         self.assertEqual(web_user.get_user_data('another_domain').to_dict(), {
-            'commcare_project': 'another_domain',
             'commcare_profile': '',
             'what_domain_is_it': 'domain 2',
         })
@@ -198,14 +195,12 @@ class TestUserDataModel(TestCase):
         # Custom user data profiles get their data added to metadata automatically for mobile users
         user_data = self.init_user_data({'yearbook_quote': 'Not all who wander are lost.'})
         self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': '',
             'yearbook_quote': 'Not all who wander are lost.',
         })
 
         user_data.profile_id = 'blues'
         self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': 'blues',
             'favorite_color': 'blue',  # provided by the profile
             'yearbook_quote': 'Not all who wander are lost.',
@@ -214,7 +209,6 @@ class TestUserDataModel(TestCase):
         # Remove profile should remove it and related fields
         user_data.profile_id = None
         self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': '',
             'yearbook_quote': 'Not all who wander are lost.',
         })
@@ -317,12 +311,5 @@ class TestUserDataModel(TestCase):
         user_data = self.user.get_user_data(self.domain)
 
         self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': '',
         })
-
-    def test_change_data_provided_by_system_will_raise_user_data_error(self):
-        user_data = self.user.get_user_data(self.domain)
-
-        with self.assertRaisesMessage(UserDataError, "'commcare_location_id' cannot be set directly"):
-            user_data['commcare_location_id'] = self.loc1.location_id
