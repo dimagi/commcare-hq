@@ -52,6 +52,7 @@ IGNORE_MODELS = {
     "cleanup.DeletedCouchDoc",
     "cleanup.DeletedSQLDoc",
     "contenttypes.ContentType",
+    "data_analytics.DomainMetrics",
     "data_analytics.GIRRow",
     "data_analytics.MALTRow",
     "django_celery_results.ChordCounter",
