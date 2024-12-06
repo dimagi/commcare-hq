@@ -88,6 +88,10 @@ hqDefine("users/js/web_users",[
             });
         };
 
+        self.inviteEditUrl = ko.computed(function () {
+            return initialPageData.reverse("edit_invitation", self.uuid);
+        });
+
         return self;
     };
 

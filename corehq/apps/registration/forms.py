@@ -494,8 +494,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
     def __init__(self, data=None, is_add_user=None,
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
-                 custom_data=None, *, domain, **kwargs):
+                 custom_data=None, invitation=None, *, domain, **kwargs):
         self.custom_data = custom_data
+        self.invite = invitation
         if data and self.custom_data:
             data = data.copy()
             custom_data_post_dict = self.custom_data.form.data
@@ -519,9 +520,12 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 programs = Program.by_domain(domain_obj.name)
                 choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
                 self.fields['program'].choices = choices
+                if self.invite:
+                    # not sure if this works - remove this comment after testing on staging
+                    self.fields['program'].initial = self.invite.program
 
         if self.can_edit_tableau_config:
-            self._initialize_tableau_fields(data, domain)
+            self._initialize_tableau_fields(data, domain, self.invite)
 
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
@@ -529,6 +533,12 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        save_button_text = "Send Invite"
+        if self.invite:
+            self.fields['email'].widget.attrs["readonly"] = True
+            save_button_text = "Update Invite"
+
         fields = [
             crispy.Fieldset(
                 gettext("Information for new Web User"),
@@ -575,8 +585,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    (gettext("Add User") if is_add_user
-                     else gettext("Send Invite")),
+                    (gettext("Add User") if is_add_user else gettext(save_button_text)),
                     type="submit",
                     css_class="btn-primary",
                     data_bind="enable: isSubmitEnabled",
@@ -594,7 +603,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         email = self.cleaned_data['email'].strip()
 
         from corehq.apps.registration.validation import AdminInvitesUserFormValidator
-        error = AdminInvitesUserFormValidator.validate_email(self.domain, email)
+        error = AdminInvitesUserFormValidator.validate_email(self.domain, email, bool(self.invite))
         if error:
             raise forms.ValidationError(error)
         return email
@@ -632,8 +641,17 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             raise forms.ValidationError(error)
         return cleaned_data
 
-    def _initialize_tableau_fields(self, data, domain):
-        self.tableau_form = BaseTableauUserForm(data, domain=domain)
+    def _initialize_tableau_fields(self, data, domain, invitation=None):
+        initial = {}
+        if invitation:
+            # For testing purposes only - not sure if this works
+            filterset = invitation.tableau_group_ids.filter()
+            indices = [index for index in filterset]
+            initial = {
+                'tableau_role': invitation.tableau_role,
+                'tableau_group_indices': indices,
+            }
+        self.tableau_form = BaseTableauUserForm(data, domain=domain, inital=initial)
         self.fields['tableau_group_indices'] = self.tableau_form.fields["groups"]
         self.fields['tableau_group_indices'].label = _('Tableau Groups')
         self.fields['tableau_role'] = self.tableau_form.fields['role']
