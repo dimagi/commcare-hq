@@ -12,9 +12,15 @@ def copy_and_reencrypt_password_to_password_cbc(apps, schema_editor):
     EmailSettings = apps.get_model('email', 'EmailSettings')
 
     for email_settings in EmailSettings.objects.all():
-        if not email_settings.password.startswith(f'${ALGO_AES_CBC}$'):
-            email_settings.password = reencrypt_ecb_to_cbc_mode(email_settings.password, f'${ALGO_AES}$')
-            email_settings.save()
+        if email_settings.password.startswith(f'${ALGO_AES_CBC}$'):
+            continue
+
+        if email_settings.password.startswith(f'${ALGO_AES}$'):
+            prefix = f'${ALGO_AES}$'
+        else:
+            prefix = None
+        email_settings.password = reencrypt_ecb_to_cbc_mode(email_settings.password, prefix)
+        email_settings.save()
 
 
 def revert_password_cbc_to_password(apps, schema_editor):
