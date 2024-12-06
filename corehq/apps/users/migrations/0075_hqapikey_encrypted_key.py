@@ -26,13 +26,6 @@ def _batch_query(db_alias, model, query, batch_size):
     return chunked(it, batch_size)
 
 
-def reverse_copy_key_to_hashed_key(apps, schema_editor):
-    HQApiKey = apps.get_model('users', 'HQApiKey')
-    for api_key in HQApiKey.objects.all():
-        api_key.encrypted_key = ''
-        api_key.save()
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -45,5 +38,5 @@ class Migration(migrations.Migration):
             name='encrypted_key',
             field=models.CharField(blank=True, db_index=True, default='', max_length=128),
         ),
-        migrations.RunPython(copy_key_to_hashed_key, reverse_copy_key_to_hashed_key),
+        migrations.RunPython(copy_key_to_hashed_key, migrations.RunPython.noop),
     ]
