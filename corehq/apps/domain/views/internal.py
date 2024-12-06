@@ -75,12 +75,13 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
     page_title = gettext_lazy("Project Information")
-    template_name = 'domain/bootstrap3/internal_settings.html'
+    template_name = 'domain/internal_settings.html'
     strict_domain_fetching = True
 
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
+    @use_bootstrap5
     @use_jquery_ui  # datepicker
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
