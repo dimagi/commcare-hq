@@ -1,7 +1,11 @@
 from django.db import models
 
-from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES
-from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
+from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES, ALGO_AES_CBC
+from corehq.motech.utils import (
+    b64_aes_cbc_decrypt,
+    b64_aes_cbc_encrypt,
+    b64_aes_decrypt,
+)
 
 
 class EmailSettings(models.Model):
@@ -24,7 +28,10 @@ class EmailSettings(models.Model):
 
     @property
     def plaintext_password(self):
-        if self.password.startswith(f'${ALGO_AES}$'):
+        if self.password.startswith(f'${ALGO_AES_CBC}$'):
+            ciphertext = self.password.split('$', 2)[2]
+            return b64_aes_cbc_decrypt(ciphertext)
+        if self.password.startswith(f'${ALGO_AES}$'):  # This will be deleted after migration to cbc is done
             ciphertext = self.password.split('$', 2)[2]
             return b64_aes_decrypt(ciphertext)
         return self.password
@@ -32,5 +39,5 @@ class EmailSettings(models.Model):
     @plaintext_password.setter
     def plaintext_password(self, plaintext):
         if plaintext != PASSWORD_PLACEHOLDER:
-            ciphertext = b64_aes_encrypt(plaintext)
-            self.password = f'${ALGO_AES}${ciphertext}'
+            ciphertext = b64_aes_cbc_encrypt(plaintext)
+            self.password = f'${ALGO_AES_CBC}${ciphertext}'
