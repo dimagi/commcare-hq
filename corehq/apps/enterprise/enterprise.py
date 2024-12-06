@@ -1,27 +1,32 @@
 import re
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from django.conf import settings
 
 from memoized import memoized
 
-from corehq.apps.reports.util import get_commcare_version_and_date_from_last_usage
 from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
-from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
-from corehq.apps.enterprise.exceptions import EnterpriseReportError, TooMuchRequestedDataError
-from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
 from corehq.apps.domain.calculations import sms_in_last
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.exceptions import (
+    EnterpriseReportError,
+    TooMuchRequestedDataError,
+)
+from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.es import forms as form_es
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
+from corehq.apps.reports.util import (
+    get_commcare_version_and_date_from_last_usage,
+)
 from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
     get_mobile_user_count,
