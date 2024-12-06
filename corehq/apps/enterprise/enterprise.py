@@ -7,7 +7,7 @@ from django.conf import settings
 
 from memoized import memoized
 
-from corehq.apps.reports.standard.deployments import format_commcare_version
+from corehq.apps.reports.util import get_commcare_version_and_date_from_last_usage
 from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
@@ -418,18 +418,11 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             ]))
 
         for user in user_query.run().hits:
-            version_in_use = None
-            date_of_use = None
-
             last_submission = user.get('reporting_metadata', {}).get('last_submission_for_user', {})
             last_device = user.get('last_device', {})
 
-            if last_submission.get('commcare_version'):
-                version_in_use = format_commcare_version(last_submission['commcare_version'])
-                date_of_use = last_submission['submission_date']
-            elif last_device.get('commcare_version'):
-                version_in_use = format_commcare_version(last_device['commcare_version'])
-                date_of_use = last_device['last_used']
+            version_in_use, date_of_use = get_commcare_version_and_date_from_last_usage(last_submission,
+                                                                                        last_device)
 
             latest_version_at_time_of_use = get_latest_version_at_time(date_of_use)
 
