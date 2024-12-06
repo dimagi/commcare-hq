@@ -1613,7 +1613,12 @@ def bulk_user_upload_api(request, domain):
         if file is None:
             raise UserUploadError(_('no file uploaded'))
         workbook = get_workbook(file)
-        user_specs, group_specs = BaseUploadUser.process_workbook(workbook, domain, is_web_upload=False)
+        user_specs, group_specs = BaseUploadUser.process_workbook(
+            workbook,
+            domain,
+            is_web_upload=False,
+            upload_user=request.couch_user
+        )
         BaseUploadUser.upload_users(request, user_specs, group_specs, domain, is_web_upload=False)
         return json_response({'success': True})
     except (WorkbookJSONError, WorksheetNotFound, UserUploadError) as e:
