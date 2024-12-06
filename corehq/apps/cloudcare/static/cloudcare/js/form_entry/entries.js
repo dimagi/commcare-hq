@@ -952,7 +952,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
             const fixedNewValue = newValue.replace(constants.FILE_PREFIX, "");
             self.fileNameDisplay(fixedNewValue);
             self.answer(fixedNewValue);
-        } else if (cachedFilename) {
+        } else if (cachedFilename && newValue !== constants.NO_ANSWER) {
             // The cached filename is only set if the file has been uploaded already and not cleared
             // newValue is only empty initially and after clear. So this combination only happens when
             // rebuilding the questions (after deleting a repeat group)
