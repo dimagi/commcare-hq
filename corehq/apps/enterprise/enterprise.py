@@ -406,31 +406,36 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
     def rows_for_domain(self, domain_obj):
         rows = []
 
-        for user in get_all_user_rows(domain_obj.name,
-                                      include_web_users=False,
-                                      include_mobile_users=True,
-                                      include_inactive=False,
-                                      include_docs=True):
-            user = CouchUser.wrap_correctly(user['doc'])
-            last_submission = user.reporting_metadata.last_submission_for_user
-            last_used_device = user.last_device
+        user_query = (UserES()
+            .domain(domain_obj.name)
+            .mobile_users()
+            .source([
+                'username',
+                'reporting_metadata.last_submission_for_user.commcare_version',
+                'reporting_metadata.last_submission_for_user.submission_date',
+                'last_device.commcare_version',
+                'last_device.last_used'
+            ]))
 
-            version_in_use = _('Unknown')
+        for user in user_query.run().hits:
+            version_in_use = None
             date_of_use = None
 
-            # If the user hasn't submitted a form, we use the last used device
-            if last_submission and last_submission.commcare_version:
-                version_in_use = format_commcare_version(last_submission.commcare_version)
-                date_of_use = last_submission.submission_date
-            elif last_used_device and last_used_device.commcare_version:
-                version_in_use = format_commcare_version(last_used_device['commcare_version'])
-                date_of_use = last_used_device.last_used
+            last_submission = user.get('reporting_metadata', {}).get('last_submission_for_user', {})
+            last_device = user.get('last_device', {})
+
+            if last_submission.get('commcare_version'):
+                version_in_use = format_commcare_version(last_submission['commcare_version'])
+                date_of_use = last_submission['submission_date']
+            elif last_device.get('commcare_version'):
+                version_in_use = format_commcare_version(last_device['commcare_version'])
+                date_of_use = last_device['last_used']
 
             latest_version_at_time_of_use = get_latest_version_at_time(date_of_use)
 
             if is_out_of_date(version_in_use, latest_version_at_time_of_use):
                 rows.append([
-                    user.username,
+                    user['username'],
                     domain_obj.name,
                     latest_version_at_time_of_use,
                     version_in_use,
