@@ -4,7 +4,7 @@ from django.db import migrations
 
 from corehq.motech.const import ALGO_AES, ALGO_AES_CBC
 from corehq.util.django_migrations import skip_on_fresh_install
-from corehq.motech.utils import reencrypt_ecb_to_cbc_mode
+from corehq.motech.utils import reencrypt_ecb_to_cbc_mode, reencrypt_cbc_to_ecb_mode
 
 
 @skip_on_fresh_install
@@ -17,6 +17,21 @@ def copy_and_reencrypt_password_to_password_cbc(apps, schema_editor):
             email_settings.save()
 
 
+def revert_password_cbc_to_password(apps, schema_editor):
+    EmailSettings = apps.get_model('email', 'EmailSettings')
+
+    for email_settings in EmailSettings.objects.all():
+        if email_settings.password.startswith(f'${ALGO_AES}$'):
+            continue
+
+        if email_settings.password.startswith(f'${ALGO_AES_CBC}$'):
+            prefix = f'${ALGO_AES_CBC}$'
+        else:
+            prefix = None
+        email_settings.password = reencrypt_cbc_to_ecb_mode(email_settings.password, prefix)
+        email_settings.save()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -24,5 +39,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(copy_and_reencrypt_password_to_password_cbc, migrations.RunPython.noop),
+        migrations.RunPython(copy_and_reencrypt_password_to_password_cbc, revert_password_cbc_to_password),
     ]
