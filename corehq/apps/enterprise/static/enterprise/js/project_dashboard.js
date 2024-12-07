@@ -60,47 +60,7 @@ hqDefine("enterprise/js/project_dashboard", [
         return self;
     };
 
-    var SMSTile = function (datePicker) {
-        var self = {};
-        self.endDate = ko.observable(moment().utc());
-        self.startDate = ko.observable(self.endDate().clone().subtract(30, "days"));
-        self.presetType = ko.observable(PRESET_LAST_30);
-        self.customDateRangeDisplay = ko.observable(datePicker.optionsStore.input.value);
-
-        self.presetText = ko.pureComputed(function () {
-            if (self.presetType() !== PRESET_CUSTOM) {
-                return dateRangePresetOptions.find(ele => ele.id === self.presetType()).text;
-            } else {
-                return self.customDateRangeDisplay();
-            }
-        });
-
-        self.onApply = function (preset, startDate, endDate) {
-            self.startDate(startDate);
-            self.endDate(endDate);
-            self.presetType(preset);
-            self.customDateRangeDisplay(datePicker.optionsStore.input.value);
-
-            updateDisplayTotal($("#sms"), {
-                "start_date": startDate.toISOString(),
-                "end_date": endDate.toISOString(),
-            });
-        };
-
-        return self;
-    };
-
-    var DateRangeModal = function ($modal, datePicker, presetOptions, maxDateRangeDays, tileMap) {
-        let tileDisplay = null;
-        $modal.on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget);
-            tileDisplay = tileMap[button.data('sender')];
-
-            self.presetType(tileDisplay.presetType());
-            self.customStartDate(tileDisplay.startDate().clone());
-            self.customEndDate(tileDisplay.endDate().clone());
-        });
-
+    var DateRangeModal = function (datePicker, presetOptions, maxDateRangeDays, tileDisplay) {
         var self = {};
         self.presetOptions = presetOptions;
         self.presetType = ko.observable(PRESET_LAST_30);
@@ -215,7 +175,11 @@ hqDefine("enterprise/js/project_dashboard", [
         const requestParams = {
             url: initialPageData.reverse("enterprise_dashboard_total", slug),
             success: function (data) {
-                $display.html(Number(data.total).toLocaleString());
+                if (typeof data.total === 'number') {
+                    $display.html(Number(data.total).toLocaleString());
+                } else {
+                    $display.html(data.total);
+                }
             },
             error: function (request) {
                 if (request.responseJSON) {
@@ -233,29 +197,24 @@ hqDefine("enterprise/js/project_dashboard", [
 
     $(function () {
         const metricType = initialPageData.get('metric_type');
-        const datePicker = tempusDominus.createDefaultDateRangePicker(
-            document.getElementById("id_date_range"),
-            moment().subtract(30, "days"),
-            moment()
-        );
+        const $dateRangeDisplay = $("#dateRangeDisplay");
+        let dateRangeModal = null;
+        if ($dateRangeDisplay.length) {
+            const datePicker = tempusDominus.createDefaultDateRangePicker(
+                document.getElementById("id_date_range"),
+                moment().subtract(30, "days"),
+                moment()
+            );
 
-        const $dateRangeModal = $('#enterpriseFormsDaterange');
+            const formSubmissionsDisplay = MobileFormSubmissionsTile(datePicker);
+            const maxDateRangeDays = initialPageData.get("max_date_range_days");
+            dateRangeModal = DateRangeModal(datePicker, dateRangePresetOptions, maxDateRangeDays, formSubmissionsDisplay);
 
-        const formSubmissionsDisplay = MobileFormSubmissionsTile(datePicker);
-        const smsDisplay = SMSTile(datePicker);
-        const maxDateRangeDays = initialPageData.get("max_date_range_days");
-
-        const displayMap = {
-            "form_submission": formSubmissionsDisplay,
-            "sms": smsDisplay,
-        };
-        const dateRangeModal = DateRangeModal($dateRangeModal, datePicker, dateRangePresetOptions, maxDateRangeDays, displayMap);
-
-        $("#form_submission_dateRangeDisplay").koApplyBindings(formSubmissionsDisplay);
-        $("#sms_dateRangeDisplay").koApplyBindings(smsDisplay);
-        $dateRangeModal.koApplyBindings(
-            dateRangeModal
-        );
+            $dateRangeDisplay.koApplyBindings(formSubmissionsDisplay);
+            $("#enterpriseFormsDaterange").koApplyBindings(
+                dateRangeModal
+            );
+        }
 
         kissmetrics.track.event(`[${metricType}] Visited page`);
         $(".report-panel").each(function () {
@@ -283,9 +242,7 @@ hqDefine("enterprise/js/project_dashboard", [
                         $button.enableButton();
                     },
                 };
-
-                const dateRangeSlugs = ["form_submissions", "sms"];
-                if (dateRangeSlugs.includes(slug)) {
+                if (slug === "form_submissions") {
                     requestParams["data"] = {
                         "start_date": dateRangeModal.startDate().toISOString(),
                         "end_date": dateRangeModal.endDate().toISOString(),
