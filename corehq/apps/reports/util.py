@@ -853,7 +853,7 @@ def domain_copied_cases_by_owner(domain, owner_ids):
         .values_list('_id', flat=True)
 
 
-def get_commcare_version_and_date_from_last_usage(last_submission=None, last_device=None):
+def get_commcare_version_and_date_from_last_usage(last_submission=None, last_device=None, formatted=False):
     """
     Gets CommCare version and date from the last submission, or fall back to the last used device.
 
@@ -866,14 +866,14 @@ def get_commcare_version_and_date_from_last_usage(last_submission=None, last_dev
     version_in_use = None
     date_of_use = None
 
-    print(last_submission)
-    print(last_device)
     if last_submission and last_submission.get('commcare_version'):
-        version_in_use = format_commcare_version(last_submission.get('commcare_version'))
+        version = last_submission.get('commcare_version')
+        version_in_use = format_commcare_version(version) if formatted else version
         date_of_use = last_submission.get('submission_date')
 
     elif last_device and last_device.get('commcare_version'):
-        version_in_use = format_commcare_version(last_device.get('commcare_version'))
+        version = last_device.get('commcare_version')
+        version_in_use = format_commcare_version(version) if formatted else version
         date_of_use = last_device.get('last_used')
 
     return version_in_use, date_of_use
