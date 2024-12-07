@@ -1,4 +1,7 @@
 import re
+from datetime import datetime
+
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 from .models import CommCareBuild, CommCareBuildConfig
 
@@ -53,6 +56,9 @@ def get_latest_version_at_time(target_time):
 
     if not target_time:
         return config.get_default().version
+
+    if isinstance(target_time, str):
+        target_time = datetime.strptime(target_time, ISO_DATETIME_FORMAT)
 
     # Iterate through menu items in reverse (newest to oldest)
     for item in reversed(config.menu):
