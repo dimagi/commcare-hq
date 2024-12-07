@@ -355,7 +355,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 if last_build.get('app_id') and device and device.get('app_meta'):
                     device_app_meta = self.get_data_for_app(device.get('app_meta'), last_build.get('app_id'))
 
-            commcare_version, last_seen = get_commcare_version_and_date_from_last_usage(last_sub, device)
+            commcare_version, last_seen = get_commcare_version_and_date_from_last_usage(last_sub,
+                                                                                        device,
+                                                                                        formatted=True)
 
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
