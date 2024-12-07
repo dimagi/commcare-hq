@@ -305,3 +305,34 @@ feature flag to be enabled.
     send_mail_async.delay(
         subject, message, [settings.SOLUTIONS_AES_EMAIL]
     )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=1, day_of_month=1))
+def send_stale_case_data_info_to_admins():
+    from corehq.apps.hqadmin.reports import StaleCasesTable
+
+    if not settings.SOLUTIONS_AES_EMAIL:
+        return
+
+    table = StaleCasesTable()
+    row_data = table.rows
+    num_domains = len(row_data)
+    subject = (
+        f'Monthly report: {num_domains} domains containing stale '
+        f'case data (older than {table.STALE_DATE_THRESHOLD_DAYS} days)'
+    )
+    if num_domains:
+        message = (
+            f'We have identified {num_domains} domains containing stale '
+            f'case data older than {table.STALE_DATE_THRESHOLD_DAYS} days.\n'
+            'Please see detailed report below:\n'
+            f'{table.format_as_table(row_data, table.headers)}'
+        )
+    else:
+        message = (
+            'No domains were found containing case data older than '
+            f'{table.STALE_DATE_THRESHOLD_DAYS} days.'
+        )
+    send_mail_async.delay(
+        subject, message, [settings.SOLUTIONS_AES_EMAIL]
+    )
