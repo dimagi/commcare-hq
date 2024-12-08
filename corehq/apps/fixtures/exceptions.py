@@ -11,13 +11,8 @@ class FixtureAPIRequestError(FixtureException):
 
 
 class FixtureUploadError(FixtureException):
-
     def __init__(self, errors):
         self.errors = errors
-
-
-class FixtureTooManyRows(FixtureException):
-    """Raised when an uploaded fixture exceeds MAX_FIXTURE_ROWS"""
 
 
 class FixtureTypeCheckError(Exception):
