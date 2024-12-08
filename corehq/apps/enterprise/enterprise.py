@@ -41,7 +41,6 @@ class EnterpriseReport:
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
     title = _('Enterprise Report')
-    subtitle = ''
 
     def __init__(self, account, couch_user, **kwargs):
         self.account = account
@@ -231,13 +230,8 @@ class EnterpriseFormReport(EnterpriseReport):
             if isinstance(start_date, str):
                 start_date = datetime.fromisoformat(start_date)
             self.datespan = DateSpan(start_date, end_date)
-            self.subtitle = _("{} to {}").format(
-                start_date.date(),
-                end_date.date(),
-            )
         else:
             self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
-            self.subtitle = _("past {} days").format(num_days)
 
         if self.datespan.enddate - self.datespan.startdate > timedelta(days=self.MAX_DATE_RANGE_DAYS):
             raise TooMuchRequestedDataError(
@@ -406,13 +400,8 @@ class EnterpriseSMSReport(EnterpriseReport):
             if isinstance(start_date, str):
                 start_date = datetime.fromisoformat(start_date)
             self.datespan = DateSpan(start_date, end_date)
-            self.subtitle = _("{} to {}").format(
-                start_date.date(),
-                end_date.date(),
-            )
         else:
             self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
-            self.subtitle = _("past {} days").format(num_days)
 
         if self.datespan.enddate - self.datespan.startdate > timedelta(days=self.MAX_DATE_RANGE_DAYS):
             raise TooMuchRequestedDataError(

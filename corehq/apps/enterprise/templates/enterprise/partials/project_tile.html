@@ -9,7 +9,7 @@
         {% elif report.title == "SMS Usage" %}
             <button id="sms_dateRangeDisplay" type="button" data-bind="text: presetText" data-bs-toggle="modal" data-bs-target="#enterpriseFormsDaterange" data-sender="sms" class="btn btn-link fs-6">&nbsp;</button>
         {% else %}
-            <div class="form-control-plaintext fs-6">{{ report.subtitle|default:"&nbsp;" }}</div>
+            <div class="form-control-plaintext fs-6">{{ "&nbsp;" }}</div>
         {% endif %}
         </div>
         <div class="card-body">
