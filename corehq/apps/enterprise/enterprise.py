@@ -462,6 +462,8 @@ def _format_percentage_for_enterprise_tile(dividend, divisor):
     if not divisor:
         return '--'
     return f"{dividend / divisor * 100:.1f}%"
+
+
 class EnterpriseSMSReport(EnterpriseReport):
     title = gettext_lazy('SMS Usage')
     MAX_DATE_RANGE_DAYS = 90
