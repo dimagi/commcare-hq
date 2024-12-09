@@ -3831,12 +3831,10 @@ interpret@~1.1.0:
   resolved "https://registry.yarnpkg.com/interpret/-/interpret-1.1.0.tgz#7ed1b1410c6a0e0f78cf95d3b8440c63f78b8614"
   integrity sha1-ftGxQQxqDg94z5XTuEQMY/eLhhQ=
 
-intl-tel-input@9.0.7:
-  version "9.0.7"
-  resolved "https://registry.yarnpkg.com/intl-tel-input/-/intl-tel-input-9.0.7.tgz#2e33f5c3c65162909c72efc5d545c49073972911"
-  integrity sha1-LjP1w8ZRYpCccu/F1UXEkHOXKRE=
-  dependencies:
-    jquery ">=1.7"
+intl-tel-input@25.2.0:
+  version "25.2.0"
+  resolved "https://registry.yarnpkg.com/intl-tel-input/-/intl-tel-input-25.2.0.tgz#cd95f7c2b00c92e5cfe19659c76507815582e1d2"
+  integrity sha512-1eUkLngMyQaeTo37KGCcR6AEro/lO8DIaZRhbmVPmMagyHa4APTnigdTkDEqymF/iOMouDt3JHrhsrIFDpz+5g==
 
 ip-address@^9.0.5:
   version "9.0.5"
