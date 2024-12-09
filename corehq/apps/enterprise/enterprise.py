@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import re
 from django.db.models import Count
 from datetime import datetime, timedelta
@@ -30,7 +31,7 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.models import CouchUser, Invitation
 
 
-class EnterpriseReport:
+class EnterpriseReport(ABC):
     DOMAINS = 'domains'
     WEB_USERS = 'web_users'
     MOBILE_USERS = 'mobile_users'
@@ -40,8 +41,15 @@ class EnterpriseReport:
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
-    title = _('Enterprise Report')
-    description = ''
+    @property
+    @abstractmethod
+    def title(self):
+        pass
+
+    @property
+    @abstractmethod
+    def description(self):
+        pass
 
     def __init__(self, account, couch_user, **kwargs):
         self.account = account
@@ -115,8 +123,13 @@ class EnterpriseReport:
 
 
 class EnterpriseDomainReport(EnterpriseReport):
-    title = gettext_lazy('Project Spaces')
-    description = gettext_lazy('# of Project Spaces')
+    @property
+    def title(self):
+        return gettext_lazy('Project Spaces')
+
+    @property
+    def description(self):
+        return gettext_lazy('# of Project Spaces')
 
     @property
     def headers(self):
@@ -139,8 +152,13 @@ class EnterpriseDomainReport(EnterpriseReport):
 
 
 class EnterpriseWebUserReport(EnterpriseReport):
-    title = gettext_lazy('Web Users')
-    description = gettext_lazy('# of Web Users')
+    @property
+    def title(self):
+        return gettext_lazy('Web Users')
+
+    @property
+    def description(self):
+        return gettext_lazy('# of Web Users')
 
     @property
     def headers(self):
@@ -186,8 +204,13 @@ class EnterpriseWebUserReport(EnterpriseReport):
 
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
-    title = gettext_lazy('Mobile Workers')
-    description = gettext_lazy('# of Mobile Workers')
+    @property
+    def title(self):
+        return gettext_lazy('Mobile Workers')
+
+    @property
+    def description(self):
+        return gettext_lazy('# of Mobile Workers')
 
     @property
     def headers(self):
@@ -218,8 +241,13 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 
 class EnterpriseFormReport(EnterpriseReport):
-    title = gettext_lazy('Mobile Form Submissions')
-    description = gettext_lazy('# of Forms Submitted by Mobile Workers')
+    @property
+    def title(self):
+        return gettext_lazy('Mobile Form Submissions')
+
+    @property
+    def description(self):
+        return gettext_lazy('# of Forms Submitted by Mobile Workers')
 
     MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
     MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
@@ -327,8 +355,13 @@ class EnterpriseFormReport(EnterpriseReport):
 
 
 class EnterpriseODataReport(EnterpriseReport):
-    title = gettext_lazy('OData Feeds')
-    description = gettext_lazy('# of OData Feeds')
+    @property
+    def title(self):
+        return gettext_lazy('OData Feeds')
+
+    @property
+    def description(self):
+        return gettext_lazy('# of OData Feeds')
 
     MAXIMUM_EXPECTED_EXPORTS = 150
 
@@ -393,8 +426,13 @@ class EnterpriseODataReport(EnterpriseReport):
 
 
 class EnterpriseSMSReport(EnterpriseReport):
-    title = gettext_lazy('SMS Usage')
-    description = gettext_lazy('# of SMS Sent')
+    @property
+    def title(self):
+        return gettext_lazy('SMS Usage')
+
+    @property
+    def description(self):
+        return gettext_lazy('# of SMS Sent')
 
     MAX_DATE_RANGE_DAYS = 90
 
