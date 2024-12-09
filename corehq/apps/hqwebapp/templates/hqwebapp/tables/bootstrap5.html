@@ -1,0 +1,122 @@
+{% extends 'django_tables2/bootstrap5.html' %}
+{% load i18n %}
+{% load django_tables2 %}
+{% load hq_shared_tags %}
+{% load hq_tables_tags %}
+
+{% block table-wrapper %}
+  <div
+    class="table-container"
+    {% if table.container_id %}
+      id="{{ table.container_id }}"
+    {% endif %}
+    {% block table-container-attrs %}{% endblock %}
+  >
+
+    {% block before_table %}{% endblock %}
+
+    {% block table %}{{ block.super }}{% endblock table %}
+
+    <div class="pb-3 d-flex justify-content-between">
+      <div>
+        {% block num_entries %}
+          <div class="input-group">
+            <div class="input-group-text">
+              {% block num_entries.text %}
+                {% with start=table.page.start_index end=table.page.end_index total=table.page.paginator.count %}
+                  {% blocktranslate %}
+                    Showing {{ start }} to {{ end }} of {{ total }} entries
+                  {% endblocktranslate %}
+                {% endwith %}
+              {% endblock num_entries.text %}
+            </div>
+            {% block num_entries.select %}
+              <select
+                class="form-select"
+                {% block select-per-page-attr %}{% endblock %}
+              >
+                {% for p in table.paginator.paging_options %}
+                  <option
+                    value="{{ p }}"
+                    {% if p == table.paginator.per_page %} selected{% endif %}
+                  >
+                    {% blocktrans %}
+                      {{ p }} per page
+                    {% endblocktrans %}
+                  </option>
+                {% endfor %}
+              </select>
+            {% endblock %}
+          </div>
+        {% endblock num_entries %}
+      </div>
+      <div>
+        {% block pagination %}
+          {% if table.page and table.paginator.num_pages > 1 %}
+            <nav aria-label="Table navigation">
+              <ul class="pagination">
+
+                {% block pagination.previous %}
+                  <li class="previous page-item{% if not table.page.has_previous %} disabled{% endif %}">
+                    <a
+                      class="page-link"
+                      {% if table.page.has_previous %}
+                        {% block prev-page-link-attr %}
+                          href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}"
+                        {% endblock %}
+                      {% endif %}
+                    >
+                      {% trans 'Previous' %}
+                    </a>
+                  </li>
+                {% endblock pagination.previous %}
+
+                {% if table.page.has_previous or table.page.has_next %}
+                  {% block pagination.range %}
+                    {% for p in table.page|table_page_range:table.paginator %}
+                      <li class="page-item{% if table.page.number == p %} active{% endif %}">
+                        <a
+                          class="page-link"
+                          {% if p != '...' %}
+                            href="{% querystring table.prefixed_page_field=p %}"
+                          {% endif %}
+                        >
+                          {{ p }}
+                        </a>
+                      </li>
+                    {% endfor %}
+                  {% endblock pagination.range %}
+                {% endif %}
+
+                {% block pagination.next %}
+                  <li class="next page-item{% if not table.page.has_next %} disabled{% endif %}">
+                    <a
+                      class="page-link"
+                      {% if table.page.has_next %}
+                        {% block next-page-link-attr %}
+                          href="{% querystring table.prefixed_page_field=table.page.next_page_number %}"
+                        {% endblock %}
+                      {% endif %}
+                    >
+                      {% trans 'Next' %}
+                    </a>
+                  </li>
+                {% endblock pagination.next %}
+
+              </ul>
+            </nav>
+          {% endif %}
+        {% endblock pagination %}
+      </div>
+    </div>
+
+    {% block after_table %}{% endblock %}
+
+  </div>
+{% endblock table-wrapper %}
+
+{% block table.thead %}
+  {% if table.show_header %}
+    {% render_header %}
+  {% endif %}
+{% endblock table.thead %}
