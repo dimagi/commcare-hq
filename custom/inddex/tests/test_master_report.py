@@ -1,10 +1,9 @@
 import csv
-import doctest
 import os
 from contextlib import ExitStack
 from datetime import date
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 from django.utils.functional import cached_property
 
 from memoized import memoized
@@ -13,7 +12,6 @@ from unmagic import fixture
 
 from dimagi.utils.dates import DateSpan
 
-import custom.inddex.reports.r4_nutrient_stats
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.userreports.util import get_indicator_adapter, get_ucr_datasource_config_by_id
@@ -97,6 +95,15 @@ def inddex_domain():
             on_exit(CommCareCase.objects.using(dbname).filter(domain=domain.name).delete)
 
         yield
+
+
+def setup_module():
+    """Make dividedwerun run all tests in this module on the same node
+
+    This could be eliminated if dividedwerun had a way to determine that
+    tests in this module use a fixture (inddex_domain) that uses the
+    database.
+    """
 
 
 @memoized
@@ -302,10 +309,3 @@ class TestInddexReports(TestCase):
                              filter_selections={'owner_id': ['not-a-user']})
         self.assertEqual([], list(IntakeData(food_data).rows))
         self.assertEqual([], list(DailyIntakeData(food_data).rows))
-
-
-class DocTests(SimpleTestCase):
-
-    def test_doctests(self):
-        results = doctest.testmod(custom.inddex.reports.r4_nutrient_stats)
-        self.assertEqual(results.failed, 0)
