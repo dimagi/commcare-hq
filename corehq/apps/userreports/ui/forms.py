@@ -17,6 +17,7 @@ from corehq.apps.userreports.models import guess_data_source_type
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import JsonField, ReportDataSourceField
 from corehq.apps.userreports.util import get_table_name
+from corehq.util.metrics import metrics_gauge, metrics_counter
 
 
 class DocumentFormBase(forms.Form):
@@ -129,8 +130,35 @@ class ConfigurableReportEditForm(DocumentFormBase):
         self.instance.report_meta.edited_manually = True
         if toggles.AGGREGATE_UCRS.enabled(self.instance.domain):
             self.instance.data_source_type = guess_data_source_type(self.instance.config_id)
+        instance = super(ConfigurableReportEditForm, self).save(commit)
+        self._ucr_report_metrics()
+        return instance
 
-        return super(ConfigurableReportEditForm, self).save(commit)
+    def _ucr_report_metrics(self):
+        # TODO Test
+        if 'config_id' in self.changed_data:
+            from corehq.apps.userreports.util import get_configurable_and_static_reports_by_datasource
+            try:
+                reports = get_configurable_and_static_reports_by_datasource(
+                    self.instance.domain,
+                    data_source_id=self.instance.config.get_id
+                )
+                metrics_gauge(
+                    'commcare.ucr.reports_per_datasource.count',
+                    len(reports)-1,
+                    tags={'domain': self.instance.domain}
+                )
+                reports = get_configurable_and_static_reports_by_datasource(
+                    self.instance.domain,
+                    data_source_id=self.data['config_id']
+                )
+                metrics_gauge(
+                    'commcare.ucr.reports_per_datasource.count',
+                    len(reports)+1,
+                    tags={'domain': self.instance.domain}
+                )
+            except Exception:
+                pass
 
 
 DOC_TYPE_CHOICES = (
@@ -271,7 +299,17 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     def save(self, commit=False):
         self.instance.meta.build.finished = False
         self.instance.meta.build.initiated = None
-        return super(ConfigurableDataSourceEditForm, self).save(commit)
+        instance = super(ConfigurableDataSourceEditForm, self).save(commit)
+        self._report_datasource_metrics()
+        return instance
+
+    def _report_datasource_metrics(self):
+        # TODO Test
+        if 'configured_filter' in self.changed_data:
+            metrics_counter('commcare.ucr.datasource.change_in_filters', tags={'domain': self.domain})
+        if 'configured_indicators' in self.changed_data:
+            if len(self.instance.configured_indicators) > len(self.initial.get('configured_indicators', [])):
+                metrics_counter('commcare.ucr.datasource.increase_in_columns', tags={'domain': self.domain})
 
 
 class ConfigurableDataSourceFromAppForm(forms.Form):

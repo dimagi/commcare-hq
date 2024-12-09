@@ -27,6 +27,7 @@ from no_exceptions.exceptions import HttpException
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -327,7 +328,6 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
                 'edit_configurable_report', args=[self.domain, self.config._id])
             )
         return self.get(request, *args, **kwargs)
-
 
 class EditConfigReportView(BaseEditConfigReportView):
     urlname = 'edit_configurable_report'
@@ -1343,11 +1343,20 @@ def rebuild_data_source(request, domain, config_id):
             config.display_name
         )
     )
-
-    rebuild_indicators.delay(config_id, request.user.username, domain=domain)
+    rebuild_indicators.delay(config_id, request.user.username, domain=domain, source='edit_data_source_rebuild')
+    _report_ucr_rebuild_metrics(domain, config, 'rebuild_datasource')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
+
+
+def _report_ucr_rebuild_metrics(domain, config, action):
+    metrics_counter(f'commcare.ucr.{action}.count', tags={'domain': domain})
+    metrics_gauge(
+        f'commcare.ucr.{action}.columns.count',
+        len(config.get_columns()),
+        tags={'domain': domain}
+    )
 
 
 def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
@@ -1442,6 +1451,7 @@ def build_data_source_in_place(request, domain, config_id):
         source='edit_data_source_build_in_place',
         domain=config.domain,
     )
+    _report_ucr_rebuild_metrics(domain, config, 'rebuild_datasource_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

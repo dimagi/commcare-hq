@@ -175,6 +175,18 @@ def get_existing_reports(domain):
     ]
 
 
+def get_configurable_and_static_reports_by_datasource(domain, data_source_id):
+    reports = get_configurable_and_static_reports(domain)
+    reports_by_datasource = []
+    for report in reports:
+        try:
+            if report.config_id == data_source_id:
+                reports_by_datasource.append(report)
+        except DataSourceConfigurationNotFoundError:
+            continue
+    return reports_by_datasource
+
+
 def number_of_report_builder_reports(domain):
     builder_reports = [
         report for report in get_existing_reports(domain)

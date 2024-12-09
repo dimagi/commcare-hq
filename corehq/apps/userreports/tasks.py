@@ -118,8 +118,63 @@ def rebuild_indicators(
             config.save()
 
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
-        adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
-        _iteratively_build_table(config, limit=limit)
+
+        print(f"BEFORE REBUILD: Datasource ID: {config.get_id}, domain: {config.domain}, table_exists, {adapter.table_exists}")
+        rows_count_before_rebuild = adapter.get_query_object().count() if adapter.table_exists else None
+
+        try:
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
+            # raise Exception("Some random error")
+            _iteratively_build_table(config, limit=limit)
+        except Exception:
+            _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource', adapter, rows_count_before_rebuild,True)
+            raise
+        _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource', adapter, rows_count_before_rebuild)
+
+
+def _report_ucr_rebuild_metrics(config, source, action, adapter, rows_count_before_rebuild, error=False):
+    if source not in ('edit_data_source_rebuild', 'rebuild_datasource_in_place'):
+        return
+
+    try:
+        print(f"AFTER {action}: Datasource ID: {config.get_id}, domain: {config.domain}")
+        print(f"initiated {config.meta.build.initiated} , Finished: {config.meta.build.finished},"
+              f" finished_in_place: {config.meta.build.finished_in_place}")
+
+        from corehq.apps.userreports.models import DataSourceActionLog
+        try:
+            earliest_entry = DataSourceActionLog.objects.filter(
+                indicator_config_id=config.get_id,
+                action__in=[DataSourceActionLog.BUILD, DataSourceActionLog.REBUILD]
+            ).earliest('date_created')
+        except DataSourceActionLog.DoesNotExist:
+            pass
+        else:
+            no_of_days = (datetime.utcnow() - earliest_entry.date_created).days
+            print("Number of Days between Data Data Source Created and Last Rebuild Date", no_of_days)
+            metrics_gauge(
+                f'commcare.ucr.{action}.days_difference',
+                no_of_days,
+                tags={'domain': config.domain}
+                )
+
+        if error:
+            from corehq.apps.userreports.views import _number_of_records_to_be_iterated_for_rebuild
+            expected_rows_to_process = _number_of_records_to_be_iterated_for_rebuild(config)
+            metrics_gauge(
+                f'commcare.ucr.{action}.failed.expected_rows_to_process',
+                expected_rows_to_process,
+                tags={'domain': config.domain}
+            )
+
+        if rows_count_before_rebuild is not None and not error:
+            # Row count can only be obtained for synchronous rebuilds.
+            if not config.asynchronous:
+                rows_count_after_rebuild = adapter.get_query_object().count()
+                if rows_count_after_rebuild > rows_count_before_rebuild:
+                    metrics_counter(f'commcare.ucr.{action}increase_in_rows', tags={'domain': config.domain})
+    except Exception:
+        pass
 
 
 @serial_task(
@@ -138,8 +193,16 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
             config.meta.build.rebuilt_asynchronously = False
             config.save()
 
-        adapter.build_table(initiated_by=initiated_by, source=source)
-        _iteratively_build_table(config, in_place=True)
+        print(f"BEFORE REBUILD: Datasource ID: {config.get_id}, domain: {config.domain}, table_exists, {adapter.table_exists}")
+        rows_count_before_rebuild = adapter.get_query_object().count() if adapter.table_exists else None
+
+        try:
+            adapter.build_table(initiated_by=initiated_by, source=source)
+            _iteratively_build_table(config, in_place=True)
+        except Exception:
+            _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource_in_place', adapter, rows_count_before_rebuild, True)
+            raise
+        _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource_in_place', adapter, rows_count_before_rebuild)
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
