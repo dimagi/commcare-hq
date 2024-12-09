@@ -63,7 +63,7 @@ if [ -n "$html_or_stylesheets" ]; then
     if [ $? != 0 ]; then
         status=1;
 	    echo "HTML and/or stylesheets above have code style issues."
-	    echo "Run ./scripts/prettify-changed.sh to fix them in a separate commit."
+	    echo "After committing changes with --no-verify, run ./scripts/prettify-changed.sh to fix them."
 	    echo
     fi
 fi
