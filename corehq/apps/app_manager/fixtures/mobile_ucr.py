@@ -91,7 +91,8 @@ class ReportFixturesProvider(FixtureProvider):
             return []
 
         restore_user = restore_state.restore_user
-        apps = self._get_apps(restore_state, restore_user)
+        with restore_state.timing_context('_get_apps'):
+            apps = self._get_apps(restore_state, restore_user)
         report_configs = self._get_report_configs(apps)
         if not report_configs:
             return []
@@ -234,7 +235,8 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
             yield _get_report_index_fixture(restore_user)
             try:
-                self.report_data_cache.load_reports()
+                with restore_state.timing_context('V1 load_reports'):
+                    self.report_data_cache.load_reports()
             except Exception:
                 logging.exception("Error fetching reports for domain", extra={
                     "domain": restore_user.domain,
@@ -321,7 +323,8 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
             yield _get_report_index_fixture(restore_user, oldest_sync_time)
 
             try:
-                self.report_data_cache.load_reports(synced_fixtures)
+                with restore_state.timing_context('V2 load_reports'):
+                    self.report_data_cache.load_reports(synced_fixtures)
             except Exception:
                 logging.exception("Error fetching reports for domain", extra={
                     "domain": restore_user.domain,
@@ -329,7 +332,8 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
                 })
                 return []
 
-            yield from self._v2_fixtures(restore_user, synced_fixtures, restore_state.params.fail_hard)
+            with restore_state.timing_context('_v2_fixtures'):
+                yield from self._v2_fixtures(restore_state, synced_fixtures)
             for report_uuid in purged_fixture_ids:
                 yield from self._empty_v2_fixtures(report_uuid)
 
@@ -404,10 +408,12 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         yield E.fixture(id=self._report_fixture_id(report_uuid))
         yield E.fixture(id=self._report_filter_id(report_uuid))
 
-    def _v2_fixtures(self, restore_user, report_configs, fail_hard=False):
+    def _v2_fixtures(self, restore_state, report_configs):
+        fail_hard = restore_state.params.fail_hard
         for report_config in report_configs:
             try:
-                yield from self.report_config_to_fixture(report_config, restore_user)
+                with restore_state.timing_context(report_config.instance_id):
+                    yield from self.report_config_to_fixture(report_config, restore_state.restore_user)
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 if fail_hard:
