@@ -242,12 +242,10 @@ class TagTest(SimpleTestCase):
             """)
 
     def test_requirejs_main_js_entry_conflict(self):
-        with self.assertRaises(TemplateSyntaxError) as e:
+        msg = "Discarding module/two js_entry value because module/one is using requirejs_main"
+        with self.assertRaisesMessage(AssertionError, msg):
             self.render("""
                 {% load hq_shared_tags %}
                 {% requirejs_main "module/one" %}
                 {% js_entry "module/two" %}
             """)
-        self.assertEqual("""
-            Cannot use both js_entry (module/two) and requirejs_main (module/one)
-        """.strip(), str(e.exception))

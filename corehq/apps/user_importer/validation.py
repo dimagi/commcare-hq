@@ -22,6 +22,7 @@ from corehq.apps.users.dbaccessors import get_existing_usernames
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import normalize_username, raw_username
+from corehq.apps.users.validation import validate_assigned_locations_allow_users
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.views.utils import (
     user_can_access_invite
@@ -147,15 +148,19 @@ class RequiredWebFieldsValidator(ImportValidator):
 
 class TableauRoleValidator(ImportValidator):
     _error_message = _("Invalid tableau role: '{}'. Please choose one of the following: {}")
+    valid_role_options = [e.value for e in TableauUser.Roles]
 
     def __init__(self, domain):
         super().__init__(domain)
-        self.valid_role_options = [e.value for e in TableauUser.Roles]
 
     def validate_spec(self, spec):
         tableau_role = spec.get('tableau_role')
-        if tableau_role is not None and tableau_role not in self.valid_role_options:
-            return self._error_message.format(tableau_role, ', '.join(self.valid_role_options))
+        return self.validate_tableau_role(tableau_role)
+
+    @classmethod
+    def validate_tableau_role(cls, tableau_role):
+        if tableau_role is not None and tableau_role not in cls.valid_role_options:
+            return cls._error_message.format(tableau_role, ', '.join(cls.valid_role_options))
 
 
 class TableauGroupsValidator(ImportValidator):
@@ -171,12 +176,16 @@ class TableauGroupsValidator(ImportValidator):
         tableau_groups = spec.get('tableau_groups') or []
         if tableau_groups:
             tableau_groups = tableau_groups.split(',')
+        return self.validate_tableau_groups(self.allowed_groups_for_domain, tableau_groups)
+
+    @classmethod
+    def validate_tableau_groups(cls, allowed_groups_for_domain, tableau_groups):
         invalid_groups = []
         for group in tableau_groups:
-            if group not in self.allowed_groups_for_domain:
+            if group not in allowed_groups_for_domain:
                 invalid_groups.append(group)
         if invalid_groups:
-            return self._error_message.format(', '.join(invalid_groups), ', '.join(self.allowed_groups_for_domain))
+            return cls._error_message.format(', '.join(invalid_groups), ', '.join(allowed_groups_for_domain))
 
 
 class DuplicateValidator(ImportValidator):
@@ -342,13 +351,16 @@ class ProfileValidator(ImportValidator):
         if spec_profile_name and spec_profile_name not in self.all_user_profile_ids_by_name.keys():
             return self.error_message_nonexisting_profile.format(spec_profile_name)
 
-        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
-        original_profile_id = None
-        if user_result.invitation:
-            original_profile_id = user_result.invitation.profile.id if user_result.invitation.profile else None
-        elif user_result.editable_user:
-            original_profile_id = user_result.editable_user.get_user_data(self.domain).profile_id
+        profile_assignment_required_error = self._validate_profile_assignment_required(spec_profile_name)
+        if profile_assignment_required_error:
+            return profile_assignment_required_error
 
+        original_profile_id = self._get_original_profile_id(spec)
+        profile_access_error = self._validate_profile_access(original_profile_id, spec_profile_name)
+        if profile_access_error:
+            return profile_access_error
+
+    def _validate_profile_assignment_required(self, spec_profile_name):
         profile_required_for_user_type_list = CustomDataFieldsDefinition.get_profile_required_for_user_type_list(
             self.domain,
             UserFieldsView.field_type
@@ -362,6 +374,15 @@ class ProfileValidator(ImportValidator):
                 [self.user_types[required_for] for required_for in profile_required_for_user_type_list]
             ))
 
+    def _get_original_profile_id(self, spec):
+        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
+        if user_result.invitation:
+            return user_result.invitation.profile.id if user_result.invitation.profile else None
+        elif user_result.editable_user:
+            return user_result.editable_user.get_user_data(self.domain).profile_id
+        return None
+
+    def _validate_profile_access(self, original_profile_id, spec_profile_name):
         spec_profile_id = self.all_user_profile_ids_by_name.get(spec_profile_name)
         spec_profile_same_as_original = original_profile_id == spec_profile_id
         if spec_profile_same_as_original:
@@ -370,8 +391,10 @@ class ProfileValidator(ImportValidator):
         upload_user_accessible_profiles = (
             UserFieldsView.get_user_accessible_profiles(self.domain, self.upload_user))
         accessible_profile_ids = {p.id for p in upload_user_accessible_profiles}
+
         if original_profile_id and original_profile_id not in accessible_profile_ids:
             return self.error_message_original_user_profile_access
+
         if spec_profile_id and spec_profile_id not in accessible_profile_ids:
             return self.error_message_new_user_profile_access.format(spec_profile_name)
 
@@ -482,8 +505,6 @@ class LocationValidator(ImportValidator):
     error_message_user_access = _("Based on your locations you do not have permission to edit this user or user "
                                   "invitation")
     error_message_location_access = _("You do not have permission to assign or remove these locations: {}")
-    error_message_location_not_has_users = _("These locations cannot have users assigned because of their "
-                                             "organization level settings: {}.")
 
     def __init__(self, domain, upload_user, location_cache, is_web_user_import):
         super().__init__(domain)
@@ -491,52 +512,61 @@ class LocationValidator(ImportValidator):
         self.location_cache = location_cache
         self.is_web_user_import = is_web_user_import
 
-    def _get_locs_being_assigned(self, spec):
+    def validate_spec(self, spec):
+        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
+        user_access_error = self._validate_uploading_user_access_to_editable_user_or_invitation(user_result)
+        if user_access_error:
+            return user_access_error
+
+        if 'location_code' in spec:
+            locs_being_assigned = self._get_locs_ids_being_assigned(spec)
+            current_locs = self._get_current_locs(user_result)
+
+            user_location_access_error = self._validate_user_location_permission(current_locs, locs_being_assigned)
+            location_cannot_have_users_error = None
+            if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
+                location_cannot_have_users_error = self._validate_locations_allow_users(locs_being_assigned)
+            return user_location_access_error or location_cannot_have_users_error
+
+    def _get_locs_ids_being_assigned(self, spec):
         from corehq.apps.user_importer.importer import find_location_id
         location_codes = (spec['location_code'] if isinstance(spec['location_code'], list)
                           else [spec['location_code']])
         locs_ids_being_assigned = find_location_id(location_codes, self.location_cache)
         return locs_ids_being_assigned
 
-    def _validate_uploading_user_access(self, spec):
-        # 1. Get current locations for user or user invitation and ensure user can edit it
+    def _get_current_locs(self, user_result):
         current_locs = []
-        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
+        if user_result.invitation:
+            current_locs = user_result.invitation.assigned_locations.all()
+        elif user_result.editable_user:
+            current_locs = user_result.editable_user.get_location_ids(self.domain)
+        return current_locs
+
+    def _validate_uploading_user_access_to_editable_user_or_invitation(self, user_result):
+        # Get current locations for editable user or user invitation and ensure uploading user
+        # can access those locations
         if user_result.invitation:
             if not user_can_access_invite(self.domain, self.upload_user, user_result.invitation):
                 return self.error_message_user_access.format(user_result.invitation.email)
-            current_locs = user_result.invitation.assigned_locations.all()
         elif user_result.editable_user:
             if not user_can_access_other_user(self.domain, self.upload_user, user_result.editable_user):
                 return self.error_message_user_access.format(user_result.editable_user.username)
-            current_locs = user_result.editable_user.get_location_ids(self.domain)
 
-        # 2. Ensure the user is only adding the user to/removing from *new locations* that they have permission
-        # to access.
-        if 'location_code' in spec:
-            locs_being_assigned = self._get_locs_being_assigned(spec)
-            problem_location_ids = user_can_change_locations(self.domain, self.upload_user,
-                                                            current_locs, locs_being_assigned)
-            if problem_location_ids:
-                return self.error_message_location_access.format(
-                    ', '.join(SQLLocation.objects.filter(
-                        location_id__in=problem_location_ids).values_list('site_code', flat=True)))
+    def _validate_user_location_permission(self, current_locs, locs_ids_being_assigned):
+        # Ensure the uploading user is only adding the user to/removing from *new locations* that
+        # the uploading user has permission to access.
+        problem_location_ids = user_can_change_locations(self.domain, self.upload_user,
+                                                        current_locs, locs_ids_being_assigned)
+        if problem_location_ids:
+            return self.error_message_location_access.format(
+                ', '.join(SQLLocation.objects.filter(
+                    location_id__in=problem_location_ids).values_list('site_code', flat=True)))
 
-    def _validate_location_has_users(self, spec):
-        if 'location_code' not in spec:
+    def _validate_locations_allow_users(self, locs_ids_being_assigned):
+        if not locs_ids_being_assigned:
             return
-        locs_being_assigned = SQLLocation.objects.filter(location_id__in=self._get_locs_being_assigned(spec))
-        problem_locations = locs_being_assigned.filter(location_type__has_users=False)
-        if problem_locations:
-            return self.error_message_location_not_has_users.format(
-                ', '.join(problem_locations.values_list('site_code', flat=True)))
-
-    def validate_spec(self, spec):
-        user_access_error = self._validate_uploading_user_access(spec)
-        location_cannot_have_users_error = None
-        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
-            location_cannot_have_users_error = self._validate_location_has_users(spec)
-        return user_access_error or location_cannot_have_users_error
+        return validate_assigned_locations_allow_users(self.domain, locs_ids_being_assigned)
 
 
 class UserRetrievalResult(NamedTuple):

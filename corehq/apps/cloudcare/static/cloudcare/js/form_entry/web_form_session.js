@@ -10,6 +10,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     'cloudcare/js/form_entry/utils',
     'cloudcare/js/form_entry/form_ui',
     'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/models',
 ], function (
     $,
     ko,
@@ -20,7 +21,8 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     taskQueue,
     formEntryUtils,
     formUI,
-    utils
+    utils,
+    UsersModels
 ) {
     function WebFormSession(params) {
         var self = {};
@@ -478,6 +480,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         };
 
         self.changeLang = function (lang) {
+            updateDisplayOptionLang(lang);
             self.serverRequest(
                 {
                     'action': constants.CHANGE_LOCALE,
@@ -623,7 +626,14 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             var urlObject = utils.currentUrlToObject();
             urlObject.changeLang = lang;
             menusController.selectMenu(urlObject);
+            updateDisplayOptionLang(lang);
         });
+    }
+
+    function updateDisplayOptionLang(lang) {
+        var displayOptions = UsersModels.getCurrentUser().displayOptions;
+        displayOptions.language = lang;
+        UsersModels.saveDisplayOptions(displayOptions);
     }
 
     return {
