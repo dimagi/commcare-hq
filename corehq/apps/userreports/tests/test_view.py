@@ -29,7 +29,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.views import (
-    _number_of_records_to_be_iterated_for_rebuild,
+    number_of_records_to_be_processed,
 )
 from corehq.apps.users.models import HQApiKey, HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase
@@ -500,7 +500,7 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
         return self.client.post(path)
 
     def test_number_of_records_to_be_iterated_for_rebuild(self):
-        number_of_cases = _number_of_records_to_be_iterated_for_rebuild(self.data_source_config)
+        number_of_cases = number_of_records_to_be_processed(self.data_source_config)
         self.assertEqual(number_of_cases, 3)
 
     def test_feature_flag(self):
@@ -533,8 +533,7 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
                     'Rebuilt was not initiated due to high number of records this data source is expected to '
                     'iterate during a rebuild. Expected records to be processed is currently 3 '
                     'which is above the limit of 2. '
-                    'Please consider creating a new data source instead or reach out to support if '
-                    'you need to rebuild this data source.'
+                    'Please update the data source to have asynchronous processing.'
                 )
             )
 
