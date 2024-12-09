@@ -26,13 +26,13 @@ def receive_message(request, *args, **kwargs):
     phone_obj = ConnectMessagingNumber(couch_user)
     for message in data["messages"]:
         key = base64.b64decode(user_link.connectidmessagingkey_set.first().key)
-        ciphertext = base64.b64decode(data["ciphertext"])
-        tag = base64.b64decode(data["tag"])
-        nonce = base64.b64decode(data["nonce"])
+        ciphertext = base64.b64decode(message["ciphertext"])
+        tag = base64.b64decode(message["tag"])
+        nonce = base64.b64decode(message["nonce"])
         cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
         text = cipher.decrypt_and_verify(ciphertext, tag).decode("utf-8")
-        timestamp = data["timestamp"]
-        message_id = data["message_id"]
+        timestamp = message["timestamp"]
+        message_id = message["message_id"]
         msg = ConnectMessage(
             direction=INCOMING,
             date=timestamp,
