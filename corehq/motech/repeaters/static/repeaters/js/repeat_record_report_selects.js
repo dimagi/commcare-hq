@@ -16,37 +16,25 @@ hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
     });
 
     $('#select-all').on('click', function () {
+        const attemptedStates = ['All', 'Success', 'Empty'];
+        const pendingStates = ['Fail', 'Pending'];
+        const cancelledStates = ['Cancelled', 'Invalid Payload'];
         if (selectAll.checked) {
-            selectItems();
-            turnOffCancelRequeue();
+            if (attemptedStates.includes(selectAll.value)) {
+                selectItems();
+                turnOffCancelRequeue();
+            } else if (pendingStates.includes(selectAll.value)) {
+                buttonRequeue.disabled = true;
+                checkMultipleItems('cancel');
+            } else if (cancelledStates.includes(selectAll.value)) {
+                buttonCancel.disabled = true;
+                checkMultipleItems('requeue');
+            }
         } else {
             unSelectItems();
             turnOnCancelRequeue();
         }
     });
-
-    // TODO: apply this logic based on state data associated with select-all element
-    // $('#select-pending').on('click', function () {
-    //     unSelectItems();
-    //     turnOnCancelRequeue();
-    //     if (selectPending.checked) {
-    //         buttonRequeue.disabled = true;
-    //         checkMultipleItems('cancel');
-    //     } else {
-    //         buttonRequeue.disabled = false;
-    //     }
-    // });
-
-    // $('#select-cancelled').on('click', function () {
-    //     unSelectItems();
-    //     turnOnCancelRequeue();
-    //     if (selectCancelled.checked) {
-    //         buttonCancel.disabled = true;
-    //         checkMultipleItems('requeue');
-    //     } else {
-    //         buttonCancel.disabled = false;
-    //     }
-    // });
 
     $('body').on('DOMNodeInserted', 'tbody', function () {
         for (const item of items) {

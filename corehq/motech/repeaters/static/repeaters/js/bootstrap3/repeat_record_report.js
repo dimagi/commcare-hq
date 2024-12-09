@@ -168,12 +168,11 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         });
 
         function performAction(action) {
-            const bulkSelection = bulkSelectionChecked();
             const checkedRecords = getCheckedRecords();
-            if (bulkSelection || checkedRecords.length > 0) {
-                if (bulkSelection) { setFlag(bulkSelection); }
-                // only applies to checked items, not bulk selections
-                // leaving as is to preserve behavior
+            if (selectAll.checked) {
+                hideAllWarnings();
+                $popUp.modal('show');
+            } else if (checkedRecords.length > 0) {
                 if (isActionPossibleForCheckedItems(action, checkedRecords)) {
                     hideAllWarnings();
                     $popUp.modal('show');
@@ -182,12 +181,6 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
                 }
             } else {
                 showWarning('no-selection');
-            }
-        }
-
-        function bulkSelectionChecked() {
-            if (selectAll.checked) {
-                return 'select_all';
             }
         }
 
@@ -220,7 +213,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             return {
                 payload_id: initialPageData.get('payload_id'),
                 repeater_id: initialPageData.get('repeater_id'),
-                flag: getFlag(),
+                state: initialPageData.get('state'),
             };
         }
 
@@ -279,14 +272,6 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 
         function getAction() {
             return $confirmButton.attr('data-action');
-        }
-
-        function setFlag(flag) {
-            $confirmButton.attr('data-flag', flag);
-        }
-
-        function getFlag() {
-            return $confirmButton.attr('data-flag');
         }
 
         function showWarning(reason) {

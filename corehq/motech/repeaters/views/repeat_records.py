@@ -158,8 +158,11 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return self.request.GET.get('repeater', None)
 
     @property
+    def state(self):
+        return self._state_map.get(self.request.GET.get('record_state'))
+
+    @property
     def rows(self):
-        self.state = self._state_map.get(self.request.GET.get('record_state'))
         if self.payload_id:
             end = self.pagination.start + self.pagination.count
             records = self._get_all_records_by_payload()[self.pagination.start:end]
@@ -247,12 +250,15 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             where &= Q(repeater_id=self.repeater_id)
         if self.payload_id:
             where &= Q(payload_id=self.payload_id)
+        if self.state:
+            where &= Q(state=self.state)
         total = RepeatRecord.objects.filter(where).count()
 
         context.update(
             total=total,
             payload_id=self.payload_id,
             repeater_id=self.repeater_id,
+            state=self.state if self.state else {"name": 'All', "label": ''},
         )
         return context
 
@@ -326,13 +332,13 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        if _get_flag(request):
+        if _get_state(request):
             try:
-                _schedule_task_with_flag(request, domain, 'resend')
+                _schedule_task_with_state(request, domain, 'resend')
             except BulkActionMissingParameters:
                 return _missing_parameters_response()
         else:
-            _schedule_task_without_flag(request, domain, 'resend')
+            _schedule_task_without_state(request, domain, 'resend')
         return JsonResponse({'success': True})
 
 
@@ -340,13 +346,13 @@ class RepeatRecordView(View):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
-    if _get_flag(request) == 'select_pending':
+    if _get_state(request) not in (State.Cancelled, State.InvalidPayload):
         try:
-            _schedule_task_with_flag(request, domain, 'cancel')
+            _schedule_task_with_state(request, domain, 'cancel')
         except BulkActionMissingParameters:
             return _missing_parameters_response()
     else:
-        _schedule_task_without_flag(request, domain, 'cancel')
+        _schedule_task_without_state(request, domain, 'cancel')
 
     return HttpResponse('OK')
 
@@ -355,13 +361,14 @@ def cancel_repeat_record(request, domain):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
-    if _get_flag(request) == 'select_cancelled':
+    if _get_state(request) not in (State.Pending, State.Fail):
+        # Pending and failed payloads are already queued
         try:
-            _schedule_task_with_flag(request, domain, 'requeue')
+            _schedule_task_with_state(request, domain, 'requeue')
         except BulkActionMissingParameters:
             return _missing_parameters_response()
     else:
-        _schedule_task_without_flag(request, domain, 'requeue')
+        _schedule_task_without_state(request, domain, 'requeue')
 
     return HttpResponse('OK')
 
@@ -381,20 +388,16 @@ def _get_record_ids_from_request(request):
     return record_ids.strip().split()
 
 
-def _get_flag(request: HttpRequest) -> str:
-    return request.POST.get('flag') or ''
-
-
-def _get_state_from_request(request):
-    flag = _get_flag(request)
+def _get_state(request):
+    state = request.POST.get('state')
     return {
         'select_all': None,
         'select_pending': State.Pending,
         'select_cancelled': State.Cancelled,
-    }[flag]
+    }[state]
 
 
-def _schedule_task_with_flag(
+def _schedule_task_with_state(
     request: HttpRequest,
     domain: str,
     action: Literal['resend', 'cancel', 'requeue']
@@ -404,13 +407,13 @@ def _schedule_task_with_flag(
     repeater_id = request.POST.get('repeater_id', None)
     if not any([repeater_id, payload_id]):
         raise BulkActionMissingParameters
-    state = _get_state_from_request(request)
+    state = _get_state(request)
     task = task_generate_ids_and_operate_on_payloads.delay(
         payload_id, repeater_id, domain, action, state=state)
     task_ref.set_task(task)
 
 
-def _schedule_task_without_flag(
+def _schedule_task_without_state(
     request: HttpRequest,
     domain: str,
     action: Literal['resend', 'cancel', 'requeue']

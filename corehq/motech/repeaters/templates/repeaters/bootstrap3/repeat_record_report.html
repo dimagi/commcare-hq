@@ -33,8 +33,10 @@
               {% trans 'Requeue' %}
             </button>
             <label class="checkbox" >
-              <input type="checkbox" id="select-all">
-                {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
+              <input type="checkbox" id="select-all" value={{ state.name }}>
+              {% blocktrans with state_label=state.label.lower %}
+                Select all {{ total }} {{ state_label }} payloads
+              {% endblocktrans %}
             </label>
           </div>
         </div>
@@ -61,7 +63,7 @@
           <button type="button" data-dismiss="modal" class="btn btn-default">
             {% blocktrans %}No{% endblocktrans %}
           </button>
-          <button type="button" id="confirm-button" data-action="" data-flag="" class="btn btn-primary">
+          <button type="button" id="confirm-button" data-action="" class="btn btn-primary">
             {% blocktrans %}Yes{% endblocktrans %}
           </button>
         </div>
@@ -76,6 +78,7 @@
     {% registerurl 'requeue_repeat_record' domain %}
     {% initial_page_data 'payload_id' payload_id %}
     {% initial_page_data 'repeater_id' repeater_id %}
+    {% initial_page_data 'state' state %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
