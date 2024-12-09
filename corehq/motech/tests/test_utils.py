@@ -13,6 +13,8 @@ from corehq.motech.utils import (
     AES_KEY_MAX_LEN,
     b64_aes_decrypt,
     b64_aes_encrypt,
+    b64_aes_cbc_encrypt,
+    b64_aes_cbc_decrypt,
     get_endpoint_url,
     pformat_json,
     simple_pad,
@@ -192,7 +194,7 @@ class PFormatJSONTests(SimpleTestCase):
 
 class EncryptionTests(SimpleTestCase):
 
-    def assert_message_equals_plaintext(self, message):
+    def assert_message_equals_plaintext_using_ecb(self, message):
         assert isinstance(message, str)
         ciphertext = b64_aes_encrypt(message)
         plaintext = b64_aes_decrypt(ciphertext)
@@ -202,11 +204,27 @@ class EncryptionTests(SimpleTestCase):
 
     def test_encrypt_decrypt_ascii(self):
         message = 'Around you is a forest.'
-        self.assert_message_equals_plaintext(message)
+        self.assert_message_equals_plaintext_using_ecb(message)
 
     def test_encrypt_decrypt_utf8(self):
         message = 'आपके आसपास एक जंगल है'
-        self.assert_message_equals_plaintext(message)
+        self.assert_message_equals_plaintext_using_ecb(message)
+
+    def assert_message_equals_plaintext_using_cbc(self, message):
+        assert isinstance(message, str)
+        ciphertext = b64_aes_cbc_encrypt(message)
+        plaintext = b64_aes_cbc_decrypt(ciphertext)
+        self.assertEqual(plaintext, message)
+        self.assertIsInstance(ciphertext, str)
+        self.assertIsInstance(plaintext, str)
+
+    def test_encrypt_decrypt_cbc_ascii(self):
+        message = 'Around you is a forest.'
+        self.assert_message_equals_plaintext_using_cbc(message)
+
+    def test_encrypt_decrypt_cbc_utf8(self):
+        message = 'आपके आसपास एक जंगल है'
+        self.assert_message_equals_plaintext_using_cbc(message)
 
 
 class GetEndpointUrlTests(SimpleTestCase):
