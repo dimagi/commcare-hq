@@ -91,6 +91,7 @@ def platform_overview(request, domain):
             EnterpriseReport.MOBILE_USERS,
             EnterpriseReport.FORM_SUBMISSIONS,
             EnterpriseReport.ODATA_FEEDS,
+            EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,
             EnterpriseReport.SMS,
         )],
         'metric_type': 'Platform Overview',
