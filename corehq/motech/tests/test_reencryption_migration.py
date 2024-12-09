@@ -45,4 +45,4 @@ class TestReencryptionMigration(SimpleTestCase):
         self.email_settings.password = plaintext_password
         reencrypted_password = reencrypt_ecb_to_cbc_mode(self.email_settings.password, f'${ALGO_AES}$')
         self.email_settings.password = reencrypted_password
-        self.assertEqual(plaintext_password, reencrypted_password)
+        self.assertEqual(plaintext_password, self.email_settings.plaintext_password)
