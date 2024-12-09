@@ -23,6 +23,9 @@ hqDefine('geospatial/js/models', [
         "Oops! Something went wrong!" +
         " Please report an issue if the problem persists."
     );
+    // TODO Define at only one place
+    const DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines'
+
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -514,23 +517,32 @@ hqDefine('geospatial/js/models', [
         };
 
         self.hasDisbursementLayers = function () {
-            const mapLayers = self.mapInstance.getStyle().layers;
-            return _.any(
-                mapLayers,
-                function (layer) { return layer.id.includes(DISBURSEMENT_LAYER_PREFIX); }
-            );
+//            const mapLayers = self.mapInstance.getStyle().layers;
+//            return _.any(
+//                mapLayers,
+//                function (layer) { return layer.id.includes(DISBURSEMENT_LAYER_PREFIX); }
+//            );
+            return self.mapInstance.getLayer(DISBURSEMENT_LINES_LAYER_ID)
         };
 
         self.removeDisbursementLayers = function () {
             const mapLayers = self.mapInstance.getStyle().layers;
             let layerRemoved = false;
-            mapLayers.forEach(function (layer) {
-                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
-                    self.mapInstance.removeLayer(layer.id);
-                    layerRemoved = true;
-                }
-            });
+            // mapLayers.forEach(function (layer) {
+            //     if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
+            //         self.mapInstance.removeLayer(layer.id);
+            //         layerRemoved = true;
+            //     }
+            // });
+            if (self.mapInstance.getLayer(DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeLayer(DISBURSEMENT_LINES_LAYER_ID);
+                layerRemoved = true;
+            }
+            if (self.mapInstance.getSource(DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeSource(DISBURSEMENT_LINES_LAYER_ID);
+            }
             return layerRemoved;
+
         };
 
         self.hasSelectedUsers = function () {
@@ -1018,11 +1030,13 @@ hqDefine('geospatial/js/models', [
                     userCasesToConnect[caseItem.assignedUserId].push(caseItem.mapItem);
                 }
             }
-
+            
+            //  TODO - update here 
             self.disbursementModel.clearConnectionLines(casesToClear);
             for (const userId in userCasesToConnect) {
                 const user = self.mapModel.caseGroupsIndex[userId].item;
                 const cases = userCasesToConnect[userId];
+                //  TODO - update here 
                 self.disbursementModel.connectUserWithCasesOnMap(user, cases);
             }
         };
