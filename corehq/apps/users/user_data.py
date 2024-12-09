@@ -67,27 +67,24 @@ class UserData:
 
     @property
     def _provided_by_system(self):
-        provided_data = {
+        return {
             **(self.profile.fields if self.profile else {}),
             PROFILE_SLUG: self.profile_id or '',
             COMMCARE_PROJECT: self.domain,
+            **self._location_data,
         }
 
-        def _add_location_data():
-            if self._couch_user.get_location_id(self.domain):
-                provided_data[COMMCARE_LOCATION_ID] = self._couch_user.get_location_id(self.domain)
-                provided_data[COMMCARE_PRIMARY_CASE_SHARING_ID] = self._couch_user.get_location_id(self.domain)
-
-            if self._couch_user.get_location_ids(self.domain):
-                provided_data[COMMCARE_LOCATION_IDS] = user_location_data(
-                    self._couch_user.get_location_ids(self.domain))
-
-        # Some test don't have an actual user existed
-        # Web User don't store location fields in user data
-        if (self._couch_user or not settings.UNIT_TESTING) and self._couch_user.is_commcare_user():
-            _add_location_data()
-
-        return provided_data
+    @property
+    def _location_data(self):
+        if (settings.UNIT_TESTING and not self._couch_user):
+            return {}  # Some tests don't have an actual user
+        elif location_id := self._couch_user.get_location_id(self.domain):
+            return {
+                COMMCARE_LOCATION_ID: location_id,
+                COMMCARE_PRIMARY_CASE_SHARING_ID: location_id,
+                COMMCARE_LOCATION_IDS: self._couch_user.get_location_ids(self.domain),
+            }
+        return {}
 
     @property
     def _system_keys(self):
