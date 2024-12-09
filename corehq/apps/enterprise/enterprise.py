@@ -247,7 +247,7 @@ class EnterpriseFormReport(EnterpriseReport):
 
     @property
     def description(self):
-        return gettext_lazy('# of Forms Submitted by Mobile Workers')
+        return gettext_lazy('# of Mobile Form Submissions')
 
     MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
     MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
