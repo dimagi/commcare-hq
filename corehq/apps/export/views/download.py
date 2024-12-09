@@ -390,6 +390,12 @@ def poll_custom_export_download(request, domain):
     permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
     permissions.access_download_export_or_404()
     download_id = request.GET.get('download_id')
+
+    if not download_id:
+        return JsonResponse({
+            'error': _('Could not find download. Please refresh page and try again.'),
+        })
+
     try:
         context = get_download_context(download_id)
     except TaskFailedError as e:
