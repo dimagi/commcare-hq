@@ -4485,7 +4485,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         new_build_has_dependencies = has_dependencies(new_build)
 
         last_build = get_latest_build_doc(self.domain, self.id)
-        last_build = ApplicationBase.wrap(last_build) if last_build else None
+        last_build = self.__class__.wrap(last_build) if last_build else None
         last_build_has_dependencies = has_dependencies(last_build) if last_build else False
 
         if not last_build_has_dependencies and new_build_has_dependencies:
