@@ -1,5 +1,5 @@
 hqDefine("scheduling/js/create_schedule_main", [
-    'scheduling/js/create_schedule.ko',
+    'scheduling/js/create_schedule',
     'data_interfaces/js/make_read_only',
     'locations/js/widgets', // remove this altogether?
     'commcarehq',
