@@ -209,13 +209,25 @@ hqDefine("enterprise/js/project_dashboard", [
         return self;
     };
 
+    function localizeNumberlikeString(input) {
+        if ((typeof input === "string") && (input.endsWith('%'))) {
+            const number = input.slice(0, -1);
+            return Number(number).toLocaleString(
+                undefined,
+                {minimumFractionDigits: 1,  maximumFractionDigits: 1}
+            ) + '%';
+        } else {
+            return Number(input).toLocaleString();
+        }
+    }
+
     function updateDisplayTotal($element, kwargs) {
         const $display = $element.find(".total");
         const slug = $element.data("slug");
         const requestParams = {
             url: initialPageData.reverse("enterprise_dashboard_total", slug),
             success: function (data) {
-                $display.html(Number(data.total).toLocaleString());
+                $display.html(localizeNumberlikeString(data.total));
             },
             error: function (request) {
                 if (request.responseJSON) {
