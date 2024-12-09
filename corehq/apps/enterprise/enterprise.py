@@ -401,7 +401,7 @@ class EnterpriseODataReport(EnterpriseReport):
 
 
 class EnterpriseCommCareVersionReport(EnterpriseReport):
-    title = gettext_lazy('CommCare Client Version Compliance')
+    title = gettext_lazy('CommCare Version Compliance')
     description = gettext_lazy('%% of mobile workers on the latest commcare client version ')
 
     @property
