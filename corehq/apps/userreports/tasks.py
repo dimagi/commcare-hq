@@ -39,6 +39,7 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.models import (
     AsyncIndicator,
+    DataSourceActionLog,
     id_is_static,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
@@ -120,6 +121,7 @@ def rebuild_indicators(
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
         adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
         _iteratively_build_table(config, limit=limit)
+        _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource')
 
 
 @serial_task(
@@ -140,6 +142,30 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
 
         adapter.build_table(initiated_by=initiated_by, source=source)
         _iteratively_build_table(config, in_place=True)
+        _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource_in_place')
+
+
+def _report_ucr_rebuild_metrics(config, source, action):
+    if source not in ('edit_data_source_rebuild', 'edit_data_source_build_in_place'):
+        return
+    try:
+        _report_metric_number_of_days_since_first_build(config.domain, config.get_id, action)
+    except Exception:
+        pass
+
+
+def _report_metric_number_of_days_since_first_build(domain, config_id, action):
+    try:
+        earliest_entry = DataSourceActionLog.objects.filter(
+            domain=domain,
+            indicator_config_id=config_id,
+            action__in=[DataSourceActionLog.BUILD, DataSourceActionLog.REBUILD]
+        ).earliest('date_created')
+    except DataSourceActionLog.DoesNotExist:
+        pass
+    else:
+        no_of_days = (datetime.utcnow() - earliest_entry.date_created).days
+        metrics_gauge(f'commcare.ucr.{action}.days_since_first_build', no_of_days, tags={'domain': domain})
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
