@@ -8,8 +8,6 @@ from django.conf import settings
 from django.core import mail
 from django.test import override_settings
 
-from dimagi.utils.dates import add_months_to_date
-
 from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
@@ -71,7 +69,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         if cls.is_testing_web_user_feature:
             # make sure the subscription is still active when we count web users
             cls.subscription_is_active = True
-        cls.subscription_end_date = add_months_to_date(cls.subscription_start_date, cls.subscription_length)
+        cls.subscription_end_date = cls.subscription_start_date + relativedelta(months=cls.subscription_length)
         cls.subscription = generator.generate_domain_subscription(
             cls.account,
             cls.domain,
