@@ -1,0 +1,23 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block page_title %}{{ current_page.title }}{% endblock %}
+
+{% js_entry 'enterprise/js/project_dashboard' %}
+
+{% block page_content %}
+  {% registerurl "enterprise_dashboard_email" domain "---" %}
+  {% registerurl "enterprise_dashboard_total" domain "---" %}
+
+  {% initial_page_data 'max_date_range_days' max_date_range_days %}
+  {% initial_page_data 'metric_type' metric_type %}
+
+  <div class="row mt-4">
+    {% for report in reports %}
+      {% include 'enterprise/partials/project_tile.html' with report=report %}
+    {% endfor %}
+  </div>
+
+  {% include 'enterprise/partials/date_range_modal.html' %}
+{% endblock %}

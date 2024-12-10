@@ -1,0 +1,13 @@
+<form
+  hx-get="{% url 'styleguide_a_hanging_view' %}"
+  hx-disabled-elt="find button"
+  hx-swap="none"  {# example view returns nothing to display #}
+>
+  <div class="mb-3">
+    <label for="id_value" class="form-label">Value</label>
+    <input type="text" name="value" class="textinput form-control" id="id_value"/>
+  </div>
+  <button class="btn btn-primary" type="submit">
+    Submit Me!
+  </button>
+</form>

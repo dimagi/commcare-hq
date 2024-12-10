@@ -2,6 +2,7 @@ hqDefine('commtrack/js/sms', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -122,11 +123,11 @@ hqDefine('commtrack/js/sms', [
             var valid = true;
 
             if (!self.keyword()) {
-                self.keywordError('required');
+                self.keywordError(gettext('SMS keyword is required.'));
                 valid = false;
             }
             if (!self.caption()) {
-                self.captionError('required');
+                self.captionError(gettext('Name is required.'));
                 valid = false;
             }
 

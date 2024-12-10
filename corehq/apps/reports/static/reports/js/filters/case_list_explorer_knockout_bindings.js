@@ -91,7 +91,7 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
         init: function (element) {
             var $element = $(element);
             if (!$element.atwho) {
-                throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+                throw new Error("The explorerColumnsAutocomplete binding requires Atwho.js and Caret.js");
             }
 
             atwho.init($element, {

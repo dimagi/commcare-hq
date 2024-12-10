@@ -462,7 +462,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
-        '/a/{domain}/geospatial/',
+        '/a/{domain}/microplanning/',
     )
 
     @property
@@ -583,7 +583,7 @@ class ProjectDataTab(UITab):
 
     @property
     def _can_view_geospatial(self):
-        return toggles.GEOSPATIAL.enabled(self.domain)
+        return toggles.MICROPLANNING.enabled(self.domain)
 
     @property
     def _is_viewable(self):
@@ -1010,7 +1010,7 @@ class ProjectDataTab(UITab):
                 'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
             },
             {
-                'title': _("Configure Geospatial Settings"),
+                'title': _("Configure Microplanning Settings"),
                 'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
             }
         ]
@@ -1824,16 +1824,25 @@ class EnterpriseSettingsTab(UITab):
         enterprise_user_management_views = []
 
         if has_privilege(self._request, privileges.PROJECT_ACCESS):
-            enterprise_views.extend([
+            enterprise_views.append(
                 {
-                    'title': _('Enterprise Dashboard'),
-                    'url': reverse('enterprise_dashboard', args=[self.domain]),
-                },
+                    'title': _('Platform Overview'),
+                    'url': reverse('platform_overview', args=[self.domain]),
+                }
+            )
+            if toggles.ENTERPRISE_DASHBOARD_IMPROVEMENTS.enabled_for_request(self._request):
+                enterprise_views.append(
+                    {
+                        'title': _('Security Center'),
+                        'url': reverse('security_center', args=[self.domain]),
+                    }
+                )
+            enterprise_views.append(
                 {
                     'title': _('Enterprise Settings'),
                     'url': reverse('enterprise_settings', args=[self.domain]),
-                },
-            ])
+                }
+            )
         enterprise_views.append({
             'title': _('Billing Statements'),
             'url': reverse('enterprise_billing_statements',

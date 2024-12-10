@@ -368,7 +368,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
 
 class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     urlname = 'two_factor_settings'
-    template_name = 'two_factor/profile/profile.html'
+    template_name = 'two_factor/profile/bootstrap3/profile.html'
     page_title = gettext_lazy("Two Factor Authentication")
 
     @method_decorator(active_domains_required)
@@ -400,7 +400,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
     urlname = 'two_factor_setup'
-    template_name = 'two_factor/core/setup.html'
+    template_name = 'two_factor/core/bootstrap3/setup.html'
     page_title = gettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
@@ -434,7 +434,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
 
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     urlname = 'two_factor_setup_complete'
-    template_name = 'two_factor/core/setup_complete.html'
+    template_name = 'two_factor/core/bootstrap3/setup_complete.html'
     page_title = gettext_lazy("Two Factor Authentication Setup Complete")
 
     @method_decorator(login_required)
@@ -451,7 +451,7 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
 
 class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     urlname = 'two_factor_backup_tokens'
-    template_name = 'two_factor/core/backup_tokens.html'
+    template_name = 'two_factor/core/bootstrap3/backup_tokens.html'
     page_title = gettext_lazy("Two Factor Authentication Backup Tokens")
 
     @method_decorator(login_required)
@@ -478,7 +478,7 @@ def _show_link_to_webapps(user):
 
 class TwoFactorDisableView(BaseMyAccountView, DisableView):
     urlname = 'two_factor_disable'
-    template_name = 'two_factor/profile/disable.html'
+    template_name = 'two_factor/profile/bootstrap3/disable.html'
     page_title = gettext_lazy("Remove Two-Factor Authentication")
 
     @method_decorator(login_required)
@@ -492,7 +492,7 @@ class TwoFactorDisableView(BaseMyAccountView, DisableView):
 
 class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     urlname = 'two_factor_phone_setup'
-    template_name = 'two_factor/core/phone_register.html'
+    template_name = 'two_factor/core/bootstrap3/phone_register.html'
     page_title = gettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
@@ -716,15 +716,15 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def _to_json(self, api_key, redacted=True):
         if redacted:
-            key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
-            full_key = api_key.key
+            key = f"{api_key.plaintext_key[0:4]}…{api_key.plaintext_key[-4:]}"
+            full_key = api_key.plaintext_key
         else:
             if self.allow_viewable_API_keys:
-                key = api_key.key
+                key = api_key.plaintext_key
             else:
                 copy_msg = _("Copy this in a secure place. It will not be shown again.")
-                key = f"{api_key.key} ({copy_msg})",
-            full_key = api_key.key
+                key = f"{api_key.plaintext_key} ({copy_msg})",
+            full_key = api_key.plaintext_key
 
         if api_key.expiration_date and api_key.expiration_date < datetime.now():
             status = "expired"

@@ -53,7 +53,7 @@ def select(request, do_not_redirect=False, next_view=None):
         'current_page': {'page_name': _('Select A Project')},
     }
 
-    domain_select_template = "domain/select.html"
+    domain_select_template = "domain/bootstrap3/select.html"
     last_visited_domain = request.session.get('last_visited_domain')
     if open_invitations \
        or do_not_redirect \

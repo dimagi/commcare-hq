@@ -80,14 +80,17 @@ class GetFilterValueTest(TestCase):
 
 class PassesUserDataFilterTest(TestCase):
     domain = 'passes-user-data-filter-test'
+    mobile_user = None
 
     @classmethod
     def setUpClass(cls):
         super(PassesUserDataFilterTest, cls).setUpClass()
         cls.domain_obj = create_domain(cls.domain)
 
-        user_data = {"wants_email": "yes", "color": "green"}
+        user_data = {"wants_email": "yes", "color": "green", "empty": ""}
         cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc', None, None, user_data=user_data)
+        create_case_2(cls.domain, case_type=USERCASE_TYPE, external_id=cls.mobile_user.user_id,
+                      case_json=user_data, save=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -122,14 +125,26 @@ class PassesUserDataFilterTest(TestCase):
                          ._passes_user_data_filter(self.mobile_user))
 
     def test_passes_with_user_case_filter(self):
-        case = create_case_2(self.domain, case_type="thing", case_json={"case_color": "red"})
-        create_case_2(self.domain, case_type=USERCASE_TYPE, external_id=self.mobile_user.user_id,
-                      case_json={"wants_email": "yes", "color": "red"}, save=True)
+        case = create_case_2(self.domain, case_type="thing", case_json={"case_color": "green"})
 
         schedule = AlertSchedule()
         schedule.use_user_case_for_filter = True
         schedule.user_data_filter = {"wants_email": ["yes"], "color": ["{case_color}"]}
         self.assertTrue(ScheduleInstance(case=case, domain=self.domain, schedule=schedule)
+                        ._passes_user_data_filter(self.mobile_user))
+
+    def test_empty_string_matches_unset_property(self):
+        schedule = AlertSchedule()
+        schedule.use_user_case_for_filter = False
+        schedule.user_data_filter = {"empty": [""], "unset": ["yes", ""]}
+        self.assertTrue(ScheduleInstance(schedule=schedule)
+                        ._passes_user_data_filter(self.mobile_user))
+
+    def test_empty_string_matches_unset_property_user_case(self):
+        schedule = AlertSchedule()
+        schedule.use_user_case_for_filter = True
+        schedule.user_data_filter = {"empty": [""], "unset": ["yes", ""]}
+        self.assertTrue(ScheduleInstance(domain=self.domain, schedule=schedule)
                         ._passes_user_data_filter(self.mobile_user))
 
 

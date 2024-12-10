@@ -36,7 +36,14 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    pip-sync requirements/test-requirements.txt
+    # uv check, pip-sync, and symlink can be removed after the commcarehq_base
+    # Docker image containing uv has been published for use by Github Actions.
+    if which uv &> /dev/null; then
+        uv pip sync requirements/test-requirements.txt
+    else
+        pip-sync --user requirements/test-requirements.txt
+        ln -s /usr/bin/google-chrome-unstable /usr/bin/google-chrome-stable
+    fi
     pip check  # make sure there are no incompatibilities in test-requirements.txt
     python_preheat  # preheat the python libs
 

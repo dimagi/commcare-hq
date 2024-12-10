@@ -6,7 +6,7 @@
 #
 aiohappyeyeballs==2.3.4
     # via aiohttp
-aiohttp==3.10.2
+aiohttp==3.10.11
     # via
     #   aiohttp-retry
     #   twilio
@@ -49,7 +49,7 @@ botocore==1.27.96
     # via
     #   boto3
     #   s3transfer
-build==0.8.0
+build==1.2.2.post1
     # via pip-tools
 bytecode==0.14.2
     # via ddtrace
@@ -134,7 +134,7 @@ diff-match-patch==20241021
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==4.2.16
+django==4.2.17
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
@@ -262,23 +262,16 @@ google-api-core==2.11.0
     #   google-cloud-firestore
     #   google-cloud-storage
 google-api-python-client==2.32.0
-    # via
-    #   -r base-requirements.in
-    #   firebase-admin
+    # via firebase-admin
 google-auth==2.18.1
     # via
     #   google-api-core
     #   google-api-python-client
     #   google-auth-httplib2
-    #   google-auth-oauthlib
     #   google-cloud-core
     #   google-cloud-storage
 google-auth-httplib2==0.1.0
-    # via
-    #   -r base-requirements.in
-    #   google-api-python-client
-google-auth-oauthlib==1.2.0
-    # via -r base-requirements.in
+    # via google-api-python-client
 google-cloud-core==2.3.2
     # via
     #   google-cloud-firestore
@@ -326,6 +319,7 @@ idna==3.7
     #   yarl
 importlib-metadata==8.5.0
     # via
+    #   build
     #   markdown
     #   opentelemetry-api
 iniconfig==2.0.0
@@ -409,8 +403,6 @@ packaging==23.0
     #   pytest
 parsimonious==0.10.0
     # via pyseeyou
-pep517==0.10.0
-    # via build
 phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
@@ -419,7 +411,7 @@ pillow==10.3.0
     # via
     #   -r base-requirements.in
     #   reportlab
-pip-tools==7.3.0
+pip-tools==7.4.1
     # via -r test-requirements.in
 pluggy==1.5.0
     # via pytest
@@ -434,6 +426,8 @@ prometheus-client==0.14.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.36
     # via click-repl
+propcache==0.2.0
+    # via yarl
 proto-plus==1.22.2
     # via google-cloud-firestore
 protobuf==4.24.2
@@ -493,6 +487,10 @@ pyphonetics==0.5.3
     # via -r base-requirements.in
 pypng==0.20220715.0
     # via qrcode
+pyproject-hooks==1.2.0
+    # via
+    #   build
+    #   pip-tools
 pyrsistent==0.17.3
     # via jsonschema
 pyseeyou==1.0.2
@@ -574,9 +572,7 @@ requests==2.32.3
 requests-mock==1.9.3
     # via -r test-requirements.in
 requests-oauthlib==1.3.1
-    # via
-    #   -r base-requirements.in
-    #   google-auth-oauthlib
+    # via -r base-requirements.in
 requests-toolbelt==1.0.0
     # via -r base-requirements.in
 rjsmin==1.2.1
@@ -653,8 +649,6 @@ text-unidecode==1.3
     # via -r base-requirements.in
 tinycss2==1.2.1
     # via bleach
-toml==0.10.2
-    # via pep517
 tomli==2.0.1
     # via
     #   build
@@ -729,7 +723,7 @@ xmlsec==1.3.14
     # via python3-saml
 xmltodict==0.13.0
     # via ddtrace
-yarl==1.9.4
+yarl==1.17.2
     # via aiohttp
 zipp==3.21.0
     # via importlib-metadata
@@ -741,7 +735,7 @@ zope-interface==6.1
 # The following packages are considered to be unsafe in a requirements file:
 pip==23.3
     # via pip-tools
-setuptools==72.1.0
+setuptools==75.4.0
     # via
     #   django-websocket-redis
     #   pip-tools

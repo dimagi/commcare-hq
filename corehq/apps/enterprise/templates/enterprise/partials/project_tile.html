@@ -1,0 +1,43 @@
+{% load i18n %}
+
+<div class="col-md-6 col-lg-6 col-xl-3">
+  <div
+    class="card text-center report-panel mb-3" id="{{ report.slug }}"
+    data-slug="{{ report.slug }}"
+  >
+    <div class="card-header">
+      <h4 class="fs-5 pt-2">{{ report.title }}</h4>
+    </div>
+    <div class="card-body pb-5">
+      <div class="total fw-bold fs-1">
+        <i class="fa fa-spin fa-spinner"></i>
+      </div>
+      <div class="fs-5">{{ report.total_description }}</div>
+      <div class="py-2">
+        {% if report.title == "Mobile Form Submissions" %}
+          <button
+            class="btn btn-link fs-6" id="form_submission_dateRangeDisplay" type="button"
+            data-bind="text: presetText"
+            data-bs-toggle="modal"
+            data-bs-target="#enterpriseFormsDaterange"
+            data-sender="form_submission"
+          >&nbsp;</button>
+        {% elif report.title == "SMS Usage" %}
+          <button
+            class="btn btn-link fs-6" id="sms_dateRangeDisplay" type="button"
+            data-bind="text: presetText"
+            data-bs-toggle="modal"
+            data-bs-target="#enterpriseFormsDaterange"
+            data-sender="sms"
+          >&nbsp;</button>
+        {% else %}
+          <div class="form-control-plaintext fs-6">{{ "&nbsp;" }}</div>
+        {% endif %}
+      </div>
+      <button class="btn btn-primary btn-lg">
+        <i class="fa fa-envelope"></i>
+        {% trans "Email Report" %}
+      </button>
+    </div>
+  </div>
+</div>

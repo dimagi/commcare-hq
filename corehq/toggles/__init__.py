@@ -961,7 +961,7 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
 USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     'ush_dont_close_patient_extensions',
     'USH: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Suppress the normal behaviour of 'closing host cases closes its extension cases'.
@@ -1705,7 +1705,6 @@ DATA_MIGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
 DISABLE_MOBILE_ENDPOINTS = StaticToggle(
     'disable_mobile_endpoints',
     'Disable mobile endpoints for form submissions and restores',
@@ -1719,6 +1718,12 @@ DISABLE_MOBILE_ENDPOINTS = StaticToggle(
     )
 )
 
+OPEN_SUBMISSION_ENDPOINT = StaticToggle(
+    'open_submission_endpoint',
+    'Leave submission endpoint open to let old APIs keep working',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+)
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
@@ -2100,9 +2105,11 @@ SKIP_FIXTURES_ON_RESTORE = StaticToggle(
 
 SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     'skip_updating_user_reporting_metadata',
-    'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
-    TAG_CUSTOM,
+    'Disable user reporting metadata updates',
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
+    description="This is used as a temporary block in case of issues caused by the metadata updates. This"
+                "typically occurs if a large number of devices share the same user account.",
 )
 
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
@@ -2172,7 +2179,7 @@ WIDGET_DIALER = StaticToggle(
 HMAC_CALLOUT = StaticToggle(
     'hmac_callout',
     'USH: Enable signed messaging url callouts in cloudcare',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
 )
@@ -2180,7 +2187,7 @@ HMAC_CALLOUT = StaticToggle(
 GAEN_OTP_SERVER = StaticToggle(
     'gaen_otp_server',
     'USH: Enable retrieving OTPs from a GAEN Server',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
 )
@@ -2250,7 +2257,7 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
 ENTERPRISE_USER_MANAGEMENT = StaticToggle(
     'enterprise_user_management',
     'USH: UI for managing all web users in an enterprise',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/USH%3A+UI+for+managing+all+web+users+in+an+enterprise",
 )
@@ -2467,17 +2474,6 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     """
 )
 
-GOOGLE_SHEETS_INTEGRATION = StaticToggle(
-    'google-sheet-integration',
-    'Unlock the Google Sheets view in Exports',
-    TAG_SAAS_CONDITIONAL,
-    namespaces=[NAMESPACE_USER],
-    description="""
-    Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
-    on the Exports page.
-    """
-)
-
 APP_DEPENDENCIES = StaticToggle(
     slug='app-dependencies',
     label='Set Android app dependencies that must be installed before using a CommCare app',
@@ -2573,6 +2569,13 @@ WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+ENTERPRISE_DASHBOARD_IMPROVEMENTS = StaticToggle(
+    'enterprise_dashboard_improvements',
+    'Shows an improved version of enterprise dashboard during development',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER]
+)
+
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege
@@ -2600,13 +2603,27 @@ ATTENDANCE_TRACKING = StaticToggle(
     save_fn=_handle_attendance_tracking_role,
 )
 
-GEOSPATIAL = StaticToggle(
-    'geospatial',
-    'Allows access to GIS functionality',
+
+def _handle_geospatial_es_index(domain, is_enabled):
+    from corehq.apps.geospatial.tasks import index_es_docs_with_location_props
+    from corehq.apps.geospatial.utils import get_celery_task_tracker
+    from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
+
+    if is_enabled:
+        celery_task_tracker = get_celery_task_tracker(domain, ES_INDEX_TASK_HELPER_BASE_KEY)
+        # This check simply enforces that each domain's task is handled in serial.
+        if not celery_task_tracker.is_active():
+            index_es_docs_with_location_props.delay(domain)
+
+
+MICROPLANNING = StaticToggle(
+    'microplanning',
+    'Allows access to Microplanning GIS functionality',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description='Additional views will be added allowing for visually viewing '
-                'and assigning cases on a map.'
+                'and assigning cases on a map.',
+    save_fn=_handle_geospatial_es_index,
 
 )
 
@@ -2959,6 +2976,14 @@ SMART_LINKS_FOR_WEB_USERS = StaticToggle(
 MODULE_BADGES = StaticToggle(
     slug='module_badges',
     label='USH: Show case counts from CSQL queries as badges on modules',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+INCLUDE_ALL_LOCATIONS = StaticToggle(
+    slug='include_all_locations',
+    label='USH: When sending conditional alerts that target locations expand them to users that are assigned to '
+          'the location no matter if it is their primary location or not.',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )

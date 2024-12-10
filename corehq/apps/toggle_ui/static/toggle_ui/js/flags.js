@@ -5,6 +5,7 @@ hqDefine('toggle_ui/js/flags', [
     'hqwebapp/js/bootstrap3/alert_user',
     'reports/js/bootstrap3/config.dataTables.bootstrap',
     'hqwebapp/js/components/select_toggle',
+    'commcarehq',
 ], function (
     $,
     ko,

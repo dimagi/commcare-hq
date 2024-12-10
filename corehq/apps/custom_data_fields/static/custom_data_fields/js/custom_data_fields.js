@@ -6,6 +6,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko',     // needed for sortable and jqueryElement bindings
+    'commcarehq',
 ], function (
     $,
     ko,

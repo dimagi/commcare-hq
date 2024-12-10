@@ -1,8 +1,7 @@
 import hashlib
 import json
 import logging
-import re
-from xml.dom.minidom import parseString
+from xml.sax.saxutils import escape
 
 from django.conf import settings
 from django.contrib import messages
@@ -111,8 +110,8 @@ from corehq.apps.app_manager.xform import (
 )
 from corehq.apps.data_dictionary.util import (
     add_properties_to_data_dictionary,
-    get_case_property_description_dict,
     get_case_property_deprecated_dict,
+    get_case_property_description_dict,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -334,17 +333,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
-
-            if request.POST.get('cleanup', False):
-                try:
-                    # First, we strip all newlines and reformat the DOM.
-                    px = parseString(xform.replace('\r\n', '')).toprettyxml()
-                    # Then we remove excess newlines from the DOM output.
-                    text_re = re.compile(r'>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-                    prettyXml = text_re.sub(r'>\g<1></', px)
-                    xform = prettyXml
-                except Exception:
-                    pass
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
@@ -419,18 +407,13 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     if should_edit('custom_instances'):
         instances = json.loads(request.POST.get('custom_instances'))
-        try:  # validate that custom instances can be added into the XML
-            for instance in instances:
-                etree.fromstring(
-                    "<instance id='{}' src='{}' />".format(
-                        instance.get('instanceId'),
-                        instance.get('instancePath')
+        for instance in instances:
+            for key in ['instanceId', 'instancePath']:
+                val = instance.get(key)
+                if val != escape(val):
+                    raise AppMisconfigurationError(
+                        _("'{val}' is an invalid custom instance {key}").format(val=val, key=key)
                     )
-                )
-        except etree.XMLSyntaxError as error:
-            raise AppMisconfigurationError(
-                _("There was an issue with your custom instances: {}").format(error)
-            )
 
         form.custom_instances = [
             CustomInstance(

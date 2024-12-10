@@ -10,6 +10,7 @@
     {% crispy commtrack.update_form %}
   </fieldset>
   {% if not request.is_view_only %}
+    {% include 'users/partials/location_edit_warnings.html' with user_type="Mobile Worker" couch_username=couch_user.username request_username=request.couch_user.username %}
     {% if warning_banner_info and warning_banner_info.orphaned_case_count_per_location %}
       <div class="alert alert-warning">
         <p>

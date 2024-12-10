@@ -1110,18 +1110,12 @@ class SelectUserLocationForm(forms.Form):
         )
 
     def clean_assigned_locations(self):
-        from corehq.apps.locations.models import SQLLocation
-        from corehq.apps.locations.util import get_locations_from_ids
-
+        from corehq.apps.users.validation import validate_assigned_locations_allow_users
         location_ids = self.data.getlist('assigned_locations')
-        try:
-            locations = get_locations_from_ids(location_ids, self.domain)
-        except SQLLocation.DoesNotExist:
-            raise forms.ValidationError(_('One or more of the locations was not found.'))
-        if locations.filter(location_type__has_users=False).exists():
-            raise forms.ValidationError(
-                _('One or more of the locations you specified cannot have users assigned.'))
-        return [location.location_id for location in locations]
+        error = validate_assigned_locations_allow_users(self.domain, location_ids)
+        if error:
+            raise forms.ValidationError(error)
+        return location_ids
 
     def _user_has_permission_to_access_locations(self, new_location_ids):
         assigned_locations = SQLLocation.objects.filter(location_id__in=new_location_ids)
@@ -1131,25 +1125,18 @@ class SelectUserLocationForm(forms.Form):
     def clean(self):
         self.cleaned_data = super(SelectUserLocationForm, self).clean()
 
-        primary_location_id = self.cleaned_data['primary_location']
+        primary_location_id = self.cleaned_data.get('primary_location', '')
         assigned_location_ids = self.cleaned_data.get('assigned_locations', [])
         if not self._user_has_permission_to_access_locations(assigned_location_ids):
             self.add_error(
                 'assigned_locations',
                 _("You do not have permissions to assign one of those locations.")
             )
-        if primary_location_id:
-            if primary_location_id not in assigned_location_ids:
-                self.add_error(
-                    'primary_location',
-                    _("Primary location must be one of the user's locations")
-                )
-        if assigned_location_ids and not primary_location_id:
-            self.add_error(
-                'primary_location',
-                _("Primary location can't be empty if the user has any "
-                  "locations set")
-            )
+        from corehq.apps.users.validation import validate_primary_location_assignment
+        error = validate_primary_location_assignment(primary_location_id, assigned_location_ids)
+        if error:
+            self.add_error('primary_location', error)
+
         return self.cleaned_data
 
 
@@ -1418,7 +1405,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
 
 class AddPhoneNumberForm(forms.Form):
     phone_number = forms.CharField(
-        max_length=50, help_text=gettext_lazy('Please enter number, including country code, in digits only.')
+        max_length=20, help_text=gettext_lazy('Please enter number, including country code, in digits only.')
     )
 
     form_type = forms.CharField(initial='add-phonenumber', widget=forms.HiddenInput)
