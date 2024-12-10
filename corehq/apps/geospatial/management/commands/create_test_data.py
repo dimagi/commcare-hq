@@ -16,7 +16,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 
 CASE_TYPE = 'test-case'
-CASE_BLOCK_CHUNK_SIZE = 100
+CASE_BLOCK_CHUNK_SIZE = 1000
 SCRIPT_NAME = 'corehq.apps.geospatial...create_test_metadata'
 
 
