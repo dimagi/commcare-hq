@@ -134,7 +134,7 @@ class TestInvoice(BaseInvoiceTestCase):
         tasks.generate_invoices_based_on_date(invoice_date)
         self.assertEqual(self.subscription.invoice_set.count(), 0)
 
-    def test_community_no_charges_no_invoice(self):
+    def test_no_subscription_no_charges_no_invoice(self):
         """
         No invoices should be generated for domains that are not on a subscription and do not
         have any per_excess charges on users or SMS messages
