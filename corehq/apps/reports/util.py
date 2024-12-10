@@ -851,3 +851,29 @@ def domain_copied_cases_by_owner(domain, owner_ids):
         .owner(owner_ids)\
         .NOT(case_property_missing(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME))\
         .values_list('_id', flat=True)
+
+
+def get_commcare_version_and_date_from_last_usage(last_submission=None, last_device=None, formatted=False):
+    """
+    Gets CommCare version and date from the last submission, or fall back to the last used device.
+
+    Args:
+    last_submission: Dictionary containing Last Submission data from ES
+    last_device: Dictionary containing DeviceIdLastUsed data from ES
+    """
+    from corehq.apps.reports.standard.deployments import format_commcare_version
+
+    version_in_use = None
+    date_of_use = None
+
+    if last_submission and last_submission.get('commcare_version'):
+        version = last_submission.get('commcare_version')
+        version_in_use = format_commcare_version(version) if formatted else version
+        date_of_use = last_submission.get('submission_date')
+
+    elif last_device and last_device.get('commcare_version'):
+        version = last_device.get('commcare_version')
+        version_in_use = format_commcare_version(version) if formatted else version
+        date_of_use = last_device.get('last_used')
+
+    return version_in_use, date_of_use
