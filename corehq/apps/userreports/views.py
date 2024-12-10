@@ -27,7 +27,6 @@ from no_exceptions.exceptions import HttpException
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 
-from corehq.util.metrics import metrics_counter
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -180,6 +179,7 @@ from corehq.motech.repeaters.models import DataSourceRepeater
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
@@ -1354,6 +1354,11 @@ def rebuild_data_source(request, domain, config_id):
 
 def _report_ucr_rebuild_metrics(domain, config, action):
     metrics_counter(f'commcare.ucr.{action}.count', tags={'domain': domain})
+    metrics_gauge(
+        f'commcare.ucr.{action}.columns.count',
+        len(config.get_columns()),
+        tags={'domain': domain}
+    )
 
 
 def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
