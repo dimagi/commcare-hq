@@ -161,6 +161,7 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import (
     add_event,
     allowed_report_builder_reports,
+    get_configurable_and_static_reports_by_data_source,
     get_indicator_adapter,
     get_referring_apps,
     has_report_builder_access,
@@ -1359,6 +1360,20 @@ def _report_ucr_rebuild_metrics(domain, config, action):
         len(config.get_columns()),
         tags={'domain': domain}
     )
+    _report_metric_report_counts_by_datasource(domain, config.get_id, action)
+
+
+def _report_metric_report_counts_by_datasource(domain, data_source_id, action):
+    try:
+        reports = get_configurable_and_static_reports_by_data_source(domain, data_source_id)
+    except Exception:
+        pass
+    else:
+        metrics_gauge(
+            f'commcare.ucr.{action}.reports_per_datasource.count',
+            len(reports),
+            tags={'domain': domain}
+        )
 
 
 def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
