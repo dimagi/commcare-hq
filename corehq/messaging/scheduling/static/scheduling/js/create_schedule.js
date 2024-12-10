@@ -3,11 +3,11 @@ hqDefine("scheduling/js/create_schedule", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler',
+    'hqwebapp/js/toggles',
     'jquery-ui/ui/widgets/datepicker',
     'bootstrap-timepicker/js/bootstrap-timepicker',
-    'hqwebapp/js/ckeditor_knockout_bindings',       // TODO: only include if feature flag is on
     'hqwebapp/js/components/select_toggle',
-], function ($, ko, initialPageData, select2Handler) {
+], function ($, ko, initialPageData, select2Handler, toggles) {
     ko.bindingHandlers.useTimePicker = {
         init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
             $(element).timepicker({
@@ -577,7 +577,14 @@ hqDefine("scheduling/js/create_schedule", [
             initialPageData.get("current_select2_case_group_recipients"),
             initialPageData.get("current_visit_scheduler_form")
         );
-        $('#create-schedule-form').koApplyBindings(scheduleViewModel);
-        scheduleViewModel.init();
+        if (toggles.toggleEnabled('RICH_TEXT_EMAILS')) {
+            import("hqwebapp/js/ckeditor_knockout_bindings").then(function() {
+                $('#create-schedule-form').koApplyBindings(scheduleViewModel);
+                scheduleViewModel.init();
+            });
+        } else {
+            $('#create-schedule-form').koApplyBindings(scheduleViewModel);
+            scheduleViewModel.init();
+        }
     });
 });
