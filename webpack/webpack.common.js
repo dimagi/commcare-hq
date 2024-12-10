@@ -69,6 +69,17 @@ module.exports = {
             },
 
             {
+                test: /nvd3\/nv\.d3\.min/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "nv",
+                    },
+                },
+            },
+            {
                 test: /sentry\.browser/,
                 loader: "exports-loader",
                 options: {

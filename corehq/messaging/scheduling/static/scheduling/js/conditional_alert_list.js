@@ -6,6 +6,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/search_box',
+    'commcarehq',
 ], function (
     $,
     ko,

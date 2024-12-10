@@ -1,4 +1,4 @@
-hqDefine("scheduling/js/create_schedule.ko", [
+hqDefine("scheduling/js/create_schedule", [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
@@ -521,11 +521,11 @@ hqDefine("scheduling/js/create_schedule.ko", [
                 fieldName: field,
                 multiple: true,
             });
-        
+
             self.getHandlerSlug = function () {
                 return 'scheduling_select2_helper';
             };
-        
+
             self.getInitialData = function () {
                 return initial_object_list;
             };
@@ -534,7 +534,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
 
             return self;
         };
-    
+
     recipientsSelect2Handler.prototype = Object.create(recipientsSelect2Handler.prototype);
     recipientsSelect2Handler.prototype.constructor = recipientsSelect2Handler;
 
