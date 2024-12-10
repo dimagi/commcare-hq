@@ -6,9 +6,6 @@
 {% js_entry_b3 'scheduling/js/conditional_alert_main' %}
 
 {% block stylesheets %}{{ block.super }}
-  {% if request|toggle_enabled:"RICH_TEXT_EMAILS" %}
-    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.0.0/ckeditor5.css" />
-  {% endif %}
   <style>
     .nav-tabs li.has-error a, .nav-tabs li.has-error a:focus, .nav-tabs li.has-error a:hover {
       background-color: #f2dede;

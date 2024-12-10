@@ -3,12 +3,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block stylesheets %}{{ block.super }}
-  {% if request|toggle_enabled:"RICH_TEXT_EMAILS" %}
-    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.0.0/ckeditor5.css" />
-  {% endif %}
-{% endblock %}
-
 {% js_entry_b3 'scheduling/js/create_schedule_main' %}
 
 {% block page_content %}{{ block.super }}
