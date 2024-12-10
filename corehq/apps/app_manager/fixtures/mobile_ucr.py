@@ -169,6 +169,7 @@ class ReportDataCache(object):
         self.reports = {}
         self.domain = domain
         self.report_configs = report_configs
+        self.add_row_index = toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(domain)
 
     def get_data(self, key, data_source):
         if key not in self.data_cache:
@@ -277,13 +278,11 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         return root
 
     def report_config_to_fixture(self, report_config, restore_user):
-        row_index_enabled = toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain)
-
         def _row_to_row_elem(
             deferred_fields, filter_options_by_field, row, index, is_total_row=False,
         ):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
-            if row_index_enabled:
+            if self.report_data_cache.add_row_index:
                 row_elem.append(E.column(str(index), id='row_index'))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
@@ -433,7 +432,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
     def report_config_to_fixture(self, report_config, restore_user):
         def _row_to_row_elem(deferred_fields, filter_options_by_field, row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
-            if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain):
+            if self.report_data_cache.add_row_index:
                 row_elem.append(E('row_index', str(index)))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
