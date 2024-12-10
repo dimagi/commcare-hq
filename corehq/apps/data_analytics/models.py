@@ -157,3 +157,94 @@ class GIRRow(models.Model):
             experienced_threshold=self.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD,
             performance_threshold=self.performance_threshold or DEFAULT_PERFORMANCE_THRESHOLD,
         )
+
+
+class DomainMetrics(models.Model):
+
+    domain = models.TextField(unique=True, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    has_project_icon = models.BooleanField()
+    has_security_settings = models.BooleanField()
+    is_active = models.BooleanField()
+    is_first_domain_for_creating_user = models.BooleanField()
+
+    lookup_tables = models.IntegerField()
+    repeaters = models.IntegerField()
+    ucrs = models.IntegerField()
+
+    # App Metrics
+    apps = models.IntegerField()
+    apps_with_icon = models.IntegerField()
+    apps_with_multiple_languages = models.IntegerField()
+
+    # User Metrics
+    mobile_workers = models.IntegerField()
+    web_users = models.IntegerField()
+
+    active_mobile_workers = models.IntegerField()
+    active_mobile_workers_in_last_365_days = models.IntegerField()
+    case_sharing_groups = models.IntegerField()
+    case_sharing_locations = models.IntegerField()
+    has_custom_roles = models.BooleanField()
+    has_locations = models.BooleanField()
+    location_restricted_users = models.IntegerField()
+    users_with_submission = models.IntegerField()
+
+    # Case Metrics
+    cases = models.IntegerField()
+
+    active_cases = models.IntegerField()
+    cases_modified_in_last_30_days = models.IntegerField()
+    cases_modified_in_last_60_days = models.IntegerField()
+    cases_modified_in_last_90_days = models.IntegerField()
+    inactive_cases = models.IntegerField()
+    usercases_modified_in_last_30_days = models.IntegerField()
+
+    # Form Metrics
+    forms = models.IntegerField()
+    forms_submitted_in_last_30_days = models.IntegerField()
+    forms_submitted_in_last_60_days = models.IntegerField()
+    forms_submitted_in_last_90_days = models.IntegerField()
+
+    first_form_submission = models.DateTimeField(null=True)
+    most_recent_form_submission = models.DateTimeField(null=True)
+    three_hundredth_form_submission = models.DateTimeField(null=True)
+
+    # SMS Metrics
+    total_sms = models.IntegerField()
+    sms_in_last_30_days = models.IntegerField()
+    sms_in_last_60_days = models.IntegerField()
+    sms_in_last_90_days = models.IntegerField()
+
+    incoming_sms = models.IntegerField()
+    incoming_sms_in_last_30_days = models.IntegerField()
+    incoming_sms_in_last_60_days = models.IntegerField()
+    incoming_sms_in_last_90_days = models.IntegerField()
+
+    outgoing_sms = models.IntegerField()
+    outgoing_sms_in_last_30_days = models.IntegerField()
+    outgoing_sms_in_last_60_days = models.IntegerField()
+    outgoing_sms_in_last_90_days = models.IntegerField()
+
+    telerivet_backends = models.IntegerField()
+
+    # Export Metrics
+    case_exports = models.IntegerField()
+    custom_exports = models.IntegerField()
+    deid_exports = models.IntegerField()
+    saved_exports = models.IntegerField()
+
+    # Calculated properties
+    @property
+    def has_app(self):
+        return bool(self.apps)
+
+    @property
+    def has_used_sms(self):
+        return bool(self.total_sms)
+
+    @property
+    def has_used_sms_in_last_30_days(self):
+        return bool(self.sms_in_last_30_days)
