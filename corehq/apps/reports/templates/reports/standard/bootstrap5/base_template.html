@@ -24,8 +24,8 @@
   {% include 'reports/partials/bootstrap5/filters_js.html' %}
   {% include 'reports/partials/graphs/charts_js.html' %}
 
-  <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
   {% compress js %}
+    <script src="{% static '@turf/turf/turf.min.js' %}"></script>
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
     <script src="{% static 'case/js/casexml.js' %}"></script>
     <script src="{% static 'reports/js/bootstrap5/tabular.js' %}"></script>
