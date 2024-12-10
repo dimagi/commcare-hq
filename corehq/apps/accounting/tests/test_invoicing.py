@@ -2,6 +2,8 @@ import datetime
 import random
 from decimal import Decimal
 
+from dateutil.relativedelta import relativedelta
+
 from django.conf import settings
 from django.core import mail
 from django.test import override_settings
@@ -23,6 +25,7 @@ from corehq.apps.accounting.models import (
     Invoice,
     SoftwarePlanEdition,
     Subscriber,
+    Subscription,
     SubscriptionType,
 )
 from corehq.apps.accounting.tasks import calculate_users_in_all_domains
@@ -417,7 +420,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
     def test_community_over_limit(self):
         """
-        For a domain under community (no subscription) with users over the community limit, make sure that:
+        For a domain under community with users over the community limit, make sure that:
         - base_description is None
         - base_cost is 0.0
         - unit_description is not None
@@ -436,8 +439,14 @@ class TestUserLineItem(BaseInvoiceTestCase):
         account.date_confirmed_extra_charges = today
         account.save()
 
+        community_plan = DefaultProductPlan.get_default_plan_version()
+        Subscription.new_domain_subscription(
+            account, domain.name, community_plan,
+            date_start=datetime.date(today.year, today.month, 1) - relativedelta(months=1),
+        )
+
         calculate_users_in_all_domains(datetime.date(today.year, today.month, 1))
-        tasks.generate_invoices_based_on_date(datetime.date.today())
+        tasks.generate_invoices_based_on_date(today)
         subscriber = Subscriber.objects.get(domain=domain.name)
         invoice = Invoice.objects.filter(subscription__subscriber=subscriber).get()
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
