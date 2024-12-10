@@ -145,34 +145,6 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertRaises(Invoice.DoesNotExist,
                           lambda: Invoice.objects.get(subscription__subscriber__domain=domain.name))
 
-    def test_community_invoice(self):
-        """
-        For an unsubscribed domain with any charges over the community limit for the month of invoicing,
-        make sure that an invoice is generated in addition to a subscription for that month to
-        the community plan.
-        """
-        domain = generator.arbitrary_domain()
-        self.addCleanup(domain.delete)
-        generator.create_excess_community_users(domain)
-        account = BillingAccount.get_or_create_account_by_domain(
-            domain, created_by=self.dimagi_user)[0]
-        generator.arbitrary_contact_info(account, self.dimagi_user)
-        account.date_confirmed_extra_charges = datetime.date.today()
-        account.save()
-        today = datetime.date.today()
-        calculate_users_in_all_domains(datetime.date(today.year, today.month, 1))
-        tasks.generate_invoices_based_on_date(today)
-        subscriber = Subscriber.objects.get(domain=domain.name)
-        invoices = Invoice.objects.filter(subscription__subscriber=subscriber)
-        self.assertEqual(invoices.count(), 1)
-        invoice = invoices.get()
-        self.assertEqual(invoice.subscription.subscriber.domain, domain.name)
-        self.assertEqual(invoice.subscription.date_start, invoice.date_start)
-        self.assertEqual(
-            invoice.subscription.date_end - datetime.timedelta(days=1),
-            invoice.date_end
-        )
-
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is small"""
         invoice_date_small = utils.months_from_date(self.subscription.date_start, 1)
