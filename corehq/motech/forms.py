@@ -144,7 +144,6 @@ class ConnectionSettingsForm(forms.ModelForm):
         from corehq.motech.views import ConnectionSettingsListView
 
         helper = hqcrispy.HQFormHelper()
-        helper.form_class = "form-horizontal"
         helper.layout = crispy.Layout(
             crispy.Field('name'),
             crispy.Field('notify_addresses_str'),
