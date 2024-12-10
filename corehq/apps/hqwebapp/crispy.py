@@ -14,9 +14,9 @@ from crispy_forms.layout import LayoutObject
 from crispy_forms.utils import flatatt, get_template_pack, render_field
 
 CSS_LABEL_CLASS = 'col-xs-12 col-sm-4 col-md-4 col-lg-2'
-CSS_LABEL_CLASS_BOOTSTRAP5 = 'col-xs-12 col-sm-4 col-md-4 col-lg-3'
+CSS_LABEL_CLASS_BOOTSTRAP5 = 'col-xs-12 col-sm-4 col-md-3 col-lg-2'
 CSS_FIELD_CLASS = 'col-xs-12 col-sm-8 col-md-8 col-lg-6'
-CSS_FIELD_CLASS_BOOTSTRAP5 = 'col-xs-12 col-sm-8 col-md-8 col-lg-9'
+CSS_FIELD_CLASS_BOOTSTRAP5 = 'col-xs-12 col-sm-8 col-md-9 col-lg-10'
 CSS_ACTION_CLASS = CSS_FIELD_CLASS + ' col-sm-offset-4 col-md-offset-4 col-lg-offset-2'
 
 
