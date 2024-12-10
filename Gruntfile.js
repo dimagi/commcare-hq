@@ -28,7 +28,7 @@ module.exports = function (grunt) {
      */
     var apps = [
         'app_manager',
-        'export/ko',
+        'export',
         'notifications/bootstrap3',
         'notifications/bootstrap5',
         'reports_core/choiceListUtils',

@@ -442,7 +442,7 @@ def test_update_gruntfile():
     filedata = """
     var apps = [
         'app_manager',
-        'export/ko',
+        'export',
         'notifications',
         'reports_core/choiceListUtils',
         'locations',
@@ -458,7 +458,7 @@ def test_update_gruntfile():
     expected_result = """
     var apps = [
         'app_manager',
-        'export/ko',
+        'export',
         'notifications/bootstrap3',
         'notifications/bootstrap5',
         'reports_core/choiceListUtils',
