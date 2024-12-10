@@ -119,8 +119,12 @@ def rebuild_indicators(
             config.save()
 
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
-        adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
-        _iteratively_build_table(config, limit=limit)
+        try:
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
+            _iteratively_build_table(config, limit=limit)
+        except Exception:
+            _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource', error=True)
+            raise
         _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource')
 
 
@@ -140,16 +144,22 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
             config.meta.build.rebuilt_asynchronously = False
             config.save()
 
-        adapter.build_table(initiated_by=initiated_by, source=source)
-        _iteratively_build_table(config, in_place=True)
+        try:
+            adapter.build_table(initiated_by=initiated_by, source=source)
+            _iteratively_build_table(config, in_place=True)
+        except Exception:
+            _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource_in_place', error=True)
+            raise
         _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource_in_place')
 
 
-def _report_ucr_rebuild_metrics(config, source, action):
+def _report_ucr_rebuild_metrics(config, source, action, error=False):
     if source not in ('edit_data_source_rebuild', 'edit_data_source_build_in_place'):
         return
     try:
         _report_metric_number_of_days_since_first_build(config.domain, config.get_id, action)
+        if error:
+            _report_metric_rebuild_error(config, action)
     except Exception:
         pass
 
@@ -166,6 +176,16 @@ def _report_metric_number_of_days_since_first_build(domain, config_id, action):
     else:
         no_of_days = (datetime.utcnow() - earliest_entry.date_created).days
         metrics_gauge(f'commcare.ucr.{action}.days_since_first_build', no_of_days, tags={'domain': domain})
+
+
+def _report_metric_rebuild_error(config, action):
+    from corehq.apps.userreports.views import _number_of_records_to_be_iterated_for_rebuild
+    expected_rows_to_process = _number_of_records_to_be_iterated_for_rebuild(config)
+    metrics_gauge(
+        f'commcare.ucr.{action}.failed.expected_rows_to_process',
+        expected_rows_to_process,
+        tags={'domain': config.domain}
+    )
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
