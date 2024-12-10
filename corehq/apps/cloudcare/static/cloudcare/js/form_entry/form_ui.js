@@ -250,17 +250,22 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             },
             children: {
                 create: function (options) {
+                    console.time("fromJs.create");
+                    let element = undefined;
                     if (options.data.type === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
-                        return new GroupedElementTileRow(options.data, self);
+                        element = new GroupedElementTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
-                        return new Question(options.data, self);
+                        element = new Question(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
-                        return new Group(options.data, self);
+                        element = new Group(options.data, self);
                     } else {
                         console.error('Could not find question type of ' + options.data.type);
                     }
+                    console.timeEnd("fromJs.create");
+                    return element;
                 },
                 update: function (options) {
+                    console.time("fromJs.update");
                     if (options.target.pendingAnswer &&
                             options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
                         // There is a request in progress, check if the answer has changed since the request
@@ -289,6 +294,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                         // at the very least we can skip entirely when there's no change.
                         delete options.data.choices;
                     }
+                    console.timeEnd("fromJs.update");
                     return options.target;
                 },
                 key: function (data) {
@@ -712,7 +718,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 }
 
                 response.children = allChildren;
+                console.time("self.fromJS(response)");
                 self.fromJS(response);
+                console.timeEnd("self.fromJS(response)");
             }
         });
 
