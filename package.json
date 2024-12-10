@@ -7,12 +7,6 @@
     "dependencies": {
         "@babel/core": "7.25.2",
         "@babel/standalone": "^7.21.4",
-        "@ckeditor/ckeditor5-alignment": "^43.3.1",
-        "@ckeditor/ckeditor5-build-classic": "^43.3.1",
-        "@ckeditor/ckeditor5-font": "^43.3.1",
-        "@ckeditor/ckeditor5-horizontal-line": "^43.3.1",
-        "@ckeditor/ckeditor5-html-support": "^43.3.1",
-        "@ckeditor/ckeditor5-restricted-editing": "^43.3.1",
         "@eonasdan/tempus-dominus": "npm:@eonasdan/tempus-dominus#6.9.4",
         "@fortawesome/fontawesome-free": "npm:@fortawesome/fontawesome-free#6.5.1",
         "@mapbox/mapbox-gl-draw": "1.4.3",
