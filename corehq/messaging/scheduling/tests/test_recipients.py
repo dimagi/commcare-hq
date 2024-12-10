@@ -681,15 +681,6 @@ class SchedulingRecipientTest(TestCase):
 
     def test_mobile_worker_recipients_with_user_data_filter(self):
         schedule = self._create_schedule(user_data_filter={'role': ['nurse']})
-
-        TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.user_data_filter = {'role': ['nurse']}
-        schedule.save()
-
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
             timed_schedule_id=schedule.schedule_id,
