@@ -29,7 +29,7 @@ def _batch_query(db_alias, model, query, batch_size):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0074_alter_sqluserdata_profile'),
+        ('users', '0075_connectiduserlink_messaging_consent_and_more'),
     ]
 
     operations = [
