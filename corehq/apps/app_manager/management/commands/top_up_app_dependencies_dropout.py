@@ -6,6 +6,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.util.couch import iter_update
 from corehq.util.metrics import metrics_counter
 from corehq.toggles import APP_DEPENDENCIES
+from corehq.apps.es.domains import DomainES
 
 logger = logging.getLogger('app_migration')
 logger.setLevel('DEBUG')
@@ -24,7 +25,12 @@ class Command(DomainAppsOperationCommand):
     DOMAIN_PROGRESS_NUMBER_FILENAME = 'top_up_app_dependencies_dropout_progress.txt'
 
     def get_domains(self):
-        return APP_DEPENDENCIES.get_enabled_domains()
+        domains_query = (
+            DomainES()
+            .in_domains(APP_DEPENDENCIES.get_enabled_domains())
+            .real_domains().fields(['name'])
+        )
+        return [domain['name'] for domain in domains_query.run().hits]
 
     def run(self, domains, domain_list_position):
         for domain in domains:
