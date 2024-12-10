@@ -146,7 +146,6 @@ class EnterpriseFormReportTests(SimpleTestCase):
 
         self.assertEqual(report.datespan.startdate, datetime(month=9, day=1, year=2024))
         self.assertEqual(report.datespan.enddate, datetime(month=10, day=1, year=2024))
-        self.assertEqual(report.subtitle, 'past 30 days')
 
     def test_constructor_with_provided_dates_uses_that_datespan(self):
         start_date = datetime(month=11, day=25, year=2023)
@@ -155,7 +154,6 @@ class EnterpriseFormReportTests(SimpleTestCase):
 
         self.assertEqual(report.datespan.startdate, start_date)
         self.assertEqual(report.datespan.enddate, end_date)
-        self.assertEqual(report.subtitle, '2023-11-25 to 2023-12-15')
 
     def test_constructor_with_only_end_date_uses_default_num_days(self):
         end_date = datetime(month=10, day=1, year=2020)

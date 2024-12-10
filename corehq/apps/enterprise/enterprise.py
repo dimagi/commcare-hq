@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import re
 from django.db.models import Count
 from datetime import datetime, timedelta
@@ -30,7 +31,7 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.models import CouchUser, Invitation
 
 
-class EnterpriseReport:
+class EnterpriseReport(ABC):
     DOMAINS = 'domains'
     WEB_USERS = 'web_users'
     MOBILE_USERS = 'mobile_users'
@@ -40,8 +41,15 @@ class EnterpriseReport:
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
-    title = _('Enterprise Report')
-    subtitle = ''
+    @property
+    @abstractmethod
+    def title(self):
+        pass
+
+    @property
+    @abstractmethod
+    def description(self):
+        pass
 
     def __init__(self, account, couch_user, **kwargs):
         self.account = account
@@ -115,7 +123,9 @@ class EnterpriseReport:
 
 
 class EnterpriseDomainReport(EnterpriseReport):
-    title = _('Project Spaces')
+
+    title = gettext_lazy('Project Spaces')
+    description = gettext_lazy('# of Project Spaces')
 
     @property
     def headers(self):
@@ -138,7 +148,9 @@ class EnterpriseDomainReport(EnterpriseReport):
 
 
 class EnterpriseWebUserReport(EnterpriseReport):
-    title = _('Web Users')
+
+    title = gettext_lazy('Web Users')
+    description = gettext_lazy('# of Web Users')
 
     @property
     def headers(self):
@@ -184,7 +196,8 @@ class EnterpriseWebUserReport(EnterpriseReport):
 
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
-    title = _('Mobile Workers')
+    title = gettext_lazy('Mobile Workers')
+    description = gettext_lazy('# of Mobile Workers')
 
     @property
     def headers(self):
@@ -215,7 +228,9 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 
 class EnterpriseFormReport(EnterpriseReport):
-    title = _('Mobile Form Submissions')
+    title = gettext_lazy('Mobile Form Submissions')
+    description = gettext_lazy('# of Mobile Form Submissions')
+
     MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
     MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
     MAX_DATE_RANGE_DAYS = 90
@@ -231,13 +246,8 @@ class EnterpriseFormReport(EnterpriseReport):
             if isinstance(start_date, str):
                 start_date = datetime.fromisoformat(start_date)
             self.datespan = DateSpan(start_date, end_date)
-            self.subtitle = _("{} to {}").format(
-                start_date.date(),
-                end_date.date(),
-            )
         else:
             self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
-            self.subtitle = _("past {} days").format(num_days)
 
         if self.datespan.enddate - self.datespan.startdate > timedelta(days=self.MAX_DATE_RANGE_DAYS):
             raise TooMuchRequestedDataError(
@@ -328,6 +338,8 @@ class EnterpriseFormReport(EnterpriseReport):
 
 class EnterpriseODataReport(EnterpriseReport):
     title = gettext_lazy('OData Feeds')
+    description = gettext_lazy('# of OData Feeds')
+
     MAXIMUM_EXPECTED_EXPORTS = 150
 
     def __init__(self, account, couch_user):
@@ -392,6 +404,8 @@ class EnterpriseODataReport(EnterpriseReport):
 
 class EnterpriseSMSReport(EnterpriseReport):
     title = gettext_lazy('SMS Usage')
+    description = gettext_lazy('# of SMS Sent')
+
     MAX_DATE_RANGE_DAYS = 90
 
     def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30):
@@ -406,13 +420,8 @@ class EnterpriseSMSReport(EnterpriseReport):
             if isinstance(start_date, str):
                 start_date = datetime.fromisoformat(start_date)
             self.datespan = DateSpan(start_date, end_date)
-            self.subtitle = _("{} to {}").format(
-                start_date.date(),
-                end_date.date(),
-            )
         else:
             self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
-            self.subtitle = _("past {} days").format(num_days)
 
         if self.datespan.enddate - self.datespan.startdate > timedelta(days=self.MAX_DATE_RANGE_DAYS):
             raise TooMuchRequestedDataError(
