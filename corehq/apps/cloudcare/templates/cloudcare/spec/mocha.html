@@ -1,7 +1,7 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
-{% requirejs_main_b5 "cloudcare/js/formplayer/spec/main" %}
+{% js_entry "cloudcare/js/formplayer/spec/main" %}
 
 {% block dependencies %}
   {% include "cloudcare/partials/dependencies.html" %}
