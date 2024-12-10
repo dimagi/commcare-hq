@@ -126,6 +126,7 @@ if (require.main === module) {
         "analytix",
         "case",
         "hqwebapp",
+        "mocha",
         "notifications",
         "registration",
         "reports_core",
