@@ -1,4 +1,3 @@
-import os
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -10,7 +9,6 @@ from django.db import models
 from django.http import Http404
 from django.utils.translation import gettext as _
 
-import css_inline
 import jsonfield as old_jsonfield
 from memoized import memoized
 
@@ -164,12 +162,6 @@ class EmailContent(Content):
                 self.html_message,
                 recipient.get_language_code()
             )
-            # Add extra css added by CKEditor, and inline css styles from template
-            email_css_filepath = os.path.join(
-                "corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
-            with open(email_css_filepath, 'r') as css_file:
-                css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
-            html_message = css_inliner.inline(html_message)
 
         try:
             subject, message, html_message = self.render_subject_and_message(
