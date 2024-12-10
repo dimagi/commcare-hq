@@ -5,7 +5,7 @@ hqDefine("scheduling/js/create_schedule", [
     'hqwebapp/js/select2_handler',
     'jquery-ui/ui/widgets/datepicker',
     'bootstrap-timepicker/js/bootstrap-timepicker',
-    'hqwebapp/js/ckeditor_knockout_bindings',
+    'hqwebapp/js/ckeditor_knockout_bindings',       // TODO: only include if feature flag is on
     'hqwebapp/js/components/select_toggle',
 ], function ($, ko, initialPageData, select2Handler) {
     ko.bindingHandlers.useTimePicker = {
