@@ -161,17 +161,23 @@ class ESSyncUtil:
         """
         es_manager.index_refresh(adapter.primary.index_name)
         es_manager.index_refresh(adapter.secondary.index_name)
-
         self.perform_cleanup(adapter)
 
-        greenlets = gevent.joinall([
-            gevent.spawn(adapter.count, {}),
-            gevent.spawn(adapter.secondary.count, {})
-        ])
-        primary_count, secondary_count = [g.get() for g in greenlets]
+        def get_doc_count(_adapter):
+            return {_adapter.index_name: _adapter.count({})}
 
-        print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
-        print(f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
+        greenlets = gevent.joinall([
+            gevent.spawn(get_doc_count, adapter.primary),
+            gevent.spawn(get_doc_count, adapter.secondary)
+        ])
+        counts = {}
+        for greenlet in greenlets:
+            counts.update(greenlet.get())
+
+        print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {counts[adapter.primary.index_name]}")
+        print(
+            f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {counts[adapter.secondary.index_name]}\n"
+        )
 
     def display_backfill_subindex_doc_counts_for_domain(self, source_adapter, destination_adapter, domain):
         if not destination_adapter.parent_index_cname:

@@ -6,7 +6,7 @@
 #
 aiohappyeyeballs==2.3.4
     # via aiohttp
-aiohttp==3.10.2
+aiohttp==3.10.11
     # via
     #   aiohttp-retry
     #   twilio
@@ -428,6 +428,8 @@ prompt-toolkit==3.0.36
     # via
     #   click-repl
     #   ipython
+propcache==0.2.0
+    # via yarl
 proto-plus==1.22.2
     # via google-cloud-firestore
 protobuf==4.24.2
@@ -634,7 +636,7 @@ toolz==0.12.1
     # via pyseeyou
 toposort==1.7
     # via -r base-requirements.in
-tornado==6.4.1
+tornado==6.4.2
     # via flower
 traitlets==5.1.1
     # via
@@ -702,7 +704,7 @@ xmlsec==1.3.14
     # via python3-saml
 xmltodict==0.13.0
     # via ddtrace
-yarl==1.9.4
+yarl==1.17.2
     # via aiohttp
 zipp==3.21.0
     # via importlib-metadata

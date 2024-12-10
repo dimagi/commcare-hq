@@ -41,7 +41,7 @@ from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
 )
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import domain_case_rate_limiter, submission_rate_limiter
@@ -75,12 +75,13 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
     page_title = gettext_lazy("Project Information")
-    template_name = 'domain/bootstrap3/internal_settings.html'
+    template_name = 'domain/internal_settings.html'
     strict_domain_fetching = True
 
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
+    @use_bootstrap5
     @use_jquery_ui  # datepicker
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
@@ -286,10 +287,11 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
 
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_superuser, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class ProjectLimitsView(BaseAdminProjectSettingsView):
     urlname = 'internal_project_limits_summary'
     page_title = gettext_lazy("Project Limits")
-    template_name = 'domain/admin/bootstrap3/project_limits.html'
+    template_name = 'domain/admin/project_limits.html'
 
     @property
     def page_context(self):

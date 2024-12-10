@@ -57,6 +57,8 @@ urlpatterns = [
         name="styleguide_datatables_data"),
     url(r'^b5/data/paginated_table_data$', bootstrap5_data.paginated_table_data,
         name="styleguide_paginated_table_data"),
+    url(r'^b5/data/a_hanging_view$', bootstrap5_data.a_hanging_view,
+        name="styleguide_a_hanging_view"),
     url(r'^b5/example/', include(example_urlpatterns)),
     url(r'^b5/guidelines/$', bootstrap5.styleguide_code_guidelines,
         name="styleguide_code_guidelines_b5"),
