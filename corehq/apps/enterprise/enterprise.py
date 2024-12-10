@@ -3,25 +3,32 @@ import re
 from django.db.models import Count
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from django.conf import settings
 
 from memoized import memoized
 
 from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
-from corehq.apps.enterprise.exceptions import EnterpriseReportError, TooMuchRequestedDataError
-from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
 from corehq.apps.domain.calculations import sms_in_last
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.exceptions import (
+    EnterpriseReportError,
+    TooMuchRequestedDataError,
+)
+from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.es import forms as form_es
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
+from corehq.apps.reports.util import (
+    get_commcare_version_and_date_from_last_usage,
+)
 from corehq.apps.sms.models import SMS, OUTGOING, INCOMING
 from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
@@ -37,6 +44,7 @@ class EnterpriseReport(ABC):
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
+    COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
     SMS = 'sms'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
@@ -81,6 +89,8 @@ class EnterpriseReport(ABC):
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
+        elif slug == cls.COMMCARE_VERSION_COMPLIANCE:
+            report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
         elif slug == cls.SMS:
             report = EnterpriseSMSReport(account, couch_user, **kwargs)
 
@@ -403,6 +413,70 @@ class EnterpriseODataReport(EnterpriseReport):
             )
 
         return rows
+
+
+class EnterpriseCommCareVersionReport(EnterpriseReport):
+    title = gettext_lazy('CommCare Version Compliance')
+    total_description = gettext_lazy('%% of mobile workers on the latest commcare client version ')
+
+    @property
+    def headers(self):
+        return [
+            _('Mobile Worker'),
+            _('Project Space'),
+            _('Latest Version Available at Submission'),
+            _('Version in Use'),
+        ]
+
+    def rows_for_domain(self, domain_obj):
+        rows = []
+
+        user_query = (UserES()
+            .domain(domain_obj.name)
+            .mobile_users()
+            .source([
+                'username',
+                'reporting_metadata.last_submission_for_user.commcare_version',
+                'reporting_metadata.last_submission_for_user.submission_date',
+                'last_device.commcare_version',
+                'last_device.last_used'
+            ]))
+
+        for user in user_query.run().hits:
+            last_submission = user.get('reporting_metadata', {}).get('last_submission_for_user', {})
+            last_device = user.get('last_device', {})
+
+            version_in_use, date_of_use = get_commcare_version_and_date_from_last_usage(last_submission,
+                                                                                        last_device)
+
+            latest_version_at_time_of_use = get_latest_version_at_time(date_of_use)
+
+            if is_out_of_date(version_in_use, latest_version_at_time_of_use):
+                rows.append([
+                    user['username'],
+                    domain_obj.name,
+                    latest_version_at_time_of_use,
+                    version_in_use,
+                ])
+
+        return rows
+
+    @property
+    def total(self):
+        total_mobile_workers = 0
+        total_up_to_date = 0
+        for domain_obj in self.domains():
+            domain_mobile_workers = get_mobile_user_count(domain_obj.name, include_inactive=False)
+            if domain_mobile_workers:
+                total_mobile_workers += domain_mobile_workers
+                total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_obj))
+        return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
+
+
+def _format_percentage_for_enterprise_tile(dividend, divisor):
+    if not divisor:
+        return '--'
+    return f"{dividend / divisor * 100:.1f}%"
 
 
 class EnterpriseSMSReport(EnterpriseReport):
