@@ -78,6 +78,7 @@ hqDefine('users/js/invite_web_user',[
                 profile_slug: initialPageData.get('custom_fields_profile_slug'),
                 slugs: initialPageData.get('custom_fields_slugs'),
                 can_edit_original_profile: true,
+                initial_values: initialPageData.get('initial_values'),
             });
         }
 
