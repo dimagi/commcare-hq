@@ -158,8 +158,10 @@ class PassesUserDataFilterTest(TestCase):
         schedule = AlertSchedule()
         schedule.use_user_case_for_filter = True
         schedule.user_data_filter = {"wants_email": ["yes"]}
-        self.assertFalse(ScheduleInstance(schedule=schedule)
-                        ._passes_user_data_filter(self.mobile_user))
+        passed, msg = (ScheduleInstance(schedule=schedule).
+                       _passes_user_data_filter(self.mobile_user))
+        self.assertFalse(passed)
+        self.assertEqual("No user case to filter on", msg)
 
 
 @es_test(requires=[user_adapter], setup_class=True)
