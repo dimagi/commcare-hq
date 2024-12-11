@@ -1020,11 +1020,12 @@ hqDefine('geospatial/js/models', [
             }
 
             self.disbursementModel.clearConnectionLines(casesToClear);
+            let userToCasesList = [];
             for (const userId in userCasesToConnect) {
                 const user = self.mapModel.caseGroupsIndex[userId].item;
-                const cases = userCasesToConnect[userId];
-                self.disbursementModel.connectUserWithCasesOnMap(user, cases);
+                userToCasesList.push({'user': user, 'cases': userCasesToConnect[userId]});
             }
+            self.disbursementModel.connectUserWithCasesOnMap(userToCasesList);
         };
 
         self.exportAssignments = function () {

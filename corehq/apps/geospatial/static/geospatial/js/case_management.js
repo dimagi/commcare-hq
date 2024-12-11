@@ -69,14 +69,15 @@ hqDefine("geospatial/js/case_management", [
             mapModel.removeDisbursementLayers();
 
             let groupId = 0;
+            let userToCasesList = [];
             Object.keys(result).forEach((userId) => {
                 const user = mapModel.userMapItems().find((userModel) => {return userModel.itemId === userId;});
                 mapModel.caseGroupsIndex[userId] = {groupId: groupId, item: user};
 
-                let cases = [];
+                let userToCases = {'user': user, 'cases': []};
                 mapModel.caseMapItems().forEach((caseModel) => {
                     if (result[userId].includes(caseModel.itemId)) {
-                        cases.push(caseModel);
+                        userToCases['cases'].push(caseModel);
                         mapModel.caseGroupsIndex[caseModel.itemId] = {
                             groupId: groupId,
                             item: caseModel,
@@ -84,9 +85,10 @@ hqDefine("geospatial/js/case_management", [
                         };
                     }
                 });
-                self.connectUserWithCasesOnMap(user, cases);
+                userToCasesList.push(userToCases);
                 groupId += 1;
             });
+            self.connectUserWithCasesOnMap(userToCasesList);
             self.setBusy(false);
         };
 
@@ -182,37 +184,9 @@ hqDefine("geospatial/js/case_management", [
             });
         };
 
-        self.connectUserWithCasesOnMap = function (user, cases) {
-            cases.forEach((caseModel) => {
-                const lineCoordinates = [
-                    [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
-                    [caseModel.itemData.coordinates.lng, caseModel.itemData.coordinates.lat],
-                ];
-                let mapInstance = mapModel.mapInstance;
-                mapInstance.addLayer({
-                    id: mapModel.getLineFeatureId(caseModel.itemId),
-                    type: 'line',
-                    source: {
-                        type: 'geojson',
-                        data: {
-                            type: 'Feature',
-                            properties: {},
-                            geometry: {
-                                type: 'LineString',
-                                coordinates: lineCoordinates,
-                            },
-                        },
-                    },
-                    layout: {
-                        'line-join': 'round',
-                        'line-cap': 'round',
-                    },
-                    paint: {
-                        'line-color': '#808080',
-                        'line-width': 1,
-                    },
-                });
-            });
+        self.connectUserWithCasesOnMap = function (userToCasesList) {
+            let disbursementLinesSource = generateDisbursementLinesSource(userToCasesList);
+            addDisbursementLinesLayer(disbursementLinesSource);
         };
 
         function generateDisbursementLinesSource(userToCasesList) {
