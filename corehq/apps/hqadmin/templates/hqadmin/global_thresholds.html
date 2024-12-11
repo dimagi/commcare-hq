@@ -1,7 +1,9 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 
-{% block reportcontent %}
+{% block title %}{{ current_page.page_name }}{% endblock %}
+
+{% block page_content %}
 
   {% include "domain/admin/partials/bootstrap3/project_limits_table.html" %}
 
