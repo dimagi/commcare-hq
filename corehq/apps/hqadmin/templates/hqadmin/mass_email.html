@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}Mass Email Users{% endblock %}
+{% block title %}{{ current_page.page_name }}{% endblock %}
 
 {% js_entry_b3 "hqadmin/js/mass_email" %}
 
@@ -15,7 +15,7 @@
       This is the email mailing list tool. Please exercise caution
       when using it.
     </p>
-    </p>
+    <p>
     Leave the <strong>email all users</strong> checkbox unchecked to send a test
     email only to yourself. This is useful for verifying that
     your formatting is correct before sending a real message.
@@ -36,8 +36,7 @@
           name="email_subject"
           type="text"
           class="form-control"
-          placeholder="Enter subject...">
-        </input>
+          placeholder="Enter subject..."/>
       </div>
 
       <div class="form-group">

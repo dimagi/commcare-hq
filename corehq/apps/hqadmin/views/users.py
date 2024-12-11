@@ -54,7 +54,7 @@ from corehq.apps.hqadmin.forms import (
     SuperuserManagementForm,
     OffboardingUserListForm,
 )
-from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
+from corehq.apps.hqadmin.views.utils import BaseAdminSectionView, get_breadcrumbs
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -537,14 +537,7 @@ class DisableTwoFactorView(FormView):
 
     def render_to_response(self, context, **response_kwargs):
         context.update({
-            'current_page': {
-                'url': reverse('disable_two_factor'),
-                'page_name': 'Temporarily Disable Two-factor Authentication',
-            },
-            'section': {
-                'url': reverse('default_admin_report'),
-                'title': 'Admin',
-            },
+            **get_breadcrumbs('Temporarily Disable Two-factor Authentication', self.urlname),
             'username': self.request.GET.get("q"),
         })
         return super().render_to_response(context, **response_kwargs)

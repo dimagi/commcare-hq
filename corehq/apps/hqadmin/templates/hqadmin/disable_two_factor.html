@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block title %}{% trans "Temporarily Disable Two-factor Authentication" %}{% endblock %}
+{% block title %}{{ current_page.page_name }}{% endblock %}
 
 {% block page_content %}
   <p>{% blocktrans %}You are about to temporarily disable two-factor authentication for {{ username }}. This

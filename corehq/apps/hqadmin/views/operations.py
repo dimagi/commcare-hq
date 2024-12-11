@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.shortcuts import render
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -18,6 +17,7 @@ from corehq.apps.hqadmin.forms import (
 from corehq.apps.hqadmin.tasks import send_mass_emails
 from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
+    get_breadcrumbs,
     get_hqadmin_base_context,
 )
 from corehq.form_processor.exceptions import CaseNotFound
@@ -43,14 +43,7 @@ def mass_email(request):
 
     context = {
         'form': form,
-        'current_page': {
-            'url': reverse('mass_email'),
-            'page_name': 'Mass Email Users',
-        },
-        'section': {
-            'url': reverse('default_admin_report'),
-            'title': 'Admin',
-        },
+        **get_breadcrumbs('Mass Email Users', 'mass_email'),
     }
     return render(request, "hqadmin/mass_email.html", context)
 
