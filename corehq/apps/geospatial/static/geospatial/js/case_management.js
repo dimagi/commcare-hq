@@ -215,6 +215,30 @@ hqDefine("geospatial/js/case_management", [
             });
         };
 
+        function generateDisbursementLinesSource(userToCasesList) {
+            let disbursementLinesSource = {
+                'type': 'FeatureCollection',
+                'features': [],
+            };
+            for (const userToCases of userToCasesList) {
+                let user = userToCases['user'];
+                userToCases['cases'].forEach((caseModel) => {
+                    const lineCoordinates = [
+                        [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
+                        [caseModel.itemData.coordinates.lng, caseModel.itemData.coordinates.lat],
+                    ];
+                    disbursementLinesSource.features.push(
+                        {
+                            type: 'Feature',
+                            properties: {},
+                            geometry: { type: 'LineString', coordinates: lineCoordinates },
+                        }
+                    );
+                });
+            }
+            return disbursementLinesSource;
+        }
+
         function addDisbursementLinesLayer(source) {
             let mapInstance = mapModel.mapInstance;
             mapInstance.addSource(DISBURSEMENT_LINES_LAYER_ID, {
