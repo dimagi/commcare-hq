@@ -1,4 +1,4 @@
-hqDefine("reports/js/bootstrap3/reports.async", function () {
+hqDefine("reports/js/bootstrap3/async", function () {
     return function (o) {
         'use strict';
         var self = {};
