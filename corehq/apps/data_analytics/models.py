@@ -165,13 +165,15 @@ class DomainMetrics(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
-    has_project_icon = models.BooleanField()
-    has_security_settings = models.BooleanField()
     is_active = models.BooleanField()
     is_first_domain_for_creating_user = models.BooleanField()
+    has_project_icon = models.BooleanField()
+    has_security_settings = models.BooleanField()
+    has_users_with_location = models.BooleanField()
 
     lookup_tables = models.IntegerField()
     repeaters = models.IntegerField()
+    report_builder_reports = models.IntegerField()
     ucrs = models.IntegerField()
 
     # App Metrics
@@ -183,14 +185,13 @@ class DomainMetrics(models.Model):
     mobile_workers = models.IntegerField()
     web_users = models.IntegerField()
 
+    users_with_submission = models.IntegerField()
     active_mobile_workers = models.IntegerField()
     active_mobile_workers_in_last_365_days = models.IntegerField()
     case_sharing_groups = models.IntegerField()
     case_sharing_locations = models.IntegerField()
-    has_custom_roles = models.BooleanField()
-    has_locations = models.BooleanField()
-    location_restricted_users = models.IntegerField()
-    users_with_submission = models.IntegerField()
+    custom_roles = models.IntegerField()
+    location_restricted_roles = models.IntegerField()
 
     # Case Metrics
     cases = models.IntegerField()
