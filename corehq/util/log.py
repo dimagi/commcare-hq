@@ -320,5 +320,5 @@ def get_traceback_string():
     return f.getvalue()
 
 
-def send_HTML_email(subject, recipient, html_content, *args, **kwargs):
-    return _send_HTML_email(subject, recipient, html_content, *args, **kwargs)
+def send_HTML_email(subject, recipient, html_content, is_conditional_alert=None, *args, **kwargs):
+    return _send_HTML_email(subject, recipient, html_content, is_conditional_alert, *args, **kwargs)

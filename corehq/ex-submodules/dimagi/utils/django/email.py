@@ -84,9 +84,9 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, bcc=None,
                     smtp_exception_skip_list=None, messaging_event_id=None,
-                    domain=None, use_domain_gateway=False):
+                    domain=None, use_domain_gateway=False, is_conditional_alert=False):
     recipients = list(recipient) if not isinstance(recipient, str) else [recipient]
-    filtered_recipients = get_valid_recipients(recipients, domain)
+    filtered_recipients = get_valid_recipients(recipients, domain, is_conditional_alert)
     bounced_addresses = list(set(recipients) - set(filtered_recipients))
     if bounced_addresses and messaging_event_id:
         mark_local_bounced_email(bounced_addresses, messaging_event_id)
