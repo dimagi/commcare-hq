@@ -58,7 +58,7 @@ hqDefine("reports/js/bootstrap3/async", function () {
                 self.standardReport.filterSubmitButton.addClass('disabled');
             }
             self.filterForm.submit(function () {
-                var params = hqImport('reports/js/reports.util').urlSerialize(this);
+                var params = hqImport('reports/js/util').urlSerialize(this);
                 if (self.isCaseListRelated(pathName)) {
                     var url = window.location.href.replace(self.standardReport.urlRoot,
                         self.standardReport.urlRoot + 'async/') + "?" + "&" + params;

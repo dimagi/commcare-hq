@@ -24,7 +24,7 @@
      <script src="{% static 'reports/js/datepicker.js' %}"></script>
 -    <script src="{% static 'reports/js/bootstrap3/hq_report.js' %}"></script>
 +    <script src="{% static 'reports/js/bootstrap5/hq_report.js' %}"></script>
-     <script src="{% static 'reports/js/reports.util.js' %}"></script>
+     <script src="{% static 'reports/js/util.js' %}"></script>
 -    <script src="{% static 'reports/js/bootstrap3/async.js' %}"></script>
 -    <script src="{% static 'reports/js/bootstrap3/standard_hq_report.js' %}"></script>
 +    <script src="{% static 'reports/js/bootstrap5/async.js' %}"></script>
