@@ -13,9 +13,9 @@
   {% initial_page_data 'max_date_range_days' max_date_range_days %}
   {% initial_page_data 'metric_type' metric_type %}
 
-  <div class="row">
+  <div class="row mt-4">
     {% for report in reports %}
-      {% include 'enterprise/partials/project_tile.html' with report=report %}
+      {% include 'enterprise/partials/project_tile.html' with report=report uses_date_range=uses_date_range %}
     {% endfor %}
   </div>
 

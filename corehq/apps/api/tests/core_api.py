@@ -473,7 +473,7 @@ class TestApiKey(APIResourceTest):
         endpoint = "%s?%s" % (self.single_endpoint(self.user._id),
                               urlencode({
                                   "username": self.user.username,
-                                  "api_key": self.api_key.key
+                                  "api_key": self.api_key.plaintext_key
                               }))
         response = self.client.get(endpoint)
         self.assertEqual(response.status_code, 200)
@@ -501,7 +501,7 @@ class TestApiKey(APIResourceTest):
         endpoint = "%s?%s" % (self.single_endpoint(self.user._id),
                               urlencode({
                                   "username": self.user.username,
-                                  "api_key": other_api_key.key
+                                  "api_key": other_api_key.plaintext_key
                               }))
         response = self.client.get(endpoint)
         self.assertEqual(response.status_code, 401)
@@ -710,7 +710,7 @@ class TestApiThrottle(APIResourceTest):
         super().setUp()
         self.endpoint = "%s?%s" % (self.single_endpoint(self.user._id), urlencode({
             "username": self.user.username,
-            "api_key": self.api_key.key
+            "api_key": self.api_key.plaintext_key
         }))
 
     def test_throttle_allowlist(self):
