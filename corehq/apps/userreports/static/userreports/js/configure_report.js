@@ -1,13 +1,19 @@
-hqDefine('userreports/js/configure_report', function () {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-        multiselectUtils = hqImport('hqwebapp/js/multiselect_utils'),
-        reportBuilder = hqImport('userreports/js/report_config').reportBuilder;
-
+hqDefine('userreports/js/configure_report', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/multiselect_utils',
+    'userreports/js/report_config',
+], function (
+    $,
+    initialPageData,
+    multiselectUtils,
+    reportBuilder,
+) {
     $(function () {
         var existingReport = initialPageData.get('existing_report'),
             reportDescription = initialPageData.get('report_description');
 
-        var reportConfig = new reportBuilder.ReportConfig({
+        var reportConfig = new reportBuilder.reportBuilder.ReportConfig({
             "columnOptions": initialPageData.get('column_options'),
             "initialColumns": initialPageData.get('initial_columns'),
             "app": initialPageData.get('application'),
