@@ -1,9 +1,7 @@
 import csv
 import itertools
-import settings
 import os
 import urllib.parse
-import uuid
 from collections import Counter
 from datetime import datetime, timedelta
 from io import StringIO
@@ -539,6 +537,14 @@ class DisableTwoFactorView(FormView):
 
     def render_to_response(self, context, **response_kwargs):
         context.update({
+            'current_page': {
+                'url': reverse('disable_two_factor'),
+                'page_name': 'Temporarily Disable Two-factor Authentication',
+            },
+            'section': {
+                'url': reverse('default_admin_report'),
+                'title': 'Admin',
+            },
             'username': self.request.GET.get("q"),
         })
         return super().render_to_response(context, **response_kwargs)
