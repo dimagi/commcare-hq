@@ -72,7 +72,7 @@ def create_user(domain, geo_property):
         first_name=first_name,
         last_name=last_name,
         user_data={geo_property: f'{random_point.y} {random_point.x} 0 0'},
-        commiit=False,  # Save below to avoid logging
+        commit=False,  # Save below to avoid logging
     )
     user.save(**get_safe_write_kwargs())
 
