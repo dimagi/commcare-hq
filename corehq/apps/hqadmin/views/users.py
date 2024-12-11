@@ -455,7 +455,8 @@ class DisableUserView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super(DisableUserView, self).get_context_data(**kwargs)
-        context['verb'] = 'disable' if self.user.is_active else 'enable'
+        verb = 'Disable' if self.user.is_active else 'Enable'
+        context.update(get_breadcrumbs(f'{verb} User Account', 'disable_user'))
         context['username'] = self.username
         return context
 
