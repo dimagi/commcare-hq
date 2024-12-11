@@ -275,11 +275,13 @@ class ScheduleInstance(PartitionedModel):
             actual_values_set = self.convert_to_set(user_data.get(key, ""))
 
             if actual_values_set.isdisjoint(allowed_values_set):
-                return False, f"Filtered out on property {key}: exp: ({','.join(allowed_values_set)}), act: ({','.join(actual_values_set)})"
+                return False, (f"Filtered out on property {key}: "
+                               f"exp: ({','.join(allowed_values_set)}), "
+                               f"act: ({','.join(actual_values_set)})")
 
         return True, ""
 
-    def expand_recipients(self, log_filter=None):
+    def expand_recipients(self, handle_filtered_recipient=None):
         """
         Can be used as a generator to iterate over all individual contacts who
         are the recipients of this ScheduleInstance.
@@ -290,11 +292,11 @@ class ScheduleInstance(PartitionedModel):
 
         for member in recipient_list:
             for contact in self._expand_recipient(member):
-                passed, error_msg = self._passes_user_data_filter(contact)
+                passed, filter_reason = self._passes_user_data_filter(contact)
                 if passed:
                     yield contact
-                elif log_filter is not None:
-                    log_filter(contact, error_msg)
+                elif handle_filtered_recipient is not None:
+                    handle_filtered_recipient(contact, filter_reason)
 
     def get_content_send_lock(self, recipient):
         if is_commcarecase(recipient):
@@ -334,15 +336,15 @@ class ScheduleInstance(PartitionedModel):
 
         logged_event = MessagingEvent.create_from_schedule_instance(self, content)
 
-        def log_filter_error(filtered_recipient, msg):
+        def log_filtered_recipient(filtered_recipient, reason):
             sub_event = logged_event.create_subevent_from_contact_and_content(
                 filtered_recipient,
                 content,
             )
-            sub_event.error(MessagingEvent.ERROR_FILTER_MISMATCH, msg)
+            sub_event.error(MessagingEvent.ERROR_FILTER_MISMATCH, reason)
 
         recipient_count = 0
-        for recipient in self.expand_recipients(log_filter_error):
+        for recipient in self.expand_recipients(log_filtered_recipient):
             recipient_count += 1
 
             #   The framework will retry sending a non-processed schedule instance
