@@ -9,6 +9,7 @@ hqDefine("linked_domain/js/domain_links", [
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/search_box',
     'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
+    'commcarehq',
 ], function (
     RMI,
     initialPageData,

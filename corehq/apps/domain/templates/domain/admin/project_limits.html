@@ -1,10 +1,10 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 
 {% block page_content %}
 
   {% initial_page_data 'domain' domain %}
 
-  {% include "domain/admin/partials/project_limits_table.html" %}
+  {% include "domain/admin/partials/bootstrap5/project_limits_table.html" %}
 
 {% endblock %}

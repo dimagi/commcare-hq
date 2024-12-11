@@ -240,3 +240,12 @@ class TagTest(SimpleTestCase):
                 {% load hq_shared_tags %}
                 {% js_entry 'x" %}
             """)
+
+    def test_requirejs_main_js_entry_conflict(self):
+        msg = "Discarding module/two js_entry value because module/one is using requirejs_main"
+        with self.assertRaisesMessage(AssertionError, msg):
+            self.render("""
+                {% load hq_shared_tags %}
+                {% requirejs_main "module/one" %}
+                {% js_entry "module/two" %}
+            """)

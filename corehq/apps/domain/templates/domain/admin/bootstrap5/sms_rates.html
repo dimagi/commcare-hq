@@ -1,0 +1,44 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% js_entry 'smsbillables/js/rate_calc' %}
+
+{% block page_content %}
+  <div class="card">  {# todo B5: css-well #}
+    <p class="lead">
+      {% blocktrans %}
+        Use this form to get a cost estimation per 160 character SMS,
+        given a <strong>connection</strong>, <strong>direction</strong>,
+        and <strong>country code</strong>.
+      {% endblocktrans %}
+    </p>
+    <p>
+      {% blocktrans %}
+        The fee will be applied to the most specific criteria available.
+        A fee for a specific country code (if available) will be used
+        over the default of 'Any Country'.
+      {% endblocktrans %}
+    </p>
+    <p>
+      {% blocktrans %}
+        Fees are subject to change based on updates to each carrier and are
+        computed at the time the SMS is sent.
+      {% endblocktrans %}
+    </p>
+  </div>
+  <hr />
+  <div class="ko-sms-rate-calculator">
+    {% crispy rate_calc_form %}  {# todo B5: crispy #}
+    <div class="alert alert-success" data-bind="visible: calculatingRate">
+      {% blocktrans %}
+        Calculating SMS Rate...
+      {% endblocktrans %}
+    </div>
+    <div class="alert alert-info"
+         data-bind="text: rate,
+                        css: { 'alert-danger': hasError, 'alert-info': noError },
+                        visible: showRateInfo"></div>
+  </div>
+{% endblock %}

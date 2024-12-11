@@ -31,6 +31,10 @@ const scanTemplates = function (dir, entryRegex, allAppPaths, details, isProdMod
      *                          being that entry filenames end in `.[contenthash].js`, which is necessary for
      *                          cache busting on production.
      */
+    if (!fs.existsSync(dir)) {      // some apps have javascript but no templates
+        return;
+    }
+
     const files = fs.readdirSync(dir);
 
     files.forEach((file) => {
@@ -120,6 +124,7 @@ if (require.main === module) {
     // these apps, but there are no existing webpack entries from these apps (yet).
     const alwaysIncludeApps = [
         "analytix",
+        "case",
         "hqwebapp",
         "notifications",
         "registration",

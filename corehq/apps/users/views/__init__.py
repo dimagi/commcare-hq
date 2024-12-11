@@ -446,6 +446,12 @@ class EditWebUserView(BaseEditUserView):
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
+            'can_access_all_locations': self.request.couch_user.has_permission(
+                self.domain, 'access_all_locations'
+            ),
+            'editable_user_can_access_all_locations': self.editable_user.has_permission(
+                self.domain, 'access_all_locations'
+            )
         }
 
         original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
@@ -1140,11 +1146,8 @@ class InviteWebUserView(BaseManageWebUserView):
         can_edit_tableau_config = (self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config')
                                 and toggles.TABLEAU_USER_SYNCING.enabled(self.domain))
         if self.request.method == 'POST':
-            current_users = [user.username for user in WebUser.by_domain(self.domain)]
-            pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
             return AdminInvitesUserForm(
                 self.request.POST,
-                excluded_emails=current_users + pending_invites,
                 role_choices=role_choices,
                 domain=self.domain,
                 is_add_user=is_add_user,
@@ -1274,7 +1277,12 @@ class BaseUploadUser(BaseUserSettingsView):
         """View's dispatch method automatically calls this"""
         try:
             workbook = get_workbook(request.FILES.get("bulk_upload_file"))
-            user_specs, group_specs = self.process_workbook(workbook, self.domain, self.is_web_upload)
+            user_specs, group_specs = self.process_workbook(
+                workbook,
+                self.domain,
+                self.is_web_upload,
+                request.couch_user
+            )
             task_ref = self.upload_users(
                 request, user_specs, group_specs, self.domain, self.is_web_upload)
             return self._get_success_response(request, task_ref)
@@ -1288,7 +1296,7 @@ class BaseUploadUser(BaseUserSettingsView):
             return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
     @staticmethod
-    def process_workbook(workbook, domain, is_web_upload):
+    def process_workbook(workbook, domain, is_web_upload, upload_user):
         from corehq.apps.user_importer.importer import check_headers
 
         try:
@@ -1299,7 +1307,7 @@ class BaseUploadUser(BaseUserSettingsView):
             except WorksheetNotFound as e:
                 raise WorksheetNotFound("Workbook has no worksheets") from e
 
-        check_headers(user_specs, domain, is_web_upload=is_web_upload)
+        check_headers(user_specs, domain, upload_couch_user=upload_user, is_web_upload=is_web_upload)
 
         try:
             group_specs = workbook.get_worksheet(title="groups")

@@ -367,7 +367,7 @@ hqDefine('export/js/download_export', [
         };
 
         self._dealWithErrors = function (data) {
-            if (self._numErrors > 3) {
+            if (self._numErrors > 3 || data.retry === false) {
                 if (data && data.error) {
                     self.downloadError(data.error);
                 } else {

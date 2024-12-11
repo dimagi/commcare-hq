@@ -255,6 +255,7 @@ cleanup
  0014_deletedcouchdoc
  0015_deletedcouchdoc_unique_id_and_type
  0016_add_deletedsqldoc
+ 0017_delete_oauth_integrations_models
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -307,6 +308,7 @@ data_analytics
  0008_auto_20161114_1903
  0009_remove_girrow_wam
  0010_maltrow_last_run_date
+ 0011_domainmetrics
 data_dictionary
  0001_squashed_0002_auto_20161116_2209
  0002_auto_20161118_1537
@@ -407,6 +409,7 @@ domain
  0012_operatorcalllimitsettings
  0013_accountconfirmationsettings_squashed_0016_alter_smsaccountconfirmationsettings_project_name (4 squashed migrations)
  0014_appreleasemodesetting
+ 0015_delete_projectlimit
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -733,11 +736,6 @@ oauth2_provider
  0005_auto_20211222_2352
  0006_alter_application_client_secret
  0007_application_post_logout_redirect_uris
-oauth_integrations
- 0001_initial
- 0002_livegooglesheetschedule
- 0003_livegooglesheetrefreshstatus
- 0004_auto_20220304_1139
 ota
  0001_initial
  0002_alter_db_index
@@ -1268,6 +1266,7 @@ users
  0072_remove_invitation_supply_point
  0073_rm_location_from_user_data
  0074_alter_sqluserdata_profile
+ 0075_hqapikey_encrypted_key
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

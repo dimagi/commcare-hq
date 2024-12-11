@@ -1,0 +1,30 @@
+{% load i18n %}
+
+{% if task_status.status == 'ERROR' %}
+<div class="alert alert-danger">
+  <p>
+    {% if task_status.error_slug == 'TOO_MANY_CASES' %}
+      {% blocktrans %}
+        Existing cases in the domain were not processed to be available in Microplanning reports
+        because there were too many to be processed. New or updated cases will still be available
+        for use for Microplanning. Please reach out to support if you need support with existing cases.
+      {% endblocktrans %}
+    {% elif task_status.error_slug == 'CELERY' %}
+      {% blocktrans %}
+        Oops! Something went wrong while processing existing cases to be available in Microplanning
+        reports. Please reach out to support.
+      {% endblocktrans %}
+    {% endif %}
+  </p>
+</div>
+{% elif task_status.status == 'ACTIVE' %}
+<div class="alert alert-info">
+  <p>
+    {% blocktrans %}
+      Existing cases in the domain are being processed to be available in
+      Microplanning reports. Please be patient.
+    {% endblocktrans %}
+    ({{ task_status.progress}}%)
+  </p>
+</div>
+{% endif %}

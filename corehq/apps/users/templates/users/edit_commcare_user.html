@@ -4,7 +4,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'users/js/edit_commcare_user' %}
+{% js_entry_b3 'users/js/edit_commcare_user' %}
 
 {% block page_content %}
   {% initial_page_data "couch_user_id" couch_user.user_id %}
@@ -16,7 +16,11 @@
   {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}
   {% initial_page_data "show_deactivate_after_date" show_deactivate_after_date %}
   {% initial_page_data "path" request.path %}
+  {% initial_page_data "request_user_domain_memberships" request.couch_user.domain_memberships %}
+  {% initial_page_data "domain" request.domain %}
   {% initial_page_data "user_data" user_data %}
+  {% initial_page_data "can_access_all_locations" can_access_all_locations %}
+  {% initial_page_data "editable_user_can_access_all_locations" editable_user_can_access_all_locations %}
   {% if couch_user.is_loadtest_user %}
     <p class="alert alert-warning">
       {% blocktrans %}

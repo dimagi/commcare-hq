@@ -2146,38 +2146,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             TableauUser.Roles.UNLICENSED.value)
         local_tableau_users.get(username='george@eliot.com')
 
-        # Test user without permission to edit Tableau Configs
-        self.uploading_user.is_superuser = False
-        role_with_upload_permission = UserRole.create(
-            self.domain, 'edit-web-users', permissions=HqPermissions(edit_web_users=True)
-        )
-        self.uploading_user.set_role(self.domain_name, role_with_upload_permission.get_qualified_id())
-        self.uploading_user.save()
-        with self.assertRaises(UserUploadError):
-            import_users_and_groups(
-                self.domain.name,
-                [
-                    self._get_spec(
-                        username='edith@wharton.com',
-                        tableau_role=TableauUser.Roles.EXPLORER.value,
-                        tableau_groups="""group1,group2"""
-                    ),
-                ],
-                [],
-                self.uploading_user.get_id,
-                self.upload_record.pk,
-                True
-            )
-
-        # Test user with permission to edit Tableau Configs
-        role_with_upload_and_edit_tableau_permission = UserRole.create(
-            self.domain, 'edit-tableau', permissions=HqPermissions(edit_web_users=True,
-                                                                   edit_user_tableau_config=True)
-        )
-        self.uploading_user.set_role(self.domain_name,
-                                     role_with_upload_and_edit_tableau_permission.get_qualified_id())
-        self.uploading_user.save()
-
         import_users_and_groups(
             self.domain.name,
             [

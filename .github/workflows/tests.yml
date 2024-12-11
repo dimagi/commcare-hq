@@ -50,7 +50,16 @@ jobs:
         JS_SETUP: yes
         KAFKA_HOSTNAME: kafka
         STRIPE_PRIVATE_KEY: ${{ secrets.STRIPE_PRIVATE_KEY }}
-      run: scripts/docker test --exitfirst -vv --reusedb=1 --divided-we-run=${{ matrix.DIVIDED_WE_RUN }} --showlocals --max-test-time=29 -p no:cacheprovider
+      run: >-
+        scripts/docker test
+        --exitfirst
+        --verbosity=2
+        --reusedb=1
+        --no-migrations
+        --divided-we-run=${{ matrix.DIVIDED_WE_RUN }}
+        --showlocals
+        --max-test-time=29
+        -p no:cacheprovider
     - name: "Codecov upload"
       env:
         TOKEN: ${{ secrets.CODECOV_TOKEN }}

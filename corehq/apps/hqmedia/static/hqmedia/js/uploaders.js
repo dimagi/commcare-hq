@@ -1,7 +1,14 @@
-hqDefine("hqmedia/js/uploaders", function () {
-    const assertProperties = hqImport("hqwebapp/js/assert_properties"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
+hqDefine("hqmedia/js/uploaders", [
+    "jquery",
+    "underscore",
+    "hqwebapp/js/assert_properties",
+    "hqwebapp/js/initial_page_data",
+], function (
+    $,
+    _,
+    assertProperties,
+    initialPageData
+) {
     const uploader = function (slug, options) {
         assertProperties.assertRequired(options, [
             'uploadURL', 'uploadParams',

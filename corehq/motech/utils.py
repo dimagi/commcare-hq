@@ -8,8 +8,9 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad as crypto_pad
 from Crypto.Util.Padding import unpad as crypto_unpad
 from Crypto.Util.py3compat import bord
+from Crypto.Random import get_random_bytes
 
-from corehq.motech.const import AUTH_PRESETS, OAUTH2_PWD
+from corehq.motech.const import AUTH_PRESETS, OAUTH2_PWD, ALGO_AES_CBC, ALGO_AES
 
 AES_BLOCK_SIZE = 16
 AES_KEY_MAX_LEN = 32  # AES key must be either 16, 24, or 32 bytes long
@@ -79,6 +80,90 @@ def b64_aes_decrypt(message):
     padded_plaintext_bytes = aes.decrypt(ciphertext_bytes)
     plaintext_bytes = unpad(padded_plaintext_bytes)
     return plaintext_bytes.decode('utf8')
+
+
+def b64_aes_cbc_encrypt(message):
+    """
+    AES-encrypt and base64-encode `message` using CBC mode.
+
+    Uses Django SECRET_KEY as AES key and generates a random IV.
+    """
+    if isinstance(settings.SECRET_KEY, bytes):
+        secret_key_bytes = settings.SECRET_KEY
+    else:
+        secret_key_bytes = settings.SECRET_KEY.encode('ascii')
+    aes_key = simple_pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
+    # We never need to unpad the key, so simple_pad() is fine (and
+    # allows us to decrypt old values).
+    iv = get_random_bytes(AES_BLOCK_SIZE)
+    aes = AES.new(aes_key, AES.MODE_CBC, iv)
+
+    message_bytes = message if isinstance(message, bytes) else message.encode('utf8')
+    plaintext_bytes = crypto_pad(message_bytes, AES_BLOCK_SIZE, style='iso7816')
+    ciphertext_bytes = aes.encrypt(plaintext_bytes)
+
+    b64ciphertext_bytes = b64encode(iv + ciphertext_bytes)
+    return b64ciphertext_bytes.decode('ascii')
+
+
+def b64_aes_cbc_decrypt(message):
+    """
+    Base64-decode and AES-decrypt ASCII `message` using CBC mode.
+
+    Uses Django SECRET_KEY as AES key.
+
+    >>> settings.SECRET_KEY = 'xyzzy'
+    >>> b64_aes_cbc_decrypt('6WbQuezOKqp4AMOCoUOndVnAUDL13e0fl3cpxcgHX/AlcPwN4+poaetdjwgikz0F')
+    'Around you is a forest.'
+    """
+    if isinstance(settings.SECRET_KEY, bytes):
+        secret_key_bytes = settings.SECRET_KEY
+    else:
+        secret_key_bytes = settings.SECRET_KEY.encode('ascii')
+    aes_key = simple_pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
+
+    decoded_bytes = b64decode(message)
+    iv = decoded_bytes[:AES_BLOCK_SIZE]
+    ciphertext_bytes = decoded_bytes[AES_BLOCK_SIZE:]
+
+    aes = AES.new(aes_key, AES.MODE_CBC, iv)
+    padded_plaintext_bytes = aes.decrypt(ciphertext_bytes)
+    plaintext_bytes = unpad(padded_plaintext_bytes)
+    return plaintext_bytes.decode('utf8')
+
+
+# Only needed for migration from ECB to CBC mode.
+def reencrypt_ecb_to_cbc_mode(encrypted_text, existing_prefix=None):
+    """
+    Re-encrypt a message that was encrypted using ECB mode to CBC mode.
+    """
+    if not encrypted_text:
+        return encrypted_text
+
+    if existing_prefix and encrypted_text.startswith(existing_prefix):
+        ciphertext = encrypted_text[len(existing_prefix):]
+    else:
+        ciphertext = encrypted_text
+
+    new_ciphertext = b64_aes_cbc_encrypt(b64_aes_decrypt(ciphertext))
+    return f'${ALGO_AES_CBC}${new_ciphertext}'
+
+
+# Only needed for migration revert from CBC to ECB mode.
+def reencrypt_cbc_to_ecb_mode(encrypted_text, existing_prefix=None):
+    """
+    Re-encrypt a message that was encrypted using CBC mode to ECB mode.
+    """
+    if not encrypted_text:
+        return encrypted_text
+
+    if existing_prefix and encrypted_text.startswith(existing_prefix):
+        ciphertext = encrypted_text[len(existing_prefix):]
+    else:
+        ciphertext = encrypted_text
+
+    new_ciphertext = b64_aes_encrypt(b64_aes_cbc_decrypt(ciphertext))
+    return f'${ALGO_AES}${new_ciphertext}'
 
 
 def unpad(bytestring):
