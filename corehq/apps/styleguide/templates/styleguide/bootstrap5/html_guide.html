@@ -69,8 +69,8 @@
   </h2>
   <p>
     Elements that are <a href="https://www.w3schools.com/html/html_blocks.asp" target="_blank">block elements</a>
-    should always be on their own line. Text within block elements like <code>div</code> or <code>p</code> should
-    be indented on a new line as a paragraph within that element.
+    should start on their own line. Text within block elements should be indented on a new line as a paragraph
+    within that element if there is more than one line of text.
   </p>
   <p>
     Inline elements, like <code>a</code>, <code>span</code>, <code>code</code>, etc. can be inline with
@@ -85,7 +85,7 @@
     <li>
       <p>
         <strong>Standard Attributes:</strong> Place primary attributes (e.g., <code>class</code>,
-        <code>id</code>, <code>style</code>) first on the element, followed by a line break
+        <code>id</code>, <code>type</code>) first on the element, followed by a line break
         if additional attributes exist or if the line exceeds 115 characters when all attributes are inline.
       </p>
       {% include 'styleguide/bootstrap5/code_display.html' with content=examples.standard_attributes %}
@@ -197,7 +197,7 @@
     7.  Self-Closing Elements
   </h2>
   <p>
-    For self-closing elements, such as <code>&gt;input /&lt;</code>:
+    For self-closing elements, such as <code>&lt;input /&gt;</code>:
   </p>
   <ul>
     <li>
