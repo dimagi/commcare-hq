@@ -120,7 +120,7 @@ class PassesUserDataFilterTest(TestCase):
         passed, msg = (ScheduleInstance(domain=self.domain, schedule=schedule).
                        _passes_user_data_filter(self.mobile_user))
         self.assertFalse(passed)
-        self.assertEqual(msg, "Filtered out on property wants_email: exp: (no), act: (yes)")
+        self.assertEqual(msg, "Filtered out on property wants_email: allowed: (no), found: (yes)")
 
     def test_fails_with_user_data_filter_because_one_value_does_not_match(self):
         schedule = AlertSchedule()
@@ -129,7 +129,7 @@ class PassesUserDataFilterTest(TestCase):
         passed, msg = (ScheduleInstance(domain=self.domain, schedule=schedule).
                        _passes_user_data_filter(self.mobile_user))
         self.assertFalse(passed)
-        self.assertEqual(msg, "Filtered out on property color: exp: (red), act: (green)")
+        self.assertEqual(msg, "Filtered out on property color: allowed: (red), found: (green)")
 
     def test_passes_with_user_case_filter(self):
         case = create_case_2(self.domain, case_type="thing", case_json={"case_color": "green"})
@@ -706,7 +706,7 @@ class SchedulingRecipientTest(TestCase):
             self.user_ids(instance.expand_recipients(handle_filtered_recipient)),
             [self.mobile_user4.get_id, self.mobile_user5.get_id, self.mobile_user6.get_id]
         )
-        self.assertEqual(message, "Filtered out on property role: exp: (nurse), act: (pharmacist)")
+        self.assertEqual(message, "Filtered out on property role: allowed: (nurse), found: (pharmacist)")
         self.assertEqual(2, filtered_count)
 
     def test_web_user_recipient_with_user_data_filter(self):

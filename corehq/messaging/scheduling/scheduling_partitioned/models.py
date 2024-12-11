@@ -279,8 +279,8 @@ class ScheduleInstance(PartitionedModel):
 
             if actual_values_set.isdisjoint(allowed_values_set):
                 return False, (f"Filtered out on property {key}: "
-                               f"exp: ({','.join(allowed_values_set)}), "
-                               f"act: ({','.join(actual_values_set)})")
+                               f"allowed: ({','.join(allowed_values_set)}), "
+                               f"found: ({','.join(actual_values_set)})")
 
         return True, ""
 
@@ -344,7 +344,7 @@ class ScheduleInstance(PartitionedModel):
                 filtered_recipient,
                 content,
             )
-            sub_event.error(MessagingEvent.ERROR_FILTER_MISMATCH, reason)
+            sub_event.error(MessagingEvent.FILTER_MISMATCH, reason)
 
         recipient_count = 0
         for recipient in self.expand_recipients(log_filtered_recipient):
