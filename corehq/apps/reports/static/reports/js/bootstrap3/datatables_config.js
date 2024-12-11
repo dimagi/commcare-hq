@@ -1,4 +1,4 @@
-hqDefine("reports/js/bootstrap5/config.dataTables.bootstrap", [
+hqDefine("reports/js/bootstrap3/datatables_config", [
     'jquery',
     'underscore',
     'analytix/js/google',
@@ -86,7 +86,7 @@ hqDefine("reports/js/bootstrap5/config.dataTables.bootstrap", [
             });
             function applyBootstrapMagic() {
                 $('[data-datatable-tooltip]').each(function () {
-                    $(this).tooltip({  /* todo B5: plugin:tooltip */
+                    $(this).tooltip({
                         placement: $(this).attr('data-datatable-tooltip'),
                         title: $(this).attr('data-datatable-tooltip-text'),
                     });
