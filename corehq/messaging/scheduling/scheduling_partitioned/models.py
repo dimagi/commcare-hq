@@ -2,9 +2,11 @@ import attr
 import pytz
 import sys
 import uuid
+
+from corehq import toggles
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.dbaccessors import get_all_users_by_location
+from corehq.apps.locations.dbaccessors import get_all_users_by_location, user_ids_at_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
@@ -24,6 +26,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from datetime import timedelta, date, datetime, time
 from memoized import memoized
 from dimagi.utils.couch import get_redis_lock
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.modules import to_function
 from django.db import models
 from django.conf import settings
@@ -191,7 +194,14 @@ class ScheduleInstance(PartitionedModel):
     def expand_location_ids(domain, location_ids):
         user_ids = set()
         for location_id in location_ids:
-            for user in get_all_users_by_location(domain, location_id):
+            if toggles.INCLUDE_ALL_LOCATIONS.enabled(domain):
+                user_ids_at_this_location = user_ids_at_locations([location_id])
+                users = (CouchUser.wrap_correctly(u)
+                         for u in iter_docs(CouchUser.get_db(), user_ids_at_this_location))
+            else:
+                users = get_all_users_by_location(domain, location_id)
+
+            for user in users:
                 if user.is_active and user.get_id not in user_ids:
                     user_ids.add(user.get_id)
                     yield user
@@ -261,11 +271,8 @@ class ScheduleInstance(PartitionedModel):
         else:
             user_data = contact.get_user_data(self.domain)
         for key, value_or_property_name in self.memoized_schedule.user_data_filter.items():
-            if key not in user_data:
-                return False
-
             allowed_values_set = {self._get_filter_value(v) for v in self.convert_to_set(value_or_property_name)}
-            actual_values_set = self.convert_to_set(user_data[key])
+            actual_values_set = self.convert_to_set(user_data.get(key, ""))
 
             if actual_values_set.isdisjoint(allowed_values_set):
                 return False

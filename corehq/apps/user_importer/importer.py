@@ -4,7 +4,6 @@ import string
 import random
 from collections import defaultdict
 from datetime import datetime
-from typing import List
 from corehq.util.soft_assert.api import soft_assert
 
 from memoized import memoized
@@ -78,9 +77,10 @@ old_headers = {
 }
 
 
-def check_headers(user_specs, domain, is_web_upload=False):
+def check_headers(user_specs, domain, upload_couch_user, is_web_upload=False):
     messages = []
     headers = set(user_specs.fieldnames)
+    conditionally_allowed_headers = set()
 
     # Backwards warnings
     for (old_name, new_name) in old_headers.items():
@@ -92,10 +92,20 @@ def check_headers(user_specs, domain, is_web_upload=False):
             headers.discard(old_name)
 
     if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
-        allowed_headers.add('domain')
+        conditionally_allowed_headers.add('domain')
 
     if not is_web_upload and EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
-        allowed_headers.add('deactivate_after')
+        conditionally_allowed_headers.add('deactivate_after')
+    if TABLEAU_USER_SYNCING.enabled(domain) and upload_couch_user.has_permission(
+            domain,
+            get_permission_name(HqPermissions.edit_user_tableau_config)
+    ):
+        conditionally_allowed_headers.update({'tableau_role', 'tableau_groups'})
+    elif "tableau_role" in headers or "tableau_groups" in headers:
+        messages.append(_(
+            "Only users with 'Manage Tableau Configuration' edit permission in domains where Tableau "
+            "User Syncing is enabled can upload files with 'Tableau Role' and/or 'Tableau Groups' fields."
+        ))
 
     if TABLEAU_USER_SYNCING.enabled(domain):
         allowed_headers.update({'tableau_role', 'tableau_groups'})
@@ -103,7 +113,8 @@ def check_headers(user_specs, domain, is_web_upload=False):
     if COMMCARE_CONNECT.enabled(domain):
         allowed_headers.add('send_connectid_invite')
 
-    illegal_headers = headers - allowed_headers
+    illegal_headers = headers - allowed_headers - conditionally_allowed_headers
+
 
     if is_web_upload:
         missing_headers = web_required_headers - headers
@@ -889,8 +900,6 @@ class WebImporter:
 
     def run(self):
         ret = {"errors": [], "rows": []}
-        column_headers = self.user_specs[0].keys() if self.user_specs else []
-        check_field_edit_permissions(column_headers, self.upload_user, self.upload_domain)
         for i, row in enumerate(self.user_specs):
             if self.update_progress:
                 self.update_progress(i)
@@ -972,15 +981,7 @@ class DomainInfo:
     @memoized
     def profiles_by_name(self):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        definition = CustomDataFieldsDefinition.get(self.domain, UserFieldsView.field_type)
-        if definition:
-            profiles = definition.get_profiles()
-            return {
-                profile.name: profile
-                for profile in profiles
-            }
-        else:
-            return {}
+        return CustomDataFieldsDefinition.get_profiles_by_name(self.domain, UserFieldsView.field_type)
 
     @property
     @memoized
@@ -1038,18 +1039,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
         upload_domain, user_specs, upload_user, upload_record_id,
         update_progress=update_progress
     ).run()
-
-
-def check_field_edit_permissions(field_names: List, upload_couch_user, domain: str):
-    if "tableau_role" in field_names or "tableau_groups" in field_names:
-        if not upload_couch_user.has_permission(
-            domain,
-            get_permission_name(HqPermissions.edit_user_tableau_config)
-        ):
-            raise UserUploadError(_(
-                "Only users with 'Manage Tableau Configuration' edit permission can upload files with"
-                "'Tableau Role and/or 'Tableau Groups' fields. Please remove those fields from your file."
-            ))
 
 
 def check_user_role(username, role):
