@@ -82,8 +82,8 @@ msgstr "Nome da Conta"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/enterprise/filters.py
-#: corehq/apps/enterprise/interface.py
+#: corehq/apps/domain/forms.py corehq/apps/enterprise/enterprise.py
+#: corehq/apps/enterprise/filters.py corehq/apps/enterprise/interface.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/smsbillables/filters.py
 msgid "Project Space"
@@ -484,8 +484,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/commtrack_action_table.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/commtrack_action_table.html
+#: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/events/forms.py
 #: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/events/views.py
@@ -968,8 +967,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/commtrack_action_table.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/commtrack_action_table.html
+#: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
@@ -10788,7 +10786,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
-msgid "There was an issue with your custom instances: {}"
+#, python-brace-format
+msgid "'{val}' is an invalid custom instance {key}"
 msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
@@ -12912,7 +12911,6 @@ msgid "Additional Information"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_entity.py
-#: corehq/apps/registration/forms.py
 msgid "Invalid profile selected. Please select a valid profile."
 msgstr ""
 
@@ -16046,16 +16044,6 @@ msgstr ""
 msgid "There has been a transfer of ownership of {domain}"
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/commtrack_action_table.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/commtrack_action_table.html
-msgid "SMS Keyword"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/commtrack_action_table.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/commtrack_action_table.html
-msgid "Action Type"
-msgstr ""
-
 #: corehq/apps/domain/templates/domain/admin/bootstrap3/edit_alert.html
 #: corehq/apps/domain/templates/domain/admin/bootstrap5/edit_alert.html
 msgid "Edit Alert"
@@ -16536,6 +16524,14 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 #: corehq/apps/domain/templates/domain/admin/partials/case_search_templates.html
 msgid "Add case property"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
+msgid "SMS Keyword"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
+msgid "Action Type"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/sms_settings.html
@@ -18975,10 +18971,6 @@ msgid "Email Settings"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-msgid "Enterprise Report"
-msgstr ""
-
-#: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 msgid "Project Space Name"
 msgstr ""
@@ -18997,6 +18989,12 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid "Project Spaces"
 msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+#, fuzzy
+#| msgid "Project Space"
+msgid "# of Project Spaces"
+msgstr "Espaco do projecto"
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Created On [UTC]"
@@ -19053,6 +19051,12 @@ msgid "Invited"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
+#, fuzzy
+#| msgid "Mobile Workers"
+msgid "# of Mobile Workers"
+msgstr "Trabalhadores Móveis"
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Created Date [UTC]"
 msgstr ""
 
@@ -19074,12 +19078,10 @@ msgid "Mobile Form Submissions"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-msgid "{} to {}"
-msgstr ""
-
-#: corehq/apps/enterprise/enterprise.py
-msgid "past {} days"
-msgstr ""
+#, fuzzy
+#| msgid "Last Form Submission"
+msgid "# of Mobile Form Submissions"
+msgstr "Última Submissão de Formulário"
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Date ranges with more than {} days are not supported"
@@ -19122,6 +19124,10 @@ msgid "OData Feeds"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
+msgid "# of OData Feeds"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Odata feeds used"
 msgstr ""
 
@@ -19140,6 +19146,30 @@ msgstr ""
 #: corehq/apps/enterprise/enterprise.py
 msgid "ERROR: Too many exports. Please contact customer service"
 msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py corehq/apps/reports/standard/sms.py
+msgid "SMS Usage"
+msgstr "Uso de SMS"
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# of SMS Sent"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# Sent"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+#, fuzzy
+#| msgid "Can Receive SMS"
+msgid "# Received"
+msgstr "Pode Receber SMS"
+
+#: corehq/apps/enterprise/enterprise.py
+#, fuzzy
+#| msgid "Error"
+msgid "# Errors"
+msgstr "Erro"
 
 #: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
@@ -19446,10 +19476,8 @@ msgid "Security Center for {}"
 msgstr ""
 
 #: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Security"
 msgid "Security Center"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py corehq/apps/reports/views.py
 msgid ""
@@ -19557,15 +19585,15 @@ msgstr ""
 msgid "All Locations"
 msgstr ""
 
-#: corehq/apps/events/forms.py corehq/apps/users/forms.py
+#: corehq/apps/events/forms.py corehq/apps/users/validation.py
 msgid "One or more of the locations was not found."
 msgstr ""
 
-#: corehq/apps/events/forms.py corehq/apps/users/forms.py
+#: corehq/apps/events/forms.py corehq/apps/users/validation.py
 msgid "Primary location must be one of the user's locations"
 msgstr ""
 
-#: corehq/apps/events/forms.py corehq/apps/users/forms.py
+#: corehq/apps/events/forms.py corehq/apps/users/validation.py
 msgid "Primary location can't be empty if the user has any locations set"
 msgstr ""
 
@@ -21547,6 +21575,10 @@ msgstr ""
 
 #: corehq/apps/export/views/download.py
 msgid "Form did not validate."
+msgstr ""
+
+#: corehq/apps/export/views/download.py
+msgid "Could not find download. Please refresh page and try again."
 msgstr ""
 
 #: corehq/apps/export/views/download.py
@@ -28715,20 +28747,6 @@ msgid "Send Invite"
 msgstr "Enviar Convite"
 
 #: corehq/apps/registration/forms.py
-msgid ""
-"A user with this email address is already in this project or has a pending "
-"invitation."
-msgstr ""
-
-#: corehq/apps/registration/forms.py
-msgid "A user with this email address is deactivated. "
-msgstr ""
-
-#: corehq/apps/registration/forms.py corehq/apps/users/forms.py
-msgid "You do not have permission to edit Tableau Configuraion."
-msgstr ""
-
-#: corehq/apps/registration/forms.py
 msgid "Tableau Groups"
 msgstr ""
 
@@ -29393,6 +29411,28 @@ msgstr ""
 
 #: corehq/apps/registration/utils.py
 msgid "Visit CommCareHQ on your computer!"
+msgstr ""
+
+#: corehq/apps/registration/validation.py
+msgid "You do not have permission to edit Tableau Configuration."
+msgstr ""
+
+#: corehq/apps/registration/validation.py
+msgid "This domain does not have user profile privileges."
+msgstr ""
+
+#: corehq/apps/registration/validation.py
+msgid "This domain does not have locations privileges."
+msgstr ""
+
+#: corehq/apps/registration/validation.py
+msgid ""
+"A user with this email address is already in this project or has a pending "
+"invitation."
+msgstr ""
+
+#: corehq/apps/registration/validation.py
+msgid "A user with this email address is deactivated. "
 msgstr ""
 
 #: corehq/apps/registration/views.py
@@ -31783,10 +31823,6 @@ msgstr "Usuários de Baixo Desempenho"
 #: corehq/apps/reports/standard/project_health.py
 msgid "New Performing Users"
 msgstr ""
-
-#: corehq/apps/reports/standard/sms.py
-msgid "SMS Usage"
-msgstr "Uso de SMS"
 
 #: corehq/apps/reports/standard/sms.py
 msgid ""
@@ -37979,6 +38015,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
+msgid ""
+"Only users with 'Manage Tableau Configuration' edit permission in domains "
+"where Tableau User Syncing is enabled can upload files with 'Tableau Role' "
+"and/or 'Tableau Groups' fields."
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
 #, python-brace-format
 msgid "The following are {label} column headers: {headers}."
 msgstr ""
@@ -38027,13 +38070,6 @@ msgstr ""
 
 #: corehq/apps/user_importer/importer.py
 msgid "You can only set 'Is Account Confirmed' to 'False' on a new User."
-msgstr ""
-
-#: corehq/apps/user_importer/importer.py
-msgid ""
-"Only users with 'Manage Tableau Configuration' edit permission can upload "
-"files with'Tableau Role and/or 'Tableau Groups' fields. Please remove those "
-"fields from your file."
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
@@ -38174,12 +38210,6 @@ msgstr ""
 
 #: corehq/apps/user_importer/validation.py
 msgid "You do not have permission to assign or remove these locations: {}"
-msgstr ""
-
-#: corehq/apps/user_importer/validation.py
-msgid ""
-"These locations cannot have users assigned because of their organization "
-"level settings: {}."
 msgstr ""
 
 #: corehq/apps/userreports/columns.py
@@ -39913,10 +39943,6 @@ msgid "Primary Location must always be set to one of above locations"
 msgstr ""
 
 #: corehq/apps/users/forms.py
-msgid "One or more of the locations you specified cannot have users assigned."
-msgstr ""
-
-#: corehq/apps/users/forms.py
 msgid "You do not have permissions to assign one of those locations."
 msgstr ""
 
@@ -39992,6 +40018,10 @@ msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "* and ? are not allowed"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid "You do not have permission to edit Tableau Configuraion."
 msgstr ""
 
 #: corehq/apps/users/landing_pages.py corehq/messaging/scheduling/views.py
@@ -41663,6 +41693,12 @@ msgstr ""
 
 #: corehq/apps/users/validation.py
 msgid "A profile assignment is required for Mobile Workers."
+msgstr ""
+
+#: corehq/apps/users/validation.py
+msgid ""
+"These locations cannot have users assigned because of their organization "
+"level settings: {}."
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py
