@@ -1,4 +1,12 @@
-hqDefine("mc/js/main", function () {
+hqDefine("mc/js/main", [
+    'jquery',
+    'knockout'
+    'underscore',
+], function (
+    $,
+    ko,
+    _
+) {
     function api_get_children(fdi_uuid, depth, callback) {
         var hierarchy = $("#mc-drillable-async").data("hierarchy");
         var params = (fdi_uuid ? {parent_id: fdi_uuid} : {});

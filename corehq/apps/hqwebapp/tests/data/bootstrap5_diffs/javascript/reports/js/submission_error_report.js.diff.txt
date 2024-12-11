@@ -1,12 +1,12 @@
 --- 
 +++ 
 @@ -1,4 +1,4 @@
--hqDefine("reports/js/bootstrap3/submission_error_report", function () {
-+hqDefine("reports/js/bootstrap5/submission_error_report", function () {
-     $(function () {
-         $('#report-content').on('click', '.reprocess-error', function () {
-             var $btn = $(this),
-@@ -16,7 +16,7 @@
+-hqDefine("reports/js/bootstrap3/submission_error_report", [
++hqDefine("reports/js/bootstrap5/submission_error_report", [
+     'jquery',
+     'hqwebapp/js/initial_page_data',
+ ], function (
+@@ -22,7 +22,7 @@
                      } else {
                          $btn.text(gettext('Failed'));
                          $btn.addClass('btn-danger');
