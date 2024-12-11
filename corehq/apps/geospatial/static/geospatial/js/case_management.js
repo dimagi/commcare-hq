@@ -66,7 +66,7 @@ hqDefine("geospatial/js/case_management", [
 
         self.handleDisbursementResults = function (result) {
             // Clean stale disbursement results
-            mapModel.removeDisbursementLayers();
+            mapModel.removeDisbursementLayer();
 
             let groupId = 0;
             let userToCasesList = [];
@@ -540,8 +540,8 @@ hqDefine("geospatial/js/case_management", [
             if (polygonFilterModel) {
                 selectMapItemsInPolygons();
             }
-            if (mapModel.hasDisbursementLayers()) {
-                mapModel.removeDisbursementLayers();
+            if (mapModel.hasDisbursementLayer()) {
+                mapModel.removeDisbursementLayer();
             }
         }
     });

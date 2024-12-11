@@ -514,11 +514,11 @@ hqDefine('geospatial/js/models', [
             });
         };
 
-        self.hasDisbursementLayers = function () {
+        self.hasDisbursementLayer = function () {
             return self.mapInstance.getLayer(DISBURSEMENT_LINES_LAYER_ID);
         };
 
-        self.removeDisbursementLayers = function () {
+        self.removeDisbursementLayer = function () {
             let layerRemoved = false;
             if (self.mapInstance.getLayer(DISBURSEMENT_LINES_LAYER_ID)) {
                 self.mapInstance.removeLayer(DISBURSEMENT_LINES_LAYER_ID);
@@ -682,11 +682,11 @@ hqDefine('geospatial/js/models', [
 
         function clearDisbursementBeforeProceeding() {
             let proceedFurther = true;
-            if (self.mapObj.hasDisbursementLayers()) {
+            if (self.mapObj.hasDisbursementLayer()) {
                 // hide it by default and show it only if necessary
                 $('#disbursement-clear-message').hide();
                 if (confirmForClearingDisbursement()) {
-                    self.mapObj.removeDisbursementLayers();
+                    self.mapObj.removeDisbursementLayer();
                     $('#disbursement-clear-message').show();
                     $('#disbursement-params').hide();
                 } else {
