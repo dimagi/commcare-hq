@@ -117,15 +117,19 @@ class PassesUserDataFilterTest(TestCase):
         schedule = AlertSchedule()
         schedule.use_user_case_for_filter = False
         schedule.user_data_filter = {"wants_email": ["no"]}
-        self.assertFalse(ScheduleInstance(domain=self.domain, schedule=schedule)
-                         ._passes_user_data_filter(self.mobile_user))
+        passed, msg = (ScheduleInstance(domain=self.domain, schedule=schedule).
+                       _passes_user_data_filter(self.mobile_user))
+        self.assertFalse(passed)
+        self.assertEqual(msg, "Filtered out on property wants_email: exp: (no), act: (yes)")
 
     def test_fails_with_user_data_filter_because_one_value_does_not_match(self):
         schedule = AlertSchedule()
         schedule.use_user_case_for_filter = False
         schedule.user_data_filter = {"wants_email": ["yes"], "color": ["red"]}
-        self.assertFalse(ScheduleInstance(domain=self.domain, schedule=schedule)
-                         ._passes_user_data_filter(self.mobile_user))
+        passed, msg = (ScheduleInstance(domain=self.domain, schedule=schedule).
+                       _passes_user_data_filter(self.mobile_user))
+        self.assertFalse(passed)
+        self.assertEqual(msg, "Filtered out on property color: exp: (red), act: (green)")
 
     def test_passes_with_user_case_filter(self):
         case = create_case_2(self.domain, case_type="thing", case_json={"case_color": "green"})
@@ -687,10 +691,21 @@ class SchedulingRecipientTest(TestCase):
             recipient_type='Group',
             recipient_id=self.group2.get_id
         )
+        message = ""
+        filtered_count = 0
+
+        def handle_filtered_recipient(_, msg):
+            nonlocal message
+            nonlocal filtered_count
+            message = msg
+            filtered_count += 1
+
         self.assertEqual(
-            self.user_ids(instance.expand_recipients()),
+            self.user_ids(instance.expand_recipients(handle_filtered_recipient)),
             [self.mobile_user4.get_id, self.mobile_user5.get_id, self.mobile_user6.get_id]
         )
+        self.assertEqual(message, "Filtered out on property role: exp: (nurse), act: (pharmacist)")
+        self.assertEqual(2, filtered_count)
 
     def test_web_user_recipient_with_user_data_filter(self):
         schedule = self._create_schedule(user_data_filter={'role': ['nurse']})
