@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -40,9 +41,17 @@ def mass_email(request):
     else:
         form = EmailForm()
 
-    context = get_hqadmin_base_context(request)
-    context['hide_filters'] = True
-    context['form'] = form
+    context = {
+        'form': form,
+        'current_page': {
+            'url': reverse('mass_email'),
+            'page_name': 'Mass Email Users',
+        },
+        'section': {
+            'url': reverse('default_admin_report'),
+            'title': 'Admin',
+        },
+    }
     return render(request, "hqadmin/mass_email.html", context)
 
 
