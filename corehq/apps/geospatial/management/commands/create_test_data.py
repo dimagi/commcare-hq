@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.core.management.base import BaseCommand
 
+from faker import Faker
 from shapely.geometry import Point, Polygon
 
 from casexml.apps.case.mock import CaseBlock
@@ -25,8 +26,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('users', type=int)
-        parser.add_argument('cases', type=int)
+        parser.add_argument('users', type=nonnegative_int)
+        parser.add_argument('cases', type=nonnegative_int)
 
     def handle(self, *args, **options):
         domain = options['domain']
@@ -40,6 +41,13 @@ class Command(BaseCommand):
         create_cases(domain, num_cases)
 
 
+def nonnegative_int(value):
+    value = int(value)
+    if value < 0:
+        raise ValueError('Value must be positive or zero')
+    return value
+
+
 def create_users(domain, num_users):
     geo_property = get_geo_user_property(domain)
     for __ in range(num_users):
@@ -47,21 +55,22 @@ def create_users(domain, num_users):
 
 
 def create_user(domain, geo_property):
-    random_point = random_point_in_scotland()
-    random_suffix = random.randint(10_000, 99_999)
-    username = '.'.join((
-        random.choice(FIRST_NAMES),
-        random.choice(LAST_NAMES),
-        str(random_suffix),
-    ))
+    fake = Faker()
+    first_name = fake.first_name()
+    last_name = fake.last_name()
+    random_suffix = str(random.randint(10_000, 99_999))
+    username = '.'.join((first_name, last_name, random_suffix))
     mobile_username = f'{username}@{domain}.commcarehq.org'
     password = '123'
+    random_point = random_point_in_scotland()
     user = CommCareUser.create(
         domain,
         mobile_username,
         password,
         created_by=None,
         created_via=SCRIPT_NAME,
+        first_name=first_name,
+        last_name=last_name,
         user_data={geo_property: f'{random_point.y} {random_point.x} 0 0'},
         commiit=False,  # Save below to avoid logging
     )
@@ -80,12 +89,8 @@ def random_point_in_scotland():
 
 def create_cases(domain, num_cases):
     geo_property = get_geo_case_property(domain)
-    i = 0
     case_blocks = []
-    while True:
-        if i == num_cases:
-            break
-        i += 1
+    for i in range(num_cases):
         case_blocks.append(get_case_block(geo_property))
         if not i % CASE_BLOCK_CHUNK_SIZE:
             submit_chunk(domain, case_blocks)
@@ -95,13 +100,12 @@ def create_cases(domain, num_cases):
 
 
 def get_case_block(geo_property):
-    case_id = uuid4().hex
-    case_name = f'{random.choice(FIRST_NAMES)} {random.choice(LAST_NAMES)}'
+    fake = Faker()
     random_point = random_point_in_scotland()
     return CaseBlock(
-        case_id=case_id,
+        case_id=uuid4().hex,
         case_type=CASE_TYPE,
-        case_name=case_name,
+        case_name=fake.name(),
         create=True,
         update={geo_property: f'{random_point.y} {random_point.x} 0 0'},
     )
@@ -124,160 +128,3 @@ ROUGHLY_SCOTLAND = Polygon([  # Sorry all of the islands
     (55.802299, -2.093642),
     (55.802299, -2.093642),
 ])
-
-
-FIRST_NAMES = [
-    'Aaliyah',
-    'Aaron',
-    'Abigail',
-    'Addison',
-    'Aiden',
-    'Alexander',
-    'Amelia',
-    'Andrew',
-    'Anthony',
-    'Aria',
-    'Aubrey',
-    'Audrey',
-    'Aurora',
-    'Ava',
-    'Avery',
-    'Bella',
-    'Benjamin',
-    'Brooklyn',
-    'Caleb',
-    'Carter',
-    'Charles',
-    'Charlotte',
-    'Chloe',
-    'Christian',
-    'Christopher',
-    'Claire',
-    'Connor',
-    'Daniel',
-    'David',
-    'Dylan',
-    'Eli',
-    'Ella',
-    'Ellie',
-    'Emma',
-    'Ethan',
-    'Evelyn',
-    'Gabriel',
-    'Genesis',
-    'Grace',
-    'Grayson',
-    'Hannah',
-    'Harper',
-    'Hazel',
-    'Henry',
-    'Hunter',
-    'Isaac',
-    'Isabella',
-    'Isaiah',
-    'Jack',
-    'Jackson',
-    'James',
-    'Jameson',
-    'Jaxon',
-    'John',
-    'Joseph',
-    'Joshua',
-    'Julian',
-    'Kennedy',
-    'Kinsley',
-    'Landon',
-    'Layla',
-    'Leah',
-    'Levi',
-    'Liam',
-    'Lillian',
-    'Lily',
-    'Lincoln',
-    'Logan',
-    'Lucas',
-    'Lucy',
-    'Luke',
-    'Madison',
-    'Matthew',
-    'Mia',
-    'Michael',
-    'Mila',
-    'Natalie',
-    'Nathan',
-    'Noah',
-    'Nora',
-    'Olivia',
-    'Owen',
-    'Paisley',
-    'Penelope',
-    'Riley',
-    'Ryan',
-    'Samantha',
-    'Samuel',
-    'Savannah',
-    'Scarlett',
-    'Sebastian',
-    'Skylar',
-    'Sophia',
-    'Stella',
-    'Thomas',
-    'Victoria',
-    'Violet',
-    'William',
-    'Wyatt',
-    'Zoey',
-]
-
-LAST_NAMES = [
-    'Anderson',
-    'Brown',
-    'Cameron',
-    'Campbell',
-    'Davis',
-    'Duncan',
-    'Ferguson',
-    'Fraser',
-    'Garcia',
-    'Gonzalez',
-    'Graham',
-    'Hamilton',
-    'Harris',
-    'Henderson',
-    'Hernandez',
-    'Jackson',
-    'Johnson',
-    'Johnston',
-    'Jones',
-    'Lee',
-    'Lopez',
-    'MacDonald',
-    'MacKenzie',
-    'MacLeod',
-    'Martin',
-    'Martinez',
-    'Miller',
-    'Moore',
-    'Morrison',
-    'Murray',
-    'Paterson',
-    'Perez',
-    'Reid',
-    'Robertson',
-    'Rodriguez',
-    'Ross',
-    'Scott',
-    'Sinclair',
-    'Smith',
-    'Stewart',
-    'Sutherland',
-    'Taylor',
-    'Thomas',
-    'Thompson',
-    'Thomson',
-    'Wallace',
-    'White',
-    'Williams',
-    'Wilson',
-    'Young',
-]
