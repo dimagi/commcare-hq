@@ -255,7 +255,6 @@ gevent==23.9.1
 google-api-core==2.11.0
     # via
     #   firebase-admin
-    #   google-api-core
     #   google-api-python-client
     #   google-cloud-core
     #   google-cloud-firestore
