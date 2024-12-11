@@ -18,7 +18,6 @@ from corehq.apps.hqadmin.tasks import send_mass_emails
 from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
     get_breadcrumbs,
-    get_hqadmin_base_context,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
@@ -99,11 +98,9 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
 
     @property
     def page_context(self):
-        context = get_hqadmin_base_context(self.request)
-        context.update({
+        return {
             'form': self.form,
-        })
-        return context
+        }
 
     def get_case(self, case_id):
         try:
