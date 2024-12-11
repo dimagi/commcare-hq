@@ -93,18 +93,9 @@ hqDefine("geospatial/js/case_management", [
         };
 
         self.clearConnectionLines = function (cases) {
-            let mapInstance = mapModel.mapInstance;
             let caseData = [];
             const hasSelectedCases = mapModel.hasSelectedCases();
             cases.forEach(function (c) {
-                const layerId = mapModel.getLineFeatureId(c.itemId);
-                if (mapInstance.getLayer(layerId)) {
-                    mapInstance.removeLayer(layerId);
-                }
-                if (mapInstance.getSource(layerId)) {
-                    mapInstance.removeSource(layerId);
-                }
-
                 // Either select all if none selected, or only pick selected cases
                 if (!hasSelectedCases || c.isSelected()) {
                     caseData.push({
@@ -114,7 +105,7 @@ hqDefine("geospatial/js/case_management", [
                     });
                 }
             });
-
+            mapModel.removeDisbursementLayer();
             return caseData;
         };
 
