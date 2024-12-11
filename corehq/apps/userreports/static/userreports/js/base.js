@@ -1,4 +1,4 @@
-hqDefine('reports_core/js/bootstrap3/base_template_new', function () {
+hqDefine('userreports/js/base', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     var baseUrl = initialPageData.get('url');
     function getReportUrl() {

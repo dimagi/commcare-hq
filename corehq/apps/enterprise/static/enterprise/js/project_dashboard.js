@@ -258,12 +258,12 @@ hqDefine("enterprise/js/project_dashboard", [
         const maxDateRangeDays = initialPageData.get("max_date_range_days");
 
         const displayMap = {
-            "form_submission": formSubmissionsDisplay,
+            "form_submissions": formSubmissionsDisplay,
             "sms": smsDisplay,
         };
         const dateRangeModal = DateRangeModal($dateRangeModal, datePicker, dateRangePresetOptions, maxDateRangeDays, displayMap);
 
-        $("#form_submission_dateRangeDisplay").koApplyBindings(formSubmissionsDisplay);
+        $("#form_submissions_dateRangeDisplay").koApplyBindings(formSubmissionsDisplay);
         $("#sms_dateRangeDisplay").koApplyBindings(smsDisplay);
         $dateRangeModal.koApplyBindings(
             dateRangeModal
