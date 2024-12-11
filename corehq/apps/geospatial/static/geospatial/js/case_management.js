@@ -92,7 +92,7 @@ hqDefine("geospatial/js/case_management", [
             self.setBusy(false);
         };
 
-        self.clearConnectionLines = function (cases) {
+        self.getCasesForDisbursement = function (cases) {
             let caseData = [];
             const hasSelectedCases = mapModel.hasSelectedCases();
             cases.forEach(function (c) {
@@ -105,13 +105,13 @@ hqDefine("geospatial/js/case_management", [
                     });
                 }
             });
-            mapModel.removeDisbursementLayer();
             return caseData;
         };
 
         self.runCaseDisbursementAlgorithm = function (cases, users) {
             self.setBusy(true);
-            const caseData = self.clearConnectionLines(cases);
+            mapModel.removeDisbursementLayer();
+            const caseData = self.getCasesForDisbursement(cases);
 
             self.setDisbursementParameters = function (parameters) {
                 var parametersList = [

@@ -1000,14 +1000,12 @@ hqDefine('geospatial/js/models', [
 
         self.finishAssignment = function () {
             let userCasesToConnect = {};
-            let casesToClear = [];
             for (const caseItem of self.caseData) {
                 const userItem = self.mapModel.caseGroupsIndex[caseItem.assignedUserId];
                 const groupId = (userItem) ? userItem.groupId : null;
                 self.mapModel.caseGroupsIndex[caseItem.caseId].assignedUserId = caseItem.assignedUserId;
                 self.mapModel.caseGroupsIndex[caseItem.caseId].groupId = groupId;
 
-                casesToClear.push(caseItem.mapItem);
                 if (caseItem.assignedUserId) {
                     if (!userCasesToConnect[caseItem.assignedUserId]) {
                         userCasesToConnect[caseItem.assignedUserId] = [];
@@ -1016,7 +1014,7 @@ hqDefine('geospatial/js/models', [
                 }
             }
 
-            self.disbursementModel.clearConnectionLines(casesToClear);
+            self.mapModel.removeDisbursementLayer();
             let userToCasesList = [];
             for (const userId in userCasesToConnect) {
                 const user = self.mapModel.caseGroupsIndex[userId].item;
