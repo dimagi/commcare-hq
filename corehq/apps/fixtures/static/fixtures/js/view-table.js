@@ -5,6 +5,7 @@ hqDefine("fixtures/js/view-table", [
     "reports/js/bootstrap3/datatables_config",
     "reports/js/filters/bootstrap3/main",
     "datatables.fixedColumns",
+    "commcarehq",
 ], function (
     $,
     initialPageData,
