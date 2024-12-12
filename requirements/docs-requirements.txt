@@ -106,8 +106,6 @@ cryptography==43.0.1
     #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
-css-inline==0.11.0
-    # via -r base-requirements.in
 datadog==0.39.0
     # via -r base-requirements.in
 ddsketch==3.0.1
