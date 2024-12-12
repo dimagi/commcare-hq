@@ -119,7 +119,7 @@ def rebuild_indicators(
             config.save()
 
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
-        rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter) if adapter.table_exists else None
+        rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter)
         try:
             adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
             _iteratively_build_table(config, limit=limit)
@@ -146,7 +146,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
             config.meta.build.rebuilt_asynchronously = False
             config.save()
 
-        rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter) if adapter.table_exists else None
+        rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter)
         try:
             adapter.build_table(initiated_by=initiated_by, source=source)
             _iteratively_build_table(config, in_place=True)
@@ -159,6 +159,8 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
 
 
 def _get_rows_count_from_existing_table(adapter):
+    if not adapter.table_exists:
+        return None
     table = adapter.get_existing_table_from_db()
     return adapter.session_helper.Session.query(table).count()
 
@@ -167,27 +169,27 @@ def _report_ucr_rebuild_metrics(config, source, action, adapter, rows_count_befo
     if source not in ('edit_data_source_rebuild', 'edit_data_source_build_in_place'):
         return
     try:
-        _report_metric_number_of_days_since_first_build(config.domain, config.get_id, action)
+        _report_metric_number_of_days_since_first_build(config, action)
         if error:
             _report_metric_rebuild_error(config, action)
-        if not error:
+        else:
             _report_metric_increase_in_rows_count(config, action, adapter, rows_count_before_rebuild)
     except Exception:
         pass
 
 
-def _report_metric_number_of_days_since_first_build(domain, config_id, action):
+def _report_metric_number_of_days_since_first_build(config, action):
     try:
         earliest_entry = DataSourceActionLog.objects.filter(
-            domain=domain,
-            indicator_config_id=config_id,
+            domain=config.domain,
+            indicator_config_id=config.get_id,
             action__in=[DataSourceActionLog.BUILD, DataSourceActionLog.REBUILD]
         ).earliest('date_created')
     except DataSourceActionLog.DoesNotExist:
         pass
     else:
         no_of_days = (datetime.utcnow() - earliest_entry.date_created).days
-        metrics_gauge(f'commcare.ucr.{action}.days_since_first_build', no_of_days, tags={'domain': domain})
+        metrics_gauge(f'commcare.ucr.{action}.days_since_first_build', no_of_days, tags={'domain': config.domain})
 
 
 def _report_metric_rebuild_error(config, action):
@@ -201,12 +203,13 @@ def _report_metric_rebuild_error(config, action):
 
 
 def _report_metric_increase_in_rows_count(config, action, adapter, rows_count_before_rebuild):
-    if rows_count_before_rebuild is not None:
-        # Row count can only be obtained for synchronous rebuilds.
-        if not config.asynchronous:
-            rows_count_after_rebuild = adapter.get_query_object().count()
-            if rows_count_after_rebuild > rows_count_before_rebuild:
-                metrics_counter(f'commcare.ucr.{action}.increase_in_rows', tags={'domain': config.domain})
+    if rows_count_before_rebuild is None:
+        return
+    # Row count can only be obtained for synchronous rebuilds.
+    if not config.asynchronous:
+        rows_count_after_rebuild = adapter.get_query_object().count()
+        if rows_count_after_rebuild > rows_count_before_rebuild:
+            metrics_counter(f'commcare.ucr.{action}.increase_in_rows', tags={'domain': config.domain})
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
