@@ -58,30 +58,39 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         calc_prop_prefix = 'cp_'
         domain_obj = _get_domain(bundle)
         try:
-            es_data = (DomainES()
-                       .in_domains([domain_obj.name])
-                       .size(1)
-                       .run()
-                       .hits[0])
-            base_properties = {
-                prop_name: es_data[prop_name]
-                for prop_name in es_data
-                if prop_name.startswith(calc_prop_prefix)
-            }
-            try:
-                audit_record = DomainAuditRecordEntry.objects.get(domain=domain_obj.name)
-            except DomainAuditRecordEntry.DoesNotExist:
-                audit_record = None
-            extra_properties = {
-                field.name: getattr(audit_record, field.name, 0)
-                for field in DomainAuditRecordEntry._meta.fields
-                if field.name.startswith(calc_prop_prefix)
-            }
-            base_properties.update(extra_properties)
-            return base_properties
+            base_properties = self._get_base_properties_from_elasticsearch(domain_obj.name, calc_prop_prefix)
+            properties = self._add_extra_calculated_properties(base_properties, domain_obj.name, calc_prop_prefix)
         except IndexError:
             logging.exception('Problem getting calculated properties for {}'.format(domain_obj.name))
             return {}
+        return properties
+
+    @staticmethod
+    def _get_base_properties_from_elasticsearch(domain, calc_prop_prefix):
+        es_data = (DomainES()
+                   .in_domains([domain])
+                   .size(1)
+                   .run()
+                   .hits[0])
+        return {
+            prop_name: es_data[prop_name]
+            for prop_name in es_data
+            if prop_name.startswith(calc_prop_prefix)
+        }
+
+    @staticmethod
+    def _add_extra_calculated_properties(properties, domain, calc_prop_prefix):
+        try:
+            audit_record = DomainAuditRecordEntry.objects.get(domain=domain)
+        except DomainAuditRecordEntry.DoesNotExist:
+            audit_record = None
+        extra_properties = {
+            field.name: getattr(audit_record, field.name, 0)
+            for field in DomainAuditRecordEntry._meta.fields
+            if field.name.startswith(calc_prop_prefix)
+        }
+        properties.update(extra_properties)
+        return properties
 
     def dehydrate_domain_properties(self, bundle):
         return _get_domain(bundle)._doc
