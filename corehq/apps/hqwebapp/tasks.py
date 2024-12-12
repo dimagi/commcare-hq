@@ -311,12 +311,9 @@ feature flag to be enabled.
     )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=1, day_of_month=1))
+@periodic_task(run_every=crontab(minute=0, hour=1))
 def send_stale_case_data_info_to_admins():
     from corehq.apps.hqadmin.reports import StaleCasesTable
-
-    if not settings.SOLUTIONS_AES_EMAIL or settings.SERVER_ENVIRONMENT != 'production':
-        return
 
     table = StaleCasesTable()
     has_error = False
@@ -357,6 +354,6 @@ def send_stale_case_data_info_to_admins():
     send_mail_async.delay(
         subject,
         message,
-        recipient_list=[settings.SOLUTIONS_AES_EMAIL],
+        recipient_list=['zengelbrecht@dimagi.com'],
         filename=csv_file
     )
