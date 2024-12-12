@@ -2,6 +2,7 @@ hqDefine('reports/js/filters/bootstrap5/drilldown_options', [
     'jquery',
     'knockout',
     'underscore',
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
 ], function (
     $,
     ko,
