@@ -10,9 +10,12 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from dateutil.parser import parse
 from memoized import memoized
 
+from dimagi.utils.logging import notify_exception
+
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import BaseDeviceLogReport
 
+from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.auditcare.utils.export import navigation_events_by_user
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -31,6 +34,7 @@ from corehq.apps.es.forms import FormES
 from corehq.toggles import USER_CONFIGURABLE_REPORTS, RESTRICT_DATA_SOURCE_REBUILD
 from corehq.motech.repeaters.const import UCRRestrictionFFStatus
 from corehq.apps.es.aggregations import TermsAggregation
+from corehq.apps.es.exceptions import ESError
 
 
 class AdminReport(GenericTabularReport):
@@ -501,9 +505,12 @@ class UCRDataLoadReport(AdminReport):
 
 
 class StaleCasesTable:
-
+    STOP_YEAR = datetime(2005, 1, 1)
+    AGG_DATE_RANGE = 150
     STALE_DATE_THRESHOLD_DAYS = 365
 
+    BACKOFF_AMOUNT = 30
+    MAX_BACKOFF_COUNT = 2
     @property
     def headers(self):
         return DataTablesHeader(
@@ -514,26 +521,70 @@ class StaleCasesTable:
     @property
     def rows(self):
         rows = []
-        case_count_by_domain = self._stale_case_count()
-        for bucket in case_count_by_domain.values():
-            rows.append([bucket.key, bucket.doc_count])
+        case_count_by_domain = self._aggregate_case_count_data()
+        for domain, case_count in case_count_by_domain.items():
+            rows.append([domain, case_count])
         return rows
 
-    def _stale_case_count(self):
+    def _aggregate_case_count_data(self):
+        end_date = datetime.now() - timedelta(days=self.STALE_DATE_THRESHOLD_DAYS)
+        agg_res = {}
+        curr_backoff_count = 0
+        curr_agg_date_range = self.AGG_DATE_RANGE
+        domains = self._get_domains()
+        while (True):
+            start_date = end_date - timedelta(days=self.AGG_DATE_RANGE)
+            try:
+                query_res = self._stale_case_count_in_date_range(domains, start_date, end_date)
+            except ESError as e:
+                curr_backoff_count += 1
+                if curr_backoff_count <= self.MAX_BACKOFF_COUNT:
+                    curr_agg_date_range -= self.AGG_DATE_RANGE
+                    curr_backoff_count += 1
+                else:
+                    notify_exception(
+                        None,
+                        'ES query timed out while compiling stale case report email.',
+                        details={
+                            'error': str(e),
+                            'start_date': start_date.strftime("%Y-%m-%d"),
+                            'end_date': end_date.strftime("%Y-%m-%d")
+                        }
+                    )
+                    raise ESError()
+            curr_backoff_count = 0
+            curr_agg_date_range = self.AGG_DATE_RANGE
+            self._merge_agg_data(agg_res, query_res)
+            end_date = start_date
+            if end_date <= self.STOP_YEAR:
+                break
+        return agg_res
+
+    def _merge_agg_data(self, agg_res, query_res):
+        for domain, case_count in query_res.items():
+            if domain not in agg_res:
+                agg_res[domain] = 0
+            agg_res[domain] += case_count
+
+    def _stale_case_count_in_date_range(self, domains, start_date, end_date):
         return (
             CaseSearchES()
+            .domain(domains)
+            .modified_range(gt=start_date, lt=end_date)
             .is_closed(False)
-            .server_modified_range(lt=self._get_stale_date())
-            .size(0)
             .aggregation(
                 TermsAggregation('domain', 'domain.exact')
             )
-        ).run().aggregations.domain.buckets_dict
+            .size(0)
+        ).run().aggregations.domain.counts_by_bucket()
 
-    def _get_stale_date(self):
-        current_date = datetime.now()
-        stale_threshold_date = current_date - timedelta(days=self.STALE_DATE_THRESHOLD_DAYS)
-        return stale_threshold_date
+    def _get_domains(self):
+        return list(set(
+            Subscription.visible_objects
+            .exclude(plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY)
+            .filter(is_active=True)
+            .values_list('subscriber__domain', flat=True)
+        ))
 
     @staticmethod
     def format_as_table(row_data, data_tables_header):
