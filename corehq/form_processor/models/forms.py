@@ -403,9 +403,10 @@ class XFormInstanceManager(RequireDBManager):
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             # cascade should delete the operations
             query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
-            if return_ids:
-                found_forms = list(query.values_list('form_id', flat=True))
-            _, deleted_models = query.delete()
+            with transaction.atomic():
+                if return_ids:
+                    found_forms = list(query.values_list('form_id', flat=True))
+                _, deleted_models = query.delete()
             deleted_count += deleted_models.get(self.model._meta.label, 0)
             if return_ids:
                 deleted_ids.extend(found_forms)
