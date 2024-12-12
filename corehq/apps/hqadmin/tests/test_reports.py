@@ -92,38 +92,27 @@ class TestStaleCasesTable(TestCase):
         super().setUpClass()
         cases = [
             cls._get_case(days_back=0),
-            cls._get_case(days_back=366),
-            cls._get_case(days_back=380, is_closed=True),
             cls._get_case(days_back=365),
+            cls._get_case(days_back=380, is_closed=True),
+            cls._get_case(days_back=365 * 21),
         ]
         case_search_adapter.bulk_index(cases, refresh=True)
         cls.table = StaleCasesTable()
 
     @classmethod
     def _get_case(cls, days_back, is_closed=False):
-        server_modified_on = datetime.now() - timedelta(days=days_back)
+        modified_on = datetime.now() - timedelta(days=days_back)
         return CommCareCase(
             case_id=uuid4().hex,
             domain='test',
-            server_modified_on=server_modified_on,
+            modified_on=modified_on,
             closed=is_closed
         )
 
-    def test_stale_case_count(self):
-        res = self.table._stale_case_count()
-        self.assertEqual(len(res), 1)
+    @patch.object(StaleCasesTable, '_get_domains')
+    def test_get_rows(self, _get_domains_mock):
+        _get_domains_mock.return_value = ['test']
         self.assertEqual(
-            (res['test'].key, res['test'].doc_count),
-            ('test', 2)
-        )
-
-    def test_format_as_table(self):
-        expected_output = (
-            'Domain | Case count\n'
-            '-------------------\n'
-            'test   | 2         '
-        )
-        self.assertEqual(
-            self.table.format_as_table(self.table.rows, self.table.headers),
-            expected_output
+            self.table.rows,
+            [['test', 1]]
         )
