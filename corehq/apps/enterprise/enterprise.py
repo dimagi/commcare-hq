@@ -453,11 +453,11 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             if not version_in_use:
                 continue
 
-            # Remove seconds to reduce the number of unique timestamps
+            # Remove seconds and microseconds to reduce the number of unique timestamps
             # This helps with performance because get_latest_version_at_time is memoized
             if isinstance(date_of_use, str):
                 date_of_use = datetime.strptime(date_of_use, ISO_DATETIME_FORMAT)
-            date_of_use_minute_precision = date_of_use.replace(second=0)
+            date_of_use_minute_precision = date_of_use.replace(second=0, microsecond=0)
 
             latest_version_at_time_of_use = get_latest_version_at_time(date_of_use_minute_precision)
 
