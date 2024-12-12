@@ -344,7 +344,7 @@ class ScheduleInstance(PartitionedModel):
                 filtered_recipient,
                 content,
             )
-            sub_event.error(MessagingEvent.FILTER_MISMATCH, reason)
+            sub_event.error(MessagingEvent.FILTER_MISMATCH, reason, MessagingEvent.STATUS_COMPLETED)
 
         recipient_count = 0
         for recipient in self.expand_recipients(log_filtered_recipient):
