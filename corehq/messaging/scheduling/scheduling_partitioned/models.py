@@ -278,7 +278,7 @@ class ScheduleInstance(PartitionedModel):
             actual_values_set = self.convert_to_set(user_data.get(key, ""))
 
             if actual_values_set.isdisjoint(allowed_values_set):
-                return False, (f"Filtered out on property {key}: "
+                return False, (f"{key}: "
                                f"allowed: ({','.join(allowed_values_set)}), "
                                f"found: ({','.join(actual_values_set)})")
 
