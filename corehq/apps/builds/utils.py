@@ -69,12 +69,20 @@ def get_latest_version_at_time(config, target_time):
         if item.superuser_only:
             continue
         try:
-            build = CommCareBuild.get_build(item.build.version, latest=True)
-            if build and build.time and build.time <= target_time:
+            build_time = get_build_time(item.build.version)
+            if build_time and build_time <= target_time:
                 return item.build.version
         except KeyError:
             continue
 
+    return None
+
+
+@memoized
+def get_build_time(version):
+    build = CommCareBuild.get_build(version, latest=True)
+    if build and build.time:
+        return build.time
     return None
 
 
