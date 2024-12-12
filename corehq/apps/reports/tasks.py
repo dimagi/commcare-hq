@@ -1,7 +1,9 @@
 import os
 import uuid
 import zipfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+from django.db.models import Q
 
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
@@ -14,7 +16,12 @@ from soil import DownloadBase
 from soil.util import expose_blob_download
 
 from corehq.apps.celery import periodic_task, task
-from corehq.apps.domain.calculations import all_domain_stats, calced_props
+from corehq.apps.data_analytics.models import DomainMetrics
+from corehq.apps.domain.calculations import (
+    all_domain_stats,
+    calced_props,
+    domain_metrics,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES, FormES, filters
 from corehq.apps.es.domains import domain_adapter
@@ -102,6 +109,75 @@ def get_domains_to_update_es_filter():
             filters.term('name', domains_submitted_today)
         )
     )
+
+
+@periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
+def update_domain_metrics():
+    domains = get_domains_to_update()
+    for chunk in chunked(domains, 5000):
+        update_domain_metrics_for_domains.delay(chunk)
+
+
+@task(queue='background_queue')
+def update_domain_metrics_for_domains(domains):
+    """
+    :param domains: list of domain names
+    """
+    # relying on caching for efficiency
+    all_stats = all_domain_stats()
+    active_users_by_domain = {}
+    for domain in domains:
+        metrics, __ = _update_or_create_domain_metrics(domain, all_stats)
+        if metrics:
+            active_users_by_domain[domain] = metrics['active_mobile_workers']
+
+    datadog_report_user_stats('commcare.active_mobile_workers.count', active_users_by_domain)
+
+
+def _update_or_create_domain_metrics(domain, all_stats):
+    try:
+        domain_obj = Domain.get_by_name(domain)
+        metrics_dict = domain_metrics(domain_obj, domain_obj['_id'], all_stats)
+        return DomainMetrics.objects.update_or_create(
+            **metrics_dict,
+        )
+    except Exception as e:
+        notify_exception(
+            None, message='Domain {} failed on stats calculations with {}'.format(domain, e)
+        )
+
+
+def get_domains_to_update():
+    """
+    Returns a list of domains that are active and meet one or more
+    of the following criteria:
+     - never had DomainMetrics created
+     - DomainMetrics was updated over one week ago
+     - new form submissions within the last day
+    """
+    is_domain_active = filters.term('is_active', True)
+    active_domains = (
+        DomainES().filter(is_domain_active)
+        .terms_aggregation('name.exact', 'domain')
+        .size(0).run().aggregations.domain.keys
+    )
+
+    now = datetime.now(tz=timezone.utc)
+    yesterday = now - timedelta(days=1)
+    domains_submitted_within_day = (
+        FormES().submitted(gte=yesterday)
+        .terms_aggregation('domain.exact', 'domain')
+        .size(0).run().aggregations.domain.keys
+    )
+
+    last_week = now - timedelta(days=7)
+    domains_up_to_date = DomainMetrics.objects.filter(
+        Q(domain__in=active_domains)
+        & Q(last_modified__gte=last_week)
+        & ~Q(domain__in=domains_submitted_within_day)
+    ).values_list('domain', flat=True)
+
+    return set(active_domains) - set(domains_up_to_date)
 
 
 @periodic_task(run_every=timedelta(minutes=1), queue='background_queue')
