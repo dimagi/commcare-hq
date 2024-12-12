@@ -369,10 +369,8 @@ class ODataFeedResource(ODataEnterpriseReportResource):
     Currently includes summary rows as well as individual reports
     '''
 
-    domain = fields.CharField(null=True)
-    num_feeds_used = fields.IntegerField(null=True)
-    num_feeds_available = fields.IntegerField(null=True)
-    report_name = fields.CharField(null=True)
+    domain = fields.CharField()
+    report_name = fields.CharField()
     report_rows = fields.IntegerField(null=True)
 
     REPORT_SLUG = EnterpriseReport.ODATA_FEEDS
@@ -386,16 +384,14 @@ class ODataFeedResource(ODataEnterpriseReportResource):
         )
 
     def dehydrate(self, bundle):
-        bundle.data['num_feeds_used'] = bundle.obj[0]
-        bundle.data['num_feeds_available'] = bundle.obj[1]
-        bundle.data['report_name'] = bundle.obj[2]
-        bundle.data['report_rows'] = bundle.obj[3]
-        bundle.data['domain'] = bundle.obj[5] if len(bundle.obj) >= 5 else None
+        bundle.data['domain'] = bundle.obj[0]
+        bundle.data['report_name'] = bundle.obj[1]
+        bundle.data['report_rows'] = bundle.obj[2]
 
         return bundle
 
     def get_primary_keys(self):
-        return ('report_name',)  # very odd report that makes coming up with an actual key challenging
+        return ('domain', 'report_name',)
 
 
 class FormSubmissionResource(ODataEnterpriseReportResource):
