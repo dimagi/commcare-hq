@@ -841,7 +841,7 @@ class GenericTabularReport(GenericReportView):
     bad_request_error_text = None
     exporting_as_excel = False
 
-    # Sets bSort in the datatables instance to true/false (config.dataTables.bootstrap.js)
+    # Sets bSort in the datatables instance to true/false (datatables_config.js)
     sortable = True
 
     # override old class properties
