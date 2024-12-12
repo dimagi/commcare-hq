@@ -49,7 +49,7 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_mail_async(self, subject, message, recipient_list, from_email=settings.DEFAULT_FROM_EMAIL,
                     messaging_event_id=None, filename: str = None, content=None, domain: str = None,
-                    use_domain_gateway=False):
+                    use_domain_gateway=False, is_conditional_alert=False):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -74,7 +74,7 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
         get_valid_recipients,
         mark_local_bounced_email,
     )
-    filtered_recipient_list = get_valid_recipients(recipient_list, domain)
+    filtered_recipient_list = get_valid_recipients(recipient_list, domain, is_conditional_alert)
     bounced_recipients = list(set(recipient_list) - set(filtered_recipient_list))
     if bounced_recipients and messaging_event_id:
         mark_local_bounced_email(bounced_recipients, messaging_event_id)
@@ -144,7 +144,8 @@ def send_html_email_async(self, subject, recipient, html_content,
                           smtp_exception_skip_list=None,
                           messaging_event_id=None,
                           domain=None,
-                          use_domain_gateway=False):
+                          use_domain_gateway=False,
+                          is_conditional_alert=False):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -163,7 +164,8 @@ def send_html_email_async(self, subject, recipient, html_content,
             smtp_exception_skip_list=smtp_exception_skip_list,
             messaging_event_id=messaging_event_id,
             domain=domain,
-            use_domain_gateway=use_domain_gateway
+            use_domain_gateway=use_domain_gateway,
+            is_conditional_alert=is_conditional_alert
         )
     except Exception as e:
         recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
