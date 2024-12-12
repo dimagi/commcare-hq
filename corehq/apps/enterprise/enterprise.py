@@ -130,11 +130,16 @@ class EnterpriseDomainReport(EnterpriseReport):
     title = gettext_lazy('Project Spaces')
     total_description = gettext_lazy('# of Project Spaces')
 
+    def __init__(self, account, couch_user):
+        super().__init__(account, couch_user)
+        self.export_fetcher = ODataExportFetcher()
+
     @property
     def headers(self):
         headers = super().headers
         return [_('Created On [UTC]'), _('# of Apps'), _('# of Mobile Users'), _('# of Web Users'),
-                _('# of SMS (last 30 days)'), _('Last Form Submission [UTC]')] + headers
+                _('# of SMS (last 30 days)'), _('Last Form Submission [UTC]'),
+                _('OData Feeds Used'), _('OData Feeds Available')] + headers
 
     def rows_for_domain(self, domain_obj):
         return [[
@@ -144,6 +149,8 @@ class EnterpriseDomainReport(EnterpriseReport):
             get_web_user_count(domain_obj.name, include_inactive=False),
             sms_in_last(domain_obj.name, 30),
             self.format_date(get_last_form_submission_received(domain_obj.name)),
+            self.export_fetcher.get_export_count(domain_obj.name),
+            domain_obj.get_odata_feed_limit(),
         ] + self.domain_properties(domain_obj)]
 
     def total_for_domain(self, domain_obj):

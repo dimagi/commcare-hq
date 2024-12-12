@@ -211,6 +211,8 @@ class DomainResource(ODataEnterpriseReportResource):
     num_web_users = fields.IntegerField()
     num_sms_last_30_days = fields.IntegerField()
     last_form_submission = fields.DateTimeField()
+    num_odata_feeds_used = fields.IntegerField(null=True)
+    num_odata_feeds_available = fields.IntegerField(null=True)
 
     REPORT_SLUG = EnterpriseReport.DOMAINS
 
@@ -230,6 +232,8 @@ class DomainResource(ODataEnterpriseReportResource):
         bundle.data['num_web_users'] = bundle.obj[3]
         bundle.data['num_sms_last_30_days'] = bundle.obj[4]
         bundle.data['last_form_submission'] = self.convert_datetime(bundle.obj[5])
+        bundle.data['num_odata_feeds_used'] = bundle.obj[6]
+        bundle.data['num_odata_feeds_available'] = bundle.obj[7]
 
         return bundle
 
