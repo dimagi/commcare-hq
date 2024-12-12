@@ -11,7 +11,7 @@ hqDefine("reports/js/filters/bootstrap5/main", [
     'locations/js/location_drilldown',
     'reports/js/filters/advanced_forms_options',
     'reports/js/filters/bootstrap5/drilldown_options',
-    'reports_core/js/choice_list_utils',
+    'reports_core/js/choice_list_utils',        // only used by UCR, may be undefined on other pages
     'reports/js/filters/case_list_explorer',
     'select2/dist/js/select2.full.min',
     'reports/js/filters/case_list_explorer_knockout_bindings',
