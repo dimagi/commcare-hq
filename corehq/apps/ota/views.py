@@ -70,9 +70,11 @@ from corehq.util.metrics import limit_domains, metrics_histogram, limit_tags
 from corehq.util.quickcache import quickcache
 
 from .case_restore import get_case_restore_response
+from .const import DEVICES_PER_USER
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .rate_limiter import rate_limit_restore
 from .utils import (
+    can_login_on_device,
     demo_user_restore_response,
     get_restore_user,
     handle_401_response,
@@ -294,6 +296,12 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         silently.
     :return: Tuple of (http response, timing context or None)
     """
+
+    if not can_login_on_device(couch_user._id, device_id):
+        return HttpResponse(
+            _("Your user has exceeded the daily device limit of {limit}.").format(limit=DEVICES_PER_USER),
+            status=403,
+        ), None
 
     if user_id and user_id != couch_user.user_id:
         # sync with a user that has been deleted but a new
