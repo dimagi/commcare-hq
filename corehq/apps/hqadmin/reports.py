@@ -509,7 +509,7 @@ class StaleCasesTable:
     AGG_DATE_RANGE = 150
     STALE_DATE_THRESHOLD_DAYS = 365
 
-    BACKOFF_AMOUNT = 30
+    BACKOFF_AMOUNT_DAYS = 30
     MAX_BACKOFF_COUNT = 2
 
     def __init__(self):
@@ -545,7 +545,7 @@ class StaleCasesTable:
             except ESError as e:
                 curr_backoff_count += 1
                 if curr_backoff_count <= self.MAX_BACKOFF_COUNT:
-                    curr_agg_date_range -= self.AGG_DATE_RANGE
+                    curr_agg_date_range -= self.BACKOFF_AMOUNT_DAYS
                     curr_backoff_count += 1
                 else:
                     notify_exception(
