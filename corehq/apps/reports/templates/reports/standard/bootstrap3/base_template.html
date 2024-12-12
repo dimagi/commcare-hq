@@ -11,6 +11,8 @@
 {% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
 
 {% block js %}{{ block.super }}
+  {% include 'reports/partials/graphs/charts_js.html' %}
+  {% include 'reports/partials/bootstrap3/filters_js.html' %}
   {% compress js %}
     <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'reports/js/bootstrap3/datatables_config.js' %}"></script>
@@ -21,8 +23,6 @@
     <script src="{% static 'reports/js/bootstrap3/standard_hq_report.js' %}"></script>
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
   {% endcompress %}
-  {% include 'reports/partials/bootstrap3/filters_js.html' %}
-  {% include 'reports/partials/graphs/charts_js.html' %}
 
   <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
   {% compress js %}

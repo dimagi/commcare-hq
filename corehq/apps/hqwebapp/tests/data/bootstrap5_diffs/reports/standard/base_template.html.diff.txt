@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,45 +1,45 @@
+@@ -1,26 +1,26 @@
 -{% extends "hqwebapp/bootstrap3/two_column.html" %}
 +{% extends "hqwebapp/bootstrap5/two_column.html" %}
  {% load compress %}
@@ -17,6 +17,9 @@
 +{% block page_content_classes %}col-sm-12 col-md-9 col-xl-10{% endblock %}
  
  {% block js %}{{ block.super }}
++  {% include 'reports/partials/bootstrap5/filters_js.html' %}
+   {% include 'reports/partials/graphs/charts_js.html' %}
+-  {% include 'reports/partials/bootstrap3/filters_js.html' %}
    {% compress js %}
      <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
 -    <script src="{% static 'reports/js/bootstrap3/datatables_config.js' %}"></script>
@@ -31,11 +34,8 @@
 +    <script src="{% static 'reports/js/bootstrap5/standard_hq_report.js' %}"></script>
      <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
    {% endcompress %}
--  {% include 'reports/partials/bootstrap3/filters_js.html' %}
-+  {% include 'reports/partials/bootstrap5/filters_js.html' %}
-   {% include 'reports/partials/graphs/charts_js.html' %}
  
-   <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+@@ -28,18 +28,18 @@
    {% compress js %}
      <script src="{% static 'case/js/cheapxml.js' %}"></script>
      <script src="{% static 'case/js/casexml.js' %}"></script>
