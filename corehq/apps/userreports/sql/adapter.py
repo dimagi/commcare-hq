@@ -392,10 +392,6 @@ def get_indicator_table(indicator_config, metadata, override_table_name=None):
     )
 
 
-def get_current_indicator_table_from_db(metadata, table_name):
-    return metadata.tables[table_name]
-
-
 def _custom_index_name(table_name, column_ids):
     base_name = "ix_{}_{}".format(table_name, ','.join(column_ids))
     base_hash = hashlib.md5(base_name.encode('utf-8')).hexdigest()
