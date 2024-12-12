@@ -20,6 +20,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base
 
 from corehq.apps.celery import periodic_task, task
+from corehq.apps.es.exceptions import ESError
 from corehq.motech.repeaters.const import UCRRestrictionFFStatus
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
@@ -315,7 +316,11 @@ def send_stale_case_data_info_to_admins():
         return
 
     table = StaleCasesTable()
-    row_data = table.rows
+    has_error = False
+    try:
+        row_data = table.rows
+    except ESError:
+        has_error = True
     num_domains = len(row_data)
     subject = (
         f'Monthly report: {num_domains} domains containing stale '
@@ -328,11 +333,21 @@ def send_stale_case_data_info_to_admins():
             'Please see detailed report below:\n'
             f'{table.format_as_table(row_data, table.headers)}'
         )
+        if has_error:
+            message += (
+                '\nPlease note that an error occurred while compiling the report '
+                'and so the data given may only be partial.'
+            )
     else:
         message = (
             'No domains were found containing case data older than '
             f'{table.STALE_DATE_THRESHOLD_DAYS} days.'
         )
+        if has_error:
+            message += (
+                '\nPlease note that an error occurred while compiling the report '
+                'and so there may be missing data that was not compiled.'
+            )
     send_mail_async.delay(
         subject, message, [settings.SOLUTIONS_AES_EMAIL]
     )
