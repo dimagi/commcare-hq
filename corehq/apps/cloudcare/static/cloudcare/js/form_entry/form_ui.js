@@ -205,8 +205,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     function Container(json) {
         var self = this;
         self.pubsub = new ko.subscribable();
+        console.time("container create");
         self.fromJS(json);
-
+        console.timeEnd("container create");
         /**
          * Used in KO template to determine what template to use for a child
          * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
