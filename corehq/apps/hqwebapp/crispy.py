@@ -13,11 +13,11 @@ from crispy_forms.layout import Field
 from crispy_forms.layout import LayoutObject
 from crispy_forms.utils import flatatt, get_template_pack, render_field
 
-CSS_LABEL_CLASS = 'col-xs-12 col-sm-4 col-md-4 col-lg-2'
+CSS_LABEL_CLASS = 'field-label'
 CSS_LABEL_CLASS_BOOTSTRAP5 = 'field-label'
-CSS_FIELD_CLASS = 'col-xs-12 col-sm-8 col-md-8 col-lg-6'
+CSS_FIELD_CLASS = 'field-control'
 CSS_FIELD_CLASS_BOOTSTRAP5 = 'field-control'
-CSS_ACTION_CLASS = CSS_FIELD_CLASS + ' col-sm-offset-4 col-md-offset-4 col-lg-offset-2'
+CSS_ACTION_CLASS = CSS_FIELD_CLASS
 
 
 class HQFormHelper(FormHelper):
