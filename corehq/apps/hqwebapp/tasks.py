@@ -315,7 +315,7 @@ feature flag to be enabled.
 def send_stale_case_data_info_to_admins():
     from corehq.apps.hqadmin.reports import StaleCasesTable
 
-    if not settings.SOLUTIONS_AES_EMAIL:
+    if not settings.SOLUTIONS_AES_EMAIL or settings.SERVER_ENVIRONMENT != 'production':
         return
 
     table = StaleCasesTable()
