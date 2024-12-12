@@ -310,7 +310,7 @@ class DomainMetrics(models.Model):
     def has_used_sms_in_last_30_days(self):
         return bool(self.sms_in_last_30_days)
 
-    def instance_to_calculated_properties(self):
+    def to_calculated_properties(self):
         return {
             calced_props_key: getattr(self, metrics_attr, None)
             for metrics_attr, calced_props_key in DOMAIN_METRICS_TO_PROPERTIES_MAP.items()
