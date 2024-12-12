@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 
 from casexml.apps.phone.models import SyncLogSQL
+from corehq import toggles
 from corehq.sql_db.util import handle_connection_failure
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
@@ -89,6 +90,9 @@ class UserSyncHistoryProcessor(PillowProcessor):
         domain = synclog.get('domain')
 
         if not user_id or not domain:
+            return
+
+        if toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             return
 
         try:

@@ -7,12 +7,6 @@
     "dependencies": {
         "@babel/core": "7.25.2",
         "@babel/standalone": "^7.21.4",
-        "@ckeditor/ckeditor5-alignment": "^43.3.1",
-        "@ckeditor/ckeditor5-build-classic": "^43.3.1",
-        "@ckeditor/ckeditor5-font": "^43.3.1",
-        "@ckeditor/ckeditor5-horizontal-line": "^43.3.1",
-        "@ckeditor/ckeditor5-html-support": "^43.3.1",
-        "@ckeditor/ckeditor5-restricted-editing": "^43.3.1",
         "@eonasdan/tempus-dominus": "npm:@eonasdan/tempus-dominus#6.9.4",
         "@fortawesome/fontawesome-free": "npm:@fortawesome/fontawesome-free#6.5.1",
         "@mapbox/mapbox-gl-draw": "1.4.3",
@@ -101,6 +95,8 @@
         "lodash": "4.17.21",
         "mocha": "9.2.2",
         "mocha-headless-chrome": "4.0.0",
+        "prettier": "^3.3.3",
+        "prettier-plugin-jinja-template": "^2.0.0",
         "sinon": "2.3.2"
     },
     "engines": {

@@ -124,11 +124,11 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
             return {}
 
         username = username or self.username
-        api_key = self.api_key.key
+        api_key = self.api_key.plaintext_key
         if username != self.username:
             web_user = WebUser.get_by_username(username)
             api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(web_user))
-            api_key = api_key.key
+            api_key = api_key.plaintext_key
 
         return {
             'HTTP_AUTHORIZATION': f'apikey {username}:{api_key}'
