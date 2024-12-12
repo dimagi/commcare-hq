@@ -60,7 +60,7 @@ def get_valid_recipients(recipients, domain=None, is_conditional_alert=False):
     :return: list of recipient emails not marked as bounced
     """
     from corehq.toggles import BLOCKED_DOMAIN_EMAIL_SENDERS
-    if domain and BLOCKED_DOMAIN_EMAIL_SENDERS.enabled(domain) and is_conditional_alert:
+    if is_conditional_alert and domain and BLOCKED_DOMAIN_EMAIL_SENDERS.enabled(domain):
         # don't sent email if domain is blocked
         metrics_gauge('commcare.bounced_email', len(recipients), tags={
             'email_domain': domain,
