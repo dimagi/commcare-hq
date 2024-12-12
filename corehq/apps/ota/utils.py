@@ -227,7 +227,7 @@ def handle_401_response(f):
 
 
 def can_login_on_device(user_id, device_id):
-    if device_id.startswith("WebAppsLogin"):
+    if not device_id or device_id.startswith("WebAppsLogin"):
         return True
 
     end_time = datetime.now()

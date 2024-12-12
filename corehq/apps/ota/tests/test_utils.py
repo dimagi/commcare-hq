@@ -511,6 +511,12 @@ class CanLoginOnDeviceTest(TestCase):
         with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 1):
             self.assertTrue(can_login_on_device('def456', 'device-id'))
 
+    def test_device_id_is_none_is_allowed(self):
+        self._create_synclog(self.domain, 'abc123', 'device-id', date=self.within_past_day)
+
+        with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 1):
+            self.assertTrue(can_login_on_device('abc123', 'device-id'))
+
     def _create_synclog(self, domain, user_id, device_id, **kwargs):
         SyncLogSQL.objects.create(
             domain=domain,
