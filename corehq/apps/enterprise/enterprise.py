@@ -439,6 +439,19 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             rows += self.rows_for_domain(domain_name, config)
         return rows
 
+    @property
+    def total(self):
+        total_mobile_workers = 0
+        total_up_to_date = 0
+        config = CommCareBuildConfig.fetch()
+
+        for domain_name in self.account.get_domains():
+            domain_mobile_workers = get_mobile_user_count(domain_name, include_inactive=False)
+            if domain_mobile_workers:
+                total_mobile_workers += domain_mobile_workers
+                total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_name, config))
+        return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
+
     def rows_for_domain(self, domain_name, config):
         rows = []
 
@@ -480,19 +493,6 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
                 ])
 
         return rows
-
-    @property
-    def total(self):
-        total_mobile_workers = 0
-        total_up_to_date = 0
-        config = CommCareBuildConfig.fetch()
-
-        for domain_name in self.account.get_domains():
-            domain_mobile_workers = get_mobile_user_count(domain_name, include_inactive=False)
-            if domain_mobile_workers:
-                total_mobile_workers += domain_mobile_workers
-                total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_name, config))
-        return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
 
 
 def _format_percentage_for_enterprise_tile(dividend, divisor):
