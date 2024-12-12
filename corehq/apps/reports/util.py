@@ -863,6 +863,7 @@ def get_commcare_version_and_date_from_last_usage(last_submission=None, last_dev
     """
     from corehq.apps.reports.standard.deployments import format_commcare_version
 
+    version = None
     version_in_use = None
     date_of_use = None
 
