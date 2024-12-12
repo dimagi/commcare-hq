@@ -505,7 +505,7 @@ class UCRDataLoadReport(AdminReport):
 
 
 class StaleCasesTable:
-    STOP_YEAR = datetime(2005, 1, 1)
+    STOP_POINT_DAYS_AGO = 365 * 20
     AGG_DATE_RANGE = 150
     STALE_DATE_THRESHOLD_DAYS = 365
 
@@ -514,6 +514,7 @@ class StaleCasesTable:
 
     def __init__(self):
         self._rows = None
+        self.stop_date = datetime.now() - timedelta(days=self.STOP_POINT_DAYS_AGO)
 
     @property
     def headers(self):
@@ -561,7 +562,7 @@ class StaleCasesTable:
             curr_agg_date_range = self.AGG_DATE_RANGE
             self._merge_agg_data(agg_res, query_res)
             end_date = start_date
-            if end_date <= self.STOP_YEAR:
+            if end_date <= self.stop_date:
                 break
         return agg_res
 
