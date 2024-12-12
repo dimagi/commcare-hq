@@ -1,3 +1,6 @@
+import csv
+from io import StringIO
+
 from smtplib import SMTPDataError
 from urllib.parse import urlencode, urljoin
 
@@ -326,18 +329,23 @@ def send_stale_case_data_info_to_admins():
         f'Monthly report: {num_domains} domains containing stale '
         f'case data (older than {table.STALE_DATE_THRESHOLD_DAYS} days)'
     )
+    csv_file = None
     if num_domains:
         message = (
             f'We have identified {num_domains} domains containing stale '
             f'case data older than {table.STALE_DATE_THRESHOLD_DAYS} days.\n'
             'Please see detailed report below:\n'
-            f'{table.format_as_table(row_data, table.headers)}'
+            'Please see detailed CSV report attached to this email.'
         )
         if has_error:
             message += (
                 '\nPlease note that an error occurred while compiling the report '
                 'and so the data given may only be partial.'
             )
+        csv_file = StringIO()
+        writer = csv.writer(csv_file)
+        writer.writerow(table.headers)
+        writer.writerows(row_data)
     else:
         message = (
             'No domains were found containing case data older than '
@@ -349,5 +357,8 @@ def send_stale_case_data_info_to_admins():
                 'and so there may be missing data that was not compiled.'
             )
     send_mail_async.delay(
-        subject, message, [settings.SOLUTIONS_AES_EMAIL]
+        subject,
+        message,
+        recipient_list=[settings.SOLUTIONS_AES_EMAIL],
+        filename=csv_file
     )

@@ -585,28 +585,3 @@ class StaleCasesTable:
             .filter(is_active=True)
             .values_list('subscriber__domain', flat=True)
         ))
-
-    @staticmethod
-    def format_as_table(row_data, data_tables_header):
-        """
-        Formats a given set of `row_data` with `headers` into a str formatted table that looks as follows:
-
-        ```
-        Header_1 | Header_2 | etc...
-        ---------------------------------
-        Alice    | 25       | New York
-        Bob      | 30       | Los Angeles
-        Charlie  | 35       | Chicago
-        ```
-        """
-        # Calculate width of each col
-        headers = [str(header.html) for header in data_tables_header]
-        col_widths = [max(len(str(row[i])) for row in [headers] + row_data) for i in range(len(headers))]
-        row_format = " | ".join(f"{{:<{w}}}" for w in col_widths)
-
-        lines = []
-        lines.append(row_format.format(*headers))
-        lines.append("-" * (sum(col_widths) + 3 * (len(headers) - 1)))  # Divider
-        for row in row_data:
-            lines.append(row_format.format(*row))
-        return '\n'.join(lines)
