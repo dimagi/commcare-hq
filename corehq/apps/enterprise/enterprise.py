@@ -435,15 +435,15 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
         rows = []
         config = CommCareBuildConfig.fetch()
 
-        for domain_obj in self.domains():
-            rows += self.rows_for_domain(domain_obj, config)
+        for domain_name in self.account.get_domains():
+            rows += self.rows_for_domain(domain_name, config)
         return rows
 
-    def rows_for_domain(self, domain_obj, config):
+    def rows_for_domain(self, domain_name, config):
         rows = []
 
         user_query = (UserES()
-            .domain(domain_obj.name)
+            .domain(domain_name)
             .mobile_users()
             .source([
                 'username',
@@ -474,7 +474,7 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             if is_out_of_date(version_in_use, latest_version_at_time_of_use):
                 rows.append([
                     user['username'],
-                    domain_obj.name,
+                    domain_name,
                     latest_version_at_time_of_use,
                     version_in_use,
                 ])
@@ -487,11 +487,11 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
         total_up_to_date = 0
         config = CommCareBuildConfig.fetch()
 
-        for domain_obj in self.domains():
-            domain_mobile_workers = get_mobile_user_count(domain_obj.name, include_inactive=False)
+        for domain_name in self.account.get_domains():
+            domain_mobile_workers = get_mobile_user_count(domain_name, include_inactive=False)
             if domain_mobile_workers:
                 total_mobile_workers += domain_mobile_workers
-                total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_obj, config))
+                total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_name, config))
         return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
 
 
