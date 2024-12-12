@@ -44,18 +44,20 @@ def get_deleted_app_ids(domain=None):
 SaveError = namedtuple('SaveError', 'id error reason')
 
 
-class AppMigrationCommandBase(BaseCommand):
+class DomainAppsOperationCommand(BaseCommand):
     """
-    Base class for commands that want to migrate apps.
+    Base class for commands that operate on applications across all domains and tracks
+    the progress.
     """
+    DOMAIN_LIST_FILENAME = None
+    DOMAIN_PROGRESS_NUMBER_FILENAME = None
+
     chunk_size = 100
     include_builds = True
     include_linked_apps = False
+    include_deleted_apps = True
 
     options = {}
-
-    DOMAIN_LIST_FILENAME = None
-    DOMAIN_PROGRESS_NUMBER_FILENAME = None
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -64,10 +66,6 @@ class AppMigrationCommandBase(BaseCommand):
             dest='failfast',
             default=False,
             help='Stop processing if there is an error',
-        )
-        parser.add_argument(
-            '--domain',
-            help='Migrate only this domain',
         )
         parser.add_argument(
             '--dry-run',
@@ -93,33 +91,19 @@ class AppMigrationCommandBase(BaseCommand):
     def handle(self, **options):
         self.options = options
 
-        if not self.options.get('force_run_again', False) and not self.is_dry_run:
-            self.command_name = self.__module__[self.__module__.rindex('.') + 1:]
-            if get_migration_complete(ALL_DOMAINS, self.command_name):
-                logger.info("This migration command has already been run on this environment. Exiting...")
-                return
-            elif not migration_in_progress(ALL_DOMAINS, self.command_name):
-                set_migration_started(ALL_DOMAINS, self.command_name)
-
-        self.start_time = time()
         self.check_filenames_set()
+        self.on_init()
+        self.start_time = time()
 
-        if self.options['domain']:
-            domains = [self.options['domain']]
-            domain_list_position = 0
-        else:
-            can_continue_progress, domain_list_position, domains = self.try_to_continue_progress()
-            if can_continue_progress:
-                domains = domains[domain_list_position:]
-            else:
-                domains = self.get_domains() or [None]
-                self.store_domain_list(domains)
-        for domain in domains:
-            app_ids = self.get_app_ids(domain)
-            logger.info('migrating {} apps{}'.format(len(app_ids), f" in {domain}" if domain else ""))
-            iter_update(Application.get_db(), self._migrate_app, app_ids, verbose=True, chunksize=self.chunk_size)
-            domain_list_position = self.increment_progress(domain_list_position)
-        self.end_migration()
+        domains, domain_list_position = self.get_domain_progress_info()
+        self.run(domains, domain_list_position)
+
+        self.remove_storage_files()
+        end_time = time()
+        self.on_end()
+
+        execution_time_seconds = end_time - self.start_time
+        logger.info(f"Completed in {timedelta(seconds=execution_time_seconds)}.")
 
     @property
     def is_dry_run(self):
@@ -133,59 +117,34 @@ class AppMigrationCommandBase(BaseCommand):
     def log_debug(self):
         return self.options.get("verbosity", 0) > 2
 
-    def _doc_types(self):
-        doc_types = ["Application", "Application-Deleted"]
-        if self.include_linked_apps:
-            doc_types.extend(["LinkedApplication", "LinkedApplication-Deleted"])
-        return doc_types
+    def on_init(self):
+        pass
 
-    def _migrate_app(self, app_doc):
+    def on_end(self):
+        pass
+
+    def remove_storage_files(self):
         try:
-            if app_doc["doc_type"] in self._doc_types():
-                migrated_app = self.migrate_app(app_doc)
-                if migrated_app and not self.is_dry_run:
-                    return DocUpdate(self.increment_app_version(migrated_app))
-        except Exception as e:
-            logger.exception("App {id} not properly migrated".format(id=app_doc['_id']))
-            if self.options['failfast']:
-                raise e
+            os.remove(self.DOMAIN_LIST_FILENAME)
+            os.remove(self.DOMAIN_PROGRESS_NUMBER_FILENAME)
+        except FileNotFoundError:
+            pass
 
-    @staticmethod
-    def increment_app_version(app_doc):
-        try:
-            copy_of = app_doc['copy_of']
-            version = app_doc['version']
-        except KeyError:
-            return
-        if not copy_of and version:
-            app_doc['version'] = version + 1
-        return app_doc
-
-    def get_app_ids(self, domain=None):
-        return (list(get_deleted_app_ids(domain))
-                + list(get_all_app_ids(domain=domain, include_builds=self.include_builds)))
+    def get_domain_progress_info(self):
+        if self.options.get('domain'):
+            domains = [self.options['domain']]
+            domain_list_position = 0
+        else:
+            can_continue_progress, domain_list_position, domains = self.try_to_continue_progress()
+            if can_continue_progress:
+                domains = domains[domain_list_position:]
+            else:
+                domains = self.get_domains() or [None]
+                self.store_domain_list(domains)
+        return domains, domain_list_position
 
     def get_domains(self):
         return None
-
-    def migrate_app(self, app):
-        """Return the app dict if the doc is to be saved else None"""
-        raise NotImplementedError()
-
-    def check_filenames_set(self):
-        if not self.DOMAIN_LIST_FILENAME or not self.DOMAIN_PROGRESS_NUMBER_FILENAME:
-            raise Exception("You must set filenames that track progress on the domain list for this command.")
-
-    def increment_progress(self, domain_list_position):
-        logger.info(f"Migrated domain #{domain_list_position}")
-        domain_list_position += 1
-        with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'w') as f:
-            f.write(str(domain_list_position))
-        return domain_list_position
-
-    def store_domain_list(self, domains):
-        with open(self.DOMAIN_LIST_FILENAME, 'w') as f:
-            f.writelines(f'{domain}\n' for domain in domains)
 
     def try_to_continue_progress(self):
         if not self.options['start_from_scratch']:
@@ -202,20 +161,93 @@ class AppMigrationCommandBase(BaseCommand):
                 logger.info("Domain progress file(s) not found. Starting from scratch...")
         return False, 0, None
 
-    def remove_storage_files(self):
+    def check_filenames_set(self):
+        if not self.DOMAIN_LIST_FILENAME or not self.DOMAIN_PROGRESS_NUMBER_FILENAME:
+            raise Exception("You must set filenames that track progress on the domain list for this command.")
+
+    def increment_progress(self, domain_list_position):
+        logger.info(f"Processed domain #{domain_list_position}")
+        domain_list_position += 1
+        with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'w') as f:
+            f.write(str(domain_list_position))
+        return domain_list_position
+
+    def store_domain_list(self, domains):
+        with open(self.DOMAIN_LIST_FILENAME, 'w') as f:
+            f.writelines(f'{domain}\n' for domain in domains)
+
+    def run(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def get_app_ids(self, domain=None):
+        return (list(get_deleted_app_ids(domain))
+                + list(get_all_app_ids(domain=domain, include_builds=self.include_builds)))
+
+    def _app_doc_types(self):
+        doc_types = ["Application"]
+        if self.include_deleted_apps:
+            doc_types.append("Application-Deleted")
+        if self.include_linked_apps:
+            doc_types.extend(["LinkedApplication", "LinkedApplication-Deleted"])
+        return doc_types
+
+
+class AppMigrationCommandBase(DomainAppsOperationCommand):
+    """
+    Base class for commands that want to migrate apps.
+    """
+    command_name = None
+
+    def add_arguments(self, parser):
+        super().add_arguments(parser)
+        parser.add_argument(
+            '--domain',
+            help='Migrate only this domain',
+        )
+
+    def on_init(self):
+        if not self.options.get('force_run_again', False) and not self.is_dry_run:
+            self.command_name = self.__module__[self.__module__.rindex('.') + 1:]
+            if get_migration_complete(ALL_DOMAINS, self.command_name):
+                logger.info("This migration command has already been run on this environment. Exiting...")
+                return
+            elif not migration_in_progress(ALL_DOMAINS, self.command_name):
+                set_migration_started(ALL_DOMAINS, self.command_name)
+
+    def run(self, domains, domain_list_position):
+        for domain in domains:
+            app_ids = self.get_app_ids(domain)
+            logger.info('Processing {} apps{}'.format(len(app_ids), f" in {domain}" if domain else ""))
+            iter_update(Application.get_db(), self._migrate_app, app_ids, verbose=True, chunksize=self.chunk_size)
+            domain_list_position = self.increment_progress(domain_list_position)
+
+    def _migrate_app(self, app_doc):
         try:
-            os.remove(self.DOMAIN_LIST_FILENAME)
-            os.remove(self.DOMAIN_PROGRESS_NUMBER_FILENAME)
-        except FileNotFoundError:
-            pass
+            if app_doc["doc_type"] in self._app_doc_types():
+                migrated_app = self.migrate_app(app_doc)
+                if migrated_app and not self.is_dry_run:
+                    return DocUpdate(self.increment_app_version(migrated_app))
+        except Exception as e:
+            logger.exception("App {id} not properly migrated".format(id=app_doc['_id']))
+            if self.options['failfast']:
+                raise e
 
-    def end_migration(self):
-        self.remove_storage_files()
-        end_time = time()
-        execution_time_seconds = end_time - self.start_time
+    def migrate_app(self, app):
+        """Return the app dict if the doc is to be saved else None"""
+        raise NotImplementedError()
 
+    def on_end(self):
         if (not self.is_dry_run and not self.options.get('force_run_again', False)
            and migration_in_progress(ALL_DOMAINS, self.command_name)):
             set_migration_complete(ALL_DOMAINS, self.command_name)
 
-        logger.info(f"Completed in {timedelta(seconds=execution_time_seconds)}.")
+    @staticmethod
+    def increment_app_version(app_doc):
+        try:
+            copy_of = app_doc['copy_of']
+            version = app_doc['version']
+        except KeyError:
+            return
+        if not copy_of and version:
+            app_doc['version'] = version + 1
+        return app_doc
