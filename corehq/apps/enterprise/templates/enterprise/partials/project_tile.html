@@ -1,14 +1,14 @@
 {% load i18n %}
 
 <div
-  class="card text-center report-panel h-100" id="{{ report.slug }}"
+  class="card text-center js-report-panel h-100" id="{{ report.slug }}"
   data-slug="{{ report.slug }}"
 >
   <div class="card-header">
     <h4 class="fs-5 pt-2">{{ report.title }}</h4>
   </div>
   <div class="card-body pb-1">
-    <div class="total fw-bold fs-1">
+    <div class="js-total fw-bold fs-1">
       <i class="fa fa-spin fa-spinner"></i>
     </div>
     <div class="fs-5 ">{{ report.total_description }}</div>
@@ -28,7 +28,7 @@
       {% endif %}
     </div>
     <div class="mb-4">
-      <button class="btn btn-primary btn-lg">
+      <button class="btn btn-primary btn-lg js-email-report">
         <i class="fa fa-envelope"></i>
         {% trans "Email Report" %}
       </button>
