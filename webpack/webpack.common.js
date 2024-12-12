@@ -7,6 +7,8 @@ const hqPlugins = require('./plugins');
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
+    "datatables.bootstrap": "datatables.net-bs5",
+    "datatables.fixedColumns": "datatables-fixedcolumns",
     "jquery": require.resolve('jquery'),
     "langcodes/js/langcodes": path.resolve("submodules/langcodes/static/langcodes/js/langcodes"),
 
