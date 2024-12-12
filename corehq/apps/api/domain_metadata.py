@@ -10,7 +10,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import CouchResourceMixin, HqBaseResource
 from corehq.apps.api.resources.meta import AdminResourceMeta
 from corehq.apps.api.serializers import XFormInstanceSerializer
-from corehq.apps.data_analytics.models import GIRRow, MALTRow
+from corehq.apps.data_analytics.models import DomainMetrics, GIRRow, MALTRow
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.es.domains import DomainES
 
@@ -55,15 +55,24 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         }
 
     def dehydrate_calculated_properties(self, bundle):
+        from corehq.toggles import CALCULATED_PROPERTIES_FROM_DOMAIN_METRICS
         calc_prop_prefix = 'cp_'
         domain_obj = _get_domain(bundle)
         try:
-            base_properties = self._get_base_properties_from_elasticsearch(domain_obj.name, calc_prop_prefix)
+            if CALCULATED_PROPERTIES_FROM_DOMAIN_METRICS.enabled(domain_obj.name):
+                base_properties = self._get_base_properties_from_domain_metrics(domain_obj.name)
+            else:
+                base_properties = self._get_base_properties_from_elasticsearch(domain_obj.name, calc_prop_prefix)
             properties = self._add_extra_calculated_properties(base_properties, domain_obj.name, calc_prop_prefix)
-        except IndexError:
+        except (DomainMetrics.DoesNotExist, IndexError):
             logging.exception('Problem getting calculated properties for {}'.format(domain_obj.name))
             return {}
         return properties
+
+    @staticmethod
+    def _get_base_properties_from_domain_metrics(domain):
+        domain_metrics = DomainMetrics.objects.get(domain=domain)
+        return domain_metrics.to_calculated_properties()
 
     @staticmethod
     def _get_base_properties_from_elasticsearch(domain, calc_prop_prefix):
