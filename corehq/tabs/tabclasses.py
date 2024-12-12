@@ -1457,6 +1457,7 @@ class MessagingTab(UITab):
                 'title': _('User Consent'),
                 'url': reverse(ConnectMessagingUserView.urlname, args=[self.domain]),
             })
+        return connect_urls
 
     @property
     def dropdown_items(self):
