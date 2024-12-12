@@ -9,6 +9,7 @@ from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
 from django.core.management import call_command
 from django.urls import reverse
+from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
@@ -314,6 +315,7 @@ feature flag to be enabled.
 @periodic_task(run_every=crontab(minute=0, hour=1, day_of_month=1))
 def send_stale_case_data_info_to_admins():
     from corehq.apps.hqadmin.reports import StaleCasesTable
+    from corehq.apps.hqwebapp.tasks import send_html_email_async
 
     if not settings.SOLUTIONS_AES_EMAIL or settings.SERVER_ENVIRONMENT != 'production':
         return
@@ -354,9 +356,9 @@ def send_stale_case_data_info_to_admins():
                 '\nPlease note that an error occurred while compiling the report '
                 'and so there may be missing data that was not compiled.'
             )
-    send_mail_async.delay(
+    send_html_email_async.delay(
         subject,
-        message,
-        recipient_list=[settings.SOLUTIONS_AES_EMAIL],
-        filename=csv_file
+        recipient=settings.SOLUTIONS_AES_EMAIL,
+        html_content=linebreaksbr(message),
+        file_attachments=[csv_file]
     )
