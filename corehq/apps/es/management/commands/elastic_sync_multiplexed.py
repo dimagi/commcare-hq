@@ -608,7 +608,12 @@ class Command(BaseCommand):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
-            cmd_func(options['index_cname'], options['batch_size'], options['requests_per_second'])
+            cmd_func(
+                options['index_cname'],
+                options['batch_size'],
+                options['requests_per_second'],
+                options['purge_ids']
+            )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
         elif sub_cmd == 'cleanup' or sub_cmd == 'display_doc_counts':
