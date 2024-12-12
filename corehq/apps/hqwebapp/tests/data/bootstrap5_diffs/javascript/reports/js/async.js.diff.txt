@@ -1,30 +1,19 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
--hqDefine("reports/js/bootstrap3/async", function () {
-+hqDefine("reports/js/bootstrap5/async", function () {
-     return function (o) {
-         'use strict';
-         var self = {};
-@@ -35,7 +35,7 @@
-             self.filterRequest = null;
-             try {
-                 $('#hq-report-filters').html(data.filters);
--                hqImport("reports/js/filters/bootstrap3/main").init();
-+                hqImport("reports/js/filters/bootstrap5/main").init();
-             } catch (e) {
-                 console.log(e);
-             }
-@@ -63,7 +63,7 @@
-                     var url = window.location.href.replace(self.standardReport.urlRoot,
-                         self.standardReport.urlRoot + 'async/') + "?" + "&" + params;
-                     if (url.length > self.maxInputLimit) {
--                        hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(self.humanReadableErrors['maxInputError'], "danger");
-+                        hqImport('hqwebapp/js/bootstrap5/alert_user').alert_user(self.humanReadableErrors['maxInputError'], "danger");
-                     } else {
-                         self.getQueryId(params, false, true, pathName);
-                     }
-@@ -151,7 +151,7 @@
+@@ -1,9 +1,9 @@
+-hqDefine("reports/js/bootstrap3/async", [
++hqDefine("reports/js/bootstrap5/async", [
+     'jquery',
+     'underscore',
+-    'hqwebapp/js/bootstrap3/alert_user',
++    'hqwebapp/js/bootstrap5/alert_user',
+     'reports/js/charts/main',
+-    'reports/js/filters/bootstrap3/main',
++    'reports/js/filters/bootstrap5/main',
+     'reports/js/util',
+ ], function (
+     $,
+@@ -165,7 +165,7 @@
                      }
                      self.issueAttempts = 0;
                      if ($('loadingIssueModal').hasClass('show')) {
@@ -33,7 +22,7 @@
                      }
                      self.hqLoading = $(self.loaderClass);
                      self.reportContent.html(data.report);
-@@ -171,7 +171,7 @@
+@@ -185,7 +185,7 @@
  
                      if (!initialLoad || !self.standardReport.needsFilters) {
                          self.standardReport.filterSubmitButton
@@ -42,7 +31,7 @@
                          setTimeout(function () {
                              // Bootstrap clears all btn styles except btn on reset
                              // This gets around it by waiting 10ms.
-@@ -183,7 +183,7 @@
+@@ -197,7 +197,7 @@
                          }, 10);
                      } else {
                          self.standardReport.filterSubmitButton
@@ -51,7 +40,7 @@
                              .addClass('btn-primary')
                              .removeClass('disabled')
                              .prop('disabled', false);
-@@ -202,10 +202,10 @@
+@@ -216,10 +216,10 @@
                          self.loadingIssueModal.find('.report-error-status').html('<strong>' + data.status + '</strong> ' +
                              ((humanReadable) ? humanReadable : ""));
                          if (self.issueAttempts > 0) {
@@ -64,7 +53,7 @@
                      } else {
                          self.hqLoading = $(self.loaderClass);
                          self.hqLoading.find('h4').text(gettext("Loading Stopped"));
-@@ -213,7 +213,7 @@
+@@ -227,7 +227,7 @@
                      }
                  },
                  beforeSend: function () {
@@ -73,7 +62,7 @@
                      $('.loading-backdrop').fadeIn();
                      if (self.hqLoading) {
                          self.hqLoading.attr('style', 'position: absolute; top: 30px; left: 40%;');
-@@ -225,7 +225,7 @@
+@@ -239,7 +239,7 @@
          };
  
          $(document).on('click', '.try-again', function () {
