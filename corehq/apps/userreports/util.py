@@ -168,7 +168,7 @@ def allowed_report_builder_reports(request):
     return 0
 
 
-def get_configurable_and_static_reports_by_data_source(domain, data_source_id):
+def get_configurable_and_static_reports_for_data_source(domain, data_source_id):
     reports = get_configurable_and_static_reports(domain)
     return [report for report in reports if report.config_id == data_source_id]
 

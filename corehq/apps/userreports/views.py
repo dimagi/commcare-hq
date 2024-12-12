@@ -161,7 +161,7 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import (
     add_event,
     allowed_report_builder_reports,
-    get_configurable_and_static_reports_by_data_source,
+    get_configurable_and_static_reports_for_data_source,
     get_indicator_adapter,
     get_referring_apps,
     has_report_builder_access,
@@ -1365,7 +1365,7 @@ def _report_ucr_rebuild_metrics(domain, config, action):
 
 def _report_metric_report_counts_by_datasource(domain, data_source_id, action):
     try:
-        reports = get_configurable_and_static_reports_by_data_source(domain, data_source_id)
+        reports = get_configurable_and_static_reports_for_data_source(domain, data_source_id)
     except Exception:
         pass
     else:
