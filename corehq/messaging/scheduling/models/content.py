@@ -191,6 +191,7 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
+        is_conditional_alert = self.case is not None
         metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
         if toggles.RICH_TEXT_EMAILS.enabled(domain) and html_message:
             send_html_email_async.delay(
@@ -200,7 +201,8 @@ class EmailContent(Content):
                 text_content=message,
                 messaging_event_id=logged_subevent.id,
                 domain=domain,
-                use_domain_gateway=True)
+                use_domain_gateway=True,
+                is_conditional_alert=is_conditional_alert)
         else:
             send_mail_async.delay(
                 subject,
@@ -208,7 +210,8 @@ class EmailContent(Content):
                 [email_address],
                 messaging_event_id=logged_subevent.id,
                 domain=domain,
-                use_domain_gateway=True)
+                use_domain_gateway=True,
+                is_conditional_alert=is_conditional_alert)
 
         email = Email(
             domain=domain,
