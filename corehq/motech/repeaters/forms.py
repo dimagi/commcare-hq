@@ -72,7 +72,6 @@ class GenericRepeaterForm(forms.Form):
 
     def _initialize_crispy_layout(self):
         self.helper = hqcrispy.HQFormHelper(self)
-        self.helper.form_class = 'form-horizontal'
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
