@@ -107,9 +107,6 @@ def check_headers(user_specs, domain, upload_couch_user, is_web_upload=False):
             "User Syncing is enabled can upload files with 'Tableau Role' and/or 'Tableau Groups' fields."
         ))
 
-    if TABLEAU_USER_SYNCING.enabled(domain):
-        allowed_headers.update({'tableau_role', 'tableau_groups'})
-
     if COMMCARE_CONNECT.enabled(domain):
         allowed_headers.add('send_connectid_invite')
 
