@@ -3,6 +3,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% js_entry_b3 'userreports/js/widgets' %}
+
 {% block page_content %}
   {% if data_source.meta.build.is_rebuild_in_progress %}
         <div id="built-warning" class="alert alert-warning">
