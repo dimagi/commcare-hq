@@ -333,7 +333,6 @@ def send_stale_case_data_info_to_admins():
         message = (
             f'We have identified {num_domains} domains containing stale '
             f'case data older than {table.STALE_DATE_THRESHOLD_DAYS} days.\n'
-            'Please see detailed report below:\n'
             'Please see detailed CSV report attached to this email.'
         )
         if has_error:
