@@ -321,10 +321,9 @@ def send_stale_case_data_info_to_admins():
     table = StaleCasesTable()
     has_error = False
     try:
-        row_data = table.rows
+        num_domains = len(table.rows)
     except ESError:
         has_error = True
-    num_domains = len(row_data)
     subject = (
         f'Monthly report: {num_domains} domains containing stale '
         f'case data (older than {table.STALE_DATE_THRESHOLD_DAYS} days)'
@@ -345,7 +344,7 @@ def send_stale_case_data_info_to_admins():
         csv_file = StringIO()
         writer = csv.writer(csv_file)
         writer.writerow(table.headers)
-        writer.writerows(row_data)
+        writer.writerows(table.rows)
     else:
         message = (
             'No domains were found containing case data older than '

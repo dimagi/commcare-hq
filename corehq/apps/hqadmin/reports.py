@@ -511,6 +511,10 @@ class StaleCasesTable:
 
     BACKOFF_AMOUNT = 30
     MAX_BACKOFF_COUNT = 2
+
+    def __init__(self):
+        self._rows = None
+
     @property
     def headers(self):
         return DataTablesHeader(
@@ -520,11 +524,12 @@ class StaleCasesTable:
 
     @property
     def rows(self):
-        rows = []
-        case_count_by_domain = self._aggregate_case_count_data()
-        for domain, case_count in case_count_by_domain.items():
-            rows.append([domain, case_count])
-        return rows
+        if self._rows is None:
+            self._rows = []
+            case_count_by_domain = self._aggregate_case_count_data()
+            for domain, case_count in case_count_by_domain.items():
+                self._rows.append([domain, case_count])
+        return self._rows
 
     def _aggregate_case_count_data(self):
         end_date = datetime.now() - timedelta(days=self.STALE_DATE_THRESHOLD_DAYS)
