@@ -11,6 +11,8 @@
 {% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
+  {% include 'reports/partials/bootstrap3/filters_js.html' %}
+  {% include 'reports/partials/graphs/charts_js.html' %}
   {% compress js %}
     <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'reports/js/bootstrap3/datatables_config.js' %}"></script>
@@ -25,9 +27,6 @@
   <script src="{% static 'reports/js/bootstrap3/maps_utils.js' %}"></script><!-- depends on leaflet -->
   <script src="{% static 'reports_core/js/bootstrap3/maps.js' %}"></script>
 
-
-  {% include 'reports/partials/bootstrap3/filters_js.html' %}
-  {% include 'reports/partials/graphs/charts_js.html' %}
   <script src="{% static 'userreports/js/base.js' %}"></script>
 {% endblock %}
 
