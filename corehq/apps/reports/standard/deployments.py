@@ -12,8 +12,6 @@ from django.utils.translation import gettext_lazy
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.apps.reports.filters.dates import SingleDateFilter
-from corehq.util.dates import iso_string_to_date
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -35,6 +33,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.reports.filters.dates import SingleDateFilter
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.generic import (
@@ -46,10 +45,14 @@ from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
-from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.reports.util import (
+    format_datatables_data,
+    get_commcare_version_and_date_from_last_usage,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.dates import iso_string_to_date
 from corehq.util.quickcache import quickcache
 
 
@@ -352,11 +355,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 if last_build.get('app_id') and device and device.get('app_meta'):
                     device_app_meta = self.get_data_for_app(device.get('app_meta'), last_build.get('app_id'))
 
-            if last_sub and last_sub.get('commcare_version'):
-                commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
-            else:
-                if device and device.get('commcare_version', None):
-                    commcare_version = _get_commcare_version(device['commcare_version'])
+            commcare_version, unused = get_commcare_version_and_date_from_last_usage(last_sub, device,
+                                                                                     formatted=True)
+
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
@@ -547,7 +548,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return format_html(f'<div>{"".join(html_nodes)}</div>')
 
 
-def _get_commcare_version(app_version_info):
+def format_commcare_version(app_version_info):
     commcare_version = (
         'CommCare {}'.format(app_version_info)
         if app_version_info

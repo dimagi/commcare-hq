@@ -1,4 +1,8 @@
 import re
+from datetime import datetime
+from memoized import memoized
+
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 from .models import CommCareBuild, CommCareBuildConfig
 
@@ -40,3 +44,61 @@ def extract_build_info_from_filename(content_disposition):
     else:
         raise ValueError('Could not find filename like {!r} in {!r}'.format(
             pattern, content_disposition))
+
+
+@memoized
+def get_latest_version_at_time(config, target_time):
+    """
+    Get the latest CommCare version that was available at a given time.
+    Excludes superuser-only versions.
+    Menu items are already in chronological order (newest last).
+    If no target time is provided, return the latest version available now.
+
+    Args:
+        config: CommCareBuildConfig instance
+        target_time: datetime or string in ISO format, or None for latest version
+    """
+    if not target_time:
+        return config.get_default().version
+
+    if isinstance(target_time, str):
+        target_time = datetime.strptime(target_time, ISO_DATETIME_FORMAT)
+
+    # Iterate through menu items in reverse (newest to oldest)
+    for item in reversed(config.menu):
+        if item.superuser_only:
+            continue
+        try:
+            build_time = get_build_time(item.build.version)
+            if build_time and build_time <= target_time:
+                return item.build.version
+        except KeyError:
+            continue
+
+    return None
+
+
+@memoized
+def get_build_time(version):
+    build = CommCareBuild.get_build(version, latest=True)
+    if build and build.time:
+        return build.time
+    return None
+
+
+def is_out_of_date(version_in_use, latest_version):
+    version_in_use_tuple = _parse_version(version_in_use)
+    latest_version_tuple = _parse_version(latest_version)
+    if not version_in_use_tuple or not latest_version_tuple:
+        return False
+    return version_in_use_tuple < latest_version_tuple
+
+
+def _parse_version(version_str):
+    """Convert version string to comparable tuple"""
+    if version_str:
+        try:
+            return tuple(int(n) for n in version_str.split('.'))
+        except (ValueError, AttributeError):
+            return None
+    return None
