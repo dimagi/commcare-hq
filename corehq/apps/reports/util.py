@@ -868,12 +868,13 @@ def get_commcare_version_and_date_from_last_usage(last_submission=None, last_dev
 
     if last_submission and last_submission.get('commcare_version'):
         version = last_submission.get('commcare_version')
-        version_in_use = format_commcare_version(version) if formatted else version
         date_of_use = last_submission.get('submission_date')
 
     elif last_device and last_device.get('commcare_version'):
         version = last_device.get('commcare_version')
-        version_in_use = format_commcare_version(version) if formatted else version
         date_of_use = last_device.get('last_used')
+
+    if version:
+        version_in_use = format_commcare_version(version) if formatted else version
 
     return version_in_use, date_of_use
