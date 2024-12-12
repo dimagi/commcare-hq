@@ -17,6 +17,7 @@ from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
+from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.calculations import sms_in_last
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.exceptions import (
@@ -429,7 +430,16 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             _('Version in Use'),
         ]
 
-    def rows_for_domain(self, domain_obj):
+    @property
+    def rows(self):
+        rows = []
+        config = CommCareBuildConfig.fetch()
+
+        for domain_obj in self.domains():
+            rows += self.rows_for_domain(domain_obj, config)
+        return rows
+
+    def rows_for_domain(self, domain_obj, config):
         rows = []
 
         user_query = (UserES()
@@ -459,7 +469,7 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
                 date_of_use = datetime.strptime(date_of_use, ISO_DATETIME_FORMAT)
             date_of_use_minute_precision = date_of_use.replace(second=0, microsecond=0)
 
-            latest_version_at_time_of_use = get_latest_version_at_time(date_of_use_minute_precision)
+            latest_version_at_time_of_use = get_latest_version_at_time(config, date_of_use_minute_precision)
 
             if is_out_of_date(version_in_use, latest_version_at_time_of_use):
                 rows.append([
@@ -475,11 +485,13 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
     def total(self):
         total_mobile_workers = 0
         total_up_to_date = 0
+        config = CommCareBuildConfig.fetch()
+
         for domain_obj in self.domains():
             domain_mobile_workers = get_mobile_user_count(domain_obj.name, include_inactive=False)
             if domain_mobile_workers:
                 total_mobile_workers += domain_mobile_workers
-                total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_obj))
+                total_up_to_date += domain_mobile_workers - len(self.rows_for_domain(domain_obj, config))
         return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
 
 

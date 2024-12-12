@@ -47,15 +47,17 @@ def extract_build_info_from_filename(content_disposition):
 
 
 @memoized
-def get_latest_version_at_time(target_time):
+def get_latest_version_at_time(config, target_time):
     """
     Get the latest CommCare version that was available at a given time.
     Excludes superuser-only versions.
     Menu items are already in chronological order (newest last).
     If no target time is provided, return the latest version available now.
-    """
-    config = CommCareBuildConfig.fetch()
 
+    Args:
+        config: CommCareBuildConfig instance
+        target_time: datetime or string in ISO format, or None for latest version
+    """
     if not target_time:
         return config.get_default().version
 
