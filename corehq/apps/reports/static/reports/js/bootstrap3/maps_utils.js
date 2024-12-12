@@ -1674,7 +1674,7 @@ hqDefine("reports/js/bootstrap3/maps_utils", function () {
             }
         );
         var table;
-        table = hqImport("reports/js/bootstrap3/config.dataTables.bootstrap").HQReportDataTables({
+        table = hqImport("reports/js/bootstrap3/datatables_config").HQReportDataTables({
             aoColumns: colSorting,
         });
 

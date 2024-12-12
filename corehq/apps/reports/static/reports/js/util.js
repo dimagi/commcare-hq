@@ -1,4 +1,4 @@
-hqDefine('reports/js/reports.util', ['jquery'], function ($) {
+hqDefine('reports/js/util', ['jquery'], function ($) {
     return {
         urlSerialize: function (filters, exclude) {
             exclude = exclude || [];
