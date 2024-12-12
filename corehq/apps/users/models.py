@@ -105,6 +105,8 @@ from .models_role import (  # noqa
 from .user_data import SQLUserData  # noqa
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.mobile_auth.utils import generate_aes_key
+
 
 WEB_USER = 'web'
 COMMCARE_USER = 'commcare'
@@ -3320,6 +3322,13 @@ class ConnectIDUserLink(models.Model):
 
     class Meta:
         unique_together = ('domain', 'commcare_user')
+
+    def get_or_create_key(self):
+        key = generate_aes_key().decode("utf-8")
+        messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
+            connectid_user_link=self, domain=self.domain, active=True, defaults={"key": key}
+        )
+        return messaging_key
 
 
 class ConnectIDMessagingKey(models.Model):

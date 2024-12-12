@@ -12,7 +12,7 @@ from corehq.apps.users.models import ConnectIDMessagingKey, ConnectIDUserLink, C
 from corehq.apps.sms.models import ConnectMessagingNumber, ConnectMessage, INCOMING
 from corehq.apps.sms.api import process_incoming
 from corehq.util.hmac_request import validate_request_hmac
-from corehq.apps.mobile_auth.utils import generate_aes_key
+
 
 @csrf_exempt
 @require_POST
@@ -53,11 +53,8 @@ def connectid_messaging_key(request, *args, **kwargs):
     channel_id = request.POST.get("channel_id")
     if channel_id is None:
         return HttpResponseBadRequest("Channel ID is required.")
-    link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
-    key = generate_aes_key().decode("utf-8")
-    messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
-        connectid_user_link=link, domain=link.domain, active=True, defaults={"key": key}
-    )
+    link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id, connectid_username=request.connectid_username)
+    messaging_key = link.get_or_create_key()
     return JsonResponse({"key": messaging_key.key})
 
 
