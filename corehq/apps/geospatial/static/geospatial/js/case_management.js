@@ -29,7 +29,6 @@ hqDefine("geospatial/js/case_management", [
     const SHOW_USERS_QUERY_PARAM = 'show_users';
     const USER_LOCATION_ID_QUERY_PARAM = 'user_location_id';
     const USER_LOCATION_NAME_QUERY_PARAM = 'user_location_name';
-    const DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
 
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
@@ -206,14 +205,15 @@ hqDefine("geospatial/js/case_management", [
 
         function addDisbursementLinesLayer(source) {
             let mapInstance = mapModel.mapInstance;
-            mapInstance.addSource(DISBURSEMENT_LINES_LAYER_ID, {
+            let layerId = mapModel.DISBURSEMENT_LINES_LAYER_ID;
+            mapInstance.addSource(layerId, {
                 'type': 'geojson',
                 'data': source,
             });
             mapInstance.addLayer({
-                id: DISBURSEMENT_LINES_LAYER_ID,
+                id: layerId,
                 type: 'line',
-                source: DISBURSEMENT_LINES_LAYER_ID,
+                source: layerId,
                 layout: {
                     'line-join': 'round',
                     'line-cap': 'round',

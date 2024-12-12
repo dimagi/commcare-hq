@@ -23,7 +23,6 @@ hqDefine('geospatial/js/models', [
         "Oops! Something went wrong!" +
         " Please report an issue if the problem persists."
     );
-    const DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -131,6 +130,8 @@ hqDefine('geospatial/js/models', [
         self.userMapItems = ko.observableArray([]);
 
         self.caseGroupsIndex = {};
+
+        self.DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
 
         self.initMap = function (mapDivId, centerCoordinates) {
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
@@ -515,17 +516,17 @@ hqDefine('geospatial/js/models', [
         };
 
         self.hasDisbursementLayer = function () {
-            return self.mapInstance.getLayer(DISBURSEMENT_LINES_LAYER_ID);
+            return self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID);
         };
 
         self.removeDisbursementLayer = function () {
             let layerRemoved = false;
-            if (self.mapInstance.getLayer(DISBURSEMENT_LINES_LAYER_ID)) {
-                self.mapInstance.removeLayer(DISBURSEMENT_LINES_LAYER_ID);
+            if (self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeLayer(self.DISBURSEMENT_LINES_LAYER_ID);
                 layerRemoved = true;
             }
-            if (self.mapInstance.getSource(DISBURSEMENT_LINES_LAYER_ID)) {
-                self.mapInstance.removeSource(DISBURSEMENT_LINES_LAYER_ID);
+            if (self.mapInstance.getSource(self.DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeSource(self.DISBURSEMENT_LINES_LAYER_ID);
             }
             return layerRemoved;
         };
