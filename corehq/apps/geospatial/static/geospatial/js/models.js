@@ -520,15 +520,12 @@ hqDefine('geospatial/js/models', [
         };
 
         self.removeDisbursementLayer = function () {
-            let layerRemoved = false;
             if (self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID)) {
                 self.mapInstance.removeLayer(self.DISBURSEMENT_LINES_LAYER_ID);
-                layerRemoved = true;
             }
             if (self.mapInstance.getSource(self.DISBURSEMENT_LINES_LAYER_ID)) {
                 self.mapInstance.removeSource(self.DISBURSEMENT_LINES_LAYER_ID);
             }
-            return layerRemoved;
         };
 
         self.hasSelectedUsers = function () {
