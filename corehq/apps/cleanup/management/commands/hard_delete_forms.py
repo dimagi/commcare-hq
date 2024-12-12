@@ -1,11 +1,11 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 import csv
 import itertools
 from dimagi.utils.chunked import chunked
 from corehq.form_processor.models import XFormInstance
 
 
-INDEX_FORM_ID = 1
+INDEX_FORM_ID = 0
 CHUNK_SIZE = 100
 
 
@@ -17,12 +17,16 @@ class Command(BaseCommand):
 
     def handle(self, domain, filename, resume_id=None, **options):
         # expects the filename to have a CSV with a header containing "Deletion Status" and "Form ID" fields
-        with open(filename) as csvfile:
+        with open(filename, mode='r', encoding='utf-8-sig') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
             self._process_rows(reader, domain, resume_id)
 
     def _process_rows(self, rows, domain, resume_id):
-        next(rows)   # skip header line
+        header_row = next(rows)   # skip header line
+        if header_row[INDEX_FORM_ID] != 'Form ID':
+            raise CommandError(
+                f'Expected Column {INDEX_FORM_ID} to be "Form ID", found "{header_row[INDEX_FORM_ID]}". Exiting'
+            )
 
         num_deleted = 0
 
