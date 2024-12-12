@@ -16,7 +16,7 @@ class Command(BaseCommand):
         parser.add_argument('--resume_id', help='form ID to start at, within the CSV file')
 
     def handle(self, domain, filename, resume_id=None, **options):
-        # expects the filename to have a CSV with a header containing "Deletion Status" and "Form ID" fields
+        # expects the filename to have a CSV with a header containing a "Form ID" field
         with open(filename, mode='r', encoding='utf-8-sig') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
             self._process_rows(reader, domain, resume_id)
