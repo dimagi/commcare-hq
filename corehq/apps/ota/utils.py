@@ -1,10 +1,14 @@
 from functools import wraps
+from datetime import datetime, timedelta
 
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Q
 from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceConflict
 
 from casexml.apps.case.xml import V2
+from casexml.apps.phone.models import SyncLogSQL
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -19,6 +23,7 @@ from corehq.apps.users.decorators import ensure_active_user_by_username
 from corehq.apps.users.models import CommCareUser
 
 from .exceptions import RestorePermissionDenied
+from .const import DEVICES_PER_USER
 from .models import DemoUserRestore
 
 
@@ -219,3 +224,26 @@ def handle_401_response(f):
 
         return response
     return _inner
+
+
+def can_login_on_device(user_id, device_id):
+    if device_id.startswith("WebAppsLogin"):
+        return True
+
+    end_time = datetime.now()
+    start_time = end_time - timedelta(days=1)
+    date_query = Q(date__gte=start_time, date__lt=end_time)
+    last_submitted_query = Q(last_submitted__gte=start_time, last_submitted__lt=end_time)
+
+    result = (
+        SyncLogSQL.objects.filter(date_query | last_submitted_query, user_id=user_id)
+        .exclude(device_id__startswith="WebAppsLogin")
+        .values('user_id')
+        .annotate(device_ids=ArrayAgg("device_id", distinct=True))
+    )
+    device_ids = result[0]['device_ids'] if result else []
+
+    if len(device_ids) < DEVICES_PER_USER or device_id in device_ids:
+        return True
+
+    return False
