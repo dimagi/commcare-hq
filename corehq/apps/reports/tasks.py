@@ -80,6 +80,30 @@ def update_calculated_properties_for_domains(domains):
     datadog_report_user_stats('commcare.active_mobile_workers.count', active_users_by_domain)
 
 
+def get_domains_to_update_es_filter():
+    """
+    Returns ES filter to obtain domains that are active, and meet one or more
+    of the following criteria:
+     - never had calculated properties updated
+     - calculated properties was updated over one week ago
+     - new form submissions within the last day
+    """
+    last_week = datetime.utcnow() - timedelta(days=7)
+    more_than_a_week_ago = filters.date_range('cp_last_updated', lt=last_week)
+    not_updated = filters.missing('cp_last_updated')
+    domains_submitted_today = (FormES().submitted(gte=datetime.utcnow() - timedelta(days=1))
+        .terms_aggregation('domain.exact', 'domain').size(0).run().aggregations.domain.keys)
+    is_domain_active = filters.term('is_active', True)
+    return filters.AND(
+        is_domain_active,
+        filters.OR(
+            not_updated,
+            more_than_a_week_ago,
+            filters.term('name', domains_submitted_today)
+        )
+    )
+
+
 @periodic_task(run_every=timedelta(minutes=1), queue='background_queue')
 def run_datadog_user_stats():
     all_stats = all_domain_stats()
@@ -117,30 +141,6 @@ def summarize_user_counts(commcare_users_by_domain, n):
         top_domains, other_domains = [], user_counts[:]
     other_entry = (sum(user_count for user_count, _ in other_domains), ())
     return {domain: user_count for user_count, domain in top_domains + [other_entry]}
-
-
-def get_domains_to_update_es_filter():
-    """
-    Returns ES filter to obtain domains that are active, and meet one or more
-    of the following criteria:
-     - never had calculated properties updated
-     - calculated properties was updated over one week ago
-     - new form submissions within the last day
-    """
-    last_week = datetime.utcnow() - timedelta(days=7)
-    more_than_a_week_ago = filters.date_range('cp_last_updated', lt=last_week)
-    not_updated = filters.missing('cp_last_updated')
-    domains_submitted_today = (FormES().submitted(gte=datetime.utcnow() - timedelta(days=1))
-        .terms_aggregation('domain.exact', 'domain').size(0).run().aggregations.domain.keys)
-    is_domain_active = filters.term('is_active', True)
-    return filters.AND(
-        is_domain_active,
-        filters.OR(
-            not_updated,
-            more_than_a_week_ago,
-            filters.term('name', domains_submitted_today)
-        )
-    )
 
 
 @task(serializer='pickle', ignore_result=True)
