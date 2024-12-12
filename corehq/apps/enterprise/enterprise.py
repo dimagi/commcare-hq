@@ -4,6 +4,7 @@ from django.db.models import Count
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -449,7 +450,16 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             version_in_use, date_of_use = get_commcare_version_and_date_from_last_usage(last_submission,
                                                                                         last_device)
 
-            latest_version_at_time_of_use = get_latest_version_at_time(date_of_use)
+            if not version_in_use:
+                continue
+
+            # Remove seconds to reduce the number of unique timestamps
+            # This helps with performance because get_latest_version_at_time is memoized
+            if isinstance(date_of_use, str):
+                date_of_use = datetime.strptime(date_of_use, ISO_DATETIME_FORMAT)
+            date_of_use_minute_precision = date_of_use.replace(second=0)
+
+            latest_version_at_time_of_use = get_latest_version_at_time(date_of_use_minute_precision)
 
             if is_out_of_date(version_in_use, latest_version_at_time_of_use):
                 rows.append([

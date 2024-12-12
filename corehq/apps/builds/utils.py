@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from memoized import memoized
 
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
@@ -45,6 +46,7 @@ def extract_build_info_from_filename(content_disposition):
             pattern, content_disposition))
 
 
+@memoized
 def get_latest_version_at_time(target_time):
     """
     Get the latest CommCare version that was available at a given time.
