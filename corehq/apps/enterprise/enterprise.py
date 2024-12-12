@@ -358,7 +358,7 @@ class EnterpriseODataReport(EnterpriseReport):
 
     @property
     def headers(self):
-        return [_('Project Space'), _('Report Names'), _('Number of rows')]
+        return [_('Project Space'), _('Name'), _('Number of Rows')]
 
     def total_for_domain(self, domain_obj):
         return self.export_fetcher.get_export_count(domain_obj.name)

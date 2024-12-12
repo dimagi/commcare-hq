@@ -19,7 +19,7 @@ class EnterpriseODataReportTests(SimpleTestCase):
     def test_headers(self):
         report = self._create_report_for_domains()
         self.assertEqual(report.headers, [
-            'Project Space', 'Report Names', 'Number of rows',
+            'Project Space', 'Name', 'Number of Rows',
         ])
 
     def test_total_number_display_odata_reports_across_enterprise(self):
