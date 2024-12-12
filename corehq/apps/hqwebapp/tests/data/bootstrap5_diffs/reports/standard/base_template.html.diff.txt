@@ -17,9 +17,11 @@
 +{% block page_content_classes %}col-sm-12 col-md-9 col-xl-10{% endblock %}
  
  {% block js %}{{ block.super }}
-+  {% include 'reports/partials/bootstrap5/filters_js.html' %}
    {% include 'reports/partials/graphs/charts_js.html' %}
--  {% include 'reports/partials/bootstrap3/filters_js.html' %}
+-  <script src="{% static 'reports/js/bootstrap3/standard_hq_report.js' %}"></script>
+-  {% include 'reports/partials/bootstrap3/filters_js.html' %}{# depends on standard_hq_report #}
++  <script src="{% static 'reports/js/bootstrap5/standard_hq_report.js' %}"></script>
++  {% include 'reports/partials/bootstrap5/filters_js.html' %}{# depends on standard_hq_report #}
    {% compress js %}
      <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
 -    <script src="{% static 'reports/js/bootstrap3/datatables_config.js' %}"></script>
@@ -28,10 +30,8 @@
 -    <script src="{% static 'reports/js/bootstrap3/hq_report.js' %}"></script>
 +    <script src="{% static 'reports/js/bootstrap5/hq_report.js' %}"></script>
      <script src="{% static 'reports/js/util.js' %}"></script>
--    <script src="{% static 'reports/js/bootstrap3/async.js' %}"></script>
--    <script src="{% static 'reports/js/bootstrap3/standard_hq_report.js' %}"></script>
-+    <script src="{% static 'reports/js/bootstrap5/async.js' %}"></script>
-+    <script src="{% static 'reports/js/bootstrap5/standard_hq_report.js' %}"></script>
+-    <script src="{% static 'reports/js/bootstrap3/async.js' %}"></script>{# depends on filters and util #}
++    <script src="{% static 'reports/js/bootstrap5/async.js' %}"></script>{# depends on filters and util #}
      <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
    {% endcompress %}
  
