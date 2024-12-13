@@ -2,6 +2,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+  <script src="{% static 'inddex/js/main.js' %}"></script>
+{% endblock %}
+
 {% block filter_panel %}
     {% if report.description %}<p class="lead">{{ report.description }}</p>{% endif %}
     {{ block.super }}
