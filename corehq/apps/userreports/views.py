@@ -1354,7 +1354,13 @@ def rebuild_data_source(request, domain, config_id):
 
 
 def _report_ucr_rebuild_metrics(domain, config, action):
-    metrics_counter(f'commcare.ucr.{action}.count', tags={'domain': domain})
+    metrics_counter(
+        f'commcare.ucr.{action}.count',
+        tags={
+            'domain': domain,
+            'datasource_id': config.get_id,
+        }
+    )
     metrics_gauge(
         f'commcare.ucr.{action}.columns.count',
         len(config.get_columns()),
