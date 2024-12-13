@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from django.urls import reverse
@@ -534,7 +535,7 @@ class StaleCasesTable:
 
     def _aggregate_case_count_data(self):
         end_date = datetime.now() - timedelta(days=self.STALE_DATE_THRESHOLD_DAYS)
-        agg_res = {}
+        agg_res = defaultdict(lambda: 0)
         curr_backoff_count = 0
         curr_agg_date_range = self.AGG_DATE_RANGE
         domains = self._get_domains()
@@ -568,8 +569,6 @@ class StaleCasesTable:
 
     def _merge_agg_data(self, agg_res, query_res):
         for domain, case_count in query_res.items():
-            if domain not in agg_res:
-                agg_res[domain] = 0
             agg_res[domain] += case_count
 
     def _stale_case_count_in_date_range(self, domains, start_date, end_date):
