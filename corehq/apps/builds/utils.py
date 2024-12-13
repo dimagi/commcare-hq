@@ -68,22 +68,21 @@ def get_latest_version_at_time(config, target_time):
     for item in reversed(config.menu):
         if item.superuser_only:
             continue
-        try:
-            build_time = get_build_time(item.build.version)
-            if build_time and build_time <= target_time:
-                return item.build.version
-        except KeyError:
-            continue
+        build_time = get_build_time(item.build.version)
+        if build_time and build_time <= target_time:
+            return item.build.version
 
     return None
 
 
 @quickcache(['version'], timeout=100 * 60, memoize_timeout=100 * 60)
 def get_build_time(version):
-    build = CommCareBuild.get_build(version, latest=True)
-    if build and build.time:
-        return build.time
-    return None
+    try:
+        build = CommCareBuild.get_build(version, latest=True)
+        if build and build.time:
+            return build.time
+    except KeyError:
+        return None
 
 
 def is_out_of_date(version_in_use, latest_version):
