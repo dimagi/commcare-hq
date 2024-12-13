@@ -2,6 +2,12 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+  <script src="{% static 'inddex/js/main.js' %}"></script>
+{% endblock %}
+
+{% initial_page_data 'report_table' data_provider %}
+
 {% block reportcontent %}
 
 {% block reporttable %}
