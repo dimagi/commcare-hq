@@ -160,9 +160,8 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
 
 def _get_rows_count_from_existing_table(adapter):
     table = adapter.get_existing_table_from_db()
-    if not table:
-        return None
-    return adapter.session_helper.Session.query(table).count()
+    if table is not None:
+        return adapter.session_helper.Session.query(table).count()
 
 
 def _report_ucr_rebuild_metrics(config, source, action, adapter, rows_count_before_rebuild, error=False):
