@@ -58,8 +58,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
     @memoized
     def get_existing_table_from_db(self):
         """Loads existing table directly from database if one exists"""
-        if self.table_exists:
+        try:
             return sqlalchemy.Table(self.get_table().name, sqlalchemy.MetaData(), autoload_with=self.engine)
+        except sqlalchemy.exc.NoSuchTableError:
+            pass
 
     @property
     def table_exists(self):
