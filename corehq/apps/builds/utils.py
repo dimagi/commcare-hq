@@ -1,10 +1,10 @@
 import re
 from datetime import datetime
-from memoized import memoized
 
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
-from .models import CommCareBuild, CommCareBuildConfig
+from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig
+from corehq.util.quickcache import quickcache
 
 
 def get_all_versions(versions):
@@ -46,7 +46,7 @@ def extract_build_info_from_filename(content_disposition):
             pattern, content_disposition))
 
 
-@memoized
+@quickcache(['config', 'target_time'], timeout=100 * 60, memoize_timeout=100 * 60)
 def get_latest_version_at_time(config, target_time):
     """
     Get the latest CommCare version that was available at a given time.
@@ -78,7 +78,7 @@ def get_latest_version_at_time(config, target_time):
     return None
 
 
-@memoized
+@quickcache(['version'], timeout=100 * 60, memoize_timeout=100 * 60)
 def get_build_time(version):
     build = CommCareBuild.get_build(version, latest=True)
     if build and build.time:
