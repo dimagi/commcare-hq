@@ -26,12 +26,12 @@ class AdminInvitesUserFormValidator():
             return _("This domain does not have locations privileges.")
 
     @staticmethod
-    def validate_email(domain, email):
+    def validate_email(domain, email, is_invite_edit=False):
         current_users = [user.username.lower() for user in WebUser.by_domain(domain)]
         pending_invites = [di.email.lower() for di in Invitation.by_domain(domain)]
         current_users_and_pending_invites = current_users + pending_invites
 
-        if email.lower() in current_users_and_pending_invites:
+        if email.lower() in current_users_and_pending_invites and not is_invite_edit:
             return _("A user with this email address is already in "
                     "this project or has a pending invitation.")
         web_user = WebUser.get_by_username(email)
