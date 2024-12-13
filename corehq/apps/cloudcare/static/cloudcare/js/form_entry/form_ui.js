@@ -205,9 +205,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     function Container(json) {
         var self = this;
         self.pubsub = new ko.subscribable();
-        console.time("container create");
+        // console.time("container create");
         self.fromJS(json);
-        console.timeEnd("container create");
+        // console.timeEnd("container create");
+        self.dummy = {};
+        self.fromJSDummy(json);
         /**
          * Used in KO template to determine what template to use for a child
          * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
@@ -251,7 +253,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             },
             children: {
                 create: function (options) {
-                    console.time("fromJs.create");
+                    // console.time("fromJs.create");
                     let element = undefined;
                     if (options.data.type === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                         element = new GroupedElementTileRow(options.data, self);
@@ -262,11 +264,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     } else {
                         console.error('Could not find question type of ' + options.data.type);
                     }
-                    console.timeEnd("fromJs.create");
+                    // console.timeEnd("fromJs.create");
                     return element;
                 },
                 update: function (options) {
-                    console.time("fromJs.update");
+                    // console.time("fromJs.update");
                     if (options.target.pendingAnswer &&
                             options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
                         // There is a request in progress, check if the answer has changed since the request
@@ -295,7 +297,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                         // at the very least we can skip entirely when there's no change.
                         delete options.data.choices;
                     }
-                    console.timeEnd("fromJs.update");
+                    // console.timeEnd("fromJs.update");
                     return options.target;
                 },
                 key: function (data) {
@@ -315,6 +317,95 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             },
         };
         ko.mapping.fromJS(json, mapping, self);
+    };
+
+    Container.prototype.fromJSDummy = function (json) {
+        var self = this;
+
+        if (!json.type) {
+            Container.groupElements(json);
+        }
+
+        var mapping = {
+            caption: {
+                update: function (options) {
+                    if (self.hideCaption) {
+                        return null;
+                    }
+                    return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
+                },
+            },
+            caption_markdown: {
+                update: function (options) {
+                    return options.data ? markdown.render(options.data) : null;
+                },
+            },
+            children: {
+                create: function (options) {
+                    // console.time("fromJs.create");
+                    let element = undefined;
+                    if (options.data.type === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
+                        element = new GroupedElementTileRow(options.data, self);
+                    } else if (options.data.type === constants.QUESTION_TYPE) {
+                        element = new Question(options.data, self);
+                    } else if (options.data.type === constants.GROUP_TYPE) {
+                        element = new Group(options.data, self);
+                    } else {
+                        console.error('Could not find question type of ' + options.data.type);
+                    }
+                    // console.timeEnd("fromJs.create");
+                    return element;
+                },
+                update: function (options) {
+                    // console.time("fromJs.update");
+                    if (options.target.pendingAnswer &&
+                            options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
+                        // There is a request in progress, check if the answer has changed since the request
+                        // was made. For file questions, it is most unlikely that the answer will change while the request
+                        // is in progress, so we just ignore the value.
+                        if (options.target.entry.templateType === "file"
+                            || options.target.entry.templateType === "signature"
+                            || formEntryUtils.answersEqual(options.data.answer, options.target.pendingAnswer())
+                        ) {
+                            // We can now mark it as not dirty
+                            options.target.pendingAnswer(constants.NO_PENDING_ANSWER);
+                        } else {
+                            // still dirty - most likely edited by the user while the request was going
+                            // Keep answer the same as the pending one to avoid overwriting the user's changes
+                            options.data.answer = _.clone(options.target.pendingAnswer());
+                        }
+                    }
+
+                    // Do not update the answer if there is a server error on that question
+                    if (ko.utils.unwrapObservable(options.target.serverError)) {
+                        options.data.answer = _.clone(options.target.answer());
+                    }
+                    if (options.target.choices && _.isEqual(options.target.choices(), options.data.choices)) {
+                        // replacing the full choice list if it has a few thousand items
+                        // is actually quite expensive and can freeze the page for seconds.
+                        // at the very least we can skip entirely when there's no change.
+                        delete options.data.choices;
+                    }
+                    // console.timeEnd("fromJs.update");
+                    return options.target;
+                },
+                key: function (data) {
+                    const uuid = ko.utils.unwrapObservable(data.uuid);
+                    if (uuid) {
+                        return uuid;
+                    }
+                    const exists = ko.utils.unwrapObservable(data.exists);
+                    const ix = ko.utils.unwrapObservable(data.ix);
+                    if (exists && exists === 'false') {
+                        // this is a add group button. replace last part with d
+                        const lastIdx = ix.lastIndexOf('_');
+                        return lastIdx === -1 ? ix : ix.slice(0, lastIdx) + '_d';
+                    }
+                    return ix;
+                },
+            },
+        };
+        ko.mapping.fromJS(json, mapping, self.dummy);
     };
 
     /**
@@ -466,7 +557,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.displayOptions = json.displayOptions || {};
         json.children = json.tree;
         delete json.tree;
+        console.time("form constructor");
         Container.call(self, json);
+        console.timeEnd("form constructor");
         self.blockSubmit = ko.observable(false);
         self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
@@ -722,6 +815,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 console.time("self.fromJS(response)");
                 self.fromJS(response);
                 console.timeEnd("self.fromJS(response)");
+
+                console.time("self.fromJSDummy(response)");
+                self.fromJSDummy(response);
+                console.timeEnd("self.fromJSDummy(response)");
             }
         });
 
