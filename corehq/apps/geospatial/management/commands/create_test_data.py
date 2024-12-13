@@ -1,3 +1,33 @@
+"""
+Create geo-located mobile workers and geo-located cases for testing
+national-scale bulk disbursement for microplanning.
+
+This script uses Faker and Shapely, which are not installed in
+production environments.
+
+To use this management command, do a limited-release deploy, and then
+install the additional requirements in its virtualenv. e.g. ::
+
+    $ cchq --control staging deploy commcare \
+           --private \
+           --limit='django_manage[0]' \
+           --keep-days=7 \
+           --commcare-rev=nh/test_data
+    ...
+    Your private release is located here:
+    /home/cchq/www/staging/releases/2024-12-11_15.07
+
+    $ cchq staging tmux 'django_manage[0]'
+
+    cchq:~$ cd www/staging/releases/2024-12-11_15.07
+    cchq:~$ source python_env/bin/activate
+    cchq:~$ pip install Faker
+    cchq:~$ pip install shapely
+
+The django_manage machine has two cores. To execute the management
+command on both cores, simply run the command in two tmux windows.
+
+"""
 import random
 from uuid import uuid4
 
