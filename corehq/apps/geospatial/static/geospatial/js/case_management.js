@@ -65,17 +65,18 @@ hqDefine("geospatial/js/case_management", [
 
         self.handleDisbursementResults = function (result) {
             // Clean stale disbursement results
-            mapModel.removeDisbursementLayers();
+            mapModel.removeDisbursementLayer();
 
             let groupId = 0;
+            let userToCasesList = [];
             Object.keys(result).forEach((userId) => {
                 const user = mapModel.userMapItems().find((userModel) => {return userModel.itemId === userId;});
                 mapModel.caseGroupsIndex[userId] = {groupId: groupId, item: user};
 
-                let cases = [];
+                let userToCases = {'user': user, 'cases': []};
                 mapModel.caseMapItems().forEach((caseModel) => {
                     if (result[userId].includes(caseModel.itemId)) {
-                        cases.push(caseModel);
+                        userToCases['cases'].push(caseModel);
                         mapModel.caseGroupsIndex[caseModel.itemId] = {
                             groupId: groupId,
                             item: caseModel,
@@ -83,25 +84,17 @@ hqDefine("geospatial/js/case_management", [
                         };
                     }
                 });
-                self.connectUserWithCasesOnMap(user, cases);
+                userToCasesList.push(userToCases);
                 groupId += 1;
             });
+            self.connectUserWithCasesOnMap(userToCasesList);
             self.setBusy(false);
         };
 
-        self.clearConnectionLines = function (cases) {
-            let mapInstance = mapModel.mapInstance;
+        self.getCasesForDisbursement = function (cases) {
             let caseData = [];
             const hasSelectedCases = mapModel.hasSelectedCases();
             cases.forEach(function (c) {
-                const layerId = mapModel.getLineFeatureId(c.itemId);
-                if (mapInstance.getLayer(layerId)) {
-                    mapInstance.removeLayer(layerId);
-                }
-                if (mapInstance.getSource(layerId)) {
-                    mapInstance.removeSource(layerId);
-                }
-
                 // Either select all if none selected, or only pick selected cases
                 if (!hasSelectedCases || c.isSelected()) {
                     caseData.push({
@@ -111,13 +104,13 @@ hqDefine("geospatial/js/case_management", [
                     });
                 }
             });
-
             return caseData;
         };
 
         self.runCaseDisbursementAlgorithm = function (cases, users) {
             self.setBusy(true);
-            const caseData = self.clearConnectionLines(cases);
+            mapModel.removeDisbursementLayer();
+            const caseData = self.getCasesForDisbursement(cases);
 
             self.setDisbursementParameters = function (parameters) {
                 var parametersList = [
@@ -181,38 +174,56 @@ hqDefine("geospatial/js/case_management", [
             });
         };
 
-        self.connectUserWithCasesOnMap = function (user, cases) {
-            cases.forEach((caseModel) => {
-                const lineCoordinates = [
-                    [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
-                    [caseModel.itemData.coordinates.lng, caseModel.itemData.coordinates.lat],
-                ];
-                let mapInstance = mapModel.mapInstance;
-                mapInstance.addLayer({
-                    id: mapModel.getLineFeatureId(caseModel.itemId),
-                    type: 'line',
-                    source: {
-                        type: 'geojson',
-                        data: {
+        self.connectUserWithCasesOnMap = function (userToCasesList) {
+            let disbursementLinesSource = generateDisbursementLinesSource(userToCasesList);
+            addDisbursementLinesLayer(disbursementLinesSource);
+        };
+
+        function generateDisbursementLinesSource(userToCasesList) {
+            let disbursementLinesSource = {
+                'type': 'FeatureCollection',
+                'features': [],
+            };
+            for (const userToCases of userToCasesList) {
+                let user = userToCases['user'];
+                userToCases['cases'].forEach((caseModel) => {
+                    const lineCoordinates = [
+                        [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
+                        [caseModel.itemData.coordinates.lng, caseModel.itemData.coordinates.lat],
+                    ];
+                    disbursementLinesSource.features.push(
+                        {
                             type: 'Feature',
                             properties: {},
-                            geometry: {
-                                type: 'LineString',
-                                coordinates: lineCoordinates,
-                            },
-                        },
-                    },
-                    layout: {
-                        'line-join': 'round',
-                        'line-cap': 'round',
-                    },
-                    paint: {
-                        'line-color': '#808080',
-                        'line-width': 1,
-                    },
+                            geometry: { type: 'LineString', coordinates: lineCoordinates },
+                        }
+                    );
                 });
+            }
+            return disbursementLinesSource;
+        }
+
+        function addDisbursementLinesLayer(source) {
+            let mapInstance = mapModel.mapInstance;
+            let layerId = mapModel.DISBURSEMENT_LINES_LAYER_ID;
+            mapInstance.addSource(layerId, {
+                'type': 'geojson',
+                'data': source,
             });
-        };
+            mapInstance.addLayer({
+                id: layerId,
+                type: 'line',
+                source: layerId,
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round',
+                },
+                paint: {
+                    'line-color': '#808080',
+                    'line-width': 1,
+                },
+            });
+        }
 
         return self;
     };
@@ -520,8 +531,8 @@ hqDefine("geospatial/js/case_management", [
             if (polygonFilterModel) {
                 selectMapItemsInPolygons();
             }
-            if (mapModel.hasDisbursementLayers()) {
-                mapModel.removeDisbursementLayers();
+            if (mapModel.hasDisbursementLayer()) {
+                mapModel.removeDisbursementLayer();
             }
         }
     });
