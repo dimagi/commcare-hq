@@ -7,7 +7,7 @@
  {% load i18n %}
  
 -{% js_entry_b3 'domain/js/bootstrap3/toggles' %}
-+{% js_entry_b3 'domain/js/bootstrap5/toggles' %}
++{% js_entry 'domain/js/bootstrap5/toggles' %}
  
  {% block page_content %}
  
