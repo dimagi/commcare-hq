@@ -539,14 +539,13 @@ class StaleCasesTable:
         curr_agg_date_range = self.AGG_DATE_RANGE
         domains = self._get_domains()
         while (True):
-            start_date = end_date - timedelta(days=self.AGG_DATE_RANGE)
+            start_date = end_date - timedelta(days=curr_agg_date_range)
             try:
                 query_res = self._stale_case_count_in_date_range(domains, start_date, end_date)
             except ESError as e:
                 curr_backoff_count += 1
                 if curr_backoff_count <= self.MAX_BACKOFF_COUNT:
                     curr_agg_date_range -= self.BACKOFF_AMOUNT_DAYS
-                    curr_backoff_count += 1
                 else:
                     notify_exception(
                         None,
@@ -558,12 +557,13 @@ class StaleCasesTable:
                         }
                     )
                     raise ESError()
-            curr_backoff_count = 0
-            curr_agg_date_range = self.AGG_DATE_RANGE
-            self._merge_agg_data(agg_res, query_res)
-            end_date = start_date
-            if end_date <= self.stop_date:
-                break
+            else:
+                curr_backoff_count = 0
+                curr_agg_date_range = self.AGG_DATE_RANGE
+                self._merge_agg_data(agg_res, query_res)
+                end_date = start_date
+                if end_date <= self.stop_date:
+                    break
         return agg_res
 
     def _merge_agg_data(self, agg_res, query_res):
