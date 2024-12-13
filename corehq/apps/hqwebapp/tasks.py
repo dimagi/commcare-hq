@@ -346,16 +346,16 @@ def send_stale_case_data_info_to_admins():
         writer = csv.writer(csv_file)
         writer.writerow(table.headers)
         writer.writerows(table.rows)
+    elif has_error:
+        message = (
+            '\nPlease note that an error occurred while compiling the report '
+            'and so there may be missing data that was not compiled.'
+        )
     else:
         message = (
             'No domains were found containing case data older than '
             f'{table.STALE_DATE_THRESHOLD_DAYS} days.'
         )
-        if has_error:
-            message += (
-                '\nPlease note that an error occurred while compiling the report '
-                'and so there may be missing data that was not compiled.'
-            )
     send_html_email_async.delay(
         subject,
         recipient=settings.SOLUTIONS_AES_EMAIL,
