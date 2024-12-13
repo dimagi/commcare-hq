@@ -88,7 +88,6 @@ class FormActions(OriginalFormActions):
         context.update({
             'formactions': self,
             'fields_output': fields_html,
-            'offsets': '',
             'field_class': context.get('field_class', '')
         })
         return render_to_string(self.template, context.flatten())
