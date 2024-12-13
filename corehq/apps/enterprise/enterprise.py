@@ -447,9 +447,9 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
         total_up_to_date = 0
         config = CommCareBuildConfig.fetch()
 
-        def total_for_domain(domain_name):
-            mobile_workers = get_mobile_user_count(domain_name, include_inactive=False)
-            outdated_users = len(self.rows_for_domain(domain_name, config))
+        def total_for_domain(domain):
+            mobile_workers = get_mobile_user_count(domain, include_inactive=False)
+            outdated_users = len(self.rows_for_domain(domain, config))
             return mobile_workers, outdated_users
 
         results = _process_domains_in_parallel(total_for_domain, self.account.get_domains())
@@ -461,11 +461,11 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
 
         return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
 
-    def rows_for_domain(self, domain_name, config):
+    def rows_for_domain(self, domain, config):
         rows = []
 
         user_query = (UserES()
-            .domain(domain_name)
+            .domain(domain)
             .mobile_users()
             .source([
                 'username',
@@ -496,7 +496,7 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             if is_out_of_date(version_in_use, latest_version_at_time_of_use):
                 rows.append([
                     user['username'],
-                    domain_name,
+                    domain,
                     latest_version_at_time_of_use,
                     version_in_use,
                 ])
