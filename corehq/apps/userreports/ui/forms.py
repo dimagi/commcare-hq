@@ -282,7 +282,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                     'asynchronous',
                     _('This data source covers more than {record_limit} records. '
                       'Please mark it for asynchronous processing for effective building/rebuilding'
-                      ).format(record_limit=DATA_SOURCE_REBUILD_RESTRICTED_AT)
+                      ).format(record_limit=f"{DATA_SOURCE_REBUILD_RESTRICTED_AT:,}")
                 )
 
     def save(self, commit=False):

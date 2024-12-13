@@ -1389,7 +1389,7 @@ def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
         'Please update the data source to have asynchronous processing.'
     ).format(
         number_of_records=number_of_records_to_be_iterated,
-        rebuild_limit=DATA_SOURCE_REBUILD_RESTRICTED_AT
+        rebuild_limit=f"{DATA_SOURCE_REBUILD_RESTRICTED_AT:,}"
     )
 
 
