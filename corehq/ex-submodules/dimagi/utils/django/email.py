@@ -52,7 +52,7 @@ def mark_local_bounced_email(bounced_addresses, message_id):
             )
 
 
-def get_valid_recipients(recipients, domain=None):
+def get_valid_recipients(recipients, domain=None, is_conditional_alert=False):
     """
     This filters out any emails that have reported hard bounces or complaints to
     Amazon SES
@@ -60,7 +60,7 @@ def get_valid_recipients(recipients, domain=None):
     :return: list of recipient emails not marked as bounced
     """
     from corehq.toggles import BLOCKED_DOMAIN_EMAIL_SENDERS
-    if domain and BLOCKED_DOMAIN_EMAIL_SENDERS.enabled(domain):
+    if is_conditional_alert and domain and BLOCKED_DOMAIN_EMAIL_SENDERS.enabled(domain):
         # don't sent email if domain is blocked
         metrics_gauge('commcare.bounced_email', len(recipients), tags={
             'email_domain': domain,
@@ -84,9 +84,9 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, bcc=None,
                     smtp_exception_skip_list=None, messaging_event_id=None,
-                    domain=None, use_domain_gateway=False):
+                    domain=None, use_domain_gateway=False, is_conditional_alert=False):
     recipients = list(recipient) if not isinstance(recipient, str) else [recipient]
-    filtered_recipients = get_valid_recipients(recipients, domain)
+    filtered_recipients = get_valid_recipients(recipients, domain, is_conditional_alert)
     bounced_addresses = list(set(recipients) - set(filtered_recipients))
     if bounced_addresses and messaging_event_id:
         mark_local_bounced_email(bounced_addresses, messaging_event_id)
