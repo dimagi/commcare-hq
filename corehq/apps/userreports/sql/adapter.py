@@ -55,6 +55,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             self.config, get_metadata(self.engine_id), override_table_name=self.override_table_name
         )
 
+    @memoized
+    def get_existing_table_from_db(self):
+        """Loads existing table directly from database if one exists"""
+        if self.table_exists:
+            return sqlalchemy.Table(self.get_table().name, sqlalchemy.MetaData(), autoload_with=self.engine)
+
     @property
     def table_exists(self):
         return self.engine.has_table(self.get_table().name)
