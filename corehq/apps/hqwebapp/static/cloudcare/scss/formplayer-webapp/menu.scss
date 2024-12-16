@@ -23,8 +23,11 @@
 }
 
 #persistent-menu-container {
-  padding: 1.5rem 1.5rem 2.5rem 2.5rem;
+  padding: 1.5rem;
   font-size: 14px;
+  overflow-x: visible;
+  overflow-y: scroll;
+  z-index: $zindex-persistent-menu-nav;
 }
 
 #persistent-menu-container .btn-close {
@@ -32,10 +35,11 @@
   top: 15px;
 }
 
-.persistent-menu-toggle {
-  color: white;
-  background-color: $cc-brand-mid;
-  padding: $spacer / 2;
+#persistent-menu-arrow-toggle {
+  color: black;
+  z-index: $zindex-persistent-menu-nav + 1;
+  // background-color: $cc-brand-mid;
+  // padding: $spacer / 2;
   &:hover {
     background-color: $cc-brand-low;
   }
