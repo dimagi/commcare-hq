@@ -79,10 +79,10 @@ def get_latest_version_at_time(config, target_time):
 def get_build_time(version):
     try:
         build = CommCareBuild.get_build(version, latest=True)
-        if build and build.time:
-            return build.time
     except KeyError:
         return None
+    if build and build.time:
+        return build.time
 
 
 def is_out_of_date(version_in_use, latest_version):
