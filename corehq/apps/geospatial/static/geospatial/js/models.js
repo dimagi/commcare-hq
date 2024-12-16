@@ -519,6 +519,27 @@ hqDefine('geospatial/js/models', [
             return self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID);
         };
 
+        self.addDisbursementLinesLayer = function (source) {
+            let layerId = self.DISBURSEMENT_LINES_LAYER_ID;
+            self.mapInstance.addSource(layerId, {
+                'type': 'geojson',
+                'data': source,
+            });
+            self.mapInstance.addLayer({
+                id: layerId,
+                type: 'line',
+                source: layerId,
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round',
+                },
+                paint: {
+                    'line-color': '#808080',
+                    'line-width': 1,
+                },
+            });
+        };
+
         self.removeDisbursementLayer = function () {
             if (self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID)) {
                 self.mapInstance.removeLayer(self.DISBURSEMENT_LINES_LAYER_ID);

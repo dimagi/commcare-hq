@@ -176,7 +176,7 @@ hqDefine("geospatial/js/case_management", [
 
         self.connectUserWithCasesOnMap = function (userToCasesList) {
             let disbursementLinesSource = generateDisbursementLinesSource(userToCasesList);
-            addDisbursementLinesLayer(disbursementLinesSource);
+            mapModel.addDisbursementLinesLayer(disbursementLinesSource);
         };
 
         function generateDisbursementLinesSource(userToCasesList) {
@@ -201,28 +201,6 @@ hqDefine("geospatial/js/case_management", [
                 });
             }
             return disbursementLinesSource;
-        }
-
-        function addDisbursementLinesLayer(source) {
-            let mapInstance = mapModel.mapInstance;
-            let layerId = mapModel.DISBURSEMENT_LINES_LAYER_ID;
-            mapInstance.addSource(layerId, {
-                'type': 'geojson',
-                'data': source,
-            });
-            mapInstance.addLayer({
-                id: layerId,
-                type: 'line',
-                source: layerId,
-                layout: {
-                    'line-join': 'round',
-                    'line-cap': 'round',
-                },
-                paint: {
-                    'line-color': '#808080',
-                    'line-width': 1,
-                },
-            });
         }
 
         return self;
