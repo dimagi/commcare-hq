@@ -879,7 +879,6 @@ def get_commcare_version_and_date_from_last_usage(last_submission=None, last_dev
     if version:
         version_in_use = format_commcare_version(version) if formatted else version
 
-    if isinstance(date_of_use, str):
-        date_of_use = datetime.strptime(date_of_use, ISO_DATETIME_FORMAT)
+    date_of_use = datetime.strptime(date_of_use, ISO_DATETIME_FORMAT)
 
     return version_in_use, date_of_use

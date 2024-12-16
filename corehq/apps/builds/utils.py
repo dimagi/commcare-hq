@@ -1,7 +1,4 @@
 import re
-from datetime import datetime
-
-from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig
 
@@ -54,7 +51,7 @@ def get_latest_version_at_time(config, target_time, cache=None):
 
     Args:
         config: CommCareBuildConfig instance
-        target_time: datetime or string in ISO format, or None for latest version
+        target_time: datetime, or None for latest version
         cache: Dictionary for per-request caching
     """
     if cache is None:
@@ -62,9 +59,6 @@ def get_latest_version_at_time(config, target_time, cache=None):
 
     if not target_time:
         return config.get_default().version
-
-    if isinstance(target_time, str):
-        target_time = datetime.strptime(target_time, ISO_DATETIME_FORMAT)
 
     # Iterate through menu items in reverse (newest to oldest)
     for item in reversed(config.menu):
