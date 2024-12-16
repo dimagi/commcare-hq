@@ -54,3 +54,7 @@ class DateTimePropertyTests(SimpleTestCase):
         prop = DateTimeProperty()
         result = prop.wrap('2015-01-01T12:00:00.120054Z')
         self.assertEqual(result, datetime(year=2015, month=1, day=1, hour=12, microsecond=120054))
+
+    def test_deserialize(self):
+        result = DateTimeProperty.deserialize('2015-01-01T12:00:00.120054Z')
+        self.assertEqual(result, datetime(year=2015, month=1, day=1, hour=12, microsecond=120054))

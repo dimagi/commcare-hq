@@ -41,6 +41,15 @@ class DateTimeProperty(AbstractDateProperty):
     _type = datetime.datetime
 
     def _wrap(self, value):
+        return self.deserialize(value)
+
+    def _unwrap(self, value):
+        _assert(value.tzinfo is None,
+                "Can't set a USecDateTimeProperty to an offset-aware datetime")
+        return value, safe_strftime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
+
+    @classmethod
+    def deserialize(cls, value):
         if '.' in value:
             fmt = ISO_DATETIME_FORMAT
             if len(value.split('.')[-1]) != 7:
@@ -61,11 +70,6 @@ class DateTimeProperty(AbstractDateProperty):
         _assert(result.tzinfo is None,
                 "USecDateTimeProperty shouldn't ever return offset-aware!")
         return result
-
-    def _unwrap(self, value):
-        _assert(value.tzinfo is None,
-                "Can't set a USecDateTimeProperty to an offset-aware datetime")
-        return value, safe_strftime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
 
 
 re_trans_datetime = re.compile(r"""
