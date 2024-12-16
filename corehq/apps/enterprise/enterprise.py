@@ -4,7 +4,6 @@ from django.db.models import Count
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -484,8 +483,6 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
 
             # Remove seconds and microseconds to reduce the number of unique timestamps
             # This helps with performance because get_latest_version_at_time is memoized
-            if isinstance(date_of_use, str):
-                date_of_use = datetime.strptime(date_of_use, ISO_DATETIME_FORMAT)
             date_of_use_minute_precision = date_of_use.replace(second=0, microsecond=0)
 
             latest_version_at_time_of_use = get_latest_version_at_time(config, date_of_use_minute_precision)
