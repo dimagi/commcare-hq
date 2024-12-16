@@ -2,11 +2,8 @@ from abc import ABC, abstractmethod
 import re
 from django.db.models import Count
 from datetime import datetime, timedelta
-from functools import partial
-from gevent.pool import Pool
 
 from django.conf import settings
-from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -41,8 +38,6 @@ from corehq.apps.users.dbaccessors import (
     get_web_user_count,
 )
 from corehq.apps.users.models import CouchUser, Invitation
-
-ES_CLIENT_CONNECTION_POOL_LIMIT = 10  # Matches ES client connection pool limit
 
 
 class EnterpriseReport(ABC):
@@ -437,9 +432,11 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
 
     @property
     def rows(self):
+        rows = []
         config = CommCareBuildConfig.fetch()
-        partial_func = partial(self.rows_for_domain, config)
-        return _process_domains_in_parallel(partial_func, self.account.get_domains())
+        for domain in self.account.get_domains():
+            rows.extend(self.rows_for_domain(domain, config))
+        return rows
 
     @property
     def total(self):
@@ -449,15 +446,15 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
 
         def total_for_domain(domain):
             mobile_workers = get_mobile_user_count(domain, include_inactive=False)
+            if mobile_workers == 0:
+                return 0, 0
             outdated_users = len(self.rows_for_domain(domain, config))
             return mobile_workers, outdated_users
 
-        results = _process_domains_in_parallel(total_for_domain, self.account.get_domains())
-
-        for domain_mobile_workers, outdated_users in results:
-            if domain_mobile_workers:
-                total_mobile_workers += domain_mobile_workers
-                total_up_to_date += domain_mobile_workers - outdated_users
+        for domain in self.account.get_domains():
+            domain_mobile_workers, outdated_users = total_for_domain(domain)
+            total_mobile_workers += domain_mobile_workers
+            total_up_to_date += domain_mobile_workers - outdated_users
 
         return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
 
@@ -569,18 +566,3 @@ class EnterpriseSMSReport(EnterpriseReport):
         num_errors = sum([result['direction_count'] for result in results if result['error']])
 
         return [(domain_obj.name, num_sent, num_received, num_errors), ]
-
-
-def _process_domains_in_parallel(process_func, domains):
-    """
-    Helper method to process domains in parallel using gevent pooling.
-    """
-    results = []
-
-    for chunk in chunked(domains, ES_CLIENT_CONNECTION_POOL_LIMIT):
-        pool = Pool(size=ES_CLIENT_CONNECTION_POOL_LIMIT)
-        chunk_results = pool.map(process_func, chunk)
-        pool.join()
-        results.extend(chunk_results)
-
-    return results
