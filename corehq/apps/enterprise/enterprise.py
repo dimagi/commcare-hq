@@ -47,6 +47,7 @@ class EnterpriseReport(ABC):
     ODATA_FEEDS = 'odata_feeds'
     COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
     SMS = 'sms'
+    TWO_FACTOR_AUTH = '2fa'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
@@ -94,6 +95,8 @@ class EnterpriseReport(ABC):
             report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
         elif slug == cls.SMS:
             report = EnterpriseSMSReport(account, couch_user, **kwargs)
+        elif slug == cls.TWO_FACTOR_AUTH:
+            report = Enterprise2FAReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
@@ -561,3 +564,22 @@ class EnterpriseSMSReport(EnterpriseReport):
         num_errors = sum([result['direction_count'] for result in results if result['error']])
 
         return [(domain_obj.name, num_sent, num_received, num_errors), ]
+
+
+class Enterprise2FAReport(EnterpriseReport):
+    title = gettext_lazy('Two Factor Authentication')
+    total_description = gettext_lazy('# of Domains not having 2FA enforced')
+
+    @property
+    def headers(self):
+        return [_('Domain not having 2FA enforced'),]
+
+    def total_for_domain(self, domain_obj):
+        if domain_obj.two_factor_auth:
+            return 0
+        return 1
+
+    def rows_for_domain(self, domain_obj):
+        if domain_obj.two_factor_auth:
+            return []
+        return [(domain_obj.name,)]
