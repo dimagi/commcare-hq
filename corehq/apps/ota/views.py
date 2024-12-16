@@ -70,7 +70,6 @@ from corehq.util.metrics import limit_domains, metrics_histogram, limit_tags
 from corehq.util.quickcache import quickcache
 
 from .case_restore import get_case_restore_response
-from .const import DEVICES_PER_USER
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .rate_limiter import rate_limit_restore
 from .utils import (
@@ -299,7 +298,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     if not can_login_on_device(couch_user._id, device_id):
         return HttpResponse(
-            _("Your user has exceeded the daily device limit of {limit}.").format(limit=DEVICES_PER_USER),
+            _("Your user has exceeded the daily device limit of {limit}.").format(limit=settings.DEVICES_PER_USER),
             status=403,
         ), None
 

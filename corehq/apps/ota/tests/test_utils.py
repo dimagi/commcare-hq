@@ -3,6 +3,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from freezegun import freeze_time
 
@@ -441,47 +442,48 @@ class CanLoginOnDeviceTest(TestCase):
         cls.within_past_day = datetime(2024, 12, 10, 0, 0)
         cls.over_one_day_ago = datetime(2024, 12, 9, 0, 0)
 
+    @override_settings(DEVICES_PER_USER=1)
     def test_allowed_if_device_count_equals_limit_but_existing_device_id(self):
         self._create_synclog(self.domain, 'abc123', 'device-id', date=self.within_past_day)
 
-        with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 1):
-            self.assertTrue(can_login_on_device('abc123', 'device-id'))
+        self.assertTrue(can_login_on_device('abc123', 'device-id'))
 
+    @override_settings(DEVICES_PER_USER=1)
     def test_not_allowed_if_device_count_equals_limit_and_new_device_id(self):
         self._create_synclog(self.domain, 'abc123', 'device-id', date=self.within_past_day)
 
-        with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 1):
-            self.assertFalse(can_login_on_device('abc123', 'new-device-id'))
+        self.assertFalse(can_login_on_device('abc123', 'new-device-id'))
 
+    @override_settings(DEVICES_PER_USER=2)
     def test_allowed_if_device_count_is_under_limit(self):
         self._create_synclog(self.domain, 'abc123', 'device-id', date=self.within_past_day)
 
-        with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 2):
-            self.assertTrue(can_login_on_device('abc123', 'new-device-id'))
+        self.assertTrue(can_login_on_device('abc123', 'new-device-id'))
 
+    @override_settings(DEVICES_PER_USER=1)
     def test_web_apps_logins_are_always_allowed(self):
         for i in range(3):
             self._create_synclog(self.domain, 'abc123', f'WebAppsLogin*{i}', date=self.within_past_day)
 
-        with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 1):
-            self.assertTrue(can_login_on_device('abc123', 'WebAppsLogin*newlogin'))
+        self.assertTrue(can_login_on_device('abc123', 'WebAppsLogin*newlogin'))
 
+    @override_settings(DEVICES_PER_USER=2)
     def test_web_apps_logins_do_not_count_towards_device_count(self):
         for i in range(3):
             self._create_synclog(self.domain, 'abc123', f'WebAppsLogin*{i}', date=self.within_past_day)
 
         self._create_synclog(self.domain, 'abc123', 'device-id', date=self.within_past_day)
 
-        with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 2):
-            self.assertTrue(can_login_on_device('abc123', 'new-device-id'))
+        self.assertTrue(can_login_on_device('abc123', 'new-device-id'))
 
+    @override_settings(DEVICES_PER_USER=1)
     def test_activity_older_than_a_day_is_ignored(self):
         for i in range(2):
             self._create_synclog(self.domain, 'abc123', f'device-{i}', date=self.over_one_day_ago)
 
-        with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 1):
-            self.assertTrue(can_login_on_device('abc123', 'new-device-id'))
+        self.assertTrue(can_login_on_device('abc123', 'new-device-id'))
 
+    @override_settings(DEVICES_PER_USER=2)
     def test_either_date_or_last_submitted_counts_towards_device_count(self):
         self._create_synclog(
             self.domain,
@@ -499,23 +501,22 @@ class CanLoginOnDeviceTest(TestCase):
             last_submitted=self.over_one_day_ago,
         )
 
-        with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 2):
-            self.assertFalse(can_login_on_device('abc123', 'new-device-id'))
+        self.assertFalse(can_login_on_device('abc123', 'new-device-id'))
 
     def test_allowed_if_empty_queryset(self):
         self.assertTrue(can_login_on_device('abc123', 'device-0'))
 
+    @override_settings(DEVICES_PER_USER=1)
     def test_allowed_for_different_user(self):
         self._create_synclog(self.domain, 'abc123', 'device-id', date=self.within_past_day)
 
-        with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 1):
-            self.assertTrue(can_login_on_device('def456', 'device-id'))
+        self.assertTrue(can_login_on_device('def456', 'device-id'))
 
+    @override_settings(DEVICES_PER_USER=1)
     def test_device_id_is_none_is_allowed(self):
         self._create_synclog(self.domain, 'abc123', 'device-id', date=self.within_past_day)
 
-        with patch('corehq.apps.ota.utils.DEVICES_PER_USER', 1):
-            self.assertTrue(can_login_on_device('abc123', 'device-id'))
+        self.assertTrue(can_login_on_device('abc123', 'device-id'))
 
     def _create_synclog(self, domain, user_id, device_id, **kwargs):
         SyncLogSQL.objects.create(

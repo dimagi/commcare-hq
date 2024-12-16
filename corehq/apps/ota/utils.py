@@ -1,6 +1,7 @@
 from functools import wraps
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Q
 from django.utils.translation import gettext as _
@@ -23,7 +24,6 @@ from corehq.apps.users.decorators import ensure_active_user_by_username
 from corehq.apps.users.models import CommCareUser
 
 from .exceptions import RestorePermissionDenied
-from .const import DEVICES_PER_USER
 from .models import DemoUserRestore
 
 
@@ -243,7 +243,7 @@ def can_login_on_device(user_id, device_id):
     )
     device_ids = result[0]['device_ids'] if result else []
 
-    if len(device_ids) < DEVICES_PER_USER or device_id in device_ids:
+    if len(device_ids) < settings.DEVICES_PER_USER or device_id in device_ids:
         return True
 
     return False
