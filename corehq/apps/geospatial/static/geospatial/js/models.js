@@ -1018,28 +1018,15 @@ hqDefine('geospatial/js/models', [
         };
 
         self.finishAssignment = function () {
-            let userCasesToConnect = {};
             for (const caseItem of self.caseData) {
                 const userItem = self.mapModel.caseGroupsIndex[caseItem.assignedUserId];
                 const groupId = (userItem) ? userItem.groupId : null;
                 self.mapModel.caseGroupsIndex[caseItem.caseId].assignedUserId = caseItem.assignedUserId;
                 self.mapModel.caseGroupsIndex[caseItem.caseId].groupId = groupId;
-
-                if (caseItem.assignedUserId) {
-                    if (!userCasesToConnect[caseItem.assignedUserId]) {
-                        userCasesToConnect[caseItem.assignedUserId] = [];
-                    }
-                    userCasesToConnect[caseItem.assignedUserId].push(caseItem.mapItem);
-                }
             }
 
             self.mapModel.removeDisbursementLayer();
-            let userToCasesList = [];
-            for (const userId in userCasesToConnect) {
-                const user = self.mapModel.caseGroupsIndex[userId].item;
-                userToCasesList.push({'user': user, 'cases': userCasesToConnect[userId]});
-            }
-            self.disbursementModel.connectUserWithCasesOnMap(userToCasesList);
+            self.disbursementModel.connectUserWithCasesOnMap();
         };
 
         self.exportAssignments = function () {
