@@ -217,7 +217,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 class EditInternalCalculationsView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_calculations'
     page_title = gettext_lazy("Calculated Properties")
-    template_name = 'domain/bootstrap5/internal_calculations.html'
+    template_name = 'domain/internal_calculations.html'
 
     @use_bootstrap5
     @method_decorator(always_allow_project_access)
