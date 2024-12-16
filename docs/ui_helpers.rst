@@ -298,7 +298,7 @@ If you want to delete data with your paginated view, you should implement someth
     class PuppiesCRUDView(BaseSectionView, CRUDPaginatedMixin):
         ...
 
-        def get_deleted_item_data(self, item_id):
+        def delete_item(self, item_id):
             deleted_puppy = Puppy.get(item_id)
             deleted_puppy.delete()
             return {
