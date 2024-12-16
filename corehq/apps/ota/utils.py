@@ -1,5 +1,5 @@
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -230,7 +230,7 @@ def can_login_on_device(user_id, device_id):
     if not device_id or device_id.startswith("WebAppsLogin"):
         return True
 
-    end_time = datetime.now()
+    end_time = datetime.now(timezone.utc)
     start_time = end_time - timedelta(days=1)
     date_query = Q(date__gte=start_time, date__lt=end_time)
     last_submitted_query = Q(last_submitted__gte=start_time, last_submitted__lt=end_time)
