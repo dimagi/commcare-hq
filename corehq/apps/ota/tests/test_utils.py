@@ -514,9 +514,7 @@ class CanLoginOnDeviceTest(TestCase):
 
     @override_settings(DEVICES_PER_USER=1)
     def test_device_id_is_none_is_allowed(self):
-        self._create_synclog(self.domain, 'abc123', 'device-id', date=self.within_past_day)
-
-        self.assertTrue(can_login_on_device('abc123', 'device-id'))
+        self.assertTrue(can_login_on_device('abc123', None))
 
     def _create_synclog(self, domain, user_id, device_id, **kwargs):
         SyncLogSQL.objects.create(
