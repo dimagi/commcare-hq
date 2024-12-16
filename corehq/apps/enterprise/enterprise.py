@@ -433,8 +433,9 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
     def rows(self):
         rows = []
         config = CommCareBuildConfig.fetch()
+        version_cache = {}
         for domain in self.account.get_domains():
-            rows.extend(self.rows_for_domain(domain, config))
+            rows.extend(self.rows_for_domain(domain, config, version_cache))
         return rows
 
     @property
@@ -442,12 +443,13 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
         total_mobile_workers = 0
         total_up_to_date = 0
         config = CommCareBuildConfig.fetch()
+        version_cache = {}
 
         def total_for_domain(domain):
             mobile_workers = get_mobile_user_count(domain, include_inactive=False)
             if mobile_workers == 0:
                 return 0, 0
-            outdated_users = len(self.rows_for_domain(domain, config))
+            outdated_users = len(self.rows_for_domain(domain, config, version_cache))
             return mobile_workers, outdated_users
 
         for domain in self.account.get_domains():
@@ -457,7 +459,7 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
 
         return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
 
-    def rows_for_domain(self, domain, config):
+    def rows_for_domain(self, domain, config, cache):
         rows = []
 
         user_query = (UserES()
@@ -481,11 +483,7 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
             if not version_in_use:
                 continue
 
-            # Remove seconds and microseconds to reduce the number of unique timestamps
-            # This helps with performance because get_latest_version_at_time is memoized
-            date_of_use_minute_precision = date_of_use.replace(second=0, microsecond=0)
-
-            latest_version_at_time_of_use = get_latest_version_at_time(config, date_of_use_minute_precision)
+            latest_version_at_time_of_use = get_latest_version_at_time(config, date_of_use, cache)
 
             if is_out_of_date(version_in_use, latest_version_at_time_of_use):
                 rows.append([

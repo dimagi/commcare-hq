@@ -4,7 +4,6 @@ from datetime import datetime
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig
-from corehq.util.quickcache import quickcache
 
 
 def get_all_versions(versions):
@@ -46,8 +45,7 @@ def extract_build_info_from_filename(content_disposition):
             pattern, content_disposition))
 
 
-@quickcache(['config', 'target_time'], timeout=100 * 60, memoize_timeout=100 * 60)
-def get_latest_version_at_time(config, target_time):
+def get_latest_version_at_time(config, target_time, cache=None):
     """
     Get the latest CommCare version that was available at a given time.
     Excludes superuser-only versions.
@@ -57,7 +55,11 @@ def get_latest_version_at_time(config, target_time):
     Args:
         config: CommCareBuildConfig instance
         target_time: datetime or string in ISO format, or None for latest version
+        cache: Dictionary for per-request caching
     """
+    if cache is None:
+        cache = {}
+
     if not target_time:
         return config.get_default().version
 
@@ -68,21 +70,29 @@ def get_latest_version_at_time(config, target_time):
     for item in reversed(config.menu):
         if item.superuser_only:
             continue
-        build_time = get_build_time(item.build.version)
+        build_time = get_build_time(item.build.version, cache)
         if build_time and build_time <= target_time:
             return item.build.version
 
     return None
 
 
-@quickcache(['version'], timeout=100 * 60, memoize_timeout=100 * 60)
-def get_build_time(version):
+def get_build_time(version, cache=None):
+    if cache is None:
+        cache = {}
+
+    if version in cache:
+        return cache[version]
+
     try:
         build = CommCareBuild.get_build(version, latest=True)
     except KeyError:
+        cache[version] = None
         return None
-    if build and build.time:
-        return build.time
+
+    build_time = build.time if build and build.time else None
+    cache[version] = build_time
+    return build_time
 
 
 def is_out_of_date(version_in_use, latest_version):
