@@ -1217,7 +1217,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                         EditDataSourceView.urlname, args=[self.domain, config._id])
                     )
             else:
-                messages.error(request, _('Data source not saved!'))
+                messages.error(request, _('Data source not saved. Please check the form for errors.'))
         except BadSpecError as e:
             messages.error(request, str(e))
         return self.get(request, *args, **kwargs)
