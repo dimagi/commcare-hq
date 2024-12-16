@@ -222,7 +222,7 @@ hqDefine("enterprise/js/project_dashboard", [
     }
 
     function updateDisplayTotal($element, kwargs) {
-        const $display = $element.find(".total");
+        const $display = $element.find(".js-total");
         const slug = $element.data("slug");
         const requestParams = {
             url: initialPageData.reverse("enterprise_dashboard_total", slug),
@@ -270,13 +270,13 @@ hqDefine("enterprise/js/project_dashboard", [
         );
 
         kissmetrics.track.event(`[${metricType}] Visited page`);
-        $(".report-panel").each(function () {
+        $(".js-report-panel").each(function () {
             var $element = $(this),
                 slug = $element.data("slug");
 
             updateDisplayTotal($element);
 
-            $element.find(".btn-primary").click(function () {
+            $element.find(".js-email-report").click(function () {
                 kissmetrics.track.event(`[${metricType}] Clicked Email Report for ` + slug);
                 var $button = $(this);
                 $button.disableButton();
