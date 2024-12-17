@@ -961,14 +961,16 @@ class GroupMembershipForm(forms.Form):
         super(GroupMembershipForm, self).__init__(*args, **kwargs)
         self.fields['selected_ids'].widget.set_url(group_api_url)
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'form-label'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
+        self.helper.form_class = 'form-horizontal'
 
         self.helper.layout = crispy.Layout(
             crispy.Field('selected_ids'),
-            crispy.ButtonHolder(
-                Submit('submit', _('Update'))
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Update'))
+                )
             )
         )
 
