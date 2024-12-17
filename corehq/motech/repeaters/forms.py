@@ -78,10 +78,12 @@ class GenericRepeaterForm(forms.Form):
                 'Forwarding Settings',
                 *self.get_ordered_crispy_form_fields()
             ),
-            twbscrispy.StrictButton(
-                self.submit_btn_text,
-                type="submit",
-                css_class='btn-primary',
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    self.submit_btn_text,
+                    type="submit",
+                    css_class='btn-primary',
+                )
             )
         )
 
