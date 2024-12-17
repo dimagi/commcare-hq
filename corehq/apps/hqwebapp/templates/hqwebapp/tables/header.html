@@ -8,7 +8,7 @@
         {{ column.attrs.th.as_html }}
       >
         {% if column.orderable %}
-          {% if column.sort_done %}
+          {% if column.sort_desc %}
             <a
               {% if use_htmx_links %}
                 class="link"
