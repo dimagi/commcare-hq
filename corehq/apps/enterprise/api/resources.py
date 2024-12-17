@@ -425,3 +425,26 @@ class CommCareVersionComplianceResource(ODataEnterpriseReportResource):
 
     def get_primary_keys(self):
         return ('mobile_worker', 'project_space',)
+
+
+class APIUsageResource(ODataEnterpriseReportResource):
+    web_user = fields.CharField()
+    api_key_name = fields.CharField()
+    scope = fields.CharField()
+    expiration_date = fields.DateTimeField()
+    created_date = fields.DateTimeField()
+    last_used_date = fields.DateTimeField()
+
+    REPORT_SLUG = EnterpriseReport.API_USAGE
+
+    def dehydrate(self, bundle):
+        bundle.data['web_user'] = bundle.obj[0]
+        bundle.data['api_key_name'] = bundle.obj[1]
+        bundle.data['scope'] = bundle.obj[2]
+        bundle.data['expiration_date'] = self.convert_datetime(bundle.obj[3])
+        bundle.data['created_date'] = self.convert_datetime(bundle.obj[4])
+        bundle.data['last_used_date'] = self.convert_datetime(bundle.obj[5])
+        return bundle
+
+    def get_primary_keys(self):
+        return ('web_user', 'api_key_name',)
