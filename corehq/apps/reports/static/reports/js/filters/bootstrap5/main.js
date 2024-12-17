@@ -15,6 +15,7 @@ hqDefine("reports/js/filters/bootstrap5/main", [
     'reports/js/filters/case_list_explorer',
     'select2/dist/js/select2.full.min',
     'reports/js/filters/case_list_explorer_knockout_bindings',
+    'hqwebapp/js/daterangepicker.config',
 ], function (
     $,
     _,
