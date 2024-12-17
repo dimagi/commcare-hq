@@ -240,7 +240,7 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
 class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     urlname = 'feature_flags_and_privileges'
     page_title = gettext_lazy("Feature Flags and Privileges")
-    template_name = 'domain/admin/bootstrap5/flags_and_privileges.html'
+    template_name = 'domain/admin/flags_and_privileges.html'
 
     def _get_toggles(self):
 
