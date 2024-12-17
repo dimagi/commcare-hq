@@ -4,6 +4,20 @@
 
 {% js_entry 'domain/js/bootstrap5/toggles' %}
 
+{% block stylesheets %}
+  <style>
+    .success > td {
+      background-color: var(--bssuccess-bg-subtle);
+    }
+    .warning > td {
+      background-color: var(--bswarning-bg-subtle);
+    }
+    .bg-default, .bg-release {
+      background-color: rgba(var(--bssecondary-rgb), 1);
+    }
+  </style>
+{% endblock %}
+
 {% block page_content %}
 
   {% initial_page_data 'domain' domain %}
@@ -80,7 +94,7 @@
         <tbody data-bind="foreach: toggles">
         <tr>
           <td>
-                            <span data-bind="css: ('label-' + tagCssClass),
+                            <span data-bind="css: ('bg-' + tagCssClass),
                                              text: tag"
                                   class="badge"></span>
           </td>
@@ -90,13 +104,13 @@
           </td>
 
           <td data-bind="css: {'text-body-secondary': !isEnabled()}" >
-            <div class="row clickable" data-bind="click: showHideDescription">
-              <!--ko text: badge --><!--/ko-->
+            <div class="clickable" data-bind="click: showHideDescription">
+              <!--ko text: label --><!--/ko-->
 
               <span data-bind="visible: description || helpLink">&hellip;</span>
             </div>
 
-            <div class="row" data-bind="slideVisible: expanded()">
+            <div data-bind="slideVisible: expanded()">
               <br />
               <p data-bind="visible: description, html: description"></p>
               <span data-bind="visible: helpLink">
@@ -105,7 +119,7 @@
 
               <hr data-bind="visible: description || helpLink" />
 
-              <span data-bind="css: ('label-' + tagCssClass),
+              <span data-bind="css: ('bg-' + tagCssClass),
                                                     text: tag"
                     class="badge"></span>
               <span data-bind="html: tagDescription"></span>
