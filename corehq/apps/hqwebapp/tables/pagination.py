@@ -21,7 +21,7 @@ class SelectablePaginatedTableMixin(SingleTableMixin):
 
     @property
     def paginate_by_cookie_slug(self):
-        slug = self.urlname if hasattr(self, "urlname") else self.__class__.__name__
+        slug = getattr(self, "urlname", self.__class__.__name__)
         return f'{slug}-paginate_by'
 
     @property
