@@ -356,7 +356,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         self.fields['language'].label = gettext_lazy("My Language")
 
-        self.new_helper = FormHelper()
+        self.new_helper = HQFormHelper()
         self.new_helper.form_method = 'POST'
         self.new_helper.attrs = {
             'name': 'user_information',
@@ -393,10 +393,12 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 gettext_lazy("Basic"),
                 *basic_fields
             ),
-            twbscrispy.StrictButton(
-                gettext_lazy("Update My Information"),
-                type='submit',
-                css_class='btn-primary',
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    gettext_lazy("Update My Information"),
+                    type='submit',
+                    css_class='btn-primary',
+                )
             )
         )
 
