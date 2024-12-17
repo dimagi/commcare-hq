@@ -6,13 +6,17 @@ hqDefine('geospatial/js/models', [
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
+    'mapbox.js',
+    'mapbox-gl',
+    '@mapbox/mapbox-gl-draw',
 ], function (
     $,
     ko,
     _,
     initialPageData,
     utils,
-    alertUser
+    alertUser,
+    mapboxgl
 ) {
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
@@ -467,6 +471,7 @@ hqDefine('geospatial/js/models', [
         };
 
         function isMapItemInPolygon(polygonFeature, coordinates) {
+            // TODO: add turf as a dependency
             // Will be 0 if a user deletes a point from a three-point polygon,
             // since mapbox will delete the entire polygon. turf.booleanPointInPolygon()
             // does not expect this, and will raise a 'TypeError' exception.

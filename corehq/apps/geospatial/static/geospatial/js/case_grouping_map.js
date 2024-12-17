@@ -1,11 +1,13 @@
-hqDefine("geospatial/js/case_grouping_map",[
+hqDefine("geospatial/js/case_grouping_map", [        // TODO: test, once async reports are fixed
     "jquery",
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/alert_user',
     'geospatial/js/models',
-    'geospatial/js/utils'
+    'geospatial/js/utils',
+    'reports/js/bootstrap3/base',
+    'commcarehq',
 ], function (
     $,
     ko,

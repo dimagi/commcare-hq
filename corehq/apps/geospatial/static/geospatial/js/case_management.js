@@ -1,13 +1,15 @@
 'use strict';
 
-hqDefine("geospatial/js/case_management", [
+hqDefine("geospatial/js/case_management", [     // TODO: test, once async reports are fixed
     "jquery",
     "hqwebapp/js/initial_page_data",
     "knockout",
     'geospatial/js/models',
     'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
+    'reports/js/bootstrap3/base',
     'select2/dist/js/select2.full.min',
+    'commcarehq',
 ], function (
     $,
     initialPageData,
