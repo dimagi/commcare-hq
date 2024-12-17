@@ -376,7 +376,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
 class ActivateTransferDomainView(BasePageView):
     urlname = 'activate_transfer_domain'
     page_title = 'Activate Domain Transfer'
-    template_name = 'domain/bootstrap3/activate_transfer_domain.html'
+    template_name = 'domain/bootstrap5/activate_transfer_domain.html'
 
     @property
     @memoized
@@ -420,6 +420,7 @@ class ActivateTransferDomainView(BasePageView):
 
         return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
