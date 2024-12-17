@@ -61,6 +61,8 @@
       "admin/partials/commtrack_action_table.html",
       "admin/project_limits.html",
       "admin/sms_settings.html",
+      "admin/transfer_domain.html",
+      "admin/transfer_domain_pending.html",
       "internal_calculations.html",
       "internal_settings.html"
     ]
