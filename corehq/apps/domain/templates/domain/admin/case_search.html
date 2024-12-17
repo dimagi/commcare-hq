@@ -1,8 +1,8 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'domain/js/case_search_main' %}
+{% js_entry 'domain/js/bootstrap5/case_search_main' %}
 
 {% block page_content %}
   {% include 'domain/admin/partials/case_search_templates.html' %}
@@ -12,7 +12,7 @@
   <h1>{% trans "Enable Case Search" %}</h1>
 
   <div class="row">
-    <div class="col-sm-6">
+    <div class="col-md-6">
       <form id="case-search-config">
         {% csrf_token %}
         <div data-bind="saveButton: saveButton"></div>
@@ -31,19 +31,23 @@
         </p>
 
         <p>
-          <input id="enable" type="checkbox" data-bind="checked: toggleEnabled"/>
-          <label for="enable">{% trans "Enable Case Search" %}</label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="enable" data-bind="checked: toggleEnabled"/>
+            <label class="form-check-label" for="enable">
+              {% trans "Enable Case Search" %}
+            </label>
+          </div>
         </p>
 
         {% if request.user.is_superuser %}
-          <div data-bind="visible: toggleEnabled">
+          <div data-bind="visible: toggleEnabled" class="mb-3">
             {% blocktrans %}
               Visit <a href='{{ case_search_url }}' target='_blank'>Case Search</a> to test out your configuration.
             {% endblocktrans %}
           </div>
         {% endif %}
 
-        <div id="fuzzies_div" data-bind="visible: toggleEnabled">
+        <div id="fuzzies_div" data-bind="visible: toggleEnabled" class="mb-3">
           <h2>{% trans "Fuzzy Search Properties" %}</h2>
           <p>
             {% blocktrans %}
@@ -67,15 +71,17 @@
           </button>
         </div>
 
-        <div data-bind="visible: toggleEnabled">
+        <div data-bind="visible: toggleEnabled" class="mb-3">
           <h2>{% trans "Synchronous Web Apps Submissions" %}</h2>
           <p>
-            <input id="sync-web-apps" type="checkbox" data-bind="checked: synchronousWebApps"/>
-            <label for="sync-web-apps">
-              {% blocktrans %}
-                Update case search data immediately on web apps form submission.
-              {% endblocktrans %}
-            </label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="sync-web-apps" data-bind="checked: synchronousWebApps"/>
+              <label class="form-check-label" for="sync-web-apps">
+                {% blocktrans %}
+                  Update case search data immediately on web apps form submission.
+                {% endblocktrans %}
+              </label>
+            </div>
           </p>
           <p class="help-block">
             {% blocktrans %}
@@ -84,15 +90,17 @@
           </p>
         </div>
 
-        <div data-bind="visible: toggleEnabled">
+        <div data-bind="visible: toggleEnabled" class="mb-3">
           <h2>{% trans "Sync Cases On Form Entry" %}</h2>
           <p>
-            <input id="sync-case-on-form-entry" type="checkbox" data-bind="checked: syncCaseOnFormEntry"/>
-            <label for="sync-case-on-form-entry">
-              {% blocktrans %}
-                Update local case data immediately before entering a web apps form.
-              {% endblocktrans %}
-            </label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="sync-case-on-form-entry" data-bind="checked: syncCaseOnFormEntry"/>
+              <label class="form-check-label" for="sync-case-on-form-entry">
+                {% blocktrans %}
+                  Update local case data immediately before entering a web apps form.
+                {% endblocktrans %}
+              </label>
+            </div>
           </p>
           <p class="help-block">
             {% blocktrans %}
@@ -101,7 +109,7 @@
           </p>
         </div>
 
-        <div data-bind="visible: toggleEnabled">
+        <div data-bind="visible: toggleEnabled" class="mb-3">
           <h2>{% trans "Remove Special Characters" %}</h2>
           <p>
             {% blocktrans %}
@@ -124,7 +132,7 @@
             <tbody data-bind="foreach: ignorePatterns">
             <tr>
               <td>
-                <select class="form-control" data-bind="options: $root.caseTypes, value: caseType"></select>
+                <select class="form-select" data-bind="options: $root.caseTypes, value: caseType"></select>
               </td>
               <td>
                 <input type="text" class="form-control" data-bind="value: caseProperty" placeholder="e.g. name" />
@@ -134,7 +142,7 @@
               </td>
               <td>
                 <button type="button"
-                        class="btn btn-danger pull-right"
+                        class="btn btn-outline-danger float-end"
                         data-bind="click: function(){$parent.removeIgnorePatterns($data); $parent.change();}">
                   <i class="fa-regular fa-trash-can"></i>
                 </button>

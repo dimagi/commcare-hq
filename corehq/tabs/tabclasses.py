@@ -462,7 +462,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
-        '/a/{domain}/geospatial/',
+        '/a/{domain}/microplanning/',
     )
 
     @property
@@ -583,7 +583,7 @@ class ProjectDataTab(UITab):
 
     @property
     def _can_view_geospatial(self):
-        return toggles.GEOSPATIAL.enabled(self.domain)
+        return toggles.MICROPLANNING.enabled(self.domain)
 
     @property
     def _is_viewable(self):
@@ -1010,7 +1010,7 @@ class ProjectDataTab(UITab):
                 'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
             },
             {
-                'title': _("Configure Geospatial Settings"),
+                'title': _("Configure Microplanning Settings"),
                 'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
             }
         ]
@@ -1812,16 +1812,25 @@ class EnterpriseSettingsTab(UITab):
         enterprise_user_management_views = []
 
         if has_privilege(self._request, privileges.PROJECT_ACCESS):
-            enterprise_views.extend([
+            enterprise_views.append(
                 {
-                    'title': _('Enterprise Dashboard'),
-                    'url': reverse('enterprise_dashboard', args=[self.domain]),
-                },
+                    'title': _('Platform Overview'),
+                    'url': reverse('platform_overview', args=[self.domain]),
+                }
+            )
+            if toggles.ENTERPRISE_DASHBOARD_IMPROVEMENTS.enabled_for_request(self._request):
+                enterprise_views.append(
+                    {
+                        'title': _('Security Center'),
+                        'url': reverse('security_center', args=[self.domain]),
+                    }
+                )
+            enterprise_views.append(
                 {
                     'title': _('Enterprise Settings'),
                     'url': reverse('enterprise_settings', args=[self.domain]),
-                },
-            ])
+                }
+            )
         enterprise_views.append({
             'title': _('Billing Statements'),
             'url': reverse('enterprise_billing_statements',
@@ -2475,9 +2484,17 @@ class AdminTab(UITab):
 
     @property
     def dropdown_items(self):
+        if (self.couch_user and not self.couch_user.is_superuser
+                and (toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
+            return [
+                dropdown_dict(_("System Info"), url=reverse("system_info")),
+                dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
+            ]
+
         submenu_context = [
             dropdown_dict(_("Reports"), is_header=True),
             dropdown_dict(_("Admin Reports"), url=reverse("default_admin_report")),
+            dropdown_dict(_("System Info"), url=reverse("system_info")),
             dropdown_dict(_("Management"), is_header=True),
         ]
         try:
@@ -2499,6 +2516,17 @@ class AdminTab(UITab):
 
     @property
     def sidebar_items(self):
+        # todo: convert these to dispatcher-style like other reports
+        if (self.couch_user
+                and (
+                not self.couch_user.is_superuser
+                and toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
+            return [
+                (_('System Health'), [
+                    {'title': _('System Info'),
+                     'url': reverse('system_info')},
+                ])]
+
         admin_operations = [
             {'title': _('Style Guide'),
              'url': reverse(MainStyleGuideView.urlname),
@@ -2524,6 +2552,9 @@ class AdminTab(UITab):
                  'url': reverse('doc_in_es')},
             ]
             system_operations = [
+                {'title': _('System Info'),
+                 'url': reverse('system_info'),
+                 'icon': 'fa fa-heartbeat'},
                 {'title': _('Branches on Staging'),
                  'url': reverse('branches_on_staging'),
                  'icon': 'fa fa-tree'},
@@ -2598,7 +2629,8 @@ class AdminTab(UITab):
     @property
     def _is_viewable(self):
         return (self.couch_user
-                and self.couch_user.is_superuser
+                and (self.couch_user.is_superuser
+                     or toggles.IS_CONTRACTOR.enabled(self.couch_user.username))
                 and not is_request_using_sso(self._request))
 
 

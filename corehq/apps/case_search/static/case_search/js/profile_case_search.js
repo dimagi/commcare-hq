@@ -5,6 +5,7 @@ hqDefine('case_search/js/profile_case_search', [
     'underscore',
     'knockout',
     'hqwebapp/js/bootstrap5/alert_user',
+    'commcarehq',
 ], function (
     $,
     _,

@@ -19,6 +19,7 @@ def get_status_data():
 
 
 def update_completed_summary(summary):
+    summary = dict(sorted(summary.items()))
     summary_string = json.dumps(summary, indent=2)
     with open(get_status_file_path(), "w") as f:
         f.writelines(summary_string + '\n')
@@ -73,6 +74,7 @@ def _mark_file_as_complete(app_name, short_path, file_type):
     app_summary.setdefault(file_type, []).append(
         short_path.removeprefix(f"{app_name}/")
     )
+    app_summary[file_type] = sorted(app_summary[file_type])
     apply_app_summary_changes(app_name, app_summary)
 
 

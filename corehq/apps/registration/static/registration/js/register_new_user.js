@@ -6,6 +6,7 @@ hqDefine('registration/js/register_new_user', [
     'hqwebapp/js/initial_page_data',
     'analytix/js/kissmetrix',
     'registration/js/login',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -17,12 +18,21 @@ hqDefine('registration/js/register_new_user', [
     'use strict';
 
     $('#js-create-account').click(function (e) {
+        startCreateAccount(e);
+    });
+
+    $('#js-self-signup').click(function (e) {
+        regForm.isSelfSignup(true);
+        startCreateAccount(e);
+    });
+
+    var startCreateAccount = function (e) {
         e.preventDefault();
         $('#registration-choose-plan-container').hide();
         $('#registration-form-container').fadeIn();
 
         $('#back-to-start-btn').removeClass('hide');
-    });
+    };
 
     $('#back-to-start-btn').click(function () {
         $('#registration-form-container').hide();

@@ -2,6 +2,7 @@ hqDefine('locations/js/import', [
     'jquery',
     'knockout',
     'analytix/js/google',
+    'commcarehq',
 ], function (
     $,
     ko,

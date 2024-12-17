@@ -65,17 +65,16 @@ hqDefine("geospatial/js/case_management", [
 
         self.handleDisbursementResults = function (result) {
             // Clean stale disbursement results
-            mapModel.removeDisbursementLayers();
+            mapModel.removeDisbursementLayer();
 
             let groupId = 0;
+            mapModel.caseGroupsIndex = {};
             Object.keys(result).forEach((userId) => {
                 const user = mapModel.userMapItems().find((userModel) => {return userModel.itemId === userId;});
                 mapModel.caseGroupsIndex[userId] = {groupId: groupId, item: user};
 
-                let cases = [];
                 mapModel.caseMapItems().forEach((caseModel) => {
                     if (result[userId].includes(caseModel.itemId)) {
-                        cases.push(caseModel);
                         mapModel.caseGroupsIndex[caseModel.itemId] = {
                             groupId: groupId,
                             item: caseModel,
@@ -83,25 +82,16 @@ hqDefine("geospatial/js/case_management", [
                         };
                     }
                 });
-                self.connectUserWithCasesOnMap(user, cases);
                 groupId += 1;
             });
+            self.connectUserWithCasesOnMap();
             self.setBusy(false);
         };
 
-        self.clearConnectionLines = function (cases) {
-            let mapInstance = mapModel.mapInstance;
+        self.getCasesForDisbursement = function (cases) {
             let caseData = [];
             const hasSelectedCases = mapModel.hasSelectedCases();
             cases.forEach(function (c) {
-                const layerId = mapModel.getLineFeatureId(c.itemId);
-                if (mapInstance.getLayer(layerId)) {
-                    mapInstance.removeLayer(layerId);
-                }
-                if (mapInstance.getSource(layerId)) {
-                    mapInstance.removeSource(layerId);
-                }
-
                 // Either select all if none selected, or only pick selected cases
                 if (!hasSelectedCases || c.isSelected()) {
                     caseData.push({
@@ -111,13 +101,13 @@ hqDefine("geospatial/js/case_management", [
                     });
                 }
             });
-
             return caseData;
         };
 
         self.runCaseDisbursementAlgorithm = function (cases, users) {
             self.setBusy(true);
-            const caseData = self.clearConnectionLines(cases);
+            mapModel.removeDisbursementLayer();
+            const caseData = self.getCasesForDisbursement(cases);
 
             self.setDisbursementParameters = function (parameters) {
                 var parametersList = [
@@ -181,38 +171,35 @@ hqDefine("geospatial/js/case_management", [
             });
         };
 
-        self.connectUserWithCasesOnMap = function (user, cases) {
-            cases.forEach((caseModel) => {
-                const lineCoordinates = [
-                    [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
-                    [caseModel.itemData.coordinates.lng, caseModel.itemData.coordinates.lat],
-                ];
-                let mapInstance = mapModel.mapInstance;
-                mapInstance.addLayer({
-                    id: mapModel.getLineFeatureId(caseModel.itemId),
-                    type: 'line',
-                    source: {
-                        type: 'geojson',
-                        data: {
+        self.connectUserWithCasesOnMap = function () {
+            let disbursementLinesSource = generateDisbursementLinesSource();
+            mapModel.addDisbursementLinesLayer(disbursementLinesSource);
+        };
+
+        function generateDisbursementLinesSource() {
+            let disbursementLinesSource = {
+                'type': 'FeatureCollection',
+                'features': [],
+            };
+            for (const itemId of Object.keys(mapModel.caseGroupsIndex)) {
+                let element = mapModel.caseGroupsIndex[itemId];
+                if ('assignedUserId' in element) {
+                    let user = mapModel.caseGroupsIndex[element.assignedUserId].item;
+                    const lineCoordinates = [
+                        [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
+                        [element.item.itemData.coordinates.lng, element.item.itemData.coordinates.lat],
+                    ];
+                    disbursementLinesSource.features.push(
+                        {
                             type: 'Feature',
                             properties: {},
-                            geometry: {
-                                type: 'LineString',
-                                coordinates: lineCoordinates,
-                            },
-                        },
-                    },
-                    layout: {
-                        'line-join': 'round',
-                        'line-cap': 'round',
-                    },
-                    paint: {
-                        'line-color': '#808080',
-                        'line-width': 1,
-                    },
-                });
-            });
-        };
+                            geometry: { type: 'LineString', coordinates: lineCoordinates },
+                        }
+                    );
+                }
+            }
+            return disbursementLinesSource;
+        }
 
         return self;
     };
@@ -469,12 +456,12 @@ hqDefine("geospatial/js/case_management", [
     $(document).ajaxComplete(function (event, xhr, settings) {
         // When mobile workers are loaded from the user filtering menu, ajaxComplete will be called again.
         // We don't want to reload the map or cases when this happens, so simply return.
-        const isAfterUserLoad = settings.url.includes('geospatial/get_users_with_gps/');
+        const isAfterUserLoad = settings.url.includes('microplanning/get_users_with_gps/');
         if (isAfterUserLoad) {
             return;
         }
 
-        const isAfterReportLoad = settings.url.includes('geospatial/async/case_management_map/');
+        const isAfterReportLoad = settings.url.includes('microplanning/async/microplanning_map/');
         // This indicates clicking Apply button or initial page load
         if (isAfterReportLoad) {
             initMap();
@@ -497,7 +484,7 @@ hqDefine("geospatial/js/case_management", [
         }
 
         // This indicates that report data is fetched either after apply or after pagination
-        const isAfterDataLoad = settings.url.includes('geospatial/json/case_management_map/');
+        const isAfterDataLoad = settings.url.includes('microplanning/json/microplanning_map/');
         if (!isAfterDataLoad) {
             return;
         }
@@ -520,8 +507,8 @@ hqDefine("geospatial/js/case_management", [
             if (polygonFilterModel) {
                 selectMapItemsInPolygons();
             }
-            if (mapModel.hasDisbursementLayers()) {
-                mapModel.removeDisbursementLayers();
+            if (mapModel.hasDisbursementLayer()) {
+                mapModel.removeDisbursementLayer();
             }
         }
     });

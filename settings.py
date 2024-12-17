@@ -320,7 +320,6 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
-    'corehq.apps.oauth_integrations',
     'corehq.messaging.MessagingAppConfig',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
@@ -454,7 +453,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
-LOGIN_TEMPLATE = "login_and_password/login.html"
+LOGIN_TEMPLATE = "login_and_password/bootstrap3/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
@@ -1153,12 +1152,6 @@ MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
 
-# GSheets related work that was dropped, but should be picked up in the near future
-GOOGLE_OATH_CONFIG = {}
-GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-GOOGLE_SHEETS_API_NAME = "sheets"
-GOOGLE_SHEETS_API_VERSION = "v4"
-DAYS_KEEP_GSHEET_STATUS = 14
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1978,6 +1971,7 @@ DOMAIN_MODULE_MAP = {
     'kenya-vca': 'custom.abt',
     'pmievolve-ethiopia-1': 'custom.abt',
     'pmievolve-ghana': 'custom.abt',
+    'pmievolve-kenya': 'custom.abt',
     'pmievolve-madagascar': 'custom.abt',
     'pmievolve-malawi': 'custom.abt',
     'pmievolve-mozambique': 'custom.abt',
@@ -2103,3 +2097,5 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 
 # NOTE: if you are adding a new setting that you intend to have other environments override,
 # make sure you add it before localsettings are imported (from localsettings import *)
+
+MAX_GEOSPATIAL_INDEX_DOC_LIMIT = 1000000

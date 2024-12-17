@@ -59,6 +59,10 @@ class LocationTypeResource(BaseLocationsResource):
             'pk': obj.pk
         })
 
+    def dehydrate_parent(self, bundle):
+        if bundle.obj.parent_type:
+            return self.get_resource_uri(bundle.obj.parent_type)
+
 
 class LocationResource(BaseLocationsResource):
     location_data = fields.DictField('metadata')
@@ -107,3 +111,16 @@ class LocationResource(BaseLocationsResource):
             'api_name': self.api_name,
             'location_id': obj.location_id
         })
+
+    def dehydrate_location_type(self, bundle):
+        if bundle.obj.location_type_id:
+            return absolute_reverse('api_dispatch_detail', kwargs={
+                'resource_name': 'location_type',
+                'domain': bundle.obj.domain,
+                'api_name': self.api_name,
+                'pk': bundle.obj.location_type_id,
+            })
+
+    def dehydrate_parent(self, bundle):
+        if bundle.obj.parent:
+            return self.get_resource_uri(bundle.obj.parent)

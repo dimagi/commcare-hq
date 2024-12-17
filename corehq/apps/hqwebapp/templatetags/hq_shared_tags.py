@@ -29,6 +29,7 @@ from corehq.apps.hqwebapp.exceptions import (
 )
 from corehq.apps.hqwebapp.models import Alert
 from corehq.motech.utils import pformat_json
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone
 
@@ -726,15 +727,27 @@ class RequireJSMainNode(template.Node):
     def __init__(self, name, value):
         self.name = name
         self.value = value
+        self.origin = None
 
     def __repr__(self):
         return "<RequireJSMain Node: %r>" % (self.value,)
 
     def render(self, context):
         if self.name not in context and self.value:
+            # Check that there isn't already an entry point from the other bundler tool
+            # If there is, don't add this one, because having both set will cause js errors
+            other_tag = "js_entry" if self.name == "requirejs_main" else "requirejs_main"
+            other_value = None
+            for context_dict in context.dicts:
+                if other_tag in context_dict:
+                    other_value = context_dict.get(other_tag)
+                    msg = f"Discarding {self.value} {self.name} value because {other_value} is using {other_tag}"
+                    soft_assert('jschweers@dimagi.com', notify_admins=False, send_to_ops=False)(False, msg)
             # set name in block parent context
-            context.dicts[-2]['use_js_bundler'] = True
-            context.dicts[-2][self.name] = self.value
+            if not other_value:
+                context.dicts[-2]['use_js_bundler'] = True
+                context.dicts[-2][self.name] = self.value
+
         return ''
 
 

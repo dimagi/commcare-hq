@@ -21,13 +21,9 @@ WHITELIST = [
     # warnings that may be resolved with a library upgrade
     ("bs4.builder", "option of HTMLParser() has never done anything"),
     ("couchdbkit.schema.properties", "'collections.abc'"),
-    ("ddtrace.internal.module", "the imp module is deprecated"),
+    ("ddtrace.internal.module", "pkg_resources is deprecated as an API"),
     ("eulxml", "pkg_resources is deprecated as an API"),
-    ("nose.importer", "the imp module is deprecated"),
-    ("nose.util", "inspect.getargspec() is deprecated"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
-    ("nose.suite", "'collections.abc'"),
-    ("nose.plugins.collect", "'collections.abc'"),
     ("", "", RemovedInDjango50Warning),
     ("", "", RemovedInDjango51Warning),
 
@@ -54,8 +50,8 @@ WHITELIST = [
         "elasticsearch6.connection.http_urllib3",
         "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
-    # Should be removed when Nose is updated
-    ("nose.plugins.manager", "pkg_resources is deprecated as an API."),
+    # Open files are leaked all over the place, it will probably take a long time to fix all of them
+    ("", "unclosed file", ResourceWarning),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
@@ -72,7 +68,7 @@ WHITELIST = [
 ]
 
 
-def configure_warnings(is_testing):
+def configure_warnings(is_testing=False):
     strict = is_testing or os.environ.get("CCHQ_STRICT_WARNINGS")
     if strict:
         augment_warning_messages()

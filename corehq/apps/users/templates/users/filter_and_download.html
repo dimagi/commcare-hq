@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main 'users/js/filtered_download' %}
+{% js_entry_b3 'users/js/filtered_download' %}
 
 {% block page_content %}
   {% initial_page_data 'count_users_url' count_users_url %}

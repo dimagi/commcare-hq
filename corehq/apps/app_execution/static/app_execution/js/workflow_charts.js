@@ -4,6 +4,7 @@ hqDefine("app_execution/js/workflow_charts", [
     'moment/moment',
     'd3/d3.min',
     'nvd3/nv.d3.latest.min',  // version 1.1.10 has a bug that affects line charts with multiple series
+    'commcarehq',
 ], function (
     $, moment, d3, nv
 ) {

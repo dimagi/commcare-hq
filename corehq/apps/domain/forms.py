@@ -1273,6 +1273,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             )
 
         self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_class = "form-horizontal"
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -2382,7 +2383,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.fields['start_date'].initial = datetime.date.today()
             self.fields['end_date'].initial = datetime.date.today() + relativedelta(years=1)
             self.helper.layout = crispy.Layout(
-                hqcrispy.B3TextField('software_plan_edition', plan_edition),
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails'),

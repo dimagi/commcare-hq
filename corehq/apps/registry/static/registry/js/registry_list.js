@@ -8,6 +8,7 @@ hqDefine("registry/js/registry_list", [
     'registry/js/registry_actions',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
     'hqwebapp/js/select2_knockout_bindings.ko',
+    'commcarehq',
 ], function (
     $,
     _,

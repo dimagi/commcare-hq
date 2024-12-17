@@ -325,7 +325,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
             metrics_counter("commcare.sms.outbound_message", tags={
                 'domain': msg.domain,
                 'status': 'ok',
-                'backend': _get_backend_tag(backend),
+                **_get_backend_tags(backend)
             })
         else:
             raise BackendAuthorizationException(
@@ -340,7 +340,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         metrics_counter("commcare.sms.outbound_message", tags={
             'domain': msg.domain,
             'status': 'error',
-            'backend': _get_backend_tag(backend),
+            **_get_backend_tags(backend),
         })
         should_log_exception = True
 
@@ -354,7 +354,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
 
 
 @quickcache(['backend_id'], skip_arg='backend')
-def _get_backend_tag(backend=None, backend_id=None):
+def _get_backend_tags(backend=None, backend_id=None):
     assert not (backend_id and backend)
     if backend_id:
         try:
@@ -363,11 +363,15 @@ def _get_backend_tag(backend=None, backend_id=None):
             backend = None
 
     if not backend:
-        return 'unknown'
-    elif backend.is_global:
-        return backend.name
+        return {
+            'backend': 'unknown',
+            'backend_hq_api_id': 'unknown',
+        }
     else:
-        return f'{backend.domain}/{backend.name}'
+        return {
+            'backend': backend.name if backend.is_global else f'{backend.domain}/{backend.name}',
+            'backend_hq_api_id': backend.hq_api_id,
+        }
 
 
 def should_log_exception_for_backend(backend, exception):
@@ -699,8 +703,8 @@ def process_incoming(msg):
         # - always report the metric even if it fails
         metrics_counter("commcare.sms.inbound_message", tags={
             'domain': msg.domain,
-            'backend': _get_backend_tag(backend_id=msg.backend_id),
             'status': status,
+            **_get_backend_tags(backend_id=msg.backend_id),
         })
 
 

@@ -3,6 +3,7 @@ hqDefine("domain/js/manage_alerts",[
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function ($, ko, _, initialPageData) {
 
     var domainAlert = function (options) {

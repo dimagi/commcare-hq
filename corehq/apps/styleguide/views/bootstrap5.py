@@ -14,6 +14,7 @@ from corehq.apps.styleguide.context import (
     get_js_example_context,
     get_gradient_colors,
     CodeForDisplay,
+    CodeForDisplayWithPartial,
 )
 from corehq.apps.styleguide.examples.bootstrap5.checkbox_form import CheckboxDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_basic import BasicCrispyExampleForm
@@ -102,6 +103,21 @@ def styleguide_htmx_and_alpine(request):
                 code=get_example_context('styleguide/htmx_todo/item_done.html'),
                 language="Django",
             ),
+            'loading_button': CodeForDisplayWithPartial(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_loading_button.html'),
+                partial="styleguide/bootstrap5/examples/htmx_loading_button.html",
+                language="Django",
+            ),
+            'loading_checkbox': CodeForDisplayWithPartial(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_loading_checkbox.html'),
+                partial="styleguide/bootstrap5/examples/htmx_loading_checkbox.html",
+                language="Django",
+            ),
+            'loading_form': CodeForDisplayWithPartial(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_loading_form.html'),
+                partial="styleguide/bootstrap5/examples/htmx_loading_form.html",
+                language="Django",
+            ),
         }
     })
     return render(request, 'styleguide/bootstrap5/htmx_and_alpine.html', context)
@@ -167,6 +183,9 @@ def styleguide_molecules_selections(request):
                 SelectToggleDemoForm(), get_python_example_context('select_toggle_form.py'),
             ),
             'select2_manual': get_example_context('styleguide/bootstrap5/examples/select2_manual.html'),
+            'select2_manual_allow_clear': get_example_context(
+                'styleguide/bootstrap5/examples/select2_manual_allow_clear.html'
+            ),
             'select2_manual_crispy': CrispyFormsWithJsDemo(
                 form=Select2ManualDemoForm(),
                 code_python=get_python_example_context('select2_manual_form.py'),

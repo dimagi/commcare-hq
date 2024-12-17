@@ -5,7 +5,8 @@ hqDefine('locations/js/filtered_download', [
     'hqwebapp/js/initial_page_data',
     'locations/js/widgets',     // location search
     'hqwebapp/js/components/select_toggle',
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // slideVisible binding
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // slideVisible binding
+    'commcarehq',
 ], function (
     $,
     ko,

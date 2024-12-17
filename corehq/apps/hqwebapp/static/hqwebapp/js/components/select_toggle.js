@@ -23,11 +23,13 @@ hqDefine('hqwebapp/js/components/select_toggle', [
     'knockout',
     'underscore',
     'hqwebapp/js/components.ko',
+    "hqwebapp/js/initial_page_data",
 ], function (
     $,
     ko,
     _,
     koComponents,
+    initialPageData
 ) {
     const component = {
         viewModel: function (params) {
@@ -36,7 +38,8 @@ hqDefine('hqwebapp/js/components/select_toggle', [
             // Attributes passed on to the input
             self.name = params.name || '';
             self.id = params.id || '';
-            self.disabled = params.disabled || false;
+            const readOnlyMode = initialPageData.get("read_only_mode");
+            self.disabled = params.disabled || readOnlyMode;
             self.htmlAttrs = {};
             if (self.name) {
                 self.htmlAttrs.name = self.name;
