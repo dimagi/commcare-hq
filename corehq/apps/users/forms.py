@@ -34,7 +34,7 @@ from corehq.apps.enterprise.models import (
     EnterprisePermissions,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.crispy import HQModalFormHelper
+from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput, Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
@@ -1412,18 +1412,19 @@ class AddPhoneNumberForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(AddPhoneNumberForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             Fieldset(
                 _('Add a Phone Number'),
                 'form_type',
                 twbscrispy.PrependedText('phone_number', '+', type='tel', pattern=r'\d+')
             ),
-            StrictButton(
-                _('Add Number'),
-                css_class='btn-primary disable-on-submit',
-                type='submit',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Add Number'),
+                    css_class='btn-primary disable-on-submit',
+                    type='submit',
+                )
             )
         )
         self.fields['phone_number'].label = gettext_lazy('Phone number')
