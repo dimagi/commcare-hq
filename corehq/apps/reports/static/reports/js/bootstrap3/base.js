@@ -3,6 +3,8 @@ hqDefine("reports/js/bootstrap3/base", [
     'hqwebapp/js/initial_page_data',
     'reports/js/filters/bootstrap3/main',
     'reports/js/bootstrap3/report_config_models',
+    'reports/js/bootstrap3/tabular',
+    'commcarehq',
 ], function (
     $,
     initialPageData,
