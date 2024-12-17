@@ -712,6 +712,12 @@ class ConnectMessageContent(Content):
         send_message_to_verified_number(connect_number, message, logged_subevent=logged_subevent)
 
 class ConnectMessageSurveyContent(SurveyContent):
+    def get_critical_section(self, recipient):
+        if self.critical_section_already_acquired:
+            return no_op_context_manager()
+
+        return critical_section_for_smsforms_sessions(recipient.get_id)
+
     def send(self, recipient, logged_event, phone_entry=None):
         app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)
         if any([o is None for o in (app, module, form)]):
