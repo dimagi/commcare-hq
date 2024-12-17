@@ -54,6 +54,7 @@
   "domain": {
     "in_progress": true,
     "templates": [
+      "activate_transfer_domain.html",
       "admin/case_search.html",
       "admin/commtrack_settings.html",
       "admin/flags_and_privileges.html",

@@ -376,7 +376,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
 class ActivateTransferDomainView(BasePageView):
     urlname = 'activate_transfer_domain'
     page_title = 'Activate Domain Transfer'
-    template_name = 'domain/bootstrap5/activate_transfer_domain.html'
+    template_name = 'domain/activate_transfer_domain.html'
 
     @property
     @memoized
