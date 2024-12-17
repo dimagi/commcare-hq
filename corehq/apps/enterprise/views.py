@@ -123,7 +123,11 @@ def security_center(request, domain):
     )
 
     context.update({
-        'reports': [],
+        'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
+            EnterpriseReport.TWO_FACTOR_AUTH,
+        )],
+        'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
+        'uses_date_range': [],
         'metric_type': 'Security Center',
     })
 
