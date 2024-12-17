@@ -8,7 +8,7 @@ def get_fake_tabular_data(num_entries):
     for row in range(0, num_entries):
         rows.append([
             "patient",
-            fake_data.get_first_name() + fake_data.get_last_name(),
+            f"{fake_data.get_first_name()} {fake_data.get_last_name()}",
             fake_data.get_color(),
             fake_data.get_big_cat(),
             fake_data.get_past_date(),
