@@ -1,11 +1,15 @@
-hqDefine("geospatial/js/case_grouping_map",[
+hqDefine("geospatial/js/case_grouping_map", [
     "jquery",
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/alert_user',
     'geospatial/js/models',
-    'geospatial/js/utils'
+    'geospatial/js/utils',
+    'mapbox-gl/dist/mapbox-gl',
+    'reports/js/bootstrap3/base',
+    'hqwebapp/js/select2_knockout_bindings.ko',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -13,7 +17,8 @@ hqDefine("geospatial/js/case_grouping_map",[
     initialPageData,
     alertUser,
     models,
-    utils
+    utils,
+    mapboxgl
 ) {
 
     const MAPBOX_LAYER_VISIBILITY = {
@@ -282,7 +287,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             const caseGroupID = caseItem.groupId;
             if (caseGroupsInstance.groupIDInVisibleGroupIds(caseGroupID)) {
                 color = groupColorByID[caseGroupID];
-                const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
+                const marker = new mapboxgl.Marker({ color: color, draggable: false });
                 marker.setLngLat([coordinates.lng, coordinates.lat]);
 
                 // Add the marker to the map
