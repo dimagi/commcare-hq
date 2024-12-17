@@ -14,6 +14,9 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
+from corehq.apps.es.client import manager
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.locations.models import SQLLocation
@@ -42,7 +45,7 @@ from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from corehq.util.test_utils import (
     create_test_case,
     set_parent_case,
-    unregistered_django_model,
+    unregistered_django_model, flag_enabled,
 )
 from testapps.test_pillowtop.utils import process_pillow_changes
 
@@ -114,15 +117,19 @@ class PassesUserDataFilterTest(TestCase):
         schedule = AlertSchedule()
         schedule.use_user_case_for_filter = False
         schedule.user_data_filter = {"wants_email": ["no"]}
-        self.assertFalse(ScheduleInstance(domain=self.domain, schedule=schedule)
-                         ._passes_user_data_filter(self.mobile_user))
+        passed, msg = (ScheduleInstance(domain=self.domain, schedule=schedule).
+                       _passes_user_data_filter(self.mobile_user))
+        self.assertFalse(passed)
+        self.assertEqual(msg, "wants_email: allowed: (no), found: (yes)")
 
     def test_fails_with_user_data_filter_because_one_value_does_not_match(self):
         schedule = AlertSchedule()
         schedule.use_user_case_for_filter = False
         schedule.user_data_filter = {"wants_email": ["yes"], "color": ["red"]}
-        self.assertFalse(ScheduleInstance(domain=self.domain, schedule=schedule)
-                         ._passes_user_data_filter(self.mobile_user))
+        passed, msg = (ScheduleInstance(domain=self.domain, schedule=schedule).
+                       _passes_user_data_filter(self.mobile_user))
+        self.assertFalse(passed)
+        self.assertEqual(msg, "color: allowed: (red), found: (green)")
 
     def test_passes_with_user_case_filter(self):
         case = create_case_2(self.domain, case_type="thing", case_json={"case_color": "green"})
@@ -147,7 +154,17 @@ class PassesUserDataFilterTest(TestCase):
         self.assertTrue(ScheduleInstance(domain=self.domain, schedule=schedule)
                         ._passes_user_data_filter(self.mobile_user))
 
+    def test_fails_if_filter_on_case_but_no_case(self):
+        schedule = AlertSchedule()
+        schedule.use_user_case_for_filter = True
+        schedule.user_data_filter = {"wants_email": ["yes"]}
+        passed, msg = (ScheduleInstance(schedule=schedule).
+                       _passes_user_data_filter(self.mobile_user))
+        self.assertFalse(passed)
+        self.assertEqual("No user case to filter on", msg)
 
+
+@es_test(requires=[user_adapter], setup_class=True)
 class SchedulingRecipientTest(TestCase):
     domain = 'scheduling-recipient-test'
 
@@ -161,9 +178,14 @@ class SchedulingRecipientTest(TestCase):
         cls.country_location = make_loc('usa', domain=cls.domain, type='country')
         cls.state_location = make_loc('ma', domain=cls.domain, type='state', parent=cls.country_location)
         cls.city_location = make_loc('boston', domain=cls.domain, type='city', parent=cls.state_location)
+        cls.city_location_2 = make_loc('salem', domain=cls.domain, type='city', parent=cls.state_location)
 
         cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc', None, None)
         cls.mobile_user.set_location(cls.city_location)
+        cls.mobile_user.add_to_assigned_locations(cls.city_location_2)
+
+        user_adapter.index(cls.mobile_user, refresh=True)
+        manager.index_refresh(user_adapter.index_name)
 
         cls.mobile_user2 = CommCareUser.create(cls.domain, 'mobile2', 'abc', None, None)
         cls.mobile_user2.set_location(cls.state_location)
@@ -246,6 +268,23 @@ class SchedulingRecipientTest(TestCase):
 
     def user_ids(self, users):
         return [user.get_id for user in users]
+
+    def _create_schedule(self,
+                         include_descendant_locations=False,
+                         location_type_filter=None,
+                         user_data_filter=None):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'})
+        )
+        schedule.include_descendant_locations = include_descendant_locations
+        if location_type_filter:
+            schedule.location_type_filter = location_type_filter
+        if user_data_filter:
+            schedule.user_data_filter = user_data_filter
+        schedule.save()
+        return schedule
 
     def test_specific_case_recipient(self):
         with create_case(self.domain, 'person') as case:
@@ -549,13 +588,7 @@ class SchedulingRecipientTest(TestCase):
                 self.assertIsNone(instance.recipient)
 
     def test_expand_location_recipients_without_descendants(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.include_descendant_locations = False
-        schedule.save()
+        schedule = self._create_schedule()
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
@@ -580,13 +613,7 @@ class SchedulingRecipientTest(TestCase):
         )
 
     def test_expand_location_recipients_with_descendants(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.include_descendant_locations = True
-        schedule.save()
+        schedule = self._create_schedule(include_descendant_locations=True)
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
@@ -600,14 +627,10 @@ class SchedulingRecipientTest(TestCase):
         )
 
     def test_expand_location_recipients_with_location_type_filter(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
+        schedule = self._create_schedule(
+            include_descendant_locations=True,
+            location_type_filter=[self.city_location.location_type_id]
         )
-        schedule.include_descendant_locations = True
-        schedule.location_type_filter = [self.city_location.location_type_id]
-        schedule.save()
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
@@ -620,12 +643,37 @@ class SchedulingRecipientTest(TestCase):
             [self.mobile_user.get_id]
         )
 
-    def test_expand_group_recipients(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
+    def test_expand_location_recipients_secondary_does_not_match(self):
+        schedule = self._create_schedule()
+
+        instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            timed_schedule_id=schedule.schedule_id,
+            recipient_type='Location',
+            recipient_id=self.city_location_2.location_id
         )
+        self.assertEqual(
+            list(instance.expand_recipients()),
+            []
+        )
+
+    @flag_enabled('INCLUDE_ALL_LOCATIONS')
+    def test_expand_location_recipients_secondary_matches(self):
+        schedule = self._create_schedule()
+
+        instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            timed_schedule_id=schedule.schedule_id,
+            recipient_type='Location',
+            recipient_id=self.city_location_2.location_id
+        )
+        self.assertEqual(
+            [self.mobile_user.get_id],
+            self.user_ids(instance.expand_recipients()),
+        )
+
+    def test_expand_group_recipients(self):
+        schedule = self._create_schedule()
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
             timed_schedule_id=schedule.schedule_id,
@@ -638,33 +686,31 @@ class SchedulingRecipientTest(TestCase):
         )
 
     def test_mobile_worker_recipients_with_user_data_filter(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.user_data_filter = {'role': ['nurse']}
-        schedule.save()
-
+        schedule = self._create_schedule(user_data_filter={'role': ['nurse']})
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
             timed_schedule_id=schedule.schedule_id,
             recipient_type='Group',
             recipient_id=self.group2.get_id
         )
+        message = ""
+        filtered_count = 0
+
+        def handle_filtered_recipient(_, msg):
+            nonlocal message
+            nonlocal filtered_count
+            message = msg
+            filtered_count += 1
+
         self.assertEqual(
-            self.user_ids(instance.expand_recipients()),
+            self.user_ids(instance.expand_recipients(handle_filtered_recipient)),
             [self.mobile_user4.get_id, self.mobile_user5.get_id, self.mobile_user6.get_id]
         )
+        self.assertEqual(message, "role: allowed: (nurse), found: (pharmacist)")
+        self.assertEqual(2, filtered_count)
 
     def test_web_user_recipient_with_user_data_filter(self):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.user_data_filter = {'role': ['nurse']}
-        schedule.save()
+        schedule = self._create_schedule(user_data_filter={'role': ['nurse']})
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
@@ -688,14 +734,7 @@ class SchedulingRecipientTest(TestCase):
     def test_case_group_recipient_with_user_data_filter(self):
         # The user data filter should have no effect here because all
         # the recipients are cases.
-
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule.user_data_filter = {'role': ['nurse']}
-        schedule.save()
+        schedule = self._create_schedule(user_data_filter={'role': ['nurse']})
 
         with create_case(self.domain, 'person') as case:
             case_group = CommCareCaseGroup(domain=self.domain, cases=[case.case_id])

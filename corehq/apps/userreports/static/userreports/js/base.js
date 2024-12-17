@@ -1,4 +1,4 @@
-hqDefine('reports_core/js/bootstrap3/base_template_new', function () {
+hqDefine('userreports/js/base', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     var baseUrl = initialPageData.get('url');
     function getReportUrl() {
@@ -65,7 +65,7 @@ hqDefine('reports_core/js/bootstrap3/base_template_new', function () {
             }
         };
 
-        var reportTables = hqImport("reports/js/bootstrap3/config.dataTables.bootstrap").HQReportDataTables({
+        var reportTables = hqImport("reports/js/bootstrap3/datatables_config").HQReportDataTables({
             dataTableElem: '#report_table_' + initialPageData.get('report_slug'),
             defaultRows: initialPageData.get('table_default_rows'),
             startAtRowNum: initialPageData.get('table_start_at_row'),

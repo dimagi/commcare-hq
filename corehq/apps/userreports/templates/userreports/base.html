@@ -13,7 +13,7 @@
 {% block js %}{{ block.super }}
   {% compress js %}
     <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap3/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'reports/js/bootstrap3/datatables_config.js' %}"></script>
     <script src="{% static 'reports_core/js/choice_list_utils.js' %}"></script>
     <script src="{% static 'reports_core/js/charts.js' %}"></script>
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
@@ -28,7 +28,7 @@
 
   {% include 'reports/partials/bootstrap3/filters_js.html' %}
   {% include 'reports/partials/graphs/charts_js.html' %}
-  <script src="{% static 'reports_core/js/bootstrap3/base_template_new.js' %}"></script>
+  <script src="{% static 'userreports/js/base.js' %}"></script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
