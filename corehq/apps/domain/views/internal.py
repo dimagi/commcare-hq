@@ -53,15 +53,9 @@ from corehq.const import USER_CHANGE_VIA_WEB
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
     strict_domain_fetching = True
 
-    @method_decorator(always_allow_project_access)
-    @method_decorator(login_and_domain_required)
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
-
     @property
     def main_context(self):
-        context = super(BaseInternalDomainSettingsView, self).main_context
+        context = super().main_context
         context.update({
             'project': self.domain_object,
         })
@@ -85,7 +79,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @use_jquery_ui  # datepicker
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -229,7 +223,7 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -349,7 +343,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
                 messages.info(request,
                               _("Resent transfer request for project '{domain}'").format(domain=self.domain))
 
-        return super(TransferDomainView, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         form = self.transfer_domain_form
@@ -373,7 +367,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
     def dispatch(self, request, *args, **kwargs):
         if not toggles.TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
-        return super(TransferDomainView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
 
 class ActivateTransferDomainView(BasePageView):
@@ -405,7 +399,7 @@ class ActivateTransferDomainView(BasePageView):
                 and not request.user.is_superuser):
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        return super(ActivateTransferDomainView, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, guid, *args, **kwargs):
         self.guid = guid
@@ -425,7 +419,7 @@ class ActivateTransferDomainView(BasePageView):
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
-        return super(ActivateTransferDomainView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
 
 class DeactivateTransferDomainView(View):
@@ -457,7 +451,7 @@ class DeactivateTransferDomainView(View):
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
-        return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
 
 @login_and_domain_required

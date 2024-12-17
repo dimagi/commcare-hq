@@ -1,3 +1,4 @@
+# flake8: noqa: F401
 from corehq.apps.domain.views.accounting import (
     BaseCardView,
     BaseStripePaymentView,
@@ -33,7 +34,6 @@ from corehq.apps.domain.views.base import (
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,
-    BaseInternalDomainSettingsView,
     DeactivateTransferDomainView,
     EditInternalCalculationsView,
     EditInternalDomainInfoView,
