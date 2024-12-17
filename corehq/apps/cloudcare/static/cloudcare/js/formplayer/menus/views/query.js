@@ -733,12 +733,25 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
 
         performSubmit: function (initiatedBy, userClickSubmit = null) {
             var self = this;
-            self.executeSearch(initiatedBy).done(function (response) {
-                self.updateModels(response);
-            });
+            if (!self.inputsHaveErrors()) {
+                self.executeSearch(initiatedBy).done(function (response) {
+                    self.updateModels(response);
+                });
+            }
             if (userClickSubmit === formplayerConstants.USER_CLICK_SUBMIT) {
                 self.displayErrors();
             }
+        },
+
+        inputsHaveErrors: function () {
+            var self = this;
+            const childViews = self._getChildren();
+            for (let childView of childViews) {
+                if (childView.getError()) {
+                    return true;
+                }
+            }
+            return false;
         },
 
         executeSearch: function (initiatedBy) {
