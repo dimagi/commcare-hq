@@ -568,11 +568,11 @@ class EnterpriseSMSReport(EnterpriseReport):
 
 class Enterprise2FAReport(EnterpriseReport):
     title = gettext_lazy('Two Factor Authentication')
-    total_description = gettext_lazy('# of Domains not having 2FA enforced')
+    total_description = gettext_lazy('# of Project Spaces not having 2FA enforced')
 
     @property
     def headers(self):
-        return [_('Domain not having 2FA enforced'),]
+        return [_('Project Space not having 2FA enforced'),]
 
     def total_for_domain(self, domain_obj):
         if domain_obj.two_factor_auth:
