@@ -22,11 +22,13 @@ Previously:
 Now:
 ```
     <div class="row mb-3">
-      <label for="id_happy_input" class="form-label">
+      <label for="id_happy_input" class="form-label field-label">
         Happy Input
       </label>
-      <input type="text" name="happy_input" class="form-control is-valid" id="id_happy_input" />
-      <div class='valid-feedback'>Look at what a good job you did.</div>
+      <div class="field-control">
+        <input type="text" name="happy_input" class="form-control is-valid" id="id_happy_input" />
+        <div class='valid-feedback'>Look at what a good job you did.</div>
+      </div>
     </div>
 ```
 
