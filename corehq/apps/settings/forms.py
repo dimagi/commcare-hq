@@ -43,8 +43,7 @@ class HQPasswordChangeForm(PasswordChangeForm):
     def __init__(self, user, *args, **kwargs):
 
         super(HQPasswordChangeForm, self).__init__(user, *args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Specify New Password'),
@@ -54,11 +53,13 @@ class HQPasswordChangeForm(PasswordChangeForm):
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
                 'new_password2',
-                twbscrispy.StrictButton(
-                    _('Change Password'),
-                    css_class='btn-primary',
-                    type='submit',
-                    data_bind="enable: passwordSufficient(), click: submitCheck"
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        _('Change Password'),
+                        css_class='btn-primary',
+                        type='submit',
+                        data_bind="enable: passwordSufficient(), click: submitCheck"
+                    ),
                 ),
                 css_class='check-password',
             )
