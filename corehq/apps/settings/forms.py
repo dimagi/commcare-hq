@@ -307,10 +307,12 @@ class HQApiKeyForm(forms.Form):
                 crispy.Field('ip_allowlist'),
                 crispy.Field('expiration_date', css_class='date-picker'),
             ),
-            StrictButton(
-                format_html('<i class="fa fa-plus"></i> {}', _("Generate New API Key")),
-                css_class='btn btn-primary',
-                type='submit'
+            hqcrispy.FormActions(
+                StrictButton(
+                    format_html('<i class="fa fa-plus"></i> {}', _("Generate New API Key")),
+                    css_class='btn btn-primary',
+                    type='submit'
+                )
             )
         )
 
