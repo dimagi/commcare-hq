@@ -84,7 +84,6 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
     });
 
     return {
-        getAsyncHQReport: getAsync,
         getStandardHQReport: getStandard,
     };
 });
