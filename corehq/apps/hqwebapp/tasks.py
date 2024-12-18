@@ -1,3 +1,6 @@
+import csv
+from io import StringIO
+
 from smtplib import SMTPDataError
 from urllib.parse import urlencode, urljoin
 
@@ -6,6 +9,7 @@ from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
 from django.core.management import call_command
 from django.urls import reverse
+from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
@@ -20,6 +24,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base
 
 from corehq.apps.celery import periodic_task, task
+from corehq.apps.es.exceptions import ESError
 from corehq.motech.repeaters.const import UCRRestrictionFFStatus
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
@@ -306,4 +311,56 @@ feature flag to be enabled.
 
     send_mail_async.delay(
         subject, message, [settings.SOLUTIONS_AES_EMAIL]
+    )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=1, day_of_month=1))
+def send_stale_case_data_info_to_admins():
+    from corehq.apps.hqadmin.reports import StaleCasesTable
+    from corehq.apps.hqwebapp.tasks import send_html_email_async
+
+    if not settings.SOLUTIONS_AES_EMAIL or settings.SERVER_ENVIRONMENT != 'production':
+        return
+
+    table = StaleCasesTable()
+    has_error = False
+    try:
+        num_domains = len(table.rows)
+    except ESError:
+        has_error = True
+    subject = (
+        f'Monthly report: {num_domains} domains containing stale '
+        f'case data (older than {table.STALE_DATE_THRESHOLD_DAYS} days)'
+    )
+    csv_file = None
+    if num_domains:
+        message = (
+            f'We have identified {num_domains} domains containing stale '
+            f'case data older than {table.STALE_DATE_THRESHOLD_DAYS} days.\n'
+            'Please see detailed CSV report attached to this email.'
+        )
+        if has_error:
+            message += (
+                '\nPlease note that an error occurred while compiling the report '
+                'and so the data given may only be partial.'
+            )
+        csv_file = StringIO()
+        writer = csv.writer(csv_file)
+        writer.writerow(table.headers)
+        writer.writerows(table.rows)
+    elif has_error:
+        message = (
+            '\nPlease note that an error occurred while compiling the report '
+            'and so there may be missing data that was not compiled.'
+        )
+    else:
+        message = (
+            'No domains were found containing case data older than '
+            f'{table.STALE_DATE_THRESHOLD_DAYS} days.'
+        )
+    send_html_email_async.delay(
+        subject,
+        recipient=settings.SOLUTIONS_AES_EMAIL,
+        html_content=linebreaksbr(message),
+        file_attachments=[csv_file]
     )

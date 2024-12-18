@@ -879,6 +879,7 @@ def get_commcare_version_and_date_from_last_usage(last_submission=None, last_dev
     if version:
         version_in_use = format_commcare_version(version) if formatted else version
 
-    date_of_use = DateTimeProperty.deserialize(date_of_use)
+    if date_of_use:
+        date_of_use = DateTimeProperty.deserialize(date_of_use)
 
     return version_in_use, date_of_use

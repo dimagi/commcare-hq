@@ -263,8 +263,12 @@ hqDefine("enterprise/js/project_dashboard", [
         };
         const dateRangeModal = DateRangeModal($dateRangeModal, datePicker, dateRangePresetOptions, maxDateRangeDays, displayMap);
 
-        $("#form_submissions_dateRangeDisplay").koApplyBindings(formSubmissionsDisplay);
-        $("#sms_dateRangeDisplay").koApplyBindings(smsDisplay);
+        if ($("#form_submissions_dateRangeDisplay").length) {
+            $("#form_submissions_dateRangeDisplay").koApplyBindings(formSubmissionsDisplay);
+        }
+        if ($("#sms_dateRangeDisplay").length) {
+            $("#sms_dateRangeDisplay").koApplyBindings(smsDisplay);
+        }
         $dateRangeModal.koApplyBindings(
             dateRangeModal
         );

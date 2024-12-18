@@ -17,6 +17,7 @@ from corehq.apps.userreports.models import guess_data_source_type
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import JsonField, ReportDataSourceField
 from corehq.apps.userreports.util import get_table_name
+from corehq.util.metrics import metrics_counter
 
 
 class DocumentFormBase(forms.Form):
@@ -271,7 +272,16 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     def save(self, commit=False):
         self.instance.meta.build.finished = False
         self.instance.meta.build.initiated = None
-        return super(ConfigurableDataSourceEditForm, self).save(commit)
+        instance = super(ConfigurableDataSourceEditForm, self).save(commit)
+        self._report_edit_datasource_metrics()
+        return instance
+
+    def _report_edit_datasource_metrics(self):
+        if 'configured_filter' in self.changed_data:
+            metrics_counter('commcare.ucr.datasource.change_in_filters', tags={'domain': self.domain})
+        if 'configured_indicators' in self.changed_data:
+            if len(self.instance.configured_indicators) > len(self.initial.get('configured_indicators', [])):
+                metrics_counter('commcare.ucr.datasource.increase_in_columns', tags={'domain': self.domain})
 
 
 class ConfigurableDataSourceFromAppForm(forms.Form):

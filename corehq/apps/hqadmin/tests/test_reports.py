@@ -1,7 +1,13 @@
+from datetime import datetime, timedelta
+from uuid import uuid4
+
 from django.test import TestCase
 from unittest.mock import patch
 
-from corehq.apps.hqadmin.reports import UCRRebuildRestrictionTable
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.hqadmin.reports import UCRRebuildRestrictionTable, StaleCasesTable
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.const import UCRRestrictionFFStatus
 
 
@@ -75,4 +81,38 @@ class TestUCRRebuildRestrictionTable(TestCase):
         )
         self.assertFalse(table_data.should_show_domain(
             domain='domain', total_cases=100_000_000, total_forms=0)
+        )
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class TestStaleCasesTable(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cases = [
+            cls._get_case(days_back=0),
+            cls._get_case(days_back=365),
+            cls._get_case(days_back=380, is_closed=True),
+            cls._get_case(days_back=365 * 21),
+        ]
+        case_search_adapter.bulk_index(cases, refresh=True)
+        cls.table = StaleCasesTable()
+
+    @classmethod
+    def _get_case(cls, days_back, is_closed=False):
+        modified_on = datetime.now() - timedelta(days=days_back)
+        return CommCareCase(
+            case_id=uuid4().hex,
+            domain='test',
+            modified_on=modified_on,
+            closed=is_closed
+        )
+
+    @patch.object(StaleCasesTable, '_get_domains')
+    def test_get_rows(self, _get_domains_mock):
+        _get_domains_mock.return_value = ['test']
+        self.assertEqual(
+            self.table.rows,
+            [['test', 1]]
         )
