@@ -190,6 +190,34 @@ hqDefine('geospatial/js/models', [
             }
         };
 
+        self.addDataToSource = function (features) {
+            self.sourceData.features = self.sourceData.features.concat(features);
+            self.refreshSource();
+        };
+
+        self.removeItemTypeFromSource = function (itemType) {
+            self.sourceData.features = self.sourceData.features.filter(
+                feature => feature.properties.type !== itemType
+            );
+            self.refreshSource();
+        };
+
+        self.refreshSource = function () {
+            let source = self.mapInstance.getSource(self.dataPointsSourceName);
+            if (!source) {
+                return;
+            }
+            source.setData(self.sourceData);
+        };
+
+        self.updatePropertyInSource = function (itemId, propName, propVal) {
+            const featureIndex = self.sourceData.features.findIndex(feature => feature.properties.id === itemId);
+            if (featureIndex >= 0) {
+                self.sourceData.features[featureIndex].properties[propName] = propVal;
+                self.refreshSource();
+            }
+        };
+
         function createMarkerLayers() {
             self.mapInstance.addSource(self.dataPointsSourceName, {
                 'type': 'geojson',
