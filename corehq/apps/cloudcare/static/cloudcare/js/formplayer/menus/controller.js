@@ -40,6 +40,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
 
         var fetchingNextMenu = FormplayerFrontend.getChannel().request("app:select:menus", options);
+        var promise = $.Deferred();
 
         /*
          Determine the next screen to display.  Could be
@@ -48,6 +49,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
          */
         $.when(fetchingNextMenu).done(function (menuResponse) {
             if (menuResponse.abort) {
+                promise.reject();
                 return;
             }
 
@@ -64,6 +66,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
             // If redirect was set, clear and go home.
             if (menuResponse.clearSession) {
                 FormplayerFrontend.trigger("apps:currentApp");
+                promise.reject();
                 return;
             }
 
@@ -94,6 +97,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
                         "required. If this persists, please report an issue to CommCare HQ");
                     FormplayerFrontend.trigger("apps:list");
+                    promise.reject();
                     return;
                 }
                 urlObject.appId = menuResponse.appId;
@@ -110,10 +114,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                 menusUtils.handleLocationRequest(options);
             }
             menusUtils.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
+            promise.resolve(menuResponse);
         }).fail(function () {
             //  if it didn't go through, then it displayed an error message.
             // the right thing to do is then to just stay in the same place.
+            promise.reject();
         });
+        return promise;
     };
 
     var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
