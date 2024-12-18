@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db.models import Count, Subquery
+from django.db.models import Count, Subquery, Q
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -586,7 +586,13 @@ class EnterpriseAPIReport(EnterpriseReport):
     def unique_api_keys(self):
         usernames = self.account.get_web_user_usernames()
         user_ids = User.objects.filter(username__in=usernames).values_list('id', flat=True)
-        return HQApiKey.objects.filter(user_id__in=Subquery(user_ids), is_active=True)
+
+        return HQApiKey.objects.filter(
+            user_id__in=Subquery(user_ids),
+            is_active=True
+        ).filter(
+            Q(domain__in=self.domains) | Q(domain='')
+        )
 
     def _get_api_key_row(self, api_key):
         return [
