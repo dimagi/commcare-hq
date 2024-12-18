@@ -28,9 +28,13 @@ hqDefine('geospatial/js/utils', [], function () {
         popupDiv.setAttribute("data-bind", "template: 'select-case'");
         const popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
             .setLngLat(coordinates)
-            .setDOMContent(popupDiv)
-            .on('open', openEventFunc)
-            .on('close', closeEventFunc);
+            .setDOMContent(popupDiv);
+        if (openEventFunc) {
+            popup.on('open', openEventFunc);
+        }
+        if (closeEventFunc) {
+            popup.on('close', closeEventFunc);
+        }
         return popup;
     };
 
