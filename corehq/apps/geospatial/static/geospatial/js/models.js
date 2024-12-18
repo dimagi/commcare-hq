@@ -1063,9 +1063,15 @@ hqDefine('geospatial/js/models', [
         self.finishAssignment = function () {
             for (const caseItem of self.caseData) {
                 const userItem = self.mapModel.caseGroupsIndex[caseItem.assignedUserId];
-                const groupId = (userItem) ? userItem.groupId : null;
-                self.mapModel.caseGroupsIndex[caseItem.caseId].assignedUserId = caseItem.assignedUserId;
-                self.mapModel.caseGroupsIndex[caseItem.caseId].groupId = groupId;
+                if (userItem) {
+                    self.mapModel.caseGroupsIndex[caseItem.caseId] = {
+                        assignedUserId: caseItem.assignedUserId,
+                        groupId: userItem.groupId,
+                        item: caseItem.mapItem,
+                    };
+                } else if (self.mapModel.caseGroupsIndex[caseItem.caseId]) {
+                    delete self.mapModel.caseGroupsIndex[caseItem.caseId];
+                }
             }
 
             self.mapModel.removeDisbursementLayer();
@@ -1098,7 +1104,7 @@ hqDefine('geospatial/js/models', [
             let caseIdToOwnerId = {};
             for (const caseItem of self.mapModel.caseMapItems()) {
                 const caseData = self.mapModel.caseGroupsIndex[caseItem.itemId];
-                if (caseData.assignedUserId) {
+                if (caseData && caseData.assignedUserId) {
                     caseIdToOwnerId[caseData.item.itemId] = caseData.assignedUserId;
                 }
             }
