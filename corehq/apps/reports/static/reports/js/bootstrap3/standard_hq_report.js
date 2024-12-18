@@ -1,5 +1,5 @@
 /*
-    This file also controls basic logic and event handling for report pages, such as the "Apply" button.
+    This file also controls basic logic and event handling for report pages.
 */
 hqDefine("reports/js/bootstrap3/standard_hq_report", [
     'jquery',
@@ -69,10 +69,6 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
     asyncReport = getAsync();
 
     $(function () {
-        $('#apply-btn').on('click', function () {
-            $('.hq-generic-report').trigger('apply-click');
-        });
-
         $('[data-toggle="offcanvas"]').click(function () {
             $('.row-offcanvas').toggleClass('active');
         });
@@ -84,7 +80,6 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
     });
 
     return {
-        getAsyncHQReport: getAsync,
         getStandardHQReport: getStandard,
     };
 });
