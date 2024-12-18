@@ -499,7 +499,7 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
         path = reverse("rebuild_configurable_data_source", args=(self.domain, self.data_source_config.get_id))
         return self.client.post(path)
 
-    def test_number_of_records_to_be_iterated_for_rebuild(self):
+    def test_number_of_records_to_be_processed(self):
         number_of_cases = number_of_records_to_be_processed(self.data_source_config)
         self.assertEqual(number_of_cases, 3)
 
