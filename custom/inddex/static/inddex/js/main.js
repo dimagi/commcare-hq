@@ -1,4 +1,13 @@
-hqDefine("inddex/js/main", function () {
+hqDefine("inddex/js/main", [
+    'jquery',
+    'reports/js/bootstrap3/standard_hq_report',
+    'reports/js/bootstrap3/datatables_config',
+    'commcarehq',
+], function (
+    $,
+    standardHQReport,
+    datatablesConfig
+) {
     // TODO: test: don't think this runs when the report data changes
     $(function () {
         $("[data-report-table]").each(function (table) {
@@ -35,8 +44,8 @@ hqDefine("inddex/js/main", function () {
                 options.badRequestErrorText = "<span class='label label-danger'>Sorry!</span> " + reportTable.bad_request_error_text;
             }
 
-            var reportTables = hqImport("reports/js/bootstrap3/datatables_config").HQReportDataTables(options);
-            var standardHQReport = hqImport("reports/js/bootstrap3/standard_hq_report").getStandardHQReport();
+            var reportTables = datatablesConfig.HQReportDataTables(options);
+            var standardHQReport = standardHQReport.getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
             }
