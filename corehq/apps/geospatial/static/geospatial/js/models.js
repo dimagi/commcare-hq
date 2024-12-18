@@ -14,7 +14,6 @@ hqDefine('geospatial/js/models', [
     utils,
     alertUser
 ) {
-    const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
     const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
