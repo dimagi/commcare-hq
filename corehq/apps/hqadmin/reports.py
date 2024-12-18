@@ -1,3 +1,6 @@
+from collections import defaultdict
+from datetime import datetime, timedelta
+
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -8,9 +11,12 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from dateutil.parser import parse
 from memoized import memoized
 
+from dimagi.utils.logging import notify_exception
+
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import BaseDeviceLogReport
 
+from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.auditcare.utils.export import navigation_events_by_user
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -24,10 +30,12 @@ from corehq.apps.users.dbaccessors import get_all_user_search_query
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.es.cases import CaseES
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.forms import FormES
 from corehq.toggles import USER_CONFIGURABLE_REPORTS, RESTRICT_DATA_SOURCE_REBUILD
 from corehq.motech.repeaters.const import UCRRestrictionFFStatus
 from corehq.apps.es.aggregations import TermsAggregation
+from corehq.apps.es.exceptions import ESError
 
 
 class AdminReport(GenericTabularReport):
@@ -402,13 +410,13 @@ class UCRRebuildRestrictionTable:
 
     @staticmethod
     def _case_count_by_domain(domains):
-        return CaseES().domain(domains).aggregation(
+        return CaseES().domain(domains).size(0).aggregation(
             TermsAggregation('domain', 'domain.exact')
         ).run().aggregations.domain.buckets_dict
 
     @staticmethod
     def _forms_count_by_domain(domains):
-        return FormES().domain(domains).aggregation(
+        return FormES().domain(domains).size(0).aggregation(
             TermsAggregation('domain', 'domain.exact')
         ).run().aggregations.domain.buckets_dict
 
@@ -495,3 +503,90 @@ class UCRDataLoadReport(AdminReport):
     @property
     def rows(self):
         return self.table_data.rows
+
+
+class StaleCasesTable:
+    STOP_POINT_DAYS_AGO = 365 * 20
+    AGG_DATE_RANGE = 150
+    STALE_DATE_THRESHOLD_DAYS = 365
+
+    BACKOFF_AMOUNT_DAYS = 30
+    MAX_BACKOFF_COUNT = 2
+
+    def __init__(self):
+        self._rows = None
+        self.stop_date = datetime.now() - timedelta(days=self.STOP_POINT_DAYS_AGO)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(gettext_lazy("Domain")),
+            DataTablesColumn(gettext_lazy("Case count"))
+        )
+
+    @property
+    def rows(self):
+        if self._rows is None:
+            self._rows = []
+            case_count_by_domain = self._aggregate_case_count_data()
+            for domain, case_count in case_count_by_domain.items():
+                self._rows.append([domain, case_count])
+        return self._rows
+
+    def _aggregate_case_count_data(self):
+        end_date = datetime.now() - timedelta(days=self.STALE_DATE_THRESHOLD_DAYS)
+        agg_res = defaultdict(lambda: 0)
+        curr_backoff_count = 0
+        curr_agg_date_range = self.AGG_DATE_RANGE
+        domains = self._get_domains()
+        while (True):
+            start_date = end_date - timedelta(days=curr_agg_date_range)
+            try:
+                query_res = self._stale_case_count_in_date_range(domains, start_date, end_date)
+            except ESError as e:
+                curr_backoff_count += 1
+                if curr_backoff_count <= self.MAX_BACKOFF_COUNT:
+                    curr_agg_date_range -= self.BACKOFF_AMOUNT_DAYS
+                else:
+                    notify_exception(
+                        None,
+                        'ES query timed out while compiling stale case report email.',
+                        details={
+                            'error': str(e),
+                            'start_date': start_date.strftime("%Y-%m-%d"),
+                            'end_date': end_date.strftime("%Y-%m-%d")
+                        }
+                    )
+                    raise ESError()
+            else:
+                curr_backoff_count = 0
+                curr_agg_date_range = self.AGG_DATE_RANGE
+                self._merge_agg_data(agg_res, query_res)
+                end_date = start_date
+                if end_date <= self.stop_date:
+                    break
+        return agg_res
+
+    def _merge_agg_data(self, agg_res, query_res):
+        for domain, case_count in query_res.items():
+            agg_res[domain] += case_count
+
+    def _stale_case_count_in_date_range(self, domains, start_date, end_date):
+        return (
+            CaseSearchES()
+            .domain(domains)
+            .modified_range(gt=start_date, lt=end_date)
+            .is_closed(False)
+            .aggregation(
+                TermsAggregation('domain', 'domain.exact')
+            )
+            .size(0)
+        ).run().aggregations.domain.counts_by_bucket()
+
+    def _get_domains(self):
+        return list(set(
+            Subscription.visible_objects
+            .exclude(plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY)
+            .filter(is_active=True)
+            .values_list('subscriber__domain', flat=True)
+        ))

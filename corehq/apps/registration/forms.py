@@ -232,7 +232,7 @@ class RegisterWebUserForm(forms.Form):
         phone_number = re.sub(r'\s|\+|\-', '', phone_number)
         if phone_number == '':
             return None
-        elif not re.match(r'\d+$', phone_number):
+        elif not phone_number.isdigit():
             raise forms.ValidationError(gettext(
                 "%s is an invalid phone number." % phone_number
             ))

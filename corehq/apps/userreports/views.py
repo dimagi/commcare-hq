@@ -161,6 +161,7 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import (
     add_event,
     allowed_report_builder_reports,
+    get_configurable_and_static_reports_for_data_source,
     get_indicator_adapter,
     get_referring_apps,
     has_report_builder_access,
@@ -179,6 +180,7 @@ from corehq.motech.repeaters.models import DataSourceRepeater
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
@@ -1344,10 +1346,40 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id, request.user.username, domain=domain)
+    rebuild_indicators.delay(config_id, request.user.username, domain=domain, source='edit_data_source_rebuild')
+    _report_ucr_rebuild_metrics(domain, config, 'rebuild_datasource')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
+
+
+def _report_ucr_rebuild_metrics(domain, config, action):
+    metrics_counter(
+        f'commcare.ucr.{action}.count',
+        tags={
+            'domain': domain,
+            'datasource_id': config.get_id,
+        }
+    )
+    metrics_gauge(
+        f'commcare.ucr.{action}.columns.count',
+        len(config.get_columns()),
+        tags={'domain': domain}
+    )
+    _report_metric_report_counts_by_datasource(domain, config.get_id, action)
+
+
+def _report_metric_report_counts_by_datasource(domain, data_source_id, action):
+    try:
+        reports = get_configurable_and_static_reports_for_data_source(domain, data_source_id)
+    except Exception:
+        pass
+    else:
+        metrics_gauge(
+            f'commcare.ucr.{action}.reports_per_datasource.count',
+            len(reports),
+            tags={'domain': domain}
+        )
 
 
 def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
@@ -1442,6 +1474,7 @@ def build_data_source_in_place(request, domain, config_id):
         source='edit_data_source_build_in_place',
         domain=config.domain,
     )
+    _report_ucr_rebuild_metrics(domain, config, 'rebuild_datasource_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

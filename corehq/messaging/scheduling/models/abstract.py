@@ -329,7 +329,7 @@ class Event(ContentForeignKeyMixin):
 
 
 class Content(models.Model):
-    # If this this content is being invoked in the context of a case,
+    # If this content is being invoked in the context of a case,
     # for example when a case triggers an alert, this is the case.
     case = None
 
