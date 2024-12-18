@@ -6,9 +6,6 @@ section</a> of the style guide.
 
 A few useful things to know about crispy forms in Bootstrap 5:
 
-* Checkboxes, typically based on a `BooleanField`, need to be updated to use the `BootstrapCheckboxInput` as their
-`widget`, as shown in <a href="https://www.commcarehq.org/styleguide/b5/organisms/forms/#crispy-forms-simple"
-target="_blank">this style guide example</a>.
 * As described in <a href="https://www.commcarehq.org/styleguide/b5/organisms/forms/#crispy-forms-simple"
 target="_blank">this section of the style guide</a>, best practice is to use one of HQ's standard helper classes
 for layout. Doing so means you can delete <code>form_class</code>, <code>label_class</code>,
