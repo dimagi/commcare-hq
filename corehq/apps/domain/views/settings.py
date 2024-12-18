@@ -220,12 +220,13 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
 
 class EditMyProjectSettingsView(BaseProjectSettingsView):
-    template_name = 'domain/admin/bootstrap3/my_project_settings.html'
+    template_name = 'domain/admin/bootstrap5/my_project_settings.html'
     urlname = 'my_project_settings'
     page_title = gettext_lazy("My Timezone")
 
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
+    @use_bootstrap5
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
