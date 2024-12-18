@@ -1145,7 +1145,7 @@ class InviteWebUserView(BaseManageWebUserView):
             assigned_location = invitation.assigned_locations.filter()
             assigned_location_ids = [loc.location_id for loc in assigned_location]
             primary_location_id = None
-            if assigned_location_ids:
+            if invitation.primary_location:
                 primary_location_id = invitation.primary_location.location_id
             initial = {
                 'email': invitation.email,

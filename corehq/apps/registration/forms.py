@@ -533,14 +533,17 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
-        save_button_text = "Send Invite"
+        save_button_text = _("Send Invite")
+        header_text = _("Information for new Web User")
+        add_user_text = _("Add User")
         if self.invite:
             self.fields['email'].widget.attrs["readonly"] = True
-            save_button_text = "Update Invite"
+            save_button_text = _("Update Invite")
+            header_text = _("Update invitation for new Web User")
 
         fields = [
             crispy.Fieldset(
-                gettext("Information for new Web User"),
+                gettext(header_text),
                 crispy.Field(
                     "email",
                     autocomplete="off",
@@ -584,7 +587,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    (gettext("Add User") if is_add_user else gettext(save_button_text)),
+                    (gettext(add_user_text) if is_add_user else gettext(save_button_text)),
                     type="submit",
                     css_class="btn-primary",
                     data_bind="enable: isSubmitEnabled",
