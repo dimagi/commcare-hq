@@ -744,6 +744,8 @@ hqDefine('geospatial/js/models', [
             self.selectedSavedPolygonId('');
             self.clearActivePolygon();
             updateSelectedSavedPolygonParam();
+            const features = mapObj.drawControls.getAll().features;
+            self.mapObj.selectAllMapItems(features);
         };
 
         function clearDisbursementBeforeProceeding() {
