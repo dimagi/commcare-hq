@@ -409,16 +409,16 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
 
 class TwoFactorAuthResource(ODataEnterpriseReportResource):
-    domain_not_having_2fa_enforced = fields.CharField()
+    domain_without_2fa = fields.CharField()
 
     REPORT_SLUG = EnterpriseReport.TWO_FACTOR_AUTH
 
     def dehydrate(self, bundle):
-        bundle.data['domain_not_having_2fa_enforced'] = bundle.obj[0]
+        bundle.data['domain_without_2fa'] = bundle.obj[0]
         return bundle
 
     def get_primary_keys(self):
-        return ('domain_not_having_2fa_enforced',)
+        return ('domain_without_2fa',)
 
 
 class CommCareVersionComplianceResource(ODataEnterpriseReportResource):
