@@ -2,9 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-  <script src="{% static 'inddex/js/main.js' %}"></script>
-{% endblock %}
+{% js_entry_b3 'inddex/js/main' %}
 
 {% block filter_panel %}
     {% if report.description %}<p class="lead">{{ report.description }}</p>{% endif %}
