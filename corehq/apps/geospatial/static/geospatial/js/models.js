@@ -115,9 +115,10 @@ hqDefine('geospatial/js/models', [
         self.link = link;
         self.groupId = null;
         self.groupCoordinates = null;
+        self.coordinates = itemData.coordinates;
 
         self.toJson = function () {
-            const coordinates = (self.itemData.coordinates) ? `${self.itemData.coordinates.lng} ${self.itemData.coordinates.lat}` : "";
+            const coordinates = (self.coordinates) ? `${self.coordinates.lng} ${self.coordinates.lat}` : "";
             const groupCoordinates = (self.groupCoordinates) ? `${self.groupCoordinates.lng} ${self.groupCoordinates.lat}` : "";
             return {
                 'groupId': self.groupId,
