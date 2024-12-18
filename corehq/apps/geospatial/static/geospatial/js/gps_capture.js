@@ -1,16 +1,21 @@
-hqDefine("geospatial/js/gps_capture", [
+hqDefine("geospatial/js/gps_capture", [     // TODO: test this, once async reports are fixed
     "jquery",
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'mapbox-gl',
     "hqwebapp/js/components/pagination",
     "hqwebapp/js/components/search_box",
+    'reports/js/bootstrap3/base',
     'select2/dist/js/select2.full.min',
+    '@mapbox/mapbox-gl-geocoder',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
+    mapboxgl
 ) {
     'use strict';
     const MAP_CONTAINER_ID = "geospatial-map";
