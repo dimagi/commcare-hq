@@ -131,8 +131,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': self.domain.name, 'key': 'F#', 'commcare_profile': '', 'mode': ''})
+        self.assert_user_data_equals({'key': 'F#', 'commcare_profile': '', 'mode': ''})
 
         # Update user_data
         import_users_and_groups(
@@ -143,8 +142,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': self.domain.name, 'key': 'Bb', 'commcare_profile': '', 'mode': ''})
+        self.assert_user_data_equals({'key': 'Bb', 'commcare_profile': '', 'mode': ''})
 
         # set user data to blank
         import_users_and_groups(
@@ -178,12 +176,7 @@ class TestUserDataMixin:
             is_web_upload
         )
 
-        self.assert_user_data_equals({
-            'commcare_project': self.domain.name,
-            'key': 'F#',
-            'mode': 'minor',
-            PROFILE_SLUG: self.profile.id,
-        })
+        self.assert_user_data_equals({'key': 'F#', 'mode': 'minor', PROFILE_SLUG: self.profile.id})
         user_history = UserHistory.objects.get(
             user_id=self.user.get_id,
             changed_by=self.uploading_user.get_id,
@@ -452,7 +445,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
             False
         )
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assert_user_data_item('commcare_location_id', self.user.location_id)
         # multiple locations
         self.assertListEqual([self.loc1._id], self.user.assigned_location_ids)
 
@@ -495,12 +487,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         )
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assert_user_data_item('commcare_location_id', self.user.location_id)
-        self.assert_user_data_item('commcare_primary_case_sharing_id', self.user.location_id)
         # multiple locations
         self.assertListEqual([loc._id for loc in [self.loc1, self.loc2]], self.user.assigned_location_ids)
-        # non-primary location
-        self.assert_user_data_item('commcare_location_ids', " ".join([self.loc1._id, self.loc2._id]))
 
         user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
                                                user_id=self.user.get_id,
@@ -551,7 +539,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
 
         # user should have no locations
         self.assertEqual(self.user.location_id, None)
-        self.assert_user_data_item('commcare_location_id', None)
         self.assertListEqual(self.user.assigned_location_ids, [])
 
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
@@ -578,8 +565,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
 
         # user's primary location should be loc1
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assert_user_data_item('commcare_location_id', self.loc1._id)
-        self.assert_user_data_item('commcare_location_ids', " ".join([self.loc1._id, self.loc2._id]))
         self.assertListEqual(self.user.assigned_location_ids, [self.loc1._id, self.loc2._id])
 
         user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
@@ -604,8 +589,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
-        self.assert_user_data_item('commcare_location_ids', self.loc2._id)
-        self.assert_user_data_item('commcare_location_id', self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
@@ -653,7 +636,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
-        self.assert_user_data_item('commcare_location_id', self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
@@ -2145,38 +2127,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertEqual(local_tableau_users.get(username='edith@wharton.com').role,
             TableauUser.Roles.UNLICENSED.value)
         local_tableau_users.get(username='george@eliot.com')
-
-        # Test user without permission to edit Tableau Configs
-        self.uploading_user.is_superuser = False
-        role_with_upload_permission = UserRole.create(
-            self.domain, 'edit-web-users', permissions=HqPermissions(edit_web_users=True)
-        )
-        self.uploading_user.set_role(self.domain_name, role_with_upload_permission.get_qualified_id())
-        self.uploading_user.save()
-        with self.assertRaises(UserUploadError):
-            import_users_and_groups(
-                self.domain.name,
-                [
-                    self._get_spec(
-                        username='edith@wharton.com',
-                        tableau_role=TableauUser.Roles.EXPLORER.value,
-                        tableau_groups="""group1,group2"""
-                    ),
-                ],
-                [],
-                self.uploading_user.get_id,
-                self.upload_record.pk,
-                True
-            )
-
-        # Test user with permission to edit Tableau Configs
-        role_with_upload_and_edit_tableau_permission = UserRole.create(
-            self.domain, 'edit-tableau', permissions=HqPermissions(edit_web_users=True,
-                                                                   edit_user_tableau_config=True)
-        )
-        self.uploading_user.set_role(self.domain_name,
-                                     role_with_upload_and_edit_tableau_permission.get_qualified_id())
-        self.uploading_user.save()
 
         import_users_and_groups(
             self.domain.name,

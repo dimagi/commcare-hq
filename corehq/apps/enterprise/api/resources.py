@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from dateutil import tz
+from datetime import timezone
 from tastypie import fields, http
 from tastypie.exceptions import ImmediateHttpResponse
 
@@ -193,7 +194,12 @@ class ODataEnterpriseReportResource(ODataResource):
             response=http.HttpTooManyRequests(headers={'Retry-After': self.RETRY_IN_PROGRESS_DELAY}))
 
     def get_report_task(self, request):
-        raise NotImplementedError()
+        account = BillingAccount.get_account_by_domain(request.domain)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+        )
 
     def _add_query_id_to_request(self, request, query_id):
         if 'report' not in request.GET:
@@ -212,14 +218,6 @@ class DomainResource(ODataEnterpriseReportResource):
     last_form_submission = fields.DateTimeField()
 
     REPORT_SLUG = EnterpriseReport.DOMAINS
-
-    def get_report_task(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        return generate_enterprise_report.s(
-            self.REPORT_SLUG,
-            account.id,
-            request.couch_user.username,
-        )
 
     def dehydrate(self, bundle):
         bundle.data['domain'] = bundle.obj[6]
@@ -246,14 +244,6 @@ class WebUserResource(ODataEnterpriseReportResource):
     domain = fields.CharField()
 
     REPORT_SLUG = EnterpriseReport.WEB_USERS
-
-    def get_report_task(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        return generate_enterprise_report.s(
-            self.REPORT_SLUG,
-            account.id,
-            request.couch_user.username,
-        )
 
     def dehydrate(self, bundle):
         bundle.data['email'] = bundle.obj[0]
@@ -288,14 +278,6 @@ class MobileUserResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.MOBILE_USERS
 
-    def get_report_task(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        return generate_enterprise_report.s(
-            self.REPORT_SLUG,
-            account.id,
-            request.couch_user.username,
-        )
-
     def dehydrate(self, bundle):
         bundle.data['username'] = bundle.obj[0]
         bundle.data['name'] = bundle.obj[1]
@@ -314,6 +296,50 @@ class MobileUserResource(ODataEnterpriseReportResource):
         return ('user_id',)
 
 
+class SMSResource(ODataEnterpriseReportResource):
+    domain = fields.CharField()
+    num_sent = fields.IntegerField()
+    num_received = fields.IntegerField()
+    num_error = fields.IntegerField()
+
+    REPORT_SLUG = EnterpriseReport.SMS
+
+    def get_report_task(self, request):
+        start_date, end_date = get_date_range_from_request(request.GET)
+
+        account = BillingAccount.get_account_by_domain(request.domain)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+    def dehydrate(self, bundle):
+        bundle.data['domain'] = bundle.obj[0]
+        bundle.data['num_sent'] = bundle.obj[1]
+        bundle.data['num_received'] = bundle.obj[2]
+        bundle.data['num_error'] = bundle.obj[3]
+
+        return bundle
+
+    def get_primary_keys(self):
+        return ('domain',)
+
+
+def get_date_range_from_request(request_dict):
+    start_date = request_dict.get('startdate', None)
+    if start_date:
+        start_date = str(datetime.fromisoformat(start_date).astimezone(timezone.utc))
+
+    end_date = request_dict.get('enddate', None)
+    if end_date:
+        end_date = str(datetime.fromisoformat(end_date).astimezone(timezone.utc))
+
+    return (start_date, end_date,)
+
+
 class ODataFeedResource(ODataEnterpriseReportResource):
     '''
     A Resource for listing all Domain-level OData feeds which belong to the Enterprise.
@@ -327,14 +353,6 @@ class ODataFeedResource(ODataEnterpriseReportResource):
     report_rows = fields.IntegerField(null=True)
 
     REPORT_SLUG = EnterpriseReport.ODATA_FEEDS
-
-    def get_report_task(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        return generate_enterprise_report.s(
-            self.REPORT_SLUG,
-            account.id,
-            request.couch_user.username,
-        )
 
     def dehydrate(self, bundle):
         bundle.data['num_feeds_used'] = bundle.obj[0]
@@ -388,3 +406,35 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
     def get_primary_keys(self):
         return ('form_id', 'submitted',)
+
+
+class TwoFactorAuthResource(ODataEnterpriseReportResource):
+    domain_without_2fa = fields.CharField()
+
+    REPORT_SLUG = EnterpriseReport.TWO_FACTOR_AUTH
+
+    def dehydrate(self, bundle):
+        bundle.data['domain_without_2fa'] = bundle.obj[0]
+        return bundle
+
+    def get_primary_keys(self):
+        return ('domain_without_2fa',)
+
+
+class CommCareVersionComplianceResource(ODataEnterpriseReportResource):
+    mobile_worker = fields.CharField()
+    project_space = fields.CharField()
+    latest_version_available_at_submission = fields.CharField()
+    version_in_use = fields.CharField()
+
+    REPORT_SLUG = EnterpriseReport.COMMCARE_VERSION_COMPLIANCE
+
+    def dehydrate(self, bundle):
+        bundle.data['mobile_worker'] = bundle.obj[0]
+        bundle.data['project_space'] = bundle.obj[1]
+        bundle.data['latest_version_available_at_submission'] = bundle.obj[2]
+        bundle.data['version_in_use'] = bundle.obj[3]
+        return bundle
+
+    def get_primary_keys(self):
+        return ('mobile_worker', 'project_space',)
