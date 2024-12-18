@@ -1004,17 +1004,17 @@ hqDefine('geospatial/js/models', [
             const groupData = self.mapModel.caseGroupsIndex;
             self.caseData = [];
             for (const item of self.mapModel.caseMapItems()) {
-                const assignedUserId = groupData[item.itemId].assignedUserId;
+                const assignedUserId = (groupData[item.itemId]) ? groupData[item.itemId].assignedUserId : null;
                 let assignedUsername = emptyColStr;
                 let primaryLocName = emptyColStr;
                 if (assignedUserId) {
-                    const userData = groupData[assignedUserId].item.itemData;
+                    const userData = groupData[assignedUserId].item;
                     assignedUsername = userData.name;
-                    primaryLocName = userData.primary_loc_name;
+                    primaryLocName = userData.customData.primary_loc_name;
                 }
                 self.caseData.push(
                     new AssignmentRow(
-                        item.itemData.name, item.itemId, assignedUserId, assignedUsername, primaryLocName, item
+                        item.name, item.itemId, assignedUserId, assignedUsername, primaryLocName, item
                     )
                 );
             }
@@ -1043,17 +1043,17 @@ hqDefine('geospatial/js/models', [
         };
 
         self.assignUserToCases = function () {
-            const selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()];
+            const selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()].item;
             for (const caseItem of self.caseDataPage()) {
                 if (!caseItem.isSelected()) {
                     continue;
                 }
 
                 caseItem.assignedUsername(
-                    (selectedUser) ? selectedUser.item.itemData.name : emptyColStr
+                    (selectedUser) ? selectedUser.name : emptyColStr
                 );
                 caseItem.assignedUserPrimaryLocName(
-                    (selectedUser) ? selectedUser.item.itemData.primary_loc_name : emptyColStr
+                    (selectedUser) ? selectedUser.customData.primary_loc_name : emptyColStr
                 );
                 caseItem.assignedUserId = self.selectedUserId();
                 caseItem.isSelected(false);
