@@ -327,6 +327,26 @@ def styleguide_molecules_pagination(request):
     context.update({
         'examples': {
             'pagination': get_example_context('styleguide/bootstrap5/examples/pagination.html'),
+            'htmx_pagination_data': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_data.py'),
+                language="Python",
+            ),
+            'htmx_pagination_host_view': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_host_view.py'),
+                language="Python",
+            ),
+            'htmx_pagination_table': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_table.py'),
+                language="Python",
+            ),
+            'htmx_pagination_table_view': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_table_view.py'),
+                language="Python",
+            ),
+            'htmx_pagination_template': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_pagination.html'),
+                language="Django",
+            ),
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/pagination.html', context)
