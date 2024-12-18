@@ -102,7 +102,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
 
     @classmethod
     def get_field_page_context(cls, domain, couch_user, custom_data_editor: CustomDataEditor,
-                            original_profile_id=None):
+                               original_profile_id=None, invitation=None):
         profiles, can_edit_original_profile = (
             cls.get_displayable_profiles_and_edit_permission(
                 original_profile_id, domain, couch_user
@@ -110,6 +110,11 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         )
         serialized_profiles = [p.to_json() for p in profiles]
 
+        initial_values = {}
+        if invitation:
+            initial_values = {f.slug: invitation.custom_user_data.get(f.slug) for f in custom_data_editor.fields}
+            if invitation.profile:
+                initial_values["profile_id"] = invitation.profile.id
         return {
             'can_edit_original_profile': can_edit_original_profile,
             'custom_fields_slugs': [f.slug for f in custom_data_editor.fields],
@@ -118,6 +123,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
             ],
             'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
             'custom_fields_profile_slug': PROFILE_SLUG,
+            'initial_values': initial_values,
         }
 
     @classmethod

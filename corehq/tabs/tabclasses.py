@@ -1650,6 +1650,10 @@ class ProjectUsersTab(UITab):
                         'urlname': 'invite_web_user'
                     },
                     {
+                        'title': _("Edit Web User Invite"),
+                        'urlname': 'edit_invitation'
+                    },
+                    {
                         'title': _get_web_username,
                         'urlname': EditWebUserView.urlname
                     },
