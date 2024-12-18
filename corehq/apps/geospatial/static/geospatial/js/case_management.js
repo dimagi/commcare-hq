@@ -89,8 +89,8 @@ hqDefine("geospatial/js/case_management", [
                 if (!hasSelectedCases || c.isSelected()) {
                     caseData.push({
                         id: c.itemId,
-                        lon: c.itemData.coordinates.lng,
-                        lat: c.itemData.coordinates.lat,
+                        lon: c.coordinates.lng,
+                        lat: c.coordinates.lat,
                     });
                 }
             });
@@ -131,8 +131,8 @@ hqDefine("geospatial/js/case_management", [
                 if (!hasSelectedUsers || userMapItem.isSelected()) {
                     userData.push({
                         id: userMapItem.itemId,
-                        lon: userMapItem.itemData.coordinates.lng,
-                        lat: userMapItem.itemData.coordinates.lat,
+                        lon: userMapItem.coordinates.lng,
+                        lat: userMapItem.coordinates.lat,
                     });
                 }
             });
@@ -179,8 +179,8 @@ hqDefine("geospatial/js/case_management", [
                 if ('assignedUserId' in element) {
                     let user = mapModel.caseGroupsIndex[element.assignedUserId].item;
                     const lineCoordinates = [
-                        [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
-                        [element.item.itemData.coordinates.lng, element.item.itemData.coordinates.lat],
+                        [user.coordinates.lng, user.coordinates.lat],
+                        [element.item.coordinates.lng, element.item.coordinates.lat],
                     ];
                     disbursementLinesSource.features.push(
                         {

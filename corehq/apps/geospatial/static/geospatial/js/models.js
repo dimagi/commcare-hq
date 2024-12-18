@@ -543,9 +543,9 @@ hqDefine('geospatial/js/models', [
             }
 
             // See https://stackoverflow.com/questions/62939325/scale-mapbox-gl-map-to-fit-set-of-markers
-            const firstCoord = mapItems[0].itemData.coordinates;
+            const firstCoord = mapItems[0].coordinates;
             const bounds = mapItems.reduce(function (bounds, mapItem) {
-                const coord = mapItem.itemData.coordinates;
+                const coord = mapItem.coordinates;
                 if (coord) {
                     return bounds.extend(coord);
                 }
