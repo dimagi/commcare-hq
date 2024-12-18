@@ -1608,7 +1608,7 @@ class ScheduleForm(Form):
         elif isinstance(content, FCMNotificationContent):
             initial['content'] = self.CONTENT_FCM_NOTIFICATION
         elif isinstance(content, ConnectMessageContent):
-            initial['conent'] = self.CONTENT_CONNECT_MESSAGE
+            initial['content'] = self.CONTENT_CONNECT_MESSAGE
         elif isinstance(content, ConnectMessageSurveyContent):
             initial['content'] = self.CONTENT_CONNECT_SURVEY
             initial['submit_partially_completed_forms'] = content.submit_partially_completed_forms

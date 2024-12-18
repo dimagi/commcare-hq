@@ -2768,6 +2768,12 @@ class ConnectMessage(Log):
     received_on = models.DateTimeField(null=True, blank=True)
     message_id = models.UUIDField(default=uuid4)
 
+    def __init__(self, *args, **kwargs):
+        # set default message id on initialization so it is available before save
+        super(ConnectMessage, self).__init__(*args, **kwargs)
+        if self.message_id is None:
+            self.message_id = uuid4()
+
     @property
     def outbound_backend(self):
         return ConnectBackend()
