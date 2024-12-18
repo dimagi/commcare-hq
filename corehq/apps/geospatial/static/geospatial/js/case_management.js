@@ -307,7 +307,7 @@ hqDefine("geospatial/js/case_management", [
         };
 
         self.loadUsers = function () {
-            mapModel.removeMarkersFromMap(mapModel.userMapItems());
+            mapModel.removeItemTypeFromSource('user');
             mapModel.userMapItems([]);
             self.hasErrors(false);
             if (!self.shouldShowUsers()) {
@@ -321,30 +321,39 @@ hqDefine("geospatial/js/case_management", [
                 url: initialPageData.reverse('get_users_with_gps'),
                 success: function (data) {
                     self.hasFiltersChanged(false);
-                    const userData = _.object(_.map(data.user_data, function (userData) {
+                    let features = [];
+                    let userMapItems = [];
+                    const polygonFeatures = getMapPolygons();
+                    for (const userData of data.user_data) {
                         const gpsData = (userData.gps_point) ? userData.gps_point.split(' ') : [];
-                        const lat = parseFloat(gpsData[0]);
-                        const lng = parseFloat(gpsData[1]);
-
+                        if (!gpsData.length) {
+                            continue;
+                        }
+                        const coordinates = {
+                            'lat': gpsData[0],
+                            'lng': gpsData[1],
+                        };
                         const editUrl = initialPageData.reverse('edit_commcare_user', userData.id);
                         const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${userData.username}</a>`;
-
-                        const userInfo = {
-                            'coordinates': {
-                                'lat': lat,
-                                'lng': lng,
+                        const isInPolygon = mapModel.isMapItemInPolygons(polygonFeatures, coordinates);
+                        const parsedData = {
+                            id: userData.id,
+                            coordinates: coordinates,
+                            link: link,
+                            name: userData.username,
+                            itemType: 'user',
+                            isSelected: isInPolygon,
+                            customData: {
+                                primary_loc_name: userData.primary_loc_name,
                             },
-                            'link': link,
-                            'type': 'user',
-                            'name': userData.username,
-                            'primary_loc_name': userData.primary_loc_name,
                         };
-                        return [userData.id, userInfo];
-                    }));
 
-                    const userMapItems = mapModel.addMarkersToMap(userData, userMarkerColors);
+                        const userMapItem = new models.MapItem(parsedData, mapModel);
+                        userMapItems.push(userMapItem);
+                        features.push(userMapItem.getGeoJson());
+                    }
+                    mapModel.addDataToSource(features);
                     mapModel.userMapItems(userMapItems);
-                    selectMapItemsInPolygons();
                 },
                 error: function () {
                     self.hasErrors(true);
