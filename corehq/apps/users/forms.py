@@ -965,7 +965,6 @@ class GroupMembershipForm(forms.Form):
 
         self.helper = HQFormHelper()
         self.helper.form_tag = False
-        self.helper.form_class = 'form-horizontal'
 
         self.helper.layout = crispy.Layout(
             crispy.Field('selected_ids'),
