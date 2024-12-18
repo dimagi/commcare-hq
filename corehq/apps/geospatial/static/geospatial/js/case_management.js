@@ -224,14 +224,17 @@ hqDefine("geospatial/js/case_management", [
         });
     }
 
-    function selectMapItemsInPolygons() {
+    function getMapPolygons() {
         let features = mapModel.drawControls.getAll().features;
         if (polygonFilterModel.activeSavedPolygon()) {
             features = features.concat(polygonFilterModel.activeSavedPolygon().geoJson.features);
         }
-        if (features.length) {
-            mapModel.selectAllMapItems(features);
-        }
+        return features;
+    }
+
+    function selectMapItemsInPolygons() {
+        const polygons = getMapPolygons();
+        mapModel.selectAllMapItems(polygons);
     }
 
     function initPolygonFilters() {
@@ -428,19 +431,28 @@ hqDefine("geospatial/js/case_management", [
     }
 
     function loadCases(caseData) {
-        mapModel.removeMarkersFromMap(mapModel.caseMapItems());
+        mapModel.removeItemTypeFromSource('case');
         mapModel.caseMapItems([]);
-        var casesWithGPS = caseData.filter(function (item) {
-            return item[1] !== null;
-        });
-        // Index by case_id
-        var casesById = _.object(_.map(casesWithGPS, function (item) {
-            if (item[1]) {
-                return [item[0], {'coordinates': item[1], 'link': item[2], 'type': 'case', 'name': item[3]}];
-            }
-        }));
-        const caseMapItems = mapModel.addMarkersToMap(casesById, caseMarkerColors);
+        let features = [];
+        let caseMapItems = [];
+        const polygonFeatures = getMapPolygons();
+        for (const caseItem of caseData) {
+            const isInPolygon = mapModel.isMapItemInPolygons(polygonFeatures, caseItem[1]);
+            const parsedData = {
+                id: caseItem[0],
+                coordinates: caseItem[1],
+                link: caseItem[2],
+                name: caseItem[3],
+                itemType: 'case',
+                isSelected: isInPolygon,
+                customData: {},
+            };
+            const caseMapItem = new models.MapItem(parsedData, mapModel);
+            caseMapItems.push(caseMapItem);
+            features.push(caseMapItem.getGeoJson());
+        }
         mapModel.caseMapItems(caseMapItems);
+        mapModel.addDataToSource(features);
         mapModel.fitMapBounds(caseMapItems);
     }
 
@@ -494,13 +506,12 @@ hqDefine("geospatial/js/case_management", [
                 );
             }
         } else if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
-            loadCases(xhr.responseJSON.aaData);
-            if (polygonFilterModel) {
-                selectMapItemsInPolygons();
-            }
-            if (mapModel.hasDisbursementLayer()) {
-                mapModel.removeDisbursementLayer();
-            }
+            mapModel.mapInstance.on('load', () => {
+                loadCases(xhr.responseJSON.aaData);
+                if (mapModel.hasDisbursementLayer()) {
+                    mapModel.removeDisbursementLayer();
+                }
+            });
         }
     });
 });
