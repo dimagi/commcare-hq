@@ -2569,13 +2569,6 @@ WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ENTERPRISE_DASHBOARD_IMPROVEMENTS = StaticToggle(
-    'enterprise_dashboard_improvements',
-    'Shows an improved version of enterprise dashboard during development',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER]
-)
-
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege

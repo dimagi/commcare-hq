@@ -49,6 +49,7 @@ class EnterpriseReport(ABC):
     COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
     SMS = 'sms'
     API_USAGE = 'api_usage'
+    TWO_FACTOR_AUTH = '2fa'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
@@ -98,6 +99,9 @@ class EnterpriseReport(ABC):
             report = EnterpriseSMSReport(account, couch_user, **kwargs)
         elif slug == cls.API_USAGE:
             report = EnterpriseAPIReport(account, couch_user, **kwargs)
+        elif slug == cls.TWO_FACTOR_AUTH:
+            report = Enterprise2FAReport(account, couch_user, **kwargs)
+
         if report:
             report.slug = slug
             return report
@@ -612,3 +616,22 @@ class EnterpriseAPIReport(EnterpriseReport):
             self.format_date(api_key.created),
             self.format_date(api_key.last_used),
         ]
+
+
+class Enterprise2FAReport(EnterpriseReport):
+    title = gettext_lazy('Two Factor Authentication')
+    total_description = gettext_lazy('# of Project Spaces without 2FA')
+
+    @property
+    def headers(self):
+        return [_('Project Space without 2FA'),]
+
+    def total_for_domain(self, domain_obj):
+        if domain_obj.two_factor_auth:
+            return 0
+        return 1
+
+    def rows_for_domain(self, domain_obj):
+        if domain_obj.two_factor_auth:
+            return []
+        return [(domain_obj.name,)]

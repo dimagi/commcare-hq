@@ -53,15 +53,9 @@ from corehq.const import USER_CHANGE_VIA_WEB
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
     strict_domain_fetching = True
 
-    @method_decorator(always_allow_project_access)
-    @method_decorator(login_and_domain_required)
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
-
     @property
     def main_context(self):
-        context = super(BaseInternalDomainSettingsView, self).main_context
+        context = super().main_context
         context.update({
             'project': self.domain_object,
         })
@@ -85,7 +79,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @use_jquery_ui  # datepicker
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -223,13 +217,14 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 class EditInternalCalculationsView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_calculations'
     page_title = gettext_lazy("Calculated Properties")
-    template_name = 'domain/bootstrap3/internal_calculations.html'
+    template_name = 'domain/internal_calculations.html'
 
+    @use_bootstrap5
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -239,12 +234,13 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_superuser, name='dispatch')
 class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     urlname = 'feature_flags_and_privileges'
     page_title = gettext_lazy("Feature Flags and Privileges")
-    template_name = 'domain/admin/bootstrap3/flags_and_privileges.html'
+    template_name = 'domain/admin/flags_and_privileges.html'
 
     def _get_toggles(self):
 
@@ -324,7 +320,7 @@ def _get_rate_limits(scope, rate_limiter):
 class TransferDomainView(BaseAdminProjectSettingsView):
     urlname = 'transfer_domain_view'
     page_title = gettext_lazy("Transfer Project")
-    template_name = 'domain/admin/bootstrap3/transfer_domain.html'
+    template_name = 'domain/admin/transfer_domain.html'
 
     @property
     @memoized
@@ -342,14 +338,14 @@ class TransferDomainView(BaseAdminProjectSettingsView):
     def get(self, request, *args, **kwargs):
 
         if self.active_transfer:
-            self.template_name = 'domain/admin/bootstrap3/transfer_domain_pending.html'
+            self.template_name = 'domain/admin/transfer_domain_pending.html'
 
             if request.GET.get('resend', None):
                 self.active_transfer.send_transfer_request()
                 messages.info(request,
                               _("Resent transfer request for project '{domain}'").format(domain=self.domain))
 
-        return super(TransferDomainView, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         form = self.transfer_domain_form
@@ -369,17 +365,18 @@ class TransferDomainView(BaseAdminProjectSettingsView):
         else:
             return {'form': self.transfer_domain_form}
 
+    @use_bootstrap5
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if not toggles.TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
-        return super(TransferDomainView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
 
 class ActivateTransferDomainView(BasePageView):
     urlname = 'activate_transfer_domain'
     page_title = 'Activate Domain Transfer'
-    template_name = 'domain/bootstrap3/activate_transfer_domain.html'
+    template_name = 'domain/activate_transfer_domain.html'
 
     @property
     @memoized
@@ -405,7 +402,7 @@ class ActivateTransferDomainView(BasePageView):
                 and not request.user.is_superuser):
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        return super(ActivateTransferDomainView, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, guid, *args, **kwargs):
         self.guid = guid
@@ -423,9 +420,10 @@ class ActivateTransferDomainView(BasePageView):
 
         return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
-        return super(ActivateTransferDomainView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
 
 class DeactivateTransferDomainView(View):
@@ -457,7 +455,7 @@ class DeactivateTransferDomainView(View):
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
-        return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
 
 @login_and_domain_required

@@ -408,9 +408,22 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
         return ('form_id', 'submitted',)
 
 
+class TwoFactorAuthResource(ODataEnterpriseReportResource):
+    domain_without_2fa = fields.CharField()
+
+    REPORT_SLUG = EnterpriseReport.TWO_FACTOR_AUTH
+
+    def dehydrate(self, bundle):
+        bundle.data['domain_without_2fa'] = bundle.obj[0]
+        return bundle
+
+    def get_primary_keys(self):
+        return ('domain_without_2fa',)
+
+
 class CommCareVersionComplianceResource(ODataEnterpriseReportResource):
     mobile_worker = fields.CharField()
-    project_space = fields.CharField()
+    domain = fields.CharField()
     latest_version_available_at_submission = fields.CharField()
     version_in_use = fields.CharField()
 
@@ -418,13 +431,13 @@ class CommCareVersionComplianceResource(ODataEnterpriseReportResource):
 
     def dehydrate(self, bundle):
         bundle.data['mobile_worker'] = bundle.obj[0]
-        bundle.data['project_space'] = bundle.obj[1]
+        bundle.data['domain'] = bundle.obj[1]
         bundle.data['latest_version_available_at_submission'] = bundle.obj[2]
         bundle.data['version_in_use'] = bundle.obj[3]
         return bundle
 
     def get_primary_keys(self):
-        return ('mobile_worker', 'project_space',)
+        return ('mobile_worker', 'domain',)
 
 
 class APIUsageResource(ODataEnterpriseReportResource):
