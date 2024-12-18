@@ -22,6 +22,7 @@ from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.programs.models import Program
+from corehq.apps.reports.models import TableauUser
 from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
 from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
@@ -644,14 +645,19 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         return cleaned_data
 
     def _initialize_tableau_fields(self, data, domain, invitation=None):
-        initial = {}
-        if invitation:
-            initial = {
-                'tableau_role': invitation.tableau_role,
-                'tableau_group_indices': invitation.tableau_group_ids,
-            }
-        self.tableau_form = BaseTableauUserForm(data, domain=domain, initial=initial)
+        self.tableau_form = BaseTableauUserForm(data, domain=domain)
         self.fields['tableau_group_indices'] = self.tableau_form.fields["groups"]
         self.fields['tableau_group_indices'].label = _('Tableau Groups')
         self.fields['tableau_role'] = self.tableau_form.fields['role']
         self.fields['tableau_role'].label = _('Tableau Role')
+        if invitation:
+            initial_groups_indicies = []
+            for group_index in invitation.tableau_group_ids:
+                for i, group in enumerate(self.tableau_form.allowed_tableau_groups):
+                    if group_index == group.id:
+                        initial_groups_indicies.append(i)
+            self.fields['tableau_group_indices'].initial = initial_groups_indicies
+            try:
+                self.fields['tableau_role'].initial = TableauUser.Roles(invitation.tableau_role)
+            except ValueError:
+                pass
