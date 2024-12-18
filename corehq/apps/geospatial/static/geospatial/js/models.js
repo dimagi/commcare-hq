@@ -701,20 +701,24 @@ hqDefine('geospatial/js/models', [
 
         function removeActivePolygonLayer() {
             if (self.activeSavedPolygon()) {
-                self.mapObj.mapInstance.removeLayer(self.activeSavedPolygon().id);
-                self.mapObj.mapInstance.removeSource(self.activeSavedPolygon().id);
+                const layerName = self.activeSavedPolygon().id + '-layer';
+                const sourceName = self.activeSavedPolygon().id + '-source';
+                self.mapObj.mapInstance.removeLayer(layerName);
+                self.mapObj.mapInstance.removeSource(sourceName);
             }
         }
 
         function createActivePolygonLayer(polygonObj) {
+            const layerName = String(polygonObj.id) + '-layer';
+            const sourceName = String(polygonObj.id) + '-source';
             self.mapObj.mapInstance.addSource(
-                String(polygonObj.id),
+                sourceName,
                 {'type': 'geojson', 'data': polygonObj.geoJson}
             );
             self.mapObj.mapInstance.addLayer({
-                'id': String(polygonObj.id),
+                'id': layerName,
                 'type': 'fill',
-                'source': String(polygonObj.id),
+                'source': sourceName,
                 'layout': {},
                 'paint': {
                     'fill-color': '#0080ff',
