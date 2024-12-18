@@ -129,11 +129,12 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
 
 
 class EditBasicProjectInfoView(BaseEditProjectInfoView):
-    template_name = 'domain/admin/bootstrap3/info_basic.html'
+    template_name = 'domain/admin/bootstrap5/info_basic.html'
     urlname = 'domain_basic_info'
     page_title = gettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
