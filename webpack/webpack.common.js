@@ -34,6 +34,7 @@ module.exports = {
             {
                 test: /\.js$/,
                 loader: 'babel-loader',
+                exclude: /node_modules/,
             },
 
             // this rule ensures that hqDefine is renamed to define AMD module
@@ -41,6 +42,7 @@ module.exports = {
             {
                 test: /\.js$/,
                 loader: 'string-replace-loader',
+                exclude: /node_modules/,
                 options: {
                     search: /\bhqDefine\b/g,
                     replace: 'define',
