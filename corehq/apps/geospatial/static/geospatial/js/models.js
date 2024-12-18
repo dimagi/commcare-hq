@@ -44,42 +44,31 @@ hqDefine('geospatial/js/models', [
         self.geoJson = polygon.geo_json;
     };
 
-    var MapItem = function (itemId, itemData, marker, markerColors) {
-        var self = this;
-        self.itemId = itemId;
-        self.itemData = itemData;
-        self.marker = marker;
-        self.selectCssId = "select" + itemId;
-        self.isSelected = ko.observable(false);
-        self.markerColors = markerColors;
-
-        self.groupId = null;
-        self.groupCoordinates = null;
-
-        self.setMarkerOpacity = function (opacity) {
-            const element = self.marker.getElement();
-            const svg = element.getElementsByTagName("svg")[0];
-            svg.setAttribute("opacity", opacity);
-        };
-
-        function changeMarkerColor(selectedCase, newColor) {
-            let marker = selectedCase.marker;
-            let element = marker.getElement();
-            let svg = element.getElementsByTagName("svg")[0];
-            let path = svg.getElementsByTagName("path")[0];
-            path.setAttribute("fill", newColor);
-        }
+    var MapItem = function (data, mapModel) {
+        let self = this;
+        self.itemId = data.id;
+        self.name = data.name;
+        self.coordinates = data.coordinates;
+        self.itemType = data.itemType;
+        self.link = data.link;
+        self.selectCssId = `select_${self.itemId}`;
+        self.isSelected = ko.observable(data.isSelected);
+        self.mapModel = mapModel;
+        self.customData = data.customData;
 
         self.getItemType = function () {
-            if (self.itemData.type === "user") {
+            if (self.itemType === 'user') {
                 return gettext("Mobile Worker");
             }
             return gettext("Case");
         };
 
+        function changeMarkerColor(val) {
+            self.mapModel.updatePropertyInSource(self.itemId, 'selected', val);
+            self.mapModel.refreshSource();
+        }
+
         self.updateCheckbox = function () {
-            // Need to update the checkbox through JQuery as we can't rely on dynamically changing its value
-            // with an observable. Doing so breaks all KO bindings in the element
             const checkbox = $(`#${self.selectCssId}`);
             if (!checkbox) {
                 return;
@@ -88,16 +77,33 @@ hqDefine('geospatial/js/models', [
         };
 
         self.isSelected.subscribe(function () {
-            // Popup might be open when value changes, so make sure checkbox shows correct value
             self.updateCheckbox();
-            var color = self.isSelected() ? self.markerColors.selected : self.markerColors.default;
-            changeMarkerColor(self, color);
+            const isSelected = self.isSelected().toString();
+            changeMarkerColor(isSelected);
         });
 
         self.getJson = function () {
             return {
                 'id': self.itemId,
-                'text': self.itemData.name,
+                'text': self.name,
+            };
+        };
+
+        self.getGeoJson = function () {
+            return {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [
+                        self.coordinates.lng,
+                        self.coordinates.lat,
+                    ],
+                },
+                'properties': {
+                    'selected': self.isSelected().toString(),  // Can only use numbers and strings, so use a str to represent true/false
+                    'id': self.itemId,
+                    'type': self.itemType,
+                },
             };
         };
     };
