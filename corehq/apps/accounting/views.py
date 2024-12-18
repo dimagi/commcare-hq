@@ -1203,7 +1203,7 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
             'template': 'accounting-admin-new',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         user = User.objects.get(id=item_id)
         ops_role = Role.objects.get(slug=privileges.OPERATIONS_TEAM)
         grant_to_remove = Grant.objects.filter(
