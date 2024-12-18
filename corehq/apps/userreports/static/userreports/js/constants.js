@@ -1,4 +1,4 @@
-hqDefine('userreports/js/constants', function () {
+hqDefine('userreports/js/constants', [], function () {
     var COUNT_PER_CHOICE = "Count per Choice";
     var SUM = "Sum";
     var GROUP_BY = "Group By";
