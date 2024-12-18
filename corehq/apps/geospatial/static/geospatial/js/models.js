@@ -586,30 +586,29 @@ hqDefine('geospatial/js/models', [
         };
 
         self.selectMapItemInPolygons = function (polygonArr, mapItem) {
-            let isSelected = false;
-            for (const polygon of polygonArr) {
-                if (polygon.geometry.type !== 'Polygon') {
-                    continue;
-                }
-                if (isMapItemInPolygon(polygon, mapItem.itemData.coordinates)) {
-                    isSelected = true;
-                    break;
-                }
-            }
+            const isSelected = self.isMapItemInPolygons(polygonArr, mapItem.coordinates);
             mapItem.isSelected(isSelected);
         };
 
-        function isMapItemInPolygon(polygonFeature, coordinates) {
-            // Will be 0 if a user deletes a point from a three-point polygon,
-            // since mapbox will delete the entire polygon. turf.booleanPointInPolygon()
-            // does not expect this, and will raise a 'TypeError' exception.
-            if (!polygonFeature.geometry.coordinates.length) {
-                return false;
+        self.isMapItemInPolygons = function (polygonFeatures, coordinates) {
+            for (const polygon of polygonFeatures) {
+                if (polygon.geometry.type !== 'Polygon') {
+                    continue;
+                }
+                // Will be 0 if a user deletes a point from a three-point polygon,
+                // since mapbox will delete the entire polygon. turf.booleanPointInPolygon()
+                // does not expect this, and will raise a 'TypeError' exception.
+                if (!polygon.geometry.coordinates.length) {
+                    continue;
+                }
+                const coordinatesArr = [coordinates.lng, coordinates.lat];
+                const point = turf.point(coordinatesArr);  // eslint-disable-line no-undef
+                if (turf.booleanPointInPolygon(point, polygon.geometry)) {
+                    return true;
+                }
             }
-            const coordinatesArr = [coordinates.lng, coordinates.lat];
-            const point = turf.point(coordinatesArr);  // eslint-disable-line no-undef
-            return turf.booleanPointInPolygon(point, polygonFeature.geometry);  // eslint-disable-line no-undef
-        }
+            return false;
+        };
 
         self.mapHasPolygons = function () {
             const drawnFeatures = self.drawControls.getAll().features;
