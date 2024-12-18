@@ -521,7 +521,6 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
                 self.fields['program'].choices = choices
                 if self.invite:
-                    # not sure if this works - remove this comment after testing on staging
                     self.fields['program'].initial = self.invite.program
 
         if self.can_edit_tableau_config:
@@ -644,14 +643,11 @@ class AdminInvitesUserForm(SelectUserLocationForm):
     def _initialize_tableau_fields(self, data, domain, invitation=None):
         initial = {}
         if invitation:
-            # For testing purposes only - not sure if this works
-            filterset = invitation.tableau_group_ids.filter()
-            indices = [index for index in filterset]
             initial = {
                 'tableau_role': invitation.tableau_role,
-                'tableau_group_indices': indices,
+                'tableau_group_indices': invitation.tableau_group_ids,
             }
-        self.tableau_form = BaseTableauUserForm(data, domain=domain, inital=initial)
+        self.tableau_form = BaseTableauUserForm(data, domain=domain, initial=initial)
         self.fields['tableau_group_indices'] = self.tableau_form.fields["groups"]
         self.fields['tableau_group_indices'].label = _('Tableau Groups')
         self.fields['tableau_role'] = self.tableau_form.fields['role']
