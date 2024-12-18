@@ -1,7 +1,8 @@
 import datetime
 import decimal
 from jsonobject.base_properties import AbstractDateProperty
-from jsonobject import *
+from jsonobject import *  # noqa: F401 unnamed jsonobject imports are imported from here by other modules
+from jsonobject import DateTimeProperty, JsonObject
 import re
 from jsonobject.api import re_date, re_time, re_decimal
 from dimagi.utils.dates import safe_strftime
