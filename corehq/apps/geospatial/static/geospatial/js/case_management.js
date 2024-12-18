@@ -249,8 +249,7 @@ hqDefine("geospatial/js/case_management", [
             $mapControlDiv.koApplyBindings(polygonFilterModel);
         }
 
-        var $runDisbursement = $("#btnRunDisbursement");
-        $runDisbursement.click(function () {
+        $("#btnRunDisbursement").click(function () {
             $('#disbursement-clear-message').hide();
             if (mapModel && mapModel.mapInstance && !polygonFilterModel.btnRunDisbursementDisabled()) {
                 let selectedCases = mapModel.caseMapItems();
