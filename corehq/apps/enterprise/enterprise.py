@@ -37,7 +37,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, HQApiKey, Invitation
+from corehq.apps.users.models import CouchUser, HQApiKey, Invitation, WebUser
 
 
 class EnterpriseReport(ABC):
@@ -586,19 +586,28 @@ class EnterpriseAPIReport(EnterpriseReport):
     def unique_api_keys(self):
         usernames = self.account.get_web_user_usernames()
         user_ids = User.objects.filter(username__in=usernames).values_list('id', flat=True)
+        domains = self.account.get_domains()
 
         return HQApiKey.objects.filter(
             user_id__in=Subquery(user_ids),
             is_active=True
         ).filter(
-            Q(domain__in=self.domains) | Q(domain='')
+            Q(domain__in=domains) | Q(domain='')
         )
 
     def _get_api_key_row(self, api_key):
+        if api_key.domain:
+            scope = api_key.domain
+        else:
+            user_domains = set(WebUser.get_by_username(api_key.user.username).get_domains())
+            account_domains = set(self.account.get_domains())
+            intersected_domains = user_domains.intersection(account_domains)
+            scope = ', '.join((intersected_domains))
+
         return [
             api_key.user.username,
             api_key.name,
-            api_key.domain if api_key.domain else 'All project spaces',
+            scope,
             self.format_date(api_key.expiration_date),
             self.format_date(api_key.created),
             self.format_date(api_key.last_used),
