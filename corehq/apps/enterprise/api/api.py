@@ -8,6 +8,7 @@ from corehq.apps.enterprise.api.resources import (
     ODataFeedResource,
     WebUserResource,
     SMSResource,
+    APIUsageResource,
     TwoFactorAuthResource,
 )
 
@@ -19,4 +20,5 @@ v1_api.register(FormSubmissionResource())
 v1_api.register(ODataFeedResource())
 v1_api.register(CommCareVersionComplianceResource())
 v1_api.register(SMSResource())
+v1_api.register(APIUsageResource())
 v1_api.register(TwoFactorAuthResource())
