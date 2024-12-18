@@ -238,7 +238,13 @@ hqDefine('geospatial/js/models', [
                     }
                     self.mapInstance.addImage('custom-marker', image, {sdf: true});
                     self.createMarkerLayer('case-points', self.dataPointsSourceName, 'case', caseMarkerColors.default, caseMarkerColors.selected);
+                    self.mapInstance.on('click', 'case-points', (e) => {
+                        markerClickEvent(e, 'case');
+                    });
                     self.createMarkerLayer('user-points', self.dataPointsSourceName, 'user', userMarkerColors.default, userMarkerColors.selected);
+                    self.mapInstance.on('click', 'user-points', (e) => {
+                        markerClickEvent(e, 'user');
+                    });
                 }
             );
         }
@@ -273,6 +279,31 @@ hqDefine('geospatial/js/models', [
                 'filter': ['==', ['get', 'type'], itemType],
             });
         };
+
+        function markerClickEvent(e, itemType) {
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const markerId = e.features[0].properties.id;
+
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            if (['mercator', 'equirectangular'].includes(self.mapInstance.getProjection().name)) {
+                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+            }
+
+            const popupDiv = document.createElement('div');
+            const markerItems = (itemType === 'user') ? self.userMapItems() : self.caseMapItems();
+            const mapItem = markerItems.find((mapItem) => {
+                return markerId === mapItem.itemId;
+            });
+
+            const openFunc = () => mapItem.updateCheckbox();
+            const popup = utils.createMapPopup(coordinates, popupDiv, openFunc);
+            popup.addTo(self.mapInstance);
+            $(popupDiv).koApplyBindings(mapItem);
+        }
 
         function loadMapBoxStreetsLayers() {
             self.mapInstance.on('load', () => {
