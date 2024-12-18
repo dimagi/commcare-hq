@@ -60,21 +60,23 @@ hqDefine("geospatial/js/case_management", [
 
             let groupId = 0;
             mapModel.caseGroupsIndex = {};
-            Object.keys(result).forEach((userId) => {
-                const user = mapModel.userMapItems().find((userModel) => {return userModel.itemId === userId;});
-                mapModel.caseGroupsIndex[userId] = {groupId: groupId, item: user};
-
+            for (const userItem of mapModel.userMapItems()) {
+                mapModel.caseGroupsIndex[userItem.itemId] = {groupId: groupId, item: userItem};
+                if (!result[userItem.itemId]) {
+                    groupId++;
+                    continue;
+                }
                 mapModel.caseMapItems().forEach((caseModel) => {
-                    if (result[userId].includes(caseModel.itemId)) {
+                    if (result[userItem.itemId].includes(caseModel.itemId)) {
                         mapModel.caseGroupsIndex[caseModel.itemId] = {
                             groupId: groupId,
                             item: caseModel,
-                            assignedUserId: userId,
+                            assignedUserId: userItem.itemId,
                         };
                     }
                 });
                 groupId += 1;
-            });
+            }
             self.connectUserWithCasesOnMap();
             self.setBusy(false);
         };
