@@ -10,6 +10,8 @@
 
 {% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
 
+{% js_entry_b3 "reports/js/bootstrap3/tabular" %}
+
 {% block js %}{{ block.super }}
   {% compress js %}
     <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
