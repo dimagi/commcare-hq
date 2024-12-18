@@ -16,15 +16,6 @@ hqDefine("geospatial/js/case_management", [
     utils,
     alertUser
 ) {
-    const caseMarkerColors = {
-        'default': "#808080", // Gray
-        'selected': "#00FF00", // Green
-    };
-    const userMarkerColors = {
-        'default': "#0e00ff", // Blue
-        'selected': "#0b940d", // Dark Green
-    };
-
     const MAP_CONTAINER_ID = 'geospatial-map';
     const SHOW_USERS_QUERY_PARAM = 'show_users';
     const USER_LOCATION_ID_QUERY_PARAM = 'user_location_id';

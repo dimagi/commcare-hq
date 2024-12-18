@@ -23,6 +23,14 @@ hqDefine('geospatial/js/models', [
         "Oops! Something went wrong!" +
         " Please report an issue if the problem persists."
     );
+    const caseMarkerColors = {
+        'default': "#808080", // Gray
+        'selected': "#00FF00", // Green
+    };
+    const userMarkerColors = {
+        'default': "#0e00ff", // Blue
+        'selected': "#0b940d", // Dark Green
+    };
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -120,6 +128,14 @@ hqDefine('geospatial/js/models', [
     var Map = function (usesClusters, usesStreetsLayers) {
         var self = this;
 
+        self.userLayerName = 'user-points';
+        self.caseLayerName = 'case-points';
+        self.dataPointsSourceName = 'data-points';
+        self.sourceData = {
+            'type': 'FeatureCollection',
+            'features': [],
+        };
+
         self.usesClusters = usesClusters;
         self.usesStreetsLayers = usesStreetsLayers;
 
@@ -164,12 +180,64 @@ hqDefine('geospatial/js/models', [
 
             if (self.usesClusters) {
                 createClusterLayers();
+            } else {
+                self.mapInstance.on('load', createMarkerLayers);
             }
 
             if (self.usesStreetsLayers) {
                 loadMapBoxStreetsLayers();
                 addLayersToPanel();
             }
+        };
+
+        function createMarkerLayers() {
+            self.mapInstance.addSource(self.dataPointsSourceName, {
+                'type': 'geojson',
+                'data': self.sourceData,
+            });
+
+            self.mapInstance.loadImage(
+                'https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png',
+                (error, image) => {
+                    if (error) {
+                        throw error;
+                    }
+                    self.mapInstance.addImage('custom-marker', image, {sdf: true});
+                    self.createMarkerLayer('case-points', self.dataPointsSourceName, 'case', caseMarkerColors.default, caseMarkerColors.selected);
+                    self.createMarkerLayer('user-points', self.dataPointsSourceName, 'user', userMarkerColors.default, userMarkerColors.selected);
+                }
+            );
+        }
+
+        self.createMarkerLayer = function (layerName, source, itemType, defaultColor, selectedColor) {
+            self.mapInstance.addLayer({
+                'id': layerName,
+                'type': 'symbol',
+                'source': source,
+                'layout': {
+                    'icon-image': 'custom-marker',
+                    'icon-size': [
+                        'interpolate',
+                        ['exponential', 2],
+                        ['zoom'],
+                        5, 0.35,
+                        15, 3,
+                    ],
+                    'icon-allow-overlap': true,
+                },
+                'paint': {
+                    'icon-color': [
+                        'match',
+                        ['get', 'selected'],
+                        'false',
+                        defaultColor,
+                        'true',
+                        selectedColor,
+                        '#0000FF',
+                    ],
+                },
+                'filter': ['==', ['get', 'type'], itemType],
+            });
         };
 
         function loadMapBoxStreetsLayers() {
