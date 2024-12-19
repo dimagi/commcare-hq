@@ -12,7 +12,7 @@ from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition, PROFILE_SLUG
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -1204,10 +1204,17 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def page_context(self):
+        initial_values = {}
+        if self.invitation:
+            initial_values = {f.slug: self.invitation.custom_user_data.get(f.slug)
+                              for f in self.custom_data.fields}
+            if self.invitation.profile:
+                initial_values[PROFILE_SLUG] = self.invitation.profile.id
         ctx = {
             'registration_form': self.invite_web_user_form,
+            'user_data': initial_values,
             **self.custom_data.field_view.get_field_page_context(
-                self.domain, self.request.couch_user, self.custom_data, None, self.invitation
+                self.domain, self.request.couch_user, self.custom_data, None
             )
         }
         return ctx
