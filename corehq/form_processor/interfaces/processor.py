@@ -3,7 +3,7 @@ import re
 from collections import namedtuple
 
 from couchdbkit.exceptions import BulkSaveError
-from redis.exceptions import RedisError
+from redis import RedisError
 
 from casexml.apps.case import const
 from corehq.form_processor.exceptions import (

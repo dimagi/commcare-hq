@@ -3,10 +3,10 @@ import logging
 import uuid
 from itertools import chain
 
-import redis
 from contextlib import ExitStack
 from django.db import transaction, DatabaseError
 from lxml import etree
+from redis import RedisError
 
 from casexml.apps.case import const
 from casexml.apps.case.xform import get_case_updates
@@ -330,7 +330,7 @@ class FormProcessorSQL(object):
             if lock:
                 try:
                     return CommCareCase.get_locked_obj(_id=case_id)
-                except redis.RedisError:
+                except RedisError:
                     case = CommCareCase.objects.get_case(case_id)
             else:
                 case = CommCareCase.objects.get_case(case_id)
