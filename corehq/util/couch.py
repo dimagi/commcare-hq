@@ -152,7 +152,7 @@ class IterDB(object):
     def __init__(self, database, chunksize=100, throttle_secs=None,
                  new_edits=None, callback=None):
         self.db = database
-        self.chunksize = chunksize
+        self.chunksize = chunksize if chunksize else 100
         self.throttle_secs = throttle_secs
         self.saved_ids = set()
         self.deleted_ids = set()

@@ -3,10 +3,11 @@ hqDefine('users/js/filtered_download', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/widgets',      // role selection
+    'hqwebapp/js/bootstrap3/widgets',      // role selection
     'locations/js/widgets',     // location search
-    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
+    'hqwebapp/js/components/select_toggle',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // slideVisible binding
+    'commcarehq',
 ], function (
     $,
     ko,

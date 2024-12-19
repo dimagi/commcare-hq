@@ -177,7 +177,7 @@ At any given time, there is one piece of data that the app is focused on acquiri
 
 Before the "Start" button is pressed, CommCare is always looking for a command id (module or form), which is why the app's root module menu is always the first screen to be shown.
 
-``commcare-core``, the engine shared by CommCare mobile, the `CommCare CLI <https://confluence.dimagi.com/display/commcarepublic/CommCare+CLI>`_, and formplayer, has the following types of screens:
+``commcare-core``, the engine shared by CommCare mobile, the CommCare CLI, and formplayer, has the following types of screens:
 
 * ``MenuScreen`` - Displays a list of menus and/or forms.
 

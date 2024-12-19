@@ -149,7 +149,7 @@ hqDefine("app_manager/js/details/sort_rows", function () {
                 }
                 row.selectField.fire("change");
             });
-        }
+        };
 
         return self;
     };

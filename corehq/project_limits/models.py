@@ -2,6 +2,14 @@ from django.db import models
 
 import architect
 
+AVG = 'AVG'
+MAX = 'MAX'
+
+AGGREGATION_OPTIONS = [
+    (AVG, 'Average'),
+    (MAX, 'Maximum'),
+]
+
 
 class DynamicRateDefinition(models.Model):
     key = models.CharField(max_length=512, blank=False, null=False, unique=True, db_index=True)
@@ -22,6 +30,42 @@ class DynamicRateDefinition(models.Model):
     def _clear_caches(self):
         from corehq.project_limits.rate_limiter import get_dynamic_rate_definition
         get_dynamic_rate_definition.clear(self.key, {})
+
+
+class GaugeDefinition(models.Model):
+    """
+    An abstract model to be used to define configuration to limit gauge values.
+    The model is used by GaugeLimiter class to decide weather to limit or not.
+    """
+    key = models.CharField(max_length=512, blank=False, null=False, unique=True, db_index=True)
+    wait_for_seconds = models.IntegerField(null=False)
+    acceptable_value = models.FloatField(default=None, blank=True, null=True)
+    aggregator = models.CharField(max_length=10, null=True, blank=True, choices=AGGREGATION_OPTIONS)
+    is_enabled = models.BooleanField(default=True)
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._clear_caches()
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        self._clear_caches()
+
+    def _clear_caches(self):
+        pass
+
+
+class PillowLagGaugeDefinition(GaugeDefinition):
+
+    max_value = models.FloatField(default=None, blank=True, null=True)
+    average_value = models.FloatField(default=None, blank=True, null=True)
+
+    def _clear_caches(self):
+        from corehq.project_limits.gauge import get_pillow_throttle_definition
+        get_pillow_throttle_definition.clear(self.key)
 
 
 @architect.install('partition', type='range', subtype='date', constraint='week', column='date')

@@ -1,4 +1,4 @@
-/* globals window, hbspt */
+"use strict";
 /**
  * Instatiates the Hubspot analytics platform.
  */

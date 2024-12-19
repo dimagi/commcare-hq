@@ -35,7 +35,7 @@ class Command(BaseCommand):
         parser.add_argument('case_type')
 
     def handle(self, *args, **options):
-        repeater = Repeater.objects.get(repeater_id=options['repeater_id'])
+        repeater = Repeater.objects.get(id=options['repeater_id'])
         assert repeater.domain == options['domain'], 'Repeater not found'
 
         case = CommCareCase.objects.get_case_by_external_id(

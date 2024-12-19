@@ -16,3 +16,9 @@ def get_email_domain_from_username(username):
         # not a real email address as the username contains invalid characters
         return
     return split_username[-1]
+
+
+def convert_emails_to_lowercase(emails):
+    # Convert each email in the list to lowercase
+    lowercase_emails = [email.lower() for email in emails]
+    return lowercase_emails

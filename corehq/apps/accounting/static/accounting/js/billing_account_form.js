@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('accounting/js/billing_account_form', [
     'jquery',
     'knockout',
@@ -10,7 +11,6 @@ hqDefine('accounting/js/billing_account_form', [
     initialPageData
 ) {
     var billingAccountFormModel = function (isActive, isCustomerBillingAccount, enterpriseAdminEmails, isSmsBillableReportVisible) {
-        'use strict';
         var self = {};
 
         self.is_active = ko.observable(isActive);

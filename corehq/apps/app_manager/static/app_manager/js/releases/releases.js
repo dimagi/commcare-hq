@@ -243,6 +243,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildState = ko.observable('');
         self.buildErrorCode = ko.observable('');
         self.errorMessage = ko.observable(self.genericErrorMessage);
+        self.releaseErrorMessage = ko.observable();
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.fetchLimit = ko.observable();
@@ -272,12 +273,12 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         });
 
-        self.download_application_zip = function (appId, multimediaOnly, buildProfile, download_targeted_version) {
+        self.download_application_zip = function (appId, multimediaOnly, buildProfile, downloadTargetedVersion) {
             var urlSlug = multimediaOnly ? 'download_multimedia_zip' : 'download_ccz';
             var url = self.reverse(urlSlug, appId);
             var params = {};
             params.message = "Your application download is ready";
-            params.download_targeted_version = download_targeted_version;
+            params.download_targeted_version = downloadTargetedVersion;
             if (buildProfile) {
                 params.profile = buildProfile;
             }
@@ -387,6 +388,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.toggleRelease = function (savedApp, event) {
+            self.releaseErrorMessage(null);
             $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('hide');
             var isReleased = savedApp.is_released();
             var savedAppId = savedApp.id();
@@ -404,7 +406,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     },
                     success: function (data) {
                         if (data.error) {
-                            alert(data.error);
+                            self.releaseErrorMessage(data.error);
                             $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
                             savedApp.is_released(isReleased);
                         } else {
@@ -451,7 +453,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.revertSavedApp = function (savedApp) {
             $.postGo(self.reverse('revert_to_copy'), {build_id: savedApp.id()});
         };
-        self.handleDeprecatedCaseTypesWarning = function(depCaseTypes) {
+        self.handleDeprecatedCaseTypesWarning = function (depCaseTypes) {
             if (depCaseTypes && depCaseTypes.length) {
                 self.depCaseTypes(depCaseTypes);
             } else {
@@ -492,6 +494,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.actuallyMakeBuild = function () {
             self.buildState('pending');
             self.errorMessage(self.genericErrorMessage);
+            self.releaseErrorMessage(null);
             $.post({
                 url: self.reverse('save_copy'),
                 success: function (data) {

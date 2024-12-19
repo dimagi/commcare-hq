@@ -8,6 +8,9 @@ from psycogreen.gevent import patch_psycopg
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == 'test':
+        sys.exit("pytest is used to run HQ tests. See 'pytest --help' for options")
+
     # important to apply gevent monkey patches before running any other code
     # applying this later can lead to inconsistencies and threading issues
     # but compressor doesn't like it
@@ -19,7 +22,7 @@ def main():
         GeventCommand('run_blob_migration'),
         GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
-        GeventCommand('migrate'),
+        GeventCommand('migrate', env_exclude=['SKIP_GEVENT_PATCHING']),
         GeventCommand('migrate_multi'),
         GeventCommand('prime_views'),
         GeventCommand('ptop_preindex'),
@@ -40,10 +43,9 @@ def main():
     run_patches()
 
     from corehq.warnings import configure_warnings
-    configure_warnings(is_testing(sys.argv))
+    configure_warnings()
 
     set_default_settings_path(sys.argv)
-    set_nosetests_verbosity(sys.argv)
     from django.core.management import execute_from_command_line
     execute_from_command_line(sys.argv)
 
@@ -52,6 +54,7 @@ def main():
 class GeventCommand(object):
     command = attr.ib()
     contains = attr.ib(default=None)
+    env_exclude = attr.ib(default=None)
     http_adapter_pool_size = attr.ib(default=None)
 
 
@@ -60,8 +63,17 @@ def _patch_gevent_if_required(args, gevent_commands):
         return
     for gevent_command in gevent_commands:
         should_patch = args[1] == gevent_command.command
-        if gevent_command.contains:
-            should_patch = should_patch and gevent_command.contains in ' '.join(args)
+        contains = set(gevent_command.contains or [])
+        env_exclude = gevent_command.env_exclude or []
+        arg_set = set(args)
+
+        should_include = contains.issubset(arg_set)
+        should_exclude = any(
+            [os.environ.get(env_var) == '1' for env_var in env_exclude]
+        )
+
+        should_patch = should_patch and should_include and not should_exclude
+
         if should_patch:
             monkey.patch_all(subprocess=True)
             patch_psycopg()
@@ -117,6 +129,7 @@ def _set_source_root(source_root):
 
 def run_patches():
     patch_jsonfield()
+    unpatch_sys_modules()
 
 
 def patch_jsonfield():
@@ -139,51 +152,20 @@ def patch_jsonfield():
     JSONField.to_python = to_python
 
 
+def unpatch_sys_modules():
+    # until https://github.com/DataDog/dd-trace-py/issues/9143 is implemented
+    if os.environ.get("DD_TRACE_ENABLED", "").lower() == "false":
+        from ddtrace import ModuleWatchdog
+        if isinstance(sys.modules, ModuleWatchdog):
+            sys.modules.uninstall()
+
+
 def set_default_settings_path(argv):
-    if is_testing(argv):
-        os.environ.setdefault('CCHQ_TESTING', '1')
+    if os.environ.get('CCHQ_TESTING') == '1':
         module = 'testsettings'
     else:
         module = 'settings'
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", module)
-
-
-def is_testing(argv):
-    return len(argv) > 1 and argv[1] == 'test' or os.environ.get('CCHQ_TESTING') == '1'
-
-
-def set_nosetests_verbosity(argv):
-    """Increase nose output verbosity with -v... argument
-
-        -v: print test names
-        -vv: do not capture stdout
-        -vvv: do not capture logging
-        -vvvv: enable nose internal logging
-    """
-    import logging
-
-    def set_verbosity(arg, i):
-        args = []
-        verbosity = sum(1 for c in arg if c == "v") + 1
-        if len(arg) > verbosity:
-            # preserve other single-letter arguments (ex: -xv)
-            args.append("".join(c for c in arg if c != "v"))
-        if verbosity > 2:
-            args.append("--nocapture")
-        if verbosity > 3:
-            verbosity -= 1
-            args.append("--nologcapture")
-            logging.basicConfig(level=logging.NOTSET)
-            logging.getLogger().info(
-                "Adjust logging with testsettings._set_logging_levels")
-        args.append("--nose-verbosity=%s" % verbosity)
-        argv[i:i + 1] = args
-
-    if len(argv) > 1 and argv[1] == 'test':
-        for i, arg in reversed(list(enumerate(argv))):
-            if arg[:1] == "-" and arg[1] != "-" and any(c == 'v' for c in arg):
-                set_verbosity(arg, i)
-                break
 
 
 if __name__ == "__main__":

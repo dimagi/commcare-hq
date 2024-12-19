@@ -25,7 +25,7 @@ def get_context_to_send_autopay_failed_email(invoice_id):
     autopay_card = payment_method.get_autopay_card(subscription.account)
     web_user = WebUser.get_by_username(auto_payer)
     if web_user:
-        recipient = web_user.get_email()
+        recipient = web_user.get_email() if web_user.is_active else invoice.get_contact_emails()
     else:
         recipient = auto_payer
     domain = invoice.get_domain()
@@ -53,7 +53,7 @@ def get_context_to_send_purchase_receipt(payment_record_id, domain, additional_c
     payment_record = PaymentRecord.objects.get(id=payment_record_id)
     username = payment_record.payment_method.web_user
     web_user = WebUser.get_by_username(username)
-    if web_user:
+    if web_user and web_user.is_active:
         email = web_user.get_email()
         name = web_user.first_name
     else:

@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
@@ -49,7 +49,6 @@ from .views.mobile.users import (
     CommCareUsersLookup,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
-    CreateCommCareUserModal,
     DemoRestoreStatusView,
     DeleteCommCareUsers,
     DownloadUsersStatusView,
@@ -79,6 +78,7 @@ from .views.mobile.users import (
     CommcareUserUploadJobPollView,
     ClearCommCareUsers,
     link_connectid_user,
+    bulk_user_upload_api,
 )
 from ..hqwebapp.decorators import waf_allow
 
@@ -149,7 +149,7 @@ urlpatterns = [
 ] + [
     url(r'^commcare/$', MobileWorkerListView.as_view(), name=MobileWorkerListView.urlname),
     url(r'^commcare/json/$', paginate_mobile_workers, name='paginate_mobile_workers'),
-    url(r'^commcare/fields/$', waf_allow('XSS_BODY')(UserFieldsView.as_view()), name=UserFieldsView.urlname),
+    url(r'^user_data/$', waf_allow('XSS_BODY')(UserFieldsView.as_view()), name=UserFieldsView.urlname),
     url(
         r'^commcare/account/(?P<couch_user_id>[ \w-]+)/$',
         EditCommCareUserView.as_view(),
@@ -196,6 +196,11 @@ urlpatterns = [
         name=UploadCommCareUsers.urlname
     ),
     url(
+        r'^commcare/upload/bulk_user_upload_api/$',
+        bulk_user_upload_api,
+        name='bulk_user_upload_api'
+    ),
+    url(
         r'^commcare/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         UserUploadStatusView.as_view(),
         name=UserUploadStatusView.urlname
@@ -221,11 +226,6 @@ urlpatterns = [
         r'^commcare/download/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         user_download_job_poll,
         name='user_download_job_poll'
-    ),
-    url(
-        r'^commcare/new_mobile_worker_modal/$',
-        CreateCommCareUserModal.as_view(),
-        name=CreateCommCareUserModal.urlname
     ),
     url(
         r'^commcare/confirm_charges/$',

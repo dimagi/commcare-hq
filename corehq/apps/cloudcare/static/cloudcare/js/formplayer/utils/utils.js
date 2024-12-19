@@ -1,8 +1,25 @@
-/*global Backbone, DOMPurify */
-hqDefine("cloudcare/js/formplayer/utils/utils", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles");
-
+'use strict';
+hqDefine("cloudcare/js/formplayer/utils/utils", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    "cloudcare/js/formplayer/constants",
+    'cloudcare/js/formplayer/apps/api',
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    bootstrap,
+    initialPageData,
+    toggles,
+    constants,
+    AppsAPI
+) {
     var Utils = {};
 
     /**
@@ -38,7 +55,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         $confirmationButton.on('click.confirmationModal', function (e) {
             options.onConfirm(e);
         });
-        $modal.modal('show');
+        bootstrap.Modal.getOrCreateInstance($modal).show();
     };
 
     Utils.encodedUrlToObject = function (encodedUrl) {
@@ -61,10 +78,18 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
     Utils.setUrlToObject = function (urlObject, replace) {
         replace = replace || false;
+        for (const queryKey in urlObject.queryData) {
+            // don't store query inputs in url
+            delete urlObject.queryData[queryKey].inputs;
+        }
+
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            FormplayerFrontend.navigate(encodedUrl, { replace: replace });
-        });
+        Utils.navigate(encodedUrl, { replace: replace });
+    };
+
+    Utils.navigate = function (route, options) {
+        options || (options = {});
+        Backbone.history.navigate(route, options);
     };
 
     /**
@@ -94,42 +119,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         options.contentType = "application/json;charset=UTF-8";
     };
 
-    Utils.saveDisplayOptions = function (displayOptions) {
-        $.when(Utils.getDisplayOptionsKey()).done(function (displayOptionsKey) {
-            localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
-        });
-    };
-
-    Utils.getSavedDisplayOptions = function () {
-        var defer = $.Deferred();
-        $.when(Utils.getDisplayOptionsKey()).done(function (displayOptionsKey) {
-            try {
-                defer.resolve(JSON.parse(localStorage.getItem(displayOptionsKey)));
-            } catch (e) {
-                window.console.warn('Unabled to parse saved display options');
-                defer.resolve({});
-            }
-        });
-        return defer.promise();
-    };
-
-    Utils.getDisplayOptionsKey = function () {
-        var defer = $.Deferred();
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
-            defer.resolve([
-                user.environment,
-                user.domain,
-                user.username,
-                'displayOptions',
-            ].join(':'));
-        });
-        return defer.promise();
-    };
-
-    // this method takes current page number on which user has clicked and total possible pages
+    // This method takes current page number on which user has clicked and total possible pages
     // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
-    Utils.paginateOptions = function (currentPage, totalPages) {
+    // totalItems can be either the total on the current page or across all pages.
+    Utils.paginateOptions = function (currentPage, totalPages, totalItems) {
         var maxPages = 5;
         // ensure current page isn't out of range
         if (currentPage < 1) {
@@ -160,10 +153,19 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 endPage = currentPage + maxPagesAfterCurrentPage;
             }
         }
+
+        const rowRange = [5, 10, 25, 50, 100],
+            hasMultiplePages = totalPages > 1,
+            hasAtLeastMinimumItemsPerPage = totalItems > rowRange[0],
+            showPagination = hasMultiplePages || hasAtLeastMinimumItemsPerPage;
+
         return {
             startPage: startPage,
             endPage: endPage,
             pageCount: totalPages,
+            rowRange: rowRange,
+            showPagination: showPagination,
+            pageNumLabel: _.template(gettext("Page <%- num %>")),
         };
     };
 
@@ -175,29 +177,33 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         }
     };
 
-    Utils.getCurrentQueryInputs = function () {
-        var queryData = Utils.currentUrlToObject().queryData[sessionStorage.queryKey];
-        if (queryData) {
-            return queryData.inputs || {};
+    Utils.getCurrentQueryInputs = function (queryKey) {
+        queryKey = queryKey || sessionStorage.queryKey;
+        const queryInputs = this.queryInputs || {};
+        return queryInputs[queryKey];
+    };
+
+    Utils.setCurrentQueryInputs = function (inputs, queryKey) {
+        queryKey = queryKey || sessionStorage.queryKey;
+        if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
+            this.queryInputs = this.queryInputs || {};
+            this.queryInputs[queryKey] = inputs;
+        }
+    };
+
+    Utils.getStickyQueryInputs = function () {
+        if (toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') && this.stickyQueryInputs) {
+            return this.stickyQueryInputs[sessionStorage.queryKey] || {};
         }
         return {};
     };
 
-    Utils.getStickyQueryInputs = function () {
-        if (!toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
-            return {};
-        }
-        if (!this.stickyQueryInputs) {
-            return {};
-        }
-        return this.stickyQueryInputs[sessionStorage.queryKey] || {};
-    };
-
     Utils.setStickyQueryInputs = function (inputs) {
-        if (!this.stickyQueryInputs) {
-            this.stickyQueryInputs = {};
+        const queryKey = sessionStorage.queryKey;
+        if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
+            this.stickyQueryInputs = this.stickyQueryInputs || {};
+            this.stickyQueryInputs[queryKey] = inputs;
         }
-        this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
     };
 
     Utils.setSelectedValues = function (selections) {
@@ -222,6 +228,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
         this.forceLoginAs = options.forceLoginAs;
+        this.requestInitiatedByTag = options.requestInitiatedByTag;
 
         this.setSelections = function (selections) {
             this.selections = selections;
@@ -264,8 +271,13 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function ({ inputs, execute, forceManualSearch, initiatedBy}) {
+        this.setRequestInitiatedByTag = function (requestInitiatedByTag) {
+            this.requestInitiatedByTag = requestInitiatedByTag;
+        };
+
+        this.setQueryData = function ({ inputs, execute, forceManualSearch}) {
             var selections = Utils.currentUrlToObject().selections;
+            var queryKey = sessionStorage.queryKey;
             this.queryData = this.queryData || {};
 
             const queryDataEntry = _.defaults({
@@ -273,13 +285,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
-            }, this.queryData[sessionStorage.queryKey]);
+            }, this.queryData[queryKey]);
 
-            if (initiatedBy !== null && initiatedBy !== undefined) {
-                queryDataEntry.initiatedBy = initiatedBy;
-            }
-
-            this.queryData[sessionStorage.queryKey] = queryDataEntry;
+            Utils.setCurrentQueryInputs(inputs, queryKey);
+            this.queryData[queryKey] = queryDataEntry;
 
             this.page = null;
             this.search = null;
@@ -304,6 +313,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sessionId = null;
             sessionStorage.removeItem('submitPerformed');
             sessionStorage.removeItem('geocoderValues');
+            sessionStorage.removeItem('validationInProgress');
+            sessionStorage.removeItem('answerQuestionInProgress');
+            sessionStorage.removeItem('formplayerQueryInProgress');
+            sessionStorage.removeItem('collapsedIx');
         };
 
         this.onSubmit = function () {
@@ -357,12 +370,17 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
             forceLoginAs: self.forceLoginAs,
+            requestInitiatedByTag: self.requestInitiatedByTag,
         };
         return JSON.stringify(dict);
     };
 
     Utils.CloudcareUrl.fromJson = function (json) {
         var data = JSON.parse(json);
+        for (const queryKey in data.queryData) {
+            // retrieve query inputs from Utils object
+            data.queryData[queryKey].inputs = Utils.getCurrentQueryInputs(queryKey);
+        }
         var options = {
             'appId': data.appId,
             'copyOf': data.copyOf,
@@ -376,6 +394,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             'singleApp': data.singleApp,
             'sortIndex': data.sortIndex,
             'forceLoginAs': data.forceLoginAs,
+            "requestInitiatedByTag": data.requestInitiatedByTag,
         };
         return new Utils.CloudcareUrl(options);
     };
@@ -401,7 +420,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
     if (!String.prototype.includes) {
         String.prototype.includes = function (search, start) {
-            'use strict';
             if (typeof start !== 'number') {
                 start = 0;
             }
@@ -433,6 +451,66 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             secure: initialPageData.get('secure_cookies'),
         });
     };
+
+    Utils.setSyncInterval = function (appId, restartInterval) {
+        const currentApp = AppsAPI.getAppEntity(appId);
+        let customProperties = {};
+        if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
+            customProperties = currentApp.attributes.profile.custom_properties || {};
+        }
+
+        const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+        if (!useAggressiveSyncTiming) {
+            return;
+        }
+
+        const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
+        if (restartInterval) {
+            stopSyncInterval();
+            startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
+        } else {
+            startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
+        }
+    };
+
+    function startSyncInterval(delayInMilliseconds) {
+        function shouldSync() {
+            const currentTime = Date.now(),
+                lastUserActivityTime =  sessionStorage.getItem("lastUserActivityTime") || 0,
+                elapsedTimeSinceLastActivity = currentTime - lastUserActivityTime,
+                isInApp = Utils.currentUrlToObject().appId !== undefined;
+            if (elapsedTimeSinceLastActivity <= delayInMilliseconds && isInApp) {
+                return true;
+            }
+        }
+
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            if (!FormplayerFrontend.syncInterval) {
+                FormplayerFrontend.syncInterval = setInterval(function () {
+                    const urlObject = Utils.currentUrlToObject(),
+                        currentApp = AppsAPI.getAppEntity(urlObject.appId);
+                    let customProperties = {};
+                    if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
+                        customProperties = currentApp.attributes.profile.custom_properties || {};
+                    }
+                    const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+                    if (!useAggressiveSyncTiming) {
+                        stopSyncInterval();
+                    }
+                    if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
+                        FormplayerFrontend.trigger("interval_sync-db", urlObject.appId);
+                    }
+                }, delayInMilliseconds);
+            }
+        });
+    }
+
+    function stopSyncInterval() {
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            clearInterval(FormplayerFrontend.syncInterval);
+            FormplayerFrontend.syncInterval = null;
+        });
+    }
 
     return Utils;
 });

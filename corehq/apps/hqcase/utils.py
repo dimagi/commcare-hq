@@ -10,7 +10,7 @@ from casexml.apps.case.util import property_changed_in_action
 from couchexport.deid import deid_date, deid_ID
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
+from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
@@ -20,18 +20,21 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.dhis2.const import XMLNS_DHIS2
+from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
+REPEATER_RESPONSE_XMLNS = 'http://commcarehq.org/data_forwarding/response'
 
 SYSTEM_FORM_XMLNS_MAP = {
     SYSTEM_FORM_XMLNS: gettext_lazy('System Form'),
     EDIT_FORM_XMLNS: gettext_lazy('Data Cleaning Form'),
     AUTO_UPDATE_XMLNS: gettext_lazy('Automatic Case Update Rule'),
     DEDUPE_XMLNS: gettext_lazy('Deduplication Rule'),
-    XMLNS_DHIS2: gettext_lazy('DHIS2 Integration')
+    XMLNS_DHIS2: gettext_lazy('DHIS2 Integration'),
+    REPEATER_RESPONSE_XMLNS: gettext_lazy('Data Forwarding Response'),
 }
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
@@ -224,7 +227,7 @@ def bulk_update_cases(domain, case_changes, device_id, xmlns=None):
 
 def resave_case(domain, case, send_post_save_signal=True):
     from corehq.form_processor.change_publishers import publish_case_saved
-    publish_case_saved(case, send_post_save_signal=send_post_save_signal)
+    publish_case_saved(case, associated_form_id=UPDATE_REASON_RESAVE, send_post_save_signal=send_post_save_signal)
 
 
 def get_last_non_blank_value(case, case_property):
@@ -257,8 +260,8 @@ def get_case_value(case, value):
     if not value:
         return None, None
 
-    if value in SPECIAL_CASE_PROPERTIES_MAP:
-        return SPECIAL_CASE_PROPERTIES_MAP[value].value_getter(case.to_json()), False
+    if value in INDEXED_METADATA_BY_KEY:
+        return INDEXED_METADATA_BY_KEY[value].get_value(case.to_json()), False
     elif value in case.case_json:
         return case.case_json.get(value, None), True
     return None, None
@@ -300,3 +303,9 @@ def get_deidentified_data(case, censor_data):
                 attrs[attr_or_prop] = censored_value
 
     return attrs, props
+
+
+def is_copied_case(case):
+    """Returns True if the case was created by copying an existing case using the 'COPY_CASES' feature"""
+    from corehq.apps.hqcase.case_helper import CaseCopier
+    return CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME in case.case_json

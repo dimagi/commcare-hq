@@ -22,6 +22,7 @@ hqDefine('export/js/const', [], function () {
         CSV: 'csv',
         XLS: 'xls',
         XLSX: 'xlsx',
+        GEOJSON: 'geojson',
     };
     var SHARING_OPTIONS = {
         PRIVATE: 'private',

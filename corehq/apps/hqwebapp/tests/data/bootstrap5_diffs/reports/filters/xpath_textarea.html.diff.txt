@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends 'reports/filters/bootstrap3/base.html' %}
++{% extends 'reports/filters/bootstrap5/base.html' %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ {% block filter_content %}

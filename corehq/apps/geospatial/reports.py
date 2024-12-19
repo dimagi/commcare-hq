@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from django.conf import settings
 from django.urls import reverse
@@ -15,13 +16,16 @@ from corehq.apps.es.case_search import (
     PROPERTY_GEOPOINT_VALUE,
     PROPERTY_KEY,
     wrap_case_search_hit,
+    case_property_missing,
 )
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
+from corehq.apps.reports.standard.cases.case_list_explorer import XpathCaseSearchFilterMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.util.quickcache import quickcache
 
 from .dispatchers import CaseManagementMapDispatcher
+from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
 from .es import (
     BUCKET_CASES_AGG,
     CASE_PROPERTIES_AGG,
@@ -35,10 +39,18 @@ from .utils import (
     geojson_to_es_geoshape,
     get_geo_case_property,
     validate_geometry,
+    get_celery_task_tracker,
 )
 
 
-class BaseCaseMapReport(ProjectReport, CaseListMixin):
+class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin):
+    fields = [
+        'corehq.apps.reports.standard.cases.filters.XPathCaseSearchFilter',
+        'corehq.apps.reports.filters.case_list.CaseListFilter',
+        'corehq.apps.reports.filters.select.CaseTypeFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+    ]
+
     section_name = gettext_noop("Data")
 
     dispatcher = CaseManagementMapDispatcher
@@ -49,36 +61,27 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
     def template_context(self):
         # Whatever is specified here can be accessed through initial_page_data
         context = super(BaseCaseMapReport, self).template_context
+        celery_task_tracker = get_celery_task_tracker(self.domain, task_slug=ES_INDEX_TASK_HELPER_BASE_KEY)
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-            'case_row_order': {val.html: idx for idx, val in enumerate(self.headers)},
             'saved_polygons': [
                 {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
                 for p in GeoPolygon.objects.filter(domain=self.domain).all()
             ],
+            'task_status': celery_task_tracker.get_status(),
         })
         return context
 
-    @property
-    def headers(self):
-        from corehq.apps.reports.datatables import (
-            DataTablesColumn,
-            DataTablesHeader,
-        )
-        headers = DataTablesHeader(
-            DataTablesColumn(_("case_id"), prop_name="type.exact"),
-            DataTablesColumn(_("gps_point"), prop_name="type.exact"),
-            DataTablesColumn(_("link"), prop_name="name.exact", css_class="case-name-link"),
-        )
-        headers.custom_sort = [[2, 'desc']]
-        return headers
+    def _build_query(self):
+        query = super()._build_query()
+        geo_case_property = get_geo_case_property(self.domain)
+        query = query.NOT(case_property_missing(geo_case_property))
+        query = self.apply_xpath_case_search_filter(query)
+        return query
 
     def _get_geo_location(self, case):
         geo_case_property = get_geo_case_property(self.domain)
         geo_point = case.get_case_property(geo_case_property)
-        if not geo_point:
-            return
-
         try:
             geo_point = GeoPoint.from_string(geo_point, flexible=True)
             return {"lat": geo_point.latitude, "lng": geo_point.longitude}
@@ -91,14 +94,29 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
 
 
 class CaseManagementMap(BaseCaseMapReport):
-    name = gettext_noop("Case Management Map")
-    slug = "case_management_map"
+    name = gettext_noop("Microplanning Map")
+    slug = "microplanning_map"
 
-    base_template = "geospatial/map_visualization_base.html"
-    report_template_path = "map_visualization.html"
+    base_template = "geospatial/case_management_base.html"
+    report_template_path = "geospatial/case_management.html"
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
+
+    @property
+    def headers(self):
+        from corehq.apps.reports.datatables import (
+            DataTablesColumn,
+            DataTablesHeader,
+        )
+        headers = DataTablesHeader(
+            DataTablesColumn(_("case_id"), prop_name="type.exact"),
+            DataTablesColumn(_("gps_point"), prop_name="type.exact"),
+            DataTablesColumn(_("link"), prop_name="name.exact", css_class="case-name-link"),
+            DataTablesColumn(_("name"), prop_name="name.exact"),
+        )
+        headers.custom_sort = [[2, 'desc']]
+        return headers
 
     @property
     def rows(self):
@@ -112,20 +130,43 @@ class CaseManagementMap(BaseCaseMapReport):
             cases.append([
                 display.case_id,
                 coordinates,
-                display.case_link
+                display.case_link,
+                display.case_name,
             ])
         return cases
 
 
 class CaseGroupingReport(BaseCaseMapReport):
-    name = gettext_noop('Case Grouping')
-    slug = 'case_grouping_map'
+    name = gettext_noop('Case Clustering Map')
+    slug = 'case_clustering_map'
 
     base_template = 'geospatial/case_grouping_map_base.html'
-    report_template_path = 'case_grouping_map.html'
+    report_template_path = 'geospatial/case_grouping_map.html'
 
     default_rows = 1
     force_page_size = True
+    sortable = False
+
+    @property
+    def headers(self):
+        from corehq.apps.reports.datatables import (
+            DataTablesColumn,
+            DataTablesHeader,
+        )
+        return DataTablesHeader(
+            DataTablesColumn(_("Case ID"), prop_name='case_id'),
+            DataTablesColumn(_("Case Name"), prop_name='case_name'),
+            DataTablesColumn(_("Owner ID"), prop_name='owner_id'),
+            DataTablesColumn(_("Owner Name"), prop_name='owner_name'),
+            DataTablesColumn(_("Case Coordinates"), prop_name='coordinates'),
+            DataTablesColumn(_("Link"), prop_name='link'),
+        )
+
+    @property
+    def template_context(self):
+        context = super().template_context
+        context['case_row_order'] = {column.prop_name: index for index, column in enumerate(self.headers)}
+        return context
 
     def _base_query(self):
         # Override function to skip default pagination
@@ -191,9 +232,9 @@ class CaseGroupingReport(BaseCaseMapReport):
             top_left=bounds['top_left'],
             bottom_right=bounds['bottom_right'],
         )]
-        if self.request.GET.get('features'):
+        if self.all_features:
             features_filter = self._get_filter_for_features(
-                self.request.GET['features']
+                self.all_features
             )
             filters_.append(features_filter)
         query = self._filter_query(query, filters_)
@@ -206,8 +247,12 @@ class CaseGroupingReport(BaseCaseMapReport):
             )
             case = wrap_case_search_hit(row)
             coordinates = self._get_geo_location(case)
+            case_owner_type, case_owner = display.owner
             cases.append([
                 display.case_id,
+                display.case_name,
+                display.owner_id,
+                case_owner['name'],
                 coordinates,
                 display.case_link
             ])
@@ -240,6 +285,31 @@ class CaseGroupingReport(BaseCaseMapReport):
         return apply_geohash_agg(query, case_property, precision)
 
     @property
+    def features_from_request(self):
+        features = {}
+        features_json = self.request.GET.get('features')
+        if features_json:
+            try:
+                features = json.loads(features_json)
+            except json.JSONDecodeError:
+                raise ValueError(f'{features_json!r} parameter is not valid JSON')
+        return features
+
+    @property
+    def saved_polygon_from_request(self):
+        features = {}
+        selected_feature_id = self.request.GET.get('selected_feature_id')
+        if selected_feature_id:
+            selected_polygon = GeoPolygon.objects.get(id=selected_feature_id)
+            geo_json_features = selected_polygon.geo_json['features']
+            features = {uuid.uuid4().hex: feature for feature in geo_json_features}
+        return features
+
+    @property
+    def all_features(self):
+        return self.features_from_request | self.saved_polygon_from_request
+
+    @property
     def total_records(self):
         """
         Returns the number of buckets.
@@ -257,13 +327,13 @@ class CaseGroupingReport(BaseCaseMapReport):
         query = super()._build_query()
         if self.request.GET.get('features'):
             features_filter = self._get_filter_for_features(
-                self.request.GET['features']
+                self.all_features
             )
             query = self._filter_query(query, [features_filter])
         return query
 
     @staticmethod
-    def _get_filter_for_features(features_json):
+    def _get_filter_for_features(features):
         """
         Returns an Elasticsearch filter to select for cases within the
         polygons defined by GeoJSON ``features_json``.
@@ -314,10 +384,6 @@ class CaseGroupingReport(BaseCaseMapReport):
             }
 
         """
-        try:
-            features = json.loads(features_json)
-        except json.JSONDecodeError:
-            raise ValueError(f'{features_json!r} parameter is not valid JSON')
         polygon_filters = []
         for feature in features.values():
             validate_geometry(feature['geometry'])

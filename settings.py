@@ -56,6 +56,9 @@ MANAGERS = ADMINS
 
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
+# this preserves current behavior prior to Django 5.0,
+# where timezone support will be enabled by default
+USE_TZ = False
 
 
 # Language code for this installation. All choices can be found here:
@@ -143,6 +146,7 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
+    'corehq.middleware.SecureCookiesMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -168,8 +172,6 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
-    # middleware that adds cookies must come before SecureCookiesMiddleware
-    'corehq.middleware.SecureCookiesMiddleware',
     'field_audit.middleware.FieldAuditMiddleware',
 ]
 
@@ -231,10 +233,10 @@ DEFAULT_APPS = (
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
+    'two_factor.plugins.phonenumber',
     'ws4redis',
     'statici18n',
     'django_user_agents',
-    'logentry_admin',
     'oauth2_provider',
 )
 
@@ -318,7 +320,6 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
-    'corehq.apps.oauth_integrations',
     'corehq.messaging.MessagingAppConfig',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
@@ -342,7 +343,6 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.registration',
-    'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
@@ -367,6 +367,7 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.styleguide',
+    'corehq.apps.prototype',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
     'corehq.motech',
@@ -382,6 +383,7 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
+    'corehq.apps.app_execution',
 
     # custom reports
     'custom.reports.mc',
@@ -392,10 +394,9 @@ HQ_APPS = (
     'custom.common',
 
     'custom.hki',
-    'custom.champ',
+    'custom.bha',
     'custom.covid',
     'custom.inddex',
-    'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
     'custom.hmhb',
@@ -452,7 +453,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
-LOGIN_TEMPLATE = "login_and_password/login.html"
+LOGIN_TEMPLATE = "login_and_password/bootstrap3/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
@@ -491,6 +492,7 @@ SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 SAAS_REPORTING_EMAIL = None
+SOLUTIONS_AES_EMAIL = None
 
 # Return-Path is the email used to forward BOUNCE & COMPLAINT notifications
 # This email must be a REAL email address, not a mailing list, otherwise
@@ -541,6 +543,7 @@ FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.registry.fixtures.registry_fixture_generator",
+    "corehq.apps.case_search.fixtures.case_search_fixture_generator",
 ]
 
 ### Shared drive settings ###
@@ -579,6 +582,7 @@ CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
 CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
 CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE = 'reminder_rule_queue'  # override in localsettings
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
+CELERY_REPEAT_RECORD_DATASOURCE_QUEUE = 'repeat_record_queue'  # override in localsettings
 CELERY_LOCATION_REASSIGNMENT_QUEUE = 'celery'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
@@ -821,6 +825,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
+    'corehq.motech.repeaters.models.DataSourceRepeater',
     'corehq.motech.fhir.repeaters.FHIRRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
@@ -828,6 +833,8 @@ REPEATER_CLASSES = [
     'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
     'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
     'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
+    'corehq.motech.repeaters.expression.repeaters.FormExpressionRepeater',
+    'corehq.motech.repeaters.expression.repeaters.ArcGISFormExpressionRepeater',
 ]
 
 # Override this in localsettings to add new repeater types
@@ -845,7 +852,7 @@ CHECK_REPEATERS_PARTITION_COUNT = 1
 ENABLE_PRELOGIN_SITE = False
 
 # dimagi.com urls
-PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
+PRICING_PAGE_URL = "https://www.dimagi.com/commcare-pricing/"
 
 # Sumologic log aggregator
 SUMOLOGIC_URL = None
@@ -853,33 +860,9 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 2
+ELASTICSEARCH_MAJOR_VERSION = 5
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
-
-# The variables should be used while reindexing an index.
-# When the variables are set to true the data will be written to both primary and secondary indexes.
-
-ES_APPS_INDEX_MULTIPLEXED = True
-ES_CASE_SEARCH_INDEX_MULTIPLEXED = True
-ES_CASES_INDEX_MULTIPLEXED = True
-ES_DOMAINS_INDEX_MULTIPLEXED = True
-ES_FORMS_INDEX_MULTIPLEXED = True
-ES_GROUPS_INDEX_MULTIPLEXED = True
-ES_SMS_INDEX_MULTIPLEXED = True
-ES_USERS_INDEX_MULTIPLEXED = True
-
-
-# Setting the variable to True would mean that the primary index would become secondary and vice-versa
-# This should only be set to True after successfully running and verifying migration command on a particular index. 
-ES_APPS_INDEX_SWAPPED = False
-ES_CASE_SEARCH_INDEX_SWAPPED = False
-ES_CASES_INDEX_SWAPPED = False
-ES_DOMAINS_INDEX_SWAPPED = False
-ES_FORMS_INDEX_SWAPPED = False
-ES_GROUPS_INDEX_SWAPPED = False
-ES_SMS_INDEX_SWAPPED = False
-ES_USERS_INDEX_SWAPPED = False
 
 BITLY_OAUTH_TOKEN = None
 
@@ -948,8 +931,6 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
-
-BOOTSTRAP_MIGRATION_LOGS_DIR = None
 
 USER_AGENTS_CACHE = 'default'
 
@@ -1094,6 +1075,16 @@ CUSTOM_LANDING_TEMPLATE = {
 # used to override low-level index settings (number_of_replicas, number_of_shards, etc)
 ES_SETTINGS = None
 
+# The CASE_SEARCH_SUB_INDICES should look like this:
+# {
+#     'co-carecoordination-perf': {
+#         'index_cname': 'case_search_bha',
+#         'multiplex_writes': True,
+#     }
+# }
+# See case_search_bha.py docstring for context
+CASE_SEARCH_SUB_INDICES = {}
+
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
@@ -1114,9 +1105,10 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
-# Disable builtin throttling for two factor backup tokens, since we have our own
-# See corehq.apps.hqwebapp.signals and corehq.apps.hqwebapp.forms for details
-OTP_STATIC_THROTTLE_FACTOR = 0
+# Preserves behavior after upgrading past version 1.15.4 of django-two-factor-auth, which changed the factor to 10
+OTP_STATIC_THROTTLE_FACTOR = 1
+OTP_TOTP_THROTTLE_FACTOR = 1
+TWO_FACTOR_PHONE_THROTTLE_FACTOR = 1
 
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False
@@ -1134,6 +1126,7 @@ LOCAL_CUSTOM_DB_ROUTING = {}
 
 DEFAULT_COMMCARE_EXTENSIONS = [
     "custom.abt.commcare_extensions",
+    "custom.bha.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
     "custom.nutrition_project.commcare_extensions",
@@ -1154,16 +1147,11 @@ FCM_CREDS = None
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
+MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
 
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
 
-# GSheets related work that was dropped, but should be picked up in the near future
-GOOGLE_OATH_CONFIG = {}
-GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-GOOGLE_SHEETS_API_NAME = "sheets"
-GOOGLE_SHEETS_API_VERSION = "v4"
-DAYS_KEEP_GSHEET_STATUS = 14
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1616,7 +1604,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'accounting',
-    ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
     ('export', META_DB),
@@ -1723,7 +1710,6 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
     'corehq.messaging.smsbackends.infobip.models.InfobipBackend',
     'corehq.messaging.smsbackends.amazon_pinpoint.models.PinpointBackend',
-    'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
@@ -1935,8 +1921,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
-    os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
-    os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
@@ -1969,8 +1953,7 @@ DOMAIN_MODULE_MAP = {
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
 
-    'champ-cameroon': 'custom.champ',
-    'onse-iss': 'custom.onse',
+    'onse-iss': 'custom.onse',  # Required by self-hosted ONSE-ISS project
 
     # vectorlink domains
     'abtmali': 'custom.abt',
@@ -1986,10 +1969,15 @@ DOMAIN_MODULE_MAP = {
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
     'kenya-vca': 'custom.abt',
+    'pmievolve-ethiopia-1': 'custom.abt',
+    'pmievolve-ghana': 'custom.abt',
+    'pmievolve-kenya': 'custom.abt',
     'pmievolve-madagascar': 'custom.abt',
     'pmievolve-malawi': 'custom.abt',
     'pmievolve-mozambique': 'custom.abt',
     'pmievolve-rwanda': 'custom.abt',
+    'pmievolve-sierra-leone': 'custom.abt',
+    'pmievolve-uganda': 'custom.abt',
     'pmievolve-zambia': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
@@ -2017,8 +2005,22 @@ DOMAIN_MODULE_MAP = {
     'senegal-arch-3-study': 'custom.inddex',
     'inddex24-dev': 'custom.inddex',
 
+    'co-carecoordination': 'custom.bha',
+    'co-carecoordination-auto': 'custom.bha',
+    'co-carecoordination-dev': 'custom.bha',
+    'co-carecoordination-perf': 'custom.bha',
+    'co-carecoordination-sand': 'custom.bha',
+    'co-carecoordination-test': 'custom.bha',
+    'co-carecoordination-train': 'custom.bha',
+    'co-carecoordination-uat': 'custom.bha',
+
     'ccqa': 'custom.ccqa',
 }
+
+CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)
+for domain, module in DOMAIN_MODULE_MAP.items():
+    CUSTOM_DOMAINS_BY_MODULE[module].append(domain)
+
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
     # Regex patterns matching domains whose scheduled reports use a
@@ -2091,5 +2093,9 @@ os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'F
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
+CRISPY_FAIL_SILENTLY = not DEBUG
+
 # NOTE: if you are adding a new setting that you intend to have other environments override,
 # make sure you add it before localsettings are imported (from localsettings import *)
+
+MAX_GEOSPATIAL_INDEX_DOC_LIMIT = 1000000

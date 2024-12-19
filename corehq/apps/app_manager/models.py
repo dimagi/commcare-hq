@@ -65,7 +65,7 @@ from corehq.apps.app_manager import (
     remote_app,
 )
 from corehq.apps.app_manager.app_schemas.case_properties import (
-    all_case_properties_by_domain,
+    expire_case_properties_caches,
     get_all_case_properties,
     get_usercase_properties,
 )
@@ -181,6 +181,7 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.util import bitly, view_utils
+from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
@@ -964,6 +965,7 @@ class MappingItem(DocumentSchema):
     key = StringProperty()
     # lang => localized string
     value = DictProperty()
+    alt_text = LabelProperty()
 
     @property
     def treat_as_expression(self):
@@ -1048,6 +1050,9 @@ class FormBase(DocumentSchema):
 
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
+
+    submit_label = LabelProperty(default={})
+    submit_notification_label = LabelProperty(default={})
 
     def __repr__(self):
         return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
@@ -1338,6 +1343,16 @@ class FormBase(DocumentSchema):
             case_type = save_to_case_update.case_type
             updates_by_case_type[case_type].update(save_to_case_update.properties)
         return updates_by_case_type
+
+    def get_submit_label(self, lang):
+        if lang in self.submit_label:
+            return self.submit_label[lang]
+        return 'Submit'
+
+    def get_submit_notification_label(self, lang):
+        if self.submit_notification_label and lang in self.submit_notification_label:
+            return self.submit_notification_label[lang]
+        return ''
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
@@ -1857,6 +1872,7 @@ class DetailColumn(IndexedSchema):
     vertical_align = StringProperty(exclude_if_none=True)
     font_size = StringProperty(exclude_if_none=True)
     show_border = BooleanProperty(exclude_if_none=True)
+    show_shading = BooleanProperty(exclude_if_none=True)
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
@@ -2010,6 +2026,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     #Only applies to 'short' details
     no_items_text = LabelProperty(default={'en': 'List is empty.'})
 
+    select_text = LabelProperty(default={'en': 'Continue'})
+
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default:
@@ -2119,6 +2137,9 @@ class CaseSearchProperty(DocumentSchema):
     receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
 
+    is_group = BooleanProperty(default=False)
+    group_key = StringProperty(exclude_if_none=True)
+
 
 class DefaultCaseSearchProperty(DocumentSchema):
     """Case Properties with fixed value to search on"""
@@ -2171,6 +2192,7 @@ class CaseSearch(DocumentSchema):
     description = LabelProperty(default={})
     include_all_related_cases = BooleanProperty(default=False)
     dynamic_search = BooleanProperty(default=False)
+    search_on_clear = BooleanProperty(default=False)
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -4158,13 +4180,16 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     has_submissions = BooleanProperty(default=False)
 
     mobile_ucr_restore_version = StringProperty(
-        default=const.MOBILE_UCR_VERSION_1, choices=const.MOBILE_UCR_VERSIONS, required=False
+        default=const.MOBILE_UCR_VERSION_2, choices=const.MOBILE_UCR_VERSIONS, required=False
     )
     location_fixture_restore = StringProperty(
         default=const.DEFAULT_LOCATION_FIXTURE_OPTION, choices=const.LOCATION_FIXTURE_OPTIONS,
         required=False
     )
     split_screen_dynamic_search = BooleanProperty(default=False)
+
+    persistent_menu = BooleanProperty(default=False)
+    show_breadcrumbs = BooleanProperty(default=True)
 
     @property
     def id(self):
@@ -4443,7 +4468,30 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         assert copy._id
         prune_auto_generated_builds.delay(self.domain, self._id)
 
+        self.check_build_dependencies(new_build=copy)
+
         return copy
+
+    def check_build_dependencies(self, new_build):
+        """
+        Reports whether the app dependencies have been added or removed.
+        """
+
+        def has_dependencies(build):
+            return bool(
+                build.profile.get('features', {}).get('dependencies')
+            )
+
+        new_build_has_dependencies = has_dependencies(new_build)
+
+        last_build = get_latest_build_doc(self.domain, self.id)
+        last_build = self.__class__.wrap(last_build) if last_build else None
+        last_build_has_dependencies = has_dependencies(last_build) if last_build else False
+
+        if not last_build_has_dependencies and new_build_has_dependencies:
+            metrics_counter('commcare.app_build.dependencies_added')
+        elif last_build_has_dependencies and not new_build_has_dependencies:
+            metrics_counter('commcare.app_build.dependencies_removed')
 
     def convert_app_to_build(self, copy_of, user_id, comment=None):
         self.copy_of = copy_of
@@ -4510,17 +4558,16 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def save(self, response_json=None, increment_version=None, **params):
         from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
+        from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
         if self.get_id:
             # expire cache unless new application
             self.global_app_config.clear_version_caches()
+            get_app_context_by_case_type.clear(self.domain, self.get_id)
         get_all_case_properties.clear(self)
-        all_case_properties_by_domain.clear(self.domain, True, True)
-        all_case_properties_by_domain.clear(self.domain, True, False)
-        all_case_properties_by_domain.clear(self.domain, False, True)
-        all_case_properties_by_domain.clear(self.domain, False, False)
+        expire_case_properties_caches(self.domain)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)
@@ -4899,6 +4946,12 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
+
+        if not domain_has_privilege(self.domain, privileges.APP_DEPENDENCIES):
+            # remove any previous dependencies if privilege was revoked
+            if 'dependencies' in app_profile['features']:
+                del app_profile['features']['dependencies']
+
         apk_heartbeat_url = self.heartbeat_url(build_profile_id)
         locale = self.get_build_langs(build_profile_id)[0]
         target_package_id = {

@@ -1,6 +1,5 @@
-/* globals ko */
+"use strict";
 hqDefine('app_manager/js/custom_assertions', function () {
-    'use strict';
     var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
 
     var customAssertion = function (test, text) {

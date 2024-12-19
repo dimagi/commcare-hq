@@ -3,11 +3,14 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     'knockout',
     'underscore',
     'analytix/js/google',
+    'es6!hqwebapp/js/bootstrap5_loader',
+    'jquery.cookie/jquery.cookie',  // $.cookie
 ], function (
     $,
     ko,
     _,
-    googleAnalytics
+    googleAnalytics,
+    bootstrap
 ) {
     // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
     $(document).on('submit', 'form', function (ev) {
@@ -34,11 +37,6 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
         $.post(postUrl, {note_id: noteId});
         $(this).parents('.alert').hide(150);
     });
-
-    if ($.timeago) {
-        $.timeago.settings.allowFuture = true;
-        $(".timeago").timeago();
-    }
 
     window.onerror = function (message, file, line, col, error) {
         var stack = error ? error.stack : null;
@@ -75,18 +73,10 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
             if (opts) {
                 options = _.extend(options, opts);
             }
-            if (!$link.data('content')) {
-                options.content = function () {
-                    return $('#popover_content_wrapper').html();
-                };
-            }
-            if (!$link.data("title")) {
-                options.template = '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>';
-            }
-            $link.popover(options);
+            new bootstrap.Popover($link, options);
 
             // Prevent jumping to the top of the page when link is clicked
-            $helpElem.find('a').click(function (event) {
+            $link.click(function (event) {
                 googleAnalytics.track.event("Clicked Help Bubble", $(this).data('title'), '-');
                 event.preventDefault();
             });

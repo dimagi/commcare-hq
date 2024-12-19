@@ -104,7 +104,7 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
-from corehq.toggles.shortcuts import set_toggle
+from corehq.toggles.shortcuts import set_toggles
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
@@ -452,8 +452,8 @@ def copy_app(request, domain):
         clear_app_cache(request, to_domain)
 
         if data['toggles']:
-            for slug in data['toggles'].split(","):
-                set_toggle(slug, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+            toggle_slugs = data['toggles'].split(",")
+            set_toggles(toggle_slugs, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
 
         linked = data.get('linked')
         if linked:
@@ -882,7 +882,9 @@ def edit_app_attr(request, domain, app_id, attr):
         ('custom_base_url', None, _always_allowed),
         ('mobile_ucr_restore_version', None, _always_allowed),
         ('location_fixture_restore', None, _always_allowed),
-        ('split_screen_dynamic_search', None, _always_allowed)
+        ('split_screen_dynamic_search', None, _always_allowed),
+        ('persistent_menu', None, _always_allowed),
+        ('show_breadcrumbs', None, _always_allowed)
     )
     for attribute, transformation, can_set_attr in easy_attrs:
         if should_edit(attribute):
@@ -945,7 +947,7 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("custom_suite"):
         app.set_custom_suite(hq_settings['custom_suite'])
 
-    return HttpResponse(json.dumps(resp))
+    return JsonResponse(resp)
 
 
 @no_conflict_require_POST
@@ -957,7 +959,7 @@ def edit_add_ons(request, domain, app_id):
         if slug in current:
             app.add_ons[slug] = value == 'on'
     app.save()
-    return HttpResponse(json.dumps({'success': True}))
+    return JsonResponse({'success': True})
 
 
 @no_conflict_require_POST
@@ -1001,7 +1003,7 @@ def rearrange(request, domain, app_id, key):
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     app.save(resp)
     if ajax:
-        return HttpResponse(json.dumps(resp))
+        return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
 

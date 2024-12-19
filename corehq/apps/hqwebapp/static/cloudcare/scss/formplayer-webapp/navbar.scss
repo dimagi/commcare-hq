@@ -1,0 +1,25 @@
+.navbar-cloudcare {
+  margin-bottom: 0;
+  border: none;
+  background-color: $cc-brand-mid;
+  min-height: $cloudcare-nav-height;
+  transition: 1s all;
+  z-index: $zindex-navbar-cloudcare;
+}
+
+.navbar-cloudcare .navbar-brand {
+  color: $cc-bg;
+  padding: 6.5px 0;
+  text-transform: uppercase;
+}
+
+.navbar-cloudcare .navbar-nav {
+  float: right;
+  margin: 0;
+
+  > li > a {
+    color: $cc-bg;
+    padding-top: 6.5px;
+    padding-bottom: 6.5px;
+  }
+}

@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from corehq.apps.sms.views import (
     AddDomainGatewayView,
@@ -36,11 +36,13 @@ urlpatterns = [
     url(r'^compose/$', ComposeMessageView.as_view(), name=ComposeMessageView.urlname),
     url(r'^message_test/$', TestSMSMessageView.as_view(), name=TestSMSMessageView.urlname),
     url(r'^api/send_sms/$', api_send_sms, name='api_send_sms'),
-    url(r'^add_gateway/(?P<hq_api_id>[\w-]+)/$',
-        AddDomainGatewayView.as_view(), name=AddDomainGatewayView.urlname
+    url(
+        r"^add_gateway/(?P<hq_api_id>[\w-]+)/$", AddDomainGatewayView.as_view(), name=AddDomainGatewayView.urlname
     ),
-    url(r'^edit_gateway/(?P<hq_api_id>[\w-]+)/(?P<backend_id>[\w-]+)/$',
-        EditDomainGatewayView.as_view(), name=EditDomainGatewayView.urlname
+    url(
+        r"^edit_gateway/(?P<hq_api_id>[\w-]+)/(?P<backend_id>[\w-]+)/$",
+        EditDomainGatewayView.as_view(),
+        name=EditDomainGatewayView.urlname,
     ),
     url(r'^gateways/$', DomainSmsGatewayListView.as_view(), name=DomainSmsGatewayListView.urlname),
     url(r'^chat_contacts/$', ChatOverSMSView.as_view(), name=ChatOverSMSView.urlname),

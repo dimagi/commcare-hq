@@ -1,6 +1,7 @@
 import json
 import logging
 from functools import wraps
+from urllib.parse import urljoin
 
 from django.contrib import messages
 from django.core.cache import cache
@@ -25,9 +26,11 @@ from corehq.apps.app_manager.util import (
     get_latest_enabled_build_for_profile,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, HqPermissions
 from corehq.apps.users.util import normalize_username
+from corehq.toggles import DISABLE_MOBILE_ENDPOINTS
 
 
 def safe_download(f):
@@ -67,10 +70,13 @@ def _get_latest_enabled_build(domain, username, app_id, profile_id, location_fla
     latest_enabled_build = None
     if location_flag_enabled:
         user = CommCareUser.get_by_username(normalize_username(username, domain))
-        user_location_id = user.location_id
-        if user_location_id:
+        if user and user.location_id:
             parent_app_id = get_app(domain, app_id).copy_of
-            latest_enabled_build = get_latest_app_release_by_location(domain, user_location_id, parent_app_id)
+            latest_enabled_build = get_latest_app_release_by_location(
+                domain,
+                user.location_id,
+                parent_app_id,
+            )
     if not latest_enabled_build:
         # Fall back to the old logic to support migration
         # ToDo: Remove this block once migration is complete
@@ -108,7 +114,8 @@ def safe_cached_download(f):
             if not username:
                 content_response = dict(error="app.update.not.allowed.user.logged_out",
                                         default_response=_("Please log in to the app to check for an update."))
-                return HttpResponse(status=406, content=json.dumps(content_response))
+                return HttpResponse(status=406, content=json.dumps(content_response),
+                                    content_type='application/json')
         if latest and not target:
             latest_enabled_build = _get_latest_enabled_build(domain, username, app_id, request.GET.get('profile'),
                                                              location_flag_enabled)
@@ -168,6 +175,40 @@ def avoid_parallel_build_request(fn):
             _release_build_in_progress_lock(domain, app_id)
         return fn_return
     return new_fn
+
+
+def check_access_and_redirect(func):
+    """
+    If the DISABLE_MOBILE_ENDPOINTS toggle is enabled, return a 503
+    response.
+
+    If ``Domain.redirect_url`` is set, return a "302 Found" temporary
+    redirect response, so that CommCare Mobile can update an app from
+    its new environment.
+    """
+    @wraps(func)
+    def wrapped(request, domain, *args, **kwargs):
+        domain_obj = Domain.get_by_name(domain)
+        if domain_obj.redirect_url:
+            if request.GET:
+                path = '?'.join((request.path, request.GET.urlencode()))
+            else:
+                path = request.path
+            url = urljoin(domain_obj.redirect_url, path)
+            return HttpResponseRedirect(url)
+
+        # First checking `redirect_url` allows projects to transition
+        # from blocking mobile workers to redirecting them without
+        # allowing form submissions and restores.
+        elif DISABLE_MOBILE_ENDPOINTS.enabled(domain):
+            return HttpResponse(
+                'Service Temporarily Unavailable',
+                content_type='text/plain', status=503,
+            )
+
+        else:
+            return func(request, domain, *args, **kwargs)
+    return wrapped
 
 
 def _set_build_in_progress_lock(domain, app_id):

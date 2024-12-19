@@ -16,7 +16,7 @@ services:
       GITHUB_EVENT_NAME: "${GITHUB_EVENT_NAME}"
       JS_SETUP: "${JS_SETUP}"
       JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
-      NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
+      DIVIDED_WE_RUN: "${DIVIDED_WE_RUN}"
       REUSE_DB: "${REUSE_DB}"
       STRIPE_PRIVATE_KEY: "${STRIPE_PRIVATE_KEY}"
       TRAVIS: "${TRAVIS}"
@@ -105,22 +105,6 @@ services:
       retries: 10
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
-
-  elasticsearch2:
-    build:
-      context: .
-      dockerfile: ./files/Dockerfile.es.2
-    environment:
-      ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-    expose:
-      - "9200"
-    healthcheck:
-      test: bash -c 'exec 6<>/dev/tcp/elasticsearch2/9200'
-      interval: 10s
-      retries: 10
-    volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch2:}/usr/share/elasticsearch/data
-      - ./files/elasticsearch_2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   elasticsearch5:
     build:

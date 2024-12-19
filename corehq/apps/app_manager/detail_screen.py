@@ -142,8 +142,7 @@ class FormattedDetailColumn(object):
             form=self.template_form,
             width=self.template_width,
         )
-
-        if self.column.useXpathExpression:
+        if self.column.useXpathExpression and self.column.format != 'translatable-enum':
             xpath = sx.CalculatedPropertyXPath(function=self.xpath)
             if re.search(r'\$lang', self.xpath):
                 xpath.variables.node.append(
@@ -192,8 +191,9 @@ class FormattedDetailColumn(object):
                             locale_id=self.id_strings.current_language()
                         ).node
                     )
-                xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
-                sort.text.xpath.variables.node.append(xpath_variable.node)
+                if self.column.format != 'translatable-enum':
+                    xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
+                    sort.text.xpath.variables.node.append(xpath_variable.node)
 
         if self.sort_element:
             if not sort:
@@ -288,6 +288,10 @@ class FormattedDetailColumn(object):
         return None
 
     @property
+    def alt_text(self):
+        return None
+
+    @property
     def fields(self):
         print_id = None
         if self.detail.print_template:
@@ -301,8 +305,10 @@ class FormattedDetailColumn(object):
                 sort_node=self.sort_node,
                 print_id=print_id,
                 endpoint_action=self.action,
+                alt_text=self.alt_text,
             )
-        elif self.sort_xpath_function and self.detail.display == 'short':
+        elif (self.sort_xpath_function and self.detail.display == 'short'
+              and self.column.format != 'translatable-enum'):
             yield sx.Field(
                 style=self.style,
                 header=self.header,
@@ -361,6 +367,12 @@ class Date(FormattedDetailColumn):
 class TimeAgo(FormattedDetailColumn):
     XPATH_FUNCTION = "if({xpath} = '', '', string(int((today() - date({xpath})) div {column.time_ago_interval})))"
     SORT_XPATH_FUNCTION = "{xpath}"
+
+
+@register_format_type('image')
+class Image(FormattedDetailColumn):
+    template_form = 'image'
+    XPATH_FUNCTION = "cc_case_image"
 
 
 @register_format_type('distance')
@@ -475,6 +487,27 @@ class EnumImage(Enum):
         if self.column.endpoint_action_id and self.app.supports_detail_field_action:
             return sx.EndpointAction(endpoint_id=self.column.endpoint_action_id, background="true")
 
+    def _make_alt_text(self, type):
+        return sx.XPathEnum.build(
+            enum=self.column.enum,
+            format=self.column.format,
+            type=type,
+            template=self._xpath_template(type),
+            get_template_context=self._xpath_template_context(type),
+            get_value=lambda key: self.id_strings.detail_column_alt_text_variable(self.module, self.detail_type,
+                                                                                  self.column, key))
+
+    @property
+    def alt_text_xpath(self):
+        return self._make_alt_text('display')
+
+    @property
+    def alt_text(self):
+        if self.app.supports_alt_text:
+            return sx.AltText(
+                text=sx.Text(xpath=self.alt_text_xpath)
+            )
+
     def _xpath_template(self, type):
         return "if({key_as_condition}, {key_as_var_name}"
 
@@ -483,6 +516,30 @@ class EnumImage(Enum):
             'key_as_condition': item.key_as_condition(self.xpath),
             'key_as_var_name': item.ref_to_key_variable(i, type)
         }
+
+
+@register_format_type('translatable-enum')
+class TranslatableEnum(Enum):
+    @property
+    def sort_node(self):
+        node = super(TranslatableEnum, self).sort_node
+        if node:
+            variables = self.variables
+            for key in variables:
+                node.text.xpath.node.append(
+                    sx.XPathVariable(name=key, locale_id=variables[key]).node
+                )
+        return node
+
+    def _make_xpath(self, type):
+        return sx.XPathEnum.build(
+            enum=self.column.enum,
+            format=self.column.format,
+            type=type,
+            template=None,
+            get_template_context=lambda: {'calculated_property': self.xpath},
+            get_value=lambda key: self.id_strings.detail_column_enum_variable(self.module, self.detail_type,
+                                                                              self.column, key))
 
 
 @register_format_type('late-flag')

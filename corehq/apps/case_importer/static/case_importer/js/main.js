@@ -1,10 +1,13 @@
+"use strict";
 hqDefine("case_importer/js/main", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
     'case_importer/js/import_history',
     'case_importer/js/excel_fields',
-    'hqwebapp/js/widgets',
+    'hqwebapp/js/bootstrap5/widgets',
+    'hqwebapp/js/components/select_toggle',
+    'commcarehq',
 ], function (
     $,
     _,
@@ -60,6 +63,7 @@ hqDefine("case_importer/js/main", [
     var behaviorForExcelMappingPage = function () {
         var excelFields = initialPageData.get('excel_fields');
         var caseFieldSpecs = initialPageData.get('case_field_specs');
+        var systemFields = initialPageData.get('system_fields');
         if (!excelFields && !caseFieldSpecs) {
             // We're not on the excel mapping page
             return;
@@ -77,7 +81,7 @@ hqDefine("case_importer/js/main", [
             return;
         }
 
-        var excelFieldRows = excelFieldsModule.excelFieldRowsModel(excelFields, caseFieldSpecs);
+        var excelFieldRows = excelFieldsModule.excelFieldRowsModel(excelFields, caseFieldSpecs, systemFields);
         $('#excel-field-rows').koApplyBindings(excelFieldRows);
 
         $('#js-add-mapping').click(function (e) {

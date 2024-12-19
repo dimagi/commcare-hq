@@ -1,5 +1,5 @@
 import textwrap
-from functools import cached_property
+from functools import cached_property, partial
 
 from jsonobject.base_properties import DefaultProperty
 from jsonpath_ng.ext import parse as jsonpath_parse
@@ -211,8 +211,7 @@ class NamedExpressionSpec(JsonObject):
     name = StringProperty(required=True)
 
     def configure(self, factory_context):
-        if self.name not in factory_context.named_expressions:
-            raise BadSpecError('Name {} not found in list of named expressions!'.format(self.name))
+        factory_context.get_named_expression(self.name)
         self._factory_context = factory_context
 
     def _context_cache_key(self, item):
@@ -223,7 +222,7 @@ class NamedExpressionSpec(JsonObject):
         if evaluation_context and evaluation_context.exists_in_cache(key):
             return evaluation_context.get_cache_value(key)
 
-        result = self._factory_context.named_expressions[self.name](item, evaluation_context)
+        result = self._factory_context.get_named_expression(self.name)(item, evaluation_context)
         if evaluation_context:
             evaluation_context.set_iteration_cache_value(key, result)
         return result
@@ -579,6 +578,14 @@ class RelatedDocExpressionSpec(JsonObject):
     doc_id_expression = DictProperty(required=True)
     value_expression = DictProperty(required=True)
 
+    SAFE_DOC_TYPES = (
+        'XFormInstance',
+        'CommCareCase',
+        'Group',
+        'Location',
+    )
+    SUPPORTED_RELATED_DOC_TYPES = SAFE_DOC_TYPES + ('CommCareUser',)
+
     def configure(self, doc_id_expression, value_expression):
         non_couch_doc_types = {
             CommCareCase.DOC_TYPE,
@@ -600,19 +607,22 @@ class RelatedDocExpressionSpec(JsonObject):
     @staticmethod
     @ucr_context_cache(vary_on=('related_doc_type', 'doc_id',))
     def _get_document(related_doc_type, doc_id, evaluation_context):
-        document_store = get_document_store_for_doc_type(
-            evaluation_context.root_doc['domain'], related_doc_type,
-            load_source="related_doc_expression")
-        try:
-            doc = document_store.get_document(doc_id)
-        except DocumentNotFoundError:
-            return None
-        if evaluation_context.root_doc['domain'] != doc.get('domain'):
-            return None
-        return doc
+        domain = evaluation_context.root_doc['domain']
+        assert domain
+
+        if related_doc_type not in RelatedDocExpressionSpec.SUPPORTED_RELATED_DOC_TYPES:
+            raise BadSpecError(f'Unsupported related_doc_type {related_doc_type!r}')
+
+        func = {
+            'CommCareUser': partial(_get_user, domain),
+            'XFormInstance': partial(_get_doc, domain, 'XFormInstance'),
+            'CommCareCase': partial(_get_doc, domain, 'CommCareCase'),
+            'Group': partial(_get_doc, domain, 'Group'),
+            'Location': partial(_get_doc, domain, 'Location'),
+        }[related_doc_type]
+        return func(doc_id)
 
     def get_value(self, doc_id, evaluation_context):
-        assert evaluation_context.root_doc['domain']
         doc = self._get_document(self.related_doc_type, doc_id, evaluation_context)
         # explicitly use a new evaluation context since this is a new document
         return self._value_expression(doc, EvaluationContext(doc, 0))
@@ -621,6 +631,190 @@ class RelatedDocExpressionSpec(JsonObject):
         return "{}[{}]/{}".format(self.related_doc_type,
                                   str(self._doc_id_expression),
                                   str(self._value_expression))
+
+
+def _get_user(domain, doc_id):
+    # Whitelisted properties of CommCareUser are organized by the
+    # (sub)class that added them. If the value is a JsonObject instance
+    # that needs to be serialized, the property is given as a tuple,
+    # where the second value is the serializer function.
+    property_whitelist = (
+        # DocumentBase
+        '_id',
+        'doc_type',
+
+        # DjangoUserMixin
+        'username',
+        'first_name',
+        'last_name',
+        'email',
+        # 'password',
+        # 'is_staff',
+        # 'is_superuser',
+        'is_active',
+        'last_login',
+        'date_joined',
+
+        # EulaMixin
+        # 'eulas',
+
+        # CouchUser
+        # 'device_ids',
+        ('devices', lambda lst: [_device_to_dict(d) for d in lst]),
+        ('last_device', _device_to_dict),
+        'phone_numbers',
+        'created_on',
+        'last_modified',
+        'status',
+        'language',
+        # 'subscribed_to_commcare_users',
+        # 'announcements_seen',
+        'location_id',
+        'assigned_location_ids',
+        # 'has_built_app',
+        # 'analytics_enabled',
+        # two_factor_auth_disabled_until,
+        # login_attempts,
+        # attempt_date,
+        ('reporting_metadata', JsonObject.to_json),
+        # 'can_assign_superuser',
+
+        # SingleMembershipMixin
+        'domain_membership',
+
+        # CommCareUser
+        'domain',
+        # 'registering_device_id',
+        # 'loadtest_factor',
+        # 'is_loadtest_user',
+        # 'is_demo_user',
+        # 'demo_restore_id',
+        # 'is_account_confirmed',
+        # 'user_location_id',
+    )
+    try:
+        user = CommCareUser.get_by_user_id(doc_id, domain)
+    except CouchUser.AccountTypeError:
+        # user is a WebUser not a CommCareUser
+        return None
+    if not user:
+        return None
+
+    doc = {}
+    for key in property_whitelist:
+        if isinstance(key, tuple):
+            key, func = key
+            doc[key] = func(getattr(user, key))
+        else:
+            doc[key] = getattr(user, key)
+    doc['user_data'] = user.get_user_data(domain).to_dict()
+    # add location ID in here to not break existing reports - they _should_ just use user.location_id
+    doc['user_data']['commcare_location_id'] = user.get_location_id(domain)
+    return doc
+
+
+def _get_doc(domain, doc_type, doc_id):
+    document_store = get_document_store_for_doc_type(
+        domain, doc_type, load_source="related_doc_expression")
+    try:
+        doc = document_store.get_document(doc_id)
+    except DocumentNotFoundError:
+        return None
+    if domain != doc.get('domain'):
+        return None
+    return doc
+
+
+def _device_to_dict(
+    device  # DeviceIdLastUsed
+):
+    whitelist = (
+        'device_id',
+        'last_used',
+        'commcare_version',
+        'app_meta',
+    )
+    return {k: v for k, v in device.to_json().items() if k in whitelist}
+
+
+class RelatedCaseExpressionSpec(JsonObject):
+    """
+    Similar to ``RelatedDocExpressionSpec``, this can be used to look up
+    a property in a related case. Related cases can be identified either
+    by their case ID or by ``external_id``. This example looks up the
+    full name of a patient identified by their external ID:
+
+    .. code:: json
+
+       {
+           "type": "related_case",
+           "external_id_expression": {
+               "type": "property_name",
+               "property_name": "patient_external_id"
+           },
+           "value_expression": {
+               "type": "property_name",
+               "property_name": "full_name"
+           }
+       }
+    """
+    type = TypeProperty('related_case')
+    case_id_expression = DictProperty()
+    external_id_expression = DictProperty()
+    value_expression = DictProperty(required=True)
+
+    def configure(
+        self,
+        *,
+        value_expression,
+        case_id_expression=None,
+        external_id_expression=None,
+    ):
+        if bool(case_id_expression) == bool(external_id_expression):
+            # Both case_id_expression and external_id_expression are
+            # present or both are missing
+            raise BadSpecError(
+                'RelatedCaseExpression must have either case_id_expression '
+                'or external_id_expression'
+            )
+        self._case_id_expression = case_id_expression
+        self._external_id_expression = external_id_expression
+        self._value_expression = value_expression
+
+    def __call__(self, item, evaluation_context=None):
+        if self._case_id_expression:
+            case_id = self._case_id_expression(item, evaluation_context)
+            external_id = None
+        else:
+            case_id = None
+            external_id = self._external_id_expression(item, evaluation_context)
+        if case_id or external_id:
+            return self.get_value(case_id, external_id, evaluation_context)
+
+    def get_value(self, case_id, external_id, evaluation_context):
+        case = self._get_document(case_id, external_id, evaluation_context)
+        # Use a new evaluation context since this is a new document
+        return self._value_expression(case, EvaluationContext(case, 0))
+
+    @staticmethod
+    @ucr_context_cache(vary_on=('case_id', 'external_id',))
+    def _get_document(case_id, external_id, evaluation_context):
+        domain = evaluation_context.root_doc['domain']
+        assert domain
+
+        # Call get_document_store_for_doc_type() so that load counter tracks load.
+        case_document_store = get_document_store_for_doc_type(
+            domain,
+            'CommCareCase',
+            load_source='related_case_expression'
+        )
+        try:
+            doc = case_document_store.get_document(case_id, external_id=external_id)
+        except DocumentNotFoundError:
+            return None
+        if domain != doc.get('domain'):
+            return None
+        return doc
 
 
 class NestedExpressionSpec(JsonObject):

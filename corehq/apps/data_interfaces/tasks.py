@@ -19,15 +19,11 @@ from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import XFormInstance
-from corehq.motech.repeaters.dbaccessors import (
-    get_couch_repeat_record_ids_by_payload_id,
-    get_sql_repeat_records_by_payload_id,
-    iter_repeat_record_ids_by_repeater,
-)
 from corehq.apps.case_importer.do_import import SubmitCaseBlockHandler, RowAndCase
-from corehq.motech.repeaters.models import SQLRepeatRecord
+from corehq.motech.repeaters.const import State
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
+from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
@@ -37,6 +33,7 @@ from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,
     CaseDuplicate,
+    CaseDuplicateNew,
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
@@ -65,9 +62,6 @@ def _get_upload_progress_tracker(upload_id):
 @no_result_task(queue='case_rule_queue', acks_late=True,
                 soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
 def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
-    if not CASE_DEDUPE.enabled(domain):
-        return
-
     try:
         rule = AutomaticUpdateRule.objects.get(
             id=rule_id,
@@ -89,6 +83,8 @@ def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
 def delete_duplicates_for_cases(case_ids):
     CaseDuplicate.bulk_remove_unique_cases(case_ids)
     CaseDuplicate.remove_duplicates_for_case_ids(case_ids)
+
+    CaseDuplicateNew.remove_duplicates_for_case_ids(case_ids)
 
 
 @task(serializer='pickle', ignore_result=True)
@@ -167,11 +163,12 @@ def run_case_update_rules_for_domain(domain, now=None):
     serializer='pickle',
 )
 def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
-    all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
-    rules = list(all_rules.filter(case_type=case_type))
+    rules = list(
+        AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case_type)
+    )
 
-    boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-    iterator = AutomaticUpdateRule.iter_cases(domain, case_type, boundary_date, db=db)
+    modified_before = AutomaticUpdateRule.get_boundary_date(rules, now)
+    iterator = AutomaticUpdateRule.iter_cases(domain, case_type, db=db, modified_lte=modified_before)
     run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db)
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
@@ -207,10 +204,8 @@ def task_operate_on_payloads(
     record_ids: List[str],
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool,
 ):
-    return operate_on_payloads(record_ids, domain, action, use_sql,
-                               task=task_operate_on_payloads)
+    return operate_on_payloads(record_ids, domain, action, task=task_operate_on_payloads)
 
 
 @task(serializer='pickle')
@@ -218,38 +213,14 @@ def task_generate_ids_and_operate_on_payloads(
     payload_id: Optional[str],
     repeater_id: Optional[str],
     domain: str,
-    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool,
+    action: Literal['resend', 'cancel', 'requeue'],
+    state: Literal[None, State.Pending, State.Cancelled] = None,
 ) -> dict:
-    repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain,
-                                               use_sql)
-    return operate_on_payloads(repeat_record_ids, domain, action, use_sql,
+    repeat_record_ids = RepeatRecord.objects.get_repeat_record_ids(
+        domain, repeater_id=repeater_id, state=state, payload_id=payload_id,
+    )
+    return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)
-
-
-def _get_repeat_record_ids(
-    payload_id: Optional[str],
-    repeater_id: Optional[str],
-    domain: str,
-    use_sql: bool,
-) -> List[str]:
-    if not payload_id and not repeater_id:
-        return []
-    if payload_id:
-        if use_sql:
-            records = get_sql_repeat_records_by_payload_id(domain, payload_id)
-            return [r.id for r in records]
-        else:
-            return get_couch_repeat_record_ids_by_payload_id(domain, payload_id)
-    else:
-        if use_sql:
-            queryset = SQLRepeatRecord.objects.filter(
-                domain=domain,
-                repeater__repeater_id=repeater_id,
-            )
-            return [r['id'] for r in queryset.values('id')]
-        else:
-            return list(iter_repeat_record_ids_by_repeater(domain, repeater_id))
 
 
 @task

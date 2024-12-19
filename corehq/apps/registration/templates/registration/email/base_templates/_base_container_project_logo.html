@@ -1,0 +1,45 @@
+{% extends 'registration/email/base_templates/_base.html' %}
+{% load hq_shared_tags %}
+{% block base_container %}
+<div class="container" style="line-height: 1.5em; font-size: 15px; font-weight: 400; color: #1c2126; width: 680px; background-color: #ffffff; margin: 0 auto; overflow: hidden;">
+    <div style="background-color: #f4f5fa; width: 100%; background-repeat: no-repeat; background-size: cover; padding-top: 40px; padding-bottom: 40px">
+        <img src="{{ link_to_logo }}" style="height: 200px; width: 200px; display:block; margin:auto;"/>
+    </div>
+
+    <div class="content" style="padding: 0 45px 35px; line-height: 1.2em; background-color: #f4f5fa; color: #1c2126;">
+        {# START CTA Button #}
+        <div style="text-align: center; padding: 20px 0 20px; ">
+            <a class="btn"
+                href="{% block cta_url %}#{% endblock %}"
+            style="color: #ffffff; text-decoration: none; padding: 13px 21px; background-color: #5d70d2; border-radius: 5px; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
+            {% block cta_text %}
+                CTA Text -- Replace!
+                {% endblock %}
+            </a>
+        </div>
+        {# END CTA Button #}
+
+    {# START CTA Headline #}
+    <div style="text-align: center; font-weight: 800; font-size: 30px; line-height: 1.1em; padding: 10px 0;">
+        {% block cta_headline %}
+        CTA HEADLINE -- Replace!
+        {% endblock %}
+    </div>
+    {# END CTA Headline #}
+
+    <div style="text-align: center; font-size: 1.6em; line-height: 1.2em; margin: 15px 0;">
+        {% block lead_text %}Lead Text -- Replace!{% endblock %}
+    </div>
+
+    {% block content %}
+        <div style="text-align: center; line-height: 1.2em; margin: 15px 0;">
+        {% block secondary_text %}
+            Secondary Text -- Replace!
+        {% endblock %}
+        </div>
+    {% endblock %}
+
+    </div>{# /content #}
+
+</div>{# /container #}
+{% endblock %}

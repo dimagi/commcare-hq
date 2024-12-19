@@ -1,15 +1,33 @@
+'use strict';
 /* eslint-env mocha */
-/* global Backbone, Marionette */
-hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function () {
+hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", [
+    "underscore",
+    "backbone",
+    "backbone.marionette",
+    "sinon/pkg/sinon",
+    "hqwebapp/js/toggles",
+    "cloudcare/js/formplayer/app",
+    "cloudcare/js/formplayer/menus/api",
+    "cloudcare/js/formplayer/menus/controller",
+    "cloudcare/js/formplayer/spec/fake_formplayer",
+    "cloudcare/js/formplayer/spec/fixtures/split_screen_case_list",
+    "cloudcare/js/formplayer/utils/utils",
+    "cloudcare/js/formplayer/users/models",
+], function (
+    _,
+    Backbone,
+    Marionette,
+    sinon,
+    Toggles,
+    FormplayerFrontend,
+    API,
+    Controller,
+    FakeFormplayer,
+    splitScreenCaseListResponse,
+    Utils,
+    UsersModels
+) {
     describe('Split Screen Case Search', function () {
-        const API = hqImport("cloudcare/js/formplayer/menus/api"),
-            Controller = hqImport('cloudcare/js/formplayer/menus/controller'),
-            FakeFormplayer = hqImport('cloudcare/js/formplayer/spec/fake_formplayer'),
-            FormplayerFrontend = hqImport('cloudcare/js/formplayer/app'),
-            splitScreenCaseListResponse = hqImport('cloudcare/js/formplayer/spec/fixtures/split_screen_case_list'),
-            Toggles = hqImport('hqwebapp/js/toggles'),
-            Utils = hqImport('cloudcare/js/formplayer/utils/utils');
-
         const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' }),
             sandbox = sinon.sandbox.create(),
             stubs = {};
@@ -44,7 +62,10 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
         });
 
         beforeEach(function () {
-            FormplayerFrontend.currentUser.displayOptions.singleAppMode = false;
+            var user = UsersModels.getCurrentUser();
+            user.displayOptions = {
+                singleAppMode: false,
+            };
             stubs.splitScreenToggleEnabled.returns(true);
         });
 
@@ -66,7 +87,11 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should show sidebar and main regions with query type split screen case search', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query' , 'models': [{}]});
+                const responseWithTypeQuery = _.extend(
+                    {},
+                    splitScreenCaseListResponse,
+                    { 'type': 'query'},
+                    new Backbone.Collection(splitScreenCaseListResponse.queryResponse.displays));
                 Controller.showMenu(responseWithTypeQuery);
 
                 assert.isTrue(stubs.regions['sidebar'].show.called);
@@ -74,7 +99,11 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should explicitly set sidebarEnabled and triggerEmptyCaseList with query type split screen case search', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query', 'models': [{}] });
+                const responseWithTypeQuery = _.extend(
+                    {},
+                    splitScreenCaseListResponse,
+                    { 'type': 'query'},
+                    new Backbone.Collection(splitScreenCaseListResponse.queryResponse.displays));
                 Controller.showMenu(responseWithTypeQuery);
 
                 assert.isTrue(stubs.regions['main'].show.called);
@@ -84,7 +113,11 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should hide sidebar if there are no search inputs in query response', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query'});
+                const responseWithTypeQuery = _.extend(
+                    {},
+                    splitScreenCaseListResponse,
+                    { 'type': 'query'},
+                    new Backbone.Collection([]));
                 Controller.showMenu(responseWithTypeQuery);
 
                 assert.isTrue(stubs.regions['sidebar'].empty.called);
@@ -100,7 +133,10 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should empty sidebar if in app preview', function () {
-                FormplayerFrontend.currentUser.displayOptions.singleAppMode = true;
+                var user = UsersModels.getCurrentUser();
+                user.displayOptions = {
+                    singleAppMode: true,
+                };
                 Controller.showMenu(splitScreenCaseListResponse);
 
                 assert.isTrue(stubs.regions['sidebar'].empty.called);

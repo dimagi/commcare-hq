@@ -8,7 +8,6 @@ git-build-branch
 gnureadline
 ipython  # for nicer django shell experience
 psutil>5.1.3  # for memory profiling
-sniffer
 wheel
 
 # linting/formatting

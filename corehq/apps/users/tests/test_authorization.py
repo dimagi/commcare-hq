@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from decorator import contextmanager
 from django.test import TestCase
-from nose.tools import nottest, istest
+from django.utils.functional import classproperty
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -11,8 +11,11 @@ from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.role_utils import UserRolePresets
 
 
-@nottest
 class BaseAuthorizationTest(TestCase):
+
+    @classproperty
+    def __test__(cls):
+        return cls is not BaseAuthorizationTest
 
     @classmethod
     def setUpTestData(cls):
@@ -141,7 +144,6 @@ class BaseAuthorizationTest(TestCase):
         self.assertFalse(self.user.has_permission(None, 'report_an_issue'))
 
 
-@istest
 class TestMobileUserAuthorizationFunctions(BaseAuthorizationTest):
     @classmethod
     def _create_user(cls, domain):
@@ -164,7 +166,6 @@ class TestMobileUserAuthorizationFunctions(BaseAuthorizationTest):
             self.assertFalse(self.user.is_domain_admin(self.domain))
 
 
-@istest
 class TestWebUserAuthorizationFunctions(BaseAuthorizationTest):
     @classmethod
     def _create_user(cls, domain):
@@ -177,7 +178,6 @@ class TestWebUserAuthorizationFunctions(BaseAuthorizationTest):
         )
 
 
-@istest
 class TestSuperUserAuthorizationFunctions(BaseAuthorizationTest):
     @classmethod
     def _create_user(cls, domain):

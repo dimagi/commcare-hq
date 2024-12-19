@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
@@ -72,13 +72,12 @@ domain_specific = [
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
-    url(r'^geospatial/', include('corehq.apps.geospatial.urls')),
+    url(r'^microplanning/', include('corehq.apps.geospatial.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
     url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
     url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
     url(r'^', include('corehq.motech.fhir.urls')),
@@ -92,6 +91,7 @@ domain_specific = [
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
     url(r'^registries/', include('corehq.apps.registry.urls')),
+    url(r'^apps/testing/', include("corehq.apps.app_execution.urls")),
 ]
 
 for url_module in extension_points.domain_specific_urls():
@@ -118,7 +118,6 @@ urlpatterns = [
     url(r'^hq/admin/', include('corehq.util.metrics.urls')),
     url(r'^hq/flags/', include('corehq.apps.toggle_ui.urls')),
     url(r'^hq/notifications/', include('corehq.apps.notifications.urls')),
-    url(r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
     url(r'^push/', include('corehq.messaging.smsbackends.push.urls')),
     url(r'^starfish/', include('corehq.messaging.smsbackends.starfish.urls')),
@@ -140,6 +139,7 @@ urlpatterns = [
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
     url(r'^styleguide/', include('corehq.apps.styleguide.urls')),
+    url(r'^prototype/', include('corehq.apps.prototype.urls')),
     url(r'^500/$', use_bootstrap5(TemplateView.as_view(template_name='500.html'))),
     url(r'^404/$', use_bootstrap5(TemplateView.as_view(template_name='404.html'))),
     url(r'^403/$', use_bootstrap5(TemplateView.as_view(template_name='403.html'))),
@@ -160,7 +160,6 @@ urlpatterns = [
         r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
-    url(r'^oauth/', include('corehq.apps.oauth_integrations.urls')),
 ] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:

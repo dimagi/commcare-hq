@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends 'reports/filters/bootstrap3/base.html' %}
++{% extends 'reports/filters/bootstrap5/base.html' %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ {% block filter_content %}
+-  <input style="margin-top: 9px;"
+-         type="checkbox"
++  <input style="margin-top: 9px;"  {# todo B5: inline style #}
++         type="checkbox"  {# todo B5: css:checkbox #}
+          id="{{ css_id }}"
+          value="True"
+          name="{{ slug }}"

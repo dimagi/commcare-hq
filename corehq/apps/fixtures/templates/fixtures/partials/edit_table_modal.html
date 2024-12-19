@@ -54,19 +54,19 @@
                   <input type="text" class="form-control" data-bind="value: tag, valueUpdate: 'afterkeydown', hasfocus: true"/>
 
                   <p class="label label-warning" data-bind="visible: isDuplicate">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     {% blocktrans %}
                       "<span data-bind="text: tag"></span>" is a duplicate field name.
                     {% endblocktrans %}
                   </p>
                   <p class="label label-warning" data-bind="visible: isBadSlug">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     {% blocktrans %}
                       Field name cannot contain \, /, <, >, or spaces.
                     {% endblocktrans %}
                   </p>
                   <p class="label label-warning" data-bind="visible: noXMLStart">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     {% blocktrans %}
                       Field name cannot start with xml.
                     {% endblocktrans %}
@@ -75,7 +75,7 @@
                 <td>
                   <input type="checkbox" data-bind="checked: remove, visible: !is_new()"/>
                   <button class="btn btn-danger" data-bind="click: remove_if_new, visible: is_new " style="vertical-align: top;">
-                    <i class="fa fa-trash"></i>
+                    <i class="fa-regular fa-trash-can"></i>
                   </button>
                 </td>
                 <!-- /ko -->

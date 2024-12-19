@@ -25,6 +25,7 @@ def fake_get_max_doc_count(query, case_property, precision):
     return 2 * x + 9_983
 
 
+@patch('corehq.apps.geospatial.es.MAX_GEOHASH_DOC_COUNT', 10000)
 def test_find_precision():
     with patch(
         'corehq.apps.geospatial.es.get_max_doc_count',
@@ -48,7 +49,7 @@ class TestGetMaxDocCount(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        with flag_enabled('GEOSPATIAL'):
+        with flag_enabled('MICROPLANNING'):
             case_search_es_setup(DOMAIN, cls._get_case_blocks())
 
     @staticmethod

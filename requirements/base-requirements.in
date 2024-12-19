@@ -1,13 +1,17 @@
 alembic
 architect
 attrs>=21.4
+beautifulsoup4  # USH - used for rich text messaging emails, and some tests
+bleach  # USH - used for rich text messaging emails
+bleach[css]  # USH - used for rich text messaging emails
 boto3
 celery
 CommcareTranslationChecker>=0.9.7
+cryptography>=43.0.1
 csiphash
 datadog
 ddtrace
-decorator==4.0.11  # required by django-digest
+decorator==5.1.1  # required by django-digest
 defusedxml
 diff-match-patch
 dimagi-memoized
@@ -22,7 +26,6 @@ crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@77
 django-cte
 django-field-audit
 django-formtools
-django-logentry-admin
 django-oauth-toolkit
 django-otp
 django-phonenumber-field
@@ -33,21 +36,18 @@ django-recaptcha
 django-statici18n
 django-tastypie
 django-transfer
-django-two-factor-auth
+django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae  # waiting for next release after 1.16.0
 django-user-agents
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
-django>=3.2.18,<4.0
+django>=4.2.16,<5.0
 djangorestframework
 dropbox
-elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
-elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
+elasticsearch5>=5.0.0,<6.0.0
+elasticsearch6>=6.0.0,<7.0.0
 ethiopian-date-converter
 eulxml
 firebase-admin  # India Division - used for FCM Push Notifications
 gevent
-google-api-python-client==2.32.0
-google-auth-httplib2==0.1.0
-google-auth-oauthlib==0.4.6
 greenlet
 gunicorn
 haversine  # SolTech - Used in Geospatial features
@@ -84,6 +84,7 @@ python-dateutil
 python-imap
 pyphonetics
 python-magic
+pytz
 pyjwt
 PyYAML
 hl7apy
@@ -109,6 +110,7 @@ stripe
 suds-py3
 text-unidecode
 toposort
+transifex-python
 tropo-webapi-python
 turn-python
 twilio

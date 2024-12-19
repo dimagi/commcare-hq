@@ -1,15 +1,31 @@
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/menus/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        kissmetrics = hqImport("analytix/js/kissmetrix"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        QueryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views"),
-        constants = hqImport("cloudcare/js/formplayer/constants");
-
+'use strict';
+hqDefine("cloudcare/js/formplayer/menus/utils", [
+    'underscore',
+    'backbone',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/layout/views/progress_bar',
+    'cloudcare/js/formplayer/menus/views/query',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/menus/views',
+    'analytix/js/gtx',
+], function (
+    _,
+    Backbone,
+    toggles,
+    kissmetrics,
+    FormplayerFrontend,
+    constants,
+    ProgressBar,
+    view,
+    UsersModels,
+    utils,
+    views,
+    gtx
+) {
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
         sessionStorage.locationLon = position.coords.longitude;
@@ -80,7 +96,9 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         });
 
         detailCollection = new Backbone.Collection(breadcrumbModels);
-        detailCollection.last().set('ariaCurrentPage', true);
+        if (detailCollection.length) {
+            detailCollection.last().set('ariaCurrentPage', true);
+        }
         var breadcrumbView = views.BreadcrumbListView({
             collection: detailCollection,
         });
@@ -92,7 +110,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
-            breadcrumbMenuDropdown: "#breadcrumb__menu-dropdown",
+            breadcrumbMenuDropdown: "#navbar-menu-region",
         });
 
         if (langs && langs.length > 1) {
@@ -138,6 +156,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             multiSelectMaxSelectValue: menuResponse.maxSelectValue,
             dynamicSearch: menuResponse.dynamicSearch,
             endpointActions: menuResponse.endpointActions,
+            groupHeaders: menuResponse.groupHeaders,
         };
     };
 
@@ -175,7 +194,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             return views.MenuListView(menuData);
         } else if (menuResponse.type === constants.QUERY) {
             var props = {
-                domain: FormplayerFrontend.getChannel().request('currentUser').domain,
+                domain: UsersModels.getCurrentUser().domain,
             };
             if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
                 props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
@@ -186,25 +205,28 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 execute: false,
                 forceManualSearch: false,
             });
-            return QueryView(menuData);
+            return view.queryListView(menuData);
         } else if (menuResponse.type === constants.ENTITIES) {
-            var searchText = urlObject.search;
-            var event = "Viewed Case List";
-            if (searchText) {
-                event = "Searched Case List";
-            }
+
             if (isSidebarEnabled(menuResponse)) {
                 menuData.sidebarEnabled = true;
             }
-            var eventData = {
-                domain: FormplayerFrontend.getChannel().request("currentUser").domain,
-                name: menuResponse.title,
-            };
+            var eventData = {};
             var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
             if (!_.isEmpty(fields)) {
                 eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
             }
-            kissmetrics.track.event(event, eventData);
+
+            var kissmetricsEventData = _.extend(eventData, {
+                domain: UsersModels.getCurrentUser().domain,
+                name: menuResponse.title,
+            });
+            var gtxEventData = _.extend(eventData, {
+                moduleName: menuResponse.title,
+            });
+            kissmetrics.track.event("Viewed Case List", kissmetricsEventData);
+            gtx.sendEvent("web_apps_viewed_case_list", gtxEventData);
+
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
                 kissmetrics.track.event('Started Case Search', {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),

@@ -1,0 +1,22 @@
+{% extends "hqwebapp/partials/bootstrap3/bulk_upload.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block prerequisites %}
+  {% blocktrans %}
+    <p>
+      Use this tool to upload ZIP files of your multimedia.
+      The bulk uploader will compare the file paths in your form with the file paths
+      in your zip to find a matching file.
+    </p>
+    <p>
+      For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's
+      <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match
+      <code>commcare/images/image.jpg</code>.
+    </p>
+  {% endblocktrans %}
+{% endblock %}
+
+{% block download_file %}
+  {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
+{% endblock download_file %}

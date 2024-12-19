@@ -3,17 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/base_ace.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
-    <script src="{% static 'userreports/js/widgets.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
-
-{% requirejs_main "userreports/js/ucr_expression" %}
+{% js_entry_b3 "userreports/js/ucr_expression" %}
 
 {% block page_content %}
 {% initial_page_data "expression" expression %}

@@ -40,7 +40,7 @@ class Command(BaseCommand):
             repeater_name_re = re.compile(options['repeater_name'])
 
         if repeater_id:
-            repeater = Repeater.objects.get(repeater_id=repeater_id)
+            repeater = Repeater.objects.get(id=repeater_id)
             if repeater_type and repeater_type != repeater.repeater_type:
                 raise CommandError(f"Repeater type does not match: {repeater_type} != {repeater.repeater_type}")
             if repeater_name_re and not repeater_name_re.match(repeater.name):

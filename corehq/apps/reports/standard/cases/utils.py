@@ -1,3 +1,4 @@
+from corehq import toggles
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
@@ -46,7 +47,7 @@ def all_project_data_filter(domain, mobile_user_and_group_slugs):
         domain=domain,
         admin=HQUserType.ADMIN not in user_types,
         unknown=HQUserType.UNKNOWN not in user_types,
-        web=HQUserType.WEB not in user_types,
+        web=not toggles.WEB_USERS_IN_REPORTS.enabled(domain),  # don't exclude if flag enabled
         demo=HQUserType.DEMO_USER not in user_types,
         commtrack=False,
     )
@@ -114,7 +115,15 @@ def get_case_owners(request, domain, mobile_user_and_group_slugs):
                     )).fields(["users"])
             )
             user_lists = [group["users"] for group in report_group_q.run().hits]
-            selected_reporting_group_users = list(set().union(*user_lists))
+            selected_reporting_group_users = set()
+            for element in user_lists:
+                if isinstance(element, list):
+                    # Groups containing multiple users will be returned as a list.
+                    selected_reporting_group_users |= set(element)
+                else:
+                    # Groups containing a single user will be returned as single elements in query.
+                    selected_reporting_group_users.add(element)
+            selected_reporting_group_users = list(selected_reporting_group_users)
 
     # Get user ids for each user that was specifically selected
     selected_user_ids = EMWF.selected_user_ids(mobile_user_and_group_slugs)

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
@@ -16,12 +16,17 @@ from corehq.apps.data_interfaces.models import (
     MatchPropertyDefinition,
     UCRFilterDefinition,
     UpdateCaseDefinition,
+    CaseDuplicateNew,
+    CaseDeduplicationMatchTypeChoices,
+    hash_arguments,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models.cases import CommCareCase
+
+from corehq.apps.data_interfaces.tests.deduplication_helpers import create_dedupe_rule
 
 
 class MatchPropertyDefinitionTests(SimpleTestCase):
@@ -37,6 +42,120 @@ class MatchPropertyDefinitionTests(SimpleTestCase):
             'property_value': 'test_value',
             'match_type': 'test_type',
         })
+
+    def test_days_less_or_equal_matches_when_date_is_equal_to_case_date(self):
+        definition = MatchPropertyDefinition(
+            property_name='test_date',
+            property_value=0,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_OR_EQUAL
+        )
+        case = CommCareCase(case_json={
+            'test_date': date(year=2024, month=10, day=1)
+        })
+
+        self.assertTrue(definition.matches(case, datetime(year=2024, month=10, day=1)))
+
+    def test_days_less_or_equal_does_not_match_when_date_is_greater_than_case_date(self):
+        definition = MatchPropertyDefinition(
+            property_name='test_date',
+            property_value=0,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_OR_EQUAL
+        )
+        case = CommCareCase(case_json={
+            'test_date': date(year=2024, month=10, day=1)
+        })
+
+        self.assertFalse(definition.matches(case, datetime(year=2024, month=10, day=2)))
+
+    def test_days_before_does_not_match_when_date_is_equal_to_case_date(self):
+        definition = MatchPropertyDefinition(
+            property_name='test_date',
+            property_value=0,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_THAN
+        )
+        case = CommCareCase(case_json={
+            'test_date': date(year=2024, month=10, day=2)
+        })
+
+        self.assertFalse(definition.matches(case, datetime(year=2024, month=10, day=2)))
+
+    def test_days_before_matches_when_date_is_less_than_case_date(self):
+        definition = MatchPropertyDefinition(
+            property_name='test_date',
+            property_value=0,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_THAN
+        )
+
+        case = CommCareCase(case_json={
+            'test_date': date(year=2024, month=10, day=2)
+        })
+
+        self.assertTrue(definition.matches(case, datetime(year=2024, month=10, day=1)))
+
+    def test_days_after_matches_when_date_is_equal_to_case_date(self):
+        definition = MatchPropertyDefinition(
+            property_name='test_date',
+            property_value=0,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL
+        )
+
+        case = CommCareCase(case_json={
+            'test_date': date(year=2024, month=10, day=1)
+        })
+
+        self.assertTrue(definition.matches(case, datetime(year=2024, month=10, day=1, hour=0)))
+
+    def test_days_after_does_not_match_when_date_is_less_than_case_date(self):
+        definition = MatchPropertyDefinition(
+            property_name='test_date',
+            property_value=0,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL
+        )
+
+        case = CommCareCase(case_json={
+            'test_date': date(year=2024, month=10, day=2)
+        })
+
+        self.assertFalse(definition.matches(case, datetime(year=2024, month=10, day=1)))
+
+    def test_days_greater_than_matches_when_date_is_greater_than_case_date(self):
+        definition = MatchPropertyDefinition(
+            property_name='test_date',
+            property_value=0,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_THAN
+        )
+
+        case = CommCareCase(case_json={
+            'test_date': date(year=2024, month=10, day=1)
+        })
+
+        self.assertTrue(definition.matches(case, datetime(year=2024, month=10, day=2)))
+
+    def test_days_greater_than_does_not_match_when_date_is_equal_to_case_date(self):
+        definition = MatchPropertyDefinition(
+            property_name='test_date',
+            property_value=0,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_THAN
+        )
+
+        case = CommCareCase(case_json={
+            'test_date': date(year=2024, month=10, day=1)
+        })
+
+        self.assertFalse(definition.matches(case, datetime(year=2024, month=10, day=1, hour=5)))
+
+    def test_check_days_handles_case_dates_as_strings(self):
+        definition = MatchPropertyDefinition(
+            property_name='test_date',
+            property_value=0,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL
+        )
+
+        case = CommCareCase(case_json={
+            'test_date': '2024-10-01',
+        })
+
+        self.assertTrue(definition.matches(case, datetime(year=2024, month=10, day=1)))
 
 
 class CustomMatchDefinitionTests(SimpleTestCase):
@@ -340,6 +459,29 @@ class AutomaticUpdateRuleTests(SimpleTestCase):
             'actions': ['action1', 'action2'],
         })
 
+    def test_get_boundary_date_returns_none_if_any_rule_does_not_filter_on_server_modified(self):
+        now = datetime(2020, 6, 1, 0, 0)
+        rules = [
+            AutomaticUpdateRule(filter_on_server_modified=True),
+            AutomaticUpdateRule(filter_on_server_modified=False),
+        ]
+
+        result = AutomaticUpdateRule.get_boundary_date(rules, now)
+
+        self.assertIsNone(result)
+
+    def test_get_boundary_date_returns_most_recent_date_if_all_rules_filter_on_server_modified(self):
+        now = datetime(2020, 6, 1, 0, 0)
+        rules = [
+            # filter_on_server_modified is True by default
+            AutomaticUpdateRule(server_modified_boundary=30),
+            AutomaticUpdateRule(server_modified_boundary=1),
+        ]
+
+        result = AutomaticUpdateRule.get_boundary_date(rules, now)
+
+        self.assertEqual(result, datetime(2020, 5, 31, 0, 0))
+
     def setUp(self):
         self.actions = []
         self.criteria = []
@@ -355,6 +497,146 @@ class AutomaticUpdateRuleTests(SimpleTestCase):
         action_patcher = patch.object(AutomaticUpdateRule, 'caseruleaction_set', action_set_mock)
         action_patcher.start()
         self.addCleanup(action_patcher.stop)
+
+
+class CaseDuplicateNewTests(TestCase):
+    def setUp(self):
+        rule = create_dedupe_rule(name='rule1')
+        self.action = CaseDeduplicationActionDefinition.from_rule(rule)
+
+    def test_get_case_ids(self):
+        rule = create_dedupe_rule()
+        action = CaseDeduplicationActionDefinition.from_rule(rule)
+        CaseDuplicateNew.objects.create(case_id='1', action=action, hash='111')
+        CaseDuplicateNew.objects.create(case_id='2', action=action, hash='111')
+        CaseDuplicateNew.objects.create(case_id='3', action=action, hash='111')
+        self.assertEqual(set(CaseDuplicateNew.get_case_ids(rule.id)), {'1', '2', '3'})
+
+    def test_get_case_ids_with_missing_rule_returns_empty_list(self):
+        invalid_rule_id = '123'
+        self.assertEqual(CaseDuplicateNew.get_case_ids(invalid_rule_id), [])
+
+    def test_create_creates_duplicate_from_case(self):
+        case = CommCareCase(case_json={'test': '123'})
+        action = self._create_action_detecting_duplicates_on('test')
+        duplicate = CaseDuplicateNew.create(case, action, save=False)
+
+        expected_hash = hash_arguments('123')
+        self.assertEqual(duplicate.hash, expected_hash)
+
+    def test_removing_record_deletes_orphaned_duplicate(self):
+        entry = CaseDuplicateNew.objects.create(case_id='1', action=self.action, hash='123')
+        duplicate = CaseDuplicateNew.objects.create(case_id='2', action=self.action, hash='123')
+
+        entry.delete()
+
+        entry_exists = CaseDuplicateNew.objects.filter(
+            case_id=entry.case_id, action=self.action).count() > 0
+        duplicate_exists = CaseDuplicateNew.objects.filter(
+            case_id=duplicate.case_id, action=self.action).count() > 0
+        self.assertFalse(entry_exists)
+        self.assertFalse(duplicate_exists)
+
+    def test_removing_record_with_multiple_existing_leaves_duplicates(self):
+        entry = CaseDuplicateNew.objects.create(case_id='1', action=self.action, hash='123')
+        CaseDuplicateNew.objects.create(case_id='2', action=self.action, hash='123')
+        CaseDuplicateNew.objects.create(case_id='3', action=self.action, hash='123')
+
+        entry.delete()
+
+        entry_exists = CaseDuplicateNew.objects.filter(
+            case_id=entry.case_id, action=self.action).count() > 0
+        remaining_duplicate_count = CaseDuplicateNew.objects.filter(
+            action=self.action, hash=entry.hash).count()
+        self.assertFalse(entry_exists)
+        self.assertEqual(remaining_duplicate_count, 2)
+
+    def test_remove_duplicates_for_case_ids_handles_multiple_actions(self):
+        action1 = CaseDeduplicationActionDefinition.from_rule(create_dedupe_rule(name='rule1'))
+        CaseDuplicateNew.objects.create(case_id='1', action=action1, hash='123')
+
+        action2 = CaseDeduplicationActionDefinition.from_rule(create_dedupe_rule(name='rule2'))
+        CaseDuplicateNew.objects.create(case_id='1', action=action2, hash='123')
+
+        CaseDuplicateNew.remove_duplicates_for_case_ids(['1'])
+
+        self.assertEqual(CaseDuplicateNew.objects.filter(case_id='1').count(), 0)
+
+    def test_remove_duplicates_removes_orphaned_records(self):
+        action = CaseDeduplicationActionDefinition.from_rule(create_dedupe_rule(name='rule1'))
+        CaseDuplicateNew.objects.create(case_id='1', action=action, hash='123')
+        CaseDuplicateNew.objects.create(case_id='2', action=action, hash='123')
+
+        CaseDuplicateNew.remove_duplicates_for_case_ids(['1'])
+
+        self.assertEqual(CaseDuplicateNew.objects.filter(action=action, hash='123').count(), 0)
+
+    def test_remove_duplicates_missing_ids_are_ignored(self):
+        action = CaseDeduplicationActionDefinition.from_rule(create_dedupe_rule(name='rule1'))
+        CaseDuplicateNew.objects.create(case_id='1', action=action, hash='123')
+        CaseDuplicateNew.objects.create(case_id='3', action=action, hash='456')
+
+        CaseDuplicateNew.remove_duplicates_for_case_ids(['1', 'missing', '3'])
+
+        self.assertEqual(CaseDuplicateNew.objects.filter(action=action, case_id__in=['1', '3']).count(), 0)
+
+    def _create_action_detecting_duplicates_on(self, *props):
+        action = CaseDeduplicationActionDefinition(
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=props
+        )
+        return action
+
+
+class HashArguments_Tests(SimpleTestCase):
+    def test_hashes_single_argument(self):
+        result = hash_arguments('one')
+        self.assertTrue(type(result), str)
+
+    def test_hashes_multiple_arguments(self):
+        single_result = hash_arguments('one')
+        multiple_result = hash_arguments('one', 'two')
+        self.assertTrue(type(multiple_result), str)
+        self.assertNotEqual(single_result, multiple_result)
+
+    def test_same_input_produces_same_output(self):
+        result1 = hash_arguments('test')
+        result2 = hash_arguments('test')
+        self.assertEqual(result1, result2)
+
+    def test_different_inputs_produce_different_output(self):
+        result1 = hash_arguments('test1')
+        result2 = hash_arguments('test2')
+        self.assertNotEqual(result1, result2)
+
+    def test_respects_all_arguments(self):
+        multiple_result1 = hash_arguments('one', 'two')
+        multiple_result2 = hash_arguments('one', 'two')
+        self.assertEqual(multiple_result1, multiple_result2)
+
+    def test_deals_with_similar_combinations(self):
+        result1 = hash_arguments('mans', 'laughter')
+        result2 = hash_arguments('man', 'slaughter')
+        self.assertNotEqual(result1, result2)
+
+    def test_converts_non_string_arguments_to_strings(self):
+        result1 = hash_arguments(1, 2)
+        result2 = hash_arguments('1', '2')
+        self.assertEqual(result1, result2)
+
+    def test_handle_delimiter_character(self):
+        result1 = hash_arguments('1', '2')
+        result2 = hash_arguments('1\t2')
+        self.assertNotEqual(result1, result2)
+
+    def test_handles_empty_arguments(self):
+        result = hash_arguments('')
+        self.assertTrue(type(result), str)
+
+    def test_empty_arguments_match(self):
+        result1 = hash_arguments('')
+        result2 = hash_arguments('')
+        self.assertEqual(result1, result2)
 
 
 def create_dict_mock(class_, data):

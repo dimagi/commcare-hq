@@ -3,8 +3,9 @@ hqDefine('toggle_ui/js/flags', [
     'knockout',
     'underscore',
     'hqwebapp/js/bootstrap3/alert_user',
-    'reports/js/config.dataTables.bootstrap',
-    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
+    'reports/js/bootstrap3/datatables_config',
+    'hqwebapp/js/components/select_toggle',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -80,7 +81,7 @@ hqDefine('toggle_ui/js/flags', [
 
     let viewModel = buildViewModel();
     $.fn.dataTableExt.afnFiltering.push(
-        function (oSettings, aData, iDataIndex) {
+        function (oSettings, aData) {
             if (viewModel.tagFilter() === 'all') {
                 return true;
             }
@@ -99,7 +100,7 @@ hqDefine('toggle_ui/js/flags', [
     });
     table.render();
 
-    viewModel.tagFilter.subscribe(function (value) {
+    viewModel.tagFilter.subscribe(function () {
         table.datatable.fnDraw();
     });
 });

@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("app_manager/js/apps_base", function () {
     $(function () {
         $('#deleted-app-modal').modal({

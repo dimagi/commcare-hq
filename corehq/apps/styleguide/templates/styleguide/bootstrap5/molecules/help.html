@@ -1,0 +1,65 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Help</h1>
+  <p class="sg-lead">
+    Add help icons that users can click for contextual help.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#usage">Usage</a>
+        <ul>
+          <li><a href="#working-example">Working Example</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    HQ has JavaScript logic to initialize tooltip-based contextual help.
+  </p>
+
+  <h2 id="usage" class="pt-4">
+    Usage
+  </h2>
+  <p>
+    Many pages in HQ use these help icons, including the
+    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/scheduling/templates/scheduling/dashboard.html#L34-L43"
+       target="_blank">Messaging Dashboard</a>. Help icons are frequently used in table colum headers and next to
+       field labels in forms. App builders can also incorporate help icons in Web Apps, to add field-specific help
+       for <a
+       href="https://github.com/dimagi/commcare-hq/blob/dd2fb1e43b327c1ef79fe46a6f1f837cc3ab3144/corehq/apps/cloudcare/templates/cloudcare/partials/query_view.html#L71-L75"
+       target="_blank">case search fields</a>.
+  </p>
+  <p>
+    Using help icons requires the Bootstrap javascript library and also <code>hq.helpers.js</code>.
+    The tooltip uses Bootstrap's <a href="https://getbootstrap.com/docs/5.0/components/popovers/"
+    target="_blank">popover</a> widget. It supports a variety of <a
+    href="https://getbootstrap.com/docs/5.0/components/popovers/#options" target="_blank">options</a>,
+    which can be set using <code>data-</code> attributes. The most
+    commonly used in HQ are:
+    <ul>
+      <li><code>title</code></li>
+      <li><code>content</code></li>
+      <li><code>placement</code> - specify where the popover should appear, relative to the icon (<code>top</code>, etc.)</li>
+      <li><code>html</code> - true if the popover contains HTML markup</li>
+    </ul>
+  </p>
+  <h3 id="working-example" class="pt-3">
+    A Working Example
+  </h3>
+  <p>
+    The example below demonstrates help in a template.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.help %}
+{% endblock content %}

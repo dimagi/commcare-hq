@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 from django.core.validators import validate_email
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.template.loader import render_to_string
-from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
@@ -17,18 +16,15 @@ from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed, with_prefix
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
-from corehq.apps.users.forms import RoleForm
+from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
+from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
-
-# Bandit does not catch any references to mark_safe using this,
-# so please use it with caution, and only on segments that do not contain user input
-mark_safe_lazy = lazy(mark_safe, str)
 
 
 class RegisterWebUserForm(forms.Form):
@@ -44,6 +40,7 @@ class RegisterWebUserForm(forms.Form):
     phone_number = forms.CharField(
         label=_("Phone Number"),
         required=False,
+        max_length=20,
     )
     persona = forms.ChoiceField(
         label=_("I will primarily be using CommCare to..."),
@@ -64,7 +61,7 @@ class RegisterWebUserForm(forms.Form):
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
-        label=mark_safe_lazy(_(
+        label=mark_safe(_(
             """I have read and agree to Dimagi's
             <a href="http://www.dimagi.com/terms/latest/privacy/"
                target="_blank">Privacy Policy</a>,
@@ -77,6 +74,7 @@ class RegisterWebUserForm(forms.Form):
             """)))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
+    is_self_signup = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         self.is_sso = kwargs.pop('is_sso', False)
@@ -219,6 +217,7 @@ class RegisterWebUserForm(forms.Form):
                                   "disable: disableNextStepTwo"
                     )
                 ),
+                hqcrispy.InlineField('is_self_signup'),
                 css_class="form-bubble form-step step-2",
                 style="display: none;"
             ),
@@ -233,7 +232,7 @@ class RegisterWebUserForm(forms.Form):
         phone_number = re.sub(r'\s|\+|\-', '', phone_number)
         if phone_number == '':
             return None
-        elif not re.match(r'\d+$', phone_number):
+        elif not phone_number.isdigit():
             raise forms.ValidationError(gettext(
                 "%s is an invalid phone number." % phone_number
             ))
@@ -372,15 +371,15 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
     eula_confirmed = forms.BooleanField(
         required=False,
         label="",
-        help_text=mark_safe_lazy(_(
+        help_text=mark_safe(_(
             """I have read and agree to Dimagi's
-                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                <a href="https://dimagi.com/terms-privacy/"
                     target="_blank">Privacy Policy</a>,
-                <a href="http://www.dimagi.com/terms/latest/tos/"
+                <a href="https://dimagi.com/terms-of-service/"
                     target="_blank">Terms of Service</a>,
-                <a href="http://www.dimagi.com/terms/latest/ba/"
+                <a href="https://dimagi.com/terms-ba/"
                     target="_blank">Business Agreement</a>, and
-                <a href="http://www.dimagi.com/terms/latest/aup/"
+                <a href="https://dimagi.com/terms-aup/"
                     target="_blank">Acceptable Use Policy</a>.
                """))
     )
@@ -434,7 +433,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         return data
 
 
-class WebUserInvitationForm(BaseUserInvitationForm):
+class AcceptedWebUserInvitationForm(BaseUserInvitationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
@@ -488,48 +487,41 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
         return ""
 
 
-# From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
-#
-# I'll put this in each app, so they can be standalone, but it should really go in some centralized
-# part of the distro
-
-class _BaseForm(object):
-
-    def clean(self):
-        for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], str):
-                self.cleaned_data[field] = self.cleaned_data[field].strip()
-        return self.cleaned_data
-
-
-class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
-    # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
-    # and do need to relabel some things.
+class AdminInvitesUserForm(SelectUserLocationForm):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, is_add_user=None, *args, **kwargs):
-        domain_obj = None
-        location = None
-        if 'domain' in kwargs:
-            domain_obj = Domain.get_by_name(kwargs['domain'])
-            del kwargs['domain']
-        if 'location' in kwargs:
-            location = kwargs['location']
-            del kwargs['location']
-        super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-        if domain_obj and domain_obj.commtrack_enabled:
-            self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
-                                                          widget=LocationSelectWidget(domain_obj.name),
-                                                          help_text=EMWF.location_search_help,
-                                                          initial=location.location_id if location else '')
-            self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
-            programs = Program.by_domain(domain_obj.name)
-            choices = list((prog.get_id, prog.name) for prog in programs)
-            choices.insert(0, ('', ''))
-            self.fields['program'].choices = choices
-        self.excluded_emails = excluded_emails or []
+    def __init__(self, data=None, is_add_user=None,
+                 role_choices=(), should_show_location=False, can_edit_tableau_config=False,
+                 custom_data=None, *, domain, **kwargs):
+        self.custom_data = custom_data
+        if data and self.custom_data:
+            data = data.copy()
+            custom_data_post_dict = self.custom_data.form.data
+            data.update({k: v for k, v in custom_data_post_dict.items() if k not in data})
+        self.request = kwargs.get('request')
+        super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
+        self.can_edit_tableau_config = can_edit_tableau_config
+        domain_obj = Domain.get_by_name(domain)
+        self.fields['role'].choices = [('', _("Select a role"))] + role_choices
+        if domain_obj:
+            if self.custom_data:
+                prefixed_fields = {}
+                if WEB_USER_INVITE_ADDITIONAL_FIELDS.enabled(domain):
+                    prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
+                elif PROFILE_SLUG in self.custom_data.form.fields:
+                    prefixed_profile_key = with_prefix(PROFILE_SLUG, self.custom_data.prefix)
+                    prefixed_fields[prefixed_profile_key] = self.custom_data.form.fields[PROFILE_SLUG]
+                self.fields.update(prefixed_fields)
+            if domain_obj.commtrack_enabled:
+                self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
+                programs = Program.by_domain(domain_obj.name)
+                choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
+                self.fields['program'].choices = choices
+
+        if self.can_edit_tableau_config:
+            self._initialize_tableau_fields(data, domain)
 
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
@@ -537,8 +529,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-
-        self.helper.layout = crispy.Layout(
+        fields = [
             crispy.Fieldset(
                 gettext("Information for new Web User"),
                 crispy.Field(
@@ -547,7 +538,33 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                     data_bind="textInput: email",
                 ),
                 'role',
-            ),
+            )
+        ]
+        if self.custom_data:
+            custom_data_fieldset = self.custom_data.make_fieldsets(prefixed_fields, data is not None,
+                                                                   field_name_includes_prefix=True)
+            fields.extend(custom_data_fieldset)
+        if should_show_location:
+            fields.append(
+                crispy.Fieldset(
+                    gettext("Location Settings"),
+                    'assigned_locations',
+                    'primary_location',
+                )
+            )
+        else:
+            self.fields.pop('assigned_locations', None)
+            self.fields.pop('primary_location', None)
+        if self.can_edit_tableau_config:
+            fields.append(
+                crispy.Fieldset(
+                    gettext("Tableau Configuration"),
+                    'tableau_role',
+                    'tableau_group_indices' if len(self.fields['tableau_group_indices'].choices) > 0 else None
+                ),
+            )
+        self.helper.layout = crispy.Layout(
+            *fields,
             crispy.HTML(
                 render_to_string(
                     'users/partials/confirm_trust_identity_provider_message.html',
@@ -575,7 +592,49 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
-        if email in self.excluded_emails:
-            raise forms.ValidationError(_("A user with this email address is already in "
-                                          "this project or has a pending invitation."))
+
+        from corehq.apps.registration.validation import AdminInvitesUserFormValidator
+        error = AdminInvitesUserFormValidator.validate_email(self.domain, email)
+        if error:
+            raise forms.ValidationError(error)
         return email
+
+    def clean(self):
+        cleaned_data = super(AdminInvitesUserForm, self).clean()
+        if 'tableau_group_indices' in cleaned_data:
+            cleaned_data['tableau_group_ids'] = [
+                self.tableau_form.allowed_tableau_groups[int(i)].id
+                for i in cleaned_data['tableau_group_indices']
+            ]
+            del cleaned_data['tableau_group_indices']
+
+        for field in cleaned_data:
+            if isinstance(cleaned_data[field], str):
+                cleaned_data[field] = cleaned_data[field].strip()
+
+        if self.custom_data:
+            prefixed_profile_key = with_prefix(PROFILE_SLUG, self.custom_data.prefix)
+            prefixed_field_names = add_prefix(self.custom_data.form.fields, self.custom_data.prefix).keys()
+            custom_user_data = {key: cleaned_data.pop(key) for key in prefixed_field_names if key in cleaned_data}
+
+            if prefixed_profile_key in custom_user_data:
+                profile_id = custom_user_data.pop(prefixed_profile_key)
+                cleaned_data['profile'] = profile_id
+            cleaned_data['custom_user_data'] = get_prefixed(custom_user_data, self.custom_data.prefix)
+
+        from corehq.apps.registration.validation import AdminInvitesUserFormValidator
+        error = AdminInvitesUserFormValidator.validate_parameters(
+            self.domain,
+            self.request.couch_user,
+            cleaned_data.keys()
+        )
+        if error:
+            raise forms.ValidationError(error)
+        return cleaned_data
+
+    def _initialize_tableau_fields(self, data, domain):
+        self.tableau_form = BaseTableauUserForm(data, domain=domain)
+        self.fields['tableau_group_indices'] = self.tableau_form.fields["groups"]
+        self.fields['tableau_group_indices'].label = _('Tableau Groups')
+        self.fields['tableau_role'] = self.tableau_form.fields['role']
+        self.fields['tableau_role'].label = _('Tableau Role')

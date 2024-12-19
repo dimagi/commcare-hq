@@ -12,7 +12,7 @@ class AsyncLocationFilter(BaseReportFilter):
     # todo: cleanup template
     label = gettext_noop("Location")
     slug = "location_async"
-    template = "reports/filters/location_async.html"
+    template = "reports/filters/bootstrap3/location_async.html"
     make_optional = False
     auto_drill = True
 

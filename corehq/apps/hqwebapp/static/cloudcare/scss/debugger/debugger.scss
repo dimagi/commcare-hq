@@ -1,0 +1,63 @@
+.debugger {
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: $zindex-cloudcare-debugger;
+  background-color: white;
+  overflow: hidden;
+
+  transition: height 0.5s;
+
+  &.debugger-minimized {
+    height: 30px;
+    overflow-y: hidden;
+  }
+
+  &.debugger-maximized {
+    height: 400px;
+  }
+
+  &.debugger-updating {
+    #debugger-form-data, #debugger-xml-instance {
+      opacity: 0.5;
+    }
+  }
+
+  .debugger-tab-title {
+    line-height: 18px;
+    color: white;
+    background-color: $cc-brand-mid;
+    border-bottom: #ddd solid 4px;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    padding: 6px;
+    cursor: pointer;
+    .debugger-title {
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    &:hover {
+      background-color: darken($cc-brand-low, 5);
+    }
+
+    transition: background-color 0.5s;
+  }
+
+  .debugger-navbar {
+    background-color: $cc-bg;
+  }
+
+  .debugger-content {
+    overflow-y: auto;
+    margin-top: 12px;
+    padding: 10px;
+    padding-bottom: 0;
+  }
+
+  .debugger-code {
+    font-family: monospace;
+  }
+}

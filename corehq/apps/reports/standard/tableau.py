@@ -9,14 +9,20 @@ from no_exceptions.exceptions import Http403
 import requests
 
 from corehq import toggles
-from corehq.apps.reports.models import TableauVisualization
+from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.locations.permissions import location_safe
 
 
+def _get_hostname(server):
+    return server.server_name if server.validate_hostname == '' else server.validate_hostname
+
+
+@location_safe
 class TableauView(BaseDomainView):
     urlname = 'tableau'
-    template_name = 'reports/tableau_template.html'
+    template_name = 'reports/bootstrap3/tableau_template.html'
 
     section_name = gettext_lazy("Tableau Reports")
 
@@ -39,24 +45,24 @@ class TableauView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.visualization.id,))
 
+    @method_decorator(login_and_domain_required)
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
     def dispatch(self, request, *args, **kwargs):
+        if not self._authenticate_request(request):
+            raise Http403
         if self.visualization is None:
             raise Http404()
         return super().dispatch(request, *args, **kwargs)
 
+    def _authenticate_request(self, request):
+        return request.couch_user.can_view_tableau_viz(self.domain, self.visualization)
+
     @property
     def page_context(self):
-        if self.visualization.server.validate_hostname == '':
-            hostname = self.visualization.server.server_name
-        else:
-            hostname = self.visualization.server.validate_hostname
         return {
             "domain": self.visualization.server.domain,
             "server_type": self.visualization.server.server_type,
-            "server_address": self.visualization.server.server_name,
-            "validate_hostname": hostname,
-            "target_site": self.visualization.server.target_site,
+            "validate_hostname": _get_hostname(self.visualization.server),
             "view_url": self.visualization.view_url,
             "viz_id": self.visualization.id,
         }
@@ -69,37 +75,37 @@ class TableauView(BaseDomainView):
 
 @login_and_domain_required
 @require_POST
-def tableau_visualization_ajax(request, domain):
+@location_safe
+def get_tableau_server_ticket(request, domain):
     from requests_toolbelt.adapters import host_header_ssl
     visualization_data = {data: value[0] for data, value in dict(request.POST).items()}
-    server_name = visualization_data.pop('server_name')
-    validate_hostname = visualization_data.pop('validate_hostname')
-    target_site = visualization_data.pop('target_site')
+
+    server = TableauServer.objects.get(domain=domain)
+    server_name = server.server_name
+    validate_hostname = _get_hostname(server)
+    target_site = server.target_site
 
     # Authenticate
-    if not request.couch_user.can_view_tableau_viz(domain, visualization_data.pop('viz_id')):
+    if not request.couch_user.can_view_tableau_viz(domain, TableauVisualization.objects.get(
+            id=visualization_data.pop('viz_id'))):
         raise Http403
 
-    if toggles.EMBED_TABLEAU_REPORT_BY_USER.enabled(domain):
+    if server.get_reports_using_role:
+        tableau_username = f"HQ/{request.couch_user.get_role(domain).name}"
+    else:
         # An equivalent Tableau user with the username "HQ/{username}" must exist.
         tableau_username = f"HQ/{request.couch_user.username}"
-    else:
-        # An equivalent Tableau user with the username "HQ/{role name}" must exist.
-        tableau_username = f"HQ/{request.couch_user.get_role(domain).name}"
+
     tabserver_url = 'https://{}/trusted/'.format(server_name)
     post_arguments = {'username': tableau_username}
 
     if target_site != 'Default':
         post_arguments.update({'target_site': target_site})
 
-    if validate_hostname != '':
-        request = requests.Session()
-        request.mount('https://', host_header_ssl.HostHeaderSSLAdapter())
-        tabserver_response = request.post(tabserver_url,
-                                          post_arguments,
-                                          headers={'Host': validate_hostname})
-    else:
-        tabserver_response = requests.post(tabserver_url, post_arguments)
+    request = requests.Session()
+    request.mount('https://', host_header_ssl.HostHeaderSSLAdapter())
+    tabserver_response = request.post(tabserver_url, post_arguments,
+                                      headers={'Host': validate_hostname})
 
     if tabserver_response.status_code == 200:
         if tabserver_response.content != b'-1':

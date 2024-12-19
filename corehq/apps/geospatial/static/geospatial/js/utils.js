@@ -1,6 +1,8 @@
+'use strict';
 hqDefine('geospatial/js/utils', [], function () {
 
     const DEFAULT_MARKER_OPACITY = 1.0;
+    const MAX_URL_LENGTH = 4500;
 
     var getRandomRGBColor = function () { // TODO: Ensure generated colors looks different!
         var r = Math.floor(Math.random() * 256); // Random value between 0 and 255 for red
@@ -22,9 +24,72 @@ hqDefine('geospatial/js/utils', [], function () {
         return todayDate.toLocaleDateString();
     };
 
+    var createMapPopup = function (coordinates, popupDiv, openEventFunc, closeEventFunc) {
+        popupDiv.setAttribute("data-bind", "template: 'select-case'");
+        const popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
+            .setLngLat(coordinates)
+            .setDOMContent(popupDiv)
+            .on('open', openEventFunc)
+            .on('close', closeEventFunc);
+        return popup;
+    };
+
+    var setQueryParam = function (paramName, paramVal) {
+        const url = new URL(window.location.href);
+        url.searchParams.set(paramName, paramVal);
+        return updateUrl(url);
+    };
+
+    var clearQueryParam = function (paramName) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete(paramName);
+        return updateUrl(url);
+    };
+
+    var fetchQueryParam = function (paramName) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(paramName);
+    };
+
+    function updateUrl(url) {
+        if (url.href.length > MAX_URL_LENGTH) {
+            return false;
+        }
+        window.history.replaceState({ path: url.href }, '', url.href);
+        return true;
+    }
+
+    function downloadCsv(items, headers, cols, fileName) {
+        let csvStr = "";
+        csvStr = (headers).join(',');
+        csvStr += '\n';
+
+        _.forEach(items, function (itemToExport) {
+            let dataToExport = [];
+            for (const col of cols) {
+                dataToExport.push(itemToExport[col]);
+            }
+            csvStr += dataToExport.join(',');
+            csvStr += '\n';
+        });
+
+        // Download CSV file
+        const hiddenElement = document.createElement('a');
+        hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvStr);
+        hiddenElement.target = '_blank';
+        hiddenElement.download = `${fileName} (${getTodayDate()}).csv`;
+        hiddenElement.click();
+        hiddenElement.remove();
+    }
+
     return {
         getRandomRGBColor: getRandomRGBColor,
         uuidv4: uuidv4,
         getTodayDate: getTodayDate,
+        createMapPopup: createMapPopup,
+        setQueryParam: setQueryParam,
+        clearQueryParam: clearQueryParam,
+        fetchQueryParam: fetchQueryParam,
+        downloadCsv: downloadCsv,
     };
 });

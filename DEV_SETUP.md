@@ -676,9 +676,9 @@ for these packages.
 
 ```sh
 $ npm --version
-8.19.3
+10.2.4
 $ node --version
-v16.19.1
+v20.11.1
 ```
 
 On a clean Ubuntu 22.04 LTS install, the packaged nodejs version is expected to be v12. The
@@ -689,16 +689,32 @@ curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-### Step 8: Configure LESS CSS (2 Options)
+### Step 8: Configure CSS Precompilers (2 Options)
 
-#### Option 1: Let Client Side Javascript (less.js) handle it for you
+#### Requirements: Install Dart Sass
+
+At present, we are undergoing a migration from Bootstrap 3 to 5. Bootstrap 3 uses LESS
+as its CSS precompiler, and Bootstrap 5 using SASS / SCSS. You will need both installed.
+
+LESS is already taken care of by `package.json` when you run `yarn install`. In order to
+compile SASS, we need Dart Sass. There is a `sass` npm package that can be installed globally with
+`npm install -g sass`, however this installs the pure javascript version without a binary. For speed in a
+development environment, it is recommended to install `sass` with homebrew:
+
+```shell
+brew install sass/sass/sass
+```
+
+You can also view [alternative installation instructions](https://sass-lang.com/install/) if homebrew doesn't work for you.
+
+#### Option 1: Compile CSS on page-load without compression
 
 This is the setup most developers use. If you don't know which option to use,
 use this one. It's the simplest to set up and the least painful way to develop:
 just make sure your `localsettings.py` does not contain `COMPRESS_ENABLED` or
 `COMPRESS_OFFLINE` settings (or has them both set to `False`).
 
-The disadvantage is that this is a different setup than production, where LESS
+The disadvantage is that this is a different setup than production, where LESS/SASS
 files are compressed.
 
 #### Option 2: Compress OFFLINE, just like production
@@ -715,7 +731,7 @@ COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 ```
 
-For all STATICFILES changes (primarily LESS and JavaScript), run:
+For all STATICFILES changes (primarily LESS, SASS, and JavaScript), run:
 
 ```sh
 ./manage.py collectstatic
@@ -746,7 +762,23 @@ This can also be used to promote a user created by signing up to a superuser.
 Note that promoting a user to superuser status using this command will also give them the
 ability to assign other users as superuser in the in-app Superuser Management page.
 
-### Step 11: Running CommCare HQ
+### Step 11: Running `yarn dev`
+
+In order to build JavaScript bundles with Webpack, you will need to have `yarn dev`
+running in the background. It will watch any existing Webpack Entry Point, aka modules
+included on a page using the `js_entry` template tag.
+
+When you add a new entry point (`js_entry` tag), please remember to restart `yarn dev` so
+that it can identify the new entry point it needs to watch.
+
+To build Webpack bundles like it's done in production environments, pleas use `yarn build`.
+This command does not have a watch functionality, so it needs to be re-run every time you make
+changes to javascript files bundled by Webpack.
+
+For more information about JavaScript and Static Files, please see the
+[Dimagi JavaScript Guide](https://commcare-hq.readthedocs.io/js-guide/README.html) on Read the Docs.
+
+### Step 12: Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
 Elasticsearch).
@@ -777,6 +809,9 @@ yarn install --frozen-lockfile
 ./manage.py compilejsi18n
 ./manage.py fix_less_imports_collectstatic
 ```
+
+See the [Dimagi JavaScript Guide](https://commcare-hq.readthedocs.io/js-guide/README.html) for additional
+useful background and tips.
 
 ## Running Formplayer and submitting data with Web Apps
 
@@ -1003,8 +1038,8 @@ Or, to drop the current test DB and create a fresh one
 ./manage.py test corehq.apps.app_manager --reusedb=reset
 ```
 
-See `corehq.tests.nose.HqdbContext` ([source](corehq/tests/nose.py)) for full
-description of `REUSE_DB` and `--reusedb`.
+See `corehq.tests.pytest_plugins.reusedb` ([source](corehq/tests/pytest_plugins/reusedb.py))
+for full description of `REUSE_DB` and `--reusedb`.
 
 
 ### Accessing the test shell and database
@@ -1067,21 +1102,21 @@ ignore:unclosed:ResourceWarning'
 Personal whitelist items may also be added in localsettings.py.
 
 
-### Running tests by tag
+### Running tests by marker
 
-You can run all tests with a certain tag as follows:
+You can run all tests with a certain marker as follows:
 
 ```sh
-./manage.py test --attr=tag
+pytest -m MARKER
 ```
 
-Available tags:
+Available markers:
 
 - slow: especially slow tests
 - sharded: tests that should get run on the sharded test runner
 - es_test: Elasticsearch tests
 
-See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
+See https://docs.pytest.org/en/stable/example/markers.html for more details.
 
 
 ### Running on DB tests or Non-DB tests
@@ -1096,7 +1131,7 @@ See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
 
 ### Running only failed tests
 
-See https://github.com/nose-devs/nose/blob/master/nose/plugins/testid.py
+See https://docs.pytest.org/en/stable/how-to/cache.html
 
 
 ## Javascript tests
@@ -1180,54 +1215,3 @@ This script goes through the steps to prepare a report for test coverage of
 JavaScript files _that are touched by tests_, i.e., apps and files with 0% test
 coverage will not be shown. A coverage summary is output to the terminal and a
 detailed html report is generated at ``coverage-js/index.html``.
-
-
-## Sniffer
-
-You can also use sniffer to auto run the Python tests.
-
-When running, sniffer auto-runs the specified tests whenever you save a file.
-
-For example, you are working on the `retire` method of `CommCareUser`. You are
-writing a `RetireUserTestCase`, which you want to run every time you make a
-small change to the `retire` method, or to the `testCase`. Sniffer to the
-rescue!
-
-
-### Sniffer Usage
-
-```sh
-sniffer -x <test.module.path>[:<TestClass>[.<test_name>]]
-```
-
-In our example, we would run
-
-```sh
-sniffer -x corehq.apps.users.tests.retire:RetireUserTestCase`
-```
-
-You can also add the regular `nose` environment variables, like:
-
-```sh
-REUSE_DB=1 sniffer -x <test>
-```
-
-For JavaScript tests, you can add `--js-` before the JavaScript app test name,
-for example:
-
-```sh
-sniffer -x --js-app_manager
-```
-
-You can combine the two to run the JavaScript tests when saving js files, and
-run the Python tests when saving py files as follows:
-
-```sh
-sniffer -x --js-app_manager -x corehq.apps.app_manager:AppManagerViewTest
-```
-
-### Sniffer Installation instructions
-
-<https://github.com/jeffh/sniffer/> (recommended to install `pywatchman` or
-`macfsevents` for this to actually be worthwhile otherwise it takes a long time
-to see the change).

@@ -31,6 +31,7 @@ from corehq.apps.linked_domain.ucr import (
 )
 from corehq.apps.sms.models import Keyword
 from corehq.apps.userreports.tests.utils import (
+    cleanup_ucr,
     get_sample_data_source,
     get_sample_report_config,
 )
@@ -233,19 +234,21 @@ class TestReleaseReport(BaseReleaseManagerTest):
         self.data_source = get_sample_data_source()
         self.data_source.domain = self.domain
         self.data_source.save()
+        self.addCleanup(cleanup_ucr, self.data_source)
 
         self.report = get_sample_report_config()
         self.report.config_id = self.data_source.get_id
         self.report.domain = self.domain
         self.report.save()
+        self.addCleanup(self.report.delete)
         return self.report
 
     def test_already_linked_report_is_pushed(self):
         new_report = self._create_new_report()
         new_report.title = "Title"
         new_report.save()
-        self.addCleanup(new_report.delete)
         linked_report_info = create_linked_ucr(self.domain_link, new_report.get_id)
+        self.addCleanup(cleanup_ucr, linked_report_info.datasource)
         self.addCleanup(linked_report_info.report.delete)
         # after creating the link, update the upstream report
         new_report.title = "Updated Title"
@@ -264,7 +267,6 @@ class TestReleaseReport(BaseReleaseManagerTest):
 
     def test_report_pushed_if_not_found(self):
         unpushed_report = self._create_new_report()
-        self.addCleanup(unpushed_report.delete)
         model = self._linked_data_view_model(
             MODEL_REPORT,
             detail=ReportLinkDetail(report_id=unpushed_report.get_id).to_json()
@@ -275,6 +277,7 @@ class TestReleaseReport(BaseReleaseManagerTest):
         self.assertIsNone(errors)
 
         downstream_report = get_downstream_report(self.linked_domain, unpushed_report.get_id)
+        self.addCleanup(cleanup_ucr, downstream_report.config)
         self.addCleanup(downstream_report.delete)
         self.assertIsNotNone(downstream_report)
 

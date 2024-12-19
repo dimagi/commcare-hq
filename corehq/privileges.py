@@ -119,6 +119,10 @@ CASE_LIST_EXPLORER = 'case_list_explorer'
 
 CASE_COPY = 'case_copy'
 
+CASE_DEDUPE = 'case_deduplicate'
+CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
+APP_DEPENDENCIES = 'app_dependencies'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -177,10 +181,12 @@ MAX_PRIVILEGES = [
     EXPORT_MULTISORT,
     EXPORT_OWNERSHIP,
     FILTERED_BULK_USER_DOWNLOAD,
-    APPLICATION_ERROR_REPORT,
     DATA_DICTIONARY,
     CASE_LIST_EXPLORER,
     CASE_COPY,
+    CASE_DEDUPE,
+    CUSTOM_DOMAIN_ALERTS,
+    APP_DEPENDENCIES,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -254,8 +260,10 @@ class Titles(object):
             EXPORT_MULTISORT: _("Sort multiple rows in exports simultaneously"),
             EXPORT_OWNERSHIP: _("Allow exports to have ownership"),
             FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features"),
-            APPLICATION_ERROR_REPORT: _("Application error report"),
             DATA_DICTIONARY: _("Project level data dictionary of cases"),
             CASE_LIST_EXPLORER: _("Case List Explorer"),
             CASE_COPY: _("Allow case copy from one user to another"),
+            CASE_DEDUPE: _("Deduplication Rules"),
+            CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
+            APP_DEPENDENCIES: _("App Dependencies"),
         }.get(privilege, privilege)

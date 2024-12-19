@@ -1,0 +1,27 @@
+--- 
++++ 
+@@ -1,12 +1,12 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 'smsbillables/js/rate_calc' %}
++{% js_entry 'smsbillables/js/rate_calc' %}
+ 
+ {% block page_content %}
+-  <div class="well">
++  <div class="card">  {# todo B5: css-well #}
+     <p class="lead">
+       {% blocktrans %}
+         Use this form to get a cost estimation per 160 character SMS,
+@@ -30,7 +30,7 @@
+   </div>
+   <hr />
+   <div class="ko-sms-rate-calculator">
+-    {% crispy rate_calc_form %}
++    {% crispy rate_calc_form %}  {# todo B5: crispy #}
+     <div class="alert alert-success" data-bind="visible: calculatingRate">
+       {% blocktrans %}
+         Calculating SMS Rate...

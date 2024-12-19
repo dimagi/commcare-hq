@@ -3,6 +3,8 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
+from couchdbkit.schema.base import DocumentBase
+
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
@@ -13,6 +15,7 @@ from corehq.apps.users.models import (
 )
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 
 
 class CouchUserTest(SimpleTestCase):
@@ -215,8 +218,6 @@ class DeviceAppMetaLatestRequestTests(SimpleTestCase):
 class HQPermissionsTests(SimpleTestCase):
     def test_normalize_removes_permissions_from_location_restricted_user(self):
         permissions = HqPermissions(
-            edit_web_users=True,
-            view_web_users=True,
             edit_groups=True,
             view_groups=True,
             edit_apps=True,
@@ -228,8 +229,6 @@ class HQPermissionsTests(SimpleTestCase):
 
         permissions.normalize()
 
-        self.assertFalse(permissions.edit_web_users)
-        self.assertFalse(permissions.view_web_users)
         self.assertFalse(permissions.edit_groups)
         self.assertFalse(permissions.view_groups)
         self.assertFalse(permissions.edit_apps)
@@ -312,3 +311,39 @@ class HQPermissionsTests(SimpleTestCase):
         left = HqPermissions(view_reports=True)
         right = HqPermissions()
         self.assertEqual(HqPermissions.diff(left, right), ['view_reports'])
+
+
+class CouchUserSaveRaceConditionTests(TestCase):
+
+    def test_couch_user_save_race_condition(self):
+        """
+        WebUser and CommCareUser use the same underlying save method that is being tested here
+        """
+        username = 'race-test-user@test.com'
+        user = WebUser.create(self.domain.name, username, '***', None, None)
+        self.addCleanup(user.delete, None, deleted_by=None)
+
+        rev_before = WebUser.get_by_username(username)._rev
+        super_save = DocumentBase.save
+
+        def race_save(self, *args, **kw):
+            """
+            Simulate a scenario where another process calls get_by_username while the current process is executing
+            user.save(). The call happens after user.save() is called, but prior to the user object actually being
+            saved to Couch (prior to super().save() being called)
+            """
+            WebUser.get_by_username(username)
+            return super_save(self, *args, **kw)
+
+        with patch.object(DocumentBase, "save", race_save):
+            user.save()
+
+        rev_after = WebUser.get_by_username(username)._rev
+        diff = int(rev_after.split('-')[0]) - int(rev_before.split('-')[0])
+        self.assertEqual(diff, 1)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain('race-user-test')
+        cls.addClassCleanup(cls.domain.delete)

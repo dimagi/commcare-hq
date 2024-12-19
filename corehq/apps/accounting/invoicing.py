@@ -32,6 +32,7 @@ from corehq.apps.accounting.models import (
     DomainUserHistory,
     EntryPoint,
     FeatureType,
+    FormSubmittingMobileWorkerHistory,
     Invoice,
     InvoicingPlan,
     LineItem,
@@ -82,9 +83,11 @@ class DomainInvoiceFactory(object):
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
 
     def create_invoices(self):
-        subscriptions = self._get_subscriptions()
-        self._ensure_full_coverage(subscriptions)
-        for subscription in subscriptions:
+        all_subscriptions = self._get_subscriptions()
+        self._ensure_full_coverage(all_subscriptions)
+        chargeable_subscriptions = [sub for sub in all_subscriptions
+                                    if sub.plan_version.plan.edition != SoftwarePlanEdition.PAUSED]
+        for subscription in chargeable_subscriptions:
             try:
                 if subscription.account.is_customer_billing_account:
                     log_accounting_info("Skipping invoice for subscription: %s, because it is part of a Customer "
@@ -105,8 +108,6 @@ class DomainInvoiceFactory(object):
             ),
             subscriber=self.subscriber,
             date_start__lte=self.date_end,
-        ).exclude(
-            plan_version__plan__edition=SoftwarePlanEdition.PAUSED,
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
@@ -554,6 +555,7 @@ class LineItemFactory(object):
         try:
             return {
                 FeatureType.SMS: SmsLineItemFactory,
+                FeatureType.FORM_SUBMITTING_MOBILE_WORKER: FormSubmittingMobileWorkerLineItemFactory,
                 FeatureType.USER: UserLineItemFactory,
                 FeatureType.WEB_USER: WebUserLineItemFactory,
             }[feature_type]
@@ -745,19 +747,23 @@ class UserLineItemFactory(FeatureLineItemFactory):
         dates = self.all_month_ends_in_invoice()
         excess_users = 0
         for date in dates:
-            total_users = 0
-            for domain in self.subscribed_domains:
-                try:
-                    history = DomainUserHistory.objects.get(domain=domain, record_date=date)
-                    total_users += history.num_users
-                except DomainUserHistory.DoesNotExist:
-                    if not deleted_domain_exists(domain):
-                        # this checks to see if the domain still exists
-                        # before raising an error. If it was deleted the
-                        # loop will continue
-                        raise
+            total_users = self.total_users_for_date(date)
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
+
+    def total_users_for_date(self, date):
+        total_users = 0
+        for domain in self.subscribed_domains:
+            try:
+                history = DomainUserHistory.objects.get(domain=domain, record_date=date)
+                total_users += history.num_users
+            except DomainUserHistory.DoesNotExist:
+                if not deleted_domain_exists(domain):
+                    # this checks to see if the domain still exists
+                    # before raising an error. If it was deleted the
+                    # loop will continue
+                    raise
+        return total_users
 
     def all_month_ends_in_invoice(self):
         _, month_end = get_first_last_days(self.invoice.date_end.year, self.invoice.date_end.month)
@@ -777,41 +783,43 @@ class UserLineItemFactory(FeatureLineItemFactory):
                 )
             )
         if self.quantity > 0:
-            return ngettext(
-                "Per-{user} fee exceeding limit of {monthly_limit} {user} "
-                "with plan above.{prorated_notice}",
-                "Per-{user} fee exceeding limit of {monthly_limit} {user}s "
-                "with plan above.{prorated_notice}",
-                self.rate.monthly_limit
-            ).format(
-                monthly_limit=self.rate.monthly_limit,
-                prorated_notice=prorated_notice,
-                user=user_type
-            )
+            return _("Fee for each {user} exceeding the plan limit of {monthly_limit}.").format(
+                user=_(user_type), monthly_limit=self.rate.monthly_limit
+            ) + prorated_notice
 
     @property
     def unit_description(self):
         return self._unit_description_by_user_type("mobile user")
 
 
-class WebUserLineItemFactory(UserLineItemFactory):
+class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
+
+    def total_users_for_date(self, date):
+        total_users = 0
+        for domain in self.subscribed_domains:
+            try:
+                history = FormSubmittingMobileWorkerHistory.objects.get(domain=domain, record_date=date)
+                total_users += history.num_users
+            except FormSubmittingMobileWorkerHistory.DoesNotExist:
+                if not deleted_domain_exists(domain):
+                    raise
+        return total_users
 
     @property
-    @memoized
-    def quantity(self):
-        # Iterate through all months in the invoice date range to aggregate total users into one line item
-        dates = self.all_month_ends_in_invoice()
-        excess_users = 0
-        for date in dates:
-            total_users = 0
-            try:
-                history = BillingAccountWebUserHistory.objects.get(
-                    billing_account=self.subscription.account, record_date=date)
-                total_users += history.num_users
-            except BillingAccountWebUserHistory.DoesNotExist:
-                raise
-            excess_users += max(total_users - self.rate.monthly_limit, 0)
-        return excess_users
+    def unit_description(self):
+        return super()._unit_description_by_user_type("form-submitting mobile worker")
+
+
+class WebUserLineItemFactory(UserLineItemFactory):
+
+    def total_users_for_date(self, date):
+        try:
+            history = BillingAccountWebUserHistory.objects.get(
+                billing_account=self.subscription.account, record_date=date)
+            total_users = history.num_users
+        except BillingAccountWebUserHistory.DoesNotExist:
+            raise
+        return total_users
 
     @property
     def unit_description(self):

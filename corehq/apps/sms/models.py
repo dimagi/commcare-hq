@@ -1069,6 +1069,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_FCM_NO_ACTION = "FCM_NO_ACTION"
     ERROR_FCM_NOTIFICATION_FAILURE = "FCM_NOTIFICATION_FAILURE"
     ERROR_FCM_DOMAIN_NOT_ENABLED = 'FCM_DOMAIN_NOT_ENABLED'
+    FILTER_MISMATCH = 'FILTER_MISMATCH'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1130,6 +1131,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_FCM_NO_ACTION: gettext_noop("No action selected for the FCM Data message type."),
         ERROR_FCM_NOTIFICATION_FAILURE: gettext_noop("Failure while sending FCM notifications to the devices."),
         ERROR_FCM_DOMAIN_NOT_ENABLED: gettext_noop("Domain is not enabled for FCM Push Notifications"),
+        FILTER_MISMATCH: gettext_noop("Recipient did not match filters:")
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -1913,9 +1915,10 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
             backend = cls.load_default_backend(backend_type, phone_number)
 
         if not backend:
-            raise BadSMSConfigException("No suitable backend found for phone "
-                                        "number and domain %s, %s" %
-                                        (phone_number, domain))
+            raise BadSMSConfigException("No gateway found "
+                                        "for phone number %s and domain %s. "
+                                        "To configure a gateway, please visit the SMS Connectivity Settings."
+                                        % (phone_number, domain))
 
         return backend
 
@@ -2062,7 +2065,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     def get_generic_name(cls):
         """
         This method should return a descriptive name for this backend
-        (such as "Unicel" or "Tropo"), for use in identifying it to an end user.
+        (such as "Tropo"), for use in identifying it to an end user.
         """
         raise NotImplementedError("Please implement this method")
 
@@ -2678,3 +2681,4 @@ class Email(models.Model):
     recipient_address = models.CharField(max_length=255, db_index=True)
     subject = models.TextField(null=True)
     body = models.TextField(null=True)
+    html_body = models.TextField(null=True)

@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
     'jquery',
     'underscore',
@@ -9,7 +10,6 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
     hqMain,
     DOMPurify
 ) {
-    'use strict';
     var module = {};
 
     var InputMap = function (showDelButton, placeholders) {
@@ -78,10 +78,11 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
                     $langcodeButton.button.attr("style", "position: absolute; top: 6px; right: 6px;");
                     this.$edit_view.find(".enum-value").css("position", "relative").after($langcodeButton.button);
                     this.on('change', function () {
-                        if (this.$edit_view.find(".enum-value").val() === "")
+                        if (this.$edit_view.find(".enum-value").val() === "") {
                             $langcodeButton.button.show();
-                        else
+                        } else {
                             $langcodeButton.button.hide();
+                        }
                     });
 
                 }

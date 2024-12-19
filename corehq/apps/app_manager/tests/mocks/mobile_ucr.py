@@ -9,14 +9,14 @@ def mock_report_configurations(report_configurations_by_id):
 
 
 def mock_report_configuration_get(report_configurations_by_id):
-    def get_report_config(_id, domain):
+    def get_report_configs(ids, domain):
         try:
-            return (report_configurations_by_id[_id], False)
+            return [report_configurations_by_id[_id] for _id in ids]
         except KeyError:
             raise ResourceNotFound
     return mock.patch(
-        'corehq.apps.app_manager.fixtures.mobile_ucr.get_report_config',
-        get_report_config
+        'corehq.apps.app_manager.fixtures.mobile_ucr.get_report_configs',
+        get_report_configs
     )
 
 

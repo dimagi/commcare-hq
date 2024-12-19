@@ -13,8 +13,7 @@ hqDefine("data_interfaces/js/archive_forms", function () {
     function toggleButton(count) {
         if (count) {
             $("#submitForms").prop('disabled', false);
-        }
-        else {
+        } else {
             $("#submitForms").prop('disabled', true);
         }
     }
@@ -55,8 +54,7 @@ hqDefine("data_interfaces/js/archive_forms", function () {
                 $(checkboxesSelector).prop('checked', true).change();
                 $(indicatorSelector).hide();
                 toggleButton(1);
-            }
-            else {
+            } else {
                 $(indicatorSelector).show();
                 $(".selectedCount").text(0);
                 $(managementSelector + ' a.select-none').click();

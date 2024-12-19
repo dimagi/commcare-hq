@@ -1,11 +1,13 @@
 import doctest
 import json
 from contextlib import contextmanager
+from decimal import Decimal
 
 from nose.tools import assert_equal, assert_raises
 
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.geospatial.models import GeoPolygon
 from corehq.apps.geospatial.reports import (
     CaseGroupingReport,
     geojson_to_es_geoshape,
@@ -55,9 +57,43 @@ def test_validate_geometry_schema():
         validate_geometry(geojson_geometry)
 
 
-@flag_enabled('GEOSPATIAL')
+@flag_enabled('MICROPLANNING')
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestCaseGroupingReport(BaseReportTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestCaseGroupingReport, cls).setUpClass()
+        cls.poly_obj_feature = {
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': []
+            }
+        }
+        cls.poly_obj = GeoPolygon.objects.create(
+            name='foobar', domain=DOMAIN, geo_json={'features': [cls.poly_obj_feature]}
+        )
+        cls.feature_dict = {
+            'id': '1234',
+            'type': 'Feature',
+            'properties': {},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [
+                    [
+                        [1.1, 2.2],
+                        [3.3, 3.3],
+                        [1.1, 2.2]
+                    ]
+                ]
+            }
+        }
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.poly_obj.delete()
+        super(TestCaseGroupingReport, cls).tearDownClass()
 
     def _get_request(self, **kwargs):
         request = self.factory.get('/some/url', **kwargs)
@@ -71,7 +107,7 @@ class TestCaseGroupingReport(BaseReportTest):
         report_obj = CaseGroupingReport(request, domain=DOMAIN)
         report_obj.rendered_as = 'view'
         context_data = report_obj.template_context
-        expected_columns = ['case_id', 'gps_point', 'link']
+        expected_columns = ['case_id', 'case_name', 'owner_id', 'owner_name', 'coordinates', 'link']
         self.assertEqual(
             list(context_data['case_row_order'].keys()),
             expected_columns
@@ -86,12 +122,26 @@ class TestCaseGroupingReport(BaseReportTest):
                 in_testing=True,
             )
             json_data = report.json_dict['aaData']
-        case_ids = [row[0] for row in json_data]
 
-        self.assertEqual(len(json_data), 3)
-        self.assertIn(porto_novo.case_id, case_ids)
-        self.assertIn(bohicon.case_id, case_ids)
-        self.assertIn(lagos.case_id, case_ids)
+        case_data_by_id = {row[0]: row for row in json_data}
+        case_ids = set(case_data_by_id)
+
+        self.assertSetEqual(
+            case_ids,
+            {porto_novo.case_id, bohicon.case_id, lagos.case_id}
+        )
+
+        case_data = case_data_by_id[porto_novo.case_id]
+        self.assertListEqual(
+            case_data[0:-1],
+            [
+                porto_novo.case_id,
+                'Porto-Novo',
+                self.couch_user.user_id,
+                self.couch_user.username,
+                {'lat': Decimal('6.497222'), 'lng': Decimal('2.605')}
+            ]
+        )
 
     def test_bucket_and_polygon_with_hole(self):
         with self.get_cases() as (porto_novo, bohicon, lagos):
@@ -109,6 +159,27 @@ class TestCaseGroupingReport(BaseReportTest):
         self.assertEqual(len(json_data), 1)
         self.assertIn(porto_novo.case_id, case_ids)
 
+    def test_features_from_request(self):
+        feature_params = {
+            # 'selected_feature_id': self.poly_obj.id,
+            'features': json.dumps({
+                '1234': self.feature_dict
+            })
+        }
+        request = self._get_request(data=feature_params)
+        report_obj = CaseGroupingReport(request, domain=DOMAIN)
+        request_features = report_obj.features_from_request
+        self.assertEqual(len(request_features), 1)
+        self.assertEqual(request_features['1234'], self.feature_dict)
+
+    def test_saved_polygon_from_request(self):
+        request = self._get_request(data={'selected_feature_id': self.poly_obj.id})
+        report_obj = CaseGroupingReport(request, domain=DOMAIN)
+        saved_poly_feature = report_obj.saved_polygon_from_request
+        self.assertEqual(len(saved_poly_feature), 1)
+        saved_poly_feature_id = list(saved_poly_feature)[0]
+        self.assertEqual(saved_poly_feature[saved_poly_feature_id], self.poly_obj_feature)
+
     @contextmanager
     def get_cases(self):
 
@@ -119,7 +190,8 @@ class TestCaseGroupingReport(BaseReportTest):
                 'case_name': name,
                 'properties': {
                     geo_property: f'{coordinates} 0 0',
-                }
+                },
+                'owner_id': self.couch_user.get_id,
             })
             return helper.case
 
@@ -347,8 +419,7 @@ def test_filter_for_two_polygons():
             )
         }
     }
-    features_json = json.dumps(two_polygons)
-    actual_filter = CaseGroupingReport._get_filter_for_features(features_json)
+    actual_filter = CaseGroupingReport._get_filter_for_features(two_polygons)
     assert_equal(actual_filter, expected_filter)
 
 
@@ -457,8 +528,7 @@ def test_one_polygon_with_hole():
             )
         }
     }
-    features_json = json.dumps(polygon_with_hole)
-    actual_filter = CaseGroupingReport._get_filter_for_features(features_json)
+    actual_filter = CaseGroupingReport._get_filter_for_features(polygon_with_hole)
     assert_equal(actual_filter, expected_filter)
 
 

@@ -85,6 +85,6 @@ class JSONResponseMixin:
 
     def json_response(self, response_data, status=200, **kwargs):
         out_data = json.dumps(response_data, cls=self.json_encoder, **kwargs)
-        response = HttpResponse(out_data, self.json_content_type, status=status)
+        response = HttpResponse(out_data, content_type=self.json_content_type, status=status)
         response['Cache-Control'] = 'no-cache'
         return response

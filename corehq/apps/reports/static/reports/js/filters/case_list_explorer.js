@@ -16,8 +16,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
                     var suggestion = Object.assign({}, allSuggestions[i]);
                     if (suggestion.count === 1) {
                         filteredProperties.push(suggestion);
-                    }
-                    else if (_.findWhere(filteredProperties, {name: suggestion.name}) === undefined) {
+                    } else if (_.findWhere(filteredProperties, {name: suggestion.name}) === undefined) {
                         if (suggestion.count !== undefined) {
                             suggestion.case_type = suggestion.count + " " + gettext("case types");
                         }

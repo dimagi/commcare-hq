@@ -21,6 +21,7 @@ from .util import (
     save_case_property,
     get_column_headings,
     map_row_values_to_column_names,
+    is_case_type_or_prop_name_valid,
 )
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
@@ -102,7 +103,12 @@ def _process_multichoice_sheets(domain, workbook, allowed_value_info, prop_row_i
             if len(row) < 1:
                 continue
 
-            row_vals = map_row_values_to_column_names(row, column_headings, default_val='')
+            row_vals, row_val_errors = map_row_values_to_column_names(
+                row, column_headings, sheet_name=worksheet.title, default_val=''
+            )
+            if len(row_val_errors):
+                errors.extend(row_val_errors)
+                break
             (allowed_value, prop_name, description) = (
                 row_vals['allowed_value'], row_vals['prop_name'], row_vals['description'])
 
@@ -137,7 +143,14 @@ def _process_sheets(domain, workbook, allowed_value_info):
                     domain, worksheet)
                 errors.extend(_errors)
             continue
+
         case_type = worksheet.title
+        if not is_case_type_or_prop_name_valid(case_type):
+            errors.append(
+                _('Invalid sheet name "{}". It should start with a letter, and only contain '
+                  'letters, numbers, "-", and "_"').format(case_type)
+            )
+            continue
 
         column_headings = []
         for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None), start=1):
@@ -158,7 +171,10 @@ def _process_sheets(domain, workbook, allowed_value_info):
             if len(row) < 1:
                 continue
 
-            row_vals = map_row_values_to_column_names(row, column_headings)
+            row_vals, row_val_errors = map_row_values_to_column_names(row, column_headings, sheet_name=case_type)
+            if len(row_val_errors):
+                errors.extend(row_val_errors)
+                break
             error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
             (name, description, label, group, deprecated) = (
                 row_vals['name'], row_vals['description'], row_vals['label'], row_vals['group'],
@@ -211,7 +227,12 @@ def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
         if len(row) < 3:
             errors.append(_('Not enough columns in \"{}\" sheet').format(FHIR_RESOURCE_TYPE_MAPPING_SHEET))
         else:
-            row_vals = map_row_values_to_column_names(row, column_headings)
+            row_vals, row_val_errors = map_row_values_to_column_names(
+                row, column_headings, sheet_name=worksheet.title
+            )
+            if len(row_val_errors):
+                errors.extend(row_val_errors)
+                break
             (case_type, remove_resource_type, fhir_resource_type) = (
                 row_vals['case_type'], row_vals['remove_resource_type'], row_vals['fhir_resource_type'])
 

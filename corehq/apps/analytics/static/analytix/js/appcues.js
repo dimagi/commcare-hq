@@ -1,3 +1,4 @@
+"use strict";
 /* global Appcues */
 
 /**
@@ -14,7 +15,6 @@ hqDefine('analytix/js/appcues', [
     logging,
     utils
 ) {
-    'use strict';
     var _get = initialAnalytics.getFn('appcues'),
         _ready = $.Deferred(),
         _logger = logging.getLoggerForApi('Appcues'),

@@ -334,5 +334,70 @@ def make_mapping_meta(comment=None):
     return meta
 
 
+class CreateIndexIfNotExists(CreateIndex):
+    """
+    The class will skip creating indexes if they already exists and would setup indexes if they don't exist.
+    The utility of this class is in initializing the elasticsearch migrations
+    for the environments that already have live HQ indexes.
+
+    Because of the nature of the operation, this class is not integrated into `make_elastic_migration` command.
+    This class should to be manually added to the bootstrap migrations and
+    it should be ensured that the index names are identical to live indexes.
+
+    Lets take an example of bootstrapping a running groups index
+
+        - Generate boilerplate migrations with `make_elastic_migration`
+
+            ```
+            ./manage.py make_elastic_migration --name init_groups -c groups
+            ```
+
+        - The above command will generate a migration file let say 0001_init_groups.py
+
+        - Replace the index name passed into CreateIndex in operations with the one that is running on HQ.
+
+        - Replace `corehq.apps.es.migration_operations.CreateIndex` with
+        `CreateIndexIfNotExists`
+
+    """
+    def run(self, *args, **kwargs):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
+            return
+        from corehq.apps.es.client import manager
+        if not manager.index_exists(self.name):
+            return super().run(*args, **kwargs)
+        log.info(f"ElasticSearch index {self.name} already exists. Skipping create index operation.")
+
+    def reverse_run(self, *args, **kw):
+        return None
+
+
+class DeleteOnlyIfIndexExists(DeleteIndex):
+    """
+    The class will not error out if trying to delete the indices that don't exist.
+    The utility of this class would generally be in case of exceptions where a migration
+    has to be rolled back which were already applied on some of the environments.
+
+    Because of the nature of the operation, this class is not integrated into `make_elastic_migration` command.
+
+    """
+    def __init__(self, name, es_versions=[]):
+        # To satisfy parent class signature adding dummy reverse params
+        # Reverse for this class would be no-op
+        dummy_reverse_params = ('type', {}, {}, 'setting_key')
+        super().__init__(name, dummy_reverse_params, es_versions)
+
+    def run(self, *args, **kwargs):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
+            return
+        from corehq.apps.es.client import manager
+        if manager.index_exists(self.name):
+            return super().run(*args, **kwargs)
+        log.info(f"ElasticSearch index {self.name} does not exist. Skipping delete index operation.")
+
+    def reverse_run(self, *args, **kw):
+        return None
+
+
 class MappingUpdateFailed(Exception):
     """The mapping update operation failed."""

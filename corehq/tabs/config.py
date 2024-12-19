@@ -1,3 +1,4 @@
+from corehq.apps.styleguide.examples.bootstrap5.tabs import StyleguideExamplesTab
 from corehq.apps.styleguide.tabs import SGExampleTab, SimpleCrispyFormSGExample
 from corehq.tabs.tabclasses import (
     AccountingTab,
@@ -37,7 +38,9 @@ MENU_TABS = (
     AdminTab,
     SMSAdminTab,
     AccountingTab,
-    # Styleguide
+    # Bootstrap3 Styleguide
     SGExampleTab,
     SimpleCrispyFormSGExample,
+    # Bootstrap5 Styleguide
+    StyleguideExamplesTab,
 )

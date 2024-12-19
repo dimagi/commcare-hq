@@ -38,6 +38,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     let mapModel;
     let polygonFilterInstance;
+    let currentPage = 1;
 
     function clusterStatsModel() {
         'use strict';
@@ -67,28 +68,37 @@ hqDefine("geospatial/js/case_grouping_map",[
                 exportableCases = self.casesToExport();
             }
 
-            const casesToExport = _.map(exportableCases, function (caseItem) {
-                return caseItem.toJson();
-            });
+            const groupNameByID = _.object(_.map(caseGroupsInstance.generatedGroups, function(group) {
+                return [group.groupId, group.name]
+            }));
 
-            let csvStr = "";
+            const casesToExport = _.map(exportableCases, function (caseItem) {
+                let caseJson = caseItem.toJson();
+                caseJson.groupName = groupNameByID[caseJson.groupId];
+                return caseJson;
+            });
 
             // Write headers first
-            csvStr = Object.keys(casesToExport[0]).join(",");
-            csvStr += "\n";
+            const headers = [
+                gettext('Group ID'),
+                gettext('Group Name'),
+                gettext('Group Center Coordinates'),
+                gettext('Case Name'),
+                gettext('Case Owner Name'),
+                gettext('Case Coordinates'),
+                gettext('Case ID'),
+            ]
+            const cols = [
+                'groupId',
+                'groupName',
+                'groupCenterCoordinates',
+                'caseName',
+                'owner_name',
+                'coordinates',
+                'caseId'
+            ]
 
-            _.forEach(casesToExport, function (itemRow) {
-                csvStr += Object.keys(itemRow).map(key => itemRow[key]).join(",");
-                csvStr += "\n";
-            });
-
-            // Download CSV file
-            const hiddenElement = document.createElement('a');
-            hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvStr);
-            hiddenElement.target = '_blank';
-            hiddenElement.download = `Grouped Cases (${utils.getTodayDate()}).csv`;
-            hiddenElement.click();
-            hiddenElement.remove();
+            utils.downloadCsv(casesToExport, headers, cols, 'Group Export');
         };
 
         self.addGroupDataToCases = function(caseGroups, groupsData, assignDefaultGroup) {
@@ -259,6 +269,11 @@ hqDefine("geospatial/js/case_grouping_map",[
         setMapLayersVisibility(MAPBOX_LAYER_VISIBILITY.None);
         mapMarkers.forEach((marker) => marker.remove());
         mapMarkers = [];
+
+        let groupColorByID = _.object(_.map(caseGroupsInstance.generatedGroups, function(group) {
+            return [group.groupId, group.color]
+        }));
+
         exportModelInstance.casesToExport().forEach(function (caseItem) {
             const coordinates = caseItem.itemData.coordinates;
             if (!coordinates) {
@@ -266,8 +281,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             }
             const caseGroupID = caseItem.groupId;
             if (caseGroupsInstance.groupIDInVisibleGroupIds(caseGroupID)) {
-                let caseGroup = caseGroupsInstance.getGroupByID(caseGroupID);
-                color = caseGroup.color;
+                color = groupColorByID[caseGroupID];
                 const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
                 marker.setLngLat([coordinates.lng, coordinates.lat]);
 
@@ -275,32 +289,10 @@ hqDefine("geospatial/js/case_grouping_map",[
                 marker.addTo(mapModel.mapInstance);
                 mapMarkers.push(marker);
 
-                let popupDiv = document.createElement("div");
-                popupDiv.setAttribute("data-bind", "template: 'select-case'");
-
-                let popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
-                    .setLngLat(coordinates)
-                    .setDOMContent(popupDiv);
+                const popupDiv = document.createElement("div");
+                const popup = utils.createMapPopup(coordinates, popupDiv, marker.togglePopup, marker.togglePopup);
 
                 marker.setPopup(popup);
-
-                const markerDiv = marker.getElement();
-                // Show popup on hover
-                markerDiv.addEventListener('mouseenter', marker.togglePopup);
-
-                // Hide popup if mouse leaves marker and popup
-                var addLeaveEvent = function (fromDiv, toDiv) {
-                    fromDiv.addEventListener('mouseleave', function () {
-                        setTimeout(function () {
-                            if (!$(toDiv).is(':hover')) {
-                                // mouse left toDiv as well
-                                marker.togglePopup();
-                            }
-                        }, 100);
-                    });
-                };
-                addLeaveEvent(markerDiv, popupDiv);
-                addLeaveEvent(popupDiv, markerDiv);
                 const colors = {default: color, selected: color};
 
                 const mapMarkerInstance = new mapMarkerModel(caseItem.itemId, caseItem, marker, colors);
@@ -441,8 +433,9 @@ hqDefine("geospatial/js/case_grouping_map",[
                 const groupUUID =  utils.uuidv4();
 
                 if (casePoints.length) {
-                    groupName = _.template(gettext("Group <%- groupCount %>"))({
+                    groupName = _.template(gettext("Group <%- pageNumber %>-<%- groupCount %>"))({
                         groupCount: groupCount,
+                        pageNumber: currentPage,
                     });
                     groupCount += 1;
 
@@ -492,11 +485,10 @@ hqDefine("geospatial/js/case_grouping_map",[
             // reset the warning banner
             self.groupsLocked(!self.groupsLocked());
             if (self.groupsLocked()) {
-                mapModel.mapInstance.scrollZoom.disable();
                 setCaseGroups();
             } else {
-                mapModel.mapInstance.scrollZoom.enable();
                 clearCaseGroups();
+                mapModel.fitMapBounds(mapModel.caseMapItems());
             }
         };
         return self;
@@ -521,7 +513,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             const caseRowOrder = initialPageData.get('case_row_order');
             for (const caseItem of rawCaseData) {
                 const caseObj = parseCaseItem(caseItem, caseRowOrder);
-                const caseModelInstance = new models.GroupedCaseMapItem(caseObj.case_id, {coordinates: caseObj.gps_point}, caseObj.link);
+                const caseModelInstance = new models.GroupedCaseMapItem(caseObj.case_id, caseObj, caseObj.link);
                 caseModels.push(caseModelInstance);
             }
             mapModel.caseMapItems(caseModels);
@@ -540,36 +532,46 @@ hqDefine("geospatial/js/case_grouping_map",[
             });
             mapModel.mapInstance.on('draw.delete', function (e) {
                 polygonFilterInstance.removePolygonsFromFilterList(e.features);
+                polygonFilterInstance.btnSaveDisabled(!mapModel.mapHasPolygons());
             });
             mapModel.mapInstance.on('draw.create', function (e) {
                 polygonFilterInstance.addPolygonsToFilterList(e.features);
+                polygonFilterInstance.btnSaveDisabled(!mapModel.mapHasPolygons());
             });
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
-            const isAfterReportLoad = settings.url.includes('geospatial/async/case_grouping_map/');
+            const isAfterReportLoad = settings.url.includes('microplanning/async/case_clustering_map/');
             if (isAfterReportLoad) {
                 $("#export-controls").koApplyBindings(exportModelInstance);
                 $("#lock-groups-controls").koApplyBindings(groupLockModelInstance);
                 initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
-                polygonFilterInstance = new models.PolygonFilter(mapModel, true, false);
-                polygonFilterInstance.loadPolygons(initialPageData.get('saved_polygons'));
-                $("#polygon-filters").koApplyBindings(polygonFilterInstance);
+                mapModel.mapInstance.on('load', () => {
+                    polygonFilterInstance = new models.PolygonFilter(mapModel, true, false, true);
+                    polygonFilterInstance.loadPolygons(initialPageData.get('saved_polygons'));
+                    $("#polygon-filters").koApplyBindings(polygonFilterInstance);
+                });
 
                 $("#caseGroupSelect").koApplyBindings(caseGroupsInstance);
                 return;
             }
 
-            const isAfterDataLoad = settings.url.includes('geospatial/json/case_grouping_map/');
+            const isAfterDataLoad = settings.url.includes('microplanning/json/case_clustering_map/');
             if (!isAfterDataLoad) {
                 return;
+            }
+
+            // Groups need to be unlocked to load new case data
+            if (groupLockModelInstance.groupsLocked()) {
+                groupLockModelInstance.toggleGroupLock();
             }
 
             // Hide the datatable rows but not the pagination bar
             $('.dataTables_scroll').hide();
 
             const caseData = xhr.responseJSON.aaData;
+            currentPage = xhr.responseJSON.sEcho;
             if (caseData.length) {
                 loadCases(caseData);
                 loadMapClusters(caseModels);

@@ -1,8 +1,10 @@
+"use strict";
 hqDefine('accounting/js/confirm_plan', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -19,7 +21,6 @@ hqDefine('accounting/js/confirm_plan', [
     var OTHER = gettext("Other");
 
     var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, currentPlan) {
-        'use strict';
         var self = {};
 
         self.isUpgrade = isUpgrade;

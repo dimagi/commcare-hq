@@ -1,14 +1,20 @@
 import re
 
-import attr
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.dispatch import receiver
 from django.forms import model_to_dict
+from django.db.models.signals import post_save
+from django.db.transaction import atomic
 from django.utils.translation import gettext as _
+
+import attr
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
+from corehq.util.metrics.const import MODULE_NAME_TAG
 from corehq.util.quickcache import quickcache
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
@@ -24,6 +30,7 @@ CASE_SEARCH_SORT_KEY = "commcare_sort"
 CASE_SEARCH_REGISTRY_ID_KEY = 'x_commcare_data_registry'
 CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = 'x_commcare_custom_related_case_property'
 CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY = 'x_commcare_include_all_related_cases'
+CASE_SEARCH_MODULE_NAME_TAG_KEY = "x_commcare_tag_module_name"
 
 CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_CASE_TYPE_KEY: "case_types",
@@ -32,6 +39,11 @@ CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: "include_all_related_cases",
     CASE_SEARCH_SORT_KEY: "commcare_sort",
 }
+
+CASE_SEARCH_TAGS_MAPPING = {
+    CASE_SEARCH_MODULE_NAME_TAG_KEY: MODULE_NAME_TAG,
+}
+
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     'owner_id',
@@ -190,8 +202,9 @@ class CaseSearchRequestConfig:
 
 
 def extract_search_request_config(request_dict):
-    params = dict(request_dict.lists())
-
+    params = request_dict.copy()
+    for param_name in CASE_SEARCH_TAGS_MAPPING:
+        params.pop(param_name, None)
     kwargs_from_params = {
         config_name: params.pop(param_name, None)
         for param_name, config_name in CONFIG_KEYS_MAPPING.items()
@@ -280,6 +293,13 @@ class CaseSearchConfig(models.Model):
     sync_cases_on_form_entry = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
+    # Deprecated - this will be removed in a later PR
+    fuzzy_prefix_length = models.SmallIntegerField(blank=True, null=True, validators=[
+        MinValueValidator(0), MaxValueValidator(10),
+    ])
+    # See case_search_bha.py docstring for context
+    index_name = models.CharField(max_length=256, blank=True, default='', help_text=(
+        "Name or alias of alternative index to use for case search"))
 
     objects = GetOrNoneManager()
 
@@ -421,3 +441,50 @@ class DomainsNotInCaseSearchIndex(models.Model):
         db_index=True,
     )
     estimated_size = models.IntegerField()
+
+
+class CSQLFixtureExpression(models.Model):
+    domain = models.CharField(max_length=64, default='')
+    name = models.CharField(max_length=64, null=False)
+    csql = models.CharField(null=False)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    deleted = models.BooleanField(default=False)
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.objects.filter(domain=domain, deleted=False)
+
+    @atomic
+    def soft_delete(self):
+        self.deleted = True
+        self.save()
+        CSQLFixtureExpressionLog.objects.create(
+            expression=self,
+            action=CSQLFixtureExpressionLog.Action.DELETE,
+        )
+
+
+class CSQLFixtureExpressionLog(models.Model):
+    class Action(models.TextChoices):
+        CREATE = 'CR', _('Create')
+        DELETE = 'DE', _('Delete')
+        UPDATE = 'UP', _('Update')
+
+    expression = models.ForeignKey(CSQLFixtureExpression, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=2, choices=Action.choices, null=False)
+    name = models.CharField(max_length=64, default='')
+    csql = models.TextField(default='')
+
+
+@receiver(post_save, sender=CSQLFixtureExpression)
+def after_save(sender, instance, created, **kwargs):
+    updated_or_created = (CSQLFixtureExpressionLog.Action.CREATE if created
+                          else CSQLFixtureExpressionLog.Action.UPDATE)
+    CSQLFixtureExpressionLog.objects.create(
+        expression=instance,
+        action=updated_or_created,
+        name=instance.name,
+        csql=instance.csql
+    )

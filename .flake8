@@ -4,3 +4,4 @@ max-line-length = 115
 ignore = E128, E265, F403, W503
 per-file-ignores =
     **/migrations/*.py: E501, E303
+extend-exclude = corehq/apps/hqwebapp/tests/data/bootstrap5_diffs

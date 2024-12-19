@@ -8,7 +8,6 @@ from celery.utils.log import get_task_logger
 from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
-from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
@@ -17,8 +16,7 @@ from soil.util import expose_blob_download
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
-from corehq.apps.es import AppES, DomainES, FormES, filters
-from corehq.apps.es.apps import app_adapter
+from corehq.apps.es import DomainES, FormES, filters
 from corehq.apps.es.domains import domain_adapter
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
 from corehq.apps.reports.models import QueryStringHash
@@ -68,12 +66,11 @@ def update_calculated_properties_for_domains(domains):
         try:
             props = calced_props(domain_obj, domain['_id'], all_stats)
             active_users_by_domain[domain['name']] = props['cp_n_active_cc_users']
-            if props['cp_first_form'] is None:
-                del props['cp_first_form']
-            if props['cp_last_form'] is None:
-                del props['cp_last_form']
-            if props['cp_300th_form'] is None:
-                del props['cp_300th_form']
+            for key in ['cp_first_form', 'cp_last_form', 'cp_300th_form']:
+                if props.get(key) is None:
+                    del props[key]
+            if props.get('cp_n_forms') is None:
+                raise ValueError(f"Null value detected for 'cp_n_forms' in domain {domain['name']}")
             domain_adapter.update(domain['_id'], props)
         except Exception as e:
             notify_exception(
@@ -144,20 +141,6 @@ def get_domains_to_update_es_filter():
             filters.term('name', domains_submitted_today)
         )
     )
-
-
-def is_app_active(app_id, domain):
-    return app_has_been_submitted_to_in_last_30_days(domain, app_id)
-
-
-@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
-def apps_update_calculated_properties():
-    query = AppES().is_build(False).values_list('_id', 'domain', scroll=True)
-    for doc_id, domain in query:
-        doc = {
-            "cp_is_active": is_app_active(doc_id, domain),
-        }
-        app_adapter.update(doc_id, doc)
 
 
 @task(serializer='pickle', ignore_result=True)

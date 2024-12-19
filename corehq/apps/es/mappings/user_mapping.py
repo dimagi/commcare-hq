@@ -16,7 +16,7 @@ USER_MAPPING = {
             "type": "text"
         },
         "__group_ids": {
-            "type": "text"
+            "type": "keyword"
         },
         "__group_names": {
             "fields": {
@@ -30,7 +30,7 @@ USER_MAPPING = {
             "type": "boolean"
         },
         "assigned_location_ids": {
-            "type": "text"
+            "type": "keyword"
         },
         "base_doc": {
             "type": "text"
@@ -93,7 +93,7 @@ USER_MAPPING = {
                     }
                 },
                 "commcare_version": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "device_id": {
                     "type": "keyword"
@@ -103,6 +103,9 @@ USER_MAPPING = {
                     "type": "date"
                 }
             }
+        },
+        "doc_id": {
+            "type": "keyword"
         },
         "doc_type": {
             "type": "keyword"
@@ -120,7 +123,7 @@ USER_MAPPING = {
             "type": "object",
             "properties": {
                 "assigned_location_ids": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "doc_type": {
                     "type": "keyword"
@@ -143,7 +146,7 @@ USER_MAPPING = {
                     "type": "boolean"
                 },
                 "role_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "timezone": {
                     "type": "text"
@@ -155,7 +158,7 @@ USER_MAPPING = {
             "type": "object",
             "properties": {
                 "assigned_location_ids": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "doc_type": {
                     "type": "keyword"
@@ -178,7 +181,7 @@ USER_MAPPING = {
                     "type": "boolean"
                 },
                 "role_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "timezone": {
                     "type": "text"
@@ -203,7 +206,7 @@ USER_MAPPING = {
                     "type": "text"
                 },
                 "user_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "user_ip": {
                     "type": "text"
@@ -294,6 +297,7 @@ USER_MAPPING = {
         "location_id": {
             "type": "keyword"
         },
+        # TODO: Remove password field when creating new mappings for this index.
         "password": {
             "type": "text"
         },
@@ -301,7 +305,7 @@ USER_MAPPING = {
             "type": "text"
         },
         "registering_device_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "reporting_metadata": {
             "dynamic": False,
@@ -312,7 +316,7 @@ USER_MAPPING = {
                     "type": "object",
                     "properties": {
                         "app_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "build_version": {
                             "type": "integer"
@@ -328,7 +332,7 @@ USER_MAPPING = {
                     "type": "nested",
                     "properties": {
                         "app_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "build_version": {
                             "type": "integer"
@@ -344,10 +348,10 @@ USER_MAPPING = {
                     "type": "object",
                     "properties": {
                         "app_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "build_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "build_version": {
                             "type": "integer"
@@ -356,7 +360,7 @@ USER_MAPPING = {
                             "type": "text"
                         },
                         "device_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "submission_date": {
                             "format": DATE_FORMATS_STRING,
@@ -369,10 +373,10 @@ USER_MAPPING = {
                     "type": "nested",
                     "properties": {
                         "app_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "build_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "build_version": {
                             "type": "integer"
@@ -381,7 +385,7 @@ USER_MAPPING = {
                             "type": "text"
                         },
                         "device_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "submission_date": {
                             "format": DATE_FORMATS_STRING,
@@ -394,7 +398,7 @@ USER_MAPPING = {
                     "type": "object",
                     "properties": {
                         "app_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "build_version": {
                             "type": "integer"
@@ -410,7 +414,7 @@ USER_MAPPING = {
                     "type": "nested",
                     "properties": {
                         "app_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "build_version": {
                             "type": "integer"
@@ -449,7 +453,6 @@ USER_MAPPING = {
             "analyzer": "standard",
             "fields": {
                 "exact": {
-                    "include_in_all": False,
                     "type": "keyword"
                 }
             },

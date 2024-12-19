@@ -360,12 +360,32 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         self._dump_and_load(expected_object_counts)
 
+    def test_sqluserdata(self):
+        from corehq.apps.users.models import SQLUserData, WebUser
+        from django.contrib.auth.models import User
+
+        expected_object_counts = Counter({User: 1, SQLUserData: 1})
+
+        web_user = WebUser.create(
+            domain=self.domain_name,
+            username='webuser_t1',
+            password='secret',
+            created_by=None,
+            created_via=None,
+            email='webuser@example.com',
+        )
+        self.addCleanup(web_user.delete, self.domain_name, deleted_by=None)
+        user = web_user.get_django_user()
+        SQLUserData.objects.create(domain=self.domain_name, data={'test': 1}, django_user=user)
+
+        self._dump_and_load(expected_object_counts)
+
     def test_dump_roles(self):
         from corehq.apps.users.models import UserRole, HqPermissions, RoleAssignableBy, RolePermission
 
         expected_object_counts = Counter({
             UserRole: 2,
-            RolePermission: 5,
+            RolePermission: 7,
             RoleAssignableBy: 1
         })
 
@@ -735,26 +755,21 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self._dump_and_load(Counter({CreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
 
     def test_lookup_table(self):
-        from corehq.apps.fixtures.models import LookupTable, LookupTableRow, LookupTableRowOwner, OwnerType
+        from corehq.apps.fixtures.models import (
+            Field,
+            LookupTable,
+            LookupTableRow,
+            LookupTableRowOwner,
+            OwnerType,
+            TypeField,
+        )
         table = LookupTable.objects.create(
             domain=self.domain_name,
             tag="dump-load",
             fields=[
-                {
-                    "name": "country",
-                    "properties": [],
-                    "is_indexed": True,
-                },
-                {
-                    "name": "state_name",
-                    "properties": ["lang"],
-                    "is_indexed": False,
-                },
-                {
-                    "name": "state_id",
-                    "properties": [],
-                    "is_indexed": False,
-                },
+                TypeField("country", is_indexed=True),
+                TypeField("state_name", properties=["lang"]),
+                TypeField("state_id"),
             ]
         )
         row = LookupTableRow.objects.create(
@@ -762,14 +777,14 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             table_id=table.id,
             fields={
                 "country": [
-                    {"value": "India", "properties": {}},
+                    Field("India"),
                 ],
                 "state_name": [
-                    {"value": "Delhi_IN_ENG", "properties": {"lang": "eng"}},
-                    {"value": "Delhi_IN_HIN", "properties": {"lang": "hin"}},
+                    Field("Delhi_IN_ENG", properties={"lang": "eng"}),
+                    Field("Delhi_IN_HIN", properties={"lang": "hin"}),
                 ],
                 "state_id": [
-                    {"value": "DEL", "properties": {}}
+                    Field("DEL"),
                 ],
             },
             sort_key=0,

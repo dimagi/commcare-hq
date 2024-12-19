@@ -1,4 +1,20 @@
-hqDefine("hqmedia/js/references_main", function () {
+hqDefine("hqmedia/js/references_main", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/bootstrap3/alert_user",
+    "hqwebapp/js/initial_page_data",
+    "hqmedia/js/media_reference_models",
+    "app_manager/js/download_async_modal",    // for the 'Download ZIP' button
+    "hqwebapp/js/components/pagination",
+], function (
+    $,
+    ko,
+    _,
+    alertUser,
+    initialPageData,
+    mediaReferenceModels
+) {
     function MultimediaReferenceController() {
         var self = {};
         self.references = ko.observableArray();
@@ -28,7 +44,7 @@ hqDefine("hqmedia/js/references_main", function () {
             self.showPaginationSpinner(true);
             var includeTotal = page === 1;
             $.ajax({
-                url: hqImport("hqwebapp/js/initial_page_data").reverse('hqmedia_references'),
+                url: initialPageData.reverse('hqmedia_references'),
                 data: {
                     json: 1,
                     page: page,
@@ -45,15 +61,15 @@ hqDefine("hqmedia/js/references_main", function () {
                     self.references(_.map(data.references, function (ref) {
                         var objRef = data.object_map[ref.path];
                         if (ref.media_class === "CommCareImage") {
-                            var imageRef = hqImport('hqmedia/js/media_reference_models').ImageReference(ref);
+                            var imageRef = mediaReferenceModels.ImageReference(ref);
                             imageRef.setObjReference(objRef);
                             return imageRef;
                         } else if (ref.media_class === "CommCareAudio") {
-                            var audioRef = hqImport('hqmedia/js/media_reference_models').AudioReference(ref);
+                            var audioRef = mediaReferenceModels.AudioReference(ref);
                             audioRef.setObjReference(objRef);
                             return audioRef;
                         } else if (ref.media_class === "CommCareVideo") {
-                            var videoRef = hqImport('hqmedia/js/media_reference_models').VideoReference(ref);
+                            var videoRef = mediaReferenceModels.VideoReference(ref);
                             videoRef.setObjReference(objRef);
                             return videoRef;
                         }
@@ -69,7 +85,7 @@ hqDefine("hqmedia/js/references_main", function () {
                 },
                 error: function () {
                     self.showPaginationSpinner(false);
-                    hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(gettext("Error fetching multimedia, " +
+                    alertUser.alert_user(gettext("Error fetching multimedia, " +
                         "please try again or report an issue if the problem persists."), 'danger');
                 },
             });

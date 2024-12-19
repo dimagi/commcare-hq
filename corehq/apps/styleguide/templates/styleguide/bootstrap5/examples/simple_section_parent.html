@@ -1,0 +1,12 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+
+{% block page_content %}
+<p>
+  This is an example page extending the <code>hqwebapp/bootstrap5/base_section.html</code> template.
+</p>
+<p>
+  You can see the parent / child nested page behavior that will be shown in the breadcrumbs above
+  <a href="{{ child_page_url }}">by visiting this page</a>.
+</p>
+{% endblock %}

@@ -244,6 +244,7 @@ def get_case_search_rows(langs, module, domain):
 def get_module_detail_rows(langs, module):
     rows = []
     rows += _get_module_detail_no_items_text(langs, module)
+    rows += _get_module_detail_select_text(langs, module)
     for list_or_detail, detail in [
         ("list", module.case_details.short),
         ("detail", module.case_details.long)
@@ -260,6 +261,16 @@ def _get_module_detail_no_items_text(langs, module):
         return []
     return [
         ("no_items_text", "list") + tuple(short_detail.no_items_text.get(lang, '') for lang in langs)
+    ]
+
+
+def _get_module_detail_select_text(langs, module):
+    app = module.get_app()
+    short_detail = module.case_details.short
+    if not (app.supports_select_text):
+        return []
+    return [
+        ("select_text", "list") + tuple(short_detail.select_text.get(lang, '') for lang in langs)
     ]
 
 
@@ -380,6 +391,12 @@ def get_form_question_label_name_media(langs, form):
                         value += part
                 itext_items[text_id][(lang, value_form)] = value
 
+    itext_items['submit_label'] = {}
+    itext_items['submit_notification_label'] = {}
+    for lang in langs:
+        itext_items['submit_label'][(lang, 'default')] = form.get_submit_label(lang)
+        itext_items['submit_notification_label'][(lang, 'default')] = form.get_submit_notification_label(lang)
+
     app = form.get_app()
     for text_id, values in itext_items.items():
         row = [text_id]
@@ -395,6 +412,9 @@ def get_form_question_label_name_media(langs, form):
                 row.append(values.get((lang, value_form), fallback))
         # Don't add empty rows:
         if any(row[1:]):
+            rows.append(row)
+        # allow empty for submit_notification_label row
+        if row[0] == 'submit_notification_label' and not any(row[1:]):
             rows.append(row)
 
     return rows

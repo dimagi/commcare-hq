@@ -16,7 +16,7 @@ x-commcarehq_base: &commcarehq_base
       condition: service_healthy
     redis:
       condition: service_healthy
-    elasticsearch2:
+    elasticsearch5:
       condition: service_healthy
     kafka:
       condition: service_healthy
@@ -80,11 +80,6 @@ services:
     extends:
       file: hq-compose-services.yml
       service: redis
-
-  elasticsearch2:
-    extends:
-      file: hq-compose-services.yml
-      service: elasticsearch2
 
   elasticsearch5:
     extends:

@@ -1,6 +1,7 @@
 from typing import Dict, Tuple
 
 from django.test import SimpleTestCase
+from django.utils.functional import classproperty
 
 from corehq.util.metrics.datadog import DatadogMetrics
 from corehq.util.metrics.prometheus import PrometheusMetrics
@@ -11,6 +12,10 @@ from prometheus_client.utils import INF
 
 class _TestMetrics(SimpleTestCase):
     provider_class = None
+
+    @classproperty
+    def __test__(cls):
+        return cls.provider_class is not None
 
     @classmethod
     def setUpClass(cls):

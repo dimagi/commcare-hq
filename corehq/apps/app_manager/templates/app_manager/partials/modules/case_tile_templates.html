@@ -1,0 +1,13 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% if request|toggle_enabled:'CASE_LIST_TILE' %}
+  <div class="row">
+    <div class="col-sm-6">
+      <label>
+        {% trans "Case Tile Template" %}
+      </label>
+      <select data-bind="options:caseTileTemplateOptions, optionsText: 'templateName', optionsValue: 'templateValue', value:caseTileTemplate" class="form-control"></select>
+    </div>
+  </div>
+{% endif %}

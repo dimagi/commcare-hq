@@ -14,6 +14,7 @@ class Format(object):
     JSON = "json"
     PYTHON_DICT = "dict"
     UNZIPPED_CSV = 'unzipped-csv'
+    GEOJSON = 'geojson'
 
     FORMAT_DICT = {CSV: {"mimetype": "application/zip",
                          "extension": "zip",
@@ -41,7 +42,11 @@ class Format(object):
                           "download": False},
                    UNZIPPED_CSV: {"mimetype": "text/csv",
                                   "extension": "csv",
-                                  "download": True}}
+                                  "download": True},
+                   GEOJSON: {"mimetype": "application/geo+json",
+                          "extension": "geojson",
+                          "download": True},
+                   }
 
     VALID_FORMATS = list(FORMAT_DICT)
 
@@ -57,18 +62,3 @@ class Format(object):
         if format not in cls.VALID_FORMATS:
             raise URLError("Unsupported export format: %s!" % format)
         return cls(format, **cls.FORMAT_DICT[format])
-
-
-class IntegrationFormat(object):
-    LIVE_GOOGLE_SHEETS = "live_google_sheets"
-
-    VALID_FORMATS = [
-        LIVE_GOOGLE_SHEETS,
-    ]
-
-    @classmethod
-    def is_integration_format(cls, format):
-        format = format.lower()
-        if format in cls.VALID_FORMATS:
-            return True
-        return False

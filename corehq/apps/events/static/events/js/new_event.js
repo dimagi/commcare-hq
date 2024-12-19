@@ -4,8 +4,9 @@ hqDefine("events/js/new_event", [
     "hqwebapp/js/multiselect_utils",
     "hqwebapp/js/initial_page_data",
     "locations/js/widgets",
-    "hqwebapp/js/widgets",
+    "hqwebapp/js/bootstrap3/widgets",
     "jquery-ui/ui/widgets/datepicker",
+    "commcarehq",
 ], function (
     $,
     ko,
@@ -78,7 +79,7 @@ hqDefine("events/js/new_event", [
             });
 
             self.locationId.subscribe(function (newLocation) {
-                function rebuildList (elementId, data) {
+                function rebuildList(elementId, data) {
                     const $expectedList = $(`#${elementId}`);
                     $expectedList.empty();
                     for (const item of data) {
@@ -86,7 +87,7 @@ hqDefine("events/js/new_event", [
                             `<option value="${item.id}">${item.name}</option>`
                         );
                     }
-                };
+                }
 
                 $.ajax({
                     url: initialPageData.reverse('get_attendees_and_attendance_takers'),
@@ -102,7 +103,7 @@ hqDefine("events/js/new_event", [
                         multiselectUtils.rebuildMultiselect('id_expected_attendees', ATTENDEE_PROPS);
                         multiselectUtils.rebuildMultiselect('id_attendance_takers', ATTENDANCE_TAKER_PROPS);
                     },
-                    error: function (error) {
+                    error: function () {
                         $("#attendance-list-error").removeClass("hidden");
                     },
                 });

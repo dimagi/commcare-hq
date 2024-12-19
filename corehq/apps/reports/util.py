@@ -1,6 +1,7 @@
 import json
 import logging
 import math
+from typing import List
 import warnings
 from collections import defaultdict, namedtuple
 from datetime import datetime
@@ -15,6 +16,7 @@ from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 from celery.schedules import crontab
 
@@ -437,7 +439,7 @@ def tableau_username(HQ_username):
     return 'HQ/' + HQ_username
 
 
-def _group_json_to_tuples(group_json):
+def _group_json_to_tuples(group_json) -> TableauGroupTuple:
     group_tuples = [TableauGroupTuple(group_dict['name'], group_dict['id']) for group_dict in group_json]
     # Remove default Tableau group and HQ group:
     group_tuples_without_defaults = []
@@ -482,6 +484,26 @@ def _notify_tableau_exception(e, domain):
     })
 
 
+def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
+                            session: TableauAPISession = None) -> List[TableauGroupTuple]:
+    session = session or TableauAPISession.create_session_for_domain(domain)
+    group_json = session.query_groups()
+    filtered_group_json = [group for group in group_json if group['id'] in interested_group_ids]
+    return _group_json_to_tuples(filtered_group_json)
+
+
+@quickcache(['domain'], timeout=2 * 60)
+def get_tableau_group_ids_by_names(group_names: List, domain: str,
+                              session: TableauAPISession = None) -> List[str]:
+    '''
+    Returns a list of all Tableau group ids on the site derived from tableau group names passed in.
+    '''
+    session = session or TableauAPISession.create_session_for_domain(domain)
+    group_json = session.query_groups()
+    filtered_group_json = [group for group in group_json if group['name'] in group_names]
+    return [tup.id for tup in _group_json_to_tuples(filtered_group_json)]
+
+
 def get_matching_tableau_users_from_other_domains(user):
     return list(TableauUser.objects.filter(
         username=user.username,
@@ -497,17 +519,21 @@ def add_tableau_user(domain, username):
     these details to the Tableau instance.
     '''
     try:
-        session = TableauAPISession.create_session_for_domain(domain)
-    except TableauConnectedApp.DoesNotExist as e:
-        _notify_tableau_exception(e, domain)
-        return
-    user, created, matching_tableau_users_from_other_domains_exist = _add_tableau_user_local(session, username)
-    if created and not matching_tableau_users_from_other_domains_exist:
         try:
-            _add_tableau_user_remote(session, user)
-        except TableauAPIError as e:
-            if e.code != 409017:  # This is the "user already added to site" code.
-                raise
+            session = TableauAPISession.create_session_for_domain(domain)
+        except TableauConnectedApp.DoesNotExist as e:
+            _notify_tableau_exception(e, domain)
+            return
+        user, created, matching_tableau_users_from_other_domains_exist = _add_tableau_user_local(session, username)
+        if created and not matching_tableau_users_from_other_domains_exist:
+            try:
+                _add_tableau_user_remote(session, user)
+            except TableauAPIError as e:
+                if e.code != 409017:  # This is the "user already added to site" code.
+                    raise
+    except TableauAPIError as e:
+        # Don't block main thread
+        _notify_tableau_exception(e, domain)
 
 
 def _add_tableau_user_local(session, username, role=DEFAULT_TABLEAU_ROLE):
@@ -542,8 +568,12 @@ def delete_tableau_user(domain, username, session=None):
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
     '''
     session = session or TableauAPISession.create_session_for_domain(domain)
-    if get_matching_tableau_users_from_other_domains(
-            TableauUser.objects.get(username=username, server__domain=domain)):
+    try:
+        tableau_user = TableauUser.objects.get(username=username, server__domain=domain)
+    except TableauUser.DoesNotExist:
+        notify_exception(None, f"TableauUser not found for {username} on {domain}")
+        return
+    if get_matching_tableau_users_from_other_domains(tableau_user):
         _delete_user_local(session, username)
     else:
         deleted_user_id = _delete_user_local(session, username)
@@ -564,30 +594,38 @@ def _delete_user_remote(session, deleted_user_id):
 
 
 @atomic
-def update_tableau_user(domain, username, role=None, groups=[], session=None):
+def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTuple] = None, session=None,
+                        blocking_exception=True):
     '''
     Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
     of TableauGroupTuples.
     '''
-    session = session or TableauAPISession.create_session_for_domain(domain)
-    user = TableauUser.objects.filter(
-        server=session.tableau_connected_app.server
-    ).get(username=username)
-    if role:
-        for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
-            local_tableau_user.role = role
-            local_tableau_user.save()
+    try:
+        groups = groups or []
+        session = session or TableauAPISession.create_session_for_domain(domain)
+        user = TableauUser.objects.filter(
+            server=session.tableau_connected_app.server
+        ).get(username=username)
+        if role:
+            for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
+                local_tableau_user.role = role
+                local_tableau_user.save()
 
-    # Group management
-    allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(domain)
-    existing_groups = _group_json_to_tuples(session.get_groups_for_user_id(user.tableau_user_id))
-    edited_groups_list = list(filter(lambda group: group.name in allowed_groups_for_domain, groups))
-    other_groups = [group for group in existing_groups if group.name not in allowed_groups_for_domain]
-    # The list of groups for the user should be a combination of those edited by the web admin and the existing
-    # groups the user belongs to that are not editable on that domain.
-    new_groups = edited_groups_list + other_groups
+        # Group management
+        allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(domain)
+        existing_groups = _group_json_to_tuples(session.get_groups_for_user_id(user.tableau_user_id))
+        edited_groups_list = list(filter(lambda group: group.name in allowed_groups_for_domain, groups))
+        other_groups = [group for group in existing_groups if group.name not in allowed_groups_for_domain]
+        # The list of groups for the user should be a combination of those edited by the web admin and the existing
+        # groups the user belongs to that are not editable on that domain.
+        new_groups = edited_groups_list + other_groups
 
-    _update_user_remote(session, user, groups=new_groups)
+        _update_user_remote(session, user, groups=new_groups)
+    except TableauAPIError as e:
+        if blocking_exception:
+            raise
+        else:
+            _notify_tableau_exception(e, domain)
 
 
 def _update_user_remote(session, user, groups=[]):
@@ -814,3 +852,34 @@ def domain_copied_cases_by_owner(domain, owner_ids):
         .owner(owner_ids)\
         .NOT(case_property_missing(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME))\
         .values_list('_id', flat=True)
+
+
+def get_commcare_version_and_date_from_last_usage(last_submission=None, last_device=None, formatted=False):
+    """
+    Gets CommCare version and date from the last submission, or fall back to the last used device.
+
+    Args:
+    last_submission: Dictionary containing Last Submission data from ES
+    last_device: Dictionary containing DeviceIdLastUsed data from ES
+    """
+    from corehq.apps.reports.standard.deployments import format_commcare_version
+
+    version = None
+    version_in_use = None
+    date_of_use = None
+
+    if last_submission and last_submission.get('commcare_version'):
+        version = last_submission.get('commcare_version')
+        date_of_use = last_submission.get('submission_date')
+
+    elif last_device and last_device.get('commcare_version'):
+        version = last_device.get('commcare_version')
+        date_of_use = last_device.get('last_used')
+
+    if version:
+        version_in_use = format_commcare_version(version) if formatted else version
+
+    if date_of_use:
+        date_of_use = datetime.strptime(date_of_use, ISO_DATETIME_FORMAT)
+
+    return version_in_use, date_of_use

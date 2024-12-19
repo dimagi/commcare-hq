@@ -8,7 +8,7 @@ from django.conf import settings
 from django.test import TestCase, TransactionTestCase
 from django.utils.functional import classproperty
 
-from nose.plugins.attrib import attr
+import pytest
 from nose.tools import nottest
 from unittest import skipIf, skipUnless
 
@@ -112,7 +112,7 @@ def sharded(cls):
 
     Was previously named @use_sql_backend
     """
-    return patch_shard_db_transactions(attr(sharded=True)(cls))
+    return patch_shard_db_transactions(pytest.mark.sharded(cls))
 
 
 def only_run_with_non_partitioned_database(cls):

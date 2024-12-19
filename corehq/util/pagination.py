@@ -151,13 +151,12 @@ def paginate_function(data_function, args_provider, event_handler=None):
 
         results = args_provider.adjust_results(results, args, kwargs)
         event_handler.page(results)
-        for item in results:
-            yield item
+        yield from results
 
         total_emitted += len(results)
         event_handler.page_end(total_emitted, datetime.utcnow() - start_time, *args, **kwargs)
 
-        item = item if results else None
+        item = results[-1] if results else None
         try:
             args, kwargs = args_provider.get_next_args(item, *args, **kwargs)
         except StopIteration:
@@ -260,8 +259,7 @@ class ResumableFunctionIterator(object):
         event_handler = self._get_event_handler()
 
         try:
-            for item in paginate_function(self.data_function, resumable_args, event_handler):
-                yield item
+            yield from paginate_function(self.data_function, resumable_args, event_handler)
         except StopToResume:
             return
 
@@ -270,8 +268,8 @@ class ResumableFunctionIterator(object):
     def _get_event_handler(self):
         if self.event_handler:
             return DelegatingPaginationEventHandler([
+                self.event_handler,  # first so it can mutate iterator state
                 ResumableIteratorEventHandler(self),
-                self.event_handler
             ])
         else:
             return ResumableIteratorEventHandler(self)

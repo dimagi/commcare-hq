@@ -68,4 +68,5 @@ class SqlSMSPillowTest(TestCase):
         results = SMSES().run()
         self.assertEqual(1, results.total)
         sms_doc = results.hits[0]
+        sms_doc.pop('doc_id')
         self.assertEqual(sms_doc, sms_json)

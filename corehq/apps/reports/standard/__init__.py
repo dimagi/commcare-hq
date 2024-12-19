@@ -30,7 +30,7 @@ from corehq.util.timezones.conversions import ServerTime
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
     section_name = gettext_noop("Project Reports")
-    base_template = 'reports/base_template.html'
+    base_template = 'reports/bootstrap3/base_template.html'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
 

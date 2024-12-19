@@ -19,11 +19,17 @@ from django.forms.widgets import (
     HiddenInput,
     Select,
     SelectMultiple,
+    Textarea
 )
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
+from django.utils.html import escape, strip_tags
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
+import bleach
+from bleach.css_sanitizer import CSSSanitizer
+from bs4 import BeautifulSoup
 from couchdbkit import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -33,6 +39,7 @@ from memoized import memoized
 
 from dimagi.utils.django.fields import TrimmedCharField
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_released_app,
@@ -50,6 +57,7 @@ from corehq.apps.data_interfaces.models import (
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.reminders.util import (
     get_combined_id,
@@ -62,6 +70,9 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.const import (
+    ALLOWED_CSS_PROPERTIES,
+    ALLOWED_HTML_ATTRIBUTES,
+    ALLOWED_HTML_TAGS,
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
     VISIT_WINDOW_START,
@@ -92,7 +103,11 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     ScheduleInstance,
 )
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, FCM_NOTIFICATION
+from corehq.toggles import (
+    EXTENSION_CASES_SYNC_ENABLED,
+    FCM_NOTIFICATION,
+    RICH_TEXT_EMAILS,
+)
 
 
 def validate_time(value):
@@ -175,6 +190,10 @@ class ContentForm(Form):
         required=False,
         widget=HiddenInput,
     )
+    html_message = CharField(
+        required=False,
+        widget=HiddenInput,
+    )
     # The app id and form unique id of this form, separated by '|'
     app_and_form_unique_id = ChoiceField(
         required=False,
@@ -232,11 +251,19 @@ class ContentForm(Form):
             raise ValueError("Expected schedule_form in kwargs")
 
         self.schedule_form = kwargs.pop('schedule_form')
+        self.domain = self.schedule_form.domain
         super(ContentForm, self).__init__(*args, **kwargs)
         self.set_app_and_form_unique_id_choices()
+        self.set_message_template()
 
     def set_app_and_form_unique_id_choices(self):
         self.fields['app_and_form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
+
+    def set_message_template(self):
+        if RICH_TEXT_EMAILS.enabled(self.domain):
+            self.fields['html_message'].initial = {
+                '*': render_to_string('scheduling/partials/rich_text_email_template.html')
+            }
 
     def clean_subject(self):
         if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
@@ -250,6 +277,11 @@ class ContentForm(Form):
         return self._clean_message_field('subject')
 
     def clean_message(self):
+        if (
+                RICH_TEXT_EMAILS.enabled(self.domain)
+                and self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_EMAIL
+        ):
+            return None
         if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
                 and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
             cleaned_value = self._clean_message_field('message')
@@ -260,6 +292,11 @@ class ContentForm(Form):
             return None
 
         return self._clean_message_field('message')
+
+    def clean_html_message(self):
+        if not RICH_TEXT_EMAILS.enabled(self.domain):
+            return None
+        return self._clean_message_field('html_message')
 
     def _clean_message_field(self, field_name):
         value = json.loads(self.cleaned_data[field_name])
@@ -389,10 +426,13 @@ class ContentForm(Form):
                 message=self.cleaned_data['message']
             )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_EMAIL:
-            return EmailContent(
-                subject=self.cleaned_data['subject'],
-                message=self.cleaned_data['message'],
-            )
+            if RICH_TEXT_EMAILS.enabled(self.domain):
+                return self._distill_rich_text_email()
+            else:
+                return EmailContent(
+                    subject=self.cleaned_data['subject'],
+                    message=self.cleaned_data['message'],
+                )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_SMS_SURVEY:
             combined_id = self.cleaned_data['app_and_form_unique_id']
             app_id, form_unique_id = split_combined_id(combined_id)
@@ -420,7 +460,88 @@ class ContentForm(Form):
         else:
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
 
+    def _distill_rich_text_email(self):
+        plaintext_message = {}
+        html_message = {}
+        css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
+        for lang, content in self.cleaned_data['html_message'].items():
+            # remove everything except the body for plaintext
+            soup = BeautifulSoup(content, features='lxml')
+            try:
+                plaintext_message[lang] = soup.find("body").get_text()
+            except AttributeError:
+                plaintext_message[lang] = strip_tags(content)
+            html_message[lang] = bleach.clean(
+                content,
+                attributes=ALLOWED_HTML_ATTRIBUTES,
+                tags=ALLOWED_HTML_TAGS,
+                css_sanitizer=css_sanitizer,
+                strip=True,
+            )
+        return EmailContent(
+            subject=self.cleaned_data['subject'],
+            message=plaintext_message,
+            html_message=html_message,
+        )
+
     def get_layout_fields(self):
+        if RICH_TEXT_EMAILS.enabled(self.domain):
+            message_fields = [
+                hqcrispy.B3MultiField(
+                    _("Rich Text Message"),
+                    crispy.Field(
+                        'html_message',
+                        data_bind='value: html_message.htmlMessagesJSONString',
+                    ),
+                    crispy.Div(
+                        crispy.Div(template='scheduling/partials/rich_text_message_configuration.html'),
+                        data_bind='with: html_message',
+                    ),
+                    data_bind="visible: $root.content() === '%s' || ($root.content() === '%s' "
+                    "&& fcm_message_type() === '%s')" %
+                    (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION,
+                     FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
+                ),
+                hqcrispy.B3MultiField(
+                    _("Message"),
+                    crispy.Field(
+                        'message',
+                        data_bind='value: message.messagesJSONString',
+                    ),
+                    crispy.Div(
+                        crispy.Div(template='scheduling/partials/message_configuration.html'),
+                        data_bind='with: message',
+                    ),
+                    data_bind=(
+                        "visible: $root.content() === '%s' || $root.content() === '%s' "
+                        "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
+                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_SMS_CALLBACK,
+                         ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
+                    ),
+                )
+            ]
+        else:
+            message_fields = [
+                hqcrispy.B3MultiField(
+                    _("Message"),
+                    crispy.Field(
+                        'message',
+                        data_bind='value: message.messagesJSONString',
+                    ),
+                    crispy.Div(
+                        crispy.Div(template='scheduling/partials/message_configuration.html'),
+                        data_bind='with: message',
+                    ),
+                    data_bind=(
+                        "visible: $root.content() === '%s' || $root.content() === '%s' "
+                        "|| $root.content() === '%s' "
+                        "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
+                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
+                         ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
+                    ),
+                ),
+            ]
+
         return [
             hqcrispy.B3MultiField(
                 _('Message type'),
@@ -450,23 +571,7 @@ class ContentForm(Form):
                           (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION,
                            FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
             ),
-            hqcrispy.B3MultiField(
-                _("Message"),
-                crispy.Field(
-                    'message',
-                    data_bind='value: message.messagesJSONString',
-                ),
-                crispy.Div(
-                    crispy.Div(template='scheduling/partials/message_configuration.html'),
-                    data_bind='with: message',
-                ),
-                data_bind=(
-                    "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s' "
-                    "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
-                    (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
-                     ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
-                ),
-            ),
+            *message_fields,
             crispy.Div(
                 crispy.Field(
                     'app_and_form_unique_id',
@@ -544,6 +649,7 @@ class ContentForm(Form):
         elif isinstance(content, EmailContent):
             result['subject'] = content.subject
             result['message'] = content.message
+            result['html_message'] = content.html_message
         elif isinstance(content, SMSSurveyContent):
             result['app_and_form_unique_id'] = get_combined_id(
                 content.app_id,
@@ -1241,6 +1347,24 @@ class ScheduleForm(Form):
         required=False,
     )
 
+    use_user_case_for_filter_choices = [(NO, "User Properties"), (YES, "User Case Properties")]
+
+    use_user_case_for_filter = ChoiceField(
+        label=gettext_lazy("Filter on"),
+        required=False,
+        initial=NO,
+        choices=use_user_case_for_filter_choices,
+        widget=SelectToggle(
+            choices=use_user_case_for_filter_choices,
+        ),
+    )
+
+    user_data_property_json = TrimmedCharField(
+        label=gettext_lazy("User data filter: whole json"),
+        required=False,
+        widget=Textarea,
+    )
+
     user_data_property_name = TrimmedCharField(
         label=gettext_lazy("User data filter: property name"),
         required=False,
@@ -1459,13 +1583,18 @@ class ScheduleForm(Form):
                 # {name: [value]} or {name: [value1, value2, ...]}
                 # See Schedule.user_data_filter for an explanation of the full possible
                 # structure.
-                name = list(schedule.user_data_filter)[0]
-                values = schedule.user_data_filter[name]
-                choice = self.YES if len(values) == 1 else self.JSON
-                value = values[0] if len(values) == 1 else json.dumps(values)
+                more_than_one_property = len(schedule.user_data_filter) > 1
+                first_property_has_multiple_value = len(next(iter(schedule.user_data_filter.values()))) > 1
+                choice = self.JSON if more_than_one_property or first_property_has_multiple_value else self.YES
                 result['use_user_data_filter'] = choice
-                result['user_data_property_name'] = name
-                result['user_data_property_value'] = value
+                if choice == self.YES:
+                    name = list(schedule.user_data_filter)[0]
+                    values = schedule.user_data_filter[name]
+                    result['user_data_property_name'] = name
+                    result['user_data_property_value'] = values[0]
+                else:
+                    result['user_data_property_json'] = json.dumps(schedule.user_data_filter, indent=4)
+                result['use_user_case_for_filter'] = self.YES if schedule.use_user_case_for_filter else self.NO
 
             result['use_utc_as_default_timezone'] = schedule.use_utc_as_default_timezone
             if isinstance(schedule, AlertSchedule):
@@ -1651,7 +1780,7 @@ class ScheduleForm(Form):
     def enable_json_user_data_filter(self, initial):
         if self.is_system_admin or initial.get('use_user_data_filter') == self.JSON:
             self.fields['use_user_data_filter'].choices += [
-                (self.JSON, _("JSON: list of strings")),
+                (self.JSON, _("JSON")),
             ]
 
     @property
@@ -1983,9 +2112,17 @@ class ScheduleForm(Form):
                     ),
                 ),
                 crispy.Div(
+                    crispy.Field('use_user_case_for_filter'),
+                    data_bind=f"visible: use_user_data_filter() !== '{self.NO}'",
+                ),
+                crispy.Div(
                     crispy.Field('user_data_property_name'),
                     crispy.Field('user_data_property_value'),
-                    data_bind="visible: use_user_data_filter() !== 'N'",
+                    data_bind=f"visible: use_user_data_filter() == '{self.YES}'",
+                ),
+                crispy.Div(
+                    crispy.Field('user_data_property_json'),
+                    data_bind=f"visible: use_user_data_filter() == '{self.JSON}'",
                 ),
             ])
 
@@ -2017,6 +2154,12 @@ class ScheduleForm(Form):
             result += list(self.initial_schedule.memoized_language_set - set(result))
 
         return result
+
+    def html_message_template(self):
+        if RICH_TEXT_EMAILS.enabled(self.domain):
+            return escape(render_to_string('scheduling/partials/rich_text_email_template.html'))
+        else:
+            return ''
 
     @property
     def use_case(self):
@@ -2378,8 +2521,11 @@ class ScheduleForm(Form):
 
         return validate_int(self.cleaned_data.get('occurrences'), 2)
 
+    def clean_use_user_case_for_filter(self):
+        return self.cleaned_data.get('use_user_case_for_filter') == self.YES
+
     def clean_user_data_property_name(self):
-        if self.cleaned_data.get('use_user_data_filter') == self.NO:
+        if self.cleaned_data.get('use_user_data_filter') != self.YES:
             return None
 
         value = self.cleaned_data.get('user_data_property_name')
@@ -2390,24 +2536,52 @@ class ScheduleForm(Form):
 
     def clean_user_data_property_value(self):
         use_user_data_filter = self.cleaned_data.get('use_user_data_filter')
-        if use_user_data_filter == self.NO:
+        if use_user_data_filter != self.YES:
             return None
 
         value = self.cleaned_data.get('user_data_property_value')
         if not value:
             raise ValidationError(_("This field is required."))
 
-        if use_user_data_filter == self.JSON:
-            err = _("Invalid JSON value. Expected a list of strings.")
-            try:
-                value = json.loads(value)
-            except Exception:
-                raise ValidationError(err)
-            if (not isinstance(value, list) or not value
-                    or any(not isinstance(v, str) for v in value)):
-                raise ValidationError(err)
-        else:
-            value = [value]
+        return [value]
+
+    def clean_user_data_property_json(self):
+        use_user_data_filter = self.cleaned_data.get('use_user_data_filter')
+        if use_user_data_filter != self.JSON:
+            return None
+
+        value = self.cleaned_data.get('user_data_property_json')
+        if not value:
+            raise ValidationError(_("This field is required."))
+
+        def json_error():
+            return ValidationError(_("Invalid JSON: Needs to be an object with valid "
+                                     "properties as keys and list of strings as values"))
+        try:
+            value = json.loads(value)
+        except Exception:
+            raise json_error()
+        if not isinstance(value, dict):
+            raise json_error()
+
+        if self.cleaned_data.get("use_user_case_for_filter"):
+            from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
+            user_case_properties = (
+                get_data_dict_props_by_case_type(self.domain, exclude_deprecated=True))[USERCASE_TYPE]
+            invalid_keys = \
+                [property_name for property_name in value.keys() if property_name not in user_case_properties]
+            if len(invalid_keys) > 0:
+                raise ValidationError(_("Invalid JSON: Keys are not valid user case property names: %s")
+                                      % ", ".join(invalid_keys))
+
+        keys_with_invalid_value = []
+        for property_name in value.keys():
+            property_values = value[property_name]
+            if not isinstance(property_values, list) or any(not isinstance(v, str) for v in property_values):
+                keys_with_invalid_value.append(property_name)
+        if len(keys_with_invalid_value) > 0:
+            raise ValidationError(_("Invalid JSON: Values for keys are not lists of strings: %s")
+                                  % ", ".join(keys_with_invalid_value))
 
         return value
 
@@ -2458,15 +2632,19 @@ class ScheduleForm(Form):
             'location_type_filter': form_data['location_types'],
             'use_utc_as_default_timezone': form_data['use_utc_as_default_timezone'],
             'user_data_filter': self.distill_user_data_filter(),
+            'use_user_case_for_filter': self.cleaned_data['use_user_case_for_filter']
         }
 
     def distill_user_data_filter(self):
         if self.cleaned_data['use_user_data_filter'] == self.NO:
             return {}
 
-        name = self.cleaned_data['user_data_property_name']
-        value = self.cleaned_data['user_data_property_value']
-        return {name: value}
+        if self.cleaned_data['use_user_data_filter'] == self.YES:
+            name = self.cleaned_data['user_data_property_name']
+            value = self.cleaned_data['user_data_property_value']
+            return {name: value}
+
+        return self.cleaned_data['user_data_property_json']
 
     def distill_start_offset(self):
         raise NotImplementedError()
@@ -2820,7 +2998,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
         CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
         CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
-        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
+        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
         CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
     ]
 
@@ -2883,6 +3062,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     )
 
     username_case_property = CharField(
+        required=False,
+    )
+
+    user_id_case_property = CharField(
         required=False,
     )
 
@@ -3061,7 +3244,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, _("The Case's Last Submitting User")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, _("The Case's Parent Case")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES, _("The Case's Child Cases")),
-            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER, _("User Specified via Case Property")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
+                _("Username Specified via Case Property")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
+                _("User ID Specified via Case Property")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL, _("Email Specified via Case Property")),
         ]
         new_choices.extend(self.fields['recipient_types'].choices)
@@ -3101,8 +3287,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         for recipient_type, recipient_id in recipients:
             if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM:
                 initial['custom_recipient'] = recipient_id
-            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER:
+            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME:
                 initial['username_case_property'] = recipient_id
+            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID:
+                initial['user_id_case_property'] = recipient_id
             if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
                 initial['email_case_property'] = recipient_id
 
@@ -3268,7 +3456,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 _("Username Case Property"),
                 twbscrispy.InlineField('username_case_property'),
                 data_bind="visible: recipientTypeSelected('%s')" %
-                          CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                          CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
+            ),
+            hqcrispy.B3MultiField(
+                _("User ID Case Property"),
+                twbscrispy.InlineField('user_id_case_property'),
+                data_bind="visible: recipientTypeSelected('%s')" %
+                          CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
             ),
             hqcrispy.B3MultiField(
                 _("Email Case Property"),
@@ -3667,9 +3861,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             custom_recipient_id = self.cleaned_data['custom_recipient']
             result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, custom_recipient_id))
 
-        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER in recipient_types:
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME in recipient_types:
             username_case_property = self.cleaned_data['username_case_property']
-            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER, username_case_property))
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
+                           username_case_property))
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID in recipient_types:
+            user_id_case_property = self.cleaned_data['user_id_case_property']
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID, user_id_case_property))
         if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL in recipient_types:
             email_case_property = self.cleaned_data['email_case_property']
             result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL, email_case_property))

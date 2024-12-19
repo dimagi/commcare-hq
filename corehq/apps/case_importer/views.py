@@ -20,10 +20,12 @@ from corehq.apps.case_importer.base import location_safe_case_imports_enabled
 from corehq.apps.case_importer.const import (
     ALL_CASE_TYPE_IMPORT,
     MAX_CASE_IMPORTER_COLUMNS,
+    MAX_CASE_IMPORTER_ROWS,
 )
 from corehq.apps.case_importer.exceptions import (
     CustomImporterError,
     ImporterError,
+    ImporterExcelTooManyRows,
     ImporterFileNotFound,
     ImporterRawError,
 )
@@ -32,6 +34,7 @@ from corehq.apps.case_importer.extension_points import (
 )
 from corehq.apps.case_importer.suggested_fields import (
     get_suggested_case_fields,
+    get_non_discoverable_system_properties,
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import (
@@ -43,7 +46,7 @@ from corehq.apps.data_dictionary.util import (
     get_data_dict_deprecated_case_types,
 )
 from corehq.apps.domain.decorators import api_auth
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
@@ -79,7 +82,7 @@ def validate_column_names(column_names, invalid_column_names):
 
 
 # Cobble together the context needed to render breadcrumbs that class-based views get from BasePageView
-# For use by function-based views that extend hqwebapp/bootstrap3/base_section.html
+# For use by function-based views that extend hqwebapp/bootstrap5/base_section.html
 def _case_importer_breadcrumb_context(page_name, domain):
     return {
         'current_page': {
@@ -94,6 +97,7 @@ def _case_importer_breadcrumb_context(page_name, domain):
 @waf_allow('XSS_BODY')
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
+@use_bootstrap5
 def excel_config(request, domain):
     """
     Step one of three.
@@ -119,6 +123,8 @@ def excel_config(request, domain):
         return render_error(request, domain, get_importer_error_message(e))
     except SpreadsheetFileExtError:
         return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
+    except ImporterExcelTooManyRows as e:
+        return render_error(request, domain, str(e))
 
     context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
     return render(request, "case_importer/excel_config.html", context)
@@ -206,7 +212,15 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
 
     case_upload.check_file()
 
+    row_count = 0
     worksheet_titles = _get_workbook_sheet_names(case_upload)
+    for i in range(len(worksheet_titles)):
+        with case_upload.get_spreadsheet(i) as spreadsheet:
+            row_count += spreadsheet.max_row - 1
+
+    if row_count > MAX_CASE_IMPORTER_ROWS:
+        raise ImporterExcelTooManyRows(row_count)
+
     case_types_from_apps = sorted(get_case_types_from_apps(domain))
     unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
                                       if t not in case_types_from_apps])
@@ -302,6 +316,7 @@ def _create_bulk_configs(domain, request, case_upload):
 @require_POST
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
+@use_bootstrap5
 def excel_fields(request, domain):
     """
     Step two of three.
@@ -370,6 +385,7 @@ def excel_fields(request, domain):
         'columns': columns,
         'excel_fields': excel_fields,
         'case_field_specs': case_field_specs,
+        'system_fields': get_non_discoverable_system_properties(),
         'domain': domain,
         'mirroring_enabled': mirroring_enabled,
         'is_bulk_import': request.POST.get('is_bulk_import', 'False') == 'True',

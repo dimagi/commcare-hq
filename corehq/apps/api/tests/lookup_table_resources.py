@@ -195,7 +195,7 @@ class TestLookupTableResource(APIResourceTest):
             item_attributes=[]
         )
         data_type.save()
-        TestLookupTableItemResource._create_data_item(self, data_type=data_type)
+        TestLookupTableItemResourceV06._create_data_item(self, data_type=data_type)
 
         self.assertEqual(2, LookupTable.objects.by_domain(self.domain.name).count())
         response = self._assert_auth_post_resource(self.single_endpoint(data_type.id), '', method='DELETE')
@@ -237,14 +237,43 @@ class TestLookupTableResource(APIResourceTest):
         self.assertEqual(data_type.fields[0].properties, ['lang', 'name'])
         self.assertEqual(data_type.item_attributes, ['X'])
 
+    def test_update_field_name(self):
+        lookup_table = {
+            "fields": [{"name": "property", "properties": ["value"]}],
+            "tag": "lookup_table",
+        }
 
-class TestLookupTableItemResource(APIResourceTest):
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(self.data_type.id), json.dumps(lookup_table), method="PUT")
+        print(response.content)  # for debugging errors
+        data_type = LookupTable.objects.get(id=self.data_type.id)
+        self.assertEqual(data_type.fields[0].field_name, 'property')
+
+    def test_update_fails_with_two_field_names(self):
+        lookup_table = {
+            "fields": [{"name": "property", "field_name": "prop"}],
+            "tag": "lookup_table",
+        }
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(self.data_type.id), json.dumps(lookup_table), method="PUT")
+        self.assertEqual(response.status_code, 400)
+        errors = json.loads(response.content.decode("utf-8"))
+        print(errors)
+        self.assertIn("Failed validating 'not' in schema", errors[0])
+        self.assertIn("{'not': {'required': ['field_name']}}", errors[0])
+        self.assertIn("Failed validating 'not' in schema", errors[1])
+        self.assertIn("{'not': {'required': ['name']}}", errors[1])
+        self.assertEqual(len(errors), 2)
+
+
+class TestLookupTableItemResourceV06(APIResourceTest):
     resource = LookupTableItemResource
-    api_name = 'v0.5'
+    api_name = 'v0.6'
 
     @classmethod
     def setUpClass(cls):
-        super(TestLookupTableItemResource, cls).setUpClass()
+        super().setUpClass()
         cls.data_type = LookupTable(
             domain=cls.domain.name,
             tag="lookup_table",
@@ -268,6 +297,122 @@ class TestLookupTableItemResource(APIResourceTest):
         )
         data_item.save()
         return data_item
+
+    def _get_data_item_update(self):
+        return {
+            "data_type_id": self.data_type.id.hex,
+            "fields": {
+                "state_name": {
+                    "field_list": [
+                        {"field_value": "Massachusetts", "properties": {"lang": "en"}},
+                        {"field_value": "马萨诸塞", "properties": {"lang": "zh"}},
+                    ]
+                }
+            },
+            "item_attributes": {
+                "attribute1": "cool_attr_value",
+            }
+        }
+
+    def _get_data_item_create(self):
+        return {
+            "data_type_id": self.data_type.id.hex,
+            "fields": {
+                "state_name": {
+                    "field_list": [
+                        {"field_value": "Massachusetts", "properties": {"lang": "en"}},
+                        {"field_value": "马萨诸塞", "properties": {"lang": "zh"}},
+                    ]
+                }
+            }
+        }
+
+    def test_create(self):
+        data_item_json = self._get_data_item_create()
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(data_item_json),
+            content_type='application/json',
+        )
+        response_json = json.loads(response.content.decode('utf-8'))
+        self.assertIn('id', response_json)
+        self.assertEqual(
+            response_json['fields']['state_name']['field_list'][0]['field_value'],
+            'Massachusetts'
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def test_update(self):
+        data_item = self._create_data_item()
+        data_item_update = self._get_data_item_update()
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(data_item.id.hex),
+            json.dumps(data_item_update),
+            method="PUT",
+        )
+        response_json = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response_json['item_attributes']['attribute1'],
+            'cool_attr_value'
+        )
+
+    def test_create_with_bad_properties(self):
+        data_item_json = self._get_data_item_create()
+        data_item_json["fields"]["state_name"]["field_list"][0]["properties"] = []
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(data_item_json),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        errors = json.loads(response.content.decode("utf-8"))
+        print(errors)
+        self.assertIn("[] is not of type 'object':", errors[0])
+        data_item = LookupTableRow.objects.filter(domain=self.domain.name).first()
+        self.assertIsNone(data_item)
+
+    def test_update_field_value(self):
+        data_item = self._create_data_item()
+        data_item_update = self._get_data_item_update()
+        data_item_update["fields"]["state_name"]["field_list"][0] = {
+            "value": "Mass.",
+            "properties": {"lang": "en"},
+        }
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(data_item.id.hex),
+            json.dumps(data_item_update),
+            method="PUT",
+        )
+        print(response.content)  # for debugging errors
+        row = LookupTableRow.objects.filter(domain=self.domain.name).first()
+        self.assertEqual(row.fields["state_name"][0].value, 'Mass.')
+
+    def test_update_fails_with_two_field_values(self):
+        data_item = self._create_data_item()
+        data_item_update = self._get_data_item_update()
+        data_item_update["fields"]["state_name"]["field_list"][0] = {
+            "value": "Mass.",
+            "field_value": "Mass...",
+        }
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(data_item.id.hex),
+            json.dumps(data_item_update),
+            method="PUT",
+        )
+        self.assertEqual(response.status_code, 400)
+        errors = json.loads(response.content.decode("utf-8"))
+        print(errors)
+        self.assertIn("Failed validating 'not' in schema", errors[0])
+        self.assertIn("{'not': {'required': ['field_value']}}", errors[0])
+        self.assertIn("Failed validating 'not' in schema", errors[1])
+        self.assertIn("{'not': {'required': ['value']}}", errors[1])
+        self.assertEqual(len(errors), 2)
+
+
+class TestLookupTableItemResourceV05(TestLookupTableItemResourceV06):
+    resource = LookupTableItemResource
+    api_name = 'v0.5'
 
     def _data_item_json(self, id_, sort_key):
         return {
@@ -311,21 +456,14 @@ class TestLookupTableItemResource(APIResourceTest):
         self.assertEqual(0, LookupTableRow.objects.filter(domain=self.domain.name).count())
 
     def test_create(self):
-        data_item_json = {
-            "data_type_id": self.data_type.id.hex,
-            "fields": {
-                "state_name": {
-                    "field_list": [
-                        {"field_value": "Massachusetts", "properties": {"lang": "en"}},
-                        {"field_value": "马萨诸塞", "properties": {"lang": "zh"}},
-                    ]
-                }
-            },
-        }
-
+        data_item_json = self._get_data_item_create()
         response = self._assert_auth_post_resource(
-            self.list_endpoint, json.dumps(data_item_json), content_type='application/json')
+            self.list_endpoint,
+            json.dumps(data_item_json),
+            content_type='application/json',
+        )
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.content, b'')
         data_item = LookupTableRow.objects.filter(domain=self.domain.name).first()
         self.addCleanup(data_item.delete)
         self.assertEqual(data_item.table_id, self.data_type.id)
@@ -335,26 +473,15 @@ class TestLookupTableItemResource(APIResourceTest):
 
     def test_update(self):
         data_item = self._create_data_item()
-
-        data_item_update = {
-            "data_type_id": self.data_type.id.hex,
-            "fields": {
-                "state_name": {
-                    "field_list": [
-                        {"field_value": "Massachusetts", "properties": {"lang": "en"}},
-                        {"field_value": "马萨诸塞", "properties": {"lang": "zh"}},
-                    ]
-                }
-            },
-            "item_attributes": {
-                "attribute1": "cool_attr_value",
-            }
-        }
-
+        data_item_update = self._get_data_item_update()
         response = self._assert_auth_post_resource(
-            self.single_endpoint(data_item.id.hex), json.dumps(data_item_update), method="PUT")
-        data_item = LookupTableRow.objects.get(id=data_item.id)
+            self.single_endpoint(data_item.id.hex),
+            json.dumps(data_item_update),
+            method="PUT",
+        )
         self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.content, b'')
+        data_item = LookupTableRow.objects.get(id=data_item.id)
         self.assertEqual(data_item.table_id, self.data_type.id)
         self.assertEqual(len(data_item.fields), 1)
         self.assertEqual(data_item.fields['state_name'][0].value, 'Massachusetts')

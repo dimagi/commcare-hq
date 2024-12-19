@@ -98,7 +98,7 @@ def get_call_center_cases(domain_name, case_type, user=None):
 
     if user:
         case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
-            domain_name, case_type=case_type, owner_ids=user.get_owner_ids())
+            domain_name, case_type=case_type, owner_ids=user.get_owner_ids(domain_name))
     else:
         case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
             domain_name, case_type=case_type)

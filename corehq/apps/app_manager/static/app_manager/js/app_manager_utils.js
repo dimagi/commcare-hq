@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('app_manager/js/app_manager_utils', [
     'jquery',
     'underscore',
@@ -61,7 +62,6 @@ hqDefine('app_manager/js/app_manager_utils', [
          * We use this method to explicitly spell out the bitly code for
          * users who have trouble reading the letters (esp. 1 and l, O and 0)
          */
-        'use strict';
         if (bitlyToPhonetic === undefined) {
             bitlyToPhonetic = getBitlyToPhoneticDict();
         }

@@ -1,0 +1,87 @@
+<div id="ko-demo-modal">
+  <div class="row">
+    <!-- ko foreach: items -->
+    <div class="col-6">
+      <div class="card ">
+        <div class="card-body">
+          <h5 data-bind="text: name"></h5>
+          <p data-bind="text: description"></p>
+          <button type="button"
+                  data-bind="click: $root.setItemBeingEdited"
+                  class="btn btn-outline-primary">
+            <i class="fa fa-edit"></i> Edit <!-- ko text: name --><!-- /ko -->
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- /ko -->
+  </div>
+
+  <div class="modal fade" data-bind="modal: itemBeingEdited" tabindex="-1" aria-labelledby="exampleKoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" data-bind="with: itemBeingEdited">
+        <div class="modal-header">
+          <h4 class="modal-title" id="exampleKoModalLabel" data-bind="text: modalTitle"></h4>
+          <button type="button" class="btn-close"  data-bind="click: $root.unsetItemBeingEdited" aria-label="Close"></button>
+        </div>
+        <form data-bind="submit: $root.submitItemChanges">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="exampleItemName" class="form-label">Name</label>
+              <input type="text" class="form-control" id="exampleItemName" data-bind="value: name">
+            </div>
+            <div class="mb-3">
+              <label for="exampleItemDescription" class="form-label">Description</label>
+              <textarea class="form-control" id="exampleItemDescription" rows="3" data-bind="value: description"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" data-bind="click: $root.unsetItemBeingEdited">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(function () {
+    'use strict';
+    let Item = function (id, name, description) {
+      let self = {};
+      self.id = ko.observable(id);
+      self.name = ko.observable(name);
+      self.description = ko.observable(description);
+      return self;
+    };
+
+    $("#ko-demo-modal").koApplyBindings(function () {
+      let self = {};
+      self.items = ko.observableArray([
+        Item(1, "First", "This is the first test item"),
+        Item(2, "Second", "This is the second test item"),
+      ]);
+      self.itemBeingEdited = ko.observable(undefined);
+
+      self.submitItemChanges = function () {
+        for (let i = 0; i < self.items().length; i++) {
+          if (self.items()[i].id() === self.itemBeingEdited().id()) {
+            self.items()[i].name(self.itemBeingEdited().name());
+            self.items()[i].description(self.itemBeingEdited().description());
+          }
+        }
+        self.unsetItemBeingEdited();
+      };
+      self.unsetItemBeingEdited = function () {
+        self.itemBeingEdited(undefined);
+      };
+      self.setItemBeingEdited = function (item) {
+        let tempItem = Item(item.id(), item.name(), item.description());
+        tempItem.modalTitle = "Editing Item '" + item.name() + "'";
+        self.itemBeingEdited(tempItem);
+      };
+      return self;
+    });
+  });
+</script>

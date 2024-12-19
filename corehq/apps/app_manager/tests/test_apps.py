@@ -10,6 +10,7 @@ from memoized import memoized
 from unittest.mock import patch
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
+from corehq.apps.app_manager.decorators import _get_latest_enabled_build
 from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
@@ -28,6 +29,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
     add_build,
+    delete_all_multimedia,
     patch_default_builds, get_simple_form, patch_validate_xform,
 )
 from corehq.apps.app_manager.util import add_odk_profile_after_build
@@ -287,6 +289,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
 
     @patch('urllib3.PoolManager.request')
     def testBuildTemplateApps(self, request_mock):
+        self.addCleanup(delete_all_multimedia)
         image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images',
                                   'commcare-hq-logo.png')
         with open(image_path, 'rb') as f:
@@ -401,3 +404,58 @@ class AppManagerTest(TestCase, TestXmlMixin):
         unlinked_doc = linked_app.convert_to_application().to_json()
         self.assertEqual(unlinked_doc['doc_type'], 'Application')
         self.assertFalse(hasattr(unlinked_doc, 'linked_app_attrs'))
+
+    def test_get_latest_enabled_build_with_loc_flag(self):
+        build = _get_latest_enabled_build(
+            self.domain,
+            'no-such-user',
+            self.app._id,
+            None,
+            location_flag_enabled=True,
+        )
+        self.assertIsNone(build)
+
+    def test_dependencies_feature_added(self):
+        factory = AppFactory(build_version='2.40.0')
+        m0, f0 = factory.new_basic_module('register', 'case')
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        factory.app.profile = {'features': {'dependencies': ['coffee']}}
+        factory.app.save()
+        self.addCleanup(factory.app.delete)
+
+        with patch("corehq.apps.app_manager.models.metrics_counter") as metric_counter_mock:
+            factory.app.make_build()
+            metric_counter_mock.assert_called_with('commcare.app_build.dependencies_added')
+
+    def test_dependencies_feature_removed(self):
+        factory = AppFactory(build_version='2.40.0')
+        m0, f0 = factory.new_basic_module('register', 'case')
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        factory.app.profile = {'features': {'dependencies': ['coffee']}}
+        factory.app.save()
+        self.addCleanup(factory.app.delete)
+        build1 = factory.app.make_build()
+        build1.save()
+
+        factory.app.profile = {'features': {'dependencies': []}}
+        factory.app.save()
+
+        with patch("corehq.apps.app_manager.models.metrics_counter") as metric_counter_mock:
+            factory.app.make_build()
+            metric_counter_mock.assert_called_with('commcare.app_build.dependencies_removed')
+
+    def test_dependencies_feature_metrics_not_triggerd(self):
+        factory = AppFactory(build_version='2.40.0')
+        m0, f0 = factory.new_basic_module('register', 'case')
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        factory.app.profile = {'features': {'dependencies': []}}
+        factory.app.save()
+        self.addCleanup(factory.app.delete)
+        build1 = factory.app.make_build()
+        build1.save()
+
+        factory.app.save()
+
+        with patch("corehq.apps.app_manager.models.metrics_counter") as metric_counter_mock:
+            factory.app.make_build()
+            metric_counter_mock.assert_not_called()

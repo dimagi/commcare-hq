@@ -1,6 +1,5 @@
 import logging
 import re
-
 from datetime import datetime
 
 from django.conf import settings
@@ -18,12 +17,11 @@ from django.views.generic.base import TemplateView, View
 
 from memoized import memoized
 
-from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
 
-from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.models import BillingAccount, SoftwarePlanEdition
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
@@ -34,7 +32,10 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
-from corehq.apps.domain.exceptions import NameUnavailableException, ErrorInitializingDomain
+from corehq.apps.domain.exceptions import (
+    ErrorInitializingDomain,
+    NameUnavailableException,
+)
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
@@ -44,17 +45,25 @@ from corehq.apps.registration.forms import (
     RegisterWebUserForm,
 )
 from corehq.apps.registration.models import (
-    RegistrationRequest,
     AsyncSignupRequest,
+    RegistrationRequest,
+    SelfSignupWorkflow,
 )
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
+    project_logo_emails_context,
     request_new_domain,
     send_domain_registration_email,
     send_mobile_experience_reminder,
     send_new_request_update_email,
 )
-from corehq.apps.users.models import CouchUser, WebUser, Invitation, EULA_CURRENT_VERSION
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.users.models import (
+    EULA_CURRENT_VERSION,
+    CouchUser,
+    Invitation,
+    WebUser,
+)
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
@@ -171,7 +180,8 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 request_new_domain(
                     self.request,
                     reg_form.cleaned_data['project_name'],
-                    is_new_user=True
+                    is_new_user=True,
+                    is_self_signup=reg_form.cleaned_data['is_self_signup']
                 )
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
@@ -290,7 +300,7 @@ class UserRegistrationView(BasePageView):
                 _("Custom mobile app builder"),
                 _("Powerful case management"),
                 _("Field staff reports"),
-                _("Unlimited mobile users"),
+                _("125+ mobile users"),
                 _("Full suite of data tools"),
                 _("3rd party integrations"),
                 _("2-way SMS workflows"),
@@ -516,12 +526,12 @@ def confirm_domain(request, guid=''):
             return render(request, 'registration/confirmation_error.html', context)
 
         requested_domain = Domain.get_by_name(req.domain)
-        view_name = "dashboard_default"
+        view_name = _confirm_domain_redirect(request.plan.plan.edition, req.domain)
         view_args = [requested_domain.name]
 
         # Has guid already been confirmed?
         if requested_domain.is_active:
-            assert(req.confirm_time is not None and req.confirm_ip is not None)
+            assert (req.confirm_time is not None and req.confirm_ip is not None)
             messages.success(request, 'Your account %s has already been activated. '
                 'No further validation is required.' % req.new_user_username)
             return HttpResponseRedirect(reverse(view_name, args=view_args))
@@ -547,6 +557,14 @@ def confirm_domain(request, guid=''):
         return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 
+def _confirm_domain_redirect(edition, domain):
+    from corehq.apps.dashboard.views import DomainDashboardView
+    from corehq.apps.domain.views import SelectPlanView
+    should_select_plan = bool(edition == SoftwarePlanEdition.COMMUNITY
+                              and SelfSignupWorkflow.get_in_progress_for_domain(domain))
+    return SelectPlanView.urlname if should_select_plan else DomainDashboardView.urlname
+
+
 @retry_resource(3)
 def eula_agreement(request):
     if request.method == 'POST':
@@ -570,5 +588,6 @@ def eula_agreement(request):
 @login_required
 @require_POST
 def send_mobile_reminder(request):
-    send_mobile_experience_reminder(request.couch_user.get_email(), request.couch_user.full_name)
+    send_mobile_experience_reminder(request.couch_user.get_email(), request.couch_user.full_name,
+                                    additional_email_context=project_logo_emails_context(None, request.couch_user))
     return HttpResponse()

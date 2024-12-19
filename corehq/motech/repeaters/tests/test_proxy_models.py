@@ -1,4 +1,4 @@
-from uuid import uuid4
+from dateutil.parser import isoparse
 
 from django.test import TestCase
 
@@ -45,7 +45,7 @@ class TestRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
         for r in self.repeater_classes:
             mock_data = self.repeater_data
             r(
-                domain=mock_data['domain'], connection_settings=self.conn, repeater_id=uuid4().hex
+                domain=mock_data['domain'], connection_settings=self.conn
             ).save()
 
     def test_repeater_all_returns_correct_instance(self):
@@ -78,13 +78,13 @@ class TestCreateCaseRepeaterSubModels(RepeaterProxyTests):
         self.createcase_repeater_obj.repeat_records.create(
             domain=DOMAIN,
             payload_id='r2d2',
-            registered_at='1977-01-01',
+            registered_at=isoparse('1977-01-01'),
             repeater_id=self.createcase_repeater_obj.id,
         )
         self.case_repeater_obj.repeat_records.create(
             domain=DOMAIN,
             payload_id='darth',
-            registered_at='1980-01-01',
+            registered_at=isoparse('1980-01-01'),
             repeater_id=self.case_repeater_obj.id,
         )
 

@@ -9,14 +9,28 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_PREVIOUS,
     WORKFLOW_ROOT,
 )
-from corehq.apps.app_manager.models import FormDatum, FormLink
+from corehq.apps.app_manager.exceptions import SuiteValidationError
+from corehq.apps.app_manager.models import (
+    CaseTileGroupConfig,
+    FormDatum,
+    FormLink,
+)
+from corehq.apps.app_manager.suite_xml.features.case_tiles import (
+    CaseTileTemplates,
+)
 from corehq.apps.app_manager.suite_xml.post_process.workflow import (
     CommandId,
     _replace_session_references_in_stack,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
+from corehq.apps.app_manager.tests.test_suite_case_tiles import (
+    add_columns_for_case_details,
+)
+from corehq.apps.app_manager.tests.util import (
+    TestXmlMixin,
+    patch_get_xform_resource_overrides,
+)
 from corehq.apps.app_manager.xpath import session_var
 
 
@@ -102,7 +116,8 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
             FormLink(xpath='true()', form_id=m1f0.unique_id, form_module_id=m1.unique_id)
         ]
 
-        self.assertXmlPartialEqual(self.get_xml('form_link_create_update_case'), factory.app.create_suite(), "./entry[1]")
+        self.assertXmlPartialEqual(self.get_xml('form_link_create_update_case'),
+                                   factory.app.create_suite(), "./entry[1]")
 
     def test_with_case_management_multiple_links(self, *args):
         factory = AppFactory(build_version='2.9.0')
@@ -285,11 +300,80 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         m1f0.form_links = [
             FormLink(xpath="true()", form_id=m2f0.unique_id, form_module_id=m2.unique_id, datums=[
                 FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
-                FormDatum(name='case_id_load_visit_0', xpath="instance('commcaresession')/session/data/case_id_new_visit_0"),
+                FormDatum(name='case_id_load_visit_0',
+                          xpath="instance('commcaresession')/session/data/case_id_new_visit_0"),
             ]),
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
+
+    def test_manual_form_link_bad_datums(self, *args):
+        factory = AppFactory(build_version='2.9.0')
+
+        m0, m0f0 = factory.new_basic_module('child visit', 'child')
+        factory.form_requires_case(m0f0)
+        factory.form_opens_case(m0f0, case_type='visit', is_subcase=True)
+
+        m1, m1f0 = factory.new_advanced_module('visit history', 'visit', parent_module=m0)
+        factory.form_requires_case(m1f0, 'child')
+        factory.form_requires_case(m1f0, 'visit', parent_case_type='child')
+
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [
+            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id, datums=[
+                FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
+                # There should be a case_id_load_visit_0 datum defined here
+            ]),
+        ]
+
+        with self.assertRaises(SuiteValidationError) as e:
+            factory.app.create_suite()
+        self.assertIn("Unable to link form 'child visit form 0', missing "
+                      "variable 'case_id_load_visit_0'", str(e.exception))
+
+    def test_manual_datum_takes_precedence(self, *args):
+        # This test is based on a real issue that occurred, where manually
+        # specified datums were being replaced with datums from the target that
+        # didn't require selection
+        factory = AppFactory(build_version='2.9.0')
+
+        m0, m0f0 = factory.new_basic_module('module0', 'parent')
+        factory.form_requires_case(m0f0, 'parent')
+
+        # Set up a module with grouped case tiles - that use case isn't important,
+        # what matters is that this creates a datum that is autopopulated
+        m1, m1f0 = factory.new_basic_module('module1', 'child', parent_module=m0)
+        factory.form_requires_case(m1f0, 'parent')
+        factory.form_requires_case(m1f0, 'child')
+        m1.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
+        add_columns_for_case_details(m1)
+        m1.case_details.short.case_tile_group = CaseTileGroupConfig(
+            index_identifier="parent", header_rows=3)
+        m1.assign_references()
+
+        m2, m2f0 = factory.new_basic_module('module2', 'case')
+        m2f0.post_form_workflow = WORKFLOW_FORM
+        m2f0.form_links = [
+            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id, datums=[
+                FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
+                FormDatum(name='case_id_child', xpath="instance('commcaresession')/session/data/case_id"),
+                FormDatum(name='case_id_parent_ids', xpath="instance('commcaresession')/session/data/case_id"),
+            ]),
+        ]
+
+        expected = """<partial>
+            <stack>
+                <create if="true()">
+                <command value="'m0'"/>
+                <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+                <command value="'m1'"/>
+                <datum id="case_id_child" value="instance('commcaresession')/session/data/case_id"/>
+                <datum id="case_id_parent_ids" value="instance('commcaresession')/session/data/case_id"/>
+                <command value="'m1-f0'"/>
+                </create>
+            </stack>
+        </partial>"""
+        self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[3]/stack")
 
     def test_manual_form_link_with_fallback(self, *args):
         factory = AppFactory(build_version='2.9.0')
@@ -346,8 +430,10 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         # so items put into the session in one step aren't available later steps
         #
         #    <datum id="case_id_A" value="instance('commcaresession')/session/data/case_id_new_A"/>
-        # -  <datum id="case_id_B" value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_A]/index/host"/>
-        # +  <datum id="case_id_B" value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_A]/index/host"/>
+        # -  <datum id="case_id_B" value="instance('casedb')/casedb/case[
+        #       @case_id=instance('commcaresession')/session/data/case_id_A]/index/host"/>
+        # +  <datum id="case_id_B" value="instance('casedb')/casedb/case[
+        #       @case_id=instance('commcaresession')/session/data/case_id_new_A]/index/host"/>
         #
         # in the above example ``case_id_A`` is being added to the session and then
         # later referenced. However since the session doesn't get updated
@@ -373,7 +459,8 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         m1f0.post_form_workflow = WORKFLOW_FORM
         m1f0.form_links = [
             FormLink(xpath="true()", form_id=m2f0.unique_id, form_module_id=m2.unique_id, datums=[
-                FormDatum(name='case_id_load_episode_0', xpath="instance('commcaresession')/session/data/case_id_new_episode_0")
+                FormDatum(name='case_id_load_episode_0',
+                          xpath="instance('commcaresession')/session/data/case_id_new_episode_0")
             ]),
         ]
 
@@ -444,7 +531,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         factory.form_requires_case(m0f0)
         m0f0.post_form_workflow = WORKFLOW_MODULE
 
-        m1 = factory.new_shadow_module('shadow_module', m0, with_form=False)
+        factory.new_shadow_module('shadow_module', m0, with_form=False)
 
         expected = """
         <partial>
@@ -475,7 +562,8 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
             FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id),
         ]
 
-        self.assertXmlPartialEqual(self.get_xml('form_link_child_modules'), factory.app.create_suite(), "./entry[3]")
+        self.assertXmlPartialEqual(self.get_xml('form_link_child_modules'),
+                                   factory.app.create_suite(), "./entry[3]")
 
     def test_form_links_submodule(self, *args):
         # Test that when linking between two forms in a submodule we match up the
@@ -738,8 +826,8 @@ class TestReplaceSessionRefs(SimpleTestCase):
             CommandId('m0'),
             StackDatum(id='a', value=session_var('new_a')),
             StackDatum(id='b', value=session_var('new_b')),
-            StackDatum(id='c', value="instance('casedb')/case/[@case_id = {a}]/index/parent".format(a=session_var('a'))),
-            StackDatum(id='d', value="if({c}, {c}, {a}]".format(a=session_var('a'), c=session_var('c')))
+            StackDatum(id='c', value=f"instance('casedb')/case/[@case_id = {session_var('a')}]/index/parent"),
+            StackDatum(id='d', value=f"if({session_var('c')}, {session_var('c')}, {session_var('a')}]"),
         ]
 
         clean = _replace_session_references_in_stack(children)

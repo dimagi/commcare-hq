@@ -33,9 +33,9 @@ class TestCaseSearchEndpoint(TestCase):
         super().setUpClass()
         cls.user = create_user("admin", "123")
         CaseSearchConfig.objects.create(domain=cls.domain, enabled=True)
-        household_1 = str(uuid.uuid4())
+        cls.household_1 = str(uuid.uuid4())
         case_blocks = [CaseBlock(
-            case_id=household_1,
+            case_id=cls.household_1,
             case_type='household',
             case_name="Villanueva",
             create=True,
@@ -48,10 +48,10 @@ class TestCaseSearchEndpoint(TestCase):
             update=properties,
             index={'parent': IndexAttrs('household', household_id, 'child')} if household_id else None,
         ) for name, properties, household_id in [
-            ("Jane", {"family": "Villanueva"}, household_1),
-            ("Xiomara", {"family": "Villanueva"}, household_1),
-            ("Alba", {"family": "Villanueva"}, household_1),
-            ("Rogelio", {"family": "de la Vega"}, household_1),
+            ("Jane", {"family": "Villanueva"}, cls.household_1),
+            ("Xiomara", {"family": "Villanueva"}, cls.household_1),
+            ("Alba", {"family": "Villanueva"}, cls.household_1),
+            ("Rogelio", {"family": "de la Vega"}, cls.household_1),
             ("Jane", {"family": "Ramos"}, None),
         ]])
         case_search_es_setup(cls.domain, case_blocks)
@@ -76,6 +76,10 @@ class TestCaseSearchEndpoint(TestCase):
         self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane"], [
             case.name for case in res
         ])
+
+    def test_case_id_criteia(self):
+        res = get_case_search_results(self.domain, ['household'], [SearchCriteria('case_id', self.household_1)])
+        self.assertItemsEqual(["Villanueva"], [case.name for case in res])
 
     def test_dynamic_property(self):
         res = get_case_search_results(self.domain, ['person'], [SearchCriteria('family', 'Ramos')])

@@ -39,22 +39,7 @@
   </div>
   <div class="panel-body">
     <div data-bind="with: shortScreen">
-      {% if request|toggle_enabled:'CASE_LIST_TILE' %}
-        <div class="row">
-          <div class="col-sm-6">
-            <label>
-              {% trans "Case Tile Template" %}
-            </label>
-            <select data-bind="options:caseTileTemplateOptions, optionsText: 'templateName', optionsValue: 'templateValue', value:caseTileTemplate" class="form-control"></select>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-12" data-bind="visible: caseTilePreviewForTemplate">
-            <label></label>
-            <div data-bind="html: caseTilePreviewForTemplate"></div>
-          </div>
-        </div>
-      {% endif %}
+      {% include 'app_manager/partials/modules/case_tile_templates.html' %}
       {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
         <div data-bind="visible: !caseTileTemplate()">
           <div class="checkbox">
@@ -111,7 +96,7 @@
       {% if request|toggle_enabled:'CASE_LIST_TILE' %}
         {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
           {% if available_modules %}
-            <div class="row">
+            <div class="row" data-bind="visible: persistTileOnForms">
               <div class="col-sm-6">
                 <label>
                   {% trans "Use persistent case tile from menu" %}
@@ -146,76 +131,7 @@
         </div>
       </div>
 
-      <button class="btn btn-default btn-xs pull-right"
-              data-bind="click: resetCaseTilePreview, visible: showCaseTileConfigColumns()">
-          <i class="fa fa-magic"></i>
-          {% trans "Reset Grid" %}
-      </button>
-      <div data-bind="visible: showCaseTileConfigColumns()" id="preview-box">
-        <div id="case-tile-preview" data-bind="foreach: columns">
-          <div class="cell" data-bind="visible: showInTilePreview, style: {
-                'grid-row-start': tileRowStart,
-                'grid-row-end': tileRowEnd,
-                'grid-column-start': tileColumnStart,
-                'grid-column-end': tileColumnEnd,
-            }">
-            <div class="content">
-              #<span data-bind="text: $index()"></span>:
-              <span data-bind="text: tileContent"></span>
-            </div>
-            <!-- TODO: align less terribly, this gets messed up as screen/tiles resize -->
-            <div class="controls">
-              <table style="width: 100%;"><tbody><tr><td style="text-align: center;">
-                <div class="btn-group" role="group">
-                  <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, -1, 0, 0); }, enable: tileColumnStart() > 1">
-                    <i class="fa fa-arrow-left"></i>
-                  </button>
-                  <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), -1, 0, 0, 0); }, enable: tileRowStart() > 1">
-                    <i class="fa fa-arrow-up"></i>
-                  </button>
-                  <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 1, 0, 0, 0); }, enable: tileRowEnd() < tileRowMax()">
-                    <i class="fa fa-arrow-down"></i>
-                  </button>
-                  <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 1, 0, 0); }, enable: tileColumnEnd() < tileColumnMax()">
-                    <i class="fa fa-arrow-right"></i>
-                  </button>
-                </div>
-                <div class="btn-group" role="group" style="float: left; margin: 0 2px;">
-                  <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, -1, 0);}, enable: tileWidth() > 1">
-                    <i class="fa fa-minus"></i>
-                  </button>
-                  <button type="button" class="btn btn-xs" disabled>
-                    <i class="fa fa-arrows-h"></i>
-                  </button>
-                  <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 1, 0); }, enable: tileColumnEnd() < tileColumnMax()">
-                    <i class="fa fa-plus"></i>
-                  </button>
-                </div>
-                <div class="btn-group" role="group" style="float: right; margin: 0 2px;">
-                  <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 0, -1); }, enable: tileHeight() > 1">
-                    <i class="fa fa-minus"></i>
-                  </button>
-                  <button type="button" class="btn btn-xs" disabled>
-                    <i class="fa fa-arrows-v"></i>
-                  </button>
-                  <button type="button" class="btn btn-xs btn-default"
-                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 0, 1); }, enable: tileRowEnd() < tileRowMax()">
-                    <i class="fa fa-plus"></i>
-                  </button>
-                </div>
-              </td></tr></tbody></table>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      {% include 'app_manager/partials/modules/case_tile_preview.html' %}
       {% include 'app_manager/partials/modules/case_list_properties.html' %}
     </div>
   </div>
@@ -292,7 +208,7 @@
               <tbody data-bind="foreach: sortRows(), sortableList: sortRows">
               <tr>
                 <td>
-                  <i class="grip fa fa-arrows-v icon-blue"></i>
+                  <i class="grip fa-solid fa-up-down icon-blue"></i>
                 </td>
                 <td class="form-group col-sm-2" data-bind="css: {'has-error': showWarning}">
                   <div data-bind="jqueryElement: selectField.ui"></div>

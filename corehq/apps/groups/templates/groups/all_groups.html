@@ -1,7 +1,8 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% requirejs_main "groups/js/all_groups" %}
+
+{% js_entry "groups/js/all_groups" %}
 
 {% block page_title %}
   {% trans "Groups" %}
@@ -37,27 +38,15 @@
         {% include 'groups/partials/case_sharing_upgrade_notice.html' %}
       </li>
     </ul>
-    {% if not request.is_view_only %}
-      <form class="well well-sm form-inline" method="post" action="{% url "add_group" domain %}" id="create_group_form">
-        {% csrf_token %}
-        <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" class="form-control" />
-        <button class="btn btn-primary" type="submit">
-          <i class="fa fa-plus"></i>
-          {% trans "Add Group" %}
-        </button>
-      </form>
-    {% endif %}
 
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title">{% trans "Project Groups" %}</h3>
-      </div>
-      <div class="panel-body">
+    <div class="card card-default mb-3">
+      <div class="card-body">
+        <h3 class="card-title">{% trans "Project Groups" %}</h3>
         {% if all_groups %}
           <table class="table table-striped">
             <thead>
             <th>{% trans "Group Name" %}</th>
-            <th>
+            <th class="text-center">
               {% trans "Reporting Group" %}
               <span class="hq-help-template"
                     data-title="{% trans 'Reporting Groups' %}"
@@ -66,10 +55,10 @@
                                     data.{% endblocktrans %}{% if not request.is_view_only %}
                                     {% blocktrans %}You can remove this group from reports by
                                     editing this group's settings.{% endblocktrans %}{% endif %}">
-                            </span>
+              </span>
             </th>
-            <th>
-              {% trans "Case Sharing Groups" %}
+            <th class="text-center">
+              {% trans "Case Sharing Group" %}
               <span class="hq-help-template"
                     data-title="{% trans 'Case Sharing Groups' %}"
                     data-content="{% blocktrans %}
@@ -78,7 +67,7 @@
                                     {% if not request.is_view_only %}
                                     {% blocktrans %} You can change this by editing this
                                     group's settings.{% endblocktrans %}{% endif %}">
-                            </span>
+              </span>
             </th>
             </thead>
             <tbody>
@@ -89,19 +78,21 @@
                     {{ group.display_name }}
                   </a>
                 </td>
-                <td>
+                <td class="text-center">
                   {% if group.reporting %}<i class="fa fa-check"></i>{% endif %}
                 </td>
-                <td>
+                <td class="text-center">
                   {% if group.case_sharing %}
-                    <i class="fa fa-check"></i>
                     {% if not is_case_sharing_enabled %}
-                      <span class="js-case-sharing-alert label label-warning"
-                            title="{% trans_html_attr 'Limited Access' %}"
-                            data-content="{% trans_html_attr 'Your subscription was downgraded after creating this group. Group membership will not be editable until case sharing is disabled.' %}">
+                      <span class="js-case-sharing-alert badge text-bg-warning"
+                            data-bs-toggle="popover"
+                            data-bs-trigger="hover focus"
+                            data-bs-content="{% trans_html_attr 'Your subscription was downgraded after creating this group. Group membership will not be editable until case sharing is disabled.' %}">
                         <i class="fa fa-warning"></i>
                         {% trans "Limited Access" %}
                       </span>
+                    {% else %}
+                      <i class="fa fa-check"></i>
                     {% endif %}
                   {% endif %}
                 </td>
@@ -125,6 +116,23 @@
         {% endif %}
       </div>
     </div>
+
+    {% if not request.is_view_only %}
+      <form method="post" action="{% url "add_group" domain %}" id="create_group_form">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-4">
+            <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" class="form-control" />
+          </div>
+          <div class="col">
+            <button class="btn btn-primary" type="submit">
+              <i class="fa fa-plus"></i>
+              {% trans "Add Group" %}
+            </button>
+          </div>
+        </div>
+      </form>
+    {% endif %}
   {% endif %}
 {% endblock %}
 

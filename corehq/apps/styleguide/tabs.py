@@ -32,7 +32,7 @@ class SimpleCrispyFormSGExample(BaseSGTab):
     title = gettext_noop("Simple Crispy Form")
     view = DefaultSimpleCrispyFormSectionView.urlname
 
-    url_prefix_formats = ('/styleguide/bootstrap3/docs/simple_crispy/',)
+    url_prefix_formats = ('/styleguide/docs/simple_crispy/',)
 
     @property
     @memoized

@@ -76,6 +76,9 @@ CASE_SEARCH_MAPPING = {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
+        "doc_id": {
+            "type": "keyword"
+        },
         "doc_type": {
             "type": "keyword"
         },

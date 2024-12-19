@@ -1,8 +1,8 @@
-/* globals hqDefine ace */
 hqDefine('hqadmin/js/admin_restore',[
     "jquery",
     "hqwebapp/js/base_ace",
     "jquery-treetable/jquery.treetable",
+    "commcarehq",
 ],function ($, baseAce) {
     $(function () {
         $("#timingTable").treetable();

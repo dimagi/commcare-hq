@@ -9,8 +9,10 @@ hqDefine("users/js/web_users",[
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
     "users/js/web_users_list",
-    'hqwebapp/js/bootstrap3/components.ko',    // pagination and search box widgets
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // for modals
+    'commcarehq',
 ], function ($, ko, _, moment, assertProperties, initialPageData, webUsersList) {
 
     /* Web Users panel */
@@ -145,7 +147,9 @@ hqDefine("users/js/web_users",[
     };
 
     $(function () {
-        $("#invitations-panel").koApplyBindings(invitationsList(initialPageData.get('invitations')));
+        if (initialPageData.get('invitations').length !== 0) {
+            $("#invitations-panel").koApplyBindings(invitationsList(initialPageData.get('invitations')));
+        }
     });
 
     /* "Copy and paste admin emails" panel */

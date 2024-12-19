@@ -6,13 +6,14 @@ from django.test import SimpleTestCase, TestCase
 from decorator import contextmanager
 
 from casexml.apps.phone.document_store import SyncLogDocumentStore
-from corehq.apps.domain.tests.test_utils import test_domain
 from dimagi.utils.couch.database import get_db
 from pillowtop.dao.couch import CouchDocumentStore
+from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
+from corehq.apps.domain.tests.test_utils import test_domain
 from corehq.apps.locations.document_store import LocationDocumentStore
 from corehq.apps.sms.document_stores import SMSDocumentStore
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
@@ -117,10 +118,12 @@ def form_data():
 
 @contextmanager
 def location_data():
-    from corehq.apps.locations.tests.util import LocationTypeStructure
-    from corehq.apps.locations.tests.util import LocationStructure
-    from corehq.apps.locations.tests.util import setup_location_types_with_structure
-    from corehq.apps.locations.tests.util import setup_locations_with_structure
+    from corehq.apps.locations.tests.util import (
+        LocationStructure,
+        LocationTypeStructure,
+        setup_location_types_with_structure,
+        setup_locations_with_structure,
+    )
     location_type_structure = [LocationTypeStructure('t1', [])]
 
     location_structure = [
@@ -138,9 +141,8 @@ def location_data():
 
 @contextmanager
 def ledger_data():
-    from casexml.apps.stock.mock import Balance
     from casexml.apps.case.mock import CaseFactory
-    from casexml.apps.stock.mock import Entry
+    from casexml.apps.stock.mock import Balance, Entry
 
     factory = CaseFactory('domain')
     with case_data() as case_ids:
@@ -199,7 +201,17 @@ def sms_data():
 
 @sharded
 class DocumentStoreDbTests(TestCase):
-    pass
+
+    def test_couch_document_store(self):
+        # this one is not included with generate_cases below because
+        # get_db() should not be called during test collection
+        _test_document_store(
+            self,
+            CouchDocumentStore,
+            (get_db(), 'domain', 'doc_type'),
+            couch_data,
+            '_id',
+        )
 
 
 def _test_document_store(self, doc_store_cls, doc_store_args, data_context, id_field):
@@ -214,7 +226,6 @@ def _test_document_store(self, doc_store_cls, doc_store_args, data_context, id_f
 
 
 @generate_cases([
-    (CouchDocumentStore, (get_db(), 'domain', 'doc_type'), couch_data, '_id'),
     (CaseDocumentStore, ('domain',), case_data, '_id'),
     (FormDocumentStore, ('domain',), form_data, '_id'),
     (LocationDocumentStore, ('domain',), location_data, 'location_id'),
@@ -222,5 +233,51 @@ def _test_document_store(self, doc_store_cls, doc_store_args, data_context, id_f
     (SyncLogDocumentStore, (), synclog_data, '_id'),
     (SMSDocumentStore, (), sms_data, '_id'),
 ], DocumentStoreDbTests)
-def test_documet_store(*args):
+def test_document_store(*args):
     _test_document_store(*args)
+
+
+class CaseDocumentStoreTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        domain = 'test-domain'
+        cls.store = CaseDocumentStore(domain)
+
+        cls.case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
+        external_ids = ['external-id', 'external-id-dup', 'external-id-dup']
+        now = datetime.utcnow()
+        for case_id, external_id in zip(cls.case_ids, external_ids):
+            case = CommCareCase(
+                domain=domain,
+                case_id=case_id,
+                external_id=external_id,
+                modified_on=now,
+                server_modified_on=now,
+            )
+            case.save()
+            cls.addClassCleanup(case.delete)
+
+    def test_get_doc_by_case_id(self):
+        case_id = self.case_ids[0]
+        doc = self.store.get_document(case_id)
+        self.assertEqual(doc['case_id'], case_id)
+
+    def test_get_doc_by_external_id(self):
+        external_id = 'external-id'
+        doc = self.store.get_document(None, external_id=external_id)
+        self.assertEqual(doc['external_id'], external_id)
+
+    def test_external_id_not_found(self):
+        with self.assertRaises(DocumentNotFoundError):
+            self.store.get_document(None, external_id='external-id-not-found')
+
+    def test_case_not_found(self):
+        with self.assertRaises(DocumentNotFoundError):
+            self.store.get_document('case-id-not-found')
+
+    def test_get_doc_by_duplicate_external_id(self):
+        with self.assertRaises(DocumentNotFoundError):
+            self.store.get_document(None, external_id='external-id-dup')

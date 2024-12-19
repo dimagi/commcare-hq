@@ -4,8 +4,18 @@ from django.views.generic import View
 from django.contrib.messages import get_messages
 from django.contrib.messages.storage import default_storage
 from django.test import TestCase, SimpleTestCase
-from corehq.apps.custom_data_fields.models import Field, CustomDataFieldsDefinition
-from corehq.apps.custom_data_fields.edit_model import CustomDataFieldsForm, CustomDataModelMixin
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+)
+from corehq.apps.custom_data_fields.edit_model import (
+    CustomDataFieldForm,
+    CustomDataFieldsForm,
+    CustomDataModelMixin,
+)
+
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
 class FieldsView(CustomDataModelMixin, View):
@@ -43,7 +53,25 @@ def fields_are_equal(left, right):
     return left.to_dict() == right.to_dict()
 
 
-class TestEditModel(TestCase):
+class FieldsViewMixin:
+
+    def create_field(self, slug='test_field', label='Test Field', is_required=False, required_for=[], choices=[],
+            regex=None, regex_msg=None, upstream_id=None):
+        return Field(
+            slug=slug,
+            label=label,
+            is_required=is_required,
+            required_for=required_for,
+            choices=choices,
+            regex=regex,
+            regex_msg=regex_msg,
+            upstream_id=upstream_id,
+        )
+
+    _create_field = create_field
+
+
+class TestEditModel(FieldsViewMixin, TestCase):
     domain = 'test-domain'
 
     def test_saves_custom_fields(self):
@@ -82,18 +110,6 @@ class TestEditModel(TestCase):
         self.assertEqual(str(messages[0]),
             "Could not update 'ExistingField'. You do not have the appropriate role")
 
-    def _create_field(self, slug='test_field', label='Test Field', is_required=False, choices=[], regex=None,
-            regex_msg=None, upstream_id=None):
-        return Field(
-            slug=slug,
-            label=label,
-            is_required=is_required,
-            choices=choices,
-            regex=regex,
-            regex_msg=regex_msg,
-            upstream_id=upstream_id,
-        )
-
     def _create_initial_fields(self, fields):
         definition = CustomDataFieldsDefinition.objects.create(field_type='UserFields', domain=self.domain)
         definition.set_fields(fields)
@@ -104,7 +120,7 @@ class TestEditModel(TestCase):
         return request
 
 
-class TestValidateIncomingFields(SimpleTestCase):
+class TestValidateIncomingFields(FieldsViewMixin, SimpleTestCase):
     def test_no_conflicts_produces_no_errors(self):
         existing_fields = [self.create_field(is_required=False)]
         new_fields = [self.create_field(is_required=True)]
@@ -191,14 +207,102 @@ class TestValidateIncomingFields(SimpleTestCase):
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0], "Could not update 'two'. Synced data cannot be created this way")
 
-    def create_field(self, slug='test_field', label='Test Field', is_required=False, choices=[], regex=None,
-            regex_msg=None, upstream_id=None):
-        return Field(
-            slug=slug,
-            label=label,
-            is_required=is_required,
-            choices=choices,
-            regex=regex,
-            regex_msg=regex_msg,
-            upstream_id=upstream_id
+
+class TestCustomDataModelValidation(FieldsViewMixin, SimpleTestCase):
+
+    def test_error_in_data_fiels_does_not_cause_error_in_profiles(self):
+        view = FieldsView(
+            "test",
+            fields=[
+                self.create_field(slug='one', label='one'),
+                self.create_field(slug='two', label=''),
+            ],
+            profiles=[CustomDataFieldsProfile(name="OneProfile", fields={"one": "one"})],
         )
+        self.assertDictEqual(
+            view.form.errors,
+            {"data_fields": ["A label is required for each field."]},
+        )
+
+
+class TestCustomDataFieldsForm(FieldsViewMixin, SimpleTestCase):
+    def test_valid(self):
+        fields = [self.create_field(slug='one')]
+        profiles = [CustomDataFieldsProfile(name='profile', fields={'one': 'one'})]
+        form = self._create_form(fields, profiles)
+
+        self.assertTrue(form.is_valid())
+
+    def test_can_assign_empty_profile_values_to_optional_fields(self):
+        fields = [self.create_field(slug='one', is_required=False)]
+        profiles = [CustomDataFieldsProfile(name='profile', fields={'one': ''})]
+        form = self._create_form(fields, profiles)
+
+        self.assertTrue(form.is_valid())
+
+    def test_cannot_assign_empty_profile_values_to_required_fields(self):
+        fields = [self.create_field(slug='one', is_required=True)]
+        profiles = [CustomDataFieldsProfile(name='profile', fields={'one': ''})]
+        form = self._create_form(fields, profiles)
+
+        self.assertFalse(form.is_valid())
+
+    def _create_form(self, fields, profiles):
+        fields_json = json.dumps([field.to_dict() for field in fields])
+        profiles_json = json.dumps([profile.to_json() for profile in profiles])
+        return CustomDataFieldsForm({
+            'data_fields': fields_json,
+            'profiles': profiles_json
+        })
+
+
+class TestProfileRequiredForUserType(FieldsViewMixin, TestCase):
+    domain = 'test-domain'
+    BOTH = [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER]
+
+    def test_req_for_defaults_to_none(self):
+        definition = CustomDataFieldsDefinition.objects.create(field_type='UserFields')
+        profiles = [CustomDataFieldsProfile(name='profile', fields={'one': 'one'}, definition=definition)]
+        profiles[0].save()
+        req_for = CustomDataFieldsProfile.objects.get(name='profile').definition.profile_required_for_user_type
+
+        self.assertEqual([], req_for)
+
+    def test_update_profile_required(self):
+        fields = [self.create_field(slug='one', is_required=True)]
+        view = FieldsView(domain='test-domain', fields=fields)
+        definition = CustomDataFieldsDefinition.objects.create(
+            field_type='UserFields', domain=self.domain,
+            profile_required_for_user_type=self.BOTH
+        )
+        profiles = [CustomDataFieldsProfile(name='profile', fields={'one': 'one'}, definition=definition)]
+        profiles[0].save()
+
+        self.assertEqual(profiles[0].definition.profile_required_for_user_type, (self.BOTH))
+
+        view.update_profile_required(UserFieldsView.COMMCARE_USER)
+        updated = CustomDataFieldsProfile.objects.get(name='profile').definition.profile_required_for_user_type
+
+        self.assertEqual(updated, UserFieldsView.COMMCARE_USER)
+
+        view.update_profile_required(self.BOTH)
+        updated = CustomDataFieldsProfile.objects.get(name='profile').definition.profile_required_for_user_type
+
+        self.assertEqual(updated, self.BOTH)
+
+
+class TestCustomDataFieldForm(SimpleTestCase):
+    def test_required_for_and_choices_field_serialization(self):
+        raw_field = {
+            'label': 'Test Field',
+            'slug': 'test_field',
+            'required_for': [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER],
+            'choices': ['blue', 'red'],
+        }
+
+        form = CustomDataFieldForm(raw_field)
+        self.assertTrue(form.is_valid())
+
+        cleaned_data = form.cleaned_data
+        self.assertEqual(cleaned_data['required_for'], [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER])
+        self.assertEqual(cleaned_data['choices'], ['blue', 'red'])

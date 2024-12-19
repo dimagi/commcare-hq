@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-checkbox', [
     'jquery',
     'hqwebapp/js/bootstrap3/main',
@@ -5,7 +6,6 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-checkbox', [
     $,
     hqMain
 ) {
-    'use strict';
     var module = {};
 
     var Checkbox = function () {

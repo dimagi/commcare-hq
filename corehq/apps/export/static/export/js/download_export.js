@@ -13,12 +13,12 @@ hqDefine('export/js/download_export', [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/tempus_dominus',
     'analytix/js/google',
     'analytix/js/kissmetrix',
-    'reports/js/filters/main',
-    'reports/js/reports.util',
+    'reports/js/filters/bootstrap5/main',
+    'reports/js/util',
     'export/js/utils',
-    'hqwebapp/js/daterangepicker.config',   // createDateRangePicker
     'jquery.cookie/jquery.cookie',      // for resuming export downloads on refresh
 ], function (
     $,
@@ -26,6 +26,7 @@ hqDefine('export/js/download_export', [
     _,
     assertProperties,
     initialPageData,
+    hqTempusDominus,
     googleAnalytics,
     kissmetricsAnalytics,
     reportFilters,
@@ -366,7 +367,7 @@ hqDefine('export/js/download_export', [
         };
 
         self._dealWithErrors = function (data) {
-            if (self._numErrors > 3) {
+            if (self._numErrors > 3 || data.retry === false) {
                 if (data && data.error) {
                     self.downloadError(data.error);
                 } else {
@@ -435,12 +436,7 @@ hqDefine('export/js/download_export', [
 
         $(".hqwebapp-datespan").each(function () {
             var $el = $(this).find("input");
-            $el.createDateRangePicker(
-                $el.data("labels"),
-                $el.data("separator"),
-                $el.data('startDate'),
-                $el.data('endDate')
-            );
+            hqTempusDominus.createDateRangePicker($el.get(0), $el.data("separator"));
         });
     });
 });

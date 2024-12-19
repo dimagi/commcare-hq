@@ -1,7 +1,6 @@
 from unittest.mock import call, patch
 
 from django.test import TestCase
-from django.utils.datastructures import MultiValueDict
 
 from testil import assert_raises, eq
 
@@ -12,6 +11,7 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
     CASE_SEARCH_SORT_KEY,
+    CASE_SEARCH_MODULE_NAME_TAG_KEY,
     CaseSearchRequestConfig,
     disable_case_search,
     enable_case_search,
@@ -65,6 +65,7 @@ def test_extract_criteria_config(self, case_type, data_registry, custom_related_
             CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: custom_related_case_property,
             CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: include_all_related_cases,
             CASE_SEARCH_SORT_KEY: commcare_sort,
+            CASE_SEARCH_MODULE_NAME_TAG_KEY: "module_name",
             "other_key": "jim",
         })
         config = extract_search_request_config(request_dict)
@@ -83,15 +84,10 @@ def test_extract_criteria_config(self, case_type, data_registry, custom_related_
 def _make_request_dict(params):
     """All values must be a list to match what we get from Django during a request.
     """
-    request_dict = MultiValueDict()
-    for key, value in params.items():
-        if value is None:
-            continue
-        if isinstance(value, list):
-            request_dict.setlist(key, value)
-        else:
-            request_dict[key] = value
-    return request_dict
+    return {
+        key: (value if isinstance(value, list) else [value])
+        for key, value in params.items() if value is not None
+    }
 
 
 @generate_cases([

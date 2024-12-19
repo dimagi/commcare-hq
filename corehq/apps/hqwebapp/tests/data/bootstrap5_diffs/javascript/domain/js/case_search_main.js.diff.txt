@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -1,9 +1,8 @@
+-hqDefine('domain/js/bootstrap3/case_search_main', [
++hqDefine('domain/js/bootstrap5/case_search_main', [
+     'jquery',
+     'hqwebapp/js/initial_page_data',
+-    'domain/js/bootstrap3/case_search',
+-    'hqwebapp/js/bootstrap3/knockout_bindings.ko',     // save button
+-    'commcarehq',
++    'domain/js/bootstrap5/case_search',
++    'hqwebapp/js/bootstrap5/knockout_bindings.ko',     // save button
+ ], function (
+     $,
+     initialPageData,

@@ -9,30 +9,37 @@ from django.utils.translation import gettext
 
 from celery import chord
 
-from corehq.apps.users.role_utils import initialize_domain_with_default_roles
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
-from dimagi.utils.web import get_ip, get_url_base, get_static_url_prefix
+from dimagi.utils.web import get_ip, get_static_url_prefix, get_url_base
 
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
     SubscriptionAdjustmentMethod,
 )
-from corehq.apps.accounting.utils.subscription import ensure_community_or_paused_subscription
+from corehq.apps.accounting.utils.subscription import (
+    ensure_community_or_paused_subscription,
+)
 from corehq.apps.analytics.tasks import (
     HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
     send_hubspot_form,
 )
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqmedia.models import LogoForSystemEmailsReference
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
-from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.registration.models import (
+    RegistrationRequest,
+    SelfSignupWorkflow,
+)
 from corehq.apps.registration.tasks import send_domain_registration_email
 from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.role_utils import initialize_domain_with_default_roles
+from corehq.toggles import USE_LOGO_IN_SYSTEM_EMAILS
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 
 APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
@@ -46,7 +53,8 @@ _soft_assert_registration_issues = soft_assert(
 )
 
 
-def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=False, domain=None, ip=None):
+def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=False, domain=None, ip=None,
+                                   commit=True):
     full_name = form.cleaned_data['full_name']
     new_user = activate_new_user(
         username=form.cleaned_data['email'],
@@ -59,13 +67,14 @@ def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admi
         domain=domain,
         ip=ip,
         atypical_user=form.cleaned_data.get('atypical_user', False),
+        commit=commit
     )
     return new_user
 
 
 def activate_new_user(
     username, password, created_by, created_via, first_name=None, last_name=None,
-    is_domain_admin=False, domain=None, ip=None, atypical_user=False
+    is_domain_admin=False, domain=None, ip=None, atypical_user=False, commit=True
 ):
     now = datetime.utcnow()
 
@@ -77,6 +86,7 @@ def activate_new_user(
         created_via,
         is_admin=is_domain_admin,
         by_domain_required_for_log=bool(domain),
+        commit=commit
     )
     new_user.first_name = first_name
     new_user.last_name = last_name
@@ -95,12 +105,13 @@ def activate_new_user(
     new_user.date_joined = now
     new_user.last_password_set = now
     new_user.atypical_user = atypical_user
-    new_user.save()
+    if commit:
+        new_user.save()
 
     return new_user
 
 
-def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False):
+def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False, is_self_signup=False):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user, strict=True)
 
@@ -154,6 +165,9 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
             })
             new_domain.delete()
             raise ErrorInitializingDomain(f"Subscription setup failed for '{name}'")
+
+        if is_self_signup:
+            SelfSignupWorkflow.objects.create(domain=new_domain.name, initiating_user=current_user.username)
 
     initialize_domain_with_default_roles(new_domain.name)
 
@@ -228,7 +242,8 @@ def send_new_request_update_email(user, requesting_ip, entity_name, entity_type=
     if is_new_sso_user:
         message = f"A new SSO user just requested a {entity_texts[0]} called {entity_name}."
     elif is_confirming:
-        message = "A (basically) brand new user just confirmed his/her account. The %s requested was %s." % (entity_texts[0], entity_name)
+        message = "A (basically) brand new user just confirmed his/her account. The %s requested was %s." % (
+            entity_texts[0], entity_name)
     elif is_new_user:
         message = "A brand new user just requested a %s called %s." % (entity_texts[0], entity_name)
     else:
@@ -256,7 +271,24 @@ You can view the %s here: %s""" % (
         logging.warning("Can't send email, but the message was:\n%s" % message)
 
 
-def send_mobile_experience_reminder(recipient, full_name):
+def project_logo_emails_context(domain, couch_user=None):
+    if couch_user:
+        user_domains = getattr(couch_user, 'domains', None)
+        if user_domains:
+            domain = user_domains[0]
+    if domain and USE_LOGO_IN_SYSTEM_EMAILS.enabled(domain):
+        try:
+            image_reference = LogoForSystemEmailsReference.objects.get(domain=domain)
+            return {
+                "base_container_template": "registration/email/base_templates/_base_container_project_logo.html",
+                "link_to_logo": image_reference.full_url_to_image()
+            }
+        except LogoForSystemEmailsReference.DoesNotExist:
+            pass
+    return {}
+
+
+def send_mobile_experience_reminder(recipient, full_name, additional_email_context={}):
     url = absolute_reverse("login")
 
     params = {
@@ -264,6 +296,7 @@ def send_mobile_experience_reminder(recipient, full_name):
         "url": url,
         'url_prefix': get_static_url_prefix(),
     }
+    params.update(additional_email_context)
     message_plaintext = render_to_string(
         'registration/email/mobile_signup_reminder.txt', params)
     message_html = render_to_string(

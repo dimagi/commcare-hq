@@ -9,7 +9,7 @@ from corehq.apps.groups.models import DeleteGroupRecord
 
 
 class TestDocument(Document):
-    pass
+    __test__ = False
 
 
 class TestSubDocument(TestDocument):

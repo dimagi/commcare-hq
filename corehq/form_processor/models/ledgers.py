@@ -33,7 +33,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.case, self.section_id, self.entry_id
+        return self.case_id, self.section_id, self.entry_id
 
     @property
     def last_modified_date(self):
@@ -129,7 +129,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.case, self.form_id, self.section_id, self.entry_id
+        return self.case_id, self.form_id, self.section_id, self.entry_id
 
     def get_consumption_transactions(self, exclude_inferred_receipts=False):
         """

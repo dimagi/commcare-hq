@@ -1,0 +1,37 @@
+@mixin make-module-size($icon-size) {
+  .module-icon-image,
+  .module-icon-container {
+    width: $icon-size;
+    height: $icon-size;
+  }
+  .module-icon-container {
+    border-radius: $icon-size / 2;
+    .module-icon {
+      font-size: $icon-size * 0.5;
+      line-height: $icon-size;
+      max-width: 100%;
+      max-height: 100%;
+    }
+  }
+  .module-column-icon {
+    width: $icon-size + 0.4 * $icon-size;
+    height: $icon-size + 0.4 * $icon-size;
+  }
+  $control-size: 0.8*$icon-size;
+  .module-audio-control, .module-delete-control {
+    width: $control-size;
+    height: $control-size;
+    right: (0.4 * $icon-size) / 2;
+    margin-top: -$control-size / 2;
+
+    border-radius: $control-size / 2;
+  }
+  .module-audio-icon, .module-delete-icon {
+    font-size: $control-size * 0.5;
+    line-height: $control-size;
+  }
+  .module-column-name-audio h3,
+  .module-column-name-session h3 {
+    margin-right: $control-size + 0.4 * $icon-size !important;
+  }
+}

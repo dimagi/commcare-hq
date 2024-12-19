@@ -22,7 +22,7 @@ def export_all(request):
         else:
             return HttpResponseBadRequest(f'[start] {e}')
 
-    response = HttpResponse()
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="AuditAll.csv"'
     write_export_from_all_log_events(response, start=start, end=end)
     return response

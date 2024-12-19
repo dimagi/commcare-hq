@@ -1,0 +1,78 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<script type="text/template" id="case-view-list-template">
+  <div class="module-case-list-container">
+
+    <button id="scroll-to-bottom"
+            class="btn btn-lg btn-circle btn-primary d-md-none d-lg-none d-none"
+            type="button"
+            aria-label="{% trans_html_attr 'Scroll to bottom' %}">
+      <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
+    </button>
+
+    {% include "cloudcare/partials/case_list/menu_header.html" %}
+
+    <% if (isMultiSelect) { %>
+    <div class="case-list-actions d-grid gap-2 d-md-block">
+      {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
+    </div>
+    <% } %>
+
+    <% if (!splitScreenToggleEnabled) { %>
+    <div class="module-search-container">
+      <div class="input-group input-group-lg">
+        <input type="text"
+               class="form-control"
+               placeholder="Search"
+               id="searchText">
+        <button class="btn btn-outline-primary"
+                type="button"
+                id="case-list-search-button">
+          <i class="fa fa-search" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <% } %>
+
+    <div id="module-case-list-container__results-container"
+         class="row g-0">
+      <% if (showMap) { %>
+        <div id="module-case-list-map"
+             class="sticky sticky-map col-lg-5 order-lg-1<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
+      <% } %>
+      <div id="module-case-list" class="col-lg<% if (showMap) { %>-7<% } %>">
+        <% if (useTiles) { %>
+          <% if (hasNoItems) { %>
+            {% include 'cloudcare/partials/case_list/no_items_text.html' %}
+          <% } else { %>
+            {% include 'cloudcare/partials/case_list/search_controls.html' %}
+          <% } %>
+          <section class="js-case-container clearfix list-cell-container-style"></section>
+        <% } else { %>
+          {% include 'cloudcare/partials/case_list/table_container.html' %}
+        <% } %>
+      </div>
+    </div>
+    <% if (actions || isMultiSelect) { %>
+      <div class="case-list-actions d-grid gap-2 d-md-block">
+        <% if (isMultiSelect) { %>
+          {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
+        <% } %>
+        <% if (actions) { %>
+          <% _.each(actions, function(action, index) { %>
+            <div class="case-list-action-button btn-group formplayer-request">
+              <button type="button" class="btn btn-outline-primary btn-lg " data-index="<%- index %>"><%- action.text %></button>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    <% } %>
+
+    <% if (!hasNoItems) { %>
+      {% block pagination_templates %}
+        {% include 'cloudcare/partials/pagination.html' %}
+      {% endblock %}
+    <% } %>
+  </div>
+</script>

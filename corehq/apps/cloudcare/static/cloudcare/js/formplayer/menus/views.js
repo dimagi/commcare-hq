@@ -1,30 +1,66 @@
-/*globals DOMPurify, Marionette */
-
-hqDefine("cloudcare/js/formplayer/menus/views", function () {
-    const kissmetrics = hqImport("analytix/js/kissmetrix"),
-        constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
-        markdown = hqImport("cloudcare/js/markdown");
-
+'use strict';
+hqDefine("cloudcare/js/formplayer/menus/views", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/markdown',
+    'cloudcare/js/utils',
+    'leaflet-fullscreen/dist/Leaflet.fullscreen.min',   // adds L.control.fullscreen to L
+], function (
+    $,
+    _,
+    Backbone,
+    Marionette,
+    DOMPurify,
+    bootstrap,
+    initialPageData,
+    toggles,
+    kissmetrics,
+    constants,
+    FormplayerFrontend,
+    AppsAPI,
+    UsersModels,
+    formplayerUtils,
+    markdown,
+    cloudcareUtils,
+    L
+) {
     const MenuView = Marionette.View.extend({
+        isGrid: function () {
+            return this.model.collection.layoutStyle === constants.LayoutStyles.GRID;
+        },
         tagName: function () {
-            if (this.model.collection.layoutStyle === 'grid') {
+            if (this.isGrid()) {
                 return 'div';
             } else {
                 return 'tr';
             }
         },
-        className: "formplayer-request",
+        className: function () {
+            let classNames = "formplayer-request";
+            if (this.isGrid()) {
+                classNames += " col-sm-6 col-md-4 col-lg-3";
+            }
+            return classNames;
+        },
         attributes: function () {
             const displayText = this.options.model.attributes.displayText;
+            const badgeText = this.options.model.attributes.badgeText;
             return {
                 "role": "link",
                 "tabindex": "0",
-                "aria-label": displayText,
+                "aria-label": displayText + (badgeText ? "; " + badgeText : ""),
             };
         },
         events: {
@@ -40,7 +76,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         getTemplate: function () {
             let id = "#menu-view-row-template";
-            if (this.model.collection.layoutStyle === constants.LayoutStyles.GRID) {
+            if (this.isGrid()) {
                 id = "#menu-view-grid-item-template";
             } else if (this.model.get('audioUri')) {
                 id = "#menu-view-row-audio-template";
@@ -62,14 +98,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.preventDefault();
             const $playBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-play');
             const $pauseBtn = $playBtn.parent().find('.js-module-audio-pause');
-            $pauseBtn.removeClass('hide');
-            $playBtn.addClass('hide');
+            $pauseBtn.removeClass("d-none");
+            $playBtn.addClass("d-none");
             const $audioElem = $playBtn.parent().find('.js-module-audio');
             if ($audioElem.data('isFirstPlay') !== 'yes') {
                 $audioElem.data('isFirstPlay', 'yes');
                 $audioElem.one('ended', function () {
-                    $playBtn.removeClass('hide');
-                    $pauseBtn.addClass('hide');
+                    $playBtn.removeClass("d-none");
+                    $pauseBtn.addClass("d-none");
                     $audioElem.data('isFirstPlay', 'no');
                 });
             }
@@ -78,8 +114,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         audioPause: function (e) {
             e.preventDefault();
             const $pauseBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-pause');
-            $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
-            $pauseBtn.addClass('hide');
+            $pauseBtn.parent().find('.js-module-audio-play').removeClass("d-none");
+            $pauseBtn.addClass("d-none");
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
         rowKeyAction: function (e) {
@@ -115,7 +151,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             return {
                 title: this.options.title,
-                environment: FormplayerFrontend.getChannel().request('currentUser').environment,
+                isAppPreview: UsersModels.getCurrentUser().isAppPreview,
             };
         },
         childViewOptions: function (model) {
@@ -147,6 +183,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // generate the case tile's style block and insert
     const buildCellLayout = function (tiles, styles, prefix) {
         const borderInTile = Boolean(_.find(styles, s => s.showBorder));
+        const shadingInTile = Boolean(_.find(styles, s => s.showShading));
         const tileModels = _.chain(tiles || [])
             .map(function (tile, idx) {
                 if (tile === null || tile === undefined) {
@@ -161,6 +198,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     horizontalAlign: getValidFieldAlignment(style.horizontalAlign),
                     showBorder: style.showBorder,
                     borderInTile: borderInTile,
+                    showShading: style.showShading,
+                    shadingInTile: shadingInTile,
                 };
             })
             .filter(function (tile) {
@@ -177,7 +216,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
     // useUniformUnits - true if the grid's cells should have the same height as width
-    const buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix) {
+    const buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix, isMultiSelect) {
         let heightString;
 
         if (useUniformUnits) {
@@ -192,6 +231,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             numColumns: numColumns,
             heightString: heightString,
             prefix: prefix,
+            isMultiSelect: isMultiSelect,
         };
         const templateString = $("#cell-grid-style-template").html();
         const template = _.template(templateString);
@@ -233,13 +273,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
-            clickIcon: ".module-icon.clickable-icon",
+            clickIcon: "button.clickable-icon",
             selectRow: ".select-row-checkbox",
             showMore: ".show-more",
         },
 
         events: {
             "click @ui.clickIcon": "iconClick",
+            "keydown @ui.clickIcon": "iconKeyAction",
             "click": "rowClick",
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
@@ -261,6 +302,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             });
             self.smallScreenEnabled = cloudcareUtils.smallScreenIsEnabled();
+            self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
         },
 
         className: "formplayer-request case-row",
@@ -288,8 +330,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
             const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
             const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='));
-            e.target.className += " disabled";
+            $(e.target).closest('button.clickable-icon').addClass('disabled');
             this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
+        },
+
+        iconKeyAction: function (e) {
+            if (e.keyCode === 13 || e.keyCode === 32) {
+                e.preventDefault();
+                this.iconClick(e);
+            }
         },
 
         getFieldIndexFromEvent: function (e) {
@@ -298,25 +347,28 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         clickableIconRequest: function (e, endpointId, caseId, endpointArg, isBackground) {
             const self = this;
-            const clickedIcon = e.target;
-            clickedIcon.classList.add("disabled");
-            clickedIcon.style.display = 'none';
-            const spinnerElement = $(clickedIcon).siblings('i');
-            spinnerElement[0].style.display = '';
+            const $moduleIcon = $(e.target).find('img.module-icon').addBack('img.module-icon');
+            const $iconButton = $(e.target).closest('button.clickable-icon');
+            const $spinnerElement = $iconButton.find('i');
+            $moduleIcon.css('display', 'none');
+            $iconButton.addClass('disabled');
+            $spinnerElement.removeClass("d-none");
+
             const currentUrlToObject = formplayerUtils.currentUrlToObject();
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
-
+            currentUrlToObject.setRequestInitiatedByTag(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             function resetIcon() {
-                clickedIcon.classList.remove("disabled");
-                clickedIcon.style.display = '';
-                spinnerElement[0].style.display = 'none';
+                $moduleIcon.css('display', '');
+                $iconButton.removeClass('disabled');
+                $spinnerElement.addClass("d-none");
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
-                self.reloadCase(self.model.get('id'));
-                resetIcon();
+                self.reloadCase(self.model.get('id')).then(function () {
+                    resetIcon();
+                });
             }).fail(function () {
                 resetIcon();
             });
@@ -326,13 +378,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
+            urlObject.setRequestInitiatedByTag(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             urlObject.clickedIcon = true;
-            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true, true);
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
                 self.updateModelFromDetailResponse(caseId, detailResponse);
             }).fail(function () {
                 console.log('could not get case details');
             });
+            return fetchingDetails;
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
@@ -340,6 +394,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.destroy();
             } else {
                 this.model.set("data", detailResponse.models[0].attributes.details);
+                this.model.set("altText", detailResponse.models[0].attributes.altText);
             }
         },
 
@@ -353,7 +408,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (!(
                 e.target.classList.contains('module-case-list-column-checkbox') ||  // multiselect checkbox
                 e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
-                $(e.target).is('a') ||                                              // actual link, as in markdown
+                $(e.target).closest('a').length ||                                  // actual link, as in markdown
                 e.target.classList.contains('show-more') ||
                 $(e.target).parent().hasClass('show-more')
             )) {
@@ -395,7 +450,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 arrow.addClass("fa-angle-double-down");
                 tileContent.addClass("collapsed-tile-content");
                 const offset = getScrollTopOffset(this.smallScreenEnabled);
-                $(window).scrollTop($(e.currentTarget).parent().offset().top - offset);
+                this.scrollContainer.animate({
+                    scrollTop: this.scrollContainer.scrollTop() + $(e.currentTarget).parent().offset().top - offset,
+                });
             }
 
         },
@@ -408,6 +465,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
+                altText: this.options.model.get('altText'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
@@ -440,7 +498,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileView = CaseView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style",
+        className: "formplayer-request list-cell-wrapper-style card",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
@@ -462,9 +520,33 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileViewUnclickable = CaseTileView.extend({
+        events: {},
+        className: "list-cell-wrapper-style card",
+        rowClick: function () {},
+    });
+
+    const initCaseTileList = function (options) {
+        const numEntitiesPerRow = options.numEntitiesPerRow || 1;
+        const numRows = options.maxHeight;
+        const numColumns = options.maxWidth;
+        const useUniformUnits = options.useUniformUnits;
+
+        const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
+            numEntitiesPerRow, useUniformUnits, 'list', options.isMultiSelect);
+
+        $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle);
+        $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle);
+        // If we have multiple cases per line, need to generate the outer grid style as well
+        if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
+            $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle);
+            $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle);
+        }
+    };
+
     const CaseTileGroupedView = CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style case-tile-group",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group card",
         template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
@@ -529,12 +611,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const PersistentCaseTileView = CaseTileView.extend({
-        className: "formplayer-request",
+        className: function () {
+            return "persistent-sticky" + (this.options.hasInlineTile ? " formplayer-request" : "");
+        },
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
                 FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, false, true);
             }
+        },
+        onAttach: function () {
+            FormplayerFrontend.regions.el.classList.add('has-persistent-case-tile');
+        },
+        onDetach: function () {
+            FormplayerFrontend.regions.el.classList.remove('has-persistent-case-tile');
         },
     });
 
@@ -587,11 +677,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         initialize: function (options) {
-            const self = this;
-            var sidebarNoItemsText = gettext("Please perform a search.");
+            const self = this,
+                sidebarNoItemsText = gettext("Please perform a search.");
             self.styles = options.styles;
             self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
+            self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
@@ -600,7 +691,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 self.selectedCaseIds = [];
             }
-            const user = FormplayerFrontend.currentUser;
+            const user = UsersModels.getCurrentUser();
             const displayOptions = user.displayOptions;
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
@@ -610,6 +701,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 self.handleSmallScreenChange(smallScreenEnabled);
             });
             self.smallScreenListener.listen();
+            self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
         },
 
         ui: CaseListViewUI(),
@@ -664,8 +756,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         scrollToBottom: function () {
-            $([document.documentElement, document.body]).animate({
-                scrollTop: $('.container .pagination-container').offset().top,
+            this.scrollContainer.animate({
+                scrollTop: $('.container.pagination-container').offset().top,
             }, 500);
         },
 
@@ -723,14 +815,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
             const hideButton = $('#hide-map-button');
-            if (!mapDiv.hasClass('hide')) {
-                mapDiv.addClass('hide');
-                moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
+            if (!mapDiv.hasClass("d-none")) {
+                mapDiv.addClass("d-none");
+                moduleCaseList.removeClass('col-lg-7').addClass('col-lg');
                 hideButton.text(gettext('Show Map'));
                 $(e.target).attr('aria-expanded', 'false');
             } else {
-                mapDiv.removeClass('hide');
-                moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
+                mapDiv.removeClass("d-none");
+                moduleCaseList.addClass('col-lg-7').removeClass('col-lg');
                 hideButton.text(gettext('Hide Map'));
                 $(e.target).attr('aria-expanded', 'true');
             }
@@ -780,8 +872,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         verifySelectedCaseIdsLessThanMaxSelectValue: function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
-                    "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                hqRequire(["hqwebapp/js/bootstrap3/alert_user"], function (alertUser) {
+                    "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
+                hqRequire(["hqwebapp/js/bootstrap5/alert_user"], function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
             }
@@ -789,7 +881,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         fontAwesomeIcon: function (iconName) {
             return L.divIcon({
-                html: `<i class='fa ${iconName} fa-4x'></i>`,
+                html: `<i class='${iconName} fa-4x'></i>`,
                 iconSize: [12, 12],
                 className: 'marker-pin',
             });
@@ -797,19 +889,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
+            const defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
 
             try {
-                const locationIcon = this.fontAwesomeIcon("fa-map-marker");
-                const selectedLocationIcon = this.fontAwesomeIcon("fa-star");
-                const homeLocationIcon = this.fontAwesomeIcon("fa-street-view");
+                const locationIcon = this.fontAwesomeIcon("fa-solid fa-location-dot");
+                const selectedLocationIcon = this.fontAwesomeIcon("fa fa-star");
+                const homeLocationIcon = this.fontAwesomeIcon("fa fa-street-view");
 
-                const lat = 30;
-                const lon = 15;
+                let initialLat = 30;
+                let initialLon = 15;
+                if (defaultGeocoderLocation && defaultGeocoderLocation.coordinates) {
+                    initialLat = defaultGeocoderLocation.coordinates.latitude;
+                    initialLon = defaultGeocoderLocation.coordinates.longitude;
+                }
                 const zoom = 3;
                 const addressMap = L.map(
                     'module-case-list-map', {
                         zoomControl: false,
-                    }).setView([lat, lon], zoom);
+                    }).setView([initialLat, initialLon], zoom);
 
                 L.control.zoom({
                     position: 'bottomright',
@@ -860,6 +957,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                 }
 
                                 marker.on('click', () => {
+                                    if (popupIndex < 0) {
+                                        const urlObject = formplayerUtils.currentUrlToObject();
+                                        urlObject.addSelection(model.get('id'));
+                                        const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, false, false);
+                                        $.when(fetchingDetails).done(function (detailResponse) {
+                                            const attributes = Array.from(detailResponse)[0].attributes;
+                                            const popupIndexOnClick =
+                                                _.findIndex(attributes.styles, (style) => style.displayFormat === constants.FORMAT_ADDRESS_POPUP);
+                                            if (popupIndexOnClick >= 0) {
+                                                const popupTextOnClick = markdown.render(attributes.details[popupIndexOnClick]);
+                                                const p = L.popup().setContent(popupTextOnClick);
+                                                marker.bindPopup(p).openPopup();
+                                            }
+                                        }).fail(function () {
+                                            console.log('could not get case details');
+                                        });
+                                    }
                                     // tiles
                                     $(`.list-cell-wrapper-style[id!='${rowId}']`)
                                         .removeClass("highlighted-case");
@@ -872,8 +986,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     marker.setIcon(selectedLocationIcon);
 
                                     const offset = getScrollTopOffset(this.smallScreenEnabled, addressMap.isFullscreen());
-                                    $([document.documentElement, document.body]).animate({
-                                        scrollTop: $(`#${rowId}`).offset().top - offset,
+                                    this.scrollContainer.animate({
+                                        scrollTop: this.scrollContainer.scrollTop() + $(`#${rowId}`).offset().top - offset,
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
@@ -890,7 +1004,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         .addTo(addressMap);
                     allCoordinates.push(homeCoordinates);
                 }
-                addressMap.fitBounds(allCoordinates, {maxZoom: 14});
+                if (allCoordinates.length > 0) {
+                    addressMap.fitBounds(allCoordinates, {maxZoom: 14});
+                } else if (defaultGeocoderLocation.bbox) {
+                    const bbox = defaultGeocoderLocation.bbox;
+                    const southWestCorner = L.latLng(bbox[1], bbox[0]);
+                    const northEastCorner = L.latLng(bbox[3], bbox[2]);
+                    const bounds = L.latLngBounds(southWestCorner, northEastCorner);
+                    addressMap.fitBounds(bounds);
+                }
             } catch (error) {
                 console.error(error);
             }
@@ -909,9 +1031,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         shouldShowScrollButton: function () {
-            const $pagination = $('.container .pagination-container');
+            const self = this;
+            const $pagination = $('.container.pagination-container');
             const paginationOffscreen = $pagination[0]
-                ? $pagination.offset().top - $(window).scrollTop() > window.innerHeight : false;
+                ? $pagination.offset().top - self.scrollContainer.scrollTop() > self.scrollContainer.innerHeight() : false;
             return paginationOffscreen;
         },
 
@@ -922,46 +1045,39 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
             self.handleSmallScreenChange(self.smallScreenEnabled);
             self.boundHandleScroll = self.handleScroll.bind(self);
-            $(window).on('scroll', self.boundHandleScroll);
+            self.scrollContainer.on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
-                $('#scroll-to-bottom').show();
+                $('#scroll-to-bottom').removeClass("d-none");
             }
         },
 
         onBeforeDetach: function () {
             const self = this;
             self.smallScreenListener.stopListening();
-            $(window).off('scroll', self.boundHandleScroll);
+            self.scrollContainer.off('scroll', self.boundHandleScroll);
         },
 
         templateContext: function () {
-            const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
+            const paginateItems = formplayerUtils.paginateOptions(
+                this.options.currentPage,
+                this.options.pageCount,
+                this.options.collection.length
+            );
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
-            const boldSortedCharIcon = (header) => {
-                const headerWords = header.trim().split(' ');
-                const lastChar = headerWords.pop();
-
-                return lastChar === "Λ" || lastChar === "V"
-                    ? `${headerWords.join(' ')} <b>${lastChar}</b>`
-                    : header;
-            };
             let description = this.options.description;
             let title = this.options.title;
             if (this.options.sidebarEnabled && this.options.collection.queryResponse) {
                 description = this.options.collection.queryResponse.description;
                 title = this.options.collection.queryResponse.title;
             }
-            return {
-                startPage: paginateItems.startPage,
+            return _.extend(paginateItems, {
                 title: title.trim(),
-                description: description === undefined ? "" : DOMPurify.sanitize(markdown.render(description.trim())),
-                headers: this.headers.map(boldSortedCharIcon),
+                description: description === undefined ? "" : markdown.render(description.trim()),
+                selectText: this.selectText === undefined ? "" : this.selectText,
+                headers: this.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                endPage: paginateItems.endPage,
-                pageCount: paginateItems.pageCount,
-                rowRange: [5, 10, 25, 50, 100],
                 limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
@@ -974,6 +1090,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 isMultiSelect: false,
                 showMap: this.showMap,
                 sidebarEnabled: this.options.sidebarEnabled,
+                splitScreenToggleEnabled: toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 smallScreenEnabled: this.smallScreenEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
 
@@ -983,8 +1100,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
-                pageNumLabel: _.template(gettext("Page <%-num%>")),
-            };
+            });
         },
     });
 
@@ -1043,10 +1159,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // - shape and size of the tile's layout grid
     // - the tile's visual style and its outer boundary
     // - layout of the case tiles on the outer, visible grid
-    const buildCaseTileStyles = function (tiles, styles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
+    const buildCaseTileStyles = function (tiles, styles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix, isMultiSelect) {
         const caseTileStyles = {};
         caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, styles, prefix);
-        caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
+        caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix, isMultiSelect);
         if (numEntitiesPerRow > 1) {
             caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
             caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template");
@@ -1064,26 +1180,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function (options) {
             CaseTileListView.__super__.initialize.apply(this, arguments);
-
-            const numEntitiesPerRow = options.numEntitiesPerRow || 1;
-            const numRows = options.maxHeight;
-            const numColumns = options.maxWidth;
-            const useUniformUnits = options.useUniformUnits;
-
-            const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
-                numEntitiesPerRow, useUniformUnits, 'list');
-
-            const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
-
-            $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
-            $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
-            // If we have multiple cases per line, need to generate the outer grid style as well
-            if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
-                $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
-                $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
-            }
-
-            $.getScript(gridPolyfillPath);
+            initCaseTileList(options);
 
             registerContinueListener(this, options);
         },
@@ -1108,6 +1205,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
             dict.useTiles = true;
             dict.isMultiSelect = this.options.isMultiSelect;
+            dict.sortOptions = _.map(dict.sortIndices, function (sortIndex) {
+                let header = dict.headers[sortIndex],
+                    sortOrder = null,
+                    headerWords = header.trim().split(' '),
+                    lastChar = headerWords.pop();
+                if (lastChar === "Λ" || lastChar === "V") {
+                    header = headerWords.join(' ');
+                    sortOrder = lastChar;
+                }
+                return {
+                    index: sortIndex,
+                    header: header,
+                    sortOrder: sortOrder,
+                };
+            });
             return dict;
         },
 
@@ -1124,10 +1236,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        onBeforeDetach: function () {
-            CaseTileListView.__super__.onBeforeDetach.apply(this, arguments);
-            $('#content-container').removeClass('full-width');
-        },
     });
 
     const CaseTileGroupedListView = CaseTileListView.extend({
@@ -1176,21 +1284,28 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
     });
+    const CaseTileDetailView = CaseListView.extend({
+        template: _.template($("#case-view-tile-detail-template").html() || ""),
+        childView: CaseTileViewUnclickable,
+
+        initialize: function (options) {
+            CaseTileDetailView.__super__.initialize.apply(this, arguments);
+            initCaseTileList(options);
+        },
+
+        childViewOptions: function () {
+            const dict = CaseTileDetailView.__super__.childViewOptions.apply(this, arguments);
+            dict.prefix = 'list';
+            return dict;
+        },
+    });
 
     const BreadcrumbView = Marionette.View.extend({
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
-        className: "breadcrumb-text",
+        className: "breadcrumb-item",
         attributes: function () {
-            let attributes = {
-                "role": "link",
-                "tabindex": "0",
-                "style": this.buildMaxWidth(),
-            };
-            if (this.options.model.get('ariaCurrentPage')) {
-                attributes['aria-current'] = 'page';
-            }
-            return attributes;
+            return {"style": this.buildMaxWidth()};
         },
         events: {
             "click": "crumbClick",
@@ -1211,6 +1326,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.crumbClick(e);
             }
         },
+        templateContext: function () {
+            return {isCurrentPage: this.options.model.get('ariaCurrentPage')};
+        },
     });
 
     const BreadcrumbListView = Marionette.CollectionView.extend({
@@ -1223,12 +1341,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keydown .js-home': 'onKeyActionHome',
         },
         onClickHome: function () {
+            if (!FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm()) {
+                return;
+            }
             FormplayerFrontend.trigger('navigateHome');
         },
         onKeyActionHome: function (e) {
             if (e.keyCode === 13) {
                 this.onClickHome();
             }
+        },
+        onAttach: function () {
+            // Add class to #cloudcare-main so other elements can offset with CSS
+            FormplayerFrontend.regions.el.classList.add('has-breadcrumbs');
+        },
+        onBeforeDetach: function () {
+            FormplayerFrontend.regions.el.classList.remove('has-breadcrumbs');
         },
     });
 
@@ -1297,15 +1425,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 languageOptionsEnabled: languageOptionsEnabled,
             };
         },
-        events: {
-            "keydown": "expandDropdown",
-        },
-        expandDropdown: function (e) {
-            if (e.keyCode === 13 || e.keyCode === 32) {
-                e.preventDefault();
-                $(this.ui.dropdownMenu).toggleClass("open");
-            }
-        },
     });
 
     const DetailView = Marionette.View.extend({
@@ -1331,8 +1450,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const DetailTabView = Marionette.View.extend({
         tagName: "li",
-        className: function () {
-            return this.options.model.get('active') ? 'active' : '';
+        className: "nav-item",
+        attributes: {
+            role: "presentation",
         },
         template: _.template($("#detail-view-tab-item-template").html() || ""),
         events: {
@@ -1363,7 +1483,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseDetailFooterView = Marionette.View.extend({
         tagName: "div",
-        className: "",
+        className: "d-flex gap-2 justify-content-center",
         events: {
             "click #select-case": "selectCase",
         },
@@ -1395,6 +1515,119 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    /* Handle an individual menu item. Also contains a child list view */
+    const PersistentMenuItemView = Marionette.View.extend({
+        tagName: "li",
+        template: _.template($("#persistent-menu-item").html() || ""),
+        regions: {
+            tree: {
+                el: 'ul',
+                replaceElement: true,
+            },
+        },
+        triggers: {
+            "click a": "click:persistent:menu:command",  // magically calls onClickPersistentMenuCommand
+        },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                imageUri = this.model.get('imageUri'),
+                icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder', ENTITY_SELECT: 'fa-list-ul'};
+            return {
+                imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+                iconClass: icons[this.model.get('navigationState')] || 'fa-arrow-up-right-from-square',
+                isActive: this.model.get('isActiveSelection'),
+            };
+        },
+        onRender: function () {
+            if (!_.isEmpty(this.model.get('commands'))) {
+                this.showChildView('tree', new PersistentMenuListView({
+                    collection: this.model.get('commands'),
+                }));
+            }
+        },
+        onClickPersistentMenuCommand: function () {
+            FormplayerFrontend.trigger("persistentMenuSelect", this.model.get('selections'));
+        },
+    });
+
+    /* Handle a collection of sibling menu items at the same level */
+    const PersistentMenuListView = Marionette.CollectionView.extend({
+        tagName: "ul",
+        className: "list-unstyled",
+        childView: PersistentMenuItemView,
+    });
+
+    /*
+      This view operates on a collection of persistent menu items, each of which
+      may contain its own collection in a recursive tree structure.
+      PersistentMenuView manages the top level of the menu
+    */
+    const PersistentMenuView = Marionette.View.extend({
+        tagName: "div",
+        template: _.template($("#persistent-menu-template").html() || ""),
+        regions: {
+            menu: "#persistent-menu-content",
+        },
+        events: {
+            'click #app-main': 'onClickAppMain',
+        },
+        handleSmallScreenChange: function (smallScreenEnabled) {
+            const offcanvas = 'offcanvas';
+            const collapse = 'collapse';
+            const containerDesktopClasses = collapse + ' position-relative';
+            const containerMobileClasses = offcanvas + ' offcanvas-start';
+            if (smallScreenEnabled) {
+                $('#persistent-menu-container').removeClass(containerDesktopClasses + ' show');
+                $('#persistent-menu-container').addClass(containerMobileClasses);
+                $('#persistent-menu-arrow-toggle').attr('aria-expanded', false);
+                $('#persistent-menu-close-button').removeAttr('data-bs-toggle');
+                $('#persistent-menu-close-button').attr('data-bs-dismiss', offcanvas);
+                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', offcanvas);
+            } else {
+                $('#persistent-menu-container').removeClass(containerMobileClasses);
+                $('#persistent-menu-container').addClass(containerDesktopClasses);
+                if (sessionStorage.showPersistentMenu !== 'false') {
+                    $('#persistent-menu-container').addClass('show');
+                }
+                $('#persistent-menu-arrow-toggle').attr('aria-expanded', true);
+                $('#persistent-menu-close-button').removeAttr('data-bs-dismiss');
+                $('#persistent-menu-close-button').attr('data-bs-toggle', collapse);
+                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', collapse);
+            }
+        },
+        initialize: function () {
+            self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                this.handleSmallScreenChange(smallScreenEnabled);
+            });
+            self.smallScreenListener.listen();
+        },
+        onRender: function () {
+            this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
+        },
+        onAttach: function () {
+            this.handleSmallScreenChange(cloudcareUtils.smallScreenIsEnabled());
+            $('#persistent-menu-container').on('hidden.bs.collapse', function () {
+                sessionStorage.showPersistentMenu = false;
+            });
+            $('#persistent-menu-container').on('show.bs.collapse', function () {
+                sessionStorage.showPersistentMenu = true;
+            });
+        },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                currentApp = AppsAPI.getAppEntity(appId),
+                appName = currentApp.get('name'),
+                imageUri = currentApp.get('imageUri');
+            return {
+                appName: appName,
+                imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+            };
+        },
+        onClickAppMain: function () {
+            FormplayerFrontend.trigger("persistentMenuSelect");
+        },
+    });
+
     return {
         buildCaseTileStyles: buildCaseTileStyles,
         BreadcrumbListView: function (options) {
@@ -1408,6 +1641,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         CaseListDetailView: function (options) {
             return new CaseListDetailView(options);
+        },
+        CaseTileDetailView: function (options) {
+            return new CaseTileDetailView(options);
         },
         CaseListView: function (options) {
             return new CaseListView(options);
@@ -1432,6 +1668,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
+        },
+        PersistentMenuView: function (options) {
+            return new PersistentMenuView(options);
         },
     };
 })

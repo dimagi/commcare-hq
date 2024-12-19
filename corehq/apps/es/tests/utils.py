@@ -4,14 +4,14 @@ from datetime import datetime
 from functools import wraps
 from inspect import isclass
 
-from nose.plugins.attrib import attr
-from nose.tools import nottest
+import pytest
 
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.tests.utils import get_pillow_doc_adapter
 
 from corehq.apps.es.client import ElasticMultiplexAdapter
 from corehq.apps.es.migration_operations import CreateIndex
+from corehq.tests.tools import nottest
 from corehq.tests.util.warnings import filter_warnings
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.elasticsearch import NotFoundError
@@ -26,7 +26,7 @@ TEST_ES_MAPPING = {
     },
     "properties": {
         "doc_type": {
-            "index": "not_analyzed", "type": "string"
+            "type": "keyword"
         },
     }
 }
@@ -39,7 +39,7 @@ ignore_index_settings_key_warning = filter_warnings(
     UserWarning,
 )
 
-es_test_attr = attr(es_test=True)
+es_test_attr = pytest.mark.es_test
 
 
 class TEST_ES_INFO:
@@ -98,7 +98,7 @@ class ElasticTestMixin(object):
 @nottest
 def es_test(test=None, requires=None, setup_class=False):
     """Decorator for Elasticsearch tests.
-    The decorator sets the ``es_test`` nose attribute and optionally performs
+    The decorator sets the ``es_test`` pytest marker and optionally performs
     index setup/cleanup before and after the test(s).
 
     :param test: A test class, method, or function -- only used via the

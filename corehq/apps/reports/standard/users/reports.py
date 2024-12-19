@@ -264,7 +264,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                 [f"{key}: {value or _('None')}" for key, value in list(all_changes.items())]
             )
         else:
-            return render_to_string("reports/standard/partials/user_history_changes.html", {
+            return render_to_string("reports/standard/partials/bootstrap3/user_history_changes.html", {
                 "primary_changes": self._html_list(primary_changes),
                 "all_changes": self._html_list(all_changes),
                 "more_count": more_count,

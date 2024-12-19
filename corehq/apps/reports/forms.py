@@ -317,6 +317,14 @@ class TableauServerForm(forms.Form):
         label=_('Target Site'),
     )
 
+    get_reports_using_role = forms.BooleanField(
+        label=_("Get Tableau reports using role name"),
+        required=False,
+        help_text=_("If checked, CommCareHQ will request embedded reports from Tableau Server using the user's "
+                    "role name instead of the user's username (e.g. \"HQ/Field Implementer\" instead of "
+                    "\"HQ/Leandra@dimagi.com\")")
+    )
+
     tableau_groups_allowed = forms.MultipleChoiceField(
         label=_("Allowed Tableau Groups"),
         choices=[],
@@ -331,6 +339,7 @@ class TableauServerForm(forms.Form):
             'server_name',
             'validate_hostname',
             'target_site',
+            'get_reports_using_role'
             'tableau_groups_allowed'
         ]
 
@@ -354,6 +363,9 @@ class TableauServerForm(forms.Form):
             ),
             crispy.Div(
                 crispy.Field('target_site'),
+            ),
+            crispy.Div(
+                crispy.Field('get_reports_using_role'),
             ),
             FormActions(
                 crispy.Submit('submit_btn', 'Submit')
@@ -395,6 +407,7 @@ class TableauServerForm(forms.Form):
             'server_name': self._existing_config.server_name,
             'validate_hostname': self._existing_config.validate_hostname,
             'target_site': self._existing_config.target_site,
+            'get_reports_using_role': self._existing_config.get_reports_using_role,
             'allowed_tableau_groups': self._existing_config.allowed_tableau_groups,
         }
 
@@ -402,6 +415,7 @@ class TableauServerForm(forms.Form):
         self._existing_config.server_type = self.cleaned_data['server_type']
         self._existing_config.server_name = self.cleaned_data['server_name']
         self._existing_config.validate_hostname = self.cleaned_data['validate_hostname']
+        self._existing_config.get_reports_using_role = self.cleaned_data['get_reports_using_role']
         self._existing_config.target_site = self.cleaned_data['target_site']
         if self.add_allowed_tableau_groups_field:
             self._existing_config.allowed_tableau_groups = [
@@ -413,6 +427,12 @@ class TableauVisualizationForm(forms.ModelForm):
     view_url = forms.CharField(
         label=_('View URL'),
     )
+    location_safe = forms.BooleanField(
+        label=_('Visible to location-restricted users'),
+        help_text=_('If checked, the visualization will be visible to users with roles that do not have '
+                    '"Full Organization Access"'),
+        required=False,
+    )
 
     class Meta:
         model = TableauVisualization
@@ -420,6 +440,7 @@ class TableauVisualizationForm(forms.ModelForm):
             'title',
             'server',
             'view_url',
+            'location_safe',
         ]
 
     def __init__(self, domain, *args, **kwargs):
@@ -435,6 +456,7 @@ class TableauVisualizationForm(forms.ModelForm):
             crispy.Field('title'),
             crispy.Field('server'),
             crispy.Field('view_url'),
+            crispy.Field('location_safe'),
 
             FormActions(
                 StrictButton(
@@ -469,6 +491,7 @@ class UpdateTableauVisualizationForm(TableauVisualizationForm):
             'title',
             'server',
             'view_url',
+            'location_safe',
         ]
 
     @property
@@ -482,6 +505,7 @@ class UpdateTableauVisualizationForm(TableauVisualizationForm):
                 crispy.Field('title'),
                 crispy.Field('server'),
                 crispy.Field('view_url'),
+                crispy.Field('location_safe'),
                 css_class='modal-body',
             ),
             FormActions(

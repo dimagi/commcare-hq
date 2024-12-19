@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 from django.contrib.auth.views import (
     PasswordChangeDoneView,
     PasswordChangeView,
@@ -32,6 +32,7 @@ from corehq.apps.domain.views.accounting import (
     InternalSubscriptionManagementView,
     InvoiceStripePaymentView,
     SelectedAnnualPlanView,
+    SelectedCustomPlanView,
     SelectedEnterprisePlanView,
     SelectPlanView,
     SubscriptionRenewalView,
@@ -48,7 +49,6 @@ from corehq.apps.domain.views.internal import (
     FlagsAndPrivilegesView,
     ProjectLimitsView,
     TransferDomainView,
-    TestBootstrap5DomainView,
     calculated_properties,
     toggle_diff,
 )
@@ -66,6 +66,7 @@ from corehq.apps.domain.views.settings import (
     CaseSearchConfigView,
     DefaultProjectSettingsView,
     EditBasicProjectInfoView,
+    EditDomainAlertView,
     EditMyProjectSettingsView,
     EditPrivacySecurityView,
     FeaturePreviewsView,
@@ -75,6 +76,7 @@ from corehq.apps.domain.views.settings import (
     RecoveryMeasuresHistory,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.integration.urls import settings_patterns as integration_settings
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -85,7 +87,7 @@ from corehq.motech.repeaters.views import (
 )
 
 PASSWORD_RESET_KWARGS = {
-    'template_name': 'login_and_password/password_reset_form.html',
+    'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
     'extra_context': {'current_page': {'page_name': _('Password Reset')}}
@@ -121,7 +123,7 @@ urlpatterns = [
         name='password_reset_done'),
     url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
         CustomPasswordResetView.as_view(
-            template_name='login_and_password/password_reset_confirm.html',
+            template_name='login_and_password/bootstrap3/password_reset_confirm.html',
             form_class=HQSetPasswordForm,
             extra_context={'current_page': {'page_name': _('Password Reset Confirmation')}},
         ),
@@ -135,7 +137,8 @@ urlpatterns = [
 domain_settings = [
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
-    url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
+    url(r'^basic/$',
+        waf_allow('XSS_BODY')(EditBasicProjectInfoView.as_view()), name=EditBasicProjectInfoView.urlname),
     url(r'^call_center_owner_options/', CallCenterOwnerOptionsView.as_view(),
         name=CallCenterOwnerOptionsView.url_name),
     url(r'^privacy/$', EditPrivacySecurityView.as_view(), name=EditPrivacySecurityView.urlname),
@@ -146,6 +149,8 @@ domain_settings = [
         name=SelectedEnterprisePlanView.urlname),
     url(r'^subscription/change/request_annual/$', SelectedAnnualPlanView.as_view(),
         name=SelectedAnnualPlanView.urlname),
+    url(r'^subscription/change/request_custom/$', SelectedCustomPlanView.as_view(),
+        name=SelectedCustomPlanView.urlname),
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
     url(r'^subscription/change/pause/$', pause_subscription, name='pause_subscription'),
@@ -187,11 +192,11 @@ domain_settings = [
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
-    url(r'^internal/bootstrap5/$', TestBootstrap5DomainView.as_view(), name=TestBootstrap5DomainView.urlname),
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(),
         name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
+    url(r'^alerts/edit/(?P<alert_id>[\w\-]+)/$', EditDomainAlertView.as_view(), name=EditDomainAlertView.urlname),
     url(r'^alerts/$', ManageDomainAlertsView.as_view(), name=ManageDomainAlertsView.urlname),
     url(r'^alerts/delete/$', delete_domain_alert, name='delete_domain_alert'),
     url(r'^alerts/update_status/$', update_domain_alert_status, name='update_domain_alert_status'),

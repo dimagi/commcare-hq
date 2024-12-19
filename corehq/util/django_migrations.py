@@ -220,8 +220,8 @@ def patch_migration_autodetector(makemigrations_command):
         with _patch(MigrationAutodetector, "_sort_migrations", _sort_migrations):
             return real_detect_changes(self, convert_apps=convert_apps, graph=graph)
 
-    def write_files(changes):
-        result = real_write_files(changes)
+    def write_files(*args):
+        result = real_write_files(*args)
         if not makemigrations_command.dry_run:
             for write_op in write_ops:
                 write_op()

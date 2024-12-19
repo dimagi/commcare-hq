@@ -1,0 +1,24 @@
+#
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"App-Id: 47a20b417ad4fad19006e9aa6302513b\n"
+"Language: en\n"
+"PO-Creation-Date: 2024-03-05 17:54:33.896525\n"
+"Version: 20\n"
+
+#: :1
+msgctxt "Module:module1:fce00a6bfc004b62a84a3a75466257ae"
+msgid "Case List"
+msgstr "Case List"
+
+#: :2
+msgctxt "Form:module1_form1:a2ca659474fe4b9c8474cc34cc4213c9"
+msgid "Registration Form"
+msgstr "Registration Form"
+
+#: :3
+msgctxt "Form:module1_form2:f799648efeac47f8b469e2854b56b121"
+msgid "Followup Form"
+msgstr "Followup Form"

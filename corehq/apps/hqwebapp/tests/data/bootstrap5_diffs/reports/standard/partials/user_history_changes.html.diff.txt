@@ -1,0 +1,10 @@
+--- 
++++ 
+@@ -8,6 +8,6 @@
+     {% blocktrans with count=more_count %}
+       <a class="see-all-link">See {{ count }} More</a>
+     {% endblocktrans %}
+-    <div class="see-all-complete hide">{{ all_changes }}</div>
++    <div class="see-all-complete d-none">{{ all_changes }}</div>
+   {% endif %}
+ </div>

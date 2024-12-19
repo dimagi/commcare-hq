@@ -1,0 +1,118 @@
+$card-dashboard-border: darken($navbar-default-bg, 5);
+$card-dashboard-header-bg: $navbar-default-bg;
+
+.dashboard-icon {
+  display: block;
+  text-align: center;
+}
+
+.dashboard-icon-large {
+  margin: 0 auto;
+  $icon-size: 220px;
+  width: $icon-size;
+  height: $icon-size;
+  font-size: 200px;
+}
+
+.dashboard-icon-medium {
+  $icon-size: 230px;
+  width: 100%;
+  height: $icon-size;
+  margin: 0 auto;
+  font-size: 170px;
+  @include media-breakpoint-down(lg) {
+    font-size: 140px;
+    padding-top: 15px;
+  }
+  @include media-breakpoint-down(md) {
+    font-size: 170px;
+  }
+}
+
+.dashboard-icon-bg {
+  position: absolute;
+  top: 4.75 * $font-size-base;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: #e7e7e7;
+}
+
+.dashboard-link,
+.dashboard-button {
+  &:hover,
+  &:focus {
+    text-decoration: none;
+    outline: none;
+    .dashboard-icon-medium {
+      background-position: 0px -189px;
+    }
+  }
+}
+
+.card-dashboard {
+  .card-header {
+    text-align: center;
+    font-size: $font-size-base * 1.5;
+  }
+}
+
+.card-dashboard-medium {
+  height: 22.9167 * $font-size-base;
+  position: relative;
+
+  .list-group {
+    margin-bottom: 10px;
+    .list-group-item {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 7px 10px;
+      background-color: rgba(255, 255, 255, 0.4);
+      position: relative;
+      &:hover {
+        background-color: rgba(244, 244, 244, 0.9);
+
+        .list-group-item-icon {
+          visibility: visible;
+        }
+      }
+      .list-group-item-icon {
+        position: absolute;
+        right: 5px;
+        top: 3px;
+        padding: 5px;
+        background-color: $cc-bg;
+        visibility: hidden;
+      }
+    }
+  }
+
+  .pagination {
+    margin: 0;
+    position: absolute;
+    bottom: 18px;
+    > li > a {
+      padding: 3px 7px;
+      background-color: rgba(255, 255, 255, 0.4);
+      &:hover {
+        background-color: rgba(244, 244, 244, 0.9);
+      }
+    }
+    li.active a {
+      background-color: rgba(21, 87, 162, 0.9);
+    }
+  }
+
+  .popover {
+    width: 300px;
+  }
+
+  .fa-spin {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    margin-left: -28px;
+    z-index: $zindexDashboardSpinner;
+  }
+}

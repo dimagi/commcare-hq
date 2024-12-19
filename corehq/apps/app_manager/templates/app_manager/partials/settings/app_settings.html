@@ -86,7 +86,7 @@
     </div>
     <div class="col-sm-1">
       <button class="btn btn-danger" data-bind="click: $parent.onDestroyCustomProperty">
-        <i class="fa fa-trash"></i>
+        <i class="fa-regular fa-trash-can"></i>
       </button>
     </div>
   </div>
@@ -107,12 +107,12 @@
             'data-hqmediapath': path,
             href: href
         },
-        click: triggerUpload,
         event: {
+            click: triggerUpload,
             mediaUploadComplete: uploadComplete
         }
     ">
-    <i class="fa fa-cloud-upload"></i>
+    <i class="fa-solid fa-cloud-arrow-up"></i>
     <span data-bind="visible: url()">
             {% trans "Replace Logo" %}
         </span>
@@ -128,8 +128,6 @@
     <i class="fa fa-remove"></i>
   </a>
 </script>
-
-{% include 'hqmedia/partials/multimedia_js.html' %}
 
 <script type="text/html" id="CommcareSettings.widgets.text">
   <span>
@@ -157,12 +155,6 @@
     </span>
 </script>
 
-<script type="text/html" id="CommcareSettings.widgets.password">
-  <span>
-        <input type="password" data-bind="passwordSetter: visibleValue" class="form-control" />
-    </span>
-</script>
-
 <script type="text/html" id="CommcareSettings.widgets.text_input">
   <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
   <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
@@ -186,24 +178,6 @@
     </div>
   </aside>
 </script>
-
-{% if request|ui_notify_enabled:"APP_BUILDER_ADD_ONS" %}
-  <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-no-arrow fade in"
-       data-slug="{{ "APP_BUILDER_ADD_ONS"|ui_notify_slug }}"
-       role="alert">
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-      <span aria-hidden="true">&times;</span>
-    </button>
-    <p class="lead">{% trans 'New Add-ons tab' %}</p>
-    <p>
-      {% blocktrans %}
-        Intermediate functionality, such as child cases, can now be enabled or disabled using the
-        <strong>Add-Ons</strong> tab below. Several feature previews, such as icons in the case list,
-        are also now accessible in this tab.
-      {% endblocktrans %}
-    </p>
-  </div>
-{% endif %}
 
 <div class="tabbable">
   <ul class="nav nav-tabs sticky-tabs">
@@ -317,7 +291,7 @@
         <legend>{% trans "Delete Application" %}</legend>
         <div class="panel-body">
           <a href="#delete-app-modal" class="btn btn-danger" data-toggle="modal">
-            <i class="fa fa-trash"></i>
+            <i class="fa-regular fa-trash-can"></i>
             {% trans "Delete this application" %}
           </a>
         </div>

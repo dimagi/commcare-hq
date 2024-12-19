@@ -7,7 +7,7 @@ from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
@@ -34,8 +34,7 @@ from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
-from tastypie.resources import ModelResource, Resource, convert_post_to_patch
-from tastypie.utils import dict_strip_unicode_keys
+from tastypie.resources import ModelResource, Resource
 
 
 from phonelog.models import DeviceReportEntry
@@ -114,6 +113,7 @@ from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
     get_user_id_by_username,
 )
+from corehq.apps.users.exceptions import ModifyUserStatusException
 from corehq.apps.users.models import (
     CommCareUser,
     ConnectIDUserLink,
@@ -121,7 +121,13 @@ from corehq.apps.users.models import (
     HqPermissions,
     WebUser,
 )
-from corehq.apps.users.util import generate_mobile_username, raw_username
+from corehq.apps.users.util import (
+    generate_mobile_username,
+    raw_username,
+    log_user_change,
+    verify_modify_user_conditions,
+)
+from corehq.apps.users.validation import validate_profile_required
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -130,6 +136,7 @@ from corehq.util.timer import TimingContext
 from ..exceptions import UpdateUserException
 from ..user_updates import update
 from . import (
+    ApiVersioningMixin,
     CorsResourceMixin,
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -138,7 +145,6 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
-
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -226,6 +232,8 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
+    primary_location = fields.CharField()
+    locations = fields.ListField()
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -247,7 +255,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
                                                           domain=obj.domain,
-                                                          api_name=self._meta.api_name,
+                                                          api_name=self.api_name,
                                                           pk=obj._id))
 
     def obj_create(self, bundle, **kwargs):
@@ -261,7 +269,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
-
+        try:
+            validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
+        except ValidationError as e:
+            raise BadRequest(e.message)
         try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
@@ -316,16 +327,65 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
 
+    def dehydrate_primary_location(self, bundle):
+        return bundle.obj.get_location_id(bundle.obj.domain)
+
+    def dehydrate_locations(self, bundle):
+        return bundle.obj.get_location_ids(bundle.obj.domain)
+
     @classmethod
     def _update(cls, bundle, user_change_logger=None):
         errors = []
-        for key, value in bundle.data.items():
+
+        location_object = {'primary_location': bundle.data.pop('primary_location', None),
+                           'locations': bundle.data.pop('locations', None)}
+
+        items_to_update = list(bundle.data.items()) + [('location', location_object)]
+
+        for key, value in items_to_update:
             try:
                 update(bundle.obj, key, value, user_change_logger)
             except UpdateUserException as e:
                 errors.append(e.message)
 
         return errors
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('activate_user'), name="api_activate_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/deactivate/$", self.wrap_view('deactivate_user'), name="api_deactivate_user"),
+        ]
+
+    @location_safe
+    def activate_user(self, request, **kwargs):
+        return self._modify_user_status(request, **kwargs, active=True)
+
+    @location_safe
+    def deactivate_user(self, request, **kwargs):
+        return self._modify_user_status(request, **kwargs, active=False)
+
+    def _modify_user_status(self, request, active, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+        self.throttle_check(request)
+
+        user = CommCareUser.get_by_user_id(kwargs['pk'], kwargs["domain"])
+        if not user:
+            raise NotFound()
+
+        try:
+            verify_modify_user_conditions(request, user, active)
+        except ModifyUserStatusException as e:
+            raise BadRequest(_(str(e)))
+
+        user.is_active = active
+        user.save(spawn_task=True)
+        log_user_change(by_domain=request.domain, for_domain=user.domain,
+                        couch_user=user, changed_by_user=request.couch_user,
+                        changed_via=USER_CHANGE_VIA_API, fields_changed={'is_active': user.is_active})
+
+        self.log_throttled_access(request)
+        return self.create_response(request, {}, response_class=http.HttpAccepted)
 
 
 class WebUserResource(v0_1.WebUserResource):
@@ -336,7 +396,7 @@ class WebUserResource(v0_1.WebUserResource):
         return reverse('api_dispatch_detail', kwargs={
             'resource_name': self._meta.resource_name,
             'domain': bundle_or_obj.request.domain,
-            'api_name': self._meta.api_name,
+            'api_name': self.api_name,
             'pk': bundle_or_obj.obj._id,
         })
 
@@ -349,7 +409,8 @@ class AdminWebUserResource(v0_1.UserResource):
 
     def obj_get_list(self, bundle, **kwargs):
         if 'username' in bundle.request.GET:
-            return [WebUser.get_by_username(bundle.request.GET['username'])]
+            web_user = WebUser.get_by_username(bundle.request.GET['username'])
+            return [web_user] if web_user.is_active else []
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
     class Meta(AdminResourceMeta):
@@ -375,37 +436,7 @@ class GroupResource(v0_4.GroupResource):
         return self._meta.serializer.serialize(data, format, options)
 
     def patch_list(self, request=None, **kwargs):
-        """
-        Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1466
-        (BSD licensed) and modified to pass the kwargs to `obj_create` and support only create method
-        """
-        request = convert_post_to_patch(request)
-        deserialized = self.deserialize(request, request.body,
-                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
-
-        collection_name = self._meta.collection_name
-        if collection_name not in deserialized:
-            raise BadRequest("Invalid data sent: missing '%s'" % collection_name)
-
-        if len(deserialized[collection_name]) and 'put' not in self._meta.detail_allowed_methods:
-            raise ImmediateHttpResponse(response=http.HttpMethodNotAllowed())
-
-        bundles_seen = []
-        status = http.HttpAccepted
-        for data in deserialized[collection_name]:
-
-            data = self.alter_deserialized_detail_data(request, data)
-            bundle = self.build_bundle(data=dict_strip_unicode_keys(data), request=request)
-            try:
-
-                self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
-            except AssertionError as e:
-                status = http.HttpBadRequest
-                bundle.data['_id'] = str(e)
-            bundles_seen.append(bundle)
-
-        to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
-        return self.create_response(request, to_be_serialized, response_class=status)
+        return super().patch_list_replica(self.obj_create, request, **kwargs)
 
     def post_list(self, request, **kwargs):
         """
@@ -415,7 +446,7 @@ class GroupResource(v0_4.GroupResource):
         deserialized = self.deserialize(request, request.body,
                                         format=request.META.get('CONTENT_TYPE', 'application/json'))
         deserialized = self.alter_deserialized_detail_data(request, deserialized)
-        bundle = self.build_bundle(data=dict_strip_unicode_keys(deserialized), request=request)
+        bundle = self.build_bundle(data=deserialized, request=request)
         try:
             updated_bundle = self.obj_create(bundle, **self.remove_api_resource_names(kwargs))
             location = self.get_resource_uri(updated_bundle)
@@ -474,7 +505,7 @@ class GroupResource(v0_4.GroupResource):
         """Returns the literal string "/a/{domain}/api/v0.5/group/{pk}/" in a DRY way"""
         return reverse('api_dispatch_detail', kwargs=dict(
             resource_name=self._meta.resource_name,
-            api_name=self._meta.api_name,
+            api_name=self.api_name,
             domain='__domain__',
             pk='__pk__')).replace('__pk__', '{pk}').replace('__domain__', '{domain}')
 
@@ -582,7 +613,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             # limit has not changed, but it may not have been present in get params before.
             new_get_params["limit"] = limit
             return reverse('api_dispatch_detail', kwargs=dict(
-                api_name=self._meta.api_name,
+                api_name=self.api_name,
                 resource_name=self._meta.resource_name,
                 domain=domain,
                 pk=id_,
@@ -819,7 +850,7 @@ UserDomain = namedtuple('UserDomain', 'domain_name project_name')
 UserDomain.__new__.__defaults__ = ('', '')
 
 
-class UserDomainsResource(CorsResourceMixin, Resource):
+class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
     domain_name = fields.CharField(attribute='domain_name')
     project_name = fields.CharField(attribute='project_name')
 
@@ -869,7 +900,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         return results
 
 
-class IdentityResource(CorsResourceMixin, Resource):
+class IdentityResource(ApiVersioningMixin, CorsResourceMixin, Resource):
     id = fields.CharField(attribute='get_id', readonly=True)
     username = fields.CharField(attribute='username', readonly=True)
     first_name = fields.CharField(attribute='first_name', readonly=True)
@@ -893,7 +924,7 @@ Form = namedtuple('Form', 'form_xmlns form_name')
 Form.__new__.__defaults__ = ('', '')
 
 
-class DomainForms(Resource):
+class DomainForms(ApiVersioningMixin, Resource):
     """
     Returns: list of forms for a given domain with form name formatted for display in Zapier
     """
@@ -933,7 +964,7 @@ CaseType = namedtuple('CaseType', 'case_type placeholder')
 CaseType.__new__.__defaults__ = ('', '')
 
 
-class DomainCases(Resource):
+class DomainCases(ApiVersioningMixin, Resource):
     """
     Returns: list of case types for a domain
 
@@ -962,7 +993,7 @@ UserInfo = namedtuple('UserInfo', 'user_id user_name')
 UserInfo.__new__.__defaults__ = ('', '')
 
 
-class DomainUsernames(Resource):
+class DomainUsernames(ApiVersioningMixin, Resource):
     """
     Returns: list of usernames for a domain.
     """
@@ -985,29 +1016,28 @@ class DomainUsernames(Resource):
 
 
 class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
-    config_id = None
-    table_id = None
 
     def dispatch(self, request_type, request, **kwargs):
         if not domain_has_privilege(request.domain, privileges.ODATA_FEED):
             raise ImmediateHttpResponse(
                 response=HttpResponseNotFound('Feature flag not enabled.')
             )
-        self.config_id = kwargs['config_id']
-        self.table_id = int(kwargs.get('table_id', 0))
         with TimingContext() as timer:
             response = super(BaseODataResource, self).dispatch(
                 request_type, request, **kwargs
             )
-        record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
+        record_feed_access_in_datadog(request, kwargs['config_id'], timer.duration, response)
         return response
 
     def create_response(self, request, data, response_class=HttpResponse,
                         **response_kwargs):
         data['domain'] = request.domain
-        data['config_id'] = self.config_id
         data['api_path'] = request.path
-        data['table_id'] = self.table_id
+        data['api_version'] = self.api_name
+        # Avoids storing these properties on the class instance which protects against the possibility of
+        # concurrent requests making conflicting updates to properties
+        data['config_id'] = request.resolver_match.kwargs['config_id']
+        data['table_id'] = int(request.resolver_match.kwargs.get('table_id', 0))
         response = super(BaseODataResource, self).create_response(
             request, data, response_class, **response_kwargs)
         return add_odata_headers(response)
@@ -1027,7 +1057,7 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
 class ODataCaseResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        config = get_document_or_404(CaseExportInstance, domain, self.config_id)
+        config = get_document_or_404(CaseExportInstance, domain, kwargs['config_id'])
         if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
             raise ImmediateHttpResponse(
                 HttpForbidden(gettext_noop(
@@ -1057,10 +1087,8 @@ class ODataCaseResource(BaseODataResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed", self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/feed", self.wrap_view('dispatch_list')),
         ]
 
 
@@ -1068,7 +1096,7 @@ class ODataCaseResource(BaseODataResource):
 class ODataFormResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        config = get_document_or_404(FormExportInstance, domain, self.config_id)
+        config = get_document_or_404(FormExportInstance, domain, kwargs['config_id'])
         if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
             raise ImmediateHttpResponse(
                 HttpForbidden(gettext_noop(
@@ -1098,10 +1126,8 @@ class ODataFormResource(BaseODataResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed", self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/feed", self.wrap_view('dispatch_list')),
         ]
 
 
@@ -1339,7 +1365,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 @require_can_edit_data
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
-def get_ucr_data(request, domain):
+def get_ucr_data(request, domain, api_version):
     if not toggles.EXPORT_DATA_SOURCE_DATA.enabled(domain):
         return HttpResponseForbidden()
     try:

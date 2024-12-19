@@ -1,6 +1,9 @@
-hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", function () {
-    const FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer");
-
+'use strict';
+hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", [
+    "cloudcare/js/formplayer/spec/fake_formplayer",
+], function (
+    FakeFormplayer
+) {
     return FakeFormplayer.makeEntitiesResponse({
         "title": "Search All Cases",
         "description": "",
@@ -34,6 +37,9 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", functio
                 "details": null,
             },
         ],
+        "groupHeaders": {
+            "groupKey": "group name",
+        },
         "headers": [
             "Name",
             "Sex",
@@ -52,10 +58,14 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", functio
                     "hint": "Enter a name",
                     "required": true,
                     "required_msg": "This field is required",
+                    "groupKey": "groupKey",
                 },
             ],
             "queryKey": "search_command.m0",
             "type": "query",
+            "groupHeaders": {
+                "groupKey": "group name",
+            },
         },
         "styles": [
             {

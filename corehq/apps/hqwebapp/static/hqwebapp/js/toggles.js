@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('hqwebapp/js/toggles', [
     'underscore',
     'hqwebapp/js/initial_page_data',

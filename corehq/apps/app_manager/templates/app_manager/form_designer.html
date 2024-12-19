@@ -5,9 +5,6 @@
 {% load xforms_extras %}
 
 {% block head %}{{ block.super }}
-  {% if include_fullstory %}
-    {% include 'analytics/fullstory.html' %}
-  {% endif %}
   {% if not vellum_debug %}
     <link href="{% static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
   {% elif vellum_debug == "dev-min" %}
@@ -70,7 +67,7 @@
       <a class="btn btn-form-action track-usage-link" href="{% url "app_form_summary" domain app.id %}"
          data-category="App Builder" data-action="Form Action Link" data-label="App Summary"
       >
-        <i class="fa fa-list-alt"></i> {% trans 'App Summary' %}
+        <i class="fa-regular fa-rectangle-list"></i> {% trans 'App Summary' %}
       </a>
       <a class="btn btn-form-action track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
          data-category="App Builder" data-action="Form Action Link" data-label="Manage Case"
@@ -103,7 +100,7 @@
   </script>
 
   <script type="text/html" id="fd-hq-helptext-survey">
-    <h4>{% blocktrans %}This is a <i class="fa fa-file-o"></i> Survey.{% endblocktrans %}</h4>
+    <h4>{% blocktrans %}This is a <i class="fa-regular fa-file"></i> Survey.{% endblocktrans %}</h4>
     <p>
       {% blocktrans %}
         It's useful for asking questions once, for information that you won't need to follow up on later.

@@ -15,13 +15,13 @@
         </div>
         <p class="lead">
           {% blocktrans %}
-            For organizations exploring CommCare.
+            For organizations managing projects.
           {% endblocktrans %}
         </p>
         {% include 'registration/partials/feature_list.html' with features=professional_features %}
         <p class="plan-price">
           {% blocktrans %}
-            See <a href="https://dimagi.com/commcare/pricing/" target="_blank">pricing</a> options.
+            See <a href="https://dimagi.com/commcare-pricing/" target="_blank">pricing</a> options.
           {% endblocktrans %}
         </p>
         <div class="plan-cta">
@@ -30,7 +30,7 @@
              data-toggle="modal"
              class="btn btn-primary">
             {% blocktrans %}
-              Request Custom Trial
+              Request a Trial
             {% endblocktrans %}
           </a>
           <script src="//fast.wistia.com/embed/medias/jzm3ggrinr.jsonp" async></script>
@@ -55,6 +55,14 @@
               {% endblocktrans %}
             </a>
           </span>
+          <p>
+            <small>
+              {% trans "Know what you need?" %}
+              <a href="#" id="js-self-signup">
+                {% trans "Get started here!" %}
+              </a>
+            </small>
+          </p>
         </div>
       </div>
     </div>

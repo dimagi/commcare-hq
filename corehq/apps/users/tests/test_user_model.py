@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -15,7 +16,7 @@ from corehq.form_processor.utils import (
     TestFormMetadata,
     get_simple_wrapped_form,
 )
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import softer_assert, flag_enabled
 
 
 class UserModelTest(TestCase):
@@ -178,19 +179,42 @@ class UserDeviceTest(SimpleTestCase):
         self.assertIsNotNone(app_meta)
 
 
-class TestCommCareUserRoles(TestCase):
-    user_class = CommCareUser
+class BaseCommCareUserTestSetup(TestCase):
 
     @classmethod
-    def setUpClass(cls):
-        super(TestCommCareUserRoles, cls).setUpClass()
-        cls.domain = 'test-user-role'
+    def setUpClass(cls, domain):
+        super(BaseCommCareUserTestSetup, cls).setUpClass()
+        cls.domain = domain
         cls.domain_obj = create_domain(cls.domain)
         cls.addClassCleanup(cls.domain_obj.get_db().delete_doc, cls.domain_obj)
 
         cls.role1 = UserRole.create(domain=cls.domain, name="role1")
         cls.role2 = UserRole.create(domain=cls.domain, name="role2")
         cls.mobile_worker_default_role = UserRole.commcare_user_default(cls.domain)
+
+    def _create_user(self, username, role_id=None, include_domain_membership=True):
+        if include_domain_membership:
+            domain = self.domain
+        else:
+            domain = None
+        user = self.user_class.create(
+            domain=domain,
+            username=username,
+            password='***',
+            created_by=None,
+            created_via=None,
+            role_id=role_id
+        )
+        self.addCleanup(user.delete, None, None)
+        return user
+
+
+class TestCommCareUserRoles(BaseCommCareUserTestSetup):
+    user_class = CommCareUser
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestCommCareUserRoles, cls).setUpClass(domain='test-user-role')
 
     def test_create_user_without_role(self):
         user = self._create_user('scotch game')
@@ -243,18 +267,6 @@ class TestCommCareUserRoles(TestCase):
         self.assertIsNotNone(role)
         self.assertEqual(role.get_qualified_id(), expected.get_qualified_id())
 
-    def _create_user(self, username, role_id=None):
-        user = self.user_class.create(
-            domain=self.domain,
-            username=username,
-            password='***',
-            created_by=None,
-            created_via=None,
-            role_id=role_id
-        )
-        self.addCleanup(user.delete, None, None)
-        return user
-
 
 class TestWebUserRoles(TestCommCareUserRoles):
     user_class = WebUser
@@ -279,3 +291,30 @@ class TestWebUserRoles(TestCommCareUserRoles):
 
         self.check_role(user, self.role1, self.domain)
         self.check_role(user, self.role2, self.domain2)
+
+
+class TestWebUserTableauIntegration(BaseCommCareUserTestSetup):
+    user_class = WebUser
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestWebUserTableauIntegration, cls).setUpClass(domain="test-web-user-tableau-integration")
+
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    @patch('corehq.apps.reports.util.add_tableau_user')
+    @patch('corehq.apps.reports.util.update_tableau_user')
+    @patch('corehq.apps.reports.util.get_tableau_groups_by_ids')
+    def test_add_as_web_user_with_tableau_params(self, mock_get_tableau_groups_by_ids, mock_update_tableau_user,
+                                                 mock_add_tableau_user):
+        user = self._create_user("test_user", include_domain_membership=False)
+
+        from corehq.apps.reports.util import TableauGroupTuple
+        groups = [TableauGroupTuple(name='group5', id='u908e'),
+                TableauGroupTuple(name='group1', id='1a2b3')]
+        mock_get_tableau_groups_by_ids.return_value = groups
+
+        user.add_as_web_user(self.domain, self.role1.get_qualified_id(),
+                            tableau_role="Viewer", tableau_group_ids=["u908e", "1a2b3"])
+        mock_add_tableau_user.assert_called_once_with(self.domain, user.username)
+        mock_update_tableau_user.assert_called_once_with(domain=self.domain, username=user.username,
+                                                        role="Viewer", groups=groups, blocking_exception=False)

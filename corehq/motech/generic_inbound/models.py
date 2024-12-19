@@ -1,4 +1,3 @@
-import enum
 from functools import cached_property
 from uuid import uuid4
 
@@ -32,10 +31,13 @@ class ConfigurableAPI(models.Model):
     updated_on = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    # UCR Expression to filter incoming requests before they are processed
     filter_expression = models.ForeignKey(
         UCRExpression, on_delete=models.PROTECT, related_name="api_filter", null=True, blank=True)
+    # UCR Expression to transform the incoming data to be processed
     transform_expression = models.ForeignKey(
         UCRExpression, on_delete=models.PROTECT, related_name="api_expression")
+    # type of data backend like JSON, HL7 etc
     backend = models.CharField(max_length=100, default=ApiBackendOptions.json)
 
     objects = AuditingManager()
@@ -58,6 +60,8 @@ class ConfigurableAPI(models.Model):
             if self.url_key:
                 raise FieldError("'url_key' is auto-assigned")
             self.url_key = make_url_key()
+            if 'update_fields' in kwargs:
+                kwargs['update_fields'].append('url_key')
             self.__original_url_key = self.url_key
         elif self.url_key != self.__original_url_key:
             raise FieldError("'url_key' can not be changed")
@@ -66,14 +70,14 @@ class ConfigurableAPI(models.Model):
     @property
     @memoized
     def parsed_expression(self):
-        return self.transform_expression.wrapped_definition(FactoryContext.empty())
+        return self.transform_expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
 
     @property
     @memoized
     def parsed_filter(self):
         if not self.filter_expression:
             return None
-        return self.filter_expression.wrapped_definition(FactoryContext.empty())
+        return self.filter_expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
 
     @cached_property
     def backend_class(self):
@@ -106,7 +110,7 @@ class ConfigurableApiValidation(models.Model):
     @property
     @memoized
     def parsed_expression(self):
-        return self.expression.wrapped_definition(FactoryContext.empty())
+        return self.expression.wrapped_definition(FactoryContext.empty(domain=self.api.domain))
 
     def get_error_context(self):
         return {

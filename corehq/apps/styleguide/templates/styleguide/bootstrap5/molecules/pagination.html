@@ -1,0 +1,79 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Pagination</h1>
+  <p class="sg-lead">
+    Most UIs that display a list of user-created data will grow to the point that they should paginate their data.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#using-pagination">Using Pagination</a>
+        <ul>
+          <li><a href="#quick-example">Quick Example</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    HQ has a custom pagination component that uses
+    <a href="https://knockoutjs.com/documentation/component-overview.html"
+       target="_blank">Knockout Components</a>.
+    See
+    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js"
+       target="_blank">pagination.js</a>
+    for full documentation.
+  </p>
+  <h2 id="using-pagination" class="pt-4">
+    Using Pagination
+  </h2>
+  <p>
+    The best way to understand the different ways of using pagination is to see its use in HQ directly. The best
+    sources for this are the Web Users and Mobile Workers pages.
+  </p>
+  <p>
+    For the Web Users page, the key points are:
+  </p>
+  <ul>
+    <li>
+      <a href="https://github.com/dimagi/commcare-hq/blob/e4a0f4aed43d19b857937c70a69630360efd0ad2/corehq/apps/users/templates/users/web_users.html#L220-L227"
+         target="_blank">
+        the HTML widget
+      </a> initializing the pagination
+    </li>
+    <li>
+      <a href="https://github.com/dimagi/commcare-hq/blob/996fd40ccbc1280e4fbfab0ea95408cdcaa635e7/corehq/apps/users/static/users/js/web_users.js#L125-L142"
+         target="_blank">
+        the goToPage javascript function
+      </a> that retrieves data for a given page
+    </li>
+    <li>
+      <a href="https://github.com/dimagi/commcare-hq/blob/0adb9582b8e36af3787396d2ee3a96864430ab11/corehq/apps/users/views/__init__.py#L821-L844"
+         target="_blank">
+        the django view
+      </a> that returns the pagination information
+    </li>
+  </ul>
+  <h3 id="quick-example" class="pt-3">
+    A Quick Example
+  </h3>
+  <p>
+    Here is a quick example simulating the pagination that should otherwise be done asynchronously as in the Web Users
+    example above. This is just so you have a visual reference of the pagination widget.
+  </p>
+  <div class="alert alert-primary">
+    For small, simple UIs, you can leave the "Showing X to Y of Z entries" text and dropdown off by adding
+    <code>inlinePageListOnly: true</code> to the pagination element's params. You can see an example of this on the
+    HQ Dashboard page.
+  </div>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.pagination %}
+{% endblock content %}
