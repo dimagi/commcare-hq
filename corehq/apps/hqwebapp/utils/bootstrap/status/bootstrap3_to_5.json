@@ -62,6 +62,7 @@
       "admin/flags_and_privileges.html",
       "admin/global_sms_rates.html",
       "admin/info_basic.html",
+      "admin/location_fixture.html",
       "admin/manage_alerts.html",
       "admin/my_project_settings.html",
       "admin/partials/case_search_templates.html",
