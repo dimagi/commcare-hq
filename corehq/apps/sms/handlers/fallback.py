@@ -9,7 +9,7 @@ from corehq.apps.sms.models import WORKFLOW_DEFAULT, MessagingEvent
 
 def fallback_handler(verified_number, text, msg):
     domain_obj = Domain.get_by_name(verified_number.domain, strict=True)
-    if verified_number isinstance(ConnectMessagingNumber):
+    if isinstance(verified_number, ConnectMessagingNumber):
         content_type = MessagingEvent.CONTENT_CONNECT
     else:
         content_type = MessagingEvent.CONTENT_SMS
