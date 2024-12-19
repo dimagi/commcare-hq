@@ -253,7 +253,7 @@ def _delete_sms_content_events_schedules(domain_name):
     models = [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
         'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
-        'FCMNotificationContent'
+        'FCMNotificationContent', 'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]
     filters = [
         'alertevent__schedule__domain',
@@ -325,6 +325,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('sms', 'DailyOutboundSMSLimitReached', 'domain'),
     ModelDeletion('sms', 'SMS', 'domain'),
     ModelDeletion('sms', 'Email', 'domain'),
+    ModelDeletion('sms', 'ConnectMessage', 'domain'),
     ModelDeletion('sms', 'SQLLastReadMessage', 'domain'),
     ModelDeletion('sms', 'ExpectedCallback', 'domain'),
     ModelDeletion('ivr', 'Call', 'domain'),
