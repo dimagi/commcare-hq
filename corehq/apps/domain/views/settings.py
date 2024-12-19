@@ -623,7 +623,7 @@ class ManageDomainAlertsView(BaseDomainAlertsView):
 
 
 class EditDomainAlertView(BaseDomainAlertsView):
-    template_name = 'domain/admin/bootstrap5/edit_alert.html'
+    template_name = 'domain/admin/edit_alert.html'
     urlname = 'domain_edit_alert'
     page_title = gettext_lazy("Edit Project Alert")
 
