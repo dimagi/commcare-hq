@@ -7,7 +7,9 @@ hqDefine("geospatial/js/case_management", [
     'geospatial/js/models',
     'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
+    'reports/js/bootstrap3/base',
     'select2/dist/js/select2.full.min',
+    'commcarehq',
 ], function (
     $,
     initialPageData,
