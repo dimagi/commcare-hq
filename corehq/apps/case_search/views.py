@@ -2,7 +2,6 @@ import json
 import re
 from io import BytesIO
 
-from django.db.transaction import atomic
 from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -22,7 +21,6 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from django.http import HttpResponse
 from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
 from corehq.util.view_utils import BadRequest, json_error
 
@@ -148,7 +146,7 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
 ], name='dispatch')
 class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseDomainView):
     urlname = 'csql_fixture_configuration'
-    page_title = _('CSQL Fixture Confguration')
+    page_title = _('CSQL Fixture Configuration')
     template_name = 'case_search/csql_fixture_configuration.html'
 
     @property

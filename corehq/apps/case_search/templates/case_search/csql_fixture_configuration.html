@@ -1,7 +1,6 @@
 {% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
-
 {% js_entry "hqwebapp/js/htmx_and_alpine" %}
 
 {% block page_title %}
@@ -22,15 +21,16 @@
       {{ form }}
     {% endfor %}
   </div>
-  <button type="button"
-          class="btn btn-default"
-          hx-post="{{ request.path_info }}"
-          hq-hx-action="new_expression"
-          hx-target="#csql-fixture-rows"
-          hx-swap="beforeend">
+  <button
+    type="button"
+    class="btn btn-default"
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="new_expression"
+    hx-target="#csql-fixture-rows"
+    hx-swap="beforeend"
+  >
     <i class="fa fa-plus"></i> {% trans "Add Expression" %}
   </button>
-
 {% endblock %}
 
 {% block modals %}
