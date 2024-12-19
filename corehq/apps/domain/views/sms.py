@@ -26,7 +26,7 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
 
     @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
-        return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -45,14 +45,15 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
     urlname = 'domain_sms_rates_view'
     page_title = gettext_lazy("SMS Rate Calculator")
-    template_name = 'domain/admin/bootstrap3/sms_rates.html'
+    template_name = 'domain/admin/bootstrap5/sms_rates.html'
     async_handlers = [
         SMSRatesAsyncHandler,
         SMSRatesSelect2AsyncHandler,
     ]
 
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
-        return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     @memoized
