@@ -12,6 +12,7 @@
 
 
 /.github/ @orangejenny
+/.github/workflows/ @dimagi/dependency-watchers
 
 /corehq/blobs/ @millerdev
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
