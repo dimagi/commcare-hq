@@ -36,7 +36,7 @@ hqDefine("users/js/custom_data_fields", [
         var originalProfileFields = {},
             originalProfileId,
             originalProfile;
-        if (options.user_data) {
+        if (Object.keys(options.user_data).length) {
             originalProfileId = options.user_data[options.profile_slug];
             if (originalProfileId) {
                 originalProfile = self.profiles[originalProfileId];

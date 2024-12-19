@@ -12,7 +12,7 @@ from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition, PROFILE_SLUG
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -1140,9 +1140,20 @@ class InviteWebUserView(BaseManageWebUserView):
         role_choices = get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
         domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
         is_add_user = self.request_id is not None
-        initial = {
-            'email': domain_request.email if domain_request else None,
-        }
+        invitation = self.invitation
+        if invitation:
+            assigned_location_ids = list(invitation.assigned_locations.all().values_list('location_id', flat=True))
+            primary_location_id = getattr(invitation.primary_location, "location_id", None)
+            initial = {
+                'email': invitation.email,
+                'role': invitation.role,
+                'assigned_locations': assigned_location_ids,
+                'primary_location': primary_location_id,
+            }
+        else:
+            initial = {
+                'email': domain_request.email if domain_request else None,
+            }
         can_edit_tableau_config = (self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config')
                                 and toggles.TABLEAU_USER_SYNCING.enabled(self.domain))
         if self.request.method == 'POST':
@@ -1154,7 +1165,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 should_show_location=self.request.project.uses_locations,
                 can_edit_tableau_config=can_edit_tableau_config,
                 request=self.request,
-                custom_data=self.custom_data
+                custom_data=self.custom_data,
+                invitation=invitation
             )
         return AdminInvitesUserForm(
             initial=initial,
@@ -1164,7 +1176,8 @@ class InviteWebUserView(BaseManageWebUserView):
             should_show_location=self.request.project.uses_locations,
             can_edit_tableau_config=can_edit_tableau_config,
             request=self.request,
-            custom_data=self.custom_data
+            custom_data=self.custom_data,
+            invitation=invitation
         )
 
     @cached_property
@@ -1191,8 +1204,15 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def page_context(self):
+        initial_values = {}
+        if self.invitation:
+            initial_values = {f.slug: self.invitation.custom_user_data.get(f.slug)
+                              for f in self.custom_data.fields}
+            if self.invitation.profile:
+                initial_values[PROFILE_SLUG] = self.invitation.profile.id
         ctx = {
             'registration_form': self.invite_web_user_form,
+            'user_data': initial_values,
             **self.custom_data.field_view.get_field_page_context(
                 self.domain, self.request.couch_user, self.custom_data, None
             )
@@ -1203,6 +1223,14 @@ class InviteWebUserView(BaseManageWebUserView):
         if not set(assigned_location_ids).issubset(set(SQLLocation.objects.accessible_to_user(
                 self.domain, self.request.couch_user).values_list('location_id', flat=True))):
             raise Http404()
+
+    @property
+    def invitation(self):
+        invitation_id = self.kwargs.get("invitation_id")
+        try:
+            return Invitation.objects.get(uuid=invitation_id)
+        except Invitation.DoesNotExist:
+            return None
 
     def post(self, request, *args, **kwargs):
         if self.invite_web_user_form.is_valid():
@@ -1215,7 +1243,22 @@ class InviteWebUserView(BaseManageWebUserView):
             profile = CustomDataFieldsProfile.objects.get(
                 id=profile_id,
                 definition__domain=self.domain) if profile_id else None
-            if domain_request is not None:
+            invitation = self.invitation
+            if invitation:
+                create_invitation = False
+                invitation.profile = profile
+                invitation.primary_location, assigned_locations = self._get_sql_locations(
+                    data.pop("primary_location", None), data.pop("assigned_locations", []))
+                invitation.assigned_locations.set(assigned_locations)
+                invitation.custom_user_data = data.get("custom_user_data", {})
+
+                invitation.role = data.get("role")
+                invitation.program = data.get("program", None)
+                invitation.tableau_role = data.get("tableau_role", None)
+                invitation.tableau_group_ids = data.get("tableau_group_ids", None)
+                invitation.save()
+                messages.success(request, "Invite to %s was successfully updated." % data["email"])
+            elif domain_request is not None:
                 domain_request.is_approved = True
                 domain_request.save()
                 user = CouchUser.get_by_username(domain_request.email)
@@ -1243,20 +1286,11 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                primary_location_id = data.pop("primary_location", None)
-                data["primary_location"] = (SQLLocation.by_location_id(primary_location_id)
-                                        if primary_location_id else None)
-                assigned_location_ids = data.pop("assigned_locations", [])
-                if primary_location_id:
-                    assert primary_location_id in assigned_location_ids
-                self._assert_user_has_permission_to_access_locations(assigned_location_ids)
                 data["profile"] = profile
+                data["primary_location"], assigned_locations = self._get_sql_locations(
+                    data.pop("primary_location", None), data.pop("assigned_locations", []))
                 invite = Invitation(**data)
                 invite.save()
-
-                assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
-                        for assigned_location_id in assigned_location_ids
-                        if assigned_location_id is not None]
                 invite.assigned_locations.set(assigned_locations)
                 invite.send_activation_email()
 
@@ -1270,6 +1304,16 @@ class InviteWebUserView(BaseManageWebUserView):
                 args=[self.domain]
             ))
         return self.get(request, *args, **kwargs)
+
+    def _get_sql_locations(self, primary_location_id, assigned_location_ids):
+        primary_location = (SQLLocation.by_location_id(primary_location_id) if primary_location_id else None)
+        if primary_location_id:
+            assert primary_location_id in assigned_location_ids
+        self._assert_user_has_permission_to_access_locations(assigned_location_ids)
+        assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
+                              for assigned_location_id in assigned_location_ids
+                              if assigned_location_id is not None]
+        return primary_location, assigned_locations
 
 
 class BaseUploadUser(BaseUserSettingsView):

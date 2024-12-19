@@ -102,7 +102,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
 
     @classmethod
     def get_field_page_context(cls, domain, couch_user, custom_data_editor: CustomDataEditor,
-                            original_profile_id=None):
+                               original_profile_id=None):
         profiles, can_edit_original_profile = (
             cls.get_displayable_profiles_and_edit_permission(
                 original_profile_id, domain, couch_user
