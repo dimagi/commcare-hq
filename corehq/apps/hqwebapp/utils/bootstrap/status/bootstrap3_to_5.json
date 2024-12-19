@@ -69,6 +69,7 @@
       "admin/project_limits.html",
       "admin/project_privacy.html",
       "admin/recovery_measures_history.html",
+      "admin/sms_rates.html",
       "admin/sms_settings.html",
       "admin/transfer_domain.html",
       "admin/transfer_domain_pending.html",

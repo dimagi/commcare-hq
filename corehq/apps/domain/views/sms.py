@@ -45,7 +45,7 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
     urlname = 'domain_sms_rates_view'
     page_title = gettext_lazy("SMS Rate Calculator")
-    template_name = 'domain/admin/bootstrap5/sms_rates.html'
+    template_name = 'domain/admin/sms_rates.html'
     async_handlers = [
         SMSRatesAsyncHandler,
         SMSRatesSelect2AsyncHandler,
