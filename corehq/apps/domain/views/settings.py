@@ -540,6 +540,7 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
 
 @method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),
                    require_can_manage_domain_alerts], name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class BaseDomainAlertsView(BaseProjectSettingsView):
     @staticmethod
     def _convert_user_time_to_server_time(timestamp, timezone):
@@ -553,7 +554,6 @@ class BaseDomainAlertsView(BaseProjectSettingsView):
         return ServerTime(timestamp).user_time(pytz.timezone(timezone))
 
 
-@method_decorator(use_bootstrap5, name='dispatch')
 class ManageDomainAlertsView(BaseDomainAlertsView):
     template_name = 'domain/admin/bootstrap5/manage_alerts.html'
     urlname = 'domain_manage_alerts'
@@ -623,7 +623,7 @@ class ManageDomainAlertsView(BaseDomainAlertsView):
 
 
 class EditDomainAlertView(BaseDomainAlertsView):
-    template_name = 'domain/admin/bootstrap3/edit_alert.html'
+    template_name = 'domain/admin/bootstrap5/edit_alert.html'
     urlname = 'domain_edit_alert'
     page_title = gettext_lazy("Edit Project Alert")
 
