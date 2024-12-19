@@ -281,11 +281,12 @@ def logo(request, domain):
 
 
 class EditPrivacySecurityView(BaseAdminProjectSettingsView):
-    template_name = "domain/admin/bootstrap3/project_privacy.html"
+    template_name = "domain/admin/bootstrap5/project_privacy.html"
     urlname = "privacy_info"
     page_title = gettext_lazy("Privacy and Security")
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
