@@ -60,6 +60,7 @@
       "admin/flags_and_privileges.html",
       "admin/feature_previews.html",
       "admin/info_basic.html",
+      "admin/manage_alerts.html",
       "admin/my_project_settings.html",
       "admin/partials/case_search_templates.html",
       "admin/partials/commtrack_action_table.html",
