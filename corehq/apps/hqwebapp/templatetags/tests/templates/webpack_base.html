@@ -1,5 +1,5 @@
 {% load hq_shared_tags %}
-{% if webpack_main %}{{ webpack_main }} before tag{% endif %}
-{% webpack_main "webpack/base" %}
-{% if webpack_main %}{{ webpack_main }} after tag{% endif %}
+{% if js_entry %}{{ js_entry }} before tag{% endif %}
+{% js_entry "webpack/base" %}
+{% if js_entry %}{{ js_entry }} after tag{% endif %}
 {% block content %}{% endblock %}

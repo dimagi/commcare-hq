@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'sso/js/new_identity_provider' %}
+{% js_entry_b3 'sso/js/new_identity_provider' %}
 
 {% block page_content %}
   {% initial_page_data 'idp_types_by_protocol' idp_types_by_protocol|JSON %}

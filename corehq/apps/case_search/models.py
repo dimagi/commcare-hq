@@ -4,7 +4,10 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.dispatch import receiver
 from django.forms import model_to_dict
+from django.db.models.signals import post_save
+from django.db.transaction import atomic
 from django.utils.translation import gettext as _
 
 import attr
@@ -438,3 +441,50 @@ class DomainsNotInCaseSearchIndex(models.Model):
         db_index=True,
     )
     estimated_size = models.IntegerField()
+
+
+class CSQLFixtureExpression(models.Model):
+    domain = models.CharField(max_length=64, default='')
+    name = models.CharField(max_length=64, null=False)
+    csql = models.CharField(null=False)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    deleted = models.BooleanField(default=False)
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.objects.filter(domain=domain, deleted=False)
+
+    @atomic
+    def soft_delete(self):
+        self.deleted = True
+        self.save()
+        CSQLFixtureExpressionLog.objects.create(
+            expression=self,
+            action=CSQLFixtureExpressionLog.Action.DELETE,
+        )
+
+
+class CSQLFixtureExpressionLog(models.Model):
+    class Action(models.TextChoices):
+        CREATE = 'CR', _('Create')
+        DELETE = 'DE', _('Delete')
+        UPDATE = 'UP', _('Update')
+
+    expression = models.ForeignKey(CSQLFixtureExpression, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=2, choices=Action.choices, null=False)
+    name = models.CharField(max_length=64, default='')
+    csql = models.TextField(default='')
+
+
+@receiver(post_save, sender=CSQLFixtureExpression)
+def after_save(sender, instance, created, **kwargs):
+    updated_or_created = (CSQLFixtureExpressionLog.Action.CREATE if created
+                          else CSQLFixtureExpressionLog.Action.UPDATE)
+    CSQLFixtureExpressionLog.objects.create(
+        expression=instance,
+        action=updated_or_created,
+        name=instance.name,
+        csql=instance.csql
+    )

@@ -1,0 +1,12 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load xforms_extras %}
+
+  <div class="alert alert-warning alert-build">
+    <h4 class="alert-heading">
+      <i class="fa fa-exclamation-circle"></i>
+      {% trans "Warning" %}</h4>
+        <span>
+          {{ warning_message }}
+        </span>
+  </div>

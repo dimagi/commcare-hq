@@ -198,8 +198,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
                 var receiveTopic = match[1];
                 var receiveTopicField = match[2];
                 if (receiveTopicField === constants.RECEIVER_FIELD_INDEXED) {
-                    var ixMatch = question.ix().match(/_(\d+)/g);
-                    receiveTopicField = ixMatch ? ixMatch.pop().replace('_', '') : '0';
+                    receiveTopicField = constants.BROADCAST_FIELD_FILENAME;
                 }
                 question.broadcastPubSub.subscribe(function (message) {
                     if (message === constants.NO_ANSWER) {
@@ -835,7 +834,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         this.templateType = 'time';
         if (question.style) {
             if (question.stylesContains(constants.TIME_12_HOUR)) {
-                this.clientFormat = 'h:mm T';
+                this.clientFormat = 'h:mm A';
             }
         }
         DateTimeEntryBase.call(this, question, options);
@@ -939,8 +938,9 @@ hqDefine("cloudcare/js/form_entry/entries", [
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
     FileEntry.prototype.onPreProcess = function (newValue) {
-        var self = this;
-        if (newValue === "" && self.question.filename()) {
+        const self = this;
+        const cachedFilename = self.question.form().fileNameCache[self.answer()];
+        if (newValue === "" && self.question.filename) {
             self.question.hasAnswered = true;
             self.fileNameDisplay(self.question.filename());
         } else if (newValue !== constants.NO_ANSWER && newValue !== "") {
@@ -949,9 +949,14 @@ hqDefine("cloudcare/js/form_entry/entries", [
                 self.question.formplayerMediaRequest = $.Deferred();
                 self.cleared = false;
             }
-            var fixedNewValue = newValue.replace(constants.FILE_PREFIX, "");
+            const fixedNewValue = newValue.replace(constants.FILE_PREFIX, "");
             self.fileNameDisplay(fixedNewValue);
             self.answer(fixedNewValue);
+        } else if (cachedFilename && newValue !== constants.NO_ANSWER) {
+            // The cached filename is only set if the file has been uploaded already and not cleared
+            // newValue is only empty initially and after clear. So this combination only happens when
+            // rebuilding the questions (after deleting a repeat group)
+            self.fileNameDisplay(cachedFilename);
         } else {
             self.onClear();
         }
@@ -959,7 +964,11 @@ hqDefine("cloudcare/js/form_entry/entries", [
     FileEntry.prototype.onAnswerChange = function (newValue) {
         var self = this;
         // file has already been validated and assigned a unique id. another request should not be sent to formplayer
-        if (newValue === constants.NO_ANSWER || self.question.formplayerMediaRequest.state() === "resolved") {
+        if (newValue === constants.NO_ANSWER) {
+            return;
+        }
+        if (self.question.formplayerMediaRequest.state() === "resolved") {
+            self.question.form().fileNameCache[self.question.answer()] = self.file().name;
             return;
         }
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
@@ -993,8 +1002,8 @@ hqDefine("cloudcare/js/form_entry/entries", [
             self.question.onchange();
 
             if (self.broadcastTopics.length) {
-                // allow support for broadcasting multiple filenames
-                var broadcastObj = Object.fromEntries([self.file()].map((file, i) => [i, file.name]));
+                var broadcastObj = {};
+                broadcastObj[constants.BROADCAST_FIELD_FILENAME] = self.file().name;
                 self.question.formplayerMediaRequest.then(function () {
                     self.broadcastMessages(self.question, broadcastObj);
                 });

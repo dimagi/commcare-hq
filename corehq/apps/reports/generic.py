@@ -1,6 +1,5 @@
 import datetime
 import io
-import json
 import re
 from itertools import chain
 
@@ -659,11 +658,11 @@ class GenericReportView(object):
         rendered_filters = render_to_string(
             self.template_filters, self.context, request=self.request
         )
-        return HttpResponse(json.dumps(dict(
+        return JsonResponse(dict(
             filters=rendered_filters,
             slug=self.slug,
             url_root=self.url_root
-        )))
+        ))
 
     @property
     @request_cache()
@@ -842,7 +841,7 @@ class GenericTabularReport(GenericReportView):
     bad_request_error_text = None
     exporting_as_excel = False
 
-    # Sets bSort in the datatables instance to true/false (config.dataTables.bootstrap.js)
+    # Sets bSort in the datatables instance to true/false (datatables_config.js)
     sortable = True
 
     # override old class properties

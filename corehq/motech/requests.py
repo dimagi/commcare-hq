@@ -14,6 +14,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.auth import AuthManager, BasicAuthManager
 from corehq.motech.const import (
     REQUEST_DELETE,
+    REQUEST_GET,
     REQUEST_POST,
     REQUEST_PUT,
     REQUEST_TIMEOUT,
@@ -259,8 +260,10 @@ def simple_request(domain, url, data, *, headers, auth_manager, verify,
         data = data.encode('utf-8')
     default_headers = CaseInsensitiveDict({
         "content-type": "text/xml",
-        "content-length": str(len(data)),
     })
+    if data:
+        default_headers["content-length"] = str(len(data))
+
     default_headers.update(headers)
     requests = Requests(
         domain,
@@ -275,6 +278,7 @@ def simple_request(domain, url, data, *, headers, auth_manager, verify,
         REQUEST_DELETE: requests.delete,
         REQUEST_POST: requests.post,
         REQUEST_PUT: requests.put,
+        REQUEST_GET: requests.get,
     }
     try:
         request_method = request_methods[method]

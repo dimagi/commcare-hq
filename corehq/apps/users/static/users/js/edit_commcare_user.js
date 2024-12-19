@@ -15,6 +15,7 @@ hqDefine('users/js/edit_commcare_user', [
     'registration/js/bootstrap3/password',
     'select2/dist/js/select2.full.min',
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -38,10 +39,11 @@ hqDefine('users/js/edit_commcare_user', [
     });
 
     $('#reset-password-form').submit(function () {
-        $(this).ajaxSubmit({
+        $.ajax({
             url: $(this).attr('action'),
-            type: 'POST',
+            method: $(this).attr('method'),
             dataType: 'json',
+            data: Object.fromEntries(new FormData(this)),
             success: function (response) {
                 if (response.status === "OK") {
                     alertUser.alert_user(gettext("Password changed successfully."), 'success');

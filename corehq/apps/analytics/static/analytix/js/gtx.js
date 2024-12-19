@@ -23,6 +23,29 @@ hqDefine('analytix/js/gtx', [
 
     window.dataLayer = window.dataLayer || [];
 
+    function setAllowedTagTypes() {
+        // https://developers.google.com/tag-platform/tag-manager/restrict
+        // Only allow tags, triggers, and variables we actively use.
+        // Others may come with unknown security risks.
+        var allowList = [
+            'google',   // class that includes GA4 tags, built-in triggers and variables, etc.
+        ];
+
+        // Explicitly block tags, triggers, and variables with known security risks.
+        // Note: blocklist overrides allowlist
+        var blockList = [
+            // Higher risk: running arbitrary code in the browser, DOM manipulation
+            'jsm',      // custom javascript variable
+            'html',     // custom html tag
+
+            // Lower risk: data leakage
+            'img',      // custom image tag
+            'j',        // javascript variable
+            'k',        // first party cookie variable
+        ];
+        window.dataLayer.push({'gtm.allowlist': allowList, 'gtm.blocklist': blockList});
+    }
+
     function addUserPropertiesToDataLayer() {
         var userPropertiesEvent = {
             event: 'userProperties',
@@ -64,9 +87,20 @@ hqDefine('analytix/js/gtx', [
     };
 
     $(function () {
-        // userProperties are added to dataLayer at earliest to be readily available once GTM loads
         var apiId = _get('apiId');
+        var projectGAOptOut = _get('projectGAOptOut');
+
+        // Tag Manager is solely used for Google Analytics. If a projects opts out of GA, we disable it here.
+        // In case we decide to use Tag Manager for other tooling in future, remove this check and instead
+        // add it for all the GA events at the Tag Manager Console end.
+        if (projectGAOptOut === 'yes') {
+            _logger.debug.log("Tag manager not initialized because Project has opted out of GA.");
+            return;
+        }
+
+        // userProperties are added to dataLayer at earliest to be readily available once GTM loads
         if (apiId && initialAnalytics.getFn('global')(('isEnabled'))) {
+            setAllowedTagTypes();
             addUserPropertiesToDataLayer();
         }
 

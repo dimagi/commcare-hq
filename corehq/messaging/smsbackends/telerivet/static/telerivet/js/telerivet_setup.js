@@ -1,6 +1,7 @@
 hqDefine("telerivet/js/telerivet_setup", [
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     ko,
     initialPageData

@@ -1,0 +1,116 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load compress %}
+
+{% block title %}{% trans "Download Files" %}{% endblock %}
+
+{% js_entry 'export/js/download_data_files' %}
+
+{% block page_content %}
+  {% registerurl 'download_data_file' domain '---' '---' %}
+  {% block main_column_content %}
+
+    <h2>{% trans "Download Files" %}</h2>
+
+    {% if data_files %}
+      <div class="row">
+        <div class="col-md-9 col-lg-8 col-xl-8">
+          <table class="table table-hover">
+            {% for data_file in data_files %}
+              <tr id="row_{{ data_file.id }}">
+                <td>
+                  <a href="{% url 'download_data_file' domain data_file.id data_file.filename %}">
+                    <i class="fa fa-file text-primary"></i>
+                    {{ data_file.filename }}
+                  </a>
+                </td>
+                <td>
+                  {{ data_file.description }}
+                  <textarea id="url_{{ data_file.id }}" class="d-none">{{ url_base }}{% url 'download_data_file' domain data_file.id data_file.filename %}</textarea>
+                </td>
+                <td>
+                  {% trans "Available until" %}: {{ data_file.delete_after|to_user_time:request }}
+                </td>
+                <td class="text-end" style="width: 6em;">
+                  <a href="#"
+                     class="copy-data-file"
+                     data-id={{ data_file.id }}
+                       data-name={{ data_file.filename }}
+                  >
+                    <i class="fa fa-link text-info"></i>
+                  </a>
+
+                  <a href="{% url 'download_data_file' domain data_file.id data_file.filename %}">
+                    <i class="fa fa-download text-success"></i>
+                  </a>
+
+                  {% if is_admin %}
+                    <a href="#"
+                       class="delete-data-file"
+                       data-id={{ data_file.id }}
+                         data-name={{ data_file.filename }}
+                    >
+                      <i class="fa-solid fa-xmark text-danger"></i>
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <p>{% trans "There are no data files available to download at the moment." %}</p>
+    {% endif %}
+
+    {% if is_admin %}
+      <div class="spacer"></div>
+      <div class="row">
+        <div class="col-md-9 col-lg-8 col-xl-8">
+          <form action="#" method="POST" enctype="multipart/form-data" class="form form-horizontal">
+            {% csrf_token %}
+            <fieldset>
+              <legend>{% trans "Upload file for transfer" %}</legend>
+
+              <div class="mb-3">
+                <label class="form-label requiredField">
+                  {% trans "Description" %}<span class="asteriskField">*</span>
+                </label>
+                <input class="form-control"
+                       name="description"
+                       required=""
+                       type="text" />
+              </div>
+
+              <div class="mb-3">
+                <label class="requiredField form-label">
+                  {% trans "File" %}<span class="asteriskField">*</span>
+                </label>
+                <input name="file"
+                       class="form-control"
+                       required=""
+                       type="file" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label requiredField">
+                  {% trans "Delete after" %}<span class="asteriskField">*</span>
+                </label>
+                <select name="ttl" class="form-select">
+                  <option value="12">{% trans "12 hours" %}</option>
+                  <option selected="selected" value="24">{% trans "1 day" %}</option>
+                  <option value="48">{% trans "2 days" %}</option>
+                  <option value="72">{% trans "3 days" %}</option>
+                </select>
+              </div>
+
+            </fieldset>
+            <input class="btn btn-primary" type="submit" value="Upload" />
+          </form>
+        </div>
+      </div>
+    {% endif %}
+
+  {% endblock main_column_content %}
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% js_entry 'app_manager/js/manage_releases_by_location' %}
+
+{% block page_content %}
+  {% initial_page_data 'app_releases_by_location' app_releases_by_location %}
+  {% initial_page_data 'appVersionSelectInitialValue' selected_build_details %}
+  {% initial_page_data 'locationSearchSelectInitialValue' selected_location_details %}
+  {% initial_page_data 'appVersionOnlyShowReleased' True %}
+  {% registerurl 'deactivate_release_restriction' domain '---'%}
+  {% registerurl 'activate_release_restriction' domain '---'%}
+  {% registerurl "paginate_releases" domain '---' %}
+  {% registerurl 'location_search' domain %}
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
+        <div class="card-body">
+          <form class="form-horizontal disable-on-submit" id="manage-app-releases" action=""
+                method='post'>
+            {% crispy manage_releases_by_location_form %}  {# todo B5: crispy #}
+          </form>
+          {% if app_releases_by_location %}
+            <table id="managed-releases" class="table">
+              <thead>
+              <tr>
+                <th class="col-md-2">{% trans 'Application' %}</th>
+                <th class="col-md-2">{% trans 'Location' %}</th>
+                <th class="col-md-2">{% trans 'Version' %}</th>
+                <th class="col-md-4">{% trans 'Last Activity' %}</th>
+                <th class="col-md-2">{% trans 'Action' %}</th>
+              </tr>
+              </thead>
+              <tbody data-bind="foreach: appReleasesByLocation, visible: appReleasesByLocation">
+              <tr data-bind="attr: {id: domId}, css: {'bg-success': active() }">
+                <td data-bind="text: app"></td>
+                <td data-bind="text: location"></td>
+                <td data-bind="text: version"></td>
+                <td>
+                  <div data-bind="visible: activatedOn">
+                    {% trans 'Activated On : ' %}
+                    <span data-bind="text: activatedOn"></span>
+                  </div>
+                  <div data-bind="visible: deactivatedOn">
+                    {% trans 'Deactivated On : ' %}
+                    <span data-bind="text: deactivatedOn"></span>
+                  </div>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-outline-primary"
+                          data-bind="click: toggleRestriction, css: buttonClass,
+                                            disable: ajaxInProgress">
+                    <span data-bind="text: actionText"></span>
+                    <i class="spinner fa-spin fa fa-refresh"
+                       data-bind="visible: ajaxInProgress"></i>
+                  </button>
+                  <br/>
+                  <span class="error-message badge text-bg-danger" data-bind="visible: error">
+                    {% trans 'Could not update!' %}
+                    <span data-bind="text: errorMessage"></span>
+                  </span>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

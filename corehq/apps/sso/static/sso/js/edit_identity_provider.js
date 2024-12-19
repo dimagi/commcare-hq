@@ -5,6 +5,7 @@ hqDefine('sso/js/edit_identity_provider', [
     'hqwebapp/js/utils/email',
     "hqwebapp/js/initial_page_data",
     'sso/js/models',
+    'commcarehq',
 ], function (
     $,
     ko,

@@ -39,6 +39,7 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.models import (
     AsyncIndicator,
+    DataSourceActionLog,
     id_is_static,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
@@ -80,8 +81,16 @@ def _build_indicators(config, document_store, relevant_ids):
 
 @serial_task('{indicator_config_id}', default_retry_delay=60 * 10, timeout=3 * 60 * 60, max_retries=20,
              queue=UCR_CELERY_QUEUE, ignore_result=True, serializer='pickle')
-def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None,
-                       engine_id=None, diffs=None, trigger_time=None, domain=None):
+def rebuild_indicators(
+    indicator_config_id,
+    initiated_by=None,
+    limit=-1,
+    source=None,
+    engine_id=None,
+    diffs=None,
+    trigger_time=None,
+    domain=None,
+):
     config = get_ucr_datasource_config_by_id(indicator_config_id)
     if trigger_time is not None and trigger_time < config.last_modified:
         return
@@ -110,8 +119,15 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
             config.save()
 
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
-        adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
-        _iteratively_build_table(config, limit=limit)
+        rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter)
+        try:
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
+            _iteratively_build_table(config, limit=limit)
+        except Exception:
+            _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource', adapter,
+                                        rows_count_before_rebuild, error=True)
+            raise
+        _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource', adapter, rows_count_before_rebuild)
 
 
 @serial_task(
@@ -130,8 +146,69 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
             config.meta.build.rebuilt_asynchronously = False
             config.save()
 
-        adapter.build_table(initiated_by=initiated_by, source=source)
-        _iteratively_build_table(config, in_place=True)
+        rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter)
+        try:
+            adapter.build_table(initiated_by=initiated_by, source=source)
+            _iteratively_build_table(config, in_place=True)
+        except Exception:
+            _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource_in_place', adapter,
+                                        rows_count_before_rebuild, error=True)
+            raise
+        _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource_in_place', adapter,
+                                    rows_count_before_rebuild)
+
+
+def _get_rows_count_from_existing_table(adapter):
+    table = adapter.get_existing_table_from_db()
+    if table is not None:
+        return adapter.session_helper.Session.query(table).count()
+
+
+def _report_ucr_rebuild_metrics(config, source, action, adapter, rows_count_before_rebuild, error=False):
+    if source not in ('edit_data_source_rebuild', 'edit_data_source_build_in_place'):
+        return
+    try:
+        _report_metric_number_of_days_since_first_build(config, action)
+        if error:
+            _report_metric_rebuild_error(config, action)
+        else:
+            _report_metric_increase_in_rows_count(config, action, adapter, rows_count_before_rebuild)
+    except Exception:
+        pass
+
+
+def _report_metric_number_of_days_since_first_build(config, action):
+    try:
+        earliest_entry = DataSourceActionLog.objects.filter(
+            domain=config.domain,
+            indicator_config_id=config.get_id,
+            action__in=[DataSourceActionLog.BUILD, DataSourceActionLog.REBUILD]
+        ).earliest('date_created')
+    except DataSourceActionLog.DoesNotExist:
+        pass
+    else:
+        no_of_days = (datetime.utcnow() - earliest_entry.date_created).days
+        metrics_gauge(f'commcare.ucr.{action}.days_since_first_build', no_of_days, tags={'domain': config.domain})
+
+
+def _report_metric_rebuild_error(config, action):
+    from corehq.apps.userreports.views import _number_of_records_to_be_iterated_for_rebuild
+    expected_rows_to_process = _number_of_records_to_be_iterated_for_rebuild(config)
+    metrics_gauge(
+        f'commcare.ucr.{action}.failed.expected_rows_to_process',
+        expected_rows_to_process,
+        tags={'domain': config.domain}
+    )
+
+
+def _report_metric_increase_in_rows_count(config, action, adapter, rows_count_before_rebuild):
+    if rows_count_before_rebuild is None:
+        return
+    # Row count can only be obtained for synchronous rebuilds.
+    if not config.asynchronous:
+        rows_count_after_rebuild = adapter.get_query_object().count()
+        if rows_count_after_rebuild > rows_count_before_rebuild:
+            metrics_counter(f'commcare.ucr.{action}.increase_in_rows', tags={'domain': config.domain})
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -254,7 +331,9 @@ def queue_async_indicators():
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
     retry_threshold = start - timedelta(hours=4)
     # don't requeue anything that has been retried more than ASYNC_INDICATOR_MAX_RETRIES times
-    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=ASYNC_INDICATOR_MAX_RETRIES)[:settings.ASYNC_INDICATORS_TO_QUEUE]
+    indicators = AsyncIndicator.objects.filter(
+        unsuccessful_attempts__lt=ASYNC_INDICATOR_MAX_RETRIES
+    )[:settings.ASYNC_INDICATORS_TO_QUEUE]
 
     indicators_by_domain_doc_type = defaultdict(list)
     # page so that envs can have arbitarily large settings.ASYNC_INDICATORS_TO_QUEUE

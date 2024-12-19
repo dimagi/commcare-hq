@@ -4,6 +4,7 @@ hqDefine("userreports/js/configurable_reports_home", [
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
+    'commcarehq',
 ], function (
     $,
     _,

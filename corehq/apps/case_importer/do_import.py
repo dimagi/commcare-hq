@@ -342,9 +342,7 @@ class _TimedAndThrottledImporter:
         for rows, status in ((rows_created, 'created'),
                              (rows_updated, 'updated'),
                              (rows_failed, 'error')):
-            metrics_counter('commcare.case_importer.cases', rows, tags={
-                'status': status,
-            })
+            metrics_counter("commcare.case_importer.cases", rows, tags={"status": status, "domain": self.domain})
 
 
 class SubmitCaseBlockHandler:

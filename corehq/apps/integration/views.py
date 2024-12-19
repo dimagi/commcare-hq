@@ -18,6 +18,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.integration.forms import (
     DialerSettingsForm,
     HmacCalloutSettingsForm,
@@ -37,6 +38,7 @@ class BiometricIntegrationView(BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Biometric Integration")
     template_name = 'integration/biometric.html'
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(toggles.BIOMETRIC_INTEGRATION.required_decorator())
     def dispatch(self, request, *args, **kwargs):
@@ -70,6 +72,7 @@ class BiometricIntegrationView(BaseAdminProjectSettingsView):
 
 
 @toggles.WIDGET_DIALER.required_decorator()
+@use_bootstrap5
 @login_and_domain_required
 @require_GET
 def dialer_view(request, domain):
@@ -81,6 +84,7 @@ def dialer_view(request, domain):
 
 
 @toggles.GAEN_OTP_SERVER.required_decorator()
+@use_bootstrap5
 @login_and_domain_required
 @require_POST
 def gaen_otp_view(request, domain):
@@ -158,6 +162,7 @@ def get_post_data_for_otp(request, domain):
     return post_params
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class DialerSettingsView(BaseProjectSettingsView):
     urlname = 'dialer_settings_view'
     page_title = gettext_lazy('Dialer Settings')
@@ -200,6 +205,7 @@ class DialerSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.GAEN_OTP_SERVER.required_decorator(), name='dispatch')
 class GaenOtpServerSettingsView(BaseProjectSettingsView):
     urlname = 'gaen_otp_server_settings_view'
@@ -240,6 +246,7 @@ class GaenOtpServerSettingsView(BaseProjectSettingsView):
 
 
 @method_decorator(toggles.HMAC_CALLOUT.required_decorator(), name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class HmacCalloutSettingsView(BaseProjectSettingsView):
     urlname = 'hmac_callout_settings_view'
     page_title = gettext_lazy('Signed Callout Settings')

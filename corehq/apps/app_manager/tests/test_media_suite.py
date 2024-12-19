@@ -9,6 +9,8 @@ from lxml import etree
 from unittest.mock import patch
 
 import commcare_translations
+
+from corehq import privileges
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.generator import MediaSuiteGenerator
 from corehq.apps.app_manager.models import (
@@ -25,7 +27,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, parse_normalize, patch_get_xform_resource_overrides
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareVideo
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import softer_assert, privilege_enabled
 
 
 class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
@@ -291,6 +293,7 @@ class TestRemoveMedia(TestCase, TestXmlMixin):
         self.assertFalse(list(app.multimedia_map.keys()))
 
 
+@privilege_enabled(privileges.APP_DEPENDENCIES)
 class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
     """
         For CC >= 2.21

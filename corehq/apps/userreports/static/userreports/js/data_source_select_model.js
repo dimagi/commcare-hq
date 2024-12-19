@@ -1,9 +1,15 @@
-hqDefine("userreports/js/data_source_select_model", function () {
+hqDefine("userreports/js/data_source_select_model", [
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+], function (
+    ko,
+    initialPageData
+) {
     return {
         application: ko.observable(""),
         sourceType: ko.observable(""),
-        sourcesMap: hqImport("hqwebapp/js/initial_page_data").get("sources_map"),
-        dropdownMap: hqImport("hqwebapp/js/initial_page_data").get("dropdown_map"),
+        sourcesMap: initialPageData.get("sources_map"),
+        dropdownMap: initialPageData.get("dropdown_map"),
         labelMap: {
             'case': gettext('Case'),
             'form': gettext('Form'),

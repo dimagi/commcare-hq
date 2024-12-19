@@ -37,7 +37,7 @@ hqDefine('cloudcare/js/utils', [
         showSpinner: false,
     });
 
-    var showError = function (message, $el, reportToHq) {
+    var showError = function (message, $el, reportToHq, additionalData) {
         message = getErrorMessage(message);
         // Make message more user friendly since html isn't useful here
         if (message.includes('500') && message.includes('<!DOCTYPE html>')) {
@@ -46,10 +46,10 @@ hqDefine('cloudcare/js/utils', [
         }
         _show(message, $el, null, "alert-danger");
         if (reportToHq === undefined || reportToHq) {
-            reportFormplayerErrorToHQ({
+            reportFormplayerErrorToHQ(Object.assign({
                 type: 'show_error_notification',
                 message: message,
-            });
+            }, (additionalData || {})));
         }
     };
 
@@ -130,7 +130,7 @@ hqDefine('cloudcare/js/utils', [
 
     var getRegionContainer = function () {
         const RegionContainer = Marionette.View.extend({
-            el: "#menu-container",
+            el: "#main-container",
 
             regions: {
                 main: "#menu-region",
@@ -346,7 +346,7 @@ hqDefine('cloudcare/js/utils', [
     // TD does have a plugin to integrate with moment, but since other usages of TD in HQ
     // don't need it, instead of enabling that, hack around this.
     const _momentFormatToTempusFormat = function (momentFormat) {
-        return momentFormat.replaceAll("D", "d").replaceAll("Y", "y");
+        return momentFormat.replaceAll("D", "d").replaceAll("Y", "y").replaceAll("A", "T");
     };
 
     /** Coerce an input date string to a moment object */
@@ -393,6 +393,7 @@ hqDefine('cloudcare/js/utils', [
         }
 
         let date = moment(selectedTime, timeFormat);
+        const tempusTimeFormat = _momentFormatToTempusFormat(timeFormat);
         let options = {
             display: {
                 buttons: {
@@ -401,8 +402,8 @@ hqDefine('cloudcare/js/utils', [
                 },
             },
             localization: {
-                format: timeFormat,
-                hourCycle: timeFormat.indexOf('T') === -1 ? 'h23' : 'h12',
+                format: tempusTimeFormat,
+                hourCycle: tempusTimeFormat.indexOf('T') === -1 ? 'h23' : 'h12',
             },
             useCurrent: true,
         };

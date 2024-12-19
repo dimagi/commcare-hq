@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "data_dictionary/js/data_dictionary" %}
+{% js_entry_b3 "data_dictionary/js/data_dictionary" %}
 
 {% block stylesheets %}{{ block.super }}
   {% compress css %}

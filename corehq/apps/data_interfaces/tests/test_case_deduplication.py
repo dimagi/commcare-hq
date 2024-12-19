@@ -323,8 +323,14 @@ class EnsureCaseExistsTest(TestCase):
 
         self.assertTrue(case_exists_in_es(self.domain, updated_case, ['case_name']))
 
-    def _create_case(self, name='Anakin Skywalker'):
-        return self.factory.create_case(case_name=name, update={})
+    def test_when_case_metadata_parameters_match_returns_true(self):
+        case = self._create_case(name='Anakin Skywalker', owner_id='abc123')
+        self._prime_es_index([case])
+
+        self.assertTrue(case_exists_in_es(self.domain, case, ['owner_id']))
+
+    def _create_case(self, name='Anakin Skywalker', owner_id=None):
+        return self.factory.create_case(case_name=name, owner_id=owner_id, update={})
 
 
 @es_test(requires=[case_search_adapter])

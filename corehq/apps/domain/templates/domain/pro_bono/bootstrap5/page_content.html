@@ -1,0 +1,21 @@
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block page_content %}
+  {% if is_submitted %}
+    <h4>{% trans "Thank you for your submission.  A representative will be in contact with you shortly." %}</h4>
+    <p><strong>Contact email(s):</strong> {{ pro_bono_form.contact_email.value }}</p>
+    <p><strong>Organization:</strong> {{ pro_bono_form.organization.value }}</p>
+    <p><strong>Project Space:</strong> {% if domain %}{{ domain }}{% else %}{{ pro_bono_form.domain.value }}{% endif %}</p>
+    <p><strong>Project overview:</strong> {{ pro_bono_form.project_overview.value }}</p>
+    <p><strong>Estimated annual expenditures on airtime:</strong> {{ pro_bono_form.airtime_expense.value }}</p>
+    <p><strong>Estimated annual expenditures on devices:</strong> {{ pro_bono_form.device_expense.value }}</p>
+    <p><strong>Pay only features needed:</strong> {{ pro_bono_form.pay_only_features_needed.value }}</p>
+    <p><strong>Duration of project:</strong> {{ pro_bono_form.duration_of_project.value }}</p>
+    <p><strong>Number of expected users:</strong> {{ pro_bono_form.num_expected_users.value }}</p>
+    <p><strong>Dimagi contact:</strong> {{ pro_bono_form.dimagi_contact.value }}</p>
+  {% else %}
+    {% crispy pro_bono_form %}  {# todo B5: crispy #}
+  {% endif %}
+{% endblock %}

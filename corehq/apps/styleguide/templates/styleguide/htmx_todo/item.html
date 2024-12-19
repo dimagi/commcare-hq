@@ -1,0 +1,95 @@
+{% load i18n %}
+<li
+    id="item-{{ item.id }}"
+    class="list-group-item"
+    {# the x-data below is from Alpine, and sets up the model for inline editing #}
+    x-data='{
+      isEditing: false,
+      isSubmitting: false,
+      itemValue: "{{ item.name }}",
+    }'
+>
+  <div class="d-flex align-items-center fs-4 p-1">
+    <input
+        class="form-check-input me-3"
+        type="checkbox"
+        {# request.path_info is just the same URL for this view #}
+        {# an alternative would be {% url "sg_htmx_todo_list_example" %} #}
+        hx-post="{{ request.path_info }}"
+        {# hq-hx-action triggers the mark_item_done method in TodoListDemoView #}
+        hq-hx-action="mark_item_done"
+        {# hx-vals is a handy way to send extra JSON-formatted data with the request #}
+        hx-vals='{
+          "itemId": {{ item.id }}
+        }'
+        {# the next two lines say replace the entire content of the target in hx-target #}
+        hx-swap="outerHTML"
+        hx-target="#item-{{ item.id }}"
+        {# :disabled is shorthand for Alpine's x-bind:disabled #}
+        :disabled="isEditing || isSubmitting"
+    >
+
+    {# the element below defines what the text looks like when not in edit mode #}
+    <div
+        class="pt-1"
+        {# here we react to the value of isEditing from the alpine model set up in the parent <li> element #}
+        x-show="!isEditing"
+        {# @dblclick is shorthand for Alpine's x-on:dblclick #}
+        @dblclick="isEditing = !isSubmitting"
+    >
+      <span>{{ item.name }}</span>
+      <button
+          class="btn btn-link btn-sm inline-edit-action"
+          type="button"
+          @click="isEditing = true"
+          :disabled="isSubmitting"
+      >
+        <i class="fa fa-pencil"></i>
+        <span class="visually-hidden">
+          {% trans "Edit Value" %}
+        </span>
+      </button>
+    </div>
+
+    {# the element below defines what the inline edit looks like in edit mode #}
+    <div x-show="isEditing">
+      <form
+          hx-post="{{ request.path_info }}"
+          hq-hx-action="edit_item"
+          hx-vals='{
+            "itemId": {{ item.id }}
+          }'
+          {# hx-disabled-elt ensures that all buttons related to this form are disabled on post #}
+          hx-disabled-elt="find button"
+          hx-swap="outerHTML"
+          hx-target="#item-{{ item.id }}"
+      >
+        <div class="input-group">
+          <input
+              type="text"
+              class="form-control"
+              name="newValue"
+              {# x-model creates a two-way binding for the value of itemValue in the alpine model with the value of the input #}
+              x-model="itemValue"
+          >
+          <button
+              class="btn btn-primary"
+              type="submit"
+              @click="isSubmitting = true"
+          >
+            <i class="fa fa-check"></i>
+          </button>
+          <button
+              class="btn btn-outline-danger"
+              type="button"
+              :disabled="isSubmitting"
+              @click="isEditing = false"
+          >
+            <i class="fa fa-close"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</li>

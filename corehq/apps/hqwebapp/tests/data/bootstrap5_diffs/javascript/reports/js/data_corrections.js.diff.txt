@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -28,15 +28,15 @@
+@@ -28,7 +28,7 @@
   *              Property is the data, plucked from the properties array. Name is displayed in the menu that lets
   *              user toggle between display properties.
   */
@@ -9,16 +9,6 @@
      "jquery",
      "knockout",
      "underscore",
-     "hqwebapp/js/assert_properties",
-     "analytix/js/kissmetrix",
--    "hqwebapp/js/bootstrap3/components.ko",     // pagination
-+    "hqwebapp/js/bootstrap5/components.ko",     // pagination
-     "select2/dist/js/select2.full.min",
--    "hqwebapp/js/bootstrap3/components.ko",    // search box
-+    "hqwebapp/js/bootstrap5/components.ko",    // search box
- ], function (
-     $,
-     ko,
 @@ -345,7 +345,7 @@
              model = DataCorrectionsModel(options);
              $modal.koApplyBindings(model);

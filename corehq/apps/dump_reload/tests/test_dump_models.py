@@ -52,6 +52,7 @@ IGNORE_MODELS = {
     "cleanup.DeletedCouchDoc",
     "cleanup.DeletedSQLDoc",
     "contenttypes.ContentType",
+    "data_analytics.DomainMetrics",
     "data_analytics.GIRRow",
     "data_analytics.MALTRow",
     "django_celery_results.ChordCounter",
@@ -86,6 +87,7 @@ IGNORE_MODELS = {
     "project_limits.DynamicRateDefinition",
     "project_limits.RateLimitedTwoFactorLog",
     "project_limits.PillowLagGaugeDefinition",
+    "registration.SelfSignupWorkflow",
 
     # 'registry' models only make sense across multiple domains
     "registry.DataRegistry",
@@ -136,9 +138,6 @@ UNKNOWN_MODELS = {
     "oauth2_provider.Grant",
     "oauth2_provider.IDToken",
     "oauth2_provider.RefreshToken",
-    "oauth_integrations.GoogleApiToken",
-    "oauth_integrations.LiveGoogleSheetRefreshStatus",
-    "oauth_integrations.LiveGoogleSheetSchedule",
     "registration.AsyncSignupRequest",
     "registration.RegistrationRequest",
     "reminders.EmailUsage",

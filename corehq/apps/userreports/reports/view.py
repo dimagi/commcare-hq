@@ -1,4 +1,3 @@
-import json
 from contextlib import closing, contextmanager
 from io import BytesIO
 
@@ -6,9 +5,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
-    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
@@ -556,9 +555,9 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 self.report_export.create_export(temp, Format.HTML)
             except UserReportsError as e:
                 return self.render_json_response({'error': str(e)})
-            return HttpResponse(json.dumps({
+            return JsonResponse({
                 'report': temp.getvalue().decode('utf-8'),
-            }), content_type='application/json')
+            })
 
     @property
     @memoized

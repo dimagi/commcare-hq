@@ -522,13 +522,3 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         CommcareSettings: CommcareSettings,
     };
 });
-
-ko.bindingHandlers.passwordSetter = {
-    init: function (element, valueAccessor) {
-        var observableValue = valueAccessor();
-        $(element).password_setter();
-        $(element).on('textchange change', function () {
-            observableValue($(element).val());
-        });
-    },
-};
