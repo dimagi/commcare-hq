@@ -396,7 +396,6 @@ HQ_APPS = (
     'custom.hki',
     'custom.bha',
     'custom.covid',
-    'custom.inddex',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
     'custom.hmhb',
@@ -1921,7 +1920,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
-    os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'polio_rdc', 'ucr', 'data_sources', 'users.json'),
@@ -1996,14 +1994,6 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',
     'vectorlink-zimbabwe': 'custom.abt',
-
-    'inddex-reports': 'custom.inddex',
-    'inddex-multilingual': 'custom.inddex',
-    'inddex-multi-vn': 'custom.inddex',
-    'iita-fcms-nigeria': 'custom.inddex',
-    'cambodia-arch-3-study': 'custom.inddex',
-    'senegal-arch-3-study': 'custom.inddex',
-    'inddex24-dev': 'custom.inddex',
 
     'co-carecoordination': 'custom.bha',
     'co-carecoordination-auto': 'custom.bha',

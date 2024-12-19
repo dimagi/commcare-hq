@@ -1,8 +1,0 @@
-{% extends "reports/bootstrap3/base_template.html" %}
-{% load hq_shared_tags %}
-{% load i18n %}
-
-{% block filter_panel %}
-    {% if report.description %}<p class="lead">{{ report.description }}</p>{% endif %}
-    {{ block.super }}
-{% endblock %}
