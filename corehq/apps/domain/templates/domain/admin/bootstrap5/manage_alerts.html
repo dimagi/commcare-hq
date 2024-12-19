@@ -12,7 +12,7 @@
     <form class="form form-horizontal" method="post">
       <fieldset>
         <legend>{% trans 'Add New Alert' %}</legend>
-        {% crispy form %}  {# todo B5: crispy #}
+        {% crispy form %}
       </fieldset>
     </form>
     <div id="ko-alert-container">
@@ -54,7 +54,7 @@
             <td data-bind="text: created_by_user">
             </td>
             <td>
-              <form action="{% url 'update_domain_alert_status' domain %}" method="post" style="float: left; margin-right: 5px;">  {# todo B5: inline-style #}
+              <form action="{% url 'update_domain_alert_status' domain %}" method="post" class="float-start me-1">
                 {% csrf_token %}
                 <input name="alert_id"
                        type="hidden"
@@ -74,11 +74,11 @@
                   {% trans "De-activate Alert" %}
                 </button>
               </form>
-              <a class="btn btn-outline-primary" data-bind="attr: {href: editUrl}" style="float: left; margin-right: 5px;">  {# todo B5: inline-style #}
+              <a class="btn btn-outline-primary" data-bind="attr: {href: editUrl}" class="float-start me-1">
                 <i class="fa fa-edit"></i>
                 {% trans "Edit" %}
               </a>
-              <form action="{% url 'delete_domain_alert' domain %}" method="post" style="float: left">  {# todo B5: inline-style #}
+              <form action="{% url 'delete_domain_alert' domain %}" method="post" class="float-start">
                 {% csrf_token %}
                 <input name="alert_id"
                        type="hidden"

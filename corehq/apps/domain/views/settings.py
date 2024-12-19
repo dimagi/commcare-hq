@@ -553,8 +553,9 @@ class BaseDomainAlertsView(BaseProjectSettingsView):
         return ServerTime(timestamp).user_time(pytz.timezone(timezone))
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ManageDomainAlertsView(BaseDomainAlertsView):
-    template_name = 'domain/admin/bootstrap3/manage_alerts.html'
+    template_name = 'domain/admin/bootstrap5/manage_alerts.html'
     urlname = 'domain_manage_alerts'
     page_title = gettext_lazy("Manage Project Alerts")
 
