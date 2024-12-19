@@ -221,9 +221,8 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         return query.distinct().order_by(
             case([
                 (self._sql_column.ilike(query_context.query), 0),  # Exact matches first
-                (self._sql_column.ilike(f"{query_context.query}%"), 1),  # Prefix matches next
-                (self._sql_column.ilike(f"%{query_context.query}%"), 2)],  # Substring matches
-                else_=3  # Everything else
+                (self._sql_column.ilike(f"%{query_context.query}%"), 1)],  # Substring matches
+                else_=2  # Everything else
             ).asc()
         )
 
