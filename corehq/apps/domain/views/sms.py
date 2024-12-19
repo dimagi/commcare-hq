@@ -21,7 +21,7 @@ from corehq.apps.smsbillables.forms import (
 class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     urlname = 'public_sms_rates_view'
     page_title = gettext_lazy("SMS Rate Calculator")
-    template_name = 'domain/admin/bootstrap5/global_sms_rates.html'
+    template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
     @use_bootstrap5
