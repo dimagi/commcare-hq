@@ -1142,11 +1142,8 @@ class InviteWebUserView(BaseManageWebUserView):
         is_add_user = self.request_id is not None
         invitation = self.invitation
         if invitation:
-            assigned_location = invitation.assigned_locations.filter()
-            assigned_location_ids = [loc.location_id for loc in assigned_location]
-            primary_location_id = None
-            if invitation.primary_location:
-                primary_location_id = invitation.primary_location.location_id
+            assigned_location_ids = list(invitation.assigned_locations.all().values_list('location_id', flat=True))
+            primary_location_id = getattr(invitation.primary_location, "location_id", None)
             initial = {
                 'email': invitation.email,
                 'role': invitation.role,
@@ -1243,12 +1240,12 @@ class InviteWebUserView(BaseManageWebUserView):
             if invitation:
                 create_invitation = False
                 invitation.profile = profile
-                invitation.primary_location, assigned_locations = self.get_sql_locations(
+                invitation.primary_location, assigned_locations = self._get_sql_locations(
                     data.pop("primary_location", None), data.pop("assigned_locations", []))
                 invitation.assigned_locations.set(assigned_locations)
                 invitation.custom_user_data = data.get("custom_user_data", {})
 
-                invitation.role = data.get("role", None)
+                invitation.role = data.get("role")
                 invitation.program = data.get("program", None)
                 invitation.tableau_role = data.get("tableau_role", None)
                 invitation.tableau_group_ids = data.get("tableau_group_ids", None)
@@ -1283,7 +1280,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
                 data["profile"] = profile
-                data["primary_location"], assigned_locations = self.get_sql_locations(
+                data["primary_location"], assigned_locations = self._get_sql_locations(
                     data.pop("primary_location", None), data.pop("assigned_locations", []))
                 invite = Invitation(**data)
                 invite.save()
@@ -1301,7 +1298,7 @@ class InviteWebUserView(BaseManageWebUserView):
             ))
         return self.get(request, *args, **kwargs)
 
-    def get_sql_locations(self, primary_location_id, assigned_location_ids):
+    def _get_sql_locations(self, primary_location_id, assigned_location_ids):
         primary_location = (SQLLocation.by_location_id(primary_location_id) if primary_location_id else None)
         if primary_location_id:
             assert primary_location_id in assigned_location_ids
