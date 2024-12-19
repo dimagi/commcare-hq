@@ -58,7 +58,7 @@ def connectid_messaging_key(request, *args, **kwargs):
         channel_id=channel_id,
         connectid_username=request.connectid_username
     )
-    messaging_key = link.get_or_create_key()
+    messaging_key = link.messaging_key
     return JsonResponse({"key": messaging_key.key})
 
 

@@ -3322,7 +3322,8 @@ class ConnectIDUserLink(models.Model):
     class Meta:
         unique_together = ('domain', 'commcare_user')
 
-    def get_or_create_key(self):
+    @property
+    def messaging_key(self):
         key = generate_aes_key().decode("utf-8")
         messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
             connectid_user_link=self, domain=self.domain, active=True, defaults={"key": key}
