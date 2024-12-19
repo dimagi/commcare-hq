@@ -508,10 +508,11 @@ class CustomPasswordResetView(PasswordResetConfirmView):
 
 
 @method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
     urlname = 'recovery_measures_history'
     page_title = gettext_lazy("Recovery Measures History")
-    template_name = 'domain/admin/bootstrap3/recovery_measures_history.html'
+    template_name = 'domain/admin/bootstrap5/recovery_measures_history.html'
 
     @property
     def page_context(self):
