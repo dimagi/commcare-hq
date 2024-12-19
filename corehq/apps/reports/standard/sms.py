@@ -62,6 +62,7 @@ from corehq.apps.sms.models import (
     OUTGOING,
     SMS,
     WORKFLOWS_FOR_REPORTS,
+    ConnectMessage,
     MessagingEvent,
     MessagingSubEvent,
     PhoneBlacklist,
@@ -869,8 +870,12 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     def headers(self):
         EMAIL_ADDRRESS = _('Email Address')
         PHONE_NUMBER = _('Phone Number')
-        if self.messaging_event and self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
-            contact_column = EMAIL_ADDRRESS
+        CONNECT_ID = _('ConnectID')
+        if self.messaging_event:
+            if self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
+                contact_column = EMAIL_ADDRRESS
+            elif self.messaging_event.content_type in (MessagingEvent.CONTENT_CONNECT, MessagingEvent.CONTENT_CONNECT_SURVEY):
+                contact_column = CONNECT_ID
         else:
             contact_column = PHONE_NUMBER
         return DataTablesHeader(
@@ -960,7 +965,8 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                             self._fmt(status),
                         ])
             elif messaging_subevent.content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
-                    MessagingEvent.CONTENT_IVR_SURVEY):
+                                                     MessagingEvent.CONTENT_IVR_SURVEY,
+                                                     MessagingEvent.CONTENT_CONNECT_SURVEY):
                 status = get_status_display(messaging_subevent)
                 xforms_session = messaging_subevent.xforms_session
                 timestamp = xforms_session.start_time if xforms_session else messaging_subevent.date
@@ -992,6 +998,26 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                     self._fmt(recipient_address),
                     self._fmt_direction(OUTGOING),
                     self._fmt(_('Email')),
+                    self._fmt(status),
+                ])
+            elif messaging_subevent.content_type == MessagingEvent.CONTENT_CONNECT:
+                timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
+                status = get_status_display(messaging_subevent)
+                content = '-'
+                recipient_address = '-'
+                try:
+                    msg = ConnectMessage.objects.get(messaging_subevent=messaging_subevent.pk)
+                    content = msg.text
+                    recipient = msg.couch_recipient
+                except ConnectMessage.DoesNotExist:
+                    pass
+                result.append([
+                    self._fmt_timestamp(timestamp),
+                    self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
+                    self._fmt(content),
+                    self._fmt(recipient),
+                    self._fmt_direction(msg.direction),
+                    self._fmt(_('Connect Message')),
                     self._fmt(status),
                 ])
         return result
