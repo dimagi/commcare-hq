@@ -402,7 +402,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
-        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent', 'FCMNotificationContent'
+        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent', 'FCMNotificationContent',
+        'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
     ModelDeletion('scheduling', 'AlertEvent', 'schedule__domain'),
