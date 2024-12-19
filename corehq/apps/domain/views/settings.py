@@ -281,7 +281,7 @@ def logo(request, domain):
 
 
 class EditPrivacySecurityView(BaseAdminProjectSettingsView):
-    template_name = "domain/admin/bootstrap5/project_privacy.html"
+    template_name = "domain/admin/project_privacy.html"
     urlname = "privacy_info"
     page_title = gettext_lazy("Privacy and Security")
 
