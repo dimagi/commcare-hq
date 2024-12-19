@@ -1,11 +1,11 @@
 import base64
 import requests
 from Crypto.Cipher import AES
-from uuid import uuid4
 
 from django.conf import settings
 
 from corehq.apps.users.models import ConnectIDUserLink, CouchUser
+
 
 class ConnectBackend:
     couch_id = "connectid"
@@ -27,14 +27,13 @@ class ConnectBackend:
         response = requests.post(
             settings.CONNECTID_MESSAGE_URL,
             json={
-                "channel": str(user_link.channel_id),
+                "channel": user_link.channel_id,
                 "content": content,
                 "message_id": str(message.message_id),
             },
             auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
         return response.status_code == requests.codes.OK
-
 
     def create_channel(self, user_link):
         response = requests.post(
@@ -46,6 +45,7 @@ class ConnectBackend:
             auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
         if response.status_code == 404:
-            return
+            return False
         user_link.channel_id = response.json()["channel_id"]
         user_link.save()
+        return True
