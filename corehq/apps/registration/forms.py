@@ -645,7 +645,8 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         return cleaned_data
 
     def _initialize_tableau_fields(self, data, domain, invitation=None):
-        self.tableau_form = BaseTableauUserForm(data, domain=domain)
+        readonly = not self.request.couch_user.has_permission(domain, 'edit_user_tableau_config')
+        self.tableau_form = BaseTableauUserForm(data, domain=domain, readonly=readonly)
         self.fields['tableau_group_indices'] = self.tableau_form.fields["groups"]
         self.fields['tableau_group_indices'].label = _('Tableau Groups')
         self.fields['tableau_role'] = self.tableau_form.fields['role']
