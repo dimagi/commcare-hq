@@ -2,11 +2,11 @@ import datetime
 import random
 from decimal import Decimal
 
+from dateutil.relativedelta import relativedelta
+
 from django.conf import settings
 from django.core import mail
 from django.test import override_settings
-
-from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
@@ -23,6 +23,7 @@ from corehq.apps.accounting.models import (
     Invoice,
     SoftwarePlanEdition,
     Subscriber,
+    Subscription,
     SubscriptionType,
 )
 from corehq.apps.accounting.tasks import calculate_users_in_all_domains
@@ -68,7 +69,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         if cls.is_testing_web_user_feature:
             # make sure the subscription is still active when we count web users
             cls.subscription_is_active = True
-        cls.subscription_end_date = add_months_to_date(cls.subscription_start_date, cls.subscription_length)
+        cls.subscription_end_date = cls.subscription_start_date + relativedelta(months=cls.subscription_length)
         cls.subscription = generator.generate_domain_subscription(
             cls.account,
             cls.domain,
@@ -131,7 +132,7 @@ class TestInvoice(BaseInvoiceTestCase):
         tasks.generate_invoices_based_on_date(invoice_date)
         self.assertEqual(self.subscription.invoice_set.count(), 0)
 
-    def test_community_no_charges_no_invoice(self):
+    def test_no_subscription_no_charges_no_invoice(self):
         """
         No invoices should be generated for domains that are not on a subscription and do not
         have any per_excess charges on users or SMS messages
@@ -144,9 +145,8 @@ class TestInvoice(BaseInvoiceTestCase):
 
     def test_community_invoice(self):
         """
-        For an unsubscribed domain with any charges over the community limit for the month of invoicing,
-        make sure that an invoice is generated in addition to a subscription for that month to
-        the community plan.
+        For community-subscribed domain with any charges over the community limit for the month of invoicing,
+        make sure that an invoice is generated.
         """
         domain = generator.arbitrary_domain()
         self.addCleanup(domain.delete)
@@ -154,6 +154,10 @@ class TestInvoice(BaseInvoiceTestCase):
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
         generator.arbitrary_contact_info(account, self.dimagi_user)
+        generator.generate_domain_subscription(
+            account, domain, self.subscription_start_date, None,
+            plan_version=generator.subscribable_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+        )
         account.date_confirmed_extra_charges = datetime.date.today()
         account.save()
         today = datetime.date.today()
@@ -164,11 +168,6 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertEqual(invoices.count(), 1)
         invoice = invoices.get()
         self.assertEqual(invoice.subscription.subscriber.domain, domain.name)
-        self.assertEqual(invoice.subscription.date_start, invoice.date_start)
-        self.assertEqual(
-            invoice.subscription.date_end - datetime.timedelta(days=1),
-            invoice.date_end
-        )
 
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is small"""
@@ -417,7 +416,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
     def test_community_over_limit(self):
         """
-        For a domain under community (no subscription) with users over the community limit, make sure that:
+        For a domain under community with users over the community limit, make sure that:
         - base_description is None
         - base_cost is 0.0
         - unit_description is not None
@@ -436,8 +435,14 @@ class TestUserLineItem(BaseInvoiceTestCase):
         account.date_confirmed_extra_charges = today
         account.save()
 
+        community_plan = DefaultProductPlan.get_default_plan_version()
+        Subscription.new_domain_subscription(
+            account, domain.name, community_plan,
+            date_start=datetime.date(today.year, today.month, 1) - relativedelta(months=1),
+        )
+
         calculate_users_in_all_domains(datetime.date(today.year, today.month, 1))
-        tasks.generate_invoices_based_on_date(datetime.date.today())
+        tasks.generate_invoices_based_on_date(today)
         subscriber = Subscriber.objects.get(domain=domain.name)
         invoice = Invoice.objects.filter(subscription__subscriber=subscriber).get()
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
