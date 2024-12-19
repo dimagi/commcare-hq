@@ -46,7 +46,7 @@ hqDefine("users/js/custom_data_fields", [
             }
         }
         _.each(self.slugs, function (slug) {
-             self[slug] = fieldModel({
+            self[slug] = fieldModel({
                 value: options.user_data[slug] || originalProfileFields[slug],
             });
         });
