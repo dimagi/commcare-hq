@@ -21,8 +21,12 @@
       <legend>{% trans 'Edit Default Monthly Consumption' %}</legend>
       {% crispy form %}
     </fieldset>
-    <button type="submit" class="btn btn-primary">
-      {% trans "Update Default Consumption Info" %}
-    </button>
+    <div class="form-actions row">
+      <div class="field-control">
+        <button type="submit" class="btn btn-primary">
+          {% trans "Update Default Consumption Info" %}
+        </button>
+      </div>
+    </div>
   </form>
 {% endblock %}

@@ -412,8 +412,10 @@ class UsersAtLocationForm(forms.Form):
                 _("Specify Workers at this Location"),
                 crispy.Field('selected_ids'),
             ),
-            crispy.ButtonHolder(
-                Submit('submit', gettext_lazy("Update Location Membership"))
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', gettext_lazy("Update Location Membership"))
+                )
             )
         )
 
@@ -567,12 +569,14 @@ class LocationFilterForm(forms.Form):
                 ),
                 crispy.Field('location_status_active',),
             ),
-            StrictButton(
-                _("Download Locations"),
-                type="submit",
-                css_class="btn btn-primary",
-                data_bind="html: buttonHTML",
-            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Download Locations"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                    data_bind="html: buttonHTML",
+                ),
+            )
         )
 
     def clean_location_id(self):

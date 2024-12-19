@@ -14,12 +14,16 @@
       {% crispy data_fields_form %}
     {% endif %}
 
-    <button type="submit" class="btn btn-primary">
-      {% if product.get_id %}
-        {% trans 'Update Product' %}
-      {% else %}
-        {% trans 'Create Product' %}
-      {% endif %}
-    </button>
+    <div class="form-actions row">
+      <div class="field-control">
+        <button type="submit" class="btn btn-primary">
+          {% if product.get_id %}
+            {% trans 'Update Product' %}
+          {% else %}
+            {% trans 'Create Product' %}
+          {% endif %}
+        </button>
+      </div>
+    </div>
   </form>
 {% endblock %}
