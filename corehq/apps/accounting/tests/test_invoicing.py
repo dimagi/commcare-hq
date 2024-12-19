@@ -145,9 +145,8 @@ class TestInvoice(BaseInvoiceTestCase):
 
     def test_community_invoice(self):
         """
-        For an unsubscribed domain with any charges over the community limit for the month of invoicing,
-        make sure that an invoice is generated in addition to a subscription for that month to
-        the community plan.
+        For community-subscribed domain with any charges over the community limit for the month of invoicing,
+        make sure that an invoice is generated.
         """
         domain = generator.arbitrary_domain()
         self.addCleanup(domain.delete)
@@ -155,6 +154,10 @@ class TestInvoice(BaseInvoiceTestCase):
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
         generator.arbitrary_contact_info(account, self.dimagi_user)
+        generator.generate_domain_subscription(
+            account, domain, self.subscription_start_date, None,
+            plan_version=generator.subscribable_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+        )
         account.date_confirmed_extra_charges = datetime.date.today()
         account.save()
         today = datetime.date.today()
@@ -165,11 +168,6 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertEqual(invoices.count(), 1)
         invoice = invoices.get()
         self.assertEqual(invoice.subscription.subscriber.domain, domain.name)
-        self.assertEqual(invoice.subscription.date_start, invoice.date_start)
-        self.assertEqual(
-            invoice.subscription.date_end - datetime.timedelta(days=1),
-            invoice.date_end
-        )
 
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is small"""

@@ -61,11 +61,9 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         """
         Ensure that Community plans can generate invoices.
         """
-        community_plan = DefaultProductPlan.get_default_plan_version()
-        subscription = Subscription.new_domain_subscription(
-            self.account, self.domain.name, community_plan,
-            date_start=self.invoice_start,
-            date_end=self.invoice_end + datetime.timedelta(days=1),
+        subscription = generator.generate_domain_subscription(
+            self.account, self.domain, self.invoice_start, None,
+            plan_version=generator.subscribable_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
         )
         DomainUserHistory.objects.create(
             domain=self.domain.name, record_date=self.invoice_end, num_users=10)
