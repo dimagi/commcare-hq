@@ -271,7 +271,7 @@
               <td>
                 {% if not request.is_view_only %}
                 <div data-bind="visible: !actionMessage()">
-                  <a data-bind="attr: {href: inviteEditUrl()}">
+                  <a data-bind="attr: {href: inviteEditUrl}" style="text-decoration:none;">
                     <button type="button" class="btn btn-default" data-bind="disable: actionInProgress">
                       <i class="fa-regular fa-edit"></i>
                       {% trans "Edit" %}

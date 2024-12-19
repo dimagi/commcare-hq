@@ -114,7 +114,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         if invitation:
             initial_values = {f.slug: invitation.custom_user_data.get(f.slug) for f in custom_data_editor.fields}
             if invitation.profile:
-                initial_values["profile_id"] = invitation.profile.id
+                initial_values[PROFILE_SLUG] = invitation.profile.id
         return {
             'can_edit_original_profile': can_edit_original_profile,
             'custom_fields_slugs': [f.slug for f in custom_data_editor.fields],
@@ -123,7 +123,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
             ],
             'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
             'custom_fields_profile_slug': PROFILE_SLUG,
-            'initial_values': initial_values,
+            'user_data': initial_values,
         }
 
     @classmethod

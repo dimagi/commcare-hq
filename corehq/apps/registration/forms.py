@@ -651,12 +651,13 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         self.fields['tableau_role'] = self.tableau_form.fields['role']
         self.fields['tableau_role'].label = _('Tableau Role')
         if invitation:
-            initial_groups_indicies = []
-            for group_index in invitation.tableau_group_ids:
-                for i, group in enumerate(self.tableau_form.allowed_tableau_groups):
-                    if group_index == group.id:
-                        initial_groups_indicies.append(i)
-            self.fields['tableau_group_indices'].initial = initial_groups_indicies
+            if invitation.tableau_group_ids:
+                initial_groups_indicies = []
+                for group_index in invitation.tableau_group_ids:
+                    for i, group in enumerate(self.tableau_form.allowed_tableau_groups):
+                        if group_index == group.id:
+                            initial_groups_indicies.append(i)
+                self.fields['tableau_group_indices'].initial = initial_groups_indicies
             try:
                 self.fields['tableau_role'].initial = TableauUser.Roles(invitation.tableau_role)
             except ValueError:
