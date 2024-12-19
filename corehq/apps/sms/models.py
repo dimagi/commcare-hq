@@ -1115,6 +1115,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_FCM_NO_ACTION = "FCM_NO_ACTION"
     ERROR_FCM_NOTIFICATION_FAILURE = "FCM_NOTIFICATION_FAILURE"
     ERROR_FCM_DOMAIN_NOT_ENABLED = 'FCM_DOMAIN_NOT_ENABLED'
+    FILTER_MISMATCH = 'FILTER_MISMATCH'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1176,6 +1177,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_FCM_NO_ACTION: gettext_noop("No action selected for the FCM Data message type."),
         ERROR_FCM_NOTIFICATION_FAILURE: gettext_noop("Failure while sending FCM notifications to the devices."),
         ERROR_FCM_DOMAIN_NOT_ENABLED: gettext_noop("Domain is not enabled for FCM Push Notifications"),
+        FILTER_MISMATCH: gettext_noop("Recipient did not match filters:")
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)

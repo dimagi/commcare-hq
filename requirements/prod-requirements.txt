@@ -108,8 +108,6 @@ cryptography==43.0.1
     #   pyjwt
 csiphash==0.0.5
     # via -r base-requirements.in
-css-inline==0.11.0
-    # via -r base-requirements.in
 datadog==0.39.0
     # via -r base-requirements.in
 ddsketch==3.0.1
@@ -393,7 +391,7 @@ openpyxl==3.0.9
     #   commcaretranslationchecker
 opentelemetry-api==1.28.1
     # via ddtrace
-packaging==23.0
+packaging==24.2
     # via
     #   -r base-requirements.in
     #   gunicorn

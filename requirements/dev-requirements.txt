@@ -121,8 +121,6 @@ cryptography==43.0.1
     #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
-css-inline==0.11.0
-    # via -r base-requirements.in
 datadog==0.39.0
     # via -r base-requirements.in
 ddsketch==3.0.1
@@ -459,7 +457,7 @@ openpyxl==3.0.9
     #   commcaretranslationchecker
 opentelemetry-api==1.28.1
     # via ddtrace
-packaging==23.0
+packaging==24.2
     # via
     #   -r base-requirements.in
     #   build
@@ -727,7 +725,7 @@ sphinx==6.2.1
     #   sphinx-rtd-theme
     #   sphinxcontrib-django
     #   sphinxcontrib-jquery
-sphinx-rtd-theme==1.2.1
+sphinx-rtd-theme==3.0.2
     # via -r docs-requirements.in
 sphinxcontrib-applehelp==1.0.2
     # via sphinx

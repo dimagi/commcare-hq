@@ -8,7 +8,6 @@ from django.core.validators import validate_email
 from django.db import models
 from django.utils.translation import gettext as _
 
-import css_inline
 import jsonfield as old_jsonfield
 
 from dimagi.utils.modules import to_function
@@ -142,12 +141,6 @@ class EmailContent(Content):
                 self.html_message,
                 recipient.get_language_code()
             )
-            # Add extra css added by CKEditor, and inline css styles from template
-            email_css_filepath = os.path.join(
-                "corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
-            with open(email_css_filepath, 'r') as css_file:
-                css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
-            html_message = css_inliner.inline(html_message)
 
         try:
             subject, message, html_message = self.render_subject_and_message(
@@ -175,6 +168,7 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
+        is_conditional_alert = self.case is not None
         metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
         if toggles.RICH_TEXT_EMAILS.enabled(domain) and html_message:
             send_html_email_async.delay(
@@ -184,7 +178,8 @@ class EmailContent(Content):
                 text_content=message,
                 messaging_event_id=logged_subevent.id,
                 domain=domain,
-                use_domain_gateway=True)
+                use_domain_gateway=True,
+                is_conditional_alert=is_conditional_alert)
         else:
             send_mail_async.delay(
                 subject,
@@ -192,7 +187,8 @@ class EmailContent(Content):
                 [email_address],
                 messaging_event_id=logged_subevent.id,
                 domain=domain,
-                use_domain_gateway=True)
+                use_domain_gateway=True,
+                is_conditional_alert=is_conditional_alert)
 
         email = Email(
             domain=domain,

@@ -9,7 +9,6 @@ celery
 CommcareTranslationChecker>=0.9.7
 cryptography>=43.0.1
 csiphash
-css_inline  # USH - used for rich text messaging emails
 datadog
 ddtrace
 decorator==5.1.1  # required by django-digest
