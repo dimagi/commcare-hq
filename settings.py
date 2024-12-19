@@ -1149,6 +1149,8 @@ CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
 
+DEVICES_PER_USER = 100  # number of mobile devices a user can actively use within a specific time window
+
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
 
