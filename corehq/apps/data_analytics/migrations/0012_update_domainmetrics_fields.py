@@ -20,6 +20,12 @@ class Migration(migrations.Migration):
             old_name="location_restricted_users",
             new_name="location_restricted_roles",
         ),
+        migrations.AlterField(
+            model_name='domainmetrics',
+            name='has_custom_roles',
+            field=models.BooleanField(default=False),
+            preserve_default=False,
+        ),
         migrations.RemoveField(
             model_name="domainmetrics",
             name="has_custom_roles",
