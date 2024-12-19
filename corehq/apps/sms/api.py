@@ -128,13 +128,9 @@ def get_location_id_by_verified_number(v):
     return get_location_id_by_contact(v.domain, v.owner)
 
 
-def get_sms_class():
-    return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
-
-
-def get_message_class(phone_number):
-    if phone_number.is_sms:
-        return get_sms_class()
+def get_message_class(is_sms=True):
+    if is_sms:
+        return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
     else:
         return ConnectMessage
 
@@ -149,7 +145,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
         phone_number = str(phone_number)
     phone_number = clean_phone_number(phone_number)
 
-    msg = get_sms_class()(
+    msg = get_message_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
@@ -200,7 +196,7 @@ def send_message_to_verified_number(verified_number, text, metadata=None, logged
             return False
         raise
 
-    msg = get_message_class(verified_number)(
+    msg = get_message_class(verified_number.is_sms)(
         couch_recipient_doc_type=verified_number.owner_doc_type,
         couch_recipient=verified_number.owner_id,
         phone_number="+" + str(verified_number.phone_number),
@@ -231,7 +227,7 @@ def send_message_to_verified_number(verified_number, text, metadata=None, logged
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):
     phone_number = clean_phone_number(phone_number)
-    msg = get_sms_class()(
+    msg = get_message_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
@@ -247,7 +243,7 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
 def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None):
     phone_number = clean_phone_number(phone_number)
     backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
-    msg = get_sms_class()(
+    msg = get_message_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
@@ -584,7 +580,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     if text is None:
         text = ""
     phone_number = clean_phone_number(phone_number)
-    msg = get_sms_class()(
+    msg = get_message_class()(
         phone_number=phone_number,
         direction=INCOMING,
         date=timestamp or get_utcnow(),
