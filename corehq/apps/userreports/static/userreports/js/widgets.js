@@ -1,5 +1,7 @@
 hqDefine("userreports/js/widgets", [
     'jquery',
+    'hqwebapp/js/base_ace',
+    'commcarehq',
 ], function ($) {
     $(function () {
         $('[data-toggle="popover"]').popover();

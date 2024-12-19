@@ -10,8 +10,8 @@
              }
          );
          var table;
--        table = hqImport("reports/js/bootstrap3/config.dataTables.bootstrap").HQReportDataTables({
-+        table = hqImport("reports/js/bootstrap5/config.dataTables.bootstrap").HQReportDataTables({
+-        table = hqImport("reports/js/bootstrap3/datatables_config").HQReportDataTables({
++        table = hqImport("reports/js/bootstrap5/datatables_config").HQReportDataTables({
              aoColumns: colSorting,
          });
  

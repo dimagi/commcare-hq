@@ -209,6 +209,6 @@ class TestBouncedEmails(TestCase):
             recipients
         )
         self.assertEqual(
-            get_valid_recipients(recipients, domain=self.bad_domain),
+            get_valid_recipients(recipients, domain=self.bad_domain, is_conditional_alert=True),
             []
         )

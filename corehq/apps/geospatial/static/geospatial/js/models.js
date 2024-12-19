@@ -131,6 +131,8 @@ hqDefine('geospatial/js/models', [
 
         self.caseGroupsIndex = {};
 
+        self.DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
+
         self.initMap = function (mapDivId, centerCoordinates) {
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
             if (!centerCoordinates) {
@@ -513,24 +515,38 @@ hqDefine('geospatial/js/models', [
             });
         };
 
-        self.hasDisbursementLayers = function () {
-            const mapLayers = self.mapInstance.getStyle().layers;
-            return _.any(
-                mapLayers,
-                function (layer) { return layer.id.includes(DISBURSEMENT_LAYER_PREFIX); }
-            );
+        self.hasDisbursementLayer = function () {
+            return self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID);
         };
 
-        self.removeDisbursementLayers = function () {
-            const mapLayers = self.mapInstance.getStyle().layers;
-            let layerRemoved = false;
-            mapLayers.forEach(function (layer) {
-                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
-                    self.mapInstance.removeLayer(layer.id);
-                    layerRemoved = true;
-                }
+        self.addDisbursementLinesLayer = function (source) {
+            let layerId = self.DISBURSEMENT_LINES_LAYER_ID;
+            self.mapInstance.addSource(layerId, {
+                'type': 'geojson',
+                'data': source,
             });
-            return layerRemoved;
+            self.mapInstance.addLayer({
+                id: layerId,
+                type: 'line',
+                source: layerId,
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round',
+                },
+                paint: {
+                    'line-color': '#808080',
+                    'line-width': 1,
+                },
+            });
+        };
+
+        self.removeDisbursementLayer = function () {
+            if (self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeLayer(self.DISBURSEMENT_LINES_LAYER_ID);
+            }
+            if (self.mapInstance.getSource(self.DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeSource(self.DISBURSEMENT_LINES_LAYER_ID);
+            }
         };
 
         self.hasSelectedUsers = function () {
@@ -685,11 +701,11 @@ hqDefine('geospatial/js/models', [
 
         function clearDisbursementBeforeProceeding() {
             let proceedFurther = true;
-            if (self.mapObj.hasDisbursementLayers()) {
+            if (self.mapObj.hasDisbursementLayer()) {
                 // hide it by default and show it only if necessary
                 $('#disbursement-clear-message').hide();
                 if (confirmForClearingDisbursement()) {
-                    self.mapObj.removeDisbursementLayers();
+                    self.mapObj.removeDisbursementLayer();
                     $('#disbursement-clear-message').show();
                     $('#disbursement-params').hide();
                 } else {
@@ -1002,29 +1018,15 @@ hqDefine('geospatial/js/models', [
         };
 
         self.finishAssignment = function () {
-            let userCasesToConnect = {};
-            let casesToClear = [];
             for (const caseItem of self.caseData) {
                 const userItem = self.mapModel.caseGroupsIndex[caseItem.assignedUserId];
                 const groupId = (userItem) ? userItem.groupId : null;
                 self.mapModel.caseGroupsIndex[caseItem.caseId].assignedUserId = caseItem.assignedUserId;
                 self.mapModel.caseGroupsIndex[caseItem.caseId].groupId = groupId;
-
-                casesToClear.push(caseItem.mapItem);
-                if (caseItem.assignedUserId) {
-                    if (!userCasesToConnect[caseItem.assignedUserId]) {
-                        userCasesToConnect[caseItem.assignedUserId] = [];
-                    }
-                    userCasesToConnect[caseItem.assignedUserId].push(caseItem.mapItem);
-                }
             }
 
-            self.disbursementModel.clearConnectionLines(casesToClear);
-            for (const userId in userCasesToConnect) {
-                const user = self.mapModel.caseGroupsIndex[userId].item;
-                const cases = userCasesToConnect[userId];
-                self.disbursementModel.connectUserWithCasesOnMap(user, cases);
-            }
+            self.mapModel.removeDisbursementLayer();
+            self.disbursementModel.connectUserWithCasesOnMap();
         };
 
         self.exportAssignments = function () {

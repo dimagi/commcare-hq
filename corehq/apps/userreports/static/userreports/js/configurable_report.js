@@ -31,7 +31,7 @@ hqDefine("userreports/js/configurable_report", function () {
             hqImport('userreports/js/report_analytix').track.event.apply(this, e);
         });
 
-        var urlSerialize = hqImport('reports/js/reports.util').urlSerialize;
+        var urlSerialize = hqImport('reports/js/util').urlSerialize;
         var reportOptions = {
             domain: initialPageData.get('domain'),
             urlRoot: initialPageData.get('url_root'),

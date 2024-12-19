@@ -4,6 +4,7 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
     "knockout",
     "underscore",
     "es6!hqwebapp/js/bootstrap5_loader",
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
 ], function (
     $,
     ko,

@@ -13,19 +13,19 @@
 {% block js %}{{ block.super }}
   {% compress js %}
     <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap3/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'reports/js/bootstrap3/datatables_config.js' %}"></script>
     <script src="{% static 'reports/js/datepicker.js' %}"></script>
     <script src="{% static 'reports/js/bootstrap3/hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/reports.util.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap3/reports.async.js' %}"></script>
+    <script src="{% static 'reports/js/util.js' %}"></script>
+    <script src="{% static 'reports/js/bootstrap3/async.js' %}"></script>
     <script src="{% static 'reports/js/bootstrap3/standard_hq_report.js' %}"></script>
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
   {% endcompress %}
   {% include 'reports/partials/bootstrap3/filters_js.html' %}
   {% include 'reports/partials/graphs/charts_js.html' %}
 
-  <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
   {% compress js %}
+    <script src="{% static '@turf/turf/turf.min.js' %}"></script>
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
     <script src="{% static 'case/js/casexml.js' %}"></script>
     <script src="{% static 'reports/js/bootstrap3/tabular.js' %}"></script>
