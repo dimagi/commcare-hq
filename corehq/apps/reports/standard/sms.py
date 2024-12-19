@@ -1008,10 +1008,10 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 recipient_address = '-'
                 try:
                     msg = ConnectMessage.objects.get(messaging_subevent=messaging_subevent.pk)
-                    content = msg.text
-                    recipient = msg.couch_recipient
                 except ConnectMessage.DoesNotExist:
                     pass
+                content = msg.text
+                recipient = msg.couch_recipient
                 result.append([
                     self._fmt_timestamp(timestamp),
                     self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
