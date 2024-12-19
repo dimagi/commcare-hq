@@ -250,6 +250,7 @@ def uses_reminders(domain, *args):
 def not_implemented(domain, *args):
     return '<p class="text-danger">not implemented</p>'
 
+
 CALC_ORDER = [
     'num_web_users', 'num_mobile_users', 'forms', 'cases',
     'active_mobile_users', 'inactive_mobile_users', 'active_mobile_users--365',
@@ -464,7 +465,7 @@ def num_location_restricted_roles(domain):
 
 
 def num_case_sharing_loc_types(domain):
-    loc_types = [l for l in LocationType.objects.by_domain(domain) if l.shares_cases]
+    loc_types = [l_type for l_type in LocationType.objects.by_domain(domain) if l_type.shares_cases]
     return len(loc_types)
 
 

@@ -2584,6 +2584,7 @@ CALCULATED_PROPERTIES_FROM_DOMAIN_METRICS = FeatureRelease(
     owner='emapson@dimagi.com'
 )
 
+
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege
     from corehq.apps.users.role_utils import (
