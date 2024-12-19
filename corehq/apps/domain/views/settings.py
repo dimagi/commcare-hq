@@ -512,7 +512,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
 class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
     urlname = 'recovery_measures_history'
     page_title = gettext_lazy("Recovery Measures History")
-    template_name = 'domain/admin/bootstrap5/recovery_measures_history.html'
+    template_name = 'domain/admin/recovery_measures_history.html'
 
     @property
     def page_context(self):
