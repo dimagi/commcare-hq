@@ -596,31 +596,13 @@ class PhoneBlacklist(models.Model):
         return True
 
 
-class AbstractNumber(ABC):
-    owner_doc_type = None
-    owner_id = None
-    is_two_way = None
-    phone_number = None
-    domain = None
-
-    @property
-    @abstractmethod
-    def backend(self):
-        pass
-
-    @property
-    @abstractmethod
-    def is_sms(self):
-        pass
-
-
-class ConnectMessagingNumber(AbstractNumber):
+class ConnectMessagingNumber:
     owner_doc_type = "CommCareUser"
     is_two_way = True
     pending_verification = False
 
-    def __init__(self, user):
-        self.user = user
+    def __init__(self, owner):
+        self.owner = owner
 
     @property
     def phone_number(self):
@@ -628,7 +610,7 @@ class ConnectMessagingNumber(AbstractNumber):
 
     @property
     def user_link(self):
-        django_user = self.user.get_django_user()
+        django_user = self.owner.get_django_user()
         return ConnectIDUserLink.objects.get(commcare_user=django_user)
 
     @property
@@ -637,11 +619,7 @@ class ConnectMessagingNumber(AbstractNumber):
 
     @property
     def owner_id(self):
-        return self.user._id
-
-    @property
-    def owner(self):
-        return self.user
+        return self.owner._id
 
     @property
     def domain(self):

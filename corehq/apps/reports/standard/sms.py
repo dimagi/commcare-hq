@@ -873,7 +873,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
         if self.messaging_event:
             if self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
                 contact_column = EMAIL_ADDRRESS
-            elif self.messaging_event.content_type == MessagingEvent.CONTENT_CONNECT:
+            elif self.messaging_event.content_type in (MessagingEvent.CONTENT_CONNECT, MessagingEvent.CONTENT_CONNECT_SURVEY):
                 contact_column = CONNECT_ID
         else:
             contact_column = PHONE_NUMBER
