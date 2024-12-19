@@ -115,12 +115,14 @@ class EmailSMTPSettingsForm(forms.ModelForm):
             hqcrispy.CheckboxField('use_tracking_headers'),
             crispy.Field('sns_secret'),
             crispy.Field('ses_config_set_name'),
-            twbscrispy.StrictButton(
-                _("Saved"),
-                type="submit",
-                css_class="btn-primary disable-on-submit",
-                data_bind="text: buttonText, enable: isFormChanged",
-            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Saved"),
+                    type="submit",
+                    css_class="btn-primary disable-on-submit",
+                    data_bind="text: buttonText, enable: isFormChanged",
+                ),
+            )
         )
         return helper
 
