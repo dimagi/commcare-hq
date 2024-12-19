@@ -27,7 +27,7 @@ class ConnectBackend:
         response = requests.post(
             settings.CONNECTID_MESSAGE_URL,
             json={
-                "channel": str(user_link.channel_id),
+                "channel": user_link.channel_id,
                 "content": content,
                 "message_id": str(message.message_id),
             },
@@ -45,6 +45,7 @@ class ConnectBackend:
             auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
         if response.status_code == 404:
-            return
+            return False
         user_link.channel_id = response.json()["channel_id"]
         user_link.save()
+        return True
