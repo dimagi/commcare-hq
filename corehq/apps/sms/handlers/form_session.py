@@ -217,7 +217,7 @@ def validate_answer(event, text, verified_number):
                 error_msg = get_message(MSG_INVALID_INT_RANGE, verified_number)
         except ValueError:
             error_msg = get_message(MSG_INVALID_INT, verified_number)
-    
+
     # Validate float
     elif event.datatype == "float":
         try:
@@ -225,7 +225,7 @@ def validate_answer(event, text, verified_number):
             valid = True
         except ValueError:
             error_msg = get_message(MSG_INVALID_FLOAT, verified_number)
-    
+
     # Validate longint
     elif event.datatype == "longint":
         try:
@@ -233,7 +233,7 @@ def validate_answer(event, text, verified_number):
             valid = True
         except ValueError:
             error_msg = get_message(MSG_INVALID_LONG, verified_number)
-    
+
     # Validate date (Format: specified by Domain.sms_survey_date_format, default: YYYYMMDD)
     elif event.datatype == "date":
         domain_obj = Domain.get_by_name(verified_number.domain)

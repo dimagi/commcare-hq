@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import hashlib
-from abc import ABC, abstractmethod
 from collections import namedtuple
 from datetime import datetime
 from uuid import uuid4
@@ -629,7 +628,6 @@ class ConnectMessagingNumber:
     def is_sms(self):
         return False
 
-    
 
 class PhoneNumber(UUIDGeneratorMixin, models.Model):
     UUIDS_TO_GENERATE = ['couch_id']

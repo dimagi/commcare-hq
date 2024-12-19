@@ -264,7 +264,7 @@ def enqueue_directly(msg):
     try:
         from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
         SMSEnqueuingOperation().enqueue(msg)
-    except:
+    except:  # noqa: E722
         # If this direct enqueue fails, no problem, it will get picked up
         # shortly.
         pass
@@ -277,7 +277,7 @@ def queue_outgoing_sms(msg):
             msg.datetime_to_process = msg.date
             msg.queued_timestamp = get_utcnow()
             msg.save()
-        except:
+        except:  # noqa: E722
             log_sms_exception(msg)
             return False
 
@@ -410,7 +410,6 @@ def send_connect_message(message, backend):
         return False
 
 
-
 def register_sms_user(
     username, cleaned_phone_number, domain, send_welcome_sms=False, admin_alert_emails=None
 ):
@@ -521,7 +520,7 @@ def process_sms_registration(msg):
     """
     registration_processed = False
     text_words = msg.text.upper().split()
-    keyword1 = text_words[0] if len(text_words) > 0 else ""
+    keyword1 = text_words[0] if len(text_words) > 0 else ""  # noqa: F841
     keyword2 = text_words[1].lower() if len(text_words) > 1 else ""
     keyword3 = text_words[2] if len(text_words) > 2 else ""
     keyword4 = text_words[3] if len(text_words) > 3 else ""
@@ -646,7 +645,7 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
     for sms_handler_name in sms_handler_names:
         try:
             handler = to_function(sms_handler_name)
-        except:
+        except:  # noqa: E722
             notify_exception(None, message=('error loading sms handler: %s' % sms_handler_name))
             continue
 

@@ -342,7 +342,8 @@ class ContentForm(Form):
         return value
 
     def clean_app_and_form_unique_id(self):
-        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS_SURVEY, ScheduleForm.CONTENT_CONNECT_SURVEY):
+        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS_SURVEY,
+                                                                  ScheduleForm.CONTENT_CONNECT_SURVEY):
             return None
 
         value = self.cleaned_data.get('app_and_form_unique_id')
@@ -353,7 +354,8 @@ class ContentForm(Form):
         return value
 
     def clean_survey_expiration_in_hours(self):
-        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS_SURVEY, ScheduleForm.CONTENT_CONNECT_SURVEY):
+        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS_SURVEY,
+                                                                  ScheduleForm.CONTENT_CONNECT_SURVEY):
             return None
 
         value = self.cleaned_data.get('survey_expiration_in_hours')
@@ -363,7 +365,8 @@ class ContentForm(Form):
         return value
 
     def clean_survey_reminder_intervals(self):
-        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS_SURVEY, ScheduleForm.CONTENT_CONNECT_SURVEY):
+        if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS_SURVEY,
+                                                                  ScheduleForm.CONTENT_CONNECT_SURVEY):
             return None
 
         if self.cleaned_data.get('survey_reminder_intervals_enabled') != 'Y':
