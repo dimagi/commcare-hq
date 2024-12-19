@@ -169,8 +169,6 @@ def basic_or_api_key(realm=''):
     return real_decorator
 
 
-
-
 def formplayer_auth(view):
     return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY')(view)
 
@@ -424,5 +422,5 @@ def connectid_token_auth(view_func):
         if username is None:
             return HttpResponseForbidden()
         request.connectid_username = username
-        return view_func(request,  *args, **kwargs)
+        return view_func(request, *args, **kwargs)
     return _inner

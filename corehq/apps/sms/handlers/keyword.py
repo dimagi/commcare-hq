@@ -308,7 +308,7 @@ def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
         form = app.get_form(form_unique_id)
         module = form.get_module()
         return app, module, form, False, None
-    except:
+    except:  # noqa: E722
         log_error(MessagingEvent.ERROR_CANNOT_FIND_FORM, logged_subevent)
         return None, None, None, True, MSG_FORM_NOT_FOUND
 
@@ -544,9 +544,9 @@ def access_through_subcases(user, case):
 
 def user_can_access_case(user, case):
     return (
-        user_is_owner(user, case) or
-        case_is_shared(user, case) or
-        access_through_subcases(user, case)
+        user_is_owner(user, case)
+        or case_is_shared(user, case)
+        or access_through_subcases(user, case)
     )
 
 

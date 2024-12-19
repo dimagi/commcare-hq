@@ -4,16 +4,15 @@ from corehq.apps.sms.api import (
     add_msg_tags,
     send_message_to_verified_number,
 )
-from corehq.apps.sms.models import WORKFLOW_DEFAULT, MessagingEvent
+from corehq.apps.sms.models import WORKFLOW_DEFAULT, ConnectMessagingNumber, MessagingEvent
 
 
 def fallback_handler(verified_number, text, msg):
     domain_obj = Domain.get_by_name(verified_number.domain, strict=True)
-    if verified_number isinstance(ConnectMessagingNumber):
+    if isinstance(verified_number, ConnectMessagingNumber):
         content_type = MessagingEvent.CONTENT_CONNECT
     else:
         content_type = MessagingEvent.CONTENT_SMS
-
 
     logged_event = MessagingEvent.create_event_for_adhoc_sms(
         verified_number.domain, recipient=verified_number.owner, content_type=content_type,
