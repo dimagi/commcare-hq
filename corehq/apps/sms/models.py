@@ -2775,3 +2775,7 @@ class ConnectMessage(Log):
     @property
     def outbound_backend(self):
         return ConnectBackend()
+
+    @property
+    def domain_scope(self):
+        return self.domain

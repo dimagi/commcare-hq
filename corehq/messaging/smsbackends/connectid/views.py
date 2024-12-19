@@ -37,7 +37,7 @@ def receive_message(request, *args, **kwargs):
             direction=INCOMING,
             date=timestamp,
             text=text,
-            domain_scope=user_link.domain,
+            domain=user_link.domain,
             backend_id="connectid",
             message_id=message_id,
         )
