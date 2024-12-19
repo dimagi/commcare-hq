@@ -1,5 +1,4 @@
 import os
-from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
 
@@ -28,9 +27,6 @@ from corehq.apps.sms.models import (
     PhoneNumber,
 )
 from corehq.apps.smsforms.tasks import send_first_message
-from corehq.apps.smsforms.util import (
-    critical_section_for_smsforms_sessions,
-)
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
@@ -45,11 +41,6 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import NullJsonField
 from corehq.util.view_utils import absolute_reverse
-
-
-@contextmanager
-def no_op_context_manager():
-    yield
 
 
 class SMSContent(Content):
@@ -253,12 +244,6 @@ class SMSSurveyContent(SurveyContent):
             pb = PhoneBlacklist.get_by_phone_number_or_none(phone_entry_or_number)
 
         return pb is not None and not pb.send_sms
-
-    def get_critical_section(self, recipient):
-        if self.critical_section_already_acquired:
-            return no_op_context_manager()
-
-        return critical_section_for_smsforms_sessions(recipient.get_id)
 
     def send(self, recipient, logged_event, phone_entry=None):
         app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)
@@ -722,12 +707,6 @@ class ConnectMessageSurveyContent(SurveyContent):
             submit_partially_completed_forms=self.submit_partially_completed_forms,
             include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
         )
-
-    def get_critical_section(self, recipient):
-        if self.critical_section_already_acquired:
-            return no_op_context_manager()
-
-        return critical_section_for_smsforms_sessions(recipient.get_id)
 
     def send(self, recipient, logged_event, phone_entry=None):
         app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)

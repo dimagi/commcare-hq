@@ -1,5 +1,6 @@
 import jsonfield
 import uuid
+from contextlib import contextmanager
 from memoized import memoized
 from django.conf import settings
 from django.db import models, transaction
@@ -33,7 +34,7 @@ from corehq.apps.sms.util import (
 )
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.smsforms.util import form_requires_input
+from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions, form_requires_input
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
@@ -48,6 +49,11 @@ from corehq.messaging.templating import (
     CaseMessagingTemplateParam,
 )
 from django.utils.functional import cached_property
+
+
+@contextmanager
+def no_op_context_manager():
+    yield
 
 
 class Schedule(models.Model):
@@ -562,6 +568,12 @@ class SurveyContent(Content):
 
     class Meta:
         abstract = True
+
+    def get_critical_section(self, recipient):
+        if self.critical_section_already_acquired:
+            return no_op_context_manager()
+
+        return critical_section_for_smsforms_sessions(recipient.get_id)
 
     @memoized
     def get_memoized_app_module_form(self, domain):
