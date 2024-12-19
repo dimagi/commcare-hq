@@ -58,6 +58,7 @@
       "admin/case_search.html",
       "admin/commtrack_settings.html",
       "admin/flags_and_privileges.html",
+      "admin/feature_previews.html",
       "admin/info_basic.html",
       "admin/my_project_settings.html",
       "admin/partials/case_search_templates.html",

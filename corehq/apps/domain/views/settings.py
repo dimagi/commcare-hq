@@ -418,7 +418,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
 class FeaturePreviewsView(BaseAdminProjectSettingsView):
     urlname = 'feature_previews'
     page_title = gettext_lazy("Feature Previews")
-    template_name = 'domain/admin/bootstrap5/feature_previews.html'
+    template_name = 'domain/admin/feature_previews.html'
 
     @method_decorator(domain_admin_required)
     @use_bootstrap5
