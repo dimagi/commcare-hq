@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from corehq.apps.domain.auth import connectid_token_auth
-from corehq.apps.users.models import ConnectIDMessagingKey, ConnectIDUserLink, CouchUser
+from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 from corehq.apps.sms.models import ConnectMessagingNumber, ConnectMessage, INCOMING
 from corehq.apps.sms.api import process_incoming
 from corehq.util.hmac_request import validate_request_hmac
@@ -53,7 +53,11 @@ def connectid_messaging_key(request, *args, **kwargs):
     channel_id = request.POST.get("channel_id")
     if channel_id is None:
         return HttpResponseBadRequest("Channel ID is required.")
-    link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id, connectid_username=request.connectid_username)
+    link = get_object_or_404(
+        ConnectIDUserLink,
+        channel_id=channel_id,
+        connectid_username=request.connectid_username
+    )
     messaging_key = link.get_or_create_key()
     return JsonResponse({"key": messaging_key.key})
 

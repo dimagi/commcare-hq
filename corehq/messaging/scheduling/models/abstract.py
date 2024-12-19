@@ -177,7 +177,9 @@ class Schedule(models.Model):
     @property
     @memoized
     def memoized_language_set(self):
-        from corehq.messaging.scheduling.models import ConnectMessageContent, SMSContent, EmailContent, SMSCallbackContent
+        from corehq.messaging.scheduling.models import (
+            ConnectMessageContent, SMSContent, EmailContent, SMSCallbackContent
+        )
 
         result = set()
         for event in self.memoized_events:
@@ -263,7 +265,7 @@ class ContentForeignKeyMixin(models.Model):
     connect_message_content = models.ForeignKey('scheduling.ConnectMessageContent', null=True,
                                                 on_delete=models.CASCADE)
     connect_survey_content = models.ForeignKey('scheduling.ConnectMessageSurveyContent', null=True,
-                                                on_delete=models.CASCADE)
+                                               on_delete=models.CASCADE)
 
     class Meta(object):
         abstract = True
@@ -557,22 +559,9 @@ class SurveyContent(Content):
     reminder_intervals = models.JSONField(default=list)
     submit_partially_completed_forms = models.BooleanField(default=False)
     include_case_updates_in_partial_submissions = models.BooleanField(default=False)
-  
+
     class Meta:
         abstract = True
-
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return SMSSurveyContent(
-            app_id=None,
-            form_unique_id=None,
-            expire_after=self.expire_after,
-            reminder_intervals=deepcopy(self.reminder_intervals),
-            submit_partially_completed_forms=self.submit_partially_completed_forms,
-            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
-        )
 
     @memoized
     def get_memoized_app_module_form(self, domain):

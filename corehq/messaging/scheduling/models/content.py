@@ -7,24 +7,16 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
-from django.http import Http404
 from django.utils.translation import gettext as _
 
 import css_inline
 import jsonfield as old_jsonfield
-from memoized import memoized
 
 from dimagi.utils.modules import to_function
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_is_on_trial
-from corehq.apps.app_manager.dbaccessors import (
-    get_app,
-    get_latest_released_app,
-)
-from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.domain.models import Domain
-from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.sms.api import send_message_to_verified_number
@@ -35,16 +27,9 @@ from corehq.apps.sms.models import (
     PhoneBlacklist,
     PhoneNumber,
 )
-from corehq.apps.sms.util import (
-    get_formplayer_exception,
-    touchforms_error_is_config_error,
-)
-from corehq.apps.smsforms.app import start_session
-from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.tasks import send_first_message
 from corehq.apps.smsforms.util import (
     critical_section_for_smsforms_sessions,
-    form_requires_input,
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import CODES, get_blob_db
@@ -246,9 +231,20 @@ class EmailContent(Content):
         return email_address
 
 
-
-
 class SMSSurveyContent(SurveyContent):
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return SMSSurveyContent(
+            app_id=None,
+            form_unique_id=None,
+            expire_after=self.expire_after,
+            reminder_intervals=deepcopy(self.reminder_intervals),
+            submit_partially_completed_forms=self.submit_partially_completed_forms,
+            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
+        )
 
     def phone_has_opted_out(self, phone_entry_or_number):
         if isinstance(phone_entry_or_number, PhoneNumber):
@@ -711,7 +707,22 @@ class ConnectMessageContent(Content):
 
         send_message_to_verified_number(connect_number, message, logged_subevent=logged_subevent)
 
+
 class ConnectMessageSurveyContent(SurveyContent):
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return ConnectMessageSurveyContent(
+            app_id=None,
+            form_unique_id=None,
+            expire_after=self.expire_after,
+            reminder_intervals=deepcopy(self.reminder_intervals),
+            submit_partially_completed_forms=self.submit_partially_completed_forms,
+            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
+        )
+
     def get_critical_section(self, recipient):
         if self.critical_section_already_acquired:
             return no_op_context_manager()
