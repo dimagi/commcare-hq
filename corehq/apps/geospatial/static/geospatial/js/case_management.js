@@ -440,6 +440,13 @@ hqDefine("geospatial/js/case_management", [
         }
     }
 
+    function beforeLoadCases(caseData) {
+        loadCases(caseData);
+        if (mapModel.hasDisbursementLayer()) {
+            mapModel.removeDisbursementLayer();
+        }
+    }
+
     function loadCases(caseData) {
         mapModel.removeItemTypeFromSource('case');
         mapModel.caseMapItems([]);
@@ -516,12 +523,13 @@ hqDefine("geospatial/js/case_management", [
                 );
             }
         } else if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
-            mapModel.mapInstance.on('load', () => {
-                loadCases(xhr.responseJSON.aaData);
-                if (mapModel.hasDisbursementLayer()) {
-                    mapModel.removeDisbursementLayer();
-                }
-            });
+            if (polygonFilterModel) {
+                beforeLoadCases(xhr.responseJSON.aaData);
+            } else {
+                mapModel.mapInstance.on('load', () => {
+                    beforeLoadCases(xhr.responseJSON.aaData);
+                });
+            }
         }
     });
 });
