@@ -76,7 +76,7 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
             messaging_subevent_id=logged_subevent.pk
         )
 
-        if isinstance(phone_entry_or_number, PhoneNumber) or isinstance(phone_entry_or_number, ConnectMessagingNumber):
+        if isinstance(phone_entry_or_number, (PhoneNumber, ConnectMessagingNumber)):
             send_message_to_verified_number(
                 phone_entry_or_number,
                 message,

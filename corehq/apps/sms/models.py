@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import hashlib
-from abc import ABC, abstractmethod
 from collections import namedtuple
 from datetime import datetime
 from uuid import uuid4
@@ -596,31 +595,13 @@ class PhoneBlacklist(models.Model):
         return True
 
 
-class AbstractNumber(ABC):
-    owner_doc_type = None
-    owner_id = None
-    is_two_way = None
-    phone_number = None
-    domain = None
-
-    @property
-    @abstractmethod
-    def backend(self):
-        pass
-
-    @property
-    @abstractmethod
-    def is_sms(self):
-        pass
-
-
-class ConnectMessagingNumber(AbstractNumber):
+class ConnectMessagingNumber:
     owner_doc_type = "CommCareUser"
     is_two_way = True
     pending_verification = False
 
-    def __init__(self, user):
-        self.user = user
+    def __init__(self, owner):
+        self.owner = owner
 
     @property
     def phone_number(self):
@@ -628,7 +609,7 @@ class ConnectMessagingNumber(AbstractNumber):
 
     @property
     def user_link(self):
-        django_user = self.user.get_django_user()
+        django_user = self.owner.get_django_user()
         return ConnectIDUserLink.objects.get(commcare_user=django_user)
 
     @property
@@ -637,11 +618,7 @@ class ConnectMessagingNumber(AbstractNumber):
 
     @property
     def owner_id(self):
-        return self.user._id
-
-    @property
-    def owner(self):
-        return self.user
+        return self.owner._id
 
     @property
     def domain(self):
@@ -651,7 +628,6 @@ class ConnectMessagingNumber(AbstractNumber):
     def is_sms(self):
         return False
 
-    
 
 class PhoneNumber(UUIDGeneratorMixin, models.Model):
     UUIDS_TO_GENERATE = ['couch_id']
@@ -2768,6 +2744,16 @@ class ConnectMessage(Log):
     received_on = models.DateTimeField(null=True, blank=True)
     message_id = models.UUIDField(default=uuid4)
 
+    def __init__(self, *args, **kwargs):
+        # set default message id on initialization so it is available before save
+        super(ConnectMessage, self).__init__(*args, **kwargs)
+        if self.message_id is None:
+            self.message_id = uuid4()
+
     @property
     def outbound_backend(self):
         return ConnectBackend()
+
+    @property
+    def domain_scope(self):
+        return self.domain
