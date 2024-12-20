@@ -1,6 +1,7 @@
 hqDefine("reports/js/filters/schedule_instance", [
     'jquery',
     'knockout',
+    'bootstrap-daterangepicker/daterangepicker',
 ], function (
     $,
     ko

@@ -3,16 +3,11 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
-    {% compress js %}
-        <script src="{% static 'geospatial/js/gps_capture.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% js_entry_b3 "geospatial/js/gps_capture" %}
 
  {% block stylesheets %}
  {{ block.super }}
- <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+ <link rel="stylesheet" href="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css' %}" type="text/css">
  {% endblock %}
 
 {% block page_content %}

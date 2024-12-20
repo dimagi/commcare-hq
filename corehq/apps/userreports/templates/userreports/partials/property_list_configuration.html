@@ -78,8 +78,6 @@ TODO:
 
   <tbody data-bind="sortable: {
         data: columns,
-        afterAdd: function (elem) { $(elem).hide().fadeIn() },
-        beforeRemove: function (elem) { $(elem).fadeOut() },
         afterMove: reorderColumn,
         afterRender: afterRender
     }"
@@ -135,14 +133,14 @@ TODO:
     <td>
       <!--ko if: !$parent.hasFilterValueCol -->
       <select class="form-control input-sm" data-bind="
-                options: hqImport('userreports/js/constants').FORMAT_OPTIONS,
+                options: $root.formatOptions,
                 value: format,
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
       <!--/ko-->
       <!--ko if: $parent.hasFilterValueCol -->
       <select class="form-control input-sm" data-bind="
-                options: hqImport('userreports/js/constants').DEFAULT_FILTER_FORMAT_OPTIONS,
+                options: $root.defaultFilterFormatOptions,
                 value: format,
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
