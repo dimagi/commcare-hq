@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
-from django.http.response import Http404, HttpResponse
+from django.http.response import Http404
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
@@ -212,7 +212,7 @@ class ToggleEditView(BasePageView):
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
             data['service_type'], data['by_service'] = _get_service_type(toggle)
-        return HttpResponse(json.dumps(data), content_type="application/json")
+        return JsonResponse(data)
 
     def _save_randomness(self, toggle, randomness):
         if 0 <= randomness <= 1:
@@ -251,7 +251,7 @@ def _call_save_fn_and_clear_cache_and_enable_dependencies(request_username, stat
         enabled = entry in currently_enabled
         namespace, entry = parse_toggle(entry)
         _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled)
-        _clear_cache_for_toggle(namespace, entry)
+        clear_toggle_cache_by_namespace(namespace, entry)
         _enable_dependencies(request_username, static_toggle, entry, namespace, enabled)
 
 
@@ -271,7 +271,6 @@ def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):
         if is_enabled:
             _notify_on_change(static_toggle, [item], request_username)
 
-        _clear_cache_for_toggle(namespace, item)
         _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled)
 
 
@@ -282,7 +281,7 @@ def _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled):
             static_toggle.save_fn(domain, enabled)
 
 
-def _clear_cache_for_toggle(namespace, entry):
+def clear_toggle_cache_by_namespace(namespace, entry):
     if namespace == NAMESPACE_DOMAIN:
         domain = entry
         toggles_enabled_for_domain.clear(domain)
@@ -387,7 +386,7 @@ def set_toggle(request, toggle_slug):
     namespace = request.POST['namespace']
     _set_toggle(request.user.username, static_toggle, item, namespace, enabled)
 
-    return HttpResponse(json.dumps({'success': True}), content_type="application/json")
+    return JsonResponse({'success': True})
 
 
 @require_superuser_or_contractor

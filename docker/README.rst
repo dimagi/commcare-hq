@@ -197,8 +197,8 @@ TEST=[ javascript | **python** | python-sharded | python-sharded-and-javascript 
      ``javascript``. Also sends static analysis to Datadog if a job is a
      Travis "cron" event.
 
-NOSE_DIVIDED_WE_RUN
-   Only runs a subset of tests. See ``.travis.yml`` for exact options.
+DIVIDED_WE_RUN
+   Only runs a subset of tests. See the ``pytest dividedwerun plugin``_ for exact options.
 
 REUSE_DB
    Same as normal ``REUSE_DB``
@@ -225,6 +225,7 @@ DOCKER_HQ_OVERLAYFS_METACOPY=[ on | **off** ]
 
 See ``.travis.yml`` for environment variable options used on Travis.
 
+.. _pytest dividedwerun plugin: https://github.com/dimagi/commcare-hq/blob/master/corehq/tests/pytest_plugins/dividedwerun.py
 
 Run containers with Podman instead of Docker
 ============================================

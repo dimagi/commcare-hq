@@ -1,0 +1,19 @@
+{% load i18n %}
+{{ wizard.management_form }}
+{% for field in wizard.form %}
+  <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">  {# todo B5: css-form-group, css-has-error #}
+    <label>{{ field.label }}</label>
+    <div>
+      {{ field }}
+      {% for error in field.errors %}
+        <span class="help-block">{{ error }}</span>
+      {% endfor %}
+      {% if field.name == "password" %}
+        <p class="help-block">
+          {% url "password_reset_email" as default_password_reset_link %}
+          <a href="{{ password_reset_url|default:default_password_reset_link }}">{% trans "Forgot your password?" %}</a>
+        </p>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}

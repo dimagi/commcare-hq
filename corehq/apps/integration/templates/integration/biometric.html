@@ -1,22 +1,15 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main 'integration/js/biometric' %}
+{% js_entry 'integration/js/biometric' %}
 
 {% block page_content %}
   {% initial_page_data 'simprintsFormData' simprints_form.initial_data %}
 
-  <div class="panel panel-modern-gray">
-    <div class="panel-heading">
-      <h4 class="panel-title panel-title-nolink">
-        {% trans 'Simprints Integration' %}
-      </h4>
-    </div>
-    <div class="panel-body" id="simprints-form">
-      {% crispy simprints_form %}
-    </div>
+  <div id="simprints-form">
+    {% crispy simprints_form %}
   </div>
 
 {% endblock %}

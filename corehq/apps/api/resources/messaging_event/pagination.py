@@ -11,14 +11,14 @@ LAST_OBJECT_ID = "last_object_id"
 logger = logging.getLogger(__name__)
 
 
-def get_paged_data(query, request_params):
+def get_paged_data(query, request_params, api_version):
     limit = get_limit_offset("limit", request_params, 20, max_value=1000)
     objects = _get_objects(query, request_params, limit)
     return {
         "objects": [serialize_event(event) for event in objects],
         "meta": {
             "limit": limit,
-            "next": _get_cursor(objects, request_params)
+            "next": _get_cursor(objects, request_params, api_version)
         }
     }
 
@@ -46,7 +46,7 @@ def _get_objects(query, request_params, limit):
     return list(query[:limit])
 
 
-def _get_cursor(objects, request_params):
+def _get_cursor(objects, request_params, api_version):
     """Generate the 'cursor' parameter which includes all query params from the current
     request excluding 'limit' as well as:
       - filter parameter for the next page e.g. date.gte = last date
@@ -70,4 +70,5 @@ def _get_cursor(objects, request_params):
     })
     encoded_params = urlencode(cursor_params)
     next_params = {'cursor': b64encode(encoded_params.encode('utf-8'))}
-    return reverse('api_messaging_event_list', args=[request_params.domain], params=next_params, absolute=True)
+    return reverse('api_messaging_event_list', args=[request_params.domain, api_version],
+                   params=next_params, absolute=True)

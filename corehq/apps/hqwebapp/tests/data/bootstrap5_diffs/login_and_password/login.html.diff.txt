@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "hqwebapp/bootstrap3/base_page.html" %}
++{% extends "hqwebapp/bootstrap5/base_page.html" %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ {% load compress %}
+ 
+-{% js_entry_b3 'registration/js/login' %}
++{% js_entry 'registration/js/login' %}
+ 
+ {% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
+ 
+@@ -39,7 +39,7 @@
+          id="user-login-form"
+          class="ko-template"
+          {% endif %}>
+-      {% include "login_and_password/partials/bootstrap3/login_full.html" %}
++      {% include "login_and_password/partials/bootstrap5/login_full.html" %}
+     </div>
+   {% endblock %}
+ {% endblock content %}

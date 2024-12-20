@@ -128,9 +128,9 @@ def domain(domain, allow_enterprise=False):
     domain_list = [domain]
     if allow_enterprise:
         from corehq.apps.enterprise.models import EnterprisePermissions
-        config = EnterprisePermissions.get_by_domain(domain)
-        if config.is_enabled and domain in config.domains:
-            domain_list.append(config.source_domain)
+        source_domain = EnterprisePermissions.get_source_domain(domain)
+        if source_domain:
+            domain_list.append(source_domain)
     return domains(domain_list)
 
 

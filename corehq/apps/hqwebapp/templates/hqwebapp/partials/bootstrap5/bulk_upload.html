@@ -8,7 +8,7 @@
       {{ verb }}
     {% endblocktrans %}
     {% blocktrans with plural_noun=bulk_upload.plural_noun %}
-      {{ plural_noun }} using Excel
+      {{ plural_noun }}
     {% endblocktrans %}
   </h2>
 {% endif %}
@@ -26,7 +26,7 @@
     <li id="download_block">
       <p>
         {% blocktrans with adjective=bulk_upload.adjective %}
-          Download your current {{ adjective }} Excel file.
+          Download your current {{ adjective }} file.
         {% endblocktrans %}
       </p>
       {% block download_file %}
@@ -48,7 +48,7 @@
           {% trans "Update the downloaded file." %}
           {% if bulk_upload.help_site %}
             {% blocktrans with address=bulk_upload.help_site.address name=bulk_upload.help_site.name %}
-              Check the <a href="{{ address }}">{{ name }}</a> for instructions.
+              Check the <a target="_blank" href="{{ address }}">{{ name }}</a> for instructions.
             {% endblocktrans %}
           {% endif %}
         </p>

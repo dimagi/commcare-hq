@@ -73,16 +73,17 @@ def response_for_cursor_based_pagination(request, query, request_params, datasou
      :returns: The response dictionary
     """
     records = get_datasource_records(query, datasource_adapter)
+    api_version = request.resolver_match.kwargs['api_version']
     return {
         "objects": records,
         "meta": {
-            "next": _get_next_url_params(request.domain, request_params, records),
+            "next": _get_next_url_params(request.domain, api_version, request_params, records),
             "limit": request_params["limit"]
         }
     }
 
 
-def _get_next_url_params(domain, request_params, datasource_records):
+def _get_next_url_params(domain, api_version, request_params, datasource_records):
     """ Constructs the query string containing a base64-encoded cursor that points to the last entry in
     `datasource_records`
     :returns: The query string"""
@@ -97,4 +98,4 @@ def _get_next_url_params(domain, request_params, datasource_records):
     cursor_params = {"last_doc_id": last_object["doc_id"], "last_inserted_at": last_object["inserted_at"]}
     encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
     next_params = new_params | {'cursor': encoded_cursor}
-    return reverse('api_get_ucr_data', args=[domain], params=next_params, absolute=True)
+    return reverse('api_get_ucr_data', args=[domain, api_version], params=next_params, absolute=True)

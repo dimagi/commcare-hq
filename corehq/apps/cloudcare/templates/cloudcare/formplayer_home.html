@@ -82,7 +82,7 @@
 
   <div id="cloudcare-main" class="cloudcare-home-content">
     <section id="cases"></section>
-    <div id="menu-container">
+    <div id="main-container" class="d-lg-flex flex-column">
       <section id="formplayer-progress-container"></section>
       <nav class="navbar navbar-cloudcare">
         <div class="d-flex container-fluid">
@@ -102,25 +102,31 @@
       <div class="d-lg-none">
         <div id="mobile-restore-as-region"></div>
       </div>
-      <div id="breadcrumb-region" class="print-container sticky-top"></div>
+      <div id="breadcrumb-region" class="print-container"></div>
       <section id="cloudcare-notifications" class="container notifications-container"></section>
-      <div class="container case-tile-container">
-        <div id="persistent-case-tile" class="print-container"></div>
+      <div id="content-plus-persistent-menu-container" class="flex-grow-1 d-lg-flex">
+        <div id="persistent-menu-region" class="d-print-none"></div>
+        <div id="content-plus-version-info-container" class="h-100 flex-grow-1 overflow-scroll d-lg-flex-column">
+          <div id="sidebar-and-content" class="d-lg-flex justify-content-center m-3">
+            <div id="sidebar-region" class="noprint-sub-container me-3"></div>
+            <div id="content-container" class="mx-0 flex-grow-1">
+              <div class="container case-tile-container">
+                <div id="persistent-case-tile" class="print-container"></div>
+              </div>
+              <div id="menu-region" class="print-container"></div>
+              <section id="webforms" data-bind="
+                template: {
+                name: 'form-fullform-ko-template',
+                afterRender: afterRender
+                }">
+              </section>
+            </div>
+          </div>
+          <small id="version-info" class="pb-5"></small>
+        </div>
       </div>
-      <div id="content-container" class="container">
-        <div id="sidebar-region" class="noprint-sub-container"></div>
-        <div id="menu-region" class="print-container"></div>
-        <section id="webforms" data-bind="
-                  template: {
-                      name: 'form-fullform-ko-template',
-                      afterRender: afterRender
-                  }">
-        </section>
-      </div>
-      <div id="persistent-menu-region"></div>
     </div>
     <div role="region" id="sr-notification-region" class="sr-only" aria-live="assertive" aria-relevant="all"></div>
-    <small id="version-info"></small>
     {% if request.couch_user.can_edit_data %}
       <section data-bind="template: { name: 'instance-viewer-ko-template' }"
                id="cloudcare-debugger"></section>

@@ -49,7 +49,6 @@ from corehq.apps.domain.views.internal import (
     FlagsAndPrivilegesView,
     ProjectLimitsView,
     TransferDomainView,
-    TestBootstrap5DomainView,
     calculated_properties,
     toggle_diff,
 )
@@ -88,7 +87,7 @@ from corehq.motech.repeaters.views import (
 )
 
 PASSWORD_RESET_KWARGS = {
-    'template_name': 'login_and_password/password_reset_form.html',
+    'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
     'extra_context': {'current_page': {'page_name': _('Password Reset')}}
@@ -124,7 +123,7 @@ urlpatterns = [
         name='password_reset_done'),
     url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
         CustomPasswordResetView.as_view(
-            template_name='login_and_password/password_reset_confirm.html',
+            template_name='login_and_password/bootstrap3/password_reset_confirm.html',
             form_class=HQSetPasswordForm,
             extra_context={'current_page': {'page_name': _('Password Reset Confirmation')}},
         ),
@@ -193,7 +192,6 @@ domain_settings = [
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
-    url(r'^internal/bootstrap5/$', TestBootstrap5DomainView.as_view(), name=TestBootstrap5DomainView.urlname),
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(),
         name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),

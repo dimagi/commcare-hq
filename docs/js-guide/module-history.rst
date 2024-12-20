@@ -7,29 +7,43 @@ Dependencies <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/de
 
 We talk about JavaScript modules, but (at least pre-ES6) JavaScript has
 no built in support for modules. It’s easy to say that, but think about
-how crazy that is. If this were Python, it would mean your program’s
+how crazy that is. If this were Python, it would mean your program's
 main file has to directly list all of the files that will be needed, in
 the correct order, and then the files share state through global
-variables. That’s insane.
+variables. That's insane.
 
-And it’s also JavaScript. Fortunately, there are things you can do to
+And it's also JavaScript. Fortunately, there are things you can do to
 enforce and respect the boundaries that keep us sane by following one of
 a number of patterns.
 
-We’re in the process of migrating to
-`RequireJS <https://requirejs.org/>`__. Part of this process has
-included developing a lighter-weight alternative module system called
-``hqDefine``.
+We're in the process of migrating to
+`Webpack <https://webpack.js.org/>`__. Prior to the migration to Webpack,
+we were migrating No-Bundler pages to RequireJS, which has since become deprecated.
+Part of this ongoing process has included developing a lighter-weight
+alternative module system called ``hqDefine``, that is based on the AMD (Asynchronous
+Module Definition) format. This ``hqDefine`` variant of AMD is relevant even for
+Webpack bundles, as it serves as the "transition" module format between pages using
+a bundler and pages not using a bundler (Legacy Pages).
 
 ``hqDefine`` serves as a stepping stone between legacy code and
-requirejs modules: it adds encapsulation but not full-blown dependency
-management. New code is written in RequireJS, but ``hqDefine`` exists to
-support legacy code that does not yet use RequireJS.
+bundled code: it adds encapsulation but not full-blown dependency
+management. New code is written in Webpack, but ``hqDefine`` exists to
+support legacy code that does not yet use Webpack.
 
 Before diving into ``hqDefine``, I want to talk first about the status
-quo convention for sanity with no module system. As we’ll describe, it’s
+quo convention for sanity with no module system. As we'll describe, it's
 a step down from our current preferred choice, but it’s still miles
 ahead of having no convention at all.
+
+Creating a Brand New Page?
+--------------------------
+
+If you are creating new pages with Webpack, then you can skip this
+discussion for now. All **new** Webpack entry points should be written using
+the new ES Module (ESM) format. This is the modern module format you will
+see referenced in most modern JavaScript library documentation. ``hqDefine``
+(aka Modified AMD) should eventually only be used for transition points
+between legacy code and bundled code.
 
 The Crockford Pattern
 ---------------------
@@ -127,7 +141,7 @@ hqDefine
 
 There are many great module systems out there, so why did we write our
 own? The answer’s pretty simple: while it’s great to start with
-require.js or system.js, with a code base HQ’s size, getting from here
+Webpack, with a code base HQ’s size, getting from here
 to there is nearly impossible without an intermediate step.
 
 Using the above example again, using ``hqDefine``, you’d write your file
@@ -164,8 +178,9 @@ function itself is exactly the same. It’s just being passed to
 ``hqDefine`` instead of being called directly.
 
 ``hqDefine`` is an intermediate step on the way to full support for AMD
-modules, which in HQ is implemented using RequireJS. ``hqDefine`` checks
-whether or not it is on a page that uses AMD modules and then behaves in
+modules, which is supported by Webpack as well as our previous bundler RequireJS.
+
+``hqDefine`` checks whether or not it is on a page that uses AMD modules and then behaves in
 one of two ways: \* If the page has been migrated, meaning it uses AMD
 modules, ``hqDefine`` just delegates to ``define``. \* If the page has
 not been migrated, ``hqDefine`` acts as a thin wrapper around the
@@ -173,7 +188,7 @@ Crockford module pattern. ``hqDefine`` takes a function, calls it
 immediately, and puts it in a namespaced global; ``hqImport`` then looks
 up the module in that global.
 
-In the first case, by handing control over to RequireJS,
+In the first case, by handing control over to Webpack,
 ``hqDefine``/``hqImport`` also act as a module *loader*. But in the
 second case, they work only as a module *dereferencer*, so in order to
 use a module, it still needs to be included as a ``<script>`` on your
@@ -186,11 +201,12 @@ html page:
 Note that in the example above, the module name matches the end of the
 filename, the same name used to identify the file when using the
 ``static`` tag, but without the ``js`` extension. This is necessary for
-RequireJS to work properly. For consistency, all modules, regardless of
-whether or not they are yet compatible with RequireJS, should be named
+Webpack to work properly. For consistency, all modules, regardless of
+whether or not they are yet compatible with Webpack, should be named
 to match their filename.
 
 ``hqDefine`` and ``hqImport`` provide a consistent interface for both
 migrated and unmigrated pages, and that interface is also consistent
-with RequireJS, making it easy to eventually “flip the switch” and
-remove them altogether once all code is compatible with RequireJS.
+with AMD Modules (supported by Webpack, and previously RequireJS),
+making it easy to eventually  “flip the switch” and remove them altogether
+once all code is compatible with Webpack.

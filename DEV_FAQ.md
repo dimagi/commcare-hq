@@ -38,6 +38,11 @@ Formplayer isn't running properly. See [Formplayer](https://github.com/dimagi/co
 
 It happens, try restarting.
 
+> I'm getting TemplateSyntaxErrors related to Webpack.
+
+Please run `yarn dev`. If this build is failing, and you didn't make any changes to JavaScript files on your branch,
+please raise this as an issue.
+
 ## Generating Sample Data
 
 ### SMS

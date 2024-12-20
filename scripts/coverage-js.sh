@@ -21,8 +21,7 @@ git checkout -b "temp-coverage-js"
 git commit --allow-empty --no-verify -a -m "temp commit"
 
 # Instrument HQ Javascript in place
-npx nyc instrument -x "**/lib" -x "**/sentry" -x "**/spec"  \
-    -x "mocha" -x "hqmedia/static/hqmedia/MediaUploader" \
+npx nyc instrument -x "**/lib" -x "**/sentry" -x "**/spec" -x "mocha" \
     "corehq/apps" "corehq/apps" --in-place
 
 # Run tests through grunt test task with coverage flag

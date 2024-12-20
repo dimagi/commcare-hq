@@ -146,6 +146,7 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
+    'corehq.middleware.SecureCookiesMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -171,8 +172,6 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
-    # middleware that adds cookies must come before SecureCookiesMiddleware
-    'corehq.middleware.SecureCookiesMiddleware',
     'field_audit.middleware.FieldAuditMiddleware',
 ]
 
@@ -321,7 +320,6 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
-    'corehq.apps.oauth_integrations',
     'corehq.messaging.MessagingAppConfig',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
@@ -396,7 +394,7 @@ HQ_APPS = (
     'custom.common',
 
     'custom.hki',
-    'custom.champ',
+    'custom.bha',
     'custom.covid',
     'custom.inddex',
     'custom.nutrition_project',
@@ -455,7 +453,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
-LOGIN_TEMPLATE = "login_and_password/login.html"
+LOGIN_TEMPLATE = "login_and_password/bootstrap3/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
@@ -545,6 +543,7 @@ FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.registry.fixtures.registry_fixture_generator",
+    "corehq.apps.case_search.fixtures.case_search_fixture_generator",
 ]
 
 ### Shared drive settings ###
@@ -933,8 +932,6 @@ LESS_B3_PATHS = {
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
 
-BOOTSTRAP_MIGRATION_LOGS_DIR = None
-
 USER_AGENTS_CACHE = 'default'
 
 # Invoicing
@@ -1132,6 +1129,7 @@ LOCAL_CUSTOM_DB_ROUTING = {}
 
 DEFAULT_COMMCARE_EXTENSIONS = [
     "custom.abt.commcare_extensions",
+    "custom.bha.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
     "custom.nutrition_project.commcare_extensions",
@@ -1157,12 +1155,6 @@ MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
 
-# GSheets related work that was dropped, but should be picked up in the near future
-GOOGLE_OATH_CONFIG = {}
-GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-GOOGLE_SHEETS_API_NAME = "sheets"
-GOOGLE_SHEETS_API_VERSION = "v4"
-DAYS_KEEP_GSHEET_STATUS = 14
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1932,8 +1924,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
-    os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
-    os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
@@ -1966,7 +1956,6 @@ DOMAIN_MODULE_MAP = {
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
 
-    'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',  # Required by self-hosted ONSE-ISS project
 
     # vectorlink domains
@@ -1985,6 +1974,7 @@ DOMAIN_MODULE_MAP = {
     'kenya-vca': 'custom.abt',
     'pmievolve-ethiopia-1': 'custom.abt',
     'pmievolve-ghana': 'custom.abt',
+    'pmievolve-kenya': 'custom.abt',
     'pmievolve-madagascar': 'custom.abt',
     'pmievolve-malawi': 'custom.abt',
     'pmievolve-mozambique': 'custom.abt',
@@ -2018,8 +2008,22 @@ DOMAIN_MODULE_MAP = {
     'senegal-arch-3-study': 'custom.inddex',
     'inddex24-dev': 'custom.inddex',
 
+    'co-carecoordination': 'custom.bha',
+    'co-carecoordination-auto': 'custom.bha',
+    'co-carecoordination-dev': 'custom.bha',
+    'co-carecoordination-perf': 'custom.bha',
+    'co-carecoordination-sand': 'custom.bha',
+    'co-carecoordination-test': 'custom.bha',
+    'co-carecoordination-train': 'custom.bha',
+    'co-carecoordination-uat': 'custom.bha',
+
     'ccqa': 'custom.ccqa',
 }
+
+CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)
+for domain, module in DOMAIN_MODULE_MAP.items():
+    CUSTOM_DOMAINS_BY_MODULE[module].append(domain)
+
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
     # Regex patterns matching domains whose scheduled reports use a
@@ -2096,3 +2100,5 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 
 # NOTE: if you are adding a new setting that you intend to have other environments override,
 # make sure you add it before localsettings are imported (from localsettings import *)
+
+MAX_GEOSPATIAL_INDEX_DOC_LIMIT = 1000000

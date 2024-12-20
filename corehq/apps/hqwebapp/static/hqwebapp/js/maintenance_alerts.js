@@ -4,6 +4,7 @@ hqDefine("hqwebapp/js/maintenance_alerts",[
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap5/widgets',
+    'commcarehq',
 ], function ($, ko, initialPageData) {
     $(function () {
         var alertFormModel = {

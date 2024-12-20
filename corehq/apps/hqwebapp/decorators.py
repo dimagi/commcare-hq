@@ -89,20 +89,6 @@ def use_datatables(view_func):
     return set_request_flag(view_func, 'use_datatables')
 
 
-def use_typeahead(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the typeahead library at the base template
-    level.
-
-    Example:
-
-    @use_typeahead
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_typeahead')
-
-
 def use_timepicker(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the timepicker library at the base template

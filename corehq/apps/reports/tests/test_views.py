@@ -14,7 +14,7 @@ from unittest.mock import patch
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, make_location
 from corehq.apps.reports.models import TableauServer, TableauVisualization
-from corehq.apps.reports.standard.tableau import tableau_visualization_ajax, TableauView
+from corehq.apps.reports.standard.tableau import get_tableau_server_ticket, TableauView
 from corehq.apps.reports.views import (
     MySavedReportsView,
     AddSavedReportConfigView,
@@ -998,6 +998,7 @@ class TestTableauView(TestReportsBase):
             server_type='server',
             server_name='a_server',
             target_site='a_site',
+            validate_hostname='',
         )
         cls.viz_1 = TableauVisualization.objects.create(
             domain=cls.DOMAIN,
@@ -1046,34 +1047,32 @@ class TestTableauView(TestReportsBase):
         response = self._get_tableau_view_response(self.viz_2)
         self.assertEqual(response.status_code, 200)
 
-    def _get_ajax_view_response(self, viz):
+    def _get_ticket_view_response(self, viz):
         self.log_user_in(self.non_admin_user.username)
         request_data = {
-            'validate_hostname': '',
-            'server_name': ['dimagi-tableau-test.us'],
-            'target_site': ['Test1234'],
             'viz_id': [viz.id]
         }
-        response = self.client.post(reverse(tableau_visualization_ajax, args=[self.DOMAIN]), request_data)
+        response = self.client.post(reverse(get_tableau_server_ticket, args=[self.DOMAIN]), request_data)
         return response
 
-    def test_ajax_view_location_restricted_user_cant_access_location_unsafe_report(self):
+    def test_ticket_view_location_restricted_user_cant_access_location_unsafe_report(self):
         self.role.set_permissions(HqPermissions(
             access_all_locations=False, view_tableau=True).to_list())
-        response = self._get_ajax_view_response(self.viz_1)
+        response = self._get_ticket_view_response(self.viz_1)
         self.assertEqual(response.status_code, 403)
 
-    def test_ajax_view_no_permission_to_tableau_report(self):
+    def test_ticket_view_no_permission_to_tableau_report(self):
         self.role.set_permissions(HqPermissions(
             access_all_locations=False, view_tableau=False, view_tableau_list=[str(self.viz_1.id)]).to_list())
-        response = self._get_ajax_view_response(self.viz_2)
+        response = self._get_ticket_view_response(self.viz_2)
         self.assertEqual(response.status_code, 403)
 
-    @patch('corehq.apps.reports.standard.tableau.requests.post')
-    def test_ajax_view_location_restricted_user_can_access_location_safe_report(self, mock_request):
+    @patch('corehq.apps.reports.standard.tableau.requests.Session')
+    def test_ticket_view_location_restricted_user_can_access_location_safe_report(self, mock_session):
+        mock_request = mock_session.return_value
         MockResponse = namedtuple('MockResponse', ['status_code', 'content'])
-        mock_request.return_value = MockResponse(status_code=200, content='1234'.encode('utf-8'))
+        mock_request.post.return_value = MockResponse(status_code=200, content='1234'.encode('utf-8'))
         self.role.set_permissions(HqPermissions(
             access_all_locations=False, view_tableau=False, view_tableau_list=[str(self.viz_2.id)]).to_list())
-        response = self._get_ajax_view_response(self.viz_2)
+        response = self._get_ticket_view_response(self.viz_2)
         self.assertEqual(response.status_code, 200)

@@ -34,7 +34,7 @@ class TwilioIncomingSMSView(IncomingBackendView):
             domain_scope=self.domain,
             backend_id=self.backend_couch_id
         )
-        return HttpResponse(EMPTY_RESPONSE)
+        return HttpResponse(EMPTY_RESPONSE, content_type='application/xml')
 
 
 class TwilioIncomingIVRView(IncomingBackendView):
@@ -48,4 +48,4 @@ class TwilioIncomingIVRView(IncomingBackendView):
         from_number = request.POST.get('From')
         call_sid = request.POST.get('CallSid')
         log_call(from_number, '%s-%s' % (SQLTwilioBackend.get_api_id(), call_sid))
-        return HttpResponse(IVR_RESPONSE)
+        return HttpResponse(IVR_RESPONSE, content_type='application/xml')

@@ -161,6 +161,7 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import (
     add_event,
     allowed_report_builder_reports,
+    get_configurable_and_static_reports_for_data_source,
     get_indicator_adapter,
     get_referring_apps,
     has_report_builder_access,
@@ -179,6 +180,7 @@ from corehq.motech.repeaters.models import DataSourceRepeater
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
@@ -1208,6 +1210,10 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                 messages.success(request, _('Data source "{}" saved!').format(
                     config.display_name
                 ))
+                messages.success(request, _(
+                    'This data source will be built/rebuilt automatically the '
+                    'next time a row is added.'
+                ))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(
                         EditDataSourceView.urlname, args=[self.domain, config._id])
@@ -1319,7 +1325,7 @@ def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
 
     if toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
-        number_of_records = _number_of_records_to_be_iterated_for_rebuild(config=config)
+        number_of_records = _number_of_records_to_be_iterated_for_rebuild(datasource_configuration=config)
         if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
             messages.error(
                 request,
@@ -1340,29 +1346,67 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id, request.user.username, domain=domain)
+    rebuild_indicators.delay(config_id, request.user.username, domain=domain, source='edit_data_source_rebuild')
+    _report_ucr_rebuild_metrics(domain, config, 'rebuild_datasource')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
 
 
-def _number_of_records_to_be_iterated_for_rebuild(config):
-    count_of_records = None
+def _report_ucr_rebuild_metrics(domain, config, action):
+    metrics_counter(
+        f'commcare.ucr.{action}.count',
+        tags={
+            'domain': domain,
+            'datasource_id': config.get_id,
+        }
+    )
+    metrics_gauge(
+        f'commcare.ucr.{action}.columns.count',
+        len(config.get_columns()),
+        tags={'domain': domain}
+    )
+    _report_metric_report_counts_by_datasource(domain, config.get_id, action)
 
-    case_types_or_xmlns = config.get_case_type_or_xmlns_filter()
-    # case_types_or_xmlns could also be [None]
-    case_types_or_xmlns = list(filter(None, case_types_or_xmlns))
 
-    if config.referenced_doc_type == 'CommCareCase':
-        if case_types_or_xmlns:
-            count_of_records = CaseSearchES().domain(config.domain).case_type(case_types_or_xmlns).count()
-        else:
-            count_of_records = CaseSearchES().domain(config.domain).count()
-    elif config.referenced_doc_type == 'XFormInstance':
-        if case_types_or_xmlns:
-            count_of_records = FormES().domain(config.domain).xmlns(case_types_or_xmlns).count()
-        else:
-            count_of_records = FormES().domain(config.domain).count()
+def _report_metric_report_counts_by_datasource(domain, data_source_id, action):
+    try:
+        reports = get_configurable_and_static_reports_for_data_source(domain, data_source_id)
+    except Exception:
+        pass
+    else:
+        metrics_gauge(
+            f'commcare.ucr.{action}.reports_per_datasource.count',
+            len(reports),
+            tags={'domain': domain}
+        )
+
+
+def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
+    if datasource_configuration.referenced_doc_type == 'CommCareCase':
+        es_query = CaseSearchES().domain(datasource_configuration.domain)
+        case_types = [
+            case_type
+            for case_type in datasource_configuration.get_case_type_or_xmlns_filter()
+            if case_type is not None
+        ]
+        if case_types:
+            es_query = es_query.case_type(case_types)
+        count_of_records = es_query.count()
+    elif datasource_configuration.referenced_doc_type == 'XFormInstance':
+        es_query = FormES().domain(datasource_configuration.domain)
+        xmlnses = [
+            xmlns
+            for xmlns in datasource_configuration.get_case_type_or_xmlns_filter()
+            if xmlns is not None
+        ]
+        if xmlnses:
+            es_query = es_query.xmlns(xmlnses)
+        count_of_records = es_query.count()
+    else:
+        # DataSourceConfiguration.referenced_doc_type is neither
+        # 'CommCareCase' nor 'XFormInstance'
+        count_of_records = None
 
     return count_of_records
 
@@ -1424,9 +1468,13 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-    rebuild_indicators_in_place.delay(config_id, request.user.username,
-                                      source='edit_data_source_build_in_place',
-                                      domain=config.domain)
+    rebuild_indicators_in_place.delay(
+        config_id,
+        request.user.username,
+        source='edit_data_source_build_in_place',
+        domain=config.domain,
+    )
+    _report_ucr_rebuild_metrics(domain, config, 'rebuild_datasource_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

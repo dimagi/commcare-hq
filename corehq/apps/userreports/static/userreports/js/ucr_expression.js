@@ -5,6 +5,7 @@ hqDefine("userreports/js/ucr_expression", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',
     'hqwebapp/js/bootstrap3/alert_user',
+    'commcarehq',
 ], function (
     moment,
     ko,
@@ -43,7 +44,9 @@ hqDefine("userreports/js/ucr_expression", [
         };
 
         self.saveExpression = function (form) {
-            $(form).ajaxSubmit({
+            $.ajax({
+                method: 'POST',
+                data: Object.fromEntries(new FormData(form)),
                 dataType: 'json',
                 success: function (response) {
                     alertUser.alert_user(gettext("Expression saved"), 'success');

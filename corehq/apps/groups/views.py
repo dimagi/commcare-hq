@@ -164,7 +164,7 @@ def _update_group_membership(request, domain, group_id):
     if group.domain != domain:
         return HttpResponseForbidden()
 
-    selected_users = request.POST.getlist('selected_ids')
+    selected_users = request.POST.getlist('selected_ids[]')
 
     # check to make sure no users were deleted at time of making group
     users = iter_docs(CouchUser.get_db(), selected_users)

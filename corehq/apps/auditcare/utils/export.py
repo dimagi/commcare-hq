@@ -1,5 +1,5 @@
 import csv
-from datetime import datetime, timedelta
+from datetime import timedelta
 from itertools import chain
 
 from django.contrib.auth.models import User
@@ -22,9 +22,6 @@ def navigation_events_by_user(user, start_date=None, end_date=None):
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
-    start_date = string_to_datetime(start_date).replace(tzinfo=None) if start_date else None
-    end_date = string_to_datetime(end_date).replace(tzinfo=None) if end_date else None
-
     for event in navigation_events_by_user(user, start_date, end_date):
         if not domain or domain == event.domain:
             write_log_event(writer, event, override_user)
@@ -138,9 +135,11 @@ def get_date_range_where(start_date, end_date):
     """Get ORM filter kwargs for inclusive event_date range"""
     where = {}
     if start_date:
-        where["event_date__gt"] = start_date.date()
+        start_date = string_to_datetime(start_date).replace(tzinfo=None)
+        where["event_date__gt"] = start_date
     if end_date:
-        where["event_date__lt"] = end_date.date() + timedelta(days=1)
+        end_date = string_to_datetime(end_date).replace(tzinfo=None)
+        where["event_date__lt"] = end_date + timedelta(days=1)
     return where
 
 

@@ -2,7 +2,12 @@ import json
 from io import BytesIO
 
 from django.contrib import messages
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse
@@ -207,11 +212,11 @@ class FetchProductListView(ProductListView):
             }
 
     def get(self, request, *args, **kwargs):
-        return HttpResponse(json.dumps({
+        return JsonResponse({
             'success': True,
             'current_page': int(self.page),
             'data_list': self.product_data,
-        }), 'text/json')
+        })
 
 
 @method_decorator(use_bootstrap5, name='dispatch')

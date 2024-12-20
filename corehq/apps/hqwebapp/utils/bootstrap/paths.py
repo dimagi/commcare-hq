@@ -8,6 +8,7 @@ TRACKED_JS_FOLDERS = ["js", "spec"]
 PARENT_PATHS = {
     "corehq": COREHQ_BASE_DIR,
     "custom": CUSTOM_BASE_DIR,
+    "messaging": COREHQ_BASE_DIR / "messaging",
     "motech": COREHQ_BASE_DIR / "motech",
     "casexml": COREHQ_BASE_DIR / "ex-submodules/casexml/apps",
     "ex-submodules": COREHQ_BASE_DIR / "ex-submodules",

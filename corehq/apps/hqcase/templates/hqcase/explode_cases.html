@@ -1,7 +1,7 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 
-{% requirejs_main_b5 'hqcase/js/explode_cases' %}
+{% js_entry 'hqcase/js/explode_cases' %}
 
 {% block page_content %}
   {% registerurl "users_select2_options" domain %}

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,12 +1,12 @@
+@@ -1,13 +1,13 @@
  'use strict';
 -hqDefine("hqwebapp/js/bootstrap3/widgets",[
 +hqDefine("hqwebapp/js/bootstrap5/widgets",[
@@ -11,12 +11,14 @@
 +    'tempusDominus',
      'select2/dist/js/select2.full.min',
 -    'jquery-ui/ui/widgets/datepicker',
+-    "commcarehq",
 -], function ($, _, MapboxGeocoder, initialPageData) {
++    'commcarehq',
 +], function ($, _, MapboxGeocoder, initialPageData, tempusDominus) {
      var init = function () {
          var MAPBOX_ACCESS_TOKEN = initialPageData.get(
              "mapbox_access_token"
-@@ -109,7 +109,19 @@
+@@ -110,7 +110,19 @@
          });
  
          _.each($(".date-picker"), function (input) {

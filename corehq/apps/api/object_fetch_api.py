@@ -122,7 +122,7 @@ class CaseAttachmentAPI(View):
         if attachment_meta is not None:
             mime_type = attachment_meta['content_type']
         else:
-            mime_type = "plain/text"
+            mime_type = "text/plain"
 
         return StreamingHttpResponse(streaming_content=FileWrapper(attachment_stream),
                                      content_type=mime_type)

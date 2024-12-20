@@ -1,13 +1,15 @@
 --- 
 +++ 
-@@ -1,12 +1,14 @@
+@@ -1,13 +1,15 @@
  // side effects: defines knockout bindings that are used in hqwebapp/partials/pagination.html
 -hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list", [
 +hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
      "jquery",
      "knockout",
      "underscore",
+-    "hqwebapp/js/bootstrap3/knockout_bindings.ko",  // fadeVisible
 +    "es6!hqwebapp/js/bootstrap5_loader",
++    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
  ], function (
      $,
      ko,
@@ -17,18 +19,18 @@
  ) {
      var CRUDPaginatedListModel = function (
          total,
-@@ -197,8 +199,9 @@
+@@ -199,8 +201,9 @@
              self.changePage(1);
          };
  
--        self.deleteItem = function (paginatedItem, event) {
+-        self.deleteItem = function (paginatedItem) {
 +        self.deleteItem = function (paginatedItem, event, button) {
              var pList = self.paginatedList();
 +            $(button).enableButton();
              paginatedItem.dismissModals();
              self.paginatedList(_(pList).without(paginatedItem));
              self.deletedList.push(paginatedItem);
-@@ -222,7 +225,7 @@
+@@ -224,7 +227,7 @@
              });
          };
  
@@ -37,7 +39,7 @@
              $.ajax({
                  url: '',
                  type: 'post',
-@@ -238,6 +241,7 @@
+@@ -240,6 +243,7 @@
                  statusCode: self.handleStatusCode,
                  success: function (data) {
                      self.utils.reloadList(data);
@@ -45,7 +47,7 @@
                  },
              });
          };
-@@ -268,15 +272,9 @@
+@@ -271,15 +275,9 @@
          };
  
          self.dismissModals = function () {
@@ -64,7 +66,7 @@
              }
          };
  
-@@ -321,15 +319,15 @@
+@@ -322,15 +320,15 @@
              var $deleteButton = $(elems).find('.delete-item-confirm');
              if ($deleteButton) {
                  $deleteButton.click(function () {

@@ -7,6 +7,7 @@ from django.utils.http import urlencode
 from .utils import create_enterprise_permissions
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.users.models import (
     HQApiKey,
@@ -68,6 +69,36 @@ class EnterprisePermissionsTest(TestCase):
         Domain.get_by_name('staging').delete()
         super().tearDownClass()
 
+    def test_get_by_domain(self):
+        # Any domain in the account can be used to get the config
+        configs = [
+            EnterprisePermissions.get_by_domain('state'),
+            EnterprisePermissions.get_by_domain('county'),
+            EnterprisePermissions.get_by_domain('staging'),
+        ]
+        for config in configs:
+            self.assertTrue(config.is_enabled)
+            self.assertEqual(config.source_domain, 'state')
+            self.assertListEqual(config.domains, ['county'])
+
+        empty_config = EnterprisePermissions.get_by_domain('not-a-domain')
+        self.assertFalse(empty_config.is_enabled)
+
+    def test_get_source_domain(self):
+        self.assertEqual(EnterprisePermissions.get_source_domain('state'), None)
+        self.assertEqual(EnterprisePermissions.get_source_domain('county'), 'state')
+        self.assertEqual(EnterprisePermissions.get_source_domain('staging'), None)
+
+    def test_get_domains(self):
+        self.assertListEqual(EnterprisePermissions.get_domains('state'), ['county'])
+        self.assertListEqual(EnterprisePermissions.get_domains('county'), [])
+        self.assertListEqual(EnterprisePermissions.get_domains('staging'), [])
+
+    def test_is_source_domain(self):
+        self.assertTrue(EnterprisePermissions.is_source_domain('state'))
+        self.assertFalse(EnterprisePermissions.is_source_domain('county'))
+        self.assertFalse(EnterprisePermissions.is_source_domain('staging'))
+
     def test_permission_mirroring(self):
         for domain in ('state', 'county'):
             self.assertTrue(self.web_user_admin.is_domain_admin(domain))
@@ -96,6 +127,6 @@ class EnterprisePermissionsTest(TestCase):
             'resource_name': InternalFixtureResource._meta.resource_name,
         })
         username = self.web_user_non_admin.username
-        api_params = urlencode({'username': username, 'api_key': self.api_key.key})
+        api_params = urlencode({'username': username, 'api_key': self.api_key.plaintext_key})
         response = self.client.get(f"{url}?{api_params}")
         self.assertEqual(response.status_code, 200)

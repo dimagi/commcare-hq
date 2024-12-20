@@ -26,11 +26,11 @@ hqDefine('registration/js/new_user.ko', [
     module.csrf = null;
     module.showPasswordFeedback = false;
     module.rmi = function () {
-        throw "Please call initRMI first.";
+        throw new Error("Please call initRMI first.");
     };
     module.resetEmailFeedback = function (isValidating) {
-        throw "please call setResetEmailFeedbackFn. " +
-              "Expects boolean isValidating. " + isValidating;
+        throw new Error("please call setResetEmailFeedbackFn. " +
+            "Expects boolean isValidating. " + isValidating);
     };
     module.submitAttemptAnalytics = function (data) {  // eslint-disable-line no-unused-vars
         kissmetrics.track.event("Clicked Create Account");
@@ -225,6 +225,9 @@ hqDefine('registration/js/new_user.ko', [
                    && (!self.isPersonaChoiceOther() || self.isPersonaChoiceOtherPresent());
         });
 
+        // Self-signup for paid software plan
+        self.isSelfSignup = ko.observable(false);
+
         // ---------------------------------------------------------------------
         // Form Functionality
         // ---------------------------------------------------------------------
@@ -247,6 +250,7 @@ hqDefine('registration/js/new_user.ko', [
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: module.getPhoneNumberFn() || self.phoneNumber(),
                 atypical_user: defaults.atypical_user,
+                is_self_signup: self.isSelfSignup(),
             };
             if (self.hasPersonaFields) {
                 _.extend(data, {

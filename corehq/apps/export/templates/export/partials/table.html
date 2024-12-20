@@ -1,0 +1,670 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load humanize %}
+
+<table class="table table-striped"
+       data-bind="visible: exports().length && !isBulkDeleting()">
+  <thead>
+    <tr>
+      {% if has_edit_permissions or allow_bulk_export %}
+        <th class="col-md-1">
+          {% blocktrans %}Select{% endblocktrans %}
+          <br>
+          <button type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  data-bind="click: selectAll">
+            {% trans 'All' %}
+          </button>
+          {%trans 'or'%}
+          <button type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  data-bind="click: selectNone">
+            {% trans 'None' %}
+          </button>
+        </th>
+      {% endif %}
+      <th class="col-md-4">
+        {% trans 'Name' %}
+      </th>
+
+    {% if model_type == "case" %}
+      <th class="col-md-2">
+        {% trans 'Case Type' %}
+      </th>
+    {% endif %}
+
+    <th class="col-md-1">
+      {% if export_filter_form %}
+        {% if has_edit_permissions %}
+          {% trans "Filters and Files" %}
+        {% endif %}
+      {% else %}
+        {{ export_type_caps }}
+      {% endif %}
+    </th>
+
+    {% if is_daily_saved_export %}
+      <th class="col-md-1">{% trans "Enable/Disable" %}</th>
+    {% endif %}
+
+    {% if has_edit_permissions %}
+      <th class="col-md-1">
+        {% if is_daily_saved_export %}
+          {% trans "Edit Columns" %}
+        {% elif not is_odata %}
+          {% trans 'Edit' %}
+        {% else %}
+          {% blocktrans %}
+            Copy &amp; Edit
+          {% endblocktrans %}
+        {% endif %}
+      </th>
+      <th class="col-md-1">
+        {% trans 'Delete' %}
+      </th>
+    {% endif %}
+
+    {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
+      <th class="col-md-1"
+          data-bind="visible: showOwnership">
+        <span data-bind="visible: myExports">
+          {% trans "Share" %}
+        </span>
+        <span data-bind="visible: !myExports">
+          {% trans "Shared By" %}
+        </span>
+      </th>
+    {% endif %}
+    </tr>
+  </thead>
+  <tbody data-bind="foreach: exports()">
+    <tr>
+    {% if has_edit_permissions or allow_bulk_export %}
+      <td>
+        <div class="form-check checkbox-table-cell">
+          <input type="checkbox"
+                 class="form-check-input"
+                 data-bind="checked: addedToBulk" />
+        </div>
+      </td>
+    {% endif %}
+      <td>
+        <div data-bind="css: {'text-body-secondary': hasEmailedExport && !isAutoRebuildEnabled()}">
+          <inline-edit params="value: name,
+                               url: editNameUrl,
+                               placeholder: '{% trans "Enter name here"|escapejs %}',
+                               cols: 50"
+                       data-apply-bindings="false"></inline-edit>
+          <label class="badge text-bg-secondary label-default"
+                 data-bind="visible: isDeid()">
+            {% trans 'De-Identified' %}
+          </label>
+        </div>
+        <p data-bind="visible: formname,
+                      css: {
+                        'text-body-secondary': hasEmailedExport && !isAutoRebuildEnabled()
+                      }">
+          <i class="fa-regular fa-file"></i>
+          <strong>
+            {% trans 'Form:' %}
+          </strong>
+          <span data-bind="text: formname"></span>
+        </p>
+        <inline-edit params="value: description,
+                             url: editDescriptionUrl,
+                             placeholder: '{% trans "Enter description here"|escapejs %}',
+                             cols: 50"
+                     data-apply-bindings="false"></inline-edit>
+        <!-- ko ifnot: isLocationSafeForUser() -->
+          <div class="alert alert-warning alert-small">
+            <i class="fa fa-warning"></i>
+            {% blocktrans %}
+              This export is filtered to data you don't have access to.
+            {% endblocktrans %}
+          </div>
+        <!-- /ko -->
+
+        <!-- ko if: isOData -->
+          <!-- ko with: odataFeedUrl -->
+          <p>
+            <div data-bind="css: {'input-group': showLink}">
+              <button class="btn btn-outline-primary btn-sm" data-bind="click: copyLinkRequested">
+                <i class="fa fa-clipboard"></i>
+                {% trans "Copy OData Feed Link" %}
+              </button>
+              <input data-bind="visible: showLink,
+                                value: url"
+                     type="text"
+                     class="form-control input-sm"
+                     readonly />
+            </div>
+          </p>
+          <!-- /ko -->
+          <!-- ko if: hasAdditionalODataFeeds -->
+            <p>
+              <a class="btn btn-sm btn-outline-primary"
+                 data-bind="attr: {
+                              href: '#' + id() + '-odata-additional'
+                            },
+                            click: sendAnalyticsOpenAdditionalFeeds"
+                 data-bs-toggle="modal">
+                <i class="fa fa-rss"></i>
+                <!-- ko if: exportType() == 'form' -->
+                  {% trans "Show additional feeds for Repeat Group data." %}
+                <!-- /ko -->
+                <!-- ko if: exportType() == 'case' -->
+                  {% trans "Show additional feeds for linking Parent and Child Cases." %}
+                <!-- /ko -->
+              </a>
+            </p>
+            <div class="modal fade"
+                 data-bind="attr: {id: id() + '-odata-additional'}">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4 class="modal-title">
+                      {% trans "Additional Feeds" %}
+                    </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p class="lead">
+                      <!-- ko if: exportType() == 'form' -->
+                      {% blocktrans %}
+                        Click to copy feeds for <strong>Repeat Group</strong> data:
+                      {% endblocktrans %}
+                      <!-- /ko -->
+                      <!-- ko if: exportType() == 'case' -->
+                      {% blocktrans %}
+                        Click to copy feeds for linking <strong>Parent</strong>
+                        and <strong>Child Cases</strong>:
+                      {% endblocktrans %}
+                      <!-- /ko -->
+                    </p>
+                    <!-- ko foreach: odataAdditionalFeedUrls -->
+                    <p>
+                      <div data-bind="css: {'input-group': url.showLink}">
+                        <button class="btn btn-outline-primary btn-sm" data-bind="click: url.copyLinkRequested">
+                          <i class="fa fa-clipboard"></i>
+                          <span data-bind="text: label"></span>
+                        </button>
+                        <input data-bind="visible: url.showLink,
+                                          value: url.url"
+                               type="text"
+                               class="form-control input-sm"
+                               readonly />
+                      </div>
+                    </p>
+                    <!-- /ko -->
+                  </div>
+                  <div class="modal-footer">
+                    <a href="#"
+                       class="btn btn-outline-primary"
+                       data-bind="click: sendAnalyticsCloseAdditionalFeeds"
+                       data-bs-dismiss="modal">
+                      {% trans "Close" %}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <!-- /ko -->
+        <!-- /ko -->
+
+        <!-- ko if: hasEmailedExport && !isAutoRebuildEnabled() -->
+        <p class="text-danger">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          {% blocktrans %}
+            Automatic updates for this saved {{ export_type }} have been disabled. Click 'Enable'
+            to re-enable automatic updates.
+          {% endblocktrans %}
+        </p>
+        <!-- /ko -->
+        <!-- ko if: hasEmailedExport && isLocationSafeForUser() -->
+        <div class="alert alert-neutral alert-small">
+          <div class="h5">
+            <span data-bind="if: emailedExport.hasFile()">
+              <strong>
+                {% trans "Size:" %}
+              </strong>
+              <span data-bind="text: emailedExport.fileData.size()"></span>
+              <strong>
+                {% trans "Last Updated:" %}
+              </strong>
+              <span data-bind="if: !emailedExport.justUpdated()">
+                <span data-bind="text: emailedExport.fileData.lastUpdated()"></span>
+              </span>
+              <span data-bind="if: emailedExport.justUpdated()">
+                {% trans "Just now" %}&nbsp;&nbsp;&nbsp;
+              </span>
+              <strong>
+                {% trans "Last Downloaded:" %}
+              </strong>
+              <span data-bind="text: emailedExport.fileData.lastAccessed()"></span>
+              {% if request|toggle_enabled:"SUPPORT" %}
+                <span data-bind="if: lastBuildDuration">
+                  <strong>
+                    {% trans "Last Build Duration:" %}
+                  </strong>
+                  <span data-bind="text: lastBuildDuration"></span>
+                </span>
+              {% endif %}
+            </span>
+            &nbsp;&nbsp;
+            <div data-bind="if: isLocationSafeForUser()">
+              <button type="button"
+                      class="btn btn-outline-primary btn-sm"
+                      data-bind="visible: emailedExport.canUpdateData,
+                                 attr: {
+                                   'data-bs-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()
+                                 }"
+                      data-bs-toggle="modal">
+                <i class="fa fa-refresh"></i>
+                {% trans "Update Data" %}
+              </button>
+              <button type="button"
+                      class="btn btn-outline-primary btn-sm btn-disabled"
+                      data-bind="visible: emailedExport.updatingData() && !emailedExport.prepareExportError()"
+                      disabled="disabled">
+                <i class="fa fa-refresh fa-spin"></i>
+                {% trans "Updating Data, please wait..." %}
+              </button>
+              <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.started()">
+                <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" data-bind="attr: {'aria-valuenow': emailedExport.taskStatus.percentComplete()}">
+                  <div class="progress-bar progress-bar-striped"
+                       data-bind="attr: {style: 'width: ' + emailedExport.taskStatus.percentComplete() + '%'}">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="h5"
+               data-bind="if: emailedExport.hasFile() && isLocationSafeForUser()">
+
+            <a data-bind="visible: !isFeed(),
+                          attr: {
+                            href: emailedExport.fileData.downloadUrl()
+                          },
+                          click: downloadRequested"
+               class="btn btn-info btn-sm">
+              <i class="fa-solid fa-cloud-arrow-down"></i>
+              {% trans "Download" %}
+            </a>
+            <!-- ko if: isFeed -->
+              <!-- ko with: feedUrl -->
+                <div data-bind="css: {'input-group': showLink}">
+                <button class="btn btn-outline-primary btn-sm" data-bind="click: copyLinkRequested">
+                  <i class="fa fa-clipboard"></i>
+                  {% trans "Copy Dashboard Feed Link" %}
+                </button>
+                <input data-bind="visible: showLink,
+                                  value: url"
+                       type="text"
+                       class="form-control input-sm"
+                       readonly />
+                </div>
+              <!-- /ko -->
+            <!-- /ko -->
+          </div>
+
+          <div data-bind="if: isLocationSafeForUser()">
+            <p class="text-danger"
+               data-bind="if: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning() && isAutoRebuildEnabled()">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              {% blocktrans %}
+                This saved {{ export_type }} has expired because it has not been used in
+                the last 35 days. To renew daily updates, click the 'Update Data'
+                button and download the file.
+              {% endblocktrans %}
+            </p>
+
+            <p class="text-danger"
+               data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.failed() == 'too_large'">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              {% blocktrans with max_rows=max_daily_export_size|intcomma %}
+                Your export exceeds the limit of {{ max_rows }} rows. Please see <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2337669143/Setting+up+a+Data+Pipeline+via+CommCare" data-bs-toggle="modal">documentation</a> for more information.
+              {% endblocktrans %}
+            </p>
+
+            <p class="text-success"
+               data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.success()">
+              <i class="fa fa-check"></i>
+              <strong>
+                {% trans "Data update complete" %}
+              </strong>
+            </p>
+
+            <p class="text-danger"
+               data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.failed() == 'unknown'">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <strong>
+                {% trans "Data update failed!" %}
+              </strong>
+              {% blocktrans %}
+                If this problem persists, please <a href="#modalReportIssue" data-bs-toggle="modal">Report an Issue</a>.
+              {% endblocktrans %}
+            </p>
+
+          </div>
+
+          <div data-bind="if: isLocationSafeForUser()">
+            <div data-bind="if: !emailedExport.hasFile() && emailedExport.taskStatus && !emailedExport.taskStatus.justFinished()">
+              <div class="alert alert-warning"
+                   data-bind="visible: emailedExport.prepareExportError()">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span data-bind="text: emailedExport.prepareExportError"></span>
+              </div>
+
+              <strong>
+                {% blocktrans %}
+                  No data is available yet.
+                {% endblocktrans %}
+              </strong>
+              <br />
+              {% blocktrans %}
+                Please click 'update data' if the automatic scheduler hasn't picked up the changes in a while.
+              {% endblocktrans %}
+
+            </div>
+            <div class="modal fade"
+                 data-bind="attr: {id: 'modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4 class="modal-title">
+                      {% trans "Confirm data updates" %}
+                    </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+                  </div>
+                  <div class="modal-body"
+                       data-bind="visible: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning()">
+                    {% blocktrans %}
+                      To renew daily updates, click the Update Data button below and check back in a little
+                      bit once the updates have finished processing.
+                    {% endblocktrans %}
+                  </div>
+                  <div class="modal-body"
+                       data-bind="visible: !(emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning())">
+                    <p class="lead">
+                      <strong>
+                        {% blocktrans %}
+                          Once the data is updated, a data refresh should
+                          occur automatically on a daily basis.
+                        {% endblocktrans %}
+                      </strong>
+                    </p>
+                    <p data-bind="ifnot: isDailySaved()">
+                      {% blocktrans %}
+                        To download data now, please click the Export button instead.
+                      {% endblocktrans %}
+                    </p>
+                    <p data-bind="if: isDailySaved() && isFeed()">
+                      To export data now, please copy the dashboard feed link instead.
+                    </p>
+                    <p data-bind="ifnot: isFeed()">
+                      To export data now, please click the Download button instead.
+                    </p>
+                  </div>
+                  <div class="modal-footer">
+                    <a href="#"
+                       class="btn btn-outline-primary"
+                       data-bs-dismiss="modal">
+                      {% trans "Cancel" %}
+                    </a>
+                    <button type="button"
+                            class="btn btn-primary"
+                            data-bind="click: emailedExport.updateData">
+                      {% trans "Update Data" %}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal fade"
+                 data-bind="attr: {id: 'modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId()}">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4 class="modal-title">
+                      {% trans "Confirm data updates." %}
+                    </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p data-bind="if: isDailySaved() && !isAutoRebuildEnabled()">
+                      {% blocktrans %}
+                        This will enable the daily automatic updates of this export.
+                      {% endblocktrans %}
+                    </p>
+                    <p data-bind="if: isDailySaved() && isAutoRebuildEnabled()">
+                      {% blocktrans %}
+                        This will disable the daily automatic updates of this export.
+                      {% endblocktrans %}
+                    </p>
+                  </div>
+                  <div class="modal-footer">
+                    <a href="#"
+                       class="btn btn-outline-primary"
+                       data-bs-dismiss="modal">
+                      {% trans "Cancel" %}
+                    </a>
+                    <button type="button"
+                            class="btn btn-primary"
+                            data-bind="click: updateDisabledState">
+                      <span data-bind="if: isAutoRebuildEnabled()">
+                        {% trans "Disable auto update" %}
+                      </span>
+                      <span data-bind="ifnot: isAutoRebuildEnabled()">
+                        {% trans "Enable auto update" %}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /ko -->
+      </td>
+    {% if model_type == "case" %}
+      <td>
+        <span class="h4" data-bind="text: case_type"></span>
+        <span data-bind="visible: is_case_type_deprecated" class="badge text-bg-warning">{% trans "deprecated" %}</span>
+      </td>
+    {% endif %}
+
+    <td nowrap>
+      <a data-bind="attr: {href: downloadUrl},
+                    visible: !showSavedFilters,
+                    click: $root.sendExportAnalytics"
+         class="btn btn-primary">
+        {{ export_type_caps }}
+      </a>
+      {% if has_edit_permissions %}
+        <a class="btn btn-outline-primary"
+           data-bind="visible: showSavedFilters && isLocationSafeForUser(),
+                      click: function (model) {
+                        $root.filterModalExportId(model.id());
+                      }"
+           href="#setFeedFiltersModal"
+           data-bs-toggle="modal">
+          <i class="fa fa-filter"></i>
+          {% trans "Edit Filters" %}
+        </a>
+      {% endif %}
+      {% trans "Download a Data Export Tool configuration file for this export" as det_help %}
+      <a data-bind="visible: showDetDownload, attr: {href: detSchemaUrl}" class="btn btn-outline-primary" title="{{ det_help }}">
+        <i class="fa fa-download"></i>
+        {% trans "DET Config" %}
+      </a>
+    </td>
+
+    {% if is_daily_saved_export %}
+      <td>
+        <!-- ko if: isLocationSafeForUser() -->
+        <a class="btn btn-outline-primary"
+           data-bind="attr: {
+                        'data-bs-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
+                      }"
+           data-bs-toggle="modal">
+          <span data-bind="visible: !isAutoRebuildEnabled()">
+            {% trans "Enable" %}
+          </span>
+          <span data-bind="visible: isAutoRebuildEnabled()">
+            {% trans "Disable" %}
+          </span>
+        </a>
+        <!-- /ko -->
+      </td>
+    {% endif %}
+
+    {% if has_edit_permissions %}
+      <td>
+        <div data-bind="if: $parent.showOwnership">
+          <div data-bind="if: can_edit()">
+            <div data-bind="if: isLocationSafeForUser()">
+              <a class="btn btn-outline-primary"
+                 {% if odata_feeds_over_limit %}
+                 href="#odataFeedLimitReachedModal"
+                 data-bs-toggle="modal"
+                 {% else %}
+                 data-bind="attr: {href: editUrl}"
+                 {% endif %}>
+                <div data-bind="ifnot: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span data-bind="visible: !isDailySaved()">
+                    {% trans 'Edit' %}
+                  </span>
+                  <span data-bind="visible: isDailySaved()">
+                    {% trans 'Edit Columns' %}
+                  </span>
+                </div>
+                <div data-bind="if: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span>
+                    {% blocktrans %}
+                      Copy &amp; Edit
+                    {% endblocktrans %}
+                  </span>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div data-bind="ifnot: can_edit()">
+            <div data-bind="if: isLocationSafeForUser()">
+              <a class="btn btn-outline-primary disabled"
+                 data-bind="visible: $parent.myExports">
+                <div data-bind="ifnot: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span data-bind="visible: !isDailySaved()">
+                    {% trans 'Edit' %}
+                  </span>
+                  <span data-bind="visible: isDailySaved()">
+                    {% trans 'Edit Columns' %}
+                  </span>
+                </div>
+                <div data-bind="if: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span>
+                    {% blocktrans %}
+                      Copy &amp; Edit
+                    {% endblocktrans %}
+                  </span>
+                </div>
+              </a>
+              <a data-bind="attr: {href: editUrl},
+                            visible: !$parent.myExports"
+                 class="btn btn-outline-primary">
+                <div data-bind="ifnot: isOData()">
+                  <span data-bind="visible: !isDailySaved()">
+                    {% trans 'View' %}
+                  </span>
+                  <span data-bind="visible: isDailySaved()">
+                    {% trans 'View Columns' %}
+                  </span>
+                </div>
+                <div data-bind="if: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span>
+                    {% trans 'View Feed' %}
+                  </span>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div data-bind="ifnot: $parent.showOwnership">
+          <div data-bind="if: isLocationSafeForUser()">
+            <a class="btn btn-outline-primary"
+                    {% if odata_feeds_over_limit %}
+                    href="#odataFeedLimitReachedModal"
+                    data-bs-toggle="modal"
+                    {% else %}
+                    data-bind="click: editExport"
+                    {% endif %}>
+              <div data-bind="ifnot: isOData()">
+                <i class="fa fa-pencil"></i>
+                <span data-bind="visible: !isDailySaved()">
+                  {% trans 'Edit' %}
+                </span>
+                <span data-bind="visible: isDailySaved()">
+                  {% trans 'Edit Columns' %}
+                </span>
+              </div>
+              <div data-bind="if: isOData()">
+                <i class="fa fa-pencil"></i>
+                <span>
+                  {% blocktrans %}
+                    Copy &amp; Edit
+                  {% endblocktrans %}
+                </span>
+              </div>
+            </a>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div data-bind="if: isLocationSafeForUser()">
+          <a class="btn btn-outline-danger"
+             data-bs-toggle="modal"
+             data-bind="attr: {
+                          href: '#delete-export-modal-' + id()
+                        }">
+            <i class="fa fa-remove"></i>
+            <span>{% trans 'Delete' %}</span>
+          </a>
+          {% include "export/dialogs/delete_custom_export_dialog.html" %}
+        </div>
+      </td>
+    {% endif %}
+
+    {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
+      <td>
+        <div data-bind="visible: $parent.myExports">
+          <div data-bind="visible: sharing() === 'private'">
+            {% trans 'Private' %}
+          </div>
+          <div data-bind="visible: sharing() === 'export_only'">
+            {% trans 'Export Only' %}
+          </div>
+          <div data-bind="visible: sharing() === 'edit_and_export'">
+            {% trans 'Edit & Export' %}
+          </div>
+        </div>
+        <div data-bind="visible: !$parent.myExports">
+          <div data-bind="visible: owner_username === 'unknown'">
+            <div class="badge text-bg-secondary">
+              {% trans 'Unknown' %}
+            </div>
+          </div>
+          <div data-bind="visible: owner_username !== 'unknown',
+                          text: owner_username"></div>
+        </div>
+      </td>
+    {% endif %}
+
+    </tr>
+  </tbody>
+</table>

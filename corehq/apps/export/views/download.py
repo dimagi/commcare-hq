@@ -61,7 +61,7 @@ from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     case_type_or_app_limit_exceeded
 )
-from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
@@ -149,7 +149,7 @@ class SMSDownloadExportViewHelper(DownloadExportViewHelper):
 
 
 class BaseDownloadExportView(BaseProjectDataView):
-    template_name = 'export/bootstrap3/download_export.html'
+    template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_date_range = False
     check_for_multimedia = False
@@ -157,7 +157,8 @@ class BaseDownloadExportView(BaseProjectDataView):
     # To serve filters for export from mobile_user_and_group_slugs
     export_filter_class = None
 
-    @use_daterangepicker
+    @use_bootstrap5
+    @use_tempusdominus
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
@@ -389,6 +390,13 @@ def poll_custom_export_download(request, domain):
     permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
     permissions.access_download_export_or_404()
     download_id = request.GET.get('download_id')
+
+    if not download_id:
+        return JsonResponse({
+            'error': _('Could not find download. Please refresh page and try again.'),
+            'retry': False,
+        })
+
     try:
         context = get_download_context(download_id)
     except TaskFailedError as e:
@@ -396,7 +404,8 @@ def poll_custom_export_download(request, domain):
             return JsonResponse({
                 'error': _(
                     'This file has more than 256 columns, which is not supported by xls. '
-                    'Please change the output type to csv or xlsx to export this file.')
+                    'Please change the output type to csv or xlsx to export this file.'),
+                'retry': False,
             })
         else:
             notify_exception(
@@ -444,6 +453,7 @@ class DownloadNewFormExportView(BaseDownloadExportView):
 
 @require_POST
 @login_and_domain_required
+@location_safe
 def prepare_form_multimedia(request, domain):
     """Gets the download_id for the multimedia zip and sends it to the
     exportDownloadService in download_export.ng.js to begin polling for the
@@ -528,8 +538,9 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
 class DownloadNewDatasourceExportView(BaseProjectDataView):
     urlname = "data_export_page"
     page_title = gettext_noop("Export Data Source Data")
-    template_name = 'export/bootstrap3/datasource_export_view.html'
+    template_name = 'export/datasource_export_view.html'
 
+    @use_bootstrap5
     def dispatch(self, *args, **kwargs):
         if not EXPORT_DATA_SOURCE_DATA.enabled(self.domain):
             raise Http404()

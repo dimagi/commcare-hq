@@ -7,7 +7,7 @@ hqDefine('reports/v2/js/bootstrap5/datagrid', [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
-    'reports/v2/js/datagrid/bootstrap5/data_models',
+    'reports/v2/js/datagrid/data_models',
     'reports/v2/js/datagrid/columns',
     'reports/v2/js/datagrid/report_filters',
     'analytix/js/kissmetrix',

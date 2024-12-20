@@ -88,7 +88,7 @@ class TestDomainGlobalSettingsForm(TestCase):
         self.assertTrue('confirmation_link_expiry' not in form.fields)
 
     def test_confirmation_link_expiry_default_present_when_flag_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
         form = self.create_form(
             confirmation_link_expiry=self.account_confirmation_settings.confirmation_link_expiry_time,
             confirmation_sms_project_name=self.account_confirmation_settings.project_name)
@@ -98,7 +98,7 @@ class TestDomainGlobalSettingsForm(TestCase):
         self.assertEqual(14, self.account_confirmation_settings.confirmation_link_expiry_time)
 
     def test_confirmation_link_expiry_custom_present_when_flag_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
         form = self.create_form(
             confirmation_link_expiry=25,
             confirmation_sms_project_name=self.account_confirmation_settings.project_name)
@@ -110,7 +110,7 @@ class TestDomainGlobalSettingsForm(TestCase):
 
     def test_confirmation_link_expiry_error_when_invalid_value(self):
         OperatorCallLimitSettings.objects.all().delete()
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
         form = self.create_form(
             confirmation_link_expiry='abc',
             confirmation_sms_project_name=self.account_confirmation_settings.project_name)
@@ -120,7 +120,7 @@ class TestDomainGlobalSettingsForm(TestCase):
 
     def test_confirmation_link_expiry_error_when_value_less_than_lower_limit(self):
         OperatorCallLimitSettings.objects.all().delete()
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
         form = self.create_form(
             confirmation_link_expiry='-1',
             confirmation_sms_project_name=self.account_confirmation_settings.project_name)
@@ -131,7 +131,7 @@ class TestDomainGlobalSettingsForm(TestCase):
 
     def test_confirmation_link_expiry_error_when_value_more_than_upper_limit(self):
         OperatorCallLimitSettings.objects.all().delete()
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
         form = self.create_form(
             confirmation_link_expiry='31',
             confirmation_sms_project_name=self.account_confirmation_settings.project_name)
@@ -203,7 +203,7 @@ class TestDomainGlobalSettingsForm(TestCase):
         return DomainGlobalSettingsForm(data, domain=domain)
 
     def tearDown(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, False, namespace=NAMESPACE_DOMAIN)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
         self.domain_obj.delete()
         OperatorCallLimitSettings.objects.all().delete()
         SMSAccountConfirmationSettings.objects.all().delete()

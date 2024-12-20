@@ -1,10 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
+from corehq.apps.locations.models import SQLLocation
 
 from dimagi.utils.couch.bulk import get_docs
 
 from corehq.apps.api.exceptions import UpdateUserException
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG, CustomDataFieldsProfile
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -13,6 +14,7 @@ from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.user_data import UserDataError
+from corehq.apps.users.validation import validate_profile_required
 
 
 def update(user, field, value, user_change_logger=None):
@@ -35,6 +37,7 @@ def update(user, field, value, user_change_logger=None):
         'phone_numbers': _update_phone_numbers,
         'user_data': _update_user_data,
         'role': _update_user_role,
+        'location': _update_location,
     }.get(field)
 
     if not update_fn:
@@ -115,7 +118,16 @@ def _update_user_data(user, new_user_data, user_change_logger):
         changed = user.get_user_data(user.domain).update(new_user_data, profile_id=profile_id)
     except UserDataError as e:
         raise UpdateUserException(str(e))
-
+    try:
+        if profile_id != ...:
+            profile = CustomDataFieldsProfile.objects.get(id=profile_id)
+            if profile:
+                profile_name = profile.name
+        else:
+            profile_name = None
+        validate_profile_required(profile_name, user.domain)
+    except ValidationError as e:
+        raise UpdateUserException(_(e.message))
     if user_change_logger and changed:
         user_change_logger.add_changes({
             'user_data': user.get_user_data(user.domain).raw
@@ -165,3 +177,69 @@ def _log_phone_number_change(new_phone_numbers, old_phone_numbers, user_change_l
 
     if change_messages:
         user_change_logger.add_change_message({'phone_numbers': change_messages})
+
+
+def _update_location(user, location_object, user_change_logger):
+    primary_location_id = location_object.get('primary_location')
+    location_ids = location_object.get('locations')
+
+    if primary_location_id is None and location_ids is None:
+        return
+
+    current_primary_location_id = user.get_location_id(user.domain)
+    current_locations = user.get_location_ids(user.domain)
+
+    if not primary_location_id and not location_ids:
+        _remove_all_locations(user, user_change_logger)
+    else:
+        if _validate_locations(primary_location_id, location_ids):
+            locations = _verify_location_ids(location_ids, user.domain)
+            if primary_location_id != current_primary_location_id:
+                _update_primary_location(user, primary_location_id, user_change_logger)
+            if set(current_locations) != set(location_ids):
+                _update_assigned_locations(user, locations, location_ids, user_change_logger)
+
+
+def _validate_locations(primary_location_id, location_ids):
+    if not primary_location_id and not location_ids:
+        return False
+    if not primary_location_id or not location_ids:
+        raise UpdateUserException(_('Both primary_location and locations must be provided together.'))
+    if primary_location_id not in location_ids:
+        raise UpdateUserException(_('Primary location must be included in the list of locations.'))
+    return True
+
+
+def _remove_all_locations(user, user_change_logger):
+    user.unset_location(commit=False)
+    user.reset_locations([], commit=False)
+    if user_change_logger:
+        user_change_logger.add_changes({'location_id': None})
+        user_change_logger.add_info(UserChangeMessage.primary_location_removed())
+        user_change_logger.add_changes({'assigned_location_ids': []})
+        user_change_logger.add_info(UserChangeMessage.assigned_locations_info([]))
+
+
+def _update_primary_location(user, primary_location_id, user_change_logger):
+    primary_location = SQLLocation.active_objects.get(location_id=primary_location_id)
+    user.set_location(primary_location, commit=False)
+    if user_change_logger:
+        user_change_logger.add_changes({'location_id': primary_location_id})
+        user_change_logger.add_info(UserChangeMessage.primary_location_info(primary_location))
+
+
+def _verify_location_ids(location_ids, domain):
+    locations = SQLLocation.active_objects.filter(location_id__in=location_ids, domain=domain)
+    real_ids = [loc.location_id for loc in locations]
+
+    if missing_ids := set(location_ids) - set(real_ids):
+        raise UpdateUserException(f"Could not find location ids: {', '.join(missing_ids)}.")
+
+    return locations
+
+
+def _update_assigned_locations(user, locations, location_ids, user_change_logger):
+    user.reset_locations(location_ids, commit=False)
+    if user_change_logger:
+        user_change_logger.add_changes({'assigned_location_ids': location_ids})
+        user_change_logger.add_info(UserChangeMessage.assigned_locations_info(locations))

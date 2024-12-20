@@ -865,10 +865,6 @@ msgstr ""
 msgid "Settings"
 msgstr "Definições"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/password_setter.jquery.js
-msgid "Reset"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/source_files.js
 msgid "Please enter a version to compare"
 msgstr ""
@@ -1178,6 +1174,7 @@ msgid "no formatting"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
 msgid "Custom"
 msgstr ""
 
@@ -2521,50 +2518,6 @@ msgid "Current"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Sharing Options"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "License"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, No Derivatives"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial, and Share Alike"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Non-Commercial, and No Derivatives"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Creative Commons Attribution, Share Alike"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Author"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Enter the name of the author."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Attribution Notes"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Begin Upload"
 msgstr ""
 
@@ -2863,10 +2816,6 @@ msgid "Hide Full Menu"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-msgid "The application could not be found"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
 msgid ""
 "You have selected a case in a different domain. App Preview does not support "
 "this feature."
@@ -3002,6 +2951,14 @@ msgstr ""
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
 msgid "Could not <%= action %> product. Please try again later."
+msgstr ""
+
+#: corehq/apps/commtrack/static/commtrack/js/sms.js
+msgid "SMS keyword is required."
+msgstr ""
+
+#: corehq/apps/commtrack/static/commtrack/js/sms.js
+msgid "Name is required."
 msgstr ""
 
 #: corehq/apps/custom_data_fields/static/custom_data_fields/js/custom_data_fields.js
@@ -3142,24 +3099,28 @@ msgstr ""
 msgid "Sorry, it looks like the upload failed."
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/billing_statements.js
+#: corehq/apps/domain/static/domain/js/bootstrap3/billing_statements.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/billing_statements.js
 msgid "Submit Payment"
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/billing_statements.js
+#: corehq/apps/domain/static/domain/js/bootstrap3/billing_statements.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/billing_statements.js
 msgid "Submit Invoice Request"
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/case_search.js
+#: corehq/apps/domain/static/domain/js/bootstrap3/case_search.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/case_search.js
 msgid "You have unchanged settings"
+msgstr ""
+
+#: corehq/apps/domain/static/domain/js/bootstrap3/info_basic.js
+#: corehq/apps/domain/static/domain/js/bootstrap5/info_basic.js
+msgid "Select a Timezone..."
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
-msgstr ""
-
-#: corehq/apps/domain/static/domain/js/info_basic.js
-msgid "Select a Timezone..."
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
@@ -3205,17 +3166,40 @@ msgid ""
 "the project space as a member in order to override your timezone."
 msgstr ""
 
-#: corehq/apps/enterprise/static/enterprise/js/enterprise_dashboard.js
-msgid ""
-"Error sending email, please try again or report an issue if this persists."
-msgstr ""
-
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
 msgid ""
 "Do not allow new users to sign up on commcarehq.org. This may take up to an "
 "hour to take effect. <br>This will affect users with email addresses from "
 "the following domains: <strong><%- domains %></strong><br>Contact <a "
 "href='mailto:<%- email %>'><%- email %></a> to change the list of domains."
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "Last 30 Days"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Month"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "Spans <%- startDate %> to <%- endDate %> (UTC)"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid ""
+"Error updating display total, please try again or report an issue if this "
+"persists."
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid "??"
+msgstr ""
+
+#: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+msgid ""
+"Error sending email, please try again or report an issue if this persists."
 msgstr ""
 
 #: corehq/apps/events/static/events/js/event_attendees.js
@@ -3300,20 +3284,6 @@ msgid "Download Requested"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/export_list.js
-msgid "All of the selected feeds will be deleted."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid "All of the selected exports will be deleted."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
-msgid ""
-"All of the selected exports will be collected for download to a single Excel "
-"file, with each export as a separate sheet."
-msgstr ""
-
-#: corehq/apps/export/static/export/js/export_list.js
 msgid "Invalid date format"
 msgstr ""
 
@@ -3384,6 +3354,10 @@ msgstr ""
 msgid "Sensitive Date"
 msgstr ""
 
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
+msgid "Can not create table with ID '<%= tag %>'. Table IDs should be unique."
+msgstr ""
+
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "No group"
 msgstr ""
@@ -3427,6 +3401,48 @@ msgid ""
 "will not be exported."
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Max cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Min cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Max distance to case"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "minutes"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "Max travel time"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid ""
+"Oops! Something went wrong! Please check that your geospatial settings are "
+"configured correctly or contact admin if the problem persists."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid ""
+"Please ensure that the filtered area includes both cases and mobile workers "
+"before attempting to run disbursement."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+msgid "All locations"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_management.js
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid ""
+"Oops! Something went wrong! Please report an issue if the problem persists."
+msgstr ""
+
 #: corehq/apps/geospatial/static/geospatial/js/geo_config.js
 msgid "Token successfully verified!"
 msgstr ""
@@ -3435,47 +3451,6 @@ msgstr ""
 msgid ""
 "Invalid API token. Please verify that the token matches the one on your "
 "Mapbox account and has the correct scope configured."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Max cases per user"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Min cases per user"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Max distance to case"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "minutes"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Max travel time"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid ""
-"Oops! Something went wrong! Please check that your geospatial settings are "
-"configured correctly or contact admin if the problem persists."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid ""
-"Please ensure that the filtered area includes both casesand mobile workers "
-"before attempting to run disbursement."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "All locations"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid ""
-"Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/gps_capture.js
@@ -3487,13 +3462,13 @@ msgid "Mobile Worker"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-msgid "Refreshing Page..."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Refreshing Page..."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
@@ -3650,6 +3625,14 @@ msgstr ""
 msgid "Clear"
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
+msgid "Gateway Timeout Error. Max retries exceeded."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
+msgid "Request timed out. Max retries exceeded."
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
 msgid "Items"
 msgstr ""
@@ -3677,6 +3660,10 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js
 msgid ""
 "There was an issue communicating with the server. Please try back later."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid " to "
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -3753,10 +3740,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Decade"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Month"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -3956,16 +3939,6 @@ msgstr ""
 msgid "Error determining number of matching locations"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location.js
-msgid ""
-"User <%- name %> added successfully. A validation message has been sent to "
-"the phone number provided."
-msgstr ""
-
-#: corehq/apps/locations/static/locations/js/location.js
-msgid "Error saving user"
-msgstr ""
-
 #: corehq/apps/locations/static/locations/js/location_tree.js
 msgid "You have successfully archived the location <%-name%>"
 msgstr ""
@@ -4141,33 +4114,64 @@ msgstr ""
 msgid "label-info-light"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-msgid "Keywords"
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Please check your Internet connection!"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-msgid "Keywords to copy"
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Report Not Found."
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-msgid "Search keywords"
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid ""
+"Request timed out when rendering this report. This might be an issue with "
+"our servers or with your Internet connection. We encourage you to report an "
+"issue to CommCare HQ Support so we can look into any possible issues."
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Linked Project Spaces"
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid ""
+"Problem Rendering Report. Our error monitoring tools have noticed this and "
+"we are working quickly to resolve this issue as soon as possible. We "
+"encourage you to contact CommCare HQ Support if this issue persists for more "
+"than a few minutes. We appreciate any additional information you can give us "
+"about this problem so we can fix it immediately."
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Projects to copy to"
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Bad Gateway. Please contact CommCare HQ Support."
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Search projects"
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid ""
+"CommCare HQ is experiencing server difficulties. We're working quickly to "
+"resolve it. Thank you for your patience. We are extremely sorry."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Gateway Timeout. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Loading Stopped"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "We were unsuccessful loading the report:"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/base.js
@@ -4186,39 +4190,39 @@ msgstr ""
 msgid "Sorry, there was an issue communicating with the server."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/data_corrections.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/data_corrections.js
+msgid "Select a value"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid "Loading"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid "No data available to display. Please try changing your filters."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
 #: corehq/apps/reports/static/reports/js/bootstrap3/tabular.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/tabular.js
 msgid "Sorry!"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid ""
 "There was an error with your query, it has been logged, please try another "
 "query."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/data_corrections.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/data_corrections.js
-msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
@@ -4282,76 +4286,6 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/bootstrap3/report_config_models.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/report_config_models.js
 msgid "Start date cannot be after end date."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Please check your Internet connection!"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Report Not Found."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid ""
-"Request timed out when rendering this report. This might be an issue with "
-"our servers or with your Internet connection. We encourage you to report an "
-"issue to CommCare HQ Support so we can look into any possible issues."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid ""
-"Problem Rendering Report. Our error monitoring tools have noticed this and "
-"we are working quickly to resolve this issue as soon as possible. We "
-"encourage you to contact CommCare HQ Support if this issue persists for more "
-"than a few minutes. We appreciate any additional information you can give us "
-"about this problem so we can fix it immediately."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Bad Gateway. Please contact CommCare HQ Support."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid ""
-"CommCare HQ is experiencing server difficulties. We're working quickly to "
-"resolve it. Thank you for your patience. We are extremely sorry."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Gateway Timeout. Please contact CommCare HQ Support."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Your search term was too long. Please provide a shorter search filter"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Loading Stopped"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "We were unsuccessful loading the report:"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/scheduled_reports_list.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/scheduled_reports_list.js
-msgid "My Scheduled Reports"
-msgstr "Meus Relatórios Agendados"
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/scheduled_reports_list.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/scheduled_reports_list.js
-msgid "Other Scheduled Reports"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
@@ -4422,6 +4356,14 @@ msgstr ""
 msgid "That do not have phone numbers"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js
+msgid "My Scheduled Reports"
+msgstr "Meus Relatórios Agendados"
+
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js
+msgid "Other Scheduled Reports"
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/tableau.js
 msgid ""
 "An error occured with the tableau server request, please ensure the server "
@@ -4444,11 +4386,6 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js
 msgid "Select <%= title %>..."
-msgstr ""
-
-#: corehq/apps/reports_core/static/reports_core/js/bootstrap3/base_template_new.js
-#: corehq/apps/reports_core/static/reports_core/js/bootstrap5/base_template_new.js
-msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/bootstrap3/maps.js
@@ -4493,11 +4430,11 @@ msgstr ""
 msgid "(filtered from _MAX_ total contacts)"
 msgstr ""
 
-#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js
+#: corehq/apps/smsbillables/static/smsbillables/js/rate_calc.js
 msgid "There was an error fetching the SMS rate."
 msgstr ""
 
-#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js
+#: corehq/apps/smsbillables/static/smsbillables/js/rate_calc.js
 msgid "Please Select a Country Code"
 msgstr ""
 
@@ -4589,6 +4526,10 @@ msgid ""
 "the dropdown in the top left."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/base.js
+msgid "Showing the current page of data. Switch pages to see more data."
+msgstr ""
+
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 #: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid "Choose the property you would like to add as a filter to this report."
@@ -4654,6 +4595,16 @@ msgstr ""
 #: corehq/apps/userreports/static/userreports/js/configure_report.js
 #: corehq/apps/userreports/static/userreports/js/edit_report_config.js
 msgid "Linked projects"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Projects to copy to"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Search projects"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js
@@ -4960,6 +4911,10 @@ msgid "Multi-Environment Release Management"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
+msgid "Linked Project Spaces"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to configure linked project spaces"
 msgstr ""
 
@@ -5164,43 +5119,43 @@ msgid ""
 "system. Restart this rule?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "hour(s)"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "minute(s)"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "last"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "last - 1"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "last - 2"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "every day"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "every week"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "every month"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "Send Broadcast"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "Schedule Broadcast"
 msgstr ""
 

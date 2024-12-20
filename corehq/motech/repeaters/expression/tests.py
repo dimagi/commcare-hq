@@ -1,13 +1,15 @@
 import dataclasses
+import doctest
 import json
 import uuid
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
+from requests import JSONDecodeError as RequestsJSONDecodeError
 
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.mock import CaseBlock, CaseFactory
+
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
@@ -18,10 +20,12 @@ from corehq.apps.userreports.models import UCRExpression
 from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.models.cases import FormSubmissionDetail
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.expression.repeaters import (
-    CaseExpressionRepeater,
+    MAX_REPEATER_CHAIN_LENGTH,
     ArcGISFormExpressionRepeater,
-    FormExpressionRepeater, MAX_REPEATER_CHAIN_LENGTH,
+    CaseExpressionRepeater,
+    FormExpressionRepeater,
 )
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.util.test_utils import flag_enabled, generate_cases
@@ -35,7 +39,10 @@ class MockResponse:
     reason: str = "success"
 
     def json(self):
-        return json.loads(self.text)
+        try:
+            return json.loads(self.text)
+        except json.JSONDecodeError as e:
+            raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
 
 
 class BaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
@@ -157,6 +164,13 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
             "a-constant": "foo",
         }))
 
+    def test_payload_empty_expression(self):
+        self.repeater.configured_expression = None
+        self.repeater.save()
+        self.factory.create_case(case_type='forward-me')
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.assertIsNone(repeat_record.get_payload())
+
     @flag_enabled("UCR_EXPRESSION_REGISTRY")
     def test_custom_url(self):
 
@@ -203,13 +217,15 @@ class CaseExpressionRepeaterTest(BaseExpressionRepeaterTest):
             "operator": "eq",
             "property_value": 201,
         }
-        self.repeater._perform_case_update = Mock()
+        self.repeater._perform_case_update = Mock(return_value="fake_form_id")
         response = MockResponse(200)
-        self.assertFalse(self.repeater._process_response_as_case_update(response, repeat_record))
+        message = self.repeater._process_response_as_case_update(response, repeat_record)
+        self.assertEqual(message, "Response did not match filter")
         self.repeater._perform_case_update.assert_not_called()
 
         response = MockResponse(201)
-        self.assertTrue(self.repeater._process_response_as_case_update(response, repeat_record))
+        message = self.repeater._process_response_as_case_update(response, repeat_record)
+        self.assertEqual(message, "Response generated a form: fake_form_id")
         self.repeater._perform_case_update.assert_called()
 
     def test_process_response(self):
@@ -305,8 +321,6 @@ class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
         </data>
         """
 
-    case_id = uuid.uuid4().hex
-
     def _create_repeater(self):
         self.repeater = FormExpressionRepeater(
             domain=self.domain,
@@ -341,10 +355,9 @@ class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
         )
         self.repeater.save()
 
-    @property
-    def expected_payload(self):
+    def expected_payload(self, case_id):
         return json.dumps({
-            'case_id': self.case_id,
+            'case_id': case_id,
             'properties': {
                 'meta_gps_point': '1.1 2.2 3.3 4.4'
             }
@@ -359,14 +372,99 @@ class FormExpressionRepeaterTest(BaseExpressionRepeaterTest):
 
     def test_payload(self):
         instance_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
         xform_xml = self.xform_xml_template.format(
             self.xmlns,
             instance_id,
-            self._create_case_block(self.case_id),
+            self._create_case_block(case_id),
         )
         submit_form_locally(xform_xml, self.domain)
         repeat_record = self.repeat_records(self.domain).all()[0]
-        self.assertEqual(repeat_record.get_payload(), self.expected_payload)
+        self.assertEqual(repeat_record.get_payload(), self.expected_payload(case_id))
+
+    def test_process_response(self):
+        instance_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            instance_id,
+            self._create_case_block(case_id),
+        )
+        submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.repeater.case_action_filter_expression = {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "jsonpath",
+                "jsonpath": "response.status_code",
+            },
+            "operator": "eq",
+            "property_value": 200,
+        }
+        self.repeater.case_action_expression = {
+            'type': 'dict',
+            'properties': {
+                'create': False,
+                'case_id': {
+                    'type': 'jsonpath',
+                    'jsonpath': 'payload.doc.form.case.@case_id',
+                },
+                'properties': {
+                    'type': 'dict',
+                    'properties': {
+                        'type': 'dict',
+                        'prop_from_response': {
+                            'type': 'jsonpath',
+                            'jsonpath': 'response.body.aValue',
+                        }
+                    }
+                }
+            }
+        }
+        response = MockResponse(200, '{"aValue": "aResponseValue"}')
+        self.repeater.handle_response(response, repeat_record)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        self.assertEqual(case.get_case_property('prop_from_response'), 'aResponseValue')
+
+    @flag_enabled("UCR_EXPRESSION_REGISTRY")
+    def test_custom_url(self):
+        self.repeater.url_template = "/?type={case_type}"
+
+        # Using a related doc expression here to test that the expression is evaluated
+        # with the evaluation context (it fails without)
+        UCRExpression.objects.create(
+            name='case_type',
+            domain=self.domain,
+            expression_type="named_expression",
+            definition={
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "type": "jsonpath",
+                    "jsonpath": "form.case.@case_id"
+                },
+                "value_expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                }
+            }
+        )
+
+        case_id = uuid.uuid4().hex
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            uuid.uuid4().hex,
+            self._create_case_block(case_id),
+        )
+        submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+
+        expected_url = self.connection.url + "/?type=person"
+
+        self.assertEqual(
+            self.repeater.get_url(repeat_record),
+            expected_url
+        )
 
 
 class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
@@ -446,8 +544,7 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
         )
         self.repeater.save()
 
-    @property
-    def expected_payload(self):
+    def expected_payload(self, case_id):
         return {
             'features': json.dumps([{
                 'attributes': {
@@ -464,3 +561,128 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
             'f': 'json',
             'token': ''
         }
+
+    def test_send_request_error_handling(self):
+        case_id = uuid.uuid4().hex
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            uuid.uuid4().hex,
+            self._create_case_block(case_id),
+        )
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=MockResponse(429, 'Too many requests'),
+        ):
+            # The repeat record is first sent when the payload is registered
+            submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+        self.assertEqual(repeat_record.state, State.Fail)
+
+        arcgis_error_response = MockResponse(200, json.dumps({
+            "error": {
+                "code": 403,
+                "details": [
+                    "You do not have permissions to access this resource or "
+                    "perform this operation."
+                ],
+                "message": "You do not have permissions to access this "
+                           "resource or perform this operation.",
+                "messageCode": "GWM_0003",
+            }
+        }))
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=arcgis_error_response,
+        ):
+            self.repeater.fire_for_record(repeat_record)
+
+        self.assertEqual(repeat_record.state, State.InvalidPayload)
+
+    def test_error_response_with_message_code(self):
+        error_json = {
+            "code": 403,
+            "details": [
+                "You do not have permissions to access this resource or "
+                "perform this operation."
+            ],
+            "message": "You do not have permissions to access this resource "
+                       "or perform this operation.",
+            "messageCode": "GWM_0003",
+        }
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(
+            resp.reason,
+            "You do not have permissions to access this resource or perform "
+            "this operation. (GWM_0003)"
+        )
+        self.assertEqual(
+            resp.text,
+            "You do not have permissions to access this resource or perform "
+            "this operation."
+        )
+
+    def test_error_response_without_message_code(self):
+        error_json = {
+            "code": 503,
+            "details": [],
+            "message": "An error occurred."
+        }
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 503)
+        self.assertEqual(resp.reason, "An error occurred.")
+        self.assertEqual(resp.text, "")
+
+    def test_error_response_with_empty_error(self):
+        error_json = {}
+        resp = ArcGISFormExpressionRepeater._error_response(error_json)
+        self.assertEqual(resp.status_code, 500)
+        self.assertEqual(resp.reason, "[No error message given by ArcGIS]")
+        self.assertEqual(resp.text, "")
+
+    @flag_enabled("UCR_EXPRESSION_REGISTRY")
+    @flag_enabled("ARCGIS_INTEGRATION")
+    def test_custom_url(self):
+        self.repeater.url_template = "/{variable1}/a_thing/delete?case_id={case_id}&{missing_variable}='foo'"
+
+        UCRExpression.objects.create(
+            name='variable1',
+            domain=self.domain,
+            expression_type="named_expression",
+            definition={
+                "type": "jsonpath",
+                "jsonpath": "form.person_name"
+            },
+        )
+        UCRExpression.objects.create(
+            name='case_id',
+            domain=self.domain,
+            expression_type="named_expression",
+            definition={
+                "type": "jsonpath",
+                "jsonpath": "form.case.@case_id"
+            },
+        )
+
+        case_id = uuid.uuid4().hex
+        xform_xml = self.xform_xml_template.format(
+            self.xmlns,
+            uuid.uuid4().hex,
+            self._create_case_block(case_id),
+        )
+        submit_form_locally(xform_xml, self.domain)
+        repeat_record = self.repeat_records(self.domain).all()[0]
+
+        expected_url = self.connection.url + f"/Timmy/a_thing/delete?case_id={case_id}&='foo'"
+
+        self.assertEqual(
+            self.repeater.get_url(repeat_record),
+            expected_url
+        )
+
+
+def test_doctests():
+    import corehq.motech.repeaters.expression.repeaters as module
+
+    results = doctest.testmod(module)
+    assert results.failed == 0

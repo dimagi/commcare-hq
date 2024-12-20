@@ -5,11 +5,11 @@
         <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.name"/>
       </text>
     </command>
-    <instance id="reports" src="jr://fixture/commcare:reports"/>
+    <instance id="commcare-reports:ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i" src="jr://fixture/commcare-reports:ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i"/>
     <session>
       <datum
         id="report_id_ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i"
-        nodeset="instance('reports')/reports/report[@id='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i']"
+        nodeset="instance('commcare-reports:ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i')/rows"
         value="./@id"
         detail-select="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.select"
         detail-confirm="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary"

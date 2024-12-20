@@ -5,7 +5,7 @@ import $ from 'jquery';
 import _ from 'underscore';
 import initialPageData from 'hqwebapp/js/initial_page_data';
 
-import 'hqwebapp/js/bootstrap5/components.ko';  // for knockout pagination widget
+import 'hqwebapp/js/components/pagination';
 
 // The rest of the code below is otherwise the same as the core content of
 // prototype/js/knockout_pagination

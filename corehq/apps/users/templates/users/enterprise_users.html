@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'users/js/enterprise_users' %}
+{% js_entry_b3 'users/js/enterprise_users' %}
 
 {% block page_content %}
   {% registerurl "paginate_enterprise_users" domain %}

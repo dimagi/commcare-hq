@@ -97,6 +97,8 @@
     <span data-bind="visible: buildErrorCode() !== 403, text: errorMessage">
     </span>
   </div>
+  <div class="alert alert-danger" data-bind="html: releaseErrorMessage, visible: releaseErrorMessage">
+  </div>
 
   <h4 id="loading" class="hide"
       data-bind="visible: showLoadingSpinner(), css: {hide: false}">

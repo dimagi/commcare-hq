@@ -103,14 +103,17 @@ class TestUpdateCustomDataFields(BaseLinkedDomainTest):
 
 class TestUpdateFields(TestCase):
     def test_can_update_user_fields(self):
-        self._set_fields([Field(slug='a', label='label1', upstream_id='1')], UserFieldsView.field_type)
+        self._set_fields([
+            Field(slug='a', label='label1', upstream_id='1', is_required=True, required_for=['mobile_user'])
+        ], UserFieldsView.field_type)
 
-        updated_field = Field(id='1', slug='a', label='label2')
+        updated_field = Field(id='1', slug='a', label='label2', is_required=False, required_for=['web_user'])
         update_definition = self._generate_update_definition_for_fields([updated_field], UserFieldsView.field_type)
         update_custom_data_models_impl(update_definition, self.domain)
 
         fields = self._get_fields(UserFieldsView.field_type)
-        expected_field = Field(slug='a', label='label2', upstream_id='1')
+        expected_field = Field(slug='a', label='label2', upstream_id='1',
+                               is_required=False, required_for=['web_user'])
         self.assertEqual(len(fields), 1)
         self.assertEqual(fields[0].to_dict(), expected_field.to_dict())
 
@@ -394,6 +397,7 @@ def field_to_json(field):
         'id': field.id,
         'slug': field.slug,
         'is_required': field.is_required,
+        'required_for': field.required_for,
         'label': field.label,
         'choices': field.choices,
         'regex': field.regex,

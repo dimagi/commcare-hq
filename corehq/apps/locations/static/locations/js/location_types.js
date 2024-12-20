@@ -6,6 +6,8 @@ hqDefine('locations/js/location_types', [
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'select2/dist/js/select2.full.min',
+    'hqwebapp/js/bootstrap5/hq.helpers',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -398,12 +400,12 @@ hqDefine('locations/js/location_types', [
         }
 
         $("form#settings").on("change input", function () {
-            $(this).find(":submit").addClass("btn-primary").enable();
+            $(this).find(":submit").addClass("btn-primary").enableButton();
             window.onbeforeunload = warnBeforeUnload;
         });
 
         $("form#settings button").on("click", function () {
-            $("form#settings").find(":submit").enable();
+            $("form#settings").find(":submit").enableButton();
             window.onbeforeunload = warnBeforeUnload;
         });
 

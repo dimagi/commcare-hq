@@ -4,6 +4,7 @@ hqDefine('hqadmin/js/system_info', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/alert_user',
+    'commcarehq',
 ], function (
     $,
     ko,

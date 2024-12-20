@@ -84,6 +84,7 @@ class SsoBackend(ModelBackend):
         if not is_new_user and not web_user.is_active:
             web_user.is_active = True
             web_user.save()
+            user.refresh_from_db()
             request.sso_new_user_messages['success'].append(
                 _("User account for {} has been re-activated.").format(web_user.username)
             )

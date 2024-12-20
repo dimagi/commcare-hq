@@ -8,7 +8,7 @@ from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
-from corehq.apps.users.views.mobile import UserFieldsView
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -65,6 +65,7 @@ def get_custom_data_models(domain, limit_types=None):
                     'id': field.id,
                     'slug': field.slug,
                     'is_required': field.is_required,
+                    'required_for': field.required_for,
                     'label': field.label,
                     'choices': field.choices,
                     'regex': field.regex,

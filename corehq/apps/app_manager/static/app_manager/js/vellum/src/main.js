@@ -17,7 +17,6 @@ requirejs.config({
             "ckeditor-jquery",
             "css/css!../node_modules/codemirror/lib/codemirror",
             "css/css!../node_modules/jstree/dist/themes/default/style",
-            "css/css!yui-combo",
             "css/css!../node_modules/at.js/dist/css/jquery.atwho"
         ],
         "main-components": [
@@ -34,7 +33,6 @@ requirejs.config({
             "vellum/saveToCase",
             "vellum/uploader",
             "vellum/window",
-            "vellum/polyfills",
             "vellum/copy-paste",
             "vellum/commander",
             "vellum/commcareConnect"
@@ -68,7 +66,6 @@ define([
     'vellum/saveToCase',
     'vellum/uploader',
     'vellum/window',
-    'vellum/polyfills',
     'vellum/copy-paste',
     'vellum/commander',
     'vellum/commcareConnect'

@@ -1,9 +1,10 @@
-hqDefine("geospatial/js/gps_capture",[
+hqDefine("geospatial/js/gps_capture", [
     "jquery",
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
-    "hqwebapp/js/bootstrap3/components.ko", // for pagination
+    "hqwebapp/js/components/pagination",
+    "hqwebapp/js/components/search_box",
     'select2/dist/js/select2.full.min',
 ], function (
     $,

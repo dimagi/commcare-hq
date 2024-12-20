@@ -6,8 +6,14 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.global_request import get_request
 
 
-def send_subscription_change_alert(domain, new_subscription, old_subscription, internal_change,
-                                   change_type='Change'):
+class SubjectTemplate:
+    CHANGE = "{env}Subscription Change Alert: {domain} from {old_plan} to {new_plan}"
+    RENEW = "{env}Subscription Renewal Alert: {domain} from {old_plan} to {new_plan}"
+    SELF_START = "{env}New Self-Start Subscription Alert: {domain} to {new_plan}"
+
+
+def send_subscription_change_alert(domain, new_subscription, old_subscription, internal_change=False,
+                                   subject_template=SubjectTemplate.CHANGE):
 
     billing_account = (
         new_subscription.account if new_subscription else
@@ -27,10 +33,9 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
         'username': request.couch_user.username if getattr(request, 'couch_user', None) else None,
         'referer': request.META.get('HTTP_REFERER') if request else None,
     }
-    email_subject = "{env}Subscription {change_type} Alert: {domain} from {old_plan} to {new_plan}".format(
+    email_subject = subject_template.format(
         env=("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
              if settings.SERVER_ENVIRONMENT == "staging" else ""),
-        change_type=change_type,
         domain=email_context['domain'],
         old_plan=email_context['old_plan'],
         new_plan=email_context['new_plan'],
@@ -48,4 +53,10 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
 
 
 def send_subscription_renewal_alert(domain, new_subscription, old_subscription):
-    send_subscription_change_alert(domain, new_subscription, old_subscription, False, change_type='Renewal')
+    send_subscription_change_alert(domain, new_subscription, old_subscription,
+                                   subject_template=SubjectTemplate.RENEW)
+
+
+def send_self_start_subscription_alert(domain, new_subscription, old_subscription):
+    send_subscription_change_alert(domain, new_subscription, old_subscription,
+                                   subject_template=SubjectTemplate.SELF_START)

@@ -13,6 +13,8 @@ import openpyxl
 import polib
 from memoized import memoized
 
+from couchexport.models import Format
+
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_current_app, get_version_build_id
 from corehq.apps.app_manager.exceptions import BuildNotFoundException
@@ -150,14 +152,14 @@ class ConvertTranslations(BaseTranslationsView):
         uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
         worksheet = openpyxl.load_workbook(uploaded_file).worksheets[0]
         content = self._generate_po_content(worksheet)
-        response = HttpResponse(content, content_type="text/html; charset=utf-8")
+        response = HttpResponse(content, content_type="text/plain; charset=utf-8")
         response['Content-Disposition'] = safe_filename_header(worksheet.title, 'po')
         return response
 
     def _excel_file_response(self):
         wb = self._generate_excel_file(self.convert_translation_form.cleaned_data.get('upload_file'))
         content = get_file_content_from_workbook(wb)
-        response = HttpResponse(content, content_type="text/html; charset=utf-8")
+        response = HttpResponse(content, content_type=Format.from_format('xlsx').mimetype)
         response['Content-Disposition'] = safe_filename_header(self._uploaded_file_name.split('.po')[0], 'xlsx')
         return response
 
@@ -181,7 +183,7 @@ class ConvertTranslations(BaseTranslationsView):
                 else:
                     assert False, "unexpected filename: {}".format(filename)
         mem_file.seek(0)
-        response = HttpResponse(mem_file, content_type="text/html")
+        response = HttpResponse(mem_file, content_type='application/zip')
         zip_filename = 'Converted-' + uploaded_zipfile.filename.split('.zip')[0]
         response['Content-Disposition'] = safe_filename_header(zip_filename, "zip")
         return response
@@ -290,10 +292,10 @@ class PullResource(BaseTranslationsView):
         file_response = self._generate_response_file(request.domain, project_slug, resource_slug)
         if isinstance(file_response, openpyxl.Workbook):
             content = get_file_content_from_workbook(file_response)
-            response = HttpResponse(content, content_type="text/html; charset=utf-8")
+            response = HttpResponse(content, content_type=Format.from_format('xlsx').mimetype)
             response['Content-Disposition'] = safe_filename_header(resource_slug, "xlsx")
         else:
-            response = HttpResponse(file_response, content_type="text/html; charset=utf-8")
+            response = HttpResponse(file_response, content_type='application/zip')
             response['Content-Disposition'] = safe_filename_header(project_slug, "zip")
         return response
 

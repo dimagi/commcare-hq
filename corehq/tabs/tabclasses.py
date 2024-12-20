@@ -45,8 +45,8 @@ from corehq.apps.events.views import (
     AttendeesListView,
     EventsView,
 )
+from corehq.apps.case_search.views import CSQLFixtureExpressionView
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
-
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
     DeviceLogSoftAssertReport,
@@ -462,7 +462,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
-        '/a/{domain}/geospatial/',
+        '/a/{domain}/microplanning/',
     )
 
     @property
@@ -562,7 +562,7 @@ class ProjectDataTab(UITab):
     @memoized
     def can_only_see_deid_exports(self):
         from corehq.apps.export.views.utils import user_can_view_deid_exports
-        return (not self.can_view_form_exports
+        return (not self.can_view_form_or_case_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
     @property
@@ -583,7 +583,7 @@ class ProjectDataTab(UITab):
 
     @property
     def _can_view_geospatial(self):
-        return toggles.GEOSPATIAL.enabled(self.domain)
+        return toggles.MICROPLANNING.enabled(self.domain)
 
     @property
     def _is_viewable(self):
@@ -625,6 +625,12 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
+        if (toggles.MODULE_BADGES.enabled(self.domain) and self.couch_user.can_edit_data()):
+            items.append([_('CSQL Fixtures'), [{
+                'title': _(CSQLFixtureExpressionView.page_title),
+                'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
+            }]])
+
         if self._can_view_data_dictionary:
             items.append([DataDictionaryView.page_title, [{
                 'title': DataDictionaryView.page_title,
@@ -663,11 +669,16 @@ class ProjectDataTab(UITab):
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
                 DeIdFormExportListView,
+                DeIdCaseExportListView,
                 ODataFeedListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
                 'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
+            })
+            export_data_views.append({
+                'title': _(DeIdCaseExportListView.page_title),
+                'url': reverse(DeIdCaseExportListView.urlname, args=(self.domain,)),
             })
             export_data_views.extend([
                 {
@@ -999,7 +1010,7 @@ class ProjectDataTab(UITab):
                 'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
             },
             {
-                'title': _("Configure Geospatial Settings"),
+                'title': _("Configure Microplanning Settings"),
                 'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
             }
         ]
@@ -1801,16 +1812,24 @@ class EnterpriseSettingsTab(UITab):
         enterprise_user_management_views = []
 
         if has_privilege(self._request, privileges.PROJECT_ACCESS):
-            enterprise_views.extend([
+            enterprise_views.append(
                 {
-                    'title': _('Enterprise Dashboard'),
-                    'url': reverse('enterprise_dashboard', args=[self.domain]),
-                },
+                    'title': _('Platform Overview'),
+                    'url': reverse('platform_overview', args=[self.domain]),
+                }
+            )
+            enterprise_views.append(
+                {
+                    'title': _('Security Center'),
+                    'url': reverse('security_center', args=[self.domain]),
+                }
+            )
+            enterprise_views.append(
                 {
                     'title': _('Enterprise Settings'),
                     'url': reverse('enterprise_settings', args=[self.domain]),
-                },
-            ])
+                }
+            )
         enterprise_views.append({
             'title': _('Billing Statements'),
             'url': reverse('enterprise_billing_statements',
@@ -1838,7 +1857,7 @@ class EnterpriseSettingsTab(UITab):
         if self.couch_user.is_superuser:
             from corehq.apps.enterprise.models import EnterprisePermissions
             if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
+                    or EnterprisePermissions.is_source_domain(self.domain):
                 enterprise_views.append({
                     'title': _("Enterprise Permissions"),
                     'url': reverse("enterprise_permissions", args=[self.domain]),

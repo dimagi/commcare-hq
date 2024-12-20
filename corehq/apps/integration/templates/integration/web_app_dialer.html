@@ -1,9 +1,8 @@
 {% extends "integration/base_cloudcare_template.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load static %}
 {% load compress %}
-{% requirejs_main "integration/js/dialer/domain_dialer_main" %}
+{% js_entry "integration/js/dialer/domain_dialer_main" %}
 
 {% block stylesheets %}
   {{ block.super }}

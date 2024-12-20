@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main 'data_interfaces/js/case_dedupe_main' %}
+{% js_entry_b3 'data_interfaces/js/case_dedupe_main' %}
 
 {% block page_content %}
   {% initial_page_data 'all_case_properties' all_case_properties %}

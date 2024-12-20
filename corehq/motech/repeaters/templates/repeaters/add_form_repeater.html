@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main_b5 'repeaters/js/add_form_repeater' %}
+{% js_entry 'repeaters/js/add_form_repeater' %}
 
 {% block page_content %}
     {% initial_page_data "repeater_type" repeater_type %}

@@ -1,0 +1,4 @@
+{# hx-swap-oob inserts the result of this element in the #done-items <ul> instead of the #todo-list <ul> #}
+<ul hx-swap-oob="afterbegin:#done-items">
+  {% include 'styleguide/htmx_todo/item_done.html' %}
+</ul>

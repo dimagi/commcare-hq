@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main_b5 "dhis2/js/dataset_map" %}
+{% js_entry "dhis2/js/dataset_map" %}
 
 {% block pagination_header %}
   {% registerurl "send_dataset_now" domain "---" %}

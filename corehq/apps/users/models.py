@@ -88,6 +88,7 @@ from corehq.apps.users.util import (
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
+from corehq.motech.utils import b64_aes_cbc_encrypt, b64_aes_cbc_decrypt
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
@@ -481,9 +482,9 @@ class IsMemberOfMixin(DocumentSchema):
 
         if allow_enterprise:
             from corehq.apps.enterprise.models import EnterprisePermissions
-            config = EnterprisePermissions.get_by_domain(domain)
-            if config.is_enabled and domain in config.domains:
-                return self.is_member_of(config.source_domain, allow_enterprise=False)
+            source_domain = EnterprisePermissions.get_source_domain(domain)
+            if source_domain:
+                return self.is_member_of(source_domain, allow_enterprise=False)
 
         return False
 
@@ -520,9 +521,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 if domain in self.domains:
                     raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
                 from corehq.apps.enterprise.models import EnterprisePermissions
-                config = EnterprisePermissions.get_by_domain(domain)
-                if allow_enterprise and config.is_enabled and domain in config.domains:
-                    return self.get_domain_membership(config.source_domain, allow_enterprise=False)
+                source_domain = EnterprisePermissions.get_source_domain(domain)
+                if allow_enterprise and source_domain:
+                    return self.get_domain_membership(source_domain, allow_enterprise=False)
         except self.Inconsistent as e:
             logging.warning(e)
             self.domains = [d.domain for d in self.domain_memberships]
@@ -552,7 +553,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
     def add_as_web_user(self, domain, role, primary_location_id=None,
                         assigned_location_ids=None, program_id=None, profile=None,
-                        tableau_role=None, tableau_group_ids=None):
+                        tableau_role=None, tableau_group_ids=None, custom_user_data=None):
         if assigned_location_ids is None:
             assigned_location_ids = []
         domain_obj = Domain.get_by_name(domain)
@@ -564,9 +565,11 @@ class _AuthorizableMixin(IsMemberOfMixin):
             if primary_location_id:
                 self.set_location(domain, primary_location_id, commit=False)
             self.reset_locations(domain, assigned_location_ids, commit=False)
+        user_data = self.get_user_data(domain_obj.name)
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
-            user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
+        if custom_user_data:
+            user_data.update(custom_user_data)
         if TABLEAU_USER_SYNCING.enabled(domain) and (tableau_role or tableau_group_ids):
             if tableau_group_ids is None:
                 tableau_group_ids = []
@@ -1159,11 +1162,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             session_data[COMMCARE_USER_TYPE_KEY] = COMMCARE_USER_TYPE_DEMO
 
         session_data.update({
+            f'{SYSTEM_PREFIX}_project': domain,
             f'{SYSTEM_PREFIX}_first_name': self.first_name,
             f'{SYSTEM_PREFIX}_last_name': self.last_name,
             f'{SYSTEM_PREFIX}_phone_number': self.phone_number,
             f'{SYSTEM_PREFIX}_user_type': self._get_user_type(),
         })
+
+        if location_id := self.get_location_id(domain):
+            session_data['commcare_location_id'] = location_id
+            session_data['commcare_location_ids'] = user_location_data(self.get_location_ids(domain))
+            session_data['commcare_primary_case_sharing_id'] = location_id
+
         return session_data
 
     def get_owner_ids(self, domain):
@@ -2060,7 +2070,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         touched = []
         faulty_groups = []
         for to_add in desired - current:
-            group = Group.get(to_add)
+            try:
+                group = Group.get(to_add)
+            except ResourceNotFound:
+                faulty_groups.append(to_add)
+                continue
             if group.domain != self.domain:
                 faulty_groups.append(to_add)
                 continue
@@ -2327,6 +2341,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @memoized
     def memoized_usercase(self):
         return self.get_usercase()
+
+    def get_usercase_by_domain(self, domain):
+        if self.domain == domain:
+            return self.memoized_usercase
+        return None
 
     def get_usercase(self):
         return CommCareCase.objects.get_case_by_external_id(self.domain, self._id, USERCASE_TYPE)
@@ -2635,14 +2654,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_usercase_by_domain(self, domain):
         return CommCareCase.objects.get_case_by_external_id(domain, self._id, USERCASE_TYPE)
 
-    def get_user_session_data(self, domain):
-        # TODO can we do this for both types of users and remove the fields from user data?
-        session_data = super(WebUser, self).get_user_session_data(domain)
-        session_data['commcare_location_id'] = self.get_location_id(domain)
-        session_data['commcare_location_ids'] = user_location_data(self.get_location_ids(domain))
-        session_data['commcare_primary_case_sharing_id'] = self.get_location_id(domain)
-        return session_data
-
 
 class FakeUser(WebUser):
     """
@@ -2736,9 +2747,8 @@ class Invitation(models.Model):
     domain = models.CharField(max_length=255)
     role = models.CharField(max_length=100, null=True, blank=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True, blank=True)   # couch id of a Program
-    supply_point = models.CharField(max_length=126, null=True, blank=True)  # couch id of a Location
     primary_location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
-                                 to_field='location_id', null=True, blank=True)  # to replace supply_point
+                                 to_field='location_id', null=True, blank=True)
     assigned_locations = models.ManyToManyField("locations.SQLLocation", symmetrical=False,
                                                 related_name='invitations')
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
@@ -2789,7 +2799,7 @@ class Invitation(models.Model):
         with override_language(lang):
             if domain_request is None:
                 text_content = render_to_string("domain/email/domain_invite.txt", params)
-                html_content = render_to_string("domain/email/domain_invite.html", params)
+                html_content = render_to_string("domain/email/bootstrap3/domain_invite.html", params)
                 subject = _('Invitation from %s to join CommCareHQ') % inviter.formatted_name
             else:
                 text_content = render_to_string("domain/email/domain_request_approval.txt", params)
@@ -2853,6 +2863,7 @@ class Invitation(models.Model):
             assigned_location_ids=list(self.assigned_locations.all().values_list('location_id', flat=True)),
             program_id=self.program,
             profile=self.profile,
+            custom_user_data=self.custom_user_data,
             tableau_role=self.tableau_role,
             tableau_group_ids=self.tableau_group_ids
         )
@@ -3078,6 +3089,7 @@ class ApiKeyManager(models.Manager):
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
     key = models.CharField(max_length=128, blank=True, default='', db_index=True)
+    encrypted_key = models.CharField(max_length=128, blank=True, default='', db_index=True)
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
@@ -3096,17 +3108,36 @@ class HQApiKey(models.Model):
         unique_together = ('user', 'name')
 
     def save(self, *args, **kwargs):
-        if not self.key:
-            self.key = self.generate_key()
+        if not self.plaintext_key:
+            self.plaintext_key = self._generate_key()
             if 'update_fields' in kwargs:
                 kwargs['update_fields'].append('key')
+                kwargs['update_fields'].append('encrypted_key')
 
         return super().save(*args, **kwargs)
 
-    def generate_key(self):
+    def _generate_key(self):
         # From tastypie
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
+
+    @property
+    def plaintext_key(self):
+        try:
+            decrypted_key = b64_aes_cbc_decrypt(self.encrypted_key)
+            if decrypted_key == self.key:
+                return decrypted_key
+            else:
+                logging.warning("Decrypted key does not match stored key for %s", self.name)
+                return self.key
+        except Exception as e:
+            logging.exception(f'Error getting decrypted key for {self.name}. {e}')
+            return self.key
+
+    @plaintext_key.setter
+    def plaintext_key(self, plaintext):
+        self.key = plaintext
+        self.encrypted_key = b64_aes_cbc_encrypt(plaintext)
 
     @property
     @memoized

@@ -4,6 +4,7 @@ hqDefine("app_manager/js/app_exchange", [
     "knockout",
     'analytix/js/kissmetrix',
     "hqwebapp/js/bootstrap3/widgets",  // hqwebapp-select2 for versions
+    "commcarehq",
 ], function (
     $,
     ko,

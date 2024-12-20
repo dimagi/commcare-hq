@@ -4,6 +4,7 @@ import commcare_translations
 
 from django.test import SimpleTestCase
 
+from corehq import privileges
 from corehq.apps.app_manager.models import (
     Application,
     DetailColumn,
@@ -12,9 +13,10 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
+@privilege_enabled(privileges.APP_DEPENDENCIES)
 @patch_get_xform_resource_overrides()
 class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')

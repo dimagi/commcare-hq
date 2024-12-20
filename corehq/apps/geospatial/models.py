@@ -98,20 +98,7 @@ class GeoConfig(models.Model):
         max_length=50
     )
     api_token = models.CharField(max_length=255, blank=True, null=True, db_column="api_token")
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self._clear_caches()
-
-    def delete(self, *args, **kwargs):
-        self._clear_caches()
-        return super().delete(*args, **kwargs)
-
-    def _clear_caches(self):
-        from .utils import get_geo_case_property, get_geo_user_property
-
-        get_geo_case_property.clear(self.domain)
-        get_geo_user_property.clear(self.domain)
+    flag_assigned_cases = models.BooleanField(default=False)
 
     @property
     def supports_travel_mode(self):

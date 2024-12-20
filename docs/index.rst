@@ -77,6 +77,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     ucr
     ucr/examples
     ucr/faq
+    ucr/mobile_ucr_v2_migration_guide
 
 .. toctree::
     :caption: Messaging

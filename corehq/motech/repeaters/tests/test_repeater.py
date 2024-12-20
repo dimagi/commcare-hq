@@ -130,11 +130,11 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
     def post_xml(cls, xml, domain_name):
         return submit_form_locally(xml, domain_name)
 
-    @classmethod
-    def repeat_records(cls, domain_name):
+    def repeat_records(self, domain=None):
+        domain = domain or self.domain
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
-        return RepeatRecord.objects.filter(domain=domain_name, next_check__lt=later)
+        return RepeatRecord.objects.filter(domain=domain, next_check__lt=later)
 
 
 class RepeaterTest(BaseRepeaterTest):
@@ -173,9 +173,6 @@ class RepeaterTest(BaseRepeaterTest):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super(RepeaterTest, self).tearDown()
-
-    def repeat_records(self):
-        return super(RepeaterTest, self).repeat_records(self.domain)
 
     # whatever value specified will be doubled since both case and form repeater are active
     def _create_additional_repeat_records(self, count):
@@ -240,10 +237,18 @@ class RepeaterTest(BaseRepeaterTest):
         )
         self.assertEqual(len(repeat_records), 2)
 
-    def test_repeater_payload_failed_cancels(self):
-        """
-        This tests records with bad payloads are cancelled
-        """
+    def test_bad_payload_invalid(self):
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=MockResponse(status_code=401, reason='Unauthorized')
+        ):
+            for repeat_record in self.repeat_records():
+                repeat_record.fire()
+
+        for repeat_record in self.repeat_records():
+            self.assertEqual(repeat_record.state, State.InvalidPayload)
+
+    def test_bad_request_fail(self):
         with patch(
             'corehq.motech.repeaters.models.simple_request',
             return_value=MockResponse(status_code=400, reason='Bad Request')
@@ -252,7 +257,7 @@ class RepeaterTest(BaseRepeaterTest):
                 repeat_record.fire()
 
         for repeat_record in self.repeat_records():
-            self.assertEqual(repeat_record.state, State.Cancelled)
+            self.assertEqual(repeat_record.state, State.Fail)
 
     def test_update_failure_next_check(self):
         now = datetime.utcnow()
@@ -834,7 +839,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             format_label = 'XML'
 
             def get_payload(self, repeat_record, payload_doc):
-                return self.payload
+                return {}
 
         with self.assertRaises(DuplicateFormatException):
             RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
@@ -845,7 +850,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             format_label = 'XML'
 
             def get_payload(self, repeat_record, payload_doc):
-                return self.payload
+                return {}
 
         with self.assertRaises(DuplicateFormatException):
             RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator, is_default=True)
@@ -946,7 +951,9 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'phone_numbers': [],
                 'email': '',
                 'eulas': '[]',
-                'resource_uri': '/a/user-repeater/api/v0.5/user/{}/'.format(user._id),
+                'resource_uri': '/a/user-repeater/api/user/v1/{}/'.format(user._id),
+                'locations': [],
+                'primary_location': None,
             }
         )
 

@@ -28,8 +28,7 @@ module.exports = function (grunt) {
      */
     var apps = [
         'app_manager',
-        'export/ko/bootstrap3',
-        'export/ko/bootstrap5',
+        'export/ko',
         'notifications/bootstrap3',
         'notifications/bootstrap5',
         'reports_core/choiceListUtils',
@@ -42,12 +41,8 @@ module.exports = function (grunt) {
         'case_importer',
     ];
 
-    var custom = [
-        'champ',
-    ];
-
     var extensions = _.split(process.env.JS_TEST_EXTENSIONS || '', ','),
-        testPaths = _.filter(_.concat(apps, custom, extensions), function (path) { return path !== ''; });
+        testPaths = _.filter(_.concat(apps, extensions), function (path) { return path !== ''; });
 
     var runTest = function (queuedTests, taskPromise, finishedTests, failures) {
         if (finishedTests === undefined) {
@@ -75,9 +70,9 @@ module.exports = function (grunt) {
                 reporter: reporter,
             };
 
-        // For running in docker/travis
+        // For running in docker
         if (process.env.PUPPETEER_SKIP_DOWNLOAD) {
-            runnerOptions.executablePath = 'google-chrome-unstable';
+            runnerOptions.executablePath = 'google-chrome-stable';
         }
 
         grunt.log.writeln("\n");

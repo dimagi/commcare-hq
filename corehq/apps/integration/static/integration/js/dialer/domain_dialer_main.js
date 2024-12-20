@@ -9,6 +9,7 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
    "detectrtc/DetectRTC",
    "integration/js/dialer/amazon-connect-min",
    "integration/js/dialer/connect-streams-min",
+   "commcarehq",
 ], function (
    initialPageData,
    dialer_utils

@@ -2,7 +2,8 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% requirejs_main_b5 'dashboard/js/dashboard' %}
+
+{% js_entry 'dashboard/js/dashboard' %}
 
 {% block stylesheets %}
   {% compress css %}
@@ -25,6 +26,8 @@
     </h1>
     {% if is_paused %}
       {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
+    {% elif should_show_pending_notice %}
+      {% include 'hqwebapp/partials/pending_plan_notice.html' %}
     {% endif %}
     <div id="dashboard-tiles">
       <div class="row" data-bind="foreach: tiles">

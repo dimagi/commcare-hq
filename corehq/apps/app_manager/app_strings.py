@@ -8,7 +8,8 @@ import langcodes
 from langcodes import langs_by_code
 from memoized import memoized
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
@@ -554,7 +555,7 @@ def _create_case_list_form_app_strings(
 
 def _create_dependencies_app_strings(app):
     dependencies = app.profile.get('features', {}).get('dependencies')
-    if toggles.APP_DEPENDENCIES.enabled(app.domain) and dependencies:
+    if domain_has_privilege(app.domain, privileges.APP_DEPENDENCIES) and dependencies:
         settings = get_commcare_settings_lookup()['features']['dependencies']
         app_id_to_name = {k: v for k, v in zip(
             settings["values"],

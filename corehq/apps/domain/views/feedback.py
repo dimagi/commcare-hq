@@ -1,7 +1,5 @@
-import json
-
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -37,6 +35,4 @@ def submit_feedback(request, domain):
         message,
         [settings.FEEDBACK_EMAIL],
     )
-    return HttpResponse(json.dumps({
-        'success': True,
-    }), content_type="application/json")
+    return JsonResponse({'success': True})

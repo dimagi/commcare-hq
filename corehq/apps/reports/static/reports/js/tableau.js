@@ -6,11 +6,8 @@ hqDefine("reports/js/tableau", function () {
     self.requestViz = function () {
         $.ajax({
             method: 'post',
-            url: initialPageData.reverse('tableau_visualization_ajax'),
+            url: initialPageData.reverse('get_tableau_server_ticket'),
             data: {
-                validate_hostname: initialPageData.get("validate_hostname"),
-                server_name: initialPageData.get("server_address"),
-                target_site: initialPageData.get("target_site"),
                 viz_id: initialPageData.get("viz_id"),
             },
             dataType: 'json',

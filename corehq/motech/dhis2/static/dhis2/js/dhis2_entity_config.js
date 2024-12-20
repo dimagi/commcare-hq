@@ -6,6 +6,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
     'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/base_ace',
     'dhis2/js/json_syntax_parse',
+    'commcarehq',
 ], function (
     $,
     _,

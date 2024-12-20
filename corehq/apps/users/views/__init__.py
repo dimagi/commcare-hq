@@ -10,7 +10,8 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
@@ -31,6 +32,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, ngettext, gettext_lazy, gettext_noop
 
@@ -130,6 +132,10 @@ from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
     get_workbook,
+)
+from corehq.apps.users.permissions import (
+    COMMCARE_ANALYTICS_SQL_LAB,
+    COMMCARE_ANALYTICS_DATASET_EDITOR,
 )
 
 from dimagi.utils.logging import notify_exception
@@ -440,6 +446,12 @@ class EditWebUserView(BaseEditUserView):
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
+            'can_access_all_locations': self.request.couch_user.has_permission(
+                self.domain, 'access_all_locations'
+            ),
+            'editable_user_can_access_all_locations': self.editable_user.has_permission(
+                self.domain, 'access_all_locations'
+            )
         }
 
         original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
@@ -777,21 +789,21 @@ class ListRolesView(BaseRoleAccessView):
             'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
             'commcare_analytics_roles': _commcare_analytics_roles_options(),
+            'has_restricted_application_access': (
+                get_application_access_for_domain(self.domain).restrict
+                and toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(self.domain)
+            ),
         }
 
 
 def _commcare_analytics_roles_options():
     return [
         {
-            'slug': 'gamma',
-            'name': 'Gamma'
-        },
-        {
-            'slug': 'sql_lab',
+            'slug': COMMCARE_ANALYTICS_SQL_LAB,
             'name': 'SQL Lab'
         },
         {
-            'slug': 'dataset_editor',
+            'slug': COMMCARE_ANALYTICS_DATASET_EDITOR,
             'name': 'Dataset Editor'
         }
     ]
@@ -1134,17 +1146,15 @@ class InviteWebUserView(BaseManageWebUserView):
         can_edit_tableau_config = (self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config')
                                 and toggles.TABLEAU_USER_SYNCING.enabled(self.domain))
         if self.request.method == 'POST':
-            current_users = [user.username for user in WebUser.by_domain(self.domain)]
-            pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
             return AdminInvitesUserForm(
                 self.request.POST,
-                excluded_emails=current_users + pending_invites,
                 role_choices=role_choices,
                 domain=self.domain,
                 is_add_user=is_add_user,
                 should_show_location=self.request.project.uses_locations,
                 can_edit_tableau_config=can_edit_tableau_config,
-                request=self.request
+                request=self.request,
+                custom_data=self.custom_data
             )
         return AdminInvitesUserForm(
             initial=initial,
@@ -1153,8 +1163,24 @@ class InviteWebUserView(BaseManageWebUserView):
             is_add_user=is_add_user,
             should_show_location=self.request.project.uses_locations,
             can_edit_tableau_config=can_edit_tableau_config,
-            request=self.request
+            request=self.request,
+            custom_data=self.custom_data
         )
+
+    @cached_property
+    def custom_data(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
+        post_dict = None
+        if self.request.method == 'POST':
+            post_dict = self.request.POST
+        custom_data = CustomDataEditor(
+            field_view=WebUserFieldsView,
+            domain=self.domain,
+            post_dict=post_dict,
+            ko_model="custom_fields",
+            request_user=self.request.couch_user
+        )
+        return custom_data
 
     @property
     @memoized
@@ -1165,9 +1191,13 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def page_context(self):
-        return {
+        ctx = {
             'registration_form': self.invite_web_user_form,
+            **self.custom_data.field_view.get_field_page_context(
+                self.domain, self.request.couch_user, self.custom_data, None
+            )
         }
+        return ctx
 
     def _assert_user_has_permission_to_access_locations(self, assigned_location_ids):
         if not set(assigned_location_ids).issubset(set(SQLLocation.objects.accessible_to_user(
@@ -1197,6 +1227,7 @@ class InviteWebUserView(BaseManageWebUserView):
                                          program_id=data.get("program", None),
                                          assigned_location_ids=data.get("assigned_locations", None),
                                          profile=profile,
+                                         custom_user_data=data.get("custom_user_data"),
                                          tableau_role=data.get("tableau_role", None),
                                          tableau_group_ids=data.get("tableau_group_ids", None)
                                          )
@@ -1246,7 +1277,12 @@ class BaseUploadUser(BaseUserSettingsView):
         """View's dispatch method automatically calls this"""
         try:
             workbook = get_workbook(request.FILES.get("bulk_upload_file"))
-            user_specs, group_specs = self.process_workbook(workbook, self.domain, self.is_web_upload)
+            user_specs, group_specs = self.process_workbook(
+                workbook,
+                self.domain,
+                self.is_web_upload,
+                request.couch_user
+            )
             task_ref = self.upload_users(
                 request, user_specs, group_specs, self.domain, self.is_web_upload)
             return self._get_success_response(request, task_ref)
@@ -1260,7 +1296,7 @@ class BaseUploadUser(BaseUserSettingsView):
             return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
     @staticmethod
-    def process_workbook(workbook, domain, is_web_upload):
+    def process_workbook(workbook, domain, is_web_upload, upload_user):
         from corehq.apps.user_importer.importer import check_headers
 
         try:
@@ -1271,7 +1307,7 @@ class BaseUploadUser(BaseUserSettingsView):
             except WorksheetNotFound as e:
                 raise WorksheetNotFound("Workbook has no worksheets") from e
 
-        check_headers(user_specs, domain, is_web_upload=is_web_upload)
+        check_headers(user_specs, domain, upload_couch_user=upload_user, is_web_upload=is_web_upload)
 
         try:
             group_specs = workbook.get_worksheet(title="groups")
@@ -1546,7 +1582,7 @@ def change_password(request, domain, login_id):
     else:
         form = SetUserPasswordForm(request.project, login_id, user=django_user)
     json_dump['formHTML'] = render_crispy_form(form)
-    return HttpResponse(json.dumps(json_dump))
+    return JsonResponse(json_dump)
 
 
 @httpdigest
