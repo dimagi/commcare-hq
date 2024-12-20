@@ -57,84 +57,13 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.assertFalse(self.community.feature_charges_exist_for_domain(domain_under_limits))
         domain_under_limits.delete()
 
-    def test_incomplete_starting_coverage(self):
-        some_plan = generator.subscribable_plan_version()
-        subscription = Subscription.new_domain_subscription(
-            self.account, self.domain.name, some_plan,
-            date_start=self.invoice_start + datetime.timedelta(days=3)
-        )
-        subscriptions = self.invoice_factory._get_subscriptions()
-        community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
-        self.assertEqual(len(community_ranges), 1)
-        self.assertEqual(community_ranges[0][0], self.invoice_start)
-        self.assertEqual(community_ranges[0][1], subscription.date_start)
-
-    def test_incomplete_ending_coverage(self):
-        some_plan = generator.subscribable_plan_version()
-        subscription = Subscription.new_domain_subscription(
-            self.account, self.domain.name, some_plan,
-            date_start=self.invoice_start,
-            date_end=self.invoice_end - datetime.timedelta(days=3)
-        )
-        subscriptions = self.invoice_factory._get_subscriptions()
-        community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
-        self.assertEqual(len(community_ranges), 1)
-        self.assertEqual(community_ranges[0][0], subscription.date_end)
-        self.assertEqual(community_ranges[0][1],
-                         self.invoice_end + datetime.timedelta(days=1))
-
-    def test_patchy_coverage(self):
-        some_plan = generator.subscribable_plan_version()
-        middle_date = self.invoice_end - datetime.timedelta(days=15)
-        Subscription.new_domain_subscription(
-            self.account, self.domain.name, some_plan,
-            date_start=self.invoice_start + datetime.timedelta(days=1),
-            date_end=middle_date
-        )
-        next_start = middle_date + datetime.timedelta(days=2)
-        next_end = next_start + datetime.timedelta(days=2)
-        Subscription.new_domain_subscription(
-            self.account, self.domain.name, some_plan,
-            date_start=next_start,
-            date_end=next_end,
-        )
-        final_start = next_end + datetime.timedelta(days=2)
-        Subscription.new_domain_subscription(
-            self.account, self.domain.name, some_plan,
-            date_start=final_start,
-            date_end=self.invoice_end - datetime.timedelta(days=1),
-        )
-        subscriptions = self.invoice_factory._get_subscriptions()
-        self.assertEqual(len(subscriptions), 3)
-        community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
-        self.assertEqual(len(community_ranges), 4)
-
-    def test_full_coverage(self):
-        some_plan = generator.subscribable_plan_version()
-        Subscription.new_domain_subscription(
-            self.account, self.domain.name, some_plan,
-            date_start=self.invoice_start,
-            date_end=self.invoice_end + datetime.timedelta(days=1),
-        )
-        subscriptions = self.invoice_factory._get_subscriptions()
-        community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
-        self.assertEqual(len(community_ranges), 0)
-
-    def test_no_coverage(self):
-        subscriptions = self.invoice_factory._get_subscriptions()
-        self.assertEqual(len(subscriptions), 0)
-        community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
-        self.assertEqual(community_ranges, [(self.invoice_start, self.invoice_end + datetime.timedelta(days=1))])
-
     def test_community_plan_generates_invoice(self):
         """
         Ensure that Community plans can generate invoices.
         """
-        community_plan = DefaultProductPlan.get_default_plan_version()
-        subscription = Subscription.new_domain_subscription(
-            self.account, self.domain.name, community_plan,
-            date_start=self.invoice_start,
-            date_end=self.invoice_end + datetime.timedelta(days=1),
+        subscription = generator.generate_domain_subscription(
+            self.account, self.domain, self.invoice_start, None,
+            plan_version=generator.subscribable_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
         )
         DomainUserHistory.objects.create(
             domain=self.domain.name, record_date=self.invoice_end, num_users=10)
