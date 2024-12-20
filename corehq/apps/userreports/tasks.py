@@ -192,8 +192,8 @@ def _report_metric_number_of_days_since_first_build(config, action):
 
 
 def _report_metric_rebuild_error(config, action):
-    from corehq.apps.userreports.views import _number_of_records_to_be_iterated_for_rebuild
-    expected_rows_to_process = _number_of_records_to_be_iterated_for_rebuild(config)
+    from corehq.apps.userreports.views import number_of_records_to_be_processed
+    expected_rows_to_process = number_of_records_to_be_processed(config)
     metrics_gauge(
         f'commcare.ucr.{action}.failed.expected_rows_to_process',
         expected_rows_to_process,
