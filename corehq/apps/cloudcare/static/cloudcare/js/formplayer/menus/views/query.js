@@ -728,23 +728,46 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         submitAction: function (e) {
             var self = this;
             e.preventDefault();
-            self.performSubmit();
+            self.performSubmit(null, formplayerConstants.USER_CLICK_SUBMIT);
         },
 
-        performSubmit: function (initiatedBy) {
+        performSubmit: function (initiatedBy, userClickSubmit = null) {
             var self = this;
-            self.validateAllFields().done(function () {
-                FormplayerFrontend.trigger(
-                    "menu:query",
-                    self.getAnswers(),
-                    self.options.sidebarEnabled,
-                    initiatedBy
-                );
-                if (self.smallScreenEnabled && self.options.sidebarEnabled) {
-                    $('#sidebar-region').collapse('hide');
+            if (!self.inputsHaveErrors()) {
+                self.executeSearch(initiatedBy).done(function (response) {
+                    self.updateModels(response);
+                });
+            }
+            if (userClickSubmit === formplayerConstants.USER_CLICK_SUBMIT) {
+                self.displayErrors();
+            }
+        },
+
+        inputsHaveErrors: function () {
+            var self = this;
+            const childViews = self._getChildren();
+            for (let childView of childViews) {
+                if (childView.getError()) {
+                    return true;
                 }
-                sessionStorage.submitPerformed = true;
-            });
+            }
+            return false;
+        },
+
+        executeSearch: function (initiatedBy) {
+            var self = this;
+            var request = FormplayerFrontend.getChannel().request(
+                "menu:query",
+                self.getAnswers(),
+                self.options.sidebarEnabled,
+                initiatedBy
+            );
+
+            if (self.smallScreenEnabled && self.options.sidebarEnabled) {
+                $('#sidebar-region').collapse('hide');
+            }
+            sessionStorage.submitPerformed = true;
+            return request;
         },
 
         updateSearchResults: function () {
@@ -783,34 +806,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         validateAllFields: function () {
             var self = this;
             var promise = $.Deferred();
-            var invalidFields = [];
             var updatingModels = self.updateModelsForValidation || self._updateModelsForValidation();
 
             $.when(updatingModels).done(function (response) {
-                // Gather error messages
-                self._getChildren().forEach(function (childView) {
-                    if (!childView.isValid()) {
-                        invalidFields.push(childView.model.get('text'));
-                    }
-                });
-
-                // Display error messages
-                FormplayerFrontend.trigger('clearNotifications');
-                if (invalidFields.length) {
-                    var errorHTML = gettext("Please check the following fields:");
-                    errorHTML += "<ul>" + _.map(invalidFields, function (f) {
-                        return "<li>" + DOMPurify.sanitize(f) + "</li>";
-                    }).join("") + "</ul>";
-                    FormplayerFrontend.trigger('showError', errorHTML, true, false);
-                }
-
+                var invalidFields = self.displayErrors();
                 if (invalidFields.length) {
                     promise.reject(response);
                 } else {
                     promise.resolve(response);
                 }
             });
-
             return promise;
         },
 
@@ -829,30 +834,57 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             urlObject.setRequestInitiatedByTag(initiatedByTag);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
-                // Update models based on response
-                if (response.queryResponse) {
-                    _.each(response.queryResponse.displays, function (responseModel, i) {
-                        self._getChildModels()[i].set({
-                            error: responseModel.error,
-                            required: responseModel.required,
-                            required_msg: responseModel.required_msg,
-                        });
-                    });
-                } else {
-                    _.each(response.models, function (responseModel, i) {
-                        const childModels = self._getChildModels();
-                        childModels[i].set({
-                            error: responseModel.get('error'),
-                            required: responseModel.get('required'),
-                            required_msg: responseModel.get('required_msg'),
-                        });
-                    });
-                }
+                self.updateModels(response);
                 promise.resolve(response);
 
             });
             sessionStorage.validationInProgress = false;
             return promise;
+        },
+
+        displayErrors: function () {
+            var self = this;
+            // Gather error messages
+            var invalidFields = [];
+            self._getChildren().forEach(function (childView) {
+                if (!childView.isValid()) {
+                    invalidFields.push(childView.model.get('text'));
+                }
+            });
+
+            // Display error messages
+            FormplayerFrontend.trigger('clearNotifications');
+            if (invalidFields.length) {
+                var errorHTML = gettext("Please check the following fields:");
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                    return "<li>" + DOMPurify.sanitize(f) + "</li>";
+                }).join("") + "</ul>";
+                FormplayerFrontend.trigger('showError', errorHTML, true, false);
+            }
+            return invalidFields;
+        },
+
+        updateModels: function (response) {
+            var self = this;
+            // Update models based on response
+            if (response.queryResponse) {
+                _.each(response.queryResponse.displays, function (responseModel, i) {
+                    self._getChildModels()[i].set({
+                        error: responseModel.error,
+                        required: responseModel.required,
+                        required_msg: responseModel.required_msg,
+                    });
+                });
+            } else {
+                _.each(response.models, function (responseModel, i) {
+                    const childModels = self._getChildModels();
+                    childModels[i].set({
+                        error: responseModel.get('error'),
+                        required: responseModel.get('required'),
+                        required_msg: responseModel.get('required_msg'),
+                    });
+                });
+            }
         },
 
         setStickyQueryInputs: function () {
