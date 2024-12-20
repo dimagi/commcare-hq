@@ -2071,8 +2071,15 @@ class ConnectMessagingUserView(BaseMessagingSectionView):
 @toggles.COMMCARE_CONNECT.required_decorator()
 @domain_admin_required
 def create_channels(request, domain, *args, **kwargs):
-    user_links = ConnectIDUserLink.objects.filter(domain=domain)
+    user_links = ConnectIDUserLink.objects.filter(domain=domain, channel_id__isnull=False)
     backend = ConnectBackend()
+    channel_users = []
     for link in user_links:
-        backend.create_channel(link)
+        success = backend.create_channel(link)
+        if success:
+            channel_users.append(link.commcare_user.username)
+    messages.success(
+        request,
+        _("Channels created for the following users: \n") + ('\n '.join(channel_users))
+    )
     return HttpResponseRedirect(reverse(ConnectMessagingUserView.urlname, args=[domain]))
