@@ -627,6 +627,15 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "ucr_queue": None,
 }
 
+# The default number of repeat_record_queue workers that one repeater
+# can use to send repeat records at the same time.
+DEFAULT_REPEATER_WORKERS = 7
+# The hard limit for the number of repeat_record_queue workers that one
+# repeater can use to send repeat records at the same time. This is a
+# guardrail to prevent one repeater from hogging repeat_record_queue
+# workers and to ensure that repeaters are iterated fairly.
+MAX_REPEATER_WORKERS = 144
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
