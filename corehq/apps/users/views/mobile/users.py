@@ -89,6 +89,7 @@ from corehq.apps.registration.forms import (
     MobileWorkerAccountConfirmationForm,
 )
 from corehq.apps.sms.api import send_sms
+from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
@@ -1682,7 +1683,7 @@ def deliver_connectid_invite(user, request=None):
     response = requests.post(
         settings.CONNECTID_USERINVITE_URL,
         data={
-            "phone_number": user.default_phone_number,
+            "phone_number": clean_phone_number(user.default_phone_number),
             "callback_url": absolute_reverse("confirm_connectid_user", args=[user.domain]),
             "user_domain": user.domain,
             "username": user.raw_username,
