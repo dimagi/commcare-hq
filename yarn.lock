@@ -2971,12 +2971,12 @@ datatables-fixedcolumns@DataTables/FixedColumns#3.2.0:
   version "0.0.0"
   resolved "https://codeload.github.com/DataTables/FixedColumns/tar.gz/a87428accba62d881e14fa2710bcc035a6efbbb6"
 
-datatables.net-bs5@1.13.8, datatables.net-bs5@>=1.13.4:
-  version "1.13.8"
-  resolved "https://registry.yarnpkg.com/datatables.net-bs5/-/datatables.net-bs5-1.13.8.tgz#807dca4b95c139fe217ed87bd25f3502b1d873d3"
-  integrity sha512-3B6S8LiKGtUtOsA97SkMddwggrza6JDtubnw1qjFb/mjqDmWO0PC1+QWeUspkLPFQCCbLaSVfXLWMdo44IGEmQ==
+datatables.net-bs5@2.1.8, datatables.net-bs5@>=1.13.4:
+  version "2.1.8"
+  resolved "https://registry.yarnpkg.com/datatables.net-bs5/-/datatables.net-bs5-2.1.8.tgz#860717c4ee85ecb84812ba9a73fb1204aa2a68b6"
+  integrity sha512-YlGws8eI3iw/1AmKJH18+YMzm/UgGb6o9s14KAC24QT1/8anolm8GnVAgGcwUcvHm3hn1i8A5QXqgbqeMRINeg==
   dependencies:
-    datatables.net "1.13.8"
+    datatables.net "2.1.8"
     jquery ">=1.7"
 
 datatables.net-fixedcolumns-bs5@4.3.0:
@@ -3003,10 +3003,10 @@ datatables.net@1.11.3:
   dependencies:
     jquery ">=1.7"
 
-datatables.net@1.13.8, datatables.net@>=1.13.4:
-  version "1.13.8"
-  resolved "https://registry.yarnpkg.com/datatables.net/-/datatables.net-1.13.8.tgz#05a2fb5a036b0b65b66d1bb1eae0ba018aaea8a3"
-  integrity sha512-2pDamr+GUwPTby2OgriVB9dR9ftFKD2AQyiuCXzZIiG4d9KkKFQ7gqPfNmG7uj9Tc5kDf+rGj86do4LAb/V71g==
+datatables.net@2.1.8, datatables.net@>=1.13.4:
+  version "2.1.8"
+  resolved "https://registry.yarnpkg.com/datatables.net/-/datatables.net-2.1.8.tgz#9b020f18e927cc924d72411f62dc595cc688669b"
+  integrity sha512-47ULt+U4bcjbuGTpTlT6SnCuSFVRBxxdWa6X3NfvTObBJ2BZU0o+JUIl05wQ6cABNIavjbAV51gpgvFsMHL9zA==
   dependencies:
     jquery ">=1.7"
 
