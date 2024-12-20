@@ -1586,21 +1586,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
         },
         makeOffcanvas: function () {
-            $('#persistent-menu-container').removeClass('show');
-            $('#persistent-menu-container').removeClass(this.containerCollapseClasses);
-            $('#persistent-menu-container').addClass(this.containerOffcanvasClasses);
-            $('#persistent-menu-arrow-toggle').attr('aria-expanded', false);
-            $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', this.offcanvas);
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass(this.containerCollapseClasses);
+            persistentMenuContainer.addClass(this.containerOffCanvasClasses);
         },
         makeCollapse: function () {
-            // $('#persistent-menu-container').removeClass('show');
-            $('#persistent-menu-container').removeClass(this.containerOffcanvasClasses);
-            $('#persistent-menu-container').addClass(this.collapse);
-            // if (sessionStorage.showPersistentMenu !== 'false') {
-            //     $('#persistent-menu-container').addClass('show');
-            // }
-            // $('#persistent-menu-arrow-toggle').attr('aria-expanded', true);
-            // $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', this.collapse);
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass(this.containerOffCanvasClasses);
+            persistentMenuContainer.addClass(this.collapse);
         },
         initialize: function (options) {
             this.sidebarEnabled = options.sidebarEnabled;
@@ -1608,7 +1601,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             this.offcanvas = 'offcanvas';
             this.collapse = 'collapse';
             this.containerCollapseClasses = this.collapse + ' position-relative';
-            this.containerOffcanvasClasses = this.offcanvas + ' offcanvas-start';
+            this.containerOffCanvasClasses = this.offcanvas + ' offcanvas-start';
             self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
@@ -1654,8 +1647,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             this.menuExpanded = true;
         },
         hideMenu: function () {
-            $('#persistent-menu-container').removeClass('show');
-            $('#persistent-menu-container').css('width', '30px');
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.css('width', '30px');
             $('#persistent-menu-container-content').addClass('d-none');
             this.menuExpanded = false;
         },
@@ -1670,21 +1663,27 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             sessionStorage.showPersistentMenu = false;
         },
         flipArrowRight: function () {
-            $('#persistent-menu-arrow-toggle').find('i').removeClass('fa-chevron-left');
-            $('#persistent-menu-arrow-toggle').find('i').addClass('fa-chevron-right');
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            arrowToggle.find('i').removeClass('fa-chevron-left');
+            arrowToggle.find('i').addClass('fa-chevron-right');
         },
         flipArrowLeft: function () {
-            $('#persistent-menu-arrow-toggle').find('i').removeClass('fa-chevron-right');
-            $('#persistent-menu-arrow-toggle').find('i').addClass('fa-chevron-left');
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            arrowToggle.find('i').removeClass('fa-chevron-right');
+            arrowToggle.find('i').addClass('fa-chevron-left');
         },
         onAttach: function () {
             const self = this;
-            this.makeCollapse(sessionStorage.showPersistentMenu);
             const smallScreenEnabledOnStartup = cloudcareUtils.smallScreenIsEnabled();
-            if (sessionStorage.showPersistentMenu === 'true' && !smallScreenEnabledOnStartup && !this.sidebarEnabled) {
-                this.showMenu();
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            self.makeCollapse(sessionStorage.showPersistentMenu);
+
+            if (sessionStorage.showPersistentMenu === 'true' && !smallScreenEnabledOnStartup) {
+                self.showMenu();
+                self.flipArrowLeft();
+                self.lockMenu();
             }
-            $('#persistent-menu-arrow-toggle').click(function () {
+            arrowToggle.click(function () {
                 if (!self.menuExpanded) {
                     self.showMenu();
                     self.flipArrowLeft();
@@ -1700,7 +1699,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             });
             $('#persistent-menu-container').hover(
                 function () {
-                    if (!this.menuExpanded) {
+                    if (!self.menuExpanded) {
                         self.showMenu();
                     }
                 },
