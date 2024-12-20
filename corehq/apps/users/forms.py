@@ -1729,7 +1729,12 @@ class BaseTableauUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
+        readonly = kwargs.pop('readonly', True)
         super(BaseTableauUserForm, self).__init__(*args, **kwargs)
+
+        if readonly:
+            self.fields['role'].widget.attrs['readonly'] = True
+            self.fields['groups'].widget.attrs['disabled'] = True
 
         self.allowed_tableau_groups = [
             TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
@@ -1745,7 +1750,6 @@ class TableauUserForm(BaseTableauUserForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
-        readonly = kwargs.pop('readonly', True)
         self.username = kwargs.pop('username', None)
         super(TableauUserForm, self).__init__(*args, **kwargs)
 
@@ -1754,10 +1758,6 @@ class TableauUserForm(BaseTableauUserForm):
             if group_name in user_group_names:
                 # Pre-choose groups that the user already belongs to
                 self.fields['groups'].initial.append(i)
-
-        if readonly:
-            self.fields['role'].widget.attrs['readonly'] = True
-            self.fields['groups'].widget.attrs['disabled'] = True
 
         self.helper = FormHelper()
 

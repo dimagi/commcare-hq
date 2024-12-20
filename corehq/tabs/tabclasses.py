@@ -1650,6 +1650,10 @@ class ProjectUsersTab(UITab):
                         'urlname': 'invite_web_user'
                     },
                     {
+                        'title': _("Edit Web User Invite"),
+                        'urlname': 'edit_invitation'
+                    },
+                    {
                         'title': _get_web_username,
                         'urlname': EditWebUserView.urlname
                     },
@@ -1818,13 +1822,12 @@ class EnterpriseSettingsTab(UITab):
                     'url': reverse('platform_overview', args=[self.domain]),
                 }
             )
-            if toggles.ENTERPRISE_DASHBOARD_IMPROVEMENTS.enabled_for_request(self._request):
-                enterprise_views.append(
-                    {
-                        'title': _('Security Center'),
-                        'url': reverse('security_center', args=[self.domain]),
-                    }
-                )
+            enterprise_views.append(
+                {
+                    'title': _('Security Center'),
+                    'url': reverse('security_center', args=[self.domain]),
+                }
+            )
             enterprise_views.append(
                 {
                     'title': _('Enterprise Settings'),

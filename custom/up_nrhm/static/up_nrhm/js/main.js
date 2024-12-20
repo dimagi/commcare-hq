@@ -1,5 +1,14 @@
-/* global moment */
-hqDefine("up_nrhm/js/main", function () {
+hqDefine("up_nrhm/js/main", [
+    'jquery'
+    'moment/moment',
+    'hqwebapp/js/initial_page_data',
+    'reports/js/bootstrap3/standard_hq_report',
+], function (
+    $,
+    moment,
+    initialPageData,
+    HQStandardReport
+) {
     function hideFilters(sf) {
         if (sf === "" || sf === 'sf2') {
             $('#fieldset_datespan').css('display', 'block');
@@ -39,7 +48,7 @@ hqDefine("up_nrhm/js/main", function () {
         if (ajaxUrl.indexOf(fragment) === -1 || !pageUrl.endsWith(ajaxUrl.replace(fragment, ''))) {
             return;
         }
-        if (hqImport("hqwebapp/js/initial_page_data").get("rendered_as") === "print") {
+        if (initialPageData.get("rendered_as") === "print") {
             if (!$('#report_filter_sf').val()) {
                 document.body.style.zoom = "80%";
                 $('.hq-loading').hide();
@@ -60,7 +69,7 @@ hqDefine("up_nrhm/js/main", function () {
         var $datespan = $('#filter_range');
         var separator = $datespan.data("separator");
         var reportLabels = $datespan.data("report-labels");
-        var standardHQReport = hqImport("reports/js/bootstrap3/standard_hq_report").getStandardHQReport();
+        var standardHQReport = HQStandardReport.getStandardHQReport();
 
         $('#filter_range').createDateRangePicker(
             reportLabels,

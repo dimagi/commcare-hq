@@ -6,13 +6,19 @@ hqDefine('geospatial/js/models', [
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
+    'mapbox-gl',
+    '@mapbox/mapbox-gl-draw',
+    '@turf/turf',
 ], function (
     $,
     ko,
     _,
     initialPageData,
     utils,
-    alertUser
+    alertUser,
+    mapboxgl,
+    MapboxDraw,
+    turf
 ) {
     const FEATURE_QUERY_PARAM = 'features';
     const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
@@ -156,12 +162,12 @@ hqDefine('geospatial/js/models', [
         self.DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
 
         self.initMap = function (mapDivId, centerCoordinates) {
-            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
+            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
             if (!centerCoordinates) {
                 centerCoordinates = [-91.874, 42.76]; // should be domain specific
             }
 
-            self.mapInstance = new mapboxgl.Map({  // eslint-disable-line no-undef
+            self.mapInstance = new mapboxgl.Map({
                 container: mapDivId, // container ID
                 style: 'mapbox://styles/mapbox/streets-v12', // style URL
                 center: centerCoordinates, // starting position [lng, lat]
@@ -170,7 +176,7 @@ hqDefine('geospatial/js/models', [
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
 
-            self.drawControls = new MapboxDraw({  // eslint-disable-line no-undef
+            self.drawControls = new MapboxDraw({
                 // API: https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md
                 displayControlsDefault: false,
                 boxSelect: true, // enables box selection
@@ -182,7 +188,7 @@ hqDefine('geospatial/js/models', [
             self.mapInstance.addControl(self.drawControls);
 
             // Add zoom and rotation controls to the map.
-            self.mapInstance.addControl(new mapboxgl.NavigationControl());  // eslint-disable-line no-undef
+            self.mapInstance.addControl(new mapboxgl.NavigationControl());
 
             if (self.usesClusters) {
                 createClusterLayers();
@@ -549,7 +555,7 @@ hqDefine('geospatial/js/models', [
                 if (coord) {
                     return bounds.extend(coord);
                 }
-            }, new mapboxgl.LngLatBounds(firstCoord, firstCoord));  // eslint-disable-line no-undef
+            }, new mapboxgl.LngLatBounds(firstCoord, firstCoord));
 
             self.mapInstance.fitBounds(bounds, {
                 padding: 50,  // in pixels

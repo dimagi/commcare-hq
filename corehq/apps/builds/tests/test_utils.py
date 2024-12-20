@@ -16,6 +16,8 @@ class TestVersionUtils(SimpleTestCase):
             ('2.53.1', 'invalid', False),   # Invalid latest version
             ('6', '7', True),               # Normal case - app version is integer
             (None, None, False),            # None version_in_use and latest_version
+            ('2.54', '2.54.0', False),      # Edge case - should not be out of date
+            ('2.54.0', '2.54', False),       # Edge case - should not be out of date
         ]
 
         for version_in_use, latest_version, expected in test_cases:

@@ -88,6 +88,8 @@ hqDefine("users/js/web_users",[
             });
         };
 
+        self.inviteEditUrl = initialPageData.reverse("edit_invitation", self.uuid);
+
         return self;
     };
 

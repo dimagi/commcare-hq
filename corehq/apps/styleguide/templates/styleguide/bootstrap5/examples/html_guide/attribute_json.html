@@ -1,0 +1,12 @@
+<div
+  hx-post="{{ request.path_info }}"
+  hq-hx-action="edit_cell_value"
+  hx-vals='{
+    "recordId": {{ record.id }},
+    "column": "{{ column.accessor }}"
+  }'
+  hx-disabled-elt="find button"
+  hx-swap="outerHTML"
+>
+  ...
+</div>
