@@ -1613,6 +1613,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
             self.smallScreenListener.listen();
+            sessionStorage.removeItem('persistantMenuRegionWidth');
         },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
@@ -1642,8 +1643,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return regionWidth;
         },
         showMenu: function () {
-            $('#persistent-menu-container').addClass('show');
-            $('#persistent-menu-container').css('width', '');
+            let persistantMenuRegionWidth = sessionStorage.getItem('persistantMenuRegionWidth');
+            if (!persistantMenuRegionWidth) {
+                persistantMenuRegionWidth = this.getPersistantMenuRegionWidth()
+            }
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.css('transition', 'width 0.25s');
+            persistentMenuContainer.css('width', persistantMenuRegionWidth);
             $('#persistent-menu-container-content').removeClass('d-none');
             this.menuExpanded = true;
         },
