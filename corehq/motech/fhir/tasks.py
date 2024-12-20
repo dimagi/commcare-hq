@@ -584,7 +584,7 @@ def sync_all_appointments_domain(domain):
                 practitioner = ''
                 for p in appointment_resource.get('participant'):
                     actor = p.get('actor')
-                    if actor and 'Practitioner' in actor.get('reference'):
+                    if actor and actor.get('reference') is not None and 'Practitioner' in actor.get('reference'):
                         practitioner = actor.get('display')
                         break
                 reason_code = appointment_resource.get('reasonCode')
@@ -628,7 +628,7 @@ def sync_all_appointments_domain(domain):
                 practitioner = ''
                 for p in appointment_resource.get('participant'):
                     actor = p.get('actor')
-                    if actor and 'Practitioner' in actor.get('reference'):
+                    if actor and actor.get('reference') is not None and 'Practitioner' in actor.get('reference'):
                         practitioner = actor.get('display')
                         break
                 reason_code = appointment_resource.get('reasonCode')
