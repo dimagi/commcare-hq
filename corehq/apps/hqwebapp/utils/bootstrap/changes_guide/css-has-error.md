@@ -22,11 +22,13 @@ Previously:
 Now:
 ```
     <div class="row mb-3">
-      <label for="id_error_input" class="form-label">
+      <label for="id_error_input" class="form-label field-label">
         Error Input
       </label>
-      <input type="text" name="error_input" class="form-control is-invalid" id="id_error_input" />
-      <div class='invalid-feedback'>This is an error message.</div>
+      <div class="field-control">
+        <input type="text" name="error_input" class="form-control is-invalid" id="id_error_input" />
+        <div class='invalid-feedback'>This is an error message.</div>
+      </div>
     </div>
 ```
 
