@@ -1617,6 +1617,30 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
+        getPersistantMenuRegionWidth: function() {
+            const contentPlusContainer = $('#content-plus-persistent-menu-container');
+
+            const persistentMenuRegionClone = $('#persistent-menu-region').clone();
+            persistentMenuRegionClone.attr("id","pmr-clone");
+            persistentMenuRegionClone.prependTo(contentPlusContainer);
+
+            const containerClone = persistentMenuRegionClone.find('#persistent-menu-container');
+            containerClone.attr("id","pmc-clone");
+            containerClone.css({'width': '', 'padding': '1.5rem', 'visibility': 'hidden'});
+            containerClone.removeClass('position-absolute');
+            containerClone.addClass('position-relative');
+
+            const containerContentClone = containerClone.find('#persistent-menu-container-content');
+            containerContentClone.attr("id","pmcc-clone");
+            containerContentClone.removeClass('d-none');
+
+            const regionWidth = persistentMenuRegionClone.outerWidth();
+
+            sessionStorage.setItem('persistantMenuRegionWidth', regionWidth)
+            persistentMenuRegionClone.remove();
+
+            return regionWidth;
+        },
         showMenu: function () {
             $('#persistent-menu-container').addClass('show');
             $('#persistent-menu-container').css('width', '');
