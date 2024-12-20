@@ -47,15 +47,15 @@ class WebUserResourceValidator():
 
     def validate_role(self, role):
         spec = {'role': role}
-        return RoleValidator(self.domain, self.roles_by_name()).validate_spec(spec)
+        return RoleValidator(self.domain, self.roles_by_name).validate_spec(spec)
 
     def validate_profile(self, new_profile_name):
-        profile_validator = ProfileValidator(self.domain, self.requesting_user, True, self.profiles_by_name())
+        profile_validator = ProfileValidator(self.domain, self.requesting_user, True, self.profiles_by_name)
         spec = {'user_profile': new_profile_name}
         return profile_validator.validate_spec(spec)
 
     def validate_custom_data(self, custom_data, profile_name):
-        custom_data_validator = CustomDataValidator(self.domain, self.profiles_by_name())
+        custom_data_validator = CustomDataValidator(self.domain, self.profiles_by_name, True)
         spec = {'data': custom_data, 'user_profile': profile_name}
         return custom_data_validator.validate_spec(spec)
 
