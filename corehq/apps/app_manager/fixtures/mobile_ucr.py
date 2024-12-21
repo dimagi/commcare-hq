@@ -91,16 +91,10 @@ class ReportFixturesProvider(FixtureProvider):
             return []
 
         restore_user = restore_state.restore_user
-        with restore_state.timing_context('_get_apps'):
-            apps = self._get_apps(restore_state, restore_user)
-        report_configs = self._get_report_configs(apps)
+        with restore_state.timing_context('_parse_apps'):
+            needed_versions, report_configs = _parse_apps(restore_state, restore_user)
         if not report_configs:
             return []
-
-        needed_versions = {
-            app.mobile_ucr_restore_version
-            for app in apps
-        }
 
         report_data_cache = ReportDataCache(restore_user.domain, report_configs)
         providers = [
@@ -135,28 +129,29 @@ class ReportFixturesProvider(FixtureProvider):
 
         return True
 
-    def _get_apps(self, restore_state, restore_user):
-        app_aware_sync_app = restore_state.params.app
 
-        if app_aware_sync_app:
-            apps = [app_aware_sync_app]
-        elif toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY.enabled(restore_user.domain):
-            apps = []
-            for app in get_web_apps_available_to_user(restore_user.domain, restore_user._couch_user):
-                if not is_remote_app(app):
-                    apps.append(get_correct_app_class(app).wrap(app))
-        else:
-            apps = get_apps_in_domain(restore_user.domain, include_remote=False)
+def _parse_apps(restore_state, restore_user):
+    if restore_state.params.app:
+        apps = [restore_state.params.app]
+    elif toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY.enabled(restore_user.domain):
+        apps = []
+        for app in get_web_apps_available_to_user(restore_user.domain, restore_user._couch_user):
+            if not is_remote_app(app):
+                apps.append(get_correct_app_class(app).wrap(app))
+    else:
+        apps = get_apps_in_domain(restore_user.domain, include_remote=False)
 
-        return apps
+    needed_versions = {app.mobile_ucr_restore_version for app in apps}
+    return needed_versions, _get_mobile_ucr_configs(apps)
 
-    def _get_report_configs(self, apps):
-        return [
-            report_config
-            for app_ in apps
-            for module in app_.get_report_modules()
-            for report_config in module.report_configs
-        ]
+
+def _get_mobile_ucr_configs(apps):
+    return [
+        report_config
+        for app_ in apps
+        for module in app_.get_report_modules()
+        for report_config in module.report_configs
+    ]
 
 
 report_fixture_generator = ReportFixturesProvider()
