@@ -4,11 +4,8 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
-from corehq.util.json import CommCareJSONEncoder
-from corehq.util.test_utils import flag_enabled
-
 from django.test import SimpleTestCase, TestCase
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
+
 import attr
 from requests import RequestException
 
@@ -27,10 +24,16 @@ from corehq.apps.receiverwrapper.exceptions import (
     DuplicateFormatException,
     IgnoreDocument,
 )
-from corehq.pillows.case import get_case_pillow
-from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
-from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.userreports.pillow import (
+    ConfigurableReportPillowProcessor,
+    ConfigurableReportTableManager,
+)
+from corehq.apps.userreports.tests.utils import (
+    get_sample_data_source,
+    get_sample_doc_and_indicators,
+)
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -38,6 +41,7 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.const import (
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
+    MIN_REPEATER_RETRY_WAIT,
     MIN_RETRY_WAIT,
     State,
 )
@@ -47,8 +51,8 @@ from corehq.motech.repeaters.models import (
     FormRepeater,
     LocationRepeater,
     Repeater,
-    ShortFormRepeater,
     RepeatRecord,
+    ShortFormRepeater,
     UserRepeater,
     _get_retry_interval,
     format_response,
@@ -62,6 +66,9 @@ from corehq.motech.repeaters.tasks import (
     _process_repeat_record,
     check_repeaters,
 )
+from corehq.pillows.case import get_case_pillow
+from corehq.util.json import CommCareJSONEncoder
+from corehq.util.test_utils import flag_enabled
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
@@ -695,10 +702,10 @@ class RepeaterFailureTest(BaseRepeaterTest):
         with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
             mock_simple_post.return_value.status_code = 503  # Fail and retry
             rr = self.repeater.register(case)
-        with self.assertRaises(Exception):
-            with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
-                rr.fire()
+        with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
+            state_or_none = rr.fire()
 
+        self.assertIsNone(state_or_none)
         repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.InvalidPayload)
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
@@ -1327,7 +1334,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         return sample_doc, expected_indicators
 
 
-class TestRaceCondition(TestCase):
+class TestSetBackoff(TestCase):
     domain = 'test-race-condition'
 
     @classmethod
@@ -1350,18 +1357,45 @@ class TestRaceCondition(TestCase):
         cls.connx.delete()
         super().tearDownClass()
 
-    def test_pause_and_set_next_attempt(self):
+    def test_race_condition(self):
         repeater_a = Repeater.objects.get(id=self.repeater.repeater_id)
         repeater_b = Repeater.objects.get(id=self.repeater.repeater_id)
         self.assertIsNone(repeater_a.next_attempt_at)
         self.assertFalse(repeater_b.is_paused)
 
-        repeater_a.set_next_attempt()
+        repeater_a.set_backoff()
         repeater_b.pause()
 
         repeater_c = Repeater.objects.get(id=self.repeater.repeater_id)
         self.assertIsNotNone(repeater_c.next_attempt_at)
         self.assertTrue(repeater_c.is_paused)
+
+    def test_initial_get_next_attempt_at(self):
+        next_attempt_at = self.repeater._get_next_attempt_at(None)
+        in_5_mins = datetime.utcnow() + MIN_REPEATER_RETRY_WAIT
+        self.assertEqual(
+            next_attempt_at.isoformat(timespec='seconds'),
+            in_5_mins.isoformat(timespec='seconds')
+        )
+
+    def test_get_next_attempt_at(self):
+        five_mins_ago = datetime.utcnow() - timedelta(minutes=5)
+        next_attempt_at = self.repeater._get_next_attempt_at(five_mins_ago)
+        # Double the last interval
+        in_10_mins = datetime.utcnow() + timedelta(minutes=10)
+        self.assertEqual(
+            next_attempt_at.isoformat(timespec='seconds'),
+            in_10_mins.isoformat(timespec='seconds')
+        )
+
+    def test_max_get_next_attempt_at(self):
+        last_month = datetime(2020, 1, 1, 0, 0, 0)
+        next_attempt_at = self.repeater._get_next_attempt_at(last_month)
+        in_7_days = datetime.utcnow() + MAX_RETRY_WAIT
+        self.assertEqual(
+            next_attempt_at.isoformat(timespec='seconds'),
+            in_7_days.isoformat(timespec='seconds')
+        )
 
 
 def fromisoformat(isoformat):
