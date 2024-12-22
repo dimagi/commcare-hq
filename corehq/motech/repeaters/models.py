@@ -458,6 +458,9 @@ class Repeater(RepeaterSuperProxy):
         # all their repeat records. If a remote endpoint is just
         # rate-limiting, backing off for an hour is too much.
         # MIN_REPEATER_RETRY_WAIT is only 5 minutes.
+
+        # TODO: With a less aggressive backoff, should MAX_ATTEMPTS be
+        #       increased?
         if last_attempt_at:
             interval = 2 * (datetime.utcnow() - last_attempt_at)
         else:
