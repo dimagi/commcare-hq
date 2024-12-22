@@ -1,6 +1,7 @@
 hqDefine("hqwebapp/js/bulk_upload_file", [
     "jquery",
     "knockout",
+    "commcarehq",
 ], function (
     $,
     ko

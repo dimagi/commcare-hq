@@ -4,6 +4,7 @@ hqDefine("translations/js/app_translations", [
     "hqwebapp/js/initial_page_data",
     "app_manager/js/widgets",
     "hqwebapp/js/bootstrap3/widgets",   // .hqwebapp-select2
+    "commcarehq",
 ], function (
     $,
     _,

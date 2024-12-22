@@ -19,8 +19,6 @@ hqDefine('geospatial/js/models', [
     const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
-    const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
-    const reassignCasesUrl = initialPageData.reverse('reassign_cases');
     const unexpectedErrorMessage = gettext(
         "Oops! Something went wrong!" +
         " Please report an issue if the problem persists."
@@ -132,6 +130,8 @@ hqDefine('geospatial/js/models', [
         self.userMapItems = ko.observableArray([]);
 
         self.caseGroupsIndex = {};
+
+        self.DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
 
         self.initMap = function (mapDivId, centerCoordinates) {
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
@@ -515,28 +515,54 @@ hqDefine('geospatial/js/models', [
             });
         };
 
-        self.hasDisbursementLayers = function () {
-            const mapLayers = self.mapInstance.getStyle().layers;
-            return _.any(
-                mapLayers,
-                function (layer) { return layer.id.includes(DISBURSEMENT_LAYER_PREFIX); }
-            );
+        self.hasDisbursementLayer = function () {
+            return self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID);
         };
 
-        self.removeDisbursementLayers = function () {
-            const mapLayers = self.mapInstance.getStyle().layers;
-            let layerRemoved = false;
-            mapLayers.forEach(function (layer) {
-                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
-                    self.mapInstance.removeLayer(layer.id);
-                    layerRemoved = true;
-                }
+        self.addDisbursementLinesLayer = function (source) {
+            let layerId = self.DISBURSEMENT_LINES_LAYER_ID;
+            self.mapInstance.addSource(layerId, {
+                'type': 'geojson',
+                'data': source,
             });
-            return layerRemoved;
+            self.mapInstance.addLayer({
+                id: layerId,
+                type: 'line',
+                source: layerId,
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round',
+                },
+                paint: {
+                    'line-color': '#808080',
+                    'line-width': 1,
+                },
+            });
+        };
+
+        self.removeDisbursementLayer = function () {
+            if (self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeLayer(self.DISBURSEMENT_LINES_LAYER_ID);
+            }
+            if (self.mapInstance.getSource(self.DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeSource(self.DISBURSEMENT_LINES_LAYER_ID);
+            }
+        };
+
+        self.hasSelectedUsers = function () {
+            return self.userMapItems().some((userMapItem) => {
+                return userMapItem.isSelected();
+            });
+        };
+
+        self.hasSelectedCases = function () {
+            return self.caseMapItems().some((caseMapItem) => {
+                return caseMapItem.isSelected();
+            });
         };
     };
 
-    var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter) {
+    var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter, requiresPageRefresh) {
         var self = this;
 
         self.mapObj = mapObj;
@@ -553,6 +579,7 @@ hqDefine('geospatial/js/models', [
 
         self.polygons = {};
         self.shouldRefreshPage = ko.observable(false);
+        self.requiresPageRefresh = ko.observable(requiresPageRefresh);  // If true then actions such as adding or moving a polygon requires a page refresh
         self.hasUrlError = ko.observable(false);
 
         self.savedPolygons = ko.observableArray([]);
@@ -588,7 +615,7 @@ hqDefine('geospatial/js/models', [
             } else {
                 success = utils.clearQueryParam(FEATURE_QUERY_PARAM);
             }
-            self.shouldRefreshPage(success);
+            self.shouldRefreshPage(success && self.requiresPageRefresh());
             self.hasUrlError(!success);
         }
 
@@ -606,7 +633,7 @@ hqDefine('geospatial/js/models', [
             } else {
                 success = utils.clearQueryParam(SELECTED_FEATURE_ID_QUERY_PARAM);
             }
-            self.shouldRefreshPage(success);
+            self.shouldRefreshPage(success && self.requiresPageRefresh());
             self.hasUrlError(!success);
         }
 
@@ -662,11 +689,38 @@ hqDefine('geospatial/js/models', [
             }
         };
 
-        self.clearSelectedPolygonFilter = function clearSelectedPolygonFilter() {
+        self.clearSelectedPolygonFilter = function () {
+            if (!clearDisbursementBeforeProceeding()) {
+                return;
+            }
+
             self.selectedSavedPolygonId('');
             self.clearActivePolygon();
             updateSelectedSavedPolygonParam();
         };
+
+        function clearDisbursementBeforeProceeding() {
+            let proceedFurther = true;
+            if (self.mapObj.hasDisbursementLayer()) {
+                // hide it by default and show it only if necessary
+                $('#disbursement-clear-message').hide();
+                if (confirmForClearingDisbursement()) {
+                    self.mapObj.removeDisbursementLayer();
+                    $('#disbursement-clear-message').show();
+                    $('#disbursement-params').hide();
+                } else {
+                    proceedFurther = false;
+                }
+            }
+            return proceedFurther;
+        }
+
+        function confirmForClearingDisbursement() {
+            return confirm(
+                gettext("Warning! This action will clear the current disbursement. " +
+                        "Please confirm if you want to proceed.")
+            );
+        }
 
         self.exportSelectedPolygonGeoJson = function (data, event) {
             if (self.activeSavedPolygon()) {
@@ -679,6 +733,10 @@ hqDefine('geospatial/js/models', [
         };
 
         self.deleteSelectedPolygonFilter = function () {
+            if (!clearDisbursementBeforeProceeding()) {
+                return;
+            }
+
             const deleteGeoJSONUrl = initialPageData.reverse('geo_polygon', self.selectedSavedPolygonId());
             $.ajax({
                 type: 'DELETE',
@@ -720,24 +778,13 @@ hqDefine('geospatial/js/models', [
                 return;
             }
 
-            // hide it by default and show it only if necessary
-            $('#disbursement-clear-message').hide();
-            if (mapObj.hasDisbursementLayers()) {
-                let confirmation = confirm(
-                    gettext("Warning! This action will clear the current disbursement. " +
-                            "Please confirm if you want to proceed.")
-                );
-                if (confirmation) {
-                    if (mapObj.removeDisbursementLayers()) {
-                        $('#disbursement-clear-message').show();
-                    }
-                } else {
-                    // set flag
-                    self.resettingSavedPolygon = true;
-                    self.selectedSavedPolygonId(self.oldSelectedSavedPolygonId());
-                    return;
-                }
+            if (!clearDisbursementBeforeProceeding()) {
+                // set flag
+                self.resettingSavedPolygon = true;
+                self.selectedSavedPolygonId(self.oldSelectedSavedPolygonId());
+                return;
             }
+
             self.clearActivePolygon();
 
             createActivePolygonLayer(polygonObj);
@@ -775,6 +822,12 @@ hqDefine('geospatial/js/models', [
                 if (!validateSavedPolygonName(name)) {
                     return;
                 }
+                const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
+
+                if (!clearDisbursementBeforeProceeding()) {
+                    return;
+                }
+
                 data['name'] = name;
                 $.ajax({
                     type: 'post',
@@ -965,29 +1018,15 @@ hqDefine('geospatial/js/models', [
         };
 
         self.finishAssignment = function () {
-            let userCasesToConnect = {};
-            let casesToClear = [];
             for (const caseItem of self.caseData) {
                 const userItem = self.mapModel.caseGroupsIndex[caseItem.assignedUserId];
                 const groupId = (userItem) ? userItem.groupId : null;
                 self.mapModel.caseGroupsIndex[caseItem.caseId].assignedUserId = caseItem.assignedUserId;
                 self.mapModel.caseGroupsIndex[caseItem.caseId].groupId = groupId;
-
-                casesToClear.push(caseItem.mapItem);
-                if (caseItem.assignedUserId) {
-                    if (!userCasesToConnect[caseItem.assignedUserId]) {
-                        userCasesToConnect[caseItem.assignedUserId] = [];
-                    }
-                    userCasesToConnect[caseItem.assignedUserId].push(caseItem.mapItem);
-                }
             }
 
-            self.disbursementModel.clearConnectionLines(casesToClear);
-            for (const userId in userCasesToConnect) {
-                const user = self.mapModel.caseGroupsIndex[userId].item;
-                const cases = userCasesToConnect[userId];
-                self.disbursementModel.connectUserWithCasesOnMap(user, cases);
-            }
+            self.mapModel.removeDisbursementLayer();
+            self.disbursementModel.connectUserWithCasesOnMap();
         };
 
         self.exportAssignments = function () {
@@ -1024,7 +1063,7 @@ hqDefine('geospatial/js/models', [
                 'case_id_to_owner_id': caseIdToOwnerId,
                 'include_related_cases': self.includeRelatedCases(),
             };
-
+            const reassignCasesUrl = initialPageData.reverse('reassign_cases');
             self.assignmentAjaxInProgress(true);
             $.ajax({
                 type: 'post',

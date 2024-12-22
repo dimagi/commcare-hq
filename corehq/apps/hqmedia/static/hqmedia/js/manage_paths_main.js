@@ -3,6 +3,7 @@ hqDefine("hqmedia/js/manage_paths_main", [
     "knockout",
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/components/select_toggle",
+    "commcarehq",
 ], function (
     $,
     ko,

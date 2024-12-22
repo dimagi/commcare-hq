@@ -50,5 +50,7 @@ hqDefine("cloudcare/js/formplayer/constants", [], function () {
         COLLAPSIBLE_TILE_MAX_HEIGHT: 150,
 
         MILLIS_BEFORE_SHOW_LOADING: 1000,
+
+        SCROLLABLE_CONTENT_CONTAINER: '#content-plus-version-info-container',
     };
 });

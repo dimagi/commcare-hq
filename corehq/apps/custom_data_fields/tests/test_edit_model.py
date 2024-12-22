@@ -256,6 +256,41 @@ class TestCustomDataFieldsForm(FieldsViewMixin, SimpleTestCase):
         })
 
 
+class TestProfileRequiredForUserType(FieldsViewMixin, TestCase):
+    domain = 'test-domain'
+    BOTH = [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER]
+
+    def test_req_for_defaults_to_none(self):
+        definition = CustomDataFieldsDefinition.objects.create(field_type='UserFields')
+        profiles = [CustomDataFieldsProfile(name='profile', fields={'one': 'one'}, definition=definition)]
+        profiles[0].save()
+        req_for = CustomDataFieldsProfile.objects.get(name='profile').definition.profile_required_for_user_type
+
+        self.assertEqual([], req_for)
+
+    def test_update_profile_required(self):
+        fields = [self.create_field(slug='one', is_required=True)]
+        view = FieldsView(domain='test-domain', fields=fields)
+        definition = CustomDataFieldsDefinition.objects.create(
+            field_type='UserFields', domain=self.domain,
+            profile_required_for_user_type=self.BOTH
+        )
+        profiles = [CustomDataFieldsProfile(name='profile', fields={'one': 'one'}, definition=definition)]
+        profiles[0].save()
+
+        self.assertEqual(profiles[0].definition.profile_required_for_user_type, (self.BOTH))
+
+        view.update_profile_required(UserFieldsView.COMMCARE_USER)
+        updated = CustomDataFieldsProfile.objects.get(name='profile').definition.profile_required_for_user_type
+
+        self.assertEqual(updated, UserFieldsView.COMMCARE_USER)
+
+        view.update_profile_required(self.BOTH)
+        updated = CustomDataFieldsProfile.objects.get(name='profile').definition.profile_required_for_user_type
+
+        self.assertEqual(updated, self.BOTH)
+
+
 class TestCustomDataFieldForm(SimpleTestCase):
     def test_required_for_and_choices_field_serialization(self):
         raw_field = {

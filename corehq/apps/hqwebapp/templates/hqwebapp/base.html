@@ -305,6 +305,29 @@
       {% endblock %}
     </div>
 
+    {% if is_demo_visible %}
+      {% if use_bootstrap5 %}
+        {% include "hqwebapp/partials/bootstrap5/get_demo_modals.html" %}
+      {% else %}
+        {% include "hqwebapp/partials/bootstrap3/get_demo_modals.html" %}
+      {% endif %}
+    {% endif %}
+
+    {# Knockout component templates #}
+    {% if use_bootstrap5 %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_pagination.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_inline_edit.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_search_box.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_select_toggle.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_feedback.html' %}
+    {% else %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_pagination.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_inline_edit.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_search_box.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_select_toggle.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_feedback.html' %}
+    {% endif %}
+
     {# javascript below this line #}
 
     {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
@@ -392,13 +415,6 @@
       {% endif %}
     {% endif %}
 
-    {% if request.use_typeahead and not use_js_bundler and not use_bootstrap5 %}
-      {% compress js %}
-        <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
     {% if request.use_timepicker and not use_js_bundler and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
@@ -408,7 +424,6 @@
     {% if request.use_multiselect and not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
-        <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
       {% endcompress %}
     {% endif %}
@@ -420,29 +435,6 @@
       {% else %}
         <script src="{% static 'hqwebapp/js/bootstrap3/validators.ko.js' %}"></script>
       {% endif %}
-    {% endif %}
-
-    {% if is_demo_visible %}
-      {% if use_bootstrap5 %}
-        {% include "hqwebapp/partials/bootstrap5/get_demo_modals.html" %}
-      {% else %}
-        {% include "hqwebapp/partials/bootstrap3/get_demo_modals.html" %}
-      {% endif %}
-    {% endif %}
-
-    {# Knockout component templates #}
-    {% if use_bootstrap5 %}
-      {% include 'hqwebapp/partials/bootstrap5/ko_pagination.html' %}
-      {% include 'hqwebapp/partials/bootstrap5/ko_inline_edit.html' %}
-      {% include 'hqwebapp/partials/bootstrap5/ko_search_box.html' %}
-      {% include 'hqwebapp/partials/bootstrap5/ko_select_toggle.html' %}
-      {% include 'hqwebapp/partials/bootstrap5/ko_feedback.html' %}
-    {% else %}
-      {% include 'hqwebapp/partials/bootstrap3/ko_pagination.html' %}
-      {% include 'hqwebapp/partials/bootstrap3/ko_inline_edit.html' %}
-      {% include 'hqwebapp/partials/bootstrap3/ko_search_box.html' %}
-      {% include 'hqwebapp/partials/bootstrap3/ko_select_toggle.html' %}
-      {% include 'hqwebapp/partials/bootstrap3/ko_feedback.html' %}
     {% endif %}
 
     {% if show_overdue_invoice_modal and not use_js_bundler %}

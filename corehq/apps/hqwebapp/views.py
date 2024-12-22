@@ -207,7 +207,7 @@ def redirect_to_default(req, domain=None):
     if domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
-            template='two_factor/core/otp_required.html',
+            template='two_factor/core/bootstrap3/otp_required.html',
             status=403,
         )
 
@@ -388,7 +388,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
+    template_name = custom_login_page if custom_login_page else 'login_and_password/bootstrap3/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST

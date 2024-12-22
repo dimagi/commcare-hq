@@ -25,6 +25,7 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.util.quickcache import quickcache
 
 from .dispatchers import CaseManagementMapDispatcher
+from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
 from .es import (
     BUCKET_CASES_AGG,
     CASE_PROPERTIES_AGG,
@@ -38,6 +39,7 @@ from .utils import (
     geojson_to_es_geoshape,
     get_geo_case_property,
     validate_geometry,
+    get_celery_task_tracker,
 )
 
 
@@ -59,12 +61,14 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
     def template_context(self):
         # Whatever is specified here can be accessed through initial_page_data
         context = super(BaseCaseMapReport, self).template_context
+        celery_task_tracker = get_celery_task_tracker(self.domain, task_slug=ES_INDEX_TASK_HELPER_BASE_KEY)
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'saved_polygons': [
                 {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
                 for p in GeoPolygon.objects.filter(domain=self.domain).all()
             ],
+            'task_status': celery_task_tracker.get_status(),
         })
         return context
 
@@ -90,11 +94,11 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
 
 
 class CaseManagementMap(BaseCaseMapReport):
-    name = gettext_noop("Case Management Map")
-    slug = "case_management_map"
+    name = gettext_noop("Microplanning Map")
+    slug = "microplanning_map"
 
     base_template = "geospatial/case_management_base.html"
-    report_template_path = "case_management.html"
+    report_template_path = "geospatial/case_management.html"
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
@@ -133,11 +137,11 @@ class CaseManagementMap(BaseCaseMapReport):
 
 
 class CaseGroupingReport(BaseCaseMapReport):
-    name = gettext_noop('Case Grouping')
-    slug = 'case_grouping_map'
+    name = gettext_noop('Case Clustering Map')
+    slug = 'case_clustering_map'
 
     base_template = 'geospatial/case_grouping_map_base.html'
-    report_template_path = 'case_grouping_map.html'
+    report_template_path = 'geospatial/case_grouping_map.html'
 
     default_rows = 1
     force_page_size = True

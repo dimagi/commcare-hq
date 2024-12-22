@@ -128,6 +128,22 @@ class TestUpdateUserMethods(TestCase):
             update(self.user, 'user_data', {PROFILE_SLUG: 123456})
         self.assertEqual(cm.exception.message, "User data profile not found")
 
+    def test_validation_error_when_profile_required(self):
+        self.definition = CustomDataFieldsDefinition.get_or_create(self.domain, UserFieldsView.field_type)
+        self.definition.profile_required_for_user_type = [UserFieldsView.COMMCARE_USER]
+        self.definition.save()
+        expected_error_message = "A profile assignment is required for Mobile Workers."
+        with self.assertRaises(UpdateUserException) as cm:
+            update(self.user, 'user_data', {'custom_data': 'updated custom data'})
+        self.assertEqual(cm.exception.message, expected_error_message)
+
+    def test_no_validation_error_when_profile_required_and_provided(self):
+        profile_id = self._setup_profile()
+        self.definition = CustomDataFieldsDefinition.get_or_create(self.domain, UserFieldsView.field_type)
+        self.definition.profile_required_for_user_type = [UserFieldsView.COMMCARE_USER]
+        self.definition.save()
+        update(self.user, 'user_data', {PROFILE_SLUG: profile_id})
+
     def test_update_groups_succeeds(self):
         group = Group({"name": "test", "domain": self.user.domain})
         group.save()
@@ -182,21 +198,21 @@ class TestUpdateUserMethods(TestCase):
         )
 
     def _setup_profile(self):
-        definition = CustomDataFieldsDefinition(domain=self.domain,
+        self.definition = CustomDataFieldsDefinition(domain=self.domain,
                                                 field_type=UserFieldsView.field_type)
-        definition.save()
-        definition.set_fields([
+        self.definition.save()
+        self.definition.set_fields([
             Field(
                 slug='conflicting_field',
                 label='Conflicting Field',
                 choices=['yes', 'no'],
             ),
         ])
-        definition.save()
+        self.definition.save()
         profile = CustomDataFieldsProfile(
             name='character',
             fields={'conflicting_field': 'yes'},
-            definition=definition,
+            definition=self.definition,
         )
         profile.save()
         return profile.id

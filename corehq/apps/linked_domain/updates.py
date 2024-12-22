@@ -112,7 +112,7 @@ from corehq.apps.users.models import UserRole, HqPermissions
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN, EMBEDDED_TABLEAU
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
-from corehq.toggles.shortcuts import set_toggle
+from corehq.toggles.shortcuts import set_toggles
 
 from corehq.apps.users.role_utils import UserRolePresets
 
@@ -158,8 +158,7 @@ def update_toggles(domain_link, is_pull=False, overwrite=False):
     downstream_toggles = set(local_enabled_toggles(domain_link.linked_domain))
 
     def _set_toggles(collection, enabled):
-        for slug in collection:
-            set_toggle(slug, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
+        set_toggles(collection, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
 
     # enable downstream toggles that are enabled upstream
     _set_toggles(upstream_toggles - downstream_toggles, True)
@@ -175,8 +174,7 @@ def update_previews(domain_link, is_pull=False, overwrite=False):
     downstream_previews = set(local_enabled_previews(domain_link.linked_domain))
 
     def _set_toggles(collection, enabled):
-        for slug in collection:
-            set_toggle(slug, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
+        set_toggles(collection, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
 
     # enable downstream previews that are enabled upstream
     _set_toggles(upstream_previews - downstream_previews, True)
@@ -311,6 +309,7 @@ def create_local_field(upstream_field_definition):
     return Field(
         slug=upstream_field_definition['slug'],
         is_required=upstream_field_definition['is_required'],
+        required_for=upstream_field_definition['required_for'],
         label=upstream_field_definition['label'],
         choices=upstream_field_definition['choices'],
         regex=upstream_field_definition['regex'],

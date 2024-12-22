@@ -83,9 +83,11 @@ class DomainInvoiceFactory(object):
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
 
     def create_invoices(self):
-        subscriptions = self._get_subscriptions()
-        self._ensure_full_coverage(subscriptions)
-        for subscription in subscriptions:
+        all_subscriptions = self._get_subscriptions()
+        self._ensure_full_coverage(all_subscriptions)
+        chargeable_subscriptions = [sub for sub in all_subscriptions
+                                    if sub.plan_version.plan.edition != SoftwarePlanEdition.PAUSED]
+        for subscription in chargeable_subscriptions:
             try:
                 if subscription.account.is_customer_billing_account:
                     log_accounting_info("Skipping invoice for subscription: %s, because it is part of a Customer "
@@ -106,8 +108,6 @@ class DomainInvoiceFactory(object):
             ),
             subscriber=self.subscriber,
             date_start__lte=self.date_end,
-        ).exclude(
-            plan_version__plan__edition=SoftwarePlanEdition.PAUSED,
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 

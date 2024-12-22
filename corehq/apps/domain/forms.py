@@ -951,9 +951,11 @@ class PrivacySecurityForm(forms.Form):
         if not SECURE_SESSION_TIMEOUT.enabled(domain):
             excluded_fields.append('secure_sessions_timeout')
 
-        # PrependedText ensures the label is to the left of the checkbox, and the help text beneath.
-        # Feels like there should be a better way to apply these styles, as we aren't pre-pending anything
-        fields = [twbscrispy.PrependedText(field_name, '')
+        for field in self.fields.values():
+            if not isinstance(field.widget, BootstrapCheckboxInput):
+                field.widget = BootstrapCheckboxInput()
+
+        fields = [hqcrispy.CheckboxField(field_name)
             for field_name in self.fields.keys() if field_name not in excluded_fields]
 
         self.helper = hqcrispy.HQFormHelper(self)
@@ -1273,6 +1275,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             )
 
         self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_class = "form-horizontal"
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -2382,7 +2385,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.fields['start_date'].initial = datetime.date.today()
             self.fields['end_date'].initial = datetime.date.today() + relativedelta(years=1)
             self.helper.layout = crispy.Layout(
-                hqcrispy.B3TextField('software_plan_edition', plan_edition),
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails'),

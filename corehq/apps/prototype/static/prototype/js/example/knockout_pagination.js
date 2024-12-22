@@ -6,6 +6,7 @@ hqDefine("prototype/js/example/knockout_pagination",[
     'underscore',
     'hqwebapp/js/initial_page_data',
     "hqwebapp/js/components/pagination",
+    'commcarehq',
 ], function ($, ko, _, initialPageData) {
     $(function () {
         let rowData = function (data) {

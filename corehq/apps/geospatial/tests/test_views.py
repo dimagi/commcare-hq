@@ -130,7 +130,7 @@ class GeoConfigViewTestClass(TestCase):
         result = self._make_post({})
         self.assertEqual(result.status_code, 404)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_new_config_create(self):
         self.assertEqual(GeoConfig.objects.filter(domain=self.domain).count(), 0)
 
@@ -151,7 +151,7 @@ class GeoConfigViewTestClass(TestCase):
         self.assertEqual(config.min_cases_per_group, 5)
         self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_config_update(self):
         self._make_post(
             self.construct_data(
@@ -177,7 +177,7 @@ class GeoConfigViewTestClass(TestCase):
         self.assertEqual(config.target_group_count, 10)
         self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_config_update__road_network_algorithm_ff_disabled(self):
         self._make_post(
             self.construct_data(
@@ -203,7 +203,7 @@ class GeoConfigViewTestClass(TestCase):
         config = GeoConfig.objects.get(domain=self.domain)
         self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @flag_enabled('SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM')
     def test_config_update__road_network_algorithm_ff_enabled(self):
         self._make_post(
@@ -232,14 +232,14 @@ class TestGPSCaptureView(BaseGeospatialViewClass):
         response = self.client.get(self.endpoint)
         self.assertEqual(response.status_code, 404)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_success(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(self.endpoint)
         self.assertEqual(response.status_code, 200)
 
 
-@flag_enabled('GEOSPATIAL')
+@flag_enabled('MICROPLANNING')
 @es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
 class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
     urlname = 'get_paginated_cases_or_users'
@@ -435,7 +435,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
             content_type='application/json',
         )
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_not_logged_in(self):
         response = Client().post(self.endpoint, _sample_geojson_data())
         self.assertRedirects(response, f"{self.login_url}?next={self.endpoint}")
@@ -444,7 +444,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         response = self._make_post_request({'geo_json': _sample_geojson_data()})
         self.assertEqual(response.status_code, 404)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_save_polygon(self):
         geo_json_data = _sample_geojson_data()
         response = self._make_post_request({'geo_json': geo_json_data})
@@ -462,7 +462,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(error, message,)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_geo_json_validation(self):
         response = self.client.generic('POST', self.endpoint, 'foobar')
         self._assert_error_message(
@@ -480,7 +480,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
             message='Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons'
         )
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_empty_name_validation(self):
         response = self._make_post_request({'geo_json': _sample_geojson_data(name='')})
         self._assert_error_message(
@@ -488,7 +488,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
             message='Please specify a name for the GeoPolygon area.'
         )
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_name_validation(self):
         GeoPolygon.objects.create(
             domain=self.domain,
@@ -524,7 +524,7 @@ class TestGeoPolygonDetailView(BaseGeospatialViewClass):
     def _endpoint(self, geo_polygon_id):
         return reverse(GeoPolygonDetailView.urlname, kwargs={"domain": self.domain, "pk": geo_polygon_id})
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_not_logged_in(self):
         geo_polygon = self._create_sample_polygon()
         response = Client().get(self._endpoint(geo_polygon.id))
@@ -535,14 +535,14 @@ class TestGeoPolygonDetailView(BaseGeospatialViewClass):
         response = self.client.get(self._endpoint(geo_polygon.id))
         self.assertEqual(response.status_code, 404)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_get_polygon(self):
         geo_polygon = self._create_sample_polygon()
         response = self.client.get(self._endpoint(geo_polygon.id))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), geo_polygon.geo_json)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_delete_polygon(self):
         geo_polygon = self._create_sample_polygon()
         response = self.client.delete(self._endpoint(geo_polygon.id))
@@ -644,7 +644,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
         self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_not_logged_in(self):
         response = Client().post(self.endpoint)
         self.assertRedirects(response, f"{self.login_url}?next={self.endpoint}")
@@ -661,7 +661,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         for case in cases:
             self.assertTrue(case.case_json.get(ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY))
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_cases_reassignment(self):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -682,7 +682,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
         self._assert_for_assigned_cases_flag_disabled([self.case_1, self.case_2])
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.views.get_flag_assigned_cases_config', return_value=True)
     def test_cases_reassignment_with_assigned_cases_flag_enabled(self, *args):
         case_id_to_owner_id = {
@@ -704,7 +704,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
         self._assert_for_assigned_cases_flag_enabled([self.case_1, self.case_2])
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_cases_reassignment_with_related_cases(self):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -728,7 +728,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             [self.case_1, self.case_2, self.related_case_1, self.related_case_2]
         )
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.views.get_flag_assigned_cases_config', return_value=True)
     def test_cases_reassignment_with_related_cases_and_assigned_cases_flag_enabled(self, *args):
         case_id_to_owner_id = {
@@ -753,7 +753,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             [self.case_1, self.case_2, self.related_case_1, self.related_case_2]
         )
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_cases_reassignment_with_related_case_in_request(self):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -775,7 +775,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_1.owner_id, self.user_a.user_id)
         self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.REQUEST_CASES_LIMIT', 1)
     def test_cases_reassignment_cases_limit_error(self, *args):
         case_id_to_owner_id = {
@@ -794,7 +794,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content.decode("utf-8"), "Maximum number of cases that can be reassigned is 1")
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_cases_reassignment_cases_json_error(self, *args):
         response = self.client.post(
             self.endpoint,
@@ -805,7 +805,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content.decode("utf-8"), "POST Body must be a valid json")
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_cases_reassignment_cases_invalid_case_ids(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -826,7 +826,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             "Following Case ids in request are invalid: {}".format(['invalid-case-id'])
         )
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     def test_cases_reassignment_cases_invalid_owner_ids(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -847,7 +847,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             "Following Owner ids in request are invalid: {}".format(['invalid-owner-id'])
         )
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
     @patch('corehq.apps.geospatial.views.CasesReassignmentView._process_as_async')
     def test_cases_reassignment_async_invocation(self, mocked_process_as_async):
@@ -867,7 +867,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         )
         mocked_process_as_async.assert_called_once()
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
     @patch('corehq.apps.geospatial.views.CeleryTaskTracker.is_active', return_value=False)
     def test_cases_reassignment_async(self, *args):
@@ -890,7 +890,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
         self._assert_for_assigned_cases_flag_disabled([self.case_1, self.case_2, self.related_case_1])
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.tasks.get_flag_assigned_cases_config', return_value=True)
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
     @patch('corehq.apps.geospatial.views.CeleryTaskTracker.is_active', return_value=False)
@@ -914,7 +914,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_2.owner_id, self.user_b.user_id)
         self._assert_for_assigned_cases_flag_enabled([self.case_1, self.case_2, self.related_case_1])
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
     @patch('corehq.apps.geospatial.views.CeleryTaskTracker.is_active', return_value=True)
     def test_cases_reassignment_async_task_invoked_and_not_completed(self, *args):
@@ -938,7 +938,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
             "Case reassignment is currently in progress. Please try again later."
         )
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.TOTAL_CASES_LIMIT', 3)
     def test_cases_reassignment_max_limit_error(self):
         case_id_to_owner_id = {

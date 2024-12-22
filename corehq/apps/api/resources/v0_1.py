@@ -17,6 +17,7 @@ from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
+from corehq.apps.users.util import user_location_data
 from corehq.const import USER_CHANGE_VIA_API
 
 
@@ -105,6 +106,14 @@ class CommCareUserResource(UserResource):
 
     def dehydrate_user_data(self, bundle):
         user_data = bundle.obj.get_user_data(bundle.obj.domain).to_dict()
+        if location_id := bundle.obj.get_location_id(bundle.obj.domain):
+            # This is all available in the top level, but add in here for backwards-compatibility
+            user_data['commcare_location_id'] = location_id
+            user_data['commcare_location_ids'] = user_location_data(
+                bundle.obj.get_location_ids(bundle.obj.domain))
+            user_data['commcare_primary_case_sharing_id'] = location_id
+
+        user_data['commcare_project'] = bundle.obj.domain
         if self.determine_format(bundle.request) == 'application/xml':
             # attribute names can't start with digits in xml
             user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}

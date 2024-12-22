@@ -12,6 +12,7 @@ hqDefine("users/js/enterprise_users", [
     "users/js/web_users_list",
     "hqwebapp/js/components/pagination",
     "hqwebapp/js/components/search_box",
+    "commcarehq",
 ], function (
     $,
     ko,

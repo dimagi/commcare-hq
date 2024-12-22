@@ -5,7 +5,7 @@ hqDefine('reports/v2/js/views/bootstrap3/explore_case_data', [
     'reports/v2/js/context',
     'reports/v2/js/bootstrap3/datagrid',
     'hqwebapp/js/components/bootstrap3/feedback',
-    'commcarehq_b3',
+    'commcarehq',
 ], function (
     $,
     ko,

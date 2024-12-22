@@ -5,6 +5,7 @@ hqDefine("domain/js/internal_settings", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/multiselect_utils',
     'jquery-ui/ui/widgets/datepicker',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -44,9 +45,9 @@ hqDefine("domain/js/internal_settings", [
         var $wr = $wr || $('#id_workshop_region').parent().parent();
         var $workshopInitiative = $workshopInitiative || $('[name="initiative"][value="Workshop"]');
         if ($workshopInitiative.is(":checked")) {
-            $wr.show();
+            $wr.removeClass("d-none");
         } else {
-            $wr.hide();
+            $wr.addClass("d-none");
         }
     }
 

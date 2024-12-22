@@ -15,6 +15,7 @@ hqDefine('users/js/edit_commcare_user', [
     'registration/js/bootstrap3/password',
     'select2/dist/js/select2.full.min',
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
+    'commcarehq',
 ], function (
     $,
     ko,

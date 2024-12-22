@@ -56,10 +56,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         attributes: function () {
             const displayText = this.options.model.attributes.displayText;
+            const badgeText = this.options.model.attributes.badgeText;
             return {
                 "role": "link",
                 "tabindex": "0",
-                "aria-label": displayText,
+                "aria-label": displayText + (badgeText ? "; " + badgeText : ""),
             };
         },
         events: {
@@ -301,6 +302,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 }
             });
             self.smallScreenEnabled = cloudcareUtils.smallScreenIsEnabled();
+            self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
         },
 
         className: "formplayer-request case-row",
@@ -448,7 +450,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 arrow.addClass("fa-angle-double-down");
                 tileContent.addClass("collapsed-tile-content");
                 const offset = getScrollTopOffset(this.smallScreenEnabled);
-                $(window).scrollTop($(e.currentTarget).parent().offset().top - offset);
+                this.scrollContainer.animate({
+                    scrollTop: this.scrollContainer.scrollTop() + $(e.currentTarget).parent().offset().top - offset,
+                });
             }
 
         },
@@ -616,6 +620,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, false, true);
             }
         },
+        onAttach: function () {
+            FormplayerFrontend.regions.el.classList.add('has-persistent-case-tile');
+        },
+        onDetach: function () {
+            FormplayerFrontend.regions.el.classList.remove('has-persistent-case-tile');
+        },
     });
 
     const CaseListViewUI = function () {
@@ -691,6 +701,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 self.handleSmallScreenChange(smallScreenEnabled);
             });
             self.smallScreenListener.listen();
+            self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
         },
 
         ui: CaseListViewUI(),
@@ -745,8 +756,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         scrollToBottom: function () {
-            $([document.documentElement, document.body]).animate({
-                scrollTop: $('.container .pagination-container').offset().top,
+            this.scrollContainer.animate({
+                scrollTop: $('.container.pagination-container').offset().top,
             }, 500);
         },
 
@@ -878,19 +889,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
+            const defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
 
             try {
                 const locationIcon = this.fontAwesomeIcon("fa-solid fa-location-dot");
                 const selectedLocationIcon = this.fontAwesomeIcon("fa fa-star");
                 const homeLocationIcon = this.fontAwesomeIcon("fa fa-street-view");
 
-                const lat = 30;
-                const lon = 15;
+                let initialLat = 30;
+                let initialLon = 15;
+                if (defaultGeocoderLocation && defaultGeocoderLocation.coordinates) {
+                    initialLat = defaultGeocoderLocation.coordinates.latitude;
+                    initialLon = defaultGeocoderLocation.coordinates.longitude;
+                }
                 const zoom = 3;
                 const addressMap = L.map(
                     'module-case-list-map', {
                         zoomControl: false,
-                    }).setView([lat, lon], zoom);
+                    }).setView([initialLat, initialLon], zoom);
 
                 L.control.zoom({
                     position: 'bottomright',
@@ -970,8 +986,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                                     marker.setIcon(selectedLocationIcon);
 
                                     const offset = getScrollTopOffset(this.smallScreenEnabled, addressMap.isFullscreen());
-                                    $([document.documentElement, document.body]).animate({
-                                        scrollTop: $(`#${rowId}`).offset().top - offset,
+                                    this.scrollContainer.animate({
+                                        scrollTop: this.scrollContainer.scrollTop() + $(`#${rowId}`).offset().top - offset,
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
@@ -988,7 +1004,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                         .addTo(addressMap);
                     allCoordinates.push(homeCoordinates);
                 }
-                addressMap.fitBounds(allCoordinates, {maxZoom: 14});
+                if (allCoordinates.length > 0) {
+                    addressMap.fitBounds(allCoordinates, {maxZoom: 14});
+                } else if (defaultGeocoderLocation.bbox) {
+                    const bbox = defaultGeocoderLocation.bbox;
+                    const southWestCorner = L.latLng(bbox[1], bbox[0]);
+                    const northEastCorner = L.latLng(bbox[3], bbox[2]);
+                    const bounds = L.latLngBounds(southWestCorner, northEastCorner);
+                    addressMap.fitBounds(bounds);
+                }
             } catch (error) {
                 console.error(error);
             }
@@ -1007,9 +1031,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         shouldShowScrollButton: function () {
-            const $pagination = $('.container .pagination-container');
+            const self = this;
+            const $pagination = $('.container.pagination-container');
             const paginationOffscreen = $pagination[0]
-                ? $pagination.offset().top - $(window).scrollTop() > window.innerHeight : false;
+                ? $pagination.offset().top - self.scrollContainer.scrollTop() > self.scrollContainer.innerHeight() : false;
             return paginationOffscreen;
         },
 
@@ -1020,7 +1045,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
             self.handleSmallScreenChange(self.smallScreenEnabled);
             self.boundHandleScroll = self.handleScroll.bind(self);
-            $(window).on('scroll', self.boundHandleScroll);
+            self.scrollContainer.on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
                 $('#scroll-to-bottom').removeClass("d-none");
             }
@@ -1029,7 +1054,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onBeforeDetach: function () {
             const self = this;
             self.smallScreenListener.stopListening();
-            $(window).off('scroll', self.boundHandleScroll);
+            self.scrollContainer.off('scroll', self.boundHandleScroll);
         },
 
         templateContext: function () {
@@ -1326,6 +1351,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 this.onClickHome();
             }
         },
+        onAttach: function () {
+            // Add class to #cloudcare-main so other elements can offset with CSS
+            FormplayerFrontend.regions.el.classList.add('has-breadcrumbs');
+        },
+        onBeforeDetach: function () {
+            FormplayerFrontend.regions.el.classList.remove('has-breadcrumbs');
+        },
     });
 
     const LanguageOptionView = Marionette.View.extend({
@@ -1539,8 +1571,47 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         events: {
             'click #app-main': 'onClickAppMain',
         },
+        handleSmallScreenChange: function (smallScreenEnabled) {
+            const offcanvas = 'offcanvas';
+            const collapse = 'collapse';
+            const containerDesktopClasses = collapse + ' position-relative';
+            const containerMobileClasses = offcanvas + ' offcanvas-start';
+            if (smallScreenEnabled) {
+                $('#persistent-menu-container').removeClass(containerDesktopClasses + ' show');
+                $('#persistent-menu-container').addClass(containerMobileClasses);
+                $('#persistent-menu-arrow-toggle').attr('aria-expanded', false);
+                $('#persistent-menu-close-button').removeAttr('data-bs-toggle');
+                $('#persistent-menu-close-button').attr('data-bs-dismiss', offcanvas);
+                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', offcanvas);
+            } else {
+                $('#persistent-menu-container').removeClass(containerMobileClasses);
+                $('#persistent-menu-container').addClass(containerDesktopClasses);
+                if (sessionStorage.showPersistentMenu !== 'false') {
+                    $('#persistent-menu-container').addClass('show');
+                }
+                $('#persistent-menu-arrow-toggle').attr('aria-expanded', true);
+                $('#persistent-menu-close-button').removeAttr('data-bs-dismiss');
+                $('#persistent-menu-close-button').attr('data-bs-toggle', collapse);
+                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', collapse);
+            }
+        },
+        initialize: function () {
+            self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                this.handleSmallScreenChange(smallScreenEnabled);
+            });
+            self.smallScreenListener.listen();
+        },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
+        },
+        onAttach: function () {
+            this.handleSmallScreenChange(cloudcareUtils.smallScreenIsEnabled());
+            $('#persistent-menu-container').on('hidden.bs.collapse', function () {
+                sessionStorage.showPersistentMenu = false;
+            });
+            $('#persistent-menu-container').on('show.bs.collapse', function () {
+                sessionStorage.showPersistentMenu = true;
+            });
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
@@ -1554,15 +1625,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         onClickAppMain: function () {
             FormplayerFrontend.trigger("persistentMenuSelect");
-        },
-        onBeforeDetach: function () {
-            // Be sure to hide offcanvas element so scroll works properly
-            const openedCanvas = bootstrap.Offcanvas.getInstance(
-                document.getElementById('persistent-menu-container')
-            );
-            if (openedCanvas) {
-                openedCanvas.hide();
-            }
         },
     });
 

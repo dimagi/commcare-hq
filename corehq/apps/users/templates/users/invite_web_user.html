@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main 'users/js/invite_web_user' %}
+{% js_entry_b3 'users/js/invite_web_user' %}
 
 {% block page_content %}
   {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}

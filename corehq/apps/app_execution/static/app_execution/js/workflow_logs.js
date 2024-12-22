@@ -6,6 +6,7 @@ hqDefine("app_execution/js/workflow_logs", [
     'hqwebapp/js/tempus_dominus',
     'app_execution/js/workflow_charts',
     'hqwebapp/js/components/pagination',
+    'commcarehq',
 ], function ($, ko, initialPageData, hqTempusDominus) {
     let logsModel = function () {
         let self = {};

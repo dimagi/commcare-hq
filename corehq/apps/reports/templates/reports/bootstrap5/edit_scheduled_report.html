@@ -4,7 +4,7 @@
 {% load i18n %}
 
 
-{% requirejs_main_b5 'reports/js/bootstrap5/edit_scheduled_report' %}
+{% js_entry 'reports/js/bootstrap5/edit_scheduled_report' %}
 
 {% block page_content %}
   {% initial_page_data 'is_configurable_map' is_configurable_map %}

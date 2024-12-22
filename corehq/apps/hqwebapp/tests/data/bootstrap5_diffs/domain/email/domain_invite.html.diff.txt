@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -32,7 +32,7 @@
+   {% blocktrans %}
+     CommCare HQ is a data management tool used by over 500 organizations
+     to help frontline workers around the world.
+-    <a href="https://dimagi.com/commcare/" style="color: #bcdeff;">Learn more about CommCare</a>.
++    <a href="https://dimagi.com/commcare/" style="color: #bcdeff;">Learn more about CommCare</a>.  {# todo B5: inline-style #}
+   {% endblocktrans %}
+ {% endblock %}
+ 

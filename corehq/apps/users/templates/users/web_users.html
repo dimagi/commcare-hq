@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'users/js/web_users' %}
+{% js_entry_b3 'users/js/web_users' %}
 
 {% block page_content %}
   {% initial_page_data "invitations" invitations %}

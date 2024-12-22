@@ -1,0 +1,82 @@
+--- 
++++ 
+@@ -8,7 +8,7 @@
+   </table>
+ 
+   <!-- ko with: newCard -->
+-    <button type='button' class="btn btn-primary new-card" data-toggle="modal" href="#card-modal">
++    <button type='button' class="btn btn-primary new-card" data-bs-toggle="modal" href="#card-modal">
+       <i class='fa fa-plus'></i> {% trans 'Add Card' %}
+     </button>
+     <div data-bind="template: {name: 'new-stripe-card-template'}"></div>
+@@ -20,7 +20,7 @@
+   <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header">
+-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
+         <h4 class="modal-title">{% trans "Credit Card" %}</h4>
+       </div>
+       <div class="modal-body">
+@@ -29,7 +29,7 @@
+         </div>
+       </div>
+       <div class="modal-footer">
+-        <button style="" type="button" class="btn btn-default" data-dismiss="modal">
++        <button style="" type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">  {# todo B5: inline-style #}
+           {% trans 'Close' %}
+         </button>
+       </div>
+@@ -41,7 +41,7 @@
+   <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header">
+-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
+         <h4 class="modal-title">{% trans "Delete Card" %}</h4>
+       </div>
+       <div class="modal-body">
+@@ -59,10 +59,10 @@
+         {% endblocktrans %}
+       </div>
+       <div class="modal-footer">
+-        <button type="button" class="btn btn-default" data-dismiss="modal">
++        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+           {% trans 'Cancel' %}
+         </button>
+-        <button type="button" class="btn btn-danger"
++        <button type="button" class="btn btn-outline-danger"
+                 data-bind="click: deleteCard,
+                                enable: !isDeleting()">
+           {% trans 'Delete' %}
+@@ -76,7 +76,7 @@
+   <tr>
+     <td>
+       <i class="fa-regular fa-credit-card"></i> <strong><span data-bind="text: brand"></span></strong>
+-      <span class="label label-success"
++      <span class="badge text-bg-success"
+             data-bind="visible: is_autopay">
+                 {% trans 'Autopay card' %}
+             </span>
+@@ -89,18 +89,18 @@
+       <button data-bind="visible: is_autopay,
+                                click: unSetAutopay,
+                                enable: $parent.autoPayButtonEnabled"
+-              class='btn btn-default autopay-button'>
++              class='btn btn-outline-primary autopay-button'>
+         {% trans 'Remove Autopay' %}
+       </button>
+       <button data-bind="visible: !is_autopay(),
+                                click: setAutopay,
+                                enable: $parent.autoPayButtonEnabled"
+-              class='btn btn-default autopay-button'>
++              class='btn btn-outline-primary autopay-button'>
+         {% trans 'Set as autopay card' %}
+       </button>
+     </td>
+     <td>
+-      <button class="btn btn-danger" href="#" data-bind="openModal: 'delete-card-modal'">
++      <button class="btn btn-outline-danger" href="#" data-bind="openModal: 'delete-card-modal'">
+         <i class="fa fa-remove"></i> {% trans 'Delete Card' %}
+       </button>
+     </td>

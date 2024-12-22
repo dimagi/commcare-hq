@@ -5,7 +5,7 @@ hqDefine("prototype/js/webpack/bootstrap3_amd",[
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    "commcarehq_b3",  // IMPORTANT :: this has to be included with any Bootstrap 3 entry point
+    "commcarehq",  // IMPORTANT :: this has to be included with any Bootstrap 3 entry point
 ], function ($, ko, _, initialPageData) {
     /**
      * This is an (HQ)AMD-formatted module, intended to be used with js_entry as follows:
@@ -16,7 +16,7 @@ hqDefine("prototype/js/webpack/bootstrap3_amd",[
      * look like.
      *
      * The most important difference between a requirejs module and a webpack module of this type
-     * is that the webpack module requires that the "commcarehq_b3" dependency is included
+     * is that the webpack module requires that the "commcarehq" dependency is included
      * in the list of dependencies above. Otherwise, everything else should function
      * identically to the requirejs module, provided the appropriate shims are in place
      * in the Webpack config for special dependencies.

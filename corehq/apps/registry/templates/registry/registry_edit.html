@@ -16,7 +16,7 @@
   {% endcompress %}
 {% endblock %}
 
-{% requirejs_main_b5 'registry/js/registry_edit' %}
+{% js_entry 'registry/js/registry_edit' %}
 
 {% block page_content %}
 {% initial_page_data "registry" registry %}

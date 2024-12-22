@@ -4,6 +4,7 @@ hqDefine("dhis2/js/dataset_map", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/crud_paginated_list_init",
     "hqwebapp/js/bootstrap5/widgets",
+    "commcarehq",
 ], function (
     $,
     _,

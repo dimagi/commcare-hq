@@ -195,6 +195,12 @@ class CustomDataEditor(object):
                 original_profile_id, self.domain, self.request_user
             )
 
+            def profile_selection_required():
+                user_type = self.field_view.user_type
+                profile_required_list_user_types = self.model.profile_required_for_user_type or []
+
+                return user_type in profile_required_list_user_types
+
             def validate_profile_slug(value):
                 from django.core.exceptions import ValidationError
                 if value not in [p.id for p in profiles]:
@@ -211,7 +217,7 @@ class CustomDataEditor(object):
                     attrs.update({'class': 'hqwebapp-select2'})
                 form_fields[PROFILE_SLUG] = forms.IntegerField(
                     label=_('Profile'),
-                    required=False,
+                    required=profile_selection_required(),
                     widget=Select(choices=[
                         (p.id, p.name)
                         for p in profiles

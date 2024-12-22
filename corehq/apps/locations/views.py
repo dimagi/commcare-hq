@@ -202,6 +202,7 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
+    @method_decorator(use_bootstrap5)
     @method_decorator(check_pending_locations_import())
     @method_decorator(require_can_edit_or_view_locations)
     def dispatch(self, request, *args, **kwargs):
@@ -248,6 +249,7 @@ class LocationsListView(BaseLocationView):
 
 
 @location_safe
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_can_edit_or_view_locations, name='dispatch')
 class FilteredLocationDownload(BaseLocationView):
     urlname = 'filter_and_download_locations'
@@ -313,6 +315,7 @@ class LocationTypesView(BaseDomainView):
         return reverse(LocationsListView.urlname, args=[self.domain])
 
     @use_jquery_ui
+    @method_decorator(use_bootstrap5)
     @method_decorator(can_edit_location_types)
     @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import())
@@ -594,6 +597,7 @@ class LocationTypesView(BaseDomainView):
         return ordered_loc_types
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class BaseEditLocationView(BaseLocationView):
     template_name = 'locations/manage/location.html'
     creates_new_location = True
@@ -949,6 +953,7 @@ class LocationImportView(BaseLocationView):
     page_title = gettext_noop('Upload Organization Structure From Excel')
     template_name = 'locations/manage/import.html'
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
@@ -1134,6 +1139,7 @@ class DowngradeLocationsView(BaseDomainView):
     section_name = gettext_lazy("Project Settings")
     page_title = gettext_lazy("Project Access")
 
+    @method_decorator(use_bootstrap5)
     def dispatch(self, *args, **kwargs):
         if not users_have_locations(self.domain):  # irrelevant, redirect
             redirect_url = reverse('users_default', args=[self.domain])

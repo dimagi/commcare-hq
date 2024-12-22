@@ -1,0 +1,27 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load crispy_forms_tags %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% requirejs_main 'domain/js/bootstrap3/update_billing_contact_info' %}
++{% requirejs_main_b5 'domain/js/bootstrap5/update_billing_contact_info' %}
+ 
+ {% block additional_initial_page_data %}{{ block.super }}
+   {% initial_page_data "stripe_public_key" stripe_public_key %}
+@@ -13,9 +13,9 @@
+ 
+ {% block page_content %}
+   <div id="billing-info">
+-    {% crispy billing_account_info_form %}
++    {% crispy billing_account_info_form %}  {# todo B5: crispy #}
+   </div>
+-  <div id="card-manager" style="margin-top:20px;">
+-    {% include 'domain/bootstrap3/stripe_cards.html' %}
++  <div id="card-manager" style="margin-top:20px;">  {# todo B5: inline-style #}
++    {% include 'domain/bootstrap5/stripe_cards.html' %}
+   </div>
+ {% endblock %}

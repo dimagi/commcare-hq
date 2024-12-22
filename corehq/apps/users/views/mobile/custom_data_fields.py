@@ -24,6 +24,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     user_type = None
     WEB_USER = "web_user"
     COMMCARE_USER = "commcare_user"
+    NEITHER = "neither"
     required_for_options = [
         {
             "text": _("Web Users"),
@@ -37,6 +38,26 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         {
             "text": _("Both"),
             "value": [WEB_USER, COMMCARE_USER],
+        }
+    ]
+
+    profile_required_for_options = [
+        {
+            "text": _("Web Users"),
+            "value": [WEB_USER],
+        },
+        {
+            "text": _("Mobile Workers"),
+            "value": [COMMCARE_USER],
+        },
+        {
+            "text": _("Both"),
+            "value": [WEB_USER, COMMCARE_USER],
+        },
+        {
+            "text": _("Neither"),
+            "value": [],
+            "isDefault": True
         }
     ]
 

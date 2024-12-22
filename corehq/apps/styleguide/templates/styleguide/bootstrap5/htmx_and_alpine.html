@@ -1,4 +1,9 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block head %}
+  <script src="{% static 'htmx.org/dist/htmx.min.js' %}"></script>
+{% endblock head %}
 
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">HTMX and Alpine</h1>
@@ -31,6 +36,14 @@
         </ul>
       </li>
       <li><a href="#debugging">Debugging During Development</a></li>
+      <li>
+        <a href="#loading-indicators">Loading Indicators</a>
+        <ul>
+          <a href="#button-loading">Buttons</a></li>
+          <a href="#checkbox-loading">Checkboxes</a></li>
+          <a href="#form-loading">Forms</a></li>
+        </ul>
+      </li>
     </ul>
   </nav>
 {% endblock toc %}
@@ -241,4 +254,49 @@
     You can check out the <code>HqHtmxDebugMixin</code> directly for additional documentation and usage
     guidance.
   </p>
+
+  <h2 id="loading-indicators" class="pt-4">
+    Loading Indicators
+  </h2>
+  <p>
+    You can use the <code>hx-indicator</code> attribute
+    (<a href="https://htmx.org/attributes/hx-indicator/" target="_blank">see docs here</a>)
+    to mark which element gets the <code>htmx-request</code> class appended to it during a request.
+    We've added custom styling to <code>_htmx.scss</code> to support the common states outlined
+    later in this section.
+  </p>
+  <p>
+    By default, if an element triggers an HTMX request, it will automatically get the <code>htmx-request</code>
+    CSS class applied to it. No extra usage of the <code>hx-indicator</code> attribute is necessary. The
+    example submitting elements below showcase this default behavior <strong>without</strong> the need for
+    specific <code>hx-indicator</code> usage.
+  </p>
+  <p>
+    It's often a great idea to pair button requests with <code>hx-disabled-elt="this"</code>
+    (<a href="https://htmx.org/attributes/hx-disabled-elt/" target="_blank`">see docs for hx-disabled-elt</a>),
+    like the examples below, so that the requesting element or related element is disabled during the request.
+  </p>
+  <h3 id="button-loading" class="pt-4">
+    Buttons
+  </h3>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.loading_button %}
+
+  <h3 id="checkbox-loading" class="pt-4">
+    Checkboxes
+  </h3>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.loading_checkbox %}
+
+  <h3 id="form-loading" class="pt-4">
+    Forms
+  </h3>
+  <p>
+    In the example below, note that the <code>form</code> is the triggering element, so the
+    <code>hx-disabled-elt</code> value is set to <code>find button</code> to disable all button children
+    of that form during an HTMX request. Since <code>form</code> is the submitting element, by default
+    it has the <code>htmx-request</code> class applied. Our styles ensure that
+    <code>button type="submit"</code> elements of a submitting form show the loading indicator during
+    an HTMX request.
+  </p>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.loading_form %}
+
 {% endblock content %}

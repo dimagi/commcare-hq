@@ -1,0 +1,72 @@
+@mixin htmx-spinner($width) {
+  position: absolute;
+  height: $width;
+  width: $width;
+  $offset: $width / 2;
+  left: calc(50% - $offset);
+  top: calc(50% - $offset);
+}
+
+form.htmx-request {
+  button[type="submit"] {
+    position: relative;
+    &::before {
+      content: " ";
+      @extend .spinner-border;
+      @extend .spinner-border-sm;
+      @include htmx-spinner(22px);
+    }
+    &.btn-sm::before {
+      @include htmx-spinner(18px);
+    }
+  }
+  .input-group button[type="submit"]::before {
+    vertical-align: -0.28em;
+  }
+}
+
+.htmx-request.page-link {
+  background-color: $blue-300;
+  color: $white;
+  position: relative;
+
+  &::after {
+    content: " ";
+    @extend .spinner-border;
+    @extend .spinner-border-sm;
+    @include htmx-spinner(22px);
+  }
+}
+
+.htmx-request[type="checkbox"] {
+  position: relative;
+
+  &::after {
+    content: " ";
+    color: $blue-400;
+    @extend .spinner-border;
+    @extend .spinner-border-sm;
+    @include htmx-spinner(22px);
+  }
+}
+
+.htmx-request.form-check-input {
+  &::after {
+    @include htmx-spinner(30px);
+  }
+}
+
+button.htmx-request {
+  position: relative;
+  &::before {
+    content: " ";
+    @extend .spinner-border;
+    @extend .spinner-border-sm;
+    @include htmx-spinner(22px);
+    opacity: .5;
+  }
+
+  &.btn-sm::before {
+    @include htmx-spinner(18px);
+  }
+}

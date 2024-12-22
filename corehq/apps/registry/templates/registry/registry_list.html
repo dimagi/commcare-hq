@@ -16,7 +16,7 @@
   {% endcompress %}
 {% endblock %}
 
-{% requirejs_main_b5 'registry/js/registry_list' %}
+{% js_entry 'registry/js/registry_list' %}
 
 {% block page_content %}
   {% initial_page_data "owned_registries" owned_registries %}

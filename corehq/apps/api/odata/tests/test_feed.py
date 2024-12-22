@@ -76,10 +76,11 @@ class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/json; charset=utf-8')
         self.assertEqual(response['OData-Version'], '4.0')
+        url = 'http://localhost:8000/a/test_domain/api/odata/cases/v1/config_id/$metadata#feed'
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
             {
-                '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/cases/config_id/$metadata#feed',
+                '@odata.context': url,
                 'value': []
             }
         )
@@ -98,7 +99,7 @@ class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
             'api_dispatch_detail',
             kwargs={
                 'domain': domain_name,
-                'api_name': 'v0.5',
+                'api_name': 'v1',
                 'resource_name': ODataCaseResource._meta.resource_name,
                 'pk': config_id + '/feed',
             }
@@ -161,10 +162,11 @@ class TestODataFormFeed(TestCase, FormOdataTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/json; charset=utf-8')
         self.assertEqual(response['OData-Version'], '4.0')
+        url = 'http://localhost:8000/a/test_domain/api/odata/forms/v1/config_id/$metadata#feed'
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
             {
-                '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/forms/config_id/$metadata#feed',
+                '@odata.context': url,
                 'value': []
             }
         )
@@ -183,7 +185,7 @@ class TestODataFormFeed(TestCase, FormOdataTestMixin):
             'api_dispatch_detail',
             kwargs={
                 'domain': domain_name,
-                'api_name': 'v0.5',
+                'api_name': 'v1',
                 'resource_name': ODataFormResource._meta.resource_name,
                 'pk': config_id + '/feed',
             }

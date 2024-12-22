@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'users/js/roles_and_permissions' %}
+{% js_entry_b3 'users/js/roles_and_permissions' %}
 {% block page_content %}
   {% registerurl "post_user_role" domain %}
   {% registerurl "delete_user_role" domain %}

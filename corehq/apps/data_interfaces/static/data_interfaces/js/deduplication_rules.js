@@ -5,7 +5,7 @@ hqDefine("data_interfaces/js/deduplication_rules", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/crud_paginated_list',
     'analytix/js/google',
-    'commcarehq_b3',
+    'commcarehq',
 ], function (
     $,
     ko,

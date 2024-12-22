@@ -9,10 +9,7 @@ from tastypie.resources import ModelResource
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.resources import HqBaseResource
-from corehq.apps.api.resources.auth import (
-    DomainAdminAuthentication,
-    RequirePermissionAuthentication,
-)
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import absolute_reverse
 
@@ -58,9 +55,13 @@ class LocationTypeResource(BaseLocationsResource):
         return absolute_reverse('api_dispatch_detail', kwargs={
             'resource_name': self._meta.resource_name,
             'domain': obj.domain,
-            'api_name': self._meta.api_name,
+            'api_name': self.api_name,
             'pk': obj.pk
         })
+
+    def dehydrate_parent(self, bundle):
+        if bundle.obj.parent_type:
+            return self.get_resource_uri(bundle.obj.parent_type)
 
 
 class LocationResource(BaseLocationsResource):
@@ -107,6 +108,19 @@ class LocationResource(BaseLocationsResource):
         return absolute_reverse('api_dispatch_detail', kwargs={
             'resource_name': self._meta.resource_name,
             'domain': obj.domain,
-            'api_name': self._meta.api_name,
+            'api_name': self.api_name,
             'location_id': obj.location_id
         })
+
+    def dehydrate_location_type(self, bundle):
+        if bundle.obj.location_type_id:
+            return absolute_reverse('api_dispatch_detail', kwargs={
+                'resource_name': 'location_type',
+                'domain': bundle.obj.domain,
+                'api_name': self.api_name,
+                'pk': bundle.obj.location_type_id,
+            })
+
+    def dehydrate_parent(self, bundle):
+        if bundle.obj.parent:
+            return self.get_resource_uri(bundle.obj.parent)

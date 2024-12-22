@@ -1,12 +1,11 @@
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
-from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
-class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
+class GridMenuSuiteTests(TestCase, TestXmlMixin):
     def test_that_grid_style_is_added(self, *args):
         """
         Confirms that style="grid" is added to the root menu

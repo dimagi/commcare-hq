@@ -17,6 +17,7 @@ from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
+from corehq.apps.users.models import SQLUserData, CouchUser
 
 from .models import (
     CustomDataFieldsDefinition,
@@ -35,6 +36,7 @@ class CustomDataFieldsForm(forms.Form):
     data_fields = forms.CharField(widget=forms.HiddenInput)
     purge_existing = forms.BooleanField(widget=forms.HiddenInput, required=False, initial=False)
     profiles = forms.CharField(widget=forms.HiddenInput)
+    require_profile = forms.CharField(widget=forms.HiddenInput, required=False)
 
     @classmethod
     def verify_no_duplicates(cls, data_fields):
@@ -155,6 +157,14 @@ class CustomDataFieldsForm(forms.Form):
 
         return profiles
 
+    def clean_require_profile(self):
+        require_profile = self.cleaned_data['require_profile']
+        if not require_profile:
+            require_profile = []
+        else:
+            require_profile = require_profile.split(',')
+        return require_profile
+
     def clean(self):
         cleaned_data = super().clean()
         data_fields = self.cleaned_data.get('data_fields')
@@ -266,6 +276,7 @@ class CustomDataModelMixin(object):
     show_purge_existing = False
     entity_string = None  # User, Group, Location, Product...
     required_for_options = []
+    profile_required_for_options = []
 
     @use_bootstrap5
     @use_jquery_ui
@@ -275,7 +286,7 @@ class CustomDataModelMixin(object):
     @classmethod
     def get_validator(cls, domain):
         data_model = CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
-        return data_model.get_validator()
+        return data_model.get_validator(cls)
 
     @classmethod
     def page_name(cls):
@@ -288,6 +299,17 @@ class CustomDataModelMixin(object):
     @memoized
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
+
+    def get_profile_required_for_user_type(self):
+        definition = self.get_definition()
+        return definition.profile_required_for_user_type
+
+    def update_profile_required(self, profile_required_for_user_type):
+        fields_definition = self.get_definition()
+        current_require_for = fields_definition.profile_required_for_user_type
+        if current_require_for != profile_required_for_user_type:
+            fields_definition.profile_required_for_user_type = profile_required_for_user_type
+            fields_definition.save()
 
     @memoized
     def get_profiles(self):
@@ -368,13 +390,20 @@ class CustomDataModelMixin(object):
                 bulk_sync_usercases_if_applicable(obj.definition.domain, list(obj.user_ids_assigned()))
             seen.add(obj.id)
 
+        return self.delete_eligible_profiles(self.get_profiles(), seen)
+
+    def delete_eligible_profiles(self, all_profiles, updated_profile_list):
         errors = []
-        for profile in self.get_profiles():
-            if profile.id not in seen:
-                if profile.has_users_assigned:
-                    errors.append(_("Could not delete profile '{}' because it has users "
-                                    "assigned.").format(profile.name))
-                else:
+        for profile in all_profiles:
+            if profile.id not in updated_profile_list:
+                user_data = SQLUserData.objects.filter(profile=profile)
+                for ud in user_data:
+                    user = CouchUser.get_by_user_id(ud.user_id)
+                    if user.is_active and self.domain in user.domains:
+                        errors.append(_("Could not delete profile '{}' because it has users "
+                                        "assigned.").format(profile.name))
+                        break
+                if not errors:
                     profile.delete()
 
         return errors
@@ -425,6 +454,11 @@ class CustomDataModelMixin(object):
             context.update({
                 "required_for_options": self.required_for_options
             })
+        if self.profile_required_for_options:
+            context.update({
+                "profile_required_for_options": self.profile_required_for_options,
+                "profile_required_for_user_type": self.get_profile_required_for_user_type()
+            })
         return context
 
     @property
@@ -469,6 +503,8 @@ class CustomDataModelMixin(object):
 
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
+            if self.form.cleaned_data['require_profile'] is not None:
+                self.update_profile_required(self.form.cleaned_data['require_profile'])
             if self.show_profiles:
                 msg = _("{} fields and profiles saved successfully.").format(self.entity_string)
             else:

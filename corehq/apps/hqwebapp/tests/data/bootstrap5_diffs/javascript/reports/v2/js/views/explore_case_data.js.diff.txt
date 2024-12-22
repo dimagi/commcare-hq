@@ -9,7 +9,7 @@
      'reports/v2/js/context',
 -    'reports/v2/js/bootstrap3/datagrid',
 -    'hqwebapp/js/components/bootstrap3/feedback',
--    'commcarehq_b3',
+-    'commcarehq',
 +    'reports/v2/js/bootstrap5/datagrid',
 +    'hqwebapp/js/components/bootstrap5/feedback',
  ], function (

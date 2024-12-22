@@ -5,6 +5,7 @@ hqDefine('users/js/edit_web_user', [
     'hqwebapp/js/initial_page_data',
     'users/js/custom_data_fields',
     'locations/js/widgets',
+    'commcarehq',
 ], function (
     $,
     initialPageData,

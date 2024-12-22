@@ -11,6 +11,7 @@ hqDefine('app_manager/js/summary/form_diff',[
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // popover
     'hqwebapp/js/components/search_box',
+    'commcarehq',
 ], function ($, _, ko, initialPageData, assertProperties, models, formModels, utils, layout) {
 
     $(function () {

@@ -94,7 +94,7 @@ tag to ``js_entry_b3``, so that the final usage looks like:
 
     {% js_entry_b3 "domain/js/my_project_settings" %}
 
-Then, in the file itself, we add the ``commcarehq_b3`` dependency to the list of dependencies:
+Then, in the file itself, we add the ``commcarehq`` dependency to the list of dependencies:
 
 ::
 
@@ -102,7 +102,7 @@ Then, in the file itself, we add the ``commcarehq_b3`` dependency to the list of
         'jquery',
         'knockout',
         'hqwebapp/js/initial_page_data',
-        'commcarehq_b3',  // <--- dependency added for webpack
+        'commcarehq',  // <--- dependency added for webpack
     ], function (
         $,
         ko,

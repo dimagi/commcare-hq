@@ -8,7 +8,7 @@ from django.utils.http import urlencode
 from flaky import flaky
 from tastypie.bundle import Bundle
 
-from corehq.apps.api.resources import v0_5
+from corehq.apps.api.resources import v0_5, v1_0
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
     CustomDataFieldsDefinition,
@@ -726,3 +726,22 @@ class TestUserDomainsResource(TestCase):
         bundle.request.user = self.user
         resp = UserDomainsResource().obj_get_list(bundle)
         self.assertEqual(0, len(resp))
+
+
+class TestCommCareAnalyticsUserResource(APIResourceTest):
+    resource = v1_0.CommCareAnalyticsUserResource
+    api_name = 'v1'
+
+    def test_flag_not_enabled(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 404)
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_user_roles_returned(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        expected_response_obj = {
+            'permissions': {'can_edit': True, 'can_view': True},
+            'resource_uri': '',
+            'roles': ['sql_lab', 'dataset_editor']
+        }
+        self.assertEqual(response.json(), expected_response_obj)

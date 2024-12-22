@@ -12,6 +12,7 @@ hqDefine("users/js/web_users",[
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/search_box',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // for modals
+    'commcarehq',
 ], function ($, ko, _, moment, assertProperties, initialPageData, webUsersList) {
 
     /* Web Users panel */

@@ -3,6 +3,7 @@ hqDefine("export/js/download_data_files",[
     'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
+    'commcarehq',
 ], function ($, alertUserModule, initialPageData, assertProperties) {
     var alertUser = alertUserModule.alert_user;
     /**

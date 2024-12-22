@@ -67,7 +67,7 @@
      .select2-search-field {
          width: 100% !important;
      }
-@@ -72,16 +64,111 @@
+@@ -72,16 +64,127 @@
      .select2-input {
          width: 100% !important;
      }
@@ -115,17 +115,33 @@
 +  }
 +}
 +
++.select2-container--default .select2-selection--single.select2-selection--clearable {
++
++  .select2-selection__clear {
++    font-size: 1.5em;
++  }
++}
++
 +.select2-container--default.is-invalid,
 +.select2-container--default.is-valid {
 +
 +  .select2-selection__rendered {
 +    padding-right: 66px !important;
 +  }
-+  .select2-selection--single .select2-selection__arrow {
++  .select2-selection--single::before {
++    content: ' ';
 +    background-repeat: no-repeat;
-+    background-size: 24%;
-+    background-position: 15px 7px;
-+    width: 66px !important;
++    background-size: 100%;
++    background-position: 0 7px;
++    width: 16px;
++    position: absolute;
++    display: block;
++    top: 1px;
++    right: 35px;
++    height: 30px;
++  }
++  .select2-selection--single.select2-selection--clearable::before {
++    right: 49px;
 +  }
 +
 +  &.select2-container--focus {
@@ -141,7 +157,7 @@
 +  .select2-selection--multiple {
 +    border-color: $form-feedback-icon-invalid-color !important;
 +  }
-+  .select2-selection--single .select2-selection__arrow {
++  .select2-selection--single::before {
 +    background-image: escape-svg($form-feedback-icon-invalid);
 +  }
 +}
@@ -151,7 +167,7 @@
 +  .select2-selection--multiple {
 +    border-color: $form-feedback-icon-valid-color !important;
 +  }
-+  .select2-selection--single .select2-selection__arrow {
++  .select2-selection--single::before {
 +    background-image: escape-svg($form-feedback-icon-valid);
 +  }
 +}

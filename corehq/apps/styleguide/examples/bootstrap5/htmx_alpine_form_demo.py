@@ -83,7 +83,7 @@ class FilterDemoForm(forms.Form):
                 twbscrispy.StrictButton(
                     _("Add Filter"),
                     type="submit",
-                    css_class="btn-primary htmx-loading",
+                    css_class="btn btn-primary",
                 ),
                 # The Alpine data model is easily bound to the form
                 # to control hiding/showing the value field:

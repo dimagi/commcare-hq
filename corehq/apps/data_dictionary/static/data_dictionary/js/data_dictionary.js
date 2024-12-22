@@ -13,6 +13,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "data_interfaces/js/make_read_only",
     'hqwebapp/js/select2_knockout_bindings.ko',
     'knockout-sortable/build/knockout-sortable',
+    "commcarehq",
 ], function (
     $,
     ko,
@@ -244,7 +245,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.deprecateProperty = function () {
-            if (toggles.toggleEnabled('GEOSPATIAL') && self.isGeoCaseProp()) {
+            if (toggles.toggleEnabled('MICROPLANNING') && self.isGeoCaseProp()) {
                 self.confirmGeospatialDeprecation();
             } else {
                 self.deprecated(true);

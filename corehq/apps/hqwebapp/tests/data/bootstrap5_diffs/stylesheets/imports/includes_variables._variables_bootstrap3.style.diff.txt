@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,124 +1,70 @@
+@@ -1,121 +1,71 @@
 -@import "@{b3-import-variables}";
 +/*
 +These are Boostrap 3 variables that were carried over in the
@@ -136,9 +136,6 @@
 -
 -@checkbox-default-color: @call-to-action-mid;
 -
--@breadcrumb-separator: '>';
--@breadcrumb-height-cloudcare: 46px;
--
 -@grid-gutter-width: 20px;
 +$checkbox-default-color: $call-to-action-mid;
  
@@ -172,6 +169,7 @@
 +$zindex-formplayer-scroll-to-bottom:    5;
 +$zindex-formplayer-anchored-submit:     4;
 +$zindex-select2-results:             1056;  // higher than $zindex-modal so select2s can be used in modals
++$zindex-next-error:                     5;  // Above the sticky submit button
  
 -
 -@input-border-radius-large:       5px;

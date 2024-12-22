@@ -3,6 +3,7 @@ hqDefine('sso/js/new_identity_provider', [
     'knockout',
     'accounting/js/widgets',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     ko,

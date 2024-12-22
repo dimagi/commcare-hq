@@ -141,6 +141,9 @@ from corehq.motech.repeaters.models import (
     RepeatRecord,
     RepeatRecordAttempt,
 )
+from corehq.toggles import NAMESPACE_DOMAIN, set_toggle
+from corehq.toggles.shortcuts import toggle_enabled
+from corehq.util.test_utils import flag_enabled
 from settings import HQ_ACCOUNT_ROOT
 
 from .. import deletion as mod
@@ -322,6 +325,21 @@ class TestDeleteDomain(TestCase):
 
     def test_case_deletion_sql(self):
         self._test_case_deletion()
+
+    # This is necessary to patch Toggle.enabled to return True for this flag.
+    # Otherwise, the delete call will think the flag isn't enabled and won't disable it.
+    @flag_enabled('CASE_LIST_LOOKUP')
+    def test_disable_toggles(self):
+        slug = 'CASE_LIST_LOOKUP'
+
+        # These calls actually update the Toggle document
+        set_toggle(slug, self.domain.name, True, NAMESPACE_DOMAIN)
+        set_toggle(slug, self.domain2.name, True, NAMESPACE_DOMAIN)
+
+        self.domain.delete()
+
+        self.assertFalse(toggle_enabled(slug, self.domain.name, namespace=NAMESPACE_DOMAIN))
+        self.assertTrue(toggle_enabled(slug, self.domain2.name, namespace=NAMESPACE_DOMAIN))
 
     def test_form_deletion(self):
         form_states = [state_tuple[0] for state_tuple in XFormInstance.STATES]

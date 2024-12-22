@@ -275,6 +275,7 @@ hqDefine("cloudcare/js/formplayer/router", [
         utils.setUrlToObject(urlObject);
         var options = {
             'appId': urlObject.appId,
+            'copyOf': urlObject.copyOf,
             'selections': urlObject.selections,
             'queryData': urlObject.queryData,
         };

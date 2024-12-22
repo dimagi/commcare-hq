@@ -15,7 +15,7 @@
         </div>
         <p class="lead">
           {% blocktrans %}
-            For organizations exploring CommCare.
+            For organizations managing projects.
           {% endblocktrans %}
         </p>
         {% include 'registration/partials/feature_list.html' with features=professional_features %}
@@ -30,7 +30,7 @@
              data-toggle="modal"
              class="btn btn-primary">
             {% blocktrans %}
-              Request Custom Trial
+              Request a Trial
             {% endblocktrans %}
           </a>
           <script src="//fast.wistia.com/embed/medias/jzm3ggrinr.jsonp" async></script>
@@ -55,6 +55,14 @@
               {% endblocktrans %}
             </a>
           </span>
+          <p>
+            <small>
+              {% trans "Know what you need?" %}
+              <a href="#" id="js-self-signup">
+                {% trans "Get started here!" %}
+              </a>
+            </small>
+          </p>
         </div>
       </div>
     </div>

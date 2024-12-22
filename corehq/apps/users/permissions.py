@@ -18,6 +18,14 @@ EXPORT_PERMISSIONS = {
     ODATA_FEED_PERMISSION,
 }
 
+COMMCARE_ANALYTICS_SQL_LAB = "sql_lab"
+COMMCARE_ANALYTICS_DATASET_EDITOR = "dataset_editor"
+
+COMMCARE_ANALYTICS_USER_ROLES = [
+    COMMCARE_ANALYTICS_SQL_LAB,
+    COMMCARE_ANALYTICS_DATASET_EDITOR,
+]
+
 ReportPermission = namedtuple('ReportPermission', ['slug', 'title', 'is_visible'])
 
 

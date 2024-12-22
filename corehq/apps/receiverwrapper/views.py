@@ -79,6 +79,10 @@ def _verify_access(domain, user_id, request):
             cache.set(cache_key, True, CACHE_EXPIRY_7_DAYS_IN_SECS)
             message = f"NoMobileEndpointsAccess: invalid request by {user_id} on {domain}"
             notify_exception(request, message=message)
+            if not toggles.OPEN_SUBMISSION_ENDPOINT.enabled(domain):
+                # Once we're confident this has enabled the flag for all active
+                # usage, we can make domains without the toggle fail hard
+                toggles.OPEN_SUBMISSION_ENDPOINT.set(domain, enabled=True, namespace=toggles.NAMESPACE_DOMAIN)
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)

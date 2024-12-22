@@ -3,7 +3,7 @@ hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list_init", [
     "knockout",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap3/crud_paginated_list",
-    "commcarehq_b3",
+    "commcarehq",
 ], function (
     $,
     ko,

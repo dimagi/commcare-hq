@@ -4,6 +4,7 @@ hqDefine("enterprise/js/enterprise_settings", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     ko,

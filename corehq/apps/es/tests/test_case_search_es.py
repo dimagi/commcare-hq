@@ -565,7 +565,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
         ).get_ids()
         self.assertItemsEqual(res, ['c3', 'c4'])
 
-    @flag_enabled('GEOSPATIAL')
+    @flag_enabled('MICROPLANNING')
     @patch('corehq.pillows.case_search.get_geo_case_property', return_value='domain_coord')
     def test_geopoint_query_for_domain_geo_case_property(self, *args):
         self._bootstrap_cases_in_es_for_domain(self.domain, [

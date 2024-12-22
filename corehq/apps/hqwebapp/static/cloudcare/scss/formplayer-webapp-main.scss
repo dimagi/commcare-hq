@@ -10,7 +10,9 @@ If you want to make changes relevant for BOTH app preview and the main
 formplayer, please make changes to the cloudcare styles.
 **/
 
-$breadcrumb-height-cloudcare: 36px;
+$breadcrumb-height: 36px;
+$cloudcare-nav-height: 30px;
+$minimized-debugger-height: 30px;
 
 @import "formplayer-webapp/content";
 @import "formplayer-webapp/navbar";

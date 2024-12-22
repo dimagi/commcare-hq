@@ -79,6 +79,8 @@ hqDefine('cloudcare/js/debugger/debugger', [
             ],
         });
 
+        $('#cloudcare-main').addClass('has-debugger');
+
         self.registeredTabIds = self.options.tabs;
         self.tabs = DebuggerTabs;
 

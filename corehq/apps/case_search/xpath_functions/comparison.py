@@ -14,9 +14,6 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import CaseFilterError
-from corehq.apps.case_search.xpath_functions.value_functions import (
-    value_to_date,
-)
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     case_property_date_range,
@@ -123,25 +120,36 @@ def _create_system_datetime_query(domain, meta_property, op, value, node):
     if op == NEQ:
         return filters.NOT(_create_system_datetime_query(domain, meta_property, EQ, value, node))
 
-    timezone = get_timezone_for_domain(domain)
-    utc_equivalent_datetime_value = adjust_input_date_by_timezone(value_to_date(node, value), timezone, op)
-    if op == EQ:
-        range_kwargs = {
-            'gte': utc_equivalent_datetime_value,
-            'lt': utc_equivalent_datetime_value + timedelta(days=1),
-        }
+    try:
+        date_or_datetime = _parse_date_or_datetime(value)
+    except ValueError as e:
+        raise CaseFilterError(str(e), serialize(node))
+
+    if isinstance(date_or_datetime, datetime):
+        if op == EQ:
+            return filters.term(meta_property.es_field_name, value)
+        range_kwargs = {RANGE_OP_MAPPING[op]: date_or_datetime}
     else:
-        range_kwargs = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value}
+        timezone = get_timezone_for_domain(domain)
+        utc_equivalent_datetime_value = adjust_input_date_by_timezone(date_or_datetime, timezone, op)
+        if op == EQ:
+            range_kwargs = {
+                'gte': utc_equivalent_datetime_value,
+                'lt': utc_equivalent_datetime_value + timedelta(days=1),
+            }
+        else:
+            range_kwargs = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value}
+
     if CASE_SEARCH_INDEXED_METADATA.enabled(domain):
         return filters.date_range(meta_property.es_field_name, **range_kwargs)
     return case_property_date_range(meta_property.key, **range_kwargs)
 
 
-def adjust_input_date_by_timezone(date, timezone, op):
-    date = datetime(date.year, date.month, date.day)
+def adjust_input_date_by_timezone(date_, timezone, op):
+    date_ = datetime(date_.year, date_.month, date_.day)
     if op == '>' or op == '<=':
-        date += timedelta(days=1)
-    return UserTime(date, tzinfo=timezone).server_time().done()
+        date_ += timedelta(days=1)
+    return UserTime(date_, tzinfo=timezone).server_time().done()
 
 
 def _create_system_query(meta_property, op, value):

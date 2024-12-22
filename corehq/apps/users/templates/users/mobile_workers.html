@@ -4,7 +4,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main 'users/js/mobile_workers' %}
+{% js_entry_b3 'users/js/mobile_workers' %}
 
 {% block page_content %}
   {% initial_page_data 'can_access_all_locations' can_access_all_locations %}

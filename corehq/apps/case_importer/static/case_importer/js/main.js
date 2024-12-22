@@ -7,6 +7,7 @@ hqDefine("case_importer/js/main", [
     'case_importer/js/excel_fields',
     'hqwebapp/js/bootstrap5/widgets',
     'hqwebapp/js/components/select_toggle',
+    'commcarehq',
 ], function (
     $,
     _,

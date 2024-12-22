@@ -8,6 +8,7 @@ hqDefine("events/js/event_attendees",[
     "hqwebapp/js/bootstrap3/widgets",
     "hqwebapp/js/components/pagination",
     "hqwebapp/js/components/search_box",
+    "commcarehq",
 ], function (
     $,
     ko,

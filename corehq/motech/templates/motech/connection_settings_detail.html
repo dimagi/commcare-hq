@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main_b5 "motech/js/connection_settings_detail" %}
+{% js_entry "motech/js/connection_settings_detail" %}
 
 {% block page_content %}
   {% registerurl "test_connection_settings" domain %}
