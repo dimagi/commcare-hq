@@ -103,8 +103,8 @@ from corehq.form_processor.models import (
     XFormInstance,
 )
 from corehq.motech.const import (
-    MAX_REQUEST_LOG_LENGTH,
     ALL_REQUEST_METHODS,
+    MAX_REQUEST_LOG_LENGTH,
     REQUEST_POST,
 )
 from corehq.motech.models import ConnectionSettings
@@ -126,6 +126,7 @@ from .const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
+    MIN_REPEATER_RETRY_WAIT,
     MIN_RETRY_WAIT,
     State,
 )
@@ -422,31 +423,48 @@ class Repeater(RepeaterSuperProxy):
         return min(num_workers, settings.MAX_REPEATER_WORKERS)
 
     def set_backoff(self):
-        now = datetime.utcnow()
-        interval = _get_retry_interval(self.last_attempt_at, now)
-        self.last_attempt_at = now
-        self.next_attempt_at = now + interval
+        self.next_attempt_at = self._get_next_attempt_at(self.last_attempt_at)
+        self.last_attempt_at = datetime.utcnow()
         # Save using QuerySet.update() to avoid a possible race condition
         # with self.pause(), etc. and to skip the unnecessary functionality
         # in RepeaterSuperProxy.save().
         Repeater.objects.filter(id=self.repeater_id).update(
-            last_attempt_at=now,
-            next_attempt_at=now + interval,
+            last_attempt_at=self.last_attempt_at,
+            next_attempt_at=self.next_attempt_at,
         )
 
     def reset_backoff(self):
         if self.last_attempt_at or self.next_attempt_at:
-            # `_get_retry_interval()` implements exponential backoff by
-            # multiplying the previous interval by 3. Set last_attempt_at
-            # to None so that the next time we need to back off, we
-            # know it is the first interval.
+            # `self._get_next_attempt_at()` uses `last_attempt_at` to
+            # determine the previous interval. Set it to `None` so that
+            # the next time we need to back off, we know it is the first
+            # interval.
             self.last_attempt_at = None
             self.next_attempt_at = None
             # Avoid a possible race condition with self.pause(), etc.
             Repeater.objects.filter(id=self.repeater_id).update(
-                last_attempt_at=None,
-                next_attempt_at=None,
+                last_attempt_at=self.last_attempt_at,
+                next_attempt_at=self.next_attempt_at,
             )
+
+    @staticmethod
+    def _get_next_attempt_at(last_attempt_at):
+        """
+        Calculates exponential backoff.
+        """
+        # Repeat records back off aggressively: The previous interval is
+        # multiplied by 3, and the minimum wait time is an hour.
+        # Repeaters are more cautious because backing off will hold up
+        # all their repeat records. If a remote endpoint is just
+        # rate-limiting, backing off for an hour is too much.
+        # MIN_REPEATER_RETRY_WAIT is only 5 minutes.
+        if last_attempt_at:
+            interval = 2 * (datetime.utcnow() - last_attempt_at)
+        else:
+            interval = timedelta(0)
+        interval = max(MIN_REPEATER_RETRY_WAIT, interval)
+        interval = min(MAX_RETRY_WAIT, interval)
+        return datetime.utcnow() + interval
 
     @property
     def verify(self):
@@ -1267,10 +1285,10 @@ class RepeatRecord(models.Model):
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
-            process_repeat_record,
             process_datasource_repeat_record,
-            retry_process_repeat_record,
+            process_repeat_record,
             retry_process_datasource_repeat_record,
+            retry_process_repeat_record,
         )
 
         def is_new_synchronous_case_repeater_record():

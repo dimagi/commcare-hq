@@ -6,6 +6,7 @@ from django.db.models import IntegerChoices
 
 MAX_RETRY_WAIT = timedelta(days=7)
 MIN_RETRY_WAIT = timedelta(minutes=60)
+MIN_REPEATER_RETRY_WAIT = timedelta(minutes=5)  # Repeaters back off slower
 RATE_LIMITER_DELAY_RANGE = (
     timedelta(minutes=getattr(settings, 'MIN_REPEATER_RATE_LIMIT_DELAY', 0)),
     timedelta(minutes=getattr(settings, 'MAX_REPEATER_RATE_LIMIT_DELAY', 15)),
