@@ -16,7 +16,7 @@
       ">
       Browse...
     </button>
-    <p data-bind="text: fileNameDisplay" style="margin-left: 7px; margin-right: auto;"></p>
+    <p data-bind="text: fileNameDisplay" class="text-break ms-2 me-auto"></p>
     <button class="btn btn-outline-primary btn-sm" data-bind="
       click: onClear,
       text: $root.getTranslation('upload.clear.title', '{% trans_html_attr 'Clear' %}'),
