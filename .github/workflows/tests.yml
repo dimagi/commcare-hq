@@ -64,7 +64,7 @@ jobs:
       env:
         TOKEN: ${{ secrets.CODECOV_TOKEN }}
       if: env.TOKEN != ''
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage.xml
