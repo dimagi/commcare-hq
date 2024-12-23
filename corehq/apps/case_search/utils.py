@@ -107,17 +107,12 @@ def time_function():
 def get_case_search_results_from_request(domain, app_id, couch_user, request_dict, debug=False):
     profiler = CaseSearchProfiler(debug_mode=debug)
     with profiler.timing_context:
-        config = extract_search_request_config(request_dict)
+        request_config = extract_search_request_config(request_dict)
         cases = get_case_search_results(
             domain,
-            config.case_types,
-            config.criteria,
+            request_config,
             app_id=app_id,
             couch_user=couch_user,
-            registry_slug=config.data_registry,
-            custom_related_case_property=config.custom_related_case_property,
-            include_all_related_cases=config.include_all_related_cases,
-            commcare_sort=config.commcare_sort,
             profiler=profiler,
         )
         with profiler.timing_context('CaseDBFixture.fixture'):
@@ -125,18 +120,20 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
     return fixtures, profiler
 
 
-def get_case_search_results(domain, case_types, criteria,
-                            app_id=None, couch_user=None, registry_slug=None, custom_related_case_property=None,
-                            include_all_related_cases=None, commcare_sort=None, profiler=None):
-    helper = _get_helper(couch_user, domain, case_types, registry_slug)
+def get_case_search_results(domain, request_config, app_id=None, couch_user=None, profiler=None):
+    helper = _get_helper(couch_user, domain, request_config.case_types, request_config.data_registry)
     if profiler:
         helper.profiler = profiler
 
-    cases = get_primary_case_search_results(helper, case_types, criteria, commcare_sort)
+    cases = get_primary_case_search_results(
+        helper,
+        request_config.case_types,
+        request_config.criteria,
+        request_config.commcare_sort,
+    )
     helper.profiler.primary_count = len(cases)
     if app_id:
-        related_cases = get_and_tag_related_cases(helper, app_id, case_types, cases,
-                                                  custom_related_case_property, include_all_related_cases)
+        related_cases = get_and_tag_related_cases(helper, app_id, request_config, cases)
         helper.profiler.related_count = len(related_cases)
         cases.extend(related_cases)
     return cases
@@ -361,8 +358,7 @@ class CaseSearchQueryBuilder:
 
 
 @time_function()
-def get_and_tag_related_cases(helper, app_id, case_types, cases,
-                            custom_related_case_property, include_all_related_cases):
+def get_and_tag_related_cases(helper, app_id, request_config, cases):
     """
     Fetch related cases that are necessary to display any related-case
     properties in the app requesting this case search.
@@ -373,13 +369,13 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
         return []
 
     expanded_case_results = []
-    if custom_related_case_property:
-        expanded_case_results.extend(get_expanded_case_results(helper, custom_related_case_property, cases))
+    if related_prop := request_config.custom_related_case_property:
+        expanded_case_results.extend(get_expanded_case_results(helper, related_prop, cases))
 
     unfiltered_results = expanded_case_results
     top_level_cases = cases + expanded_case_results
     related_cases = get_related_cases_result(
-        helper, app_id, case_types, top_level_cases, include_all_related_cases)
+        helper, app_id, request_config.case_types, top_level_cases, request_config.include_all_related_cases)
     if related_cases:
         unfiltered_results.extend(related_cases)
     initial_case_ids = {case.case_id for case in cases}
