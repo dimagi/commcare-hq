@@ -130,6 +130,7 @@ def get_case_search_results(domain, request_config, app_id=None, couch_user=None
         request_config.case_types,
         request_config.criteria,
         request_config.commcare_sort,
+        request_config.xpath_vars,
     )
     helper.profiler.primary_count = len(cases)
     if app_id:
@@ -140,8 +141,8 @@ def get_case_search_results(domain, request_config, app_id=None, couch_user=None
 
 
 @time_function()
-def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=None):
-    builder = CaseSearchQueryBuilder(helper, case_types)
+def get_primary_case_search_results(helper, case_types, criteria, commcare_sort, xpath_vars):
+    builder = CaseSearchQueryBuilder(helper, case_types, xpath_vars)
     try:
         with helper.profiler.timing_context('build_query'):
             search_es = builder.build_query(criteria, commcare_sort)
@@ -224,11 +225,12 @@ class RegistryQueryHelper(QueryHelper):
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
 
-    def __init__(self, helper, case_types):
+    def __init__(self, helper, case_types, xpath_vars=None):
         self.request_domain = helper.domain
         self.case_types = case_types
         self.helper = helper
         self.config = helper.config
+        self.xpath_vars = xpath_vars or {}
 
     def build_query(self, search_criteria, commcare_sort=None):
         search_es = self._get_initial_search_es()
@@ -264,8 +266,8 @@ class CaseSearchQueryBuilder:
         if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
             if not criteria.is_empty:
                 xpaths = criteria.value if criteria.has_multiple_terms else [criteria.value]
-                for xpath in xpaths:
-                    search_es = search_es.filter(self._build_filter_from_xpath(xpath))
+                for xpath_template in xpaths:
+                    search_es = search_es.filter(self._build_filter_from_xpath(xpath_template))
                 return search_es
         elif criteria.key == 'case_id':
             return search_es.filter(case_es.case_ids(criteria.value))
@@ -282,7 +284,11 @@ class CaseSearchQueryBuilder:
             return search_es.add_query(self._get_case_property_query(criteria), queries.MUST)
         return search_es
 
-    def _build_filter_from_xpath(self, xpath, fuzzy=False):
+    def _build_filter_from_xpath(self, xpath_template, fuzzy=False):
+        try:
+            xpath = xpath_template.format(**self.xpath_vars)
+        except KeyError as e:
+            raise CaseSearchUserError(_("Variable '{}' not found").format(e.args[0]))
         context = SearchFilterContext(self.request_domain, fuzzy, self.helper)
         with self.helper.profiler.timing_context('_build_filter_from_xpath'):
             return build_filter_from_xpath(xpath, context=context)
