@@ -44,6 +44,7 @@ from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.app_manager.xpath import UsercaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.models import Domain
+from corehq.apps.es import AppES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
@@ -775,3 +776,27 @@ def does_app_have_mobile_ucr_v1_refs(app):
         ):
             return True
     return False
+
+
+def get_all_released_builds_for_app(domain, app_id):
+    app_es = (
+        AppES()
+        .domain(domain)
+        .is_build()
+        .app_id(app_id)
+        .sort('version', desc=True)
+        .is_released()
+    )
+
+    results = app_es.run()
+    from corehq.apps.app_manager.models import SavedAppBuild
+    builds = [SavedAppBuild.wrap(b) for b in results.hits]
+
+    return [
+        (
+            build.id,
+            build.version,
+            build.last_released,
+        )
+        for build in builds
+    ]
