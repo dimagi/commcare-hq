@@ -15,7 +15,7 @@ from dimagi.utils.dates import DateSpan
 
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_brief_apps_in_domain
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
 from corehq.apps.builds.models import CommCareBuildConfig
@@ -672,6 +672,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
     def rows_for_domain(self, domain_obj):
         rows = []
+        apps = get_app_ids_in_domain(domain_obj.name)
 
         user_query = (UserES()
             .domain(domain_obj.name)
@@ -684,7 +685,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
             last_builds = user.get('reporting_metadata', {}).get('last_builds', [])
             for build in last_builds:
                 build = LastBuild.wrap(build)
-                if build.build_version and build.app_id:
+                if build.build_version and build.app_id in apps:
                     all_builds = self.get_app_builds(domain_obj.name, build.app_id)
                     latest_version = self.get_latest_build_version_at_time(all_builds,
                                                                            build.build_version_date)
