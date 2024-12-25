@@ -688,7 +688,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                     all_builds = self.get_app_builds(domain_obj.name, build.app_id)
                     latest_version = self.get_latest_build_version_at_time(all_builds,
                                                                            build.build_version_date)
-                    if is_out_of_date(build.build_version, latest_version):
+                    if is_out_of_date(str(build.build_version), str(latest_version)):
                         rows.append([
                             user['username'],
                             domain_obj.name,
