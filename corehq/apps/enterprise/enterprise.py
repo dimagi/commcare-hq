@@ -677,7 +677,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
             last_builds = user.get('reporting_metadata', {}).get('last_builds', [])
             for build in last_builds:
                 build = LastBuild.wrap(build)
-                if build.build_version:
+                if build.build_version and build.app_id:
                     all_builds = self.get_app_builds(domain_obj.name, build.app_id)
                     latest_version = self.get_latest_build_version_at_time(all_builds,
                                                                            build.build_version_date)
