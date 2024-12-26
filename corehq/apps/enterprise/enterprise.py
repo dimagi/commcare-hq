@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Count, Subquery, Q
+from dimagi.ext.jsonobject import DateTimeProperty
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -16,7 +17,7 @@ from dimagi.utils.dates import DateSpan
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_brief_apps_in_domain
-from corehq.apps.app_manager.models import Application, SavedAppBuild
+from corehq.apps.app_manager.models import Application
 from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.calculations import sms_in_last
@@ -659,6 +660,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 .app_id(app_id)
                 .sort('version', desc=True)
                 .is_released()
+                .source(['_id', 'version', 'last_released'])
             )
             self.builds_by_app_id[app_id] = app_es.run().hits
 
@@ -717,11 +719,14 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         for build_doc in all_builds:
             build_id = build_doc['_id']
             if build_id in self.wrapped_builds_cache:
-                build = self.wrapped_builds_cache[build_id]
+                build_info = self.wrapped_builds_cache[build_id]
             else:
-                build = SavedAppBuild.wrap(build_doc)
-                self.wrapped_builds_cache[build_id] = build
+                build_info = {
+                    'version': build_doc['version'],
+                    'last_released': DateTimeProperty.deserialize(build_doc['last_released'])
+                }
+                self.wrapped_builds_cache[build_id] = build_info
 
-            if build.last_released <= time:
-                return build.version
+            if build_info['last_released'] <= time:
+                return build_info['version']
         return None
