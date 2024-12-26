@@ -649,7 +649,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     def __init__(self, account, couch_user):
         super().__init__(account, couch_user)
         self.builds_by_app_id = {}
-        self.wrapped_builds_cache = {}
+        self.build_by_build_id = {}
 
     def get_app_builds(self, domain, app_id):
         if app_id not in self.builds_by_app_id:
@@ -718,14 +718,14 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
         for build_doc in all_builds:
             build_id = build_doc['_id']
-            if build_id in self.wrapped_builds_cache:
-                build_info = self.wrapped_builds_cache[build_id]
+            if build_id in self.build_by_build_id:
+                build_info = self.build_by_build_id[build_id]
             else:
                 build_info = {
                     'version': build_doc['version'],
                     'last_released': DateTimeProperty.deserialize(build_doc['last_released'])
                 }
-                self.wrapped_builds_cache[build_id] = build_info
+                self.build_by_build_id[build_id] = build_info
 
             if build_info['last_released'] <= time:
                 return build_info['version']
