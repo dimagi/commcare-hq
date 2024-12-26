@@ -684,20 +684,21 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         for user in user_query.run().hits:
             last_builds = user.get('reporting_metadata', {}).get('last_builds', [])
             for build in last_builds:
+                if build.get('app_id') not in apps or not build.get('build_version'):
+                    continue
                 build = LastBuild.wrap(build)
-                if build.build_version and build.app_id in apps:
-                    all_builds = self.get_app_builds(domain_obj.name, build.app_id)
-                    latest_version = self.get_latest_build_version_at_time(all_builds,
-                                                                           build.build_version_date)
-                    if is_out_of_date(str(build.build_version), str(latest_version)):
-                        rows.append([
-                            user['username'],
-                            domain_obj.name,
-                            Application.get(build.app_id).name,
-                            latest_version,
-                            build.build_version,
-                            self.format_date(build.build_version_date),
-                        ])
+                all_builds = self.get_app_builds(domain_obj.name, build.app_id)
+                latest_version = self.get_latest_build_version_at_time(all_builds,
+                                                                       build.build_version_date)
+                if is_out_of_date(str(build.build_version), str(latest_version)):
+                    rows.append([
+                        user['username'],
+                        domain_obj.name,
+                        Application.get(build.app_id).name,
+                        latest_version,
+                        build.build_version,
+                        self.format_date(build.build_version_date),
+                    ])
 
         return rows
 
