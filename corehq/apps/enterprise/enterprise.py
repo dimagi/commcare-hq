@@ -660,7 +660,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 .app_id(app_id)
                 .sort('version', desc=True)
                 .is_released()
-                .source(['_id', 'version', 'last_released'])
+                .source(['_id', 'version', 'last_released', 'built_on'])
             )
             self.builds_by_app_id[app_id] = app_es.run().hits
 
@@ -721,9 +721,13 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
             if build_id in self.build_by_build_id:
                 build_info = self.build_by_build_id[build_id]
             else:
+                # last_released is added in 2019, build before 2019 don't have this field
+                # TODO: have a migration to populate last_released from built_on
+                # Then this code can be modified to use last_released only
+                released_date = build_doc['last_released'] or build_doc['built_on']
                 build_info = {
                     'version': build_doc['version'],
-                    'last_released': DateTimeProperty.deserialize(build_doc['last_released'])
+                    'last_released': DateTimeProperty.deserialize(released_date)
                 }
                 self.build_by_build_id[build_id] = build_info
 
