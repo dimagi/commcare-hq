@@ -16,8 +16,7 @@ from dimagi.utils.dates import DateSpan
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import get_all_released_builds_for_app
+from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.calculations import sms_in_last
@@ -27,7 +26,7 @@ from corehq.apps.enterprise.exceptions import (
     TooMuchRequestedDataError,
 )
 from corehq.apps.enterprise.iterators import raise_after_max_elements
-from corehq.apps.es import forms as form_es
+from corehq.apps.es import AppES, forms as form_es
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.reports.util import (
@@ -648,12 +647,22 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
     def __init__(self, account, couch_user):
         super().__init__(account, couch_user)
-        self.app_builds_cache = {}
+        self.builds_by_app_id = {}
+        self.wrapped_builds_cache = {}
 
     def get_app_builds(self, domain, app_id):
-        if app_id not in self.app_builds_cache:
-            self.app_builds_cache[app_id] = get_all_released_builds_for_app(domain, app_id)
-        return self.app_builds_cache[app_id]
+        if app_id not in self.builds_by_app_id:
+            app_es = (
+                AppES()
+                .domain(domain)
+                .is_build()
+                .app_id(app_id)
+                .sort('version', desc=True)
+                .is_released()
+            )
+            self.builds_by_app_id[app_id] = app_es.run().hits
+
+        return self.builds_by_app_id[app_id]
 
     @property
     def headers(self):
@@ -698,11 +707,19 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         """
         Get the latest build version at the time
 
-        :param all_builds: List of tuples containing build information (id, version, last_released)
+        :param all_builds: List of raw build documents sorted by version in descending order
         :param time: The date of the build version to compare against
         :return: The latest build version available at the given date
         """
-        for build_id, version, release_date in all_builds:
-            if release_date <= time:
-                return version
+
+        for build_doc in all_builds:
+            build_id = build_doc['_id']
+            if build_id in self.wrapped_builds_cache:
+                build = self.wrapped_builds_cache[build_id]
+            else:
+                build = SavedAppBuild.wrap(build_doc)
+                self.wrapped_builds_cache[build_id] = build
+
+            if build.last_released <= time:
+                return build.version
         return None
