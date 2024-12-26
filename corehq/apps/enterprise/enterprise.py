@@ -674,6 +674,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
     def rows_for_domain(self, domain_obj):
         rows = []
+        app_name_by_id = {}
         apps = get_app_ids_in_domain(domain_obj.name)
 
         user_query = (UserES()
@@ -693,10 +694,12 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 latest_version = self.get_latest_build_version_at_time(all_builds,
                                                                        build.build_version_date)
                 if is_out_of_date(str(build.build_version), str(latest_version)):
+                    if build.app_id not in app_name_by_id:
+                        app_name_by_id[build.app_id] = Application.get(build.app_id).name
                     rows.append([
                         user['username'],
                         domain_obj.name,
-                        Application.get(build.app_id).name,
+                        app_name_by_id[build.app_id],
                         latest_version,
                         build.build_version,
                         self.format_date(build.build_version_date),
