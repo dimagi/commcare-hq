@@ -39,7 +39,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, HQApiKey, Invitation, LastBuild, WebUser
+from corehq.apps.users.models import CouchUser, HQApiKey, Invitation, WebUser
 
 
 class EnterpriseReport(ABC):
@@ -673,22 +673,24 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         for user in user_query.run().hits:
             last_builds = user.get('reporting_metadata', {}).get('last_builds', [])
             for build in last_builds:
-                if build.get('app_id') not in apps or not build.get('build_version'):
+                app_id = build.get('app_id')
+                build_version = build.get('build_version')
+                if app_id not in apps or not build_version:
                     continue
-                build = LastBuild.wrap(build)
-                all_builds = self.get_app_builds(domain, build.app_id)
+                build_version_date = DateTimeProperty.deserialize(build.get('build_version_date'))
+                all_builds = self.get_app_builds(domain, app_id)
                 latest_version = self.get_latest_build_version_at_time(all_builds,
-                                                                       build.build_version_date)
-                if is_out_of_date(str(build.build_version), str(latest_version)):
-                    if build.app_id not in app_name_by_id:
-                        app_name_by_id[build.app_id] = Application.get_db().get(build.app_id).get('name')
+                                                                       build_version_date)
+                if is_out_of_date(str(build_version), str(latest_version)):
+                    if app_id not in app_name_by_id:
+                        app_name_by_id[app_id] = Application.get_db().get(app_id).get('name')
                     rows.append([
                         user['username'],
                         domain,
-                        app_name_by_id[build.app_id],
+                        app_name_by_id[app_id],
                         latest_version,
-                        build.build_version,
-                        self.format_date(build.build_version_date),
+                        build_version,
+                        self.format_date(build_version_date),
                     ])
 
         return rows
