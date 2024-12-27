@@ -681,7 +681,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                                                                        build.build_version_date)
                 if is_out_of_date(str(build.build_version), str(latest_version)):
                     if build.app_id not in app_name_by_id:
-                        app_name_by_id[build.app_id] = Application.get(build.app_id).name
+                        app_name_by_id[build.app_id] = Application.get_db().get(build.app_id).get('name')
                     rows.append([
                         user['username'],
                         domain,
