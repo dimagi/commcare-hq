@@ -672,13 +672,20 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 _('Latest Version Available at Submission'),
                 _('Version in Use'), _('Last Used [UTC]')]
 
-    def rows_for_domain(self, domain_obj):
+    @property
+    def rows(self):
+        rows = []
+        for domain in self.account.get_domains():
+            rows.extend(self.rows_for_domain(domain))
+        return rows
+
+    def rows_for_domain(self, domain):
         rows = []
         app_name_by_id = {}
-        apps = get_app_ids_in_domain(domain_obj.name)
+        apps = get_app_ids_in_domain(domain)
 
         user_query = (UserES()
-            .domain(domain_obj.name)
+            .domain(domain)
             .mobile_users()
             .source([
                 'username',
@@ -690,7 +697,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 if build.get('app_id') not in apps or not build.get('build_version'):
                     continue
                 build = LastBuild.wrap(build)
-                all_builds = self.get_app_builds(domain_obj.name, build.app_id)
+                all_builds = self.get_app_builds(domain, build.app_id)
                 latest_version = self.get_latest_build_version_at_time(all_builds,
                                                                        build.build_version_date)
                 if is_out_of_date(str(build.build_version), str(latest_version)):
@@ -698,7 +705,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                         app_name_by_id[build.app_id] = Application.get(build.app_id).name
                     rows.append([
                         user['username'],
-                        domain_obj.name,
+                        domain,
                         app_name_by_id[build.app_id],
                         latest_version,
                         build.build_version,
@@ -707,7 +714,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
         return rows
 
-    def total_for_domain(self, domain_obj):
+    def total_for_domain(self, domain):
         return 0
 
     def get_latest_build_version_at_time(self, all_builds, time):
