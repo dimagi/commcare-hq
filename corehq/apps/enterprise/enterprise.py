@@ -508,12 +508,6 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
         return rows
 
 
-def _format_percentage_for_enterprise_tile(dividend, divisor):
-    if not divisor:
-        return '--'
-    return f"{dividend / divisor * 100:.1f}%"
-
-
 class EnterpriseSMSReport(EnterpriseReport):
     title = gettext_lazy('SMS Usage')
     total_description = gettext_lazy('# of SMS Sent')
@@ -651,21 +645,6 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         self.builds_by_app_id = {}
         self.build_by_build_id = {}
 
-    def get_app_builds(self, domain, app_id):
-        if app_id not in self.builds_by_app_id:
-            app_es = (
-                AppES()
-                .domain(domain)
-                .is_build()
-                .app_id(app_id)
-                .sort('version', desc=True)
-                .is_released()
-                .source(['_id', 'version', 'last_released', 'built_on'])
-            )
-            self.builds_by_app_id[app_id] = app_es.run().hits
-
-        return self.builds_by_app_id[app_id]
-
     @property
     def headers(self):
         return [_('Mobile Worker'), _('Project Space'), _('Application'),
@@ -717,6 +696,21 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     def total_for_domain(self, domain):
         return 0
 
+    def get_app_builds(self, domain, app_id):
+        if app_id not in self.builds_by_app_id:
+            app_es = (
+                AppES()
+                .domain(domain)
+                .is_build()
+                .app_id(app_id)
+                .sort('version', desc=True)
+                .is_released()
+                .source(['_id', 'version', 'last_released', 'built_on'])
+            )
+            self.builds_by_app_id[app_id] = app_es.run().hits
+
+        return self.builds_by_app_id[app_id]
+
     def get_latest_build_version_at_time(self, all_builds, time):
         """
         Get the latest build version at the time
@@ -744,3 +738,9 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
             if build_info['last_released'] <= time:
                 return build_info['version']
         return None
+
+
+def _format_percentage_for_enterprise_tile(dividend, divisor):
+    if not divisor:
+        return '--'
+    return f"{dividend / divisor * 100:.1f}%"
