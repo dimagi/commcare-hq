@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 
 from collections import namedtuple
+from jsonpath_ng import parse as parse_jsonpath
 from typing import Generator, List
 from urllib.parse import urlencode
 from uuid import uuid4
@@ -461,15 +462,11 @@ def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
     response = requests.get(url, headers=headers)
     response_json = handle_response(response)
     fhir_id = None
-    entry_list = response_json.get('entry')
-    if entry_list and len(entry_list) > 0:
-        entry = entry_list[0]
-    else:
-        entry = None
-    if entry:
-        resource = entry.get('resource')
-        if resource:
-            fhir_id = resource.get('id')
+
+    path = parse_jsonpath('entry[0].resource.id')
+    matches = path.find(response_json)
+    if matches:
+        fhir_id = matches[0].value
     return fhir_id
 
 
