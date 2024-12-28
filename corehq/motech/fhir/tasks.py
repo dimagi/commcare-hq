@@ -470,8 +470,33 @@ def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
     return fhir_id
 
 
-# TODO add time param 12 weeks from study start date
-def get_epic_appointments_for_patient(fhir_id, access_token):
+def filter_appointments_by_date(appointments_entries_json, study_start_date, weeks_from_start_date):
+    """
+    Returns a list of appointment entries
+    :param appointments_entries_json: Json response data for Epic appointment search
+    :param study_start_date: A date case property formatted YYYY-MM-DD
+    :param weeks_from_start_date: Number of weeks after study start to filter by
+    :return: A list of json entries
+    """
+    appointments = []
+    path = parse_jsonpath('$.resource.start')
+    for entry in appointments_entries_json:
+        matches = path.find(entry)
+        if matches:
+            entry_start = matches[0].value
+            local_appointment_date, local_appointment_time = convert_utc_timestamp_to_date_and_time(entry_start)
+            study_start_datetime = datetime.strptime(study_start_date, "%Y-%m-%d")
+            local_appointment_datetime = datetime.strptime(local_appointment_date, "%Y-%m-%d")
+
+            difference = local_appointment_datetime - study_start_datetime
+            difference_in_weeks = difference.days // 7
+
+            if (difference_in_weeks > -1 and difference_in_weeks <= weeks_from_start_date):
+                appointments.append(entry)
+    return appointments
+
+
+def get_epic_appointments_for_patient(fhir_id, access_token, study_start_date):
     if not fhir_id:
         return []
     appointments = []
@@ -489,8 +514,12 @@ def get_epic_appointments_for_patient(fhir_id, access_token):
     response_json = handle_response(response)
 
     entries = response_json['entry']
-    for entry in entries:
-        appointments.append(entry)
+
+    if not study_start_date:
+        for entry in entries:
+            appointments.append(entry)
+    else:
+        appointments = filter_appointments_by_date(entries, study_start_date, 12)
 
     return appointments
 
@@ -560,7 +589,10 @@ def sync_all_appointments_domain(domain):
         epic_appointments_to_add = []
         epic_appointments_to_update = []
         # Get all appointments for patient from epic
-        epic_appointment_records = get_epic_appointments_for_patient(patient_fhir_id, access_token)
+        study_start_date = patient.get_case_property('study_start_date')
+        epic_appointment_records = get_epic_appointments_for_patient(patient_fhir_id,
+                                                                     access_token,
+                                                                     study_start_date)
         for appointment in epic_appointment_records:
             appointment_resource = appointment.get('resource')
             appointment_id = appointment_resource.get('id')
