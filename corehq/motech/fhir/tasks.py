@@ -475,6 +475,8 @@ def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
 
 # TODO add time param 12 weeks from study start date
 def get_epic_appointments_for_patient(fhir_id, access_token):
+    if not fhir_id:
+        return []
     appointments = []
     headers = {
         'authorization': f'Bearer {access_token}',
