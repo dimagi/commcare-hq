@@ -1657,14 +1657,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             this.menuExpanded = false;
         },
         lockMenu: function () {
-            $('#persistent-menu-container').removeClass('position-absolute');
-            $('#persistent-menu-container').addClass('position-relative');
             const persistantMenuRegionWidth = this.fetchPersistantMenuRegionWidth();
+            const persistentMenuRegion = $('#persistent-menu-region');
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuRegion.css('width', persistantMenuRegionWidth);
+            persistentMenuContainer.removeClass('position-absolute');
+            persistentMenuContainer.addClass('position-relative');
             sessionStorage.showPersistentMenu = true;
         },
         deLockMenu: function () {
-            $('#persistent-menu-container').removeClass('position-relative');
-            $('#persistent-menu-container').addClass('position-absolute');
+            const persistentMenuRegion = $('#persistent-menu-region');
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass('position-relative');
+            persistentMenuContainer.addClass('position-absolute');
             persistentMenuRegion.css('width', '');
             sessionStorage.showPersistentMenu = false;
         },
