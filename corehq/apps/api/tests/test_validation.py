@@ -1,9 +1,14 @@
 from django.test import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 
 from corehq.apps.api.validation import WebUserResourceValidator
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.util.test_utils import flag_enabled, flag_disabled
 
 
@@ -17,6 +22,9 @@ class TestWebUserResourceValidator(TestCase):
         cls.addClassCleanup(cls.domain.delete)
         cls.requesting_user = WebUser.create(cls.domain.name, "test@example.com", "123", None, None)
         cls.validator = WebUserResourceValidator(cls.domain.name, cls.requesting_user)
+        cls.definition = CustomDataFieldsDefinition.get_or_create(cls.domain.name, UserFieldsView.field_type)
+        cls.definition.profile_required_for_user_type = [UserFieldsView.WEB_USER]
+        cls.definition.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -71,6 +79,33 @@ class TestWebUserResourceValidator(TestCase):
         self.assertEqual(self.validator.validate_parameters(params),
                          "This domain does not have locations privileges.")
 
+    def test_validate_role(self):
+        with patch.object(WebUserResourceValidator,
+                          'roles_by_name', new_callable=PropertyMock) as mock_roles_by_name:
+            mock_roles_by_name.return_value = {"Admin": "Admin_role_id"}
+            self.assertIsNone(self.validator.validate_role("Admin"))
+
+            mock_roles_by_name.return_value = {"User": "User_role_id"}
+            self.assertEqual(self.validator.validate_role("Admin"),
+                             "Role 'Admin' does not exist or you do not have permission to access it")
+
+    def test_validate_role_with_no_role_input(self):
+        with patch.object(WebUserResourceValidator,
+                          'roles_by_name', new_callable=PropertyMock) as mock_roles_by_name:
+            mock_roles_by_name.return_value = {"Admin": "Admin_role_id"}
+            self.assertIsNone(self.validator.validate_role(None))
+
+    def test_validate_profile_with_no_profile_input(self):
+        with patch.object(WebUserResourceValidator,
+                          'profiles_by_name', new_callable=PropertyMock) as mock_profiles_by_name:
+            mock_profiles_by_name.return_value = {"fake_profile": CustomDataFieldsProfile(
+                name="fake_profile",
+                definition=self.definition
+            )}
+            self.assertIsNone(self.validator.validate_profile(None, False))
+            self.assertEqual(self.validator.validate_profile(None, True),
+                "A profile must be assigned to users of the following type(s): Web Users")
+
     def test_validate_email(self):
         self.assertIsNone(self.validator.validate_email("newtest@example.com", True))
 
@@ -83,6 +118,9 @@ class TestWebUserResourceValidator(TestCase):
         deactivated_user.save()
         self.assertEqual(self.validator.validate_email("deactivated@example.com", True),
                          "A user with this email address is deactivated. ")
+
+    def test_validate_email_with_no_email_input(self):
+        self.assertIsNone(self.validator.validate_email(None, True))
 
     def test_validate_locations(self):
         with patch('corehq.apps.user_importer.validation.LocationValidator.validate_spec') as mock_validate_spec:

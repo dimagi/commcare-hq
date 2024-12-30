@@ -49,7 +49,9 @@ class WebUserResourceValidator():
         spec = {'role': role}
         return RoleValidator(self.domain, self.roles_by_name).validate_spec(spec)
 
-    def validate_profile(self, new_profile_name):
+    def validate_profile(self, new_profile_name, is_post):
+        if not is_post and new_profile_name is None:
+            return None
         profile_validator = ProfileValidator(self.domain, self.requesting_user, True, self.profiles_by_name)
         spec = {'user_profile': new_profile_name}
         return profile_validator.validate_spec(spec)
@@ -60,7 +62,7 @@ class WebUserResourceValidator():
         return custom_data_validator.validate_spec(spec)
 
     def validate_email(self, email, is_post):
-        if is_post:
+        if is_post and email is not None:
             error = AdminInvitesUserFormValidator.validate_email(self.domain, email)
             if error:
                 return error
