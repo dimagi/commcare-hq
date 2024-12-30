@@ -661,15 +661,17 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
     @property
     def total(self):
-        total_rows = 0
+        total_out_of_date_rows = 0
         total_last_builds = 0
 
         for domain in self.account.get_domains():
-            domain_rows, domain_last_builds = self.total_for_domain(domain)
-            total_rows += domain_rows
+            domain_out_of_date_rows, domain_last_builds = self.total_for_domain(domain)
+            total_out_of_date_rows += domain_out_of_date_rows
             total_last_builds += domain_last_builds
 
-        return _format_percentage_for_enterprise_tile(total_rows, total_last_builds)
+        total_up_to_date = total_last_builds - total_out_of_date_rows
+
+        return _format_percentage_for_enterprise_tile(total_up_to_date, total_last_builds)
 
     def rows_for_domain(self, domain):
         rows = []
