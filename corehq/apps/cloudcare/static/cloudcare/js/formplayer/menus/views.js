@@ -1611,7 +1611,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
-        getPersistantMenuRegionWidth: function() {
+        setPersistantMenuRegionWidth: function() {
             const contentPlusContainer = $('#content-plus-persistent-menu-container');
 
             const persistentMenuRegionClone = $('#persistent-menu-region').clone();
@@ -1635,11 +1635,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
             return regionWidth;
         },
-        showMenu: function () {
+        fetchPersistantMenuRegionWidth: function() {
             let persistantMenuRegionWidth = sessionStorage.getItem('persistantMenuRegionWidth');
             if (!persistantMenuRegionWidth) {
-                persistantMenuRegionWidth = this.getPersistantMenuRegionWidth()
+                persistantMenuRegionWidth = this.setPersistantMenuRegionWidth();
             }
+            return persistantMenuRegionWidth;
+        },
+        showMenu: function () {
+            const persistantMenuRegionWidth = this.fetchPersistantMenuRegionWidth();
             const persistentMenuContainer = $('#persistent-menu-container');
             persistentMenuContainer.css('transition', 'width 0.25s');
             persistentMenuContainer.css('width', persistantMenuRegionWidth);
@@ -1655,6 +1659,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         lockMenu: function () {
             $('#persistent-menu-container').removeClass('position-absolute');
             $('#persistent-menu-container').addClass('position-relative');
+            const persistantMenuRegionWidth = this.fetchPersistantMenuRegionWidth();
             sessionStorage.showPersistentMenu = true;
         },
         deLockMenu: function () {
