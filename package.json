@@ -94,7 +94,7 @@
         "grunt-contrib-watch": "1.1.0",
         "grunt-mocha": "1.2.0",
         "lodash": "4.17.21",
-        "mocha": "9.2.2",
+        "mocha": "11.0.1",
         "mocha-headless-chrome": "4.0.0",
         "prettier": "^3.3.3",
         "prettier-plugin-jinja-template": "^2.0.0",

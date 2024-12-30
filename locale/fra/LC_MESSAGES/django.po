@@ -3030,7 +3030,6 @@ msgstr "Allez sur la page des Factures pour cet espace de projet"
 
 #: corehq/apps/accounting/templates/accounting/partials/invoice_table.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Export to Excel"
 msgstr "Télécharger fichier Excel"
@@ -13034,7 +13033,6 @@ msgid "Dropdown toggle"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
 msgid "Print"
@@ -19580,10 +19578,8 @@ msgid "Project Spaces"
 msgstr "Espaces de projets"
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Project Spaces"
 msgid "# of Project Spaces"
-msgstr "Espaces de projets"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Created On [UTC]"
@@ -19640,10 +19636,8 @@ msgid "Invited"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Mobile Workers"
 msgid "# of Mobile Workers"
-msgstr "Utilisateurs mobiles"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Created Date [UTC]"
@@ -19667,10 +19661,8 @@ msgid "Mobile Form Submissions"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Form Submission"
 msgid "# of Mobile Form Submissions"
-msgstr "Formulaire de soumission"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Date ranges with more than {} days are not supported"
@@ -19736,6 +19728,32 @@ msgstr ""
 msgid "ERROR: Too many exports. Please contact customer service"
 msgstr ""
 
+#: corehq/apps/enterprise/enterprise.py
+#, fuzzy
+#| msgid "CommCare Version"
+msgid "CommCare Version Compliance"
+msgstr "Version CommCare"
+
+#: corehq/apps/enterprise/enterprise.py
+#, python-format
+msgid "% of Mobile Workers on the Latest CommCare Version"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/sms/models.py corehq/apps/sms/views.py
+msgid "Mobile Worker"
+msgstr "Utilisateur mobile"
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Latest Version Available at Submission"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+#, fuzzy
+#| msgid "Versions"
+msgid "Version in Use"
+msgstr "Versions"
+
 #: corehq/apps/enterprise/enterprise.py corehq/apps/reports/standard/sms.py
 msgid "SMS Usage"
 msgstr "Utilisation SMS"
@@ -19745,22 +19763,16 @@ msgid "# of SMS Sent"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Sent"
 msgid "# Sent"
-msgstr "Envoyé"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Received"
 msgid "# Received"
-msgstr "Reçu"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Errors"
 msgid "# Errors"
-msgstr "Erreurs"
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
@@ -22190,10 +22202,8 @@ msgid "Form did not validate."
 msgstr "Le formulaire ne valide pas"
 
 #: corehq/apps/export/views/download.py
-#, fuzzy
-#| msgid "Something went wrong. Please reload the page and try again."
 msgid "Could not find download. Please refresh page and try again."
-msgstr "Erreur! Veuillez actualiser la page et réessayer."
+msgstr ""
 
 #: corehq/apps/export/views/download.py
 msgid ""
@@ -24473,19 +24483,11 @@ msgid "Case actions"
 msgstr "Actions de dossiers"
 
 #: corehq/apps/hqadmin/templates/hqadmin/disable_two_factor.html
-msgid "Temporarily Disable Two-factor Authentication"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/disable_two_factor.html
 #, python-format
 msgid ""
 "You are about to temporarily disable two-factor authentication for "
 "%(username)s. This\n"
 "    compromises their account security, are you sure?"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/disable_user.html
-msgid "User Account"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/disable_user.html
@@ -24510,27 +24512,11 @@ msgstr "Année Mois"
 msgid "Download as CSV"
 msgstr "Télécharger en mode CSV"
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
-#: corehq/tabs/tabclasses.py
-msgid "Admin Reports"
-msgstr "Rapports administratifs"
-
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
-#: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
-#: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
-msgid "Email report"
-msgstr "Envoyer le rapport par courrier électronique"
-
 #: corehq/apps/hqadmin/templates/hqadmin/malt_downloader.html
 msgid "Enter a month to download all MALT data as csv for that month"
 msgstr ""
 "Saisir un mois pour télécharger tous les données MALT en tant que csv pour "
 "ce mois"
-
-#: corehq/apps/hqadmin/templates/hqadmin/messaging_case_updates.html
-#: corehq/apps/hqadmin/views/operations.py corehq/tabs/tabclasses.py
-msgid "Reprocess Messaging Case Updates"
-msgstr "Retraiter les mises à jour de messagerie de dossiers"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 msgid ""
@@ -24647,6 +24633,10 @@ msgstr ""
 #: corehq/apps/hqadmin/views/operations.py
 msgid "Check Callcenter UCR tables"
 msgstr "Vérifier les tableaux UCR du Callcenter"
+
+#: corehq/apps/hqadmin/views/operations.py corehq/tabs/tabclasses.py
+msgid "Reprocess Messaging Case Updates"
+msgstr "Retraiter les mises à jour de messagerie de dossiers"
 
 #: corehq/apps/hqadmin/views/operations.py
 msgid "Processed the following case ids: {}"
@@ -25392,11 +25382,6 @@ msgstr "Construction d'application"
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
 msgid "Case Group"
 msgstr "Groupes de dossiers"
-
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py
-msgid "Mobile Worker"
-msgstr "Utilisateur mobile"
 
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
 msgid "Web User"
@@ -30183,20 +30168,16 @@ msgid "Visit CommCareHQ on your computer!"
 msgstr ""
 
 #: corehq/apps/registration/validation.py
-#, fuzzy
-#| msgid "{} does not have permission to edit commcare users"
 msgid "You do not have permission to edit Tableau Configuration."
-msgstr "{}  n'a pas la permission de modifier des utilisateurs commcare"
+msgstr ""
 
 #: corehq/apps/registration/validation.py
 msgid "This domain does not have user profile privileges."
 msgstr ""
 
 #: corehq/apps/registration/validation.py
-#, fuzzy
-#| msgid "You do not have domain permissions."
 msgid "This domain does not have locations privileges."
-msgstr "Vous ne disposez pas de permissions de domaine."
+msgstr ""
 
 #: corehq/apps/registration/validation.py
 msgid ""
@@ -33810,15 +33791,13 @@ msgstr "Comment puis-je utiliser ce rapport ?"
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/description.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/description.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
+#: corehq/apps/userreports/templates/userreports/base.html
 msgid "Why can't I see any data?"
 msgstr "Pourquoi ne puis-je pas voir les données ?"
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/description.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/description.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
+#: corehq/apps/userreports/templates/userreports/base.html
 msgid ""
 "Please choose your filters above and click <strong>Apply</strong> to see "
 "report data."
@@ -33843,11 +33822,6 @@ msgstr "Vous n'avez aucun favori"
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 msgid "Email Supported"
 msgstr "Messagerie électronique"
-
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/punchcard.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/punchcard.html
-msgid "Hour vs. Weekday"
-msgstr "Heure VS. jour de semaine"
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
@@ -34203,6 +34177,11 @@ msgstr "Options de filtre"
 msgid "Export to"
 msgstr "Télécharger à"
 
+#: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
+#: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
+msgid "Email report"
+msgstr "Envoyer le rapport par courrier électronique"
+
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/user_history_changes.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/user_history_changes.html
 #, python-format
@@ -34495,50 +34474,6 @@ msgstr "Filtre numérique"
 #, python-brace-format
 msgid "Choice \"{choice}\" not found in choices: {choices}"
 msgstr "Choix \"{choice}\" non trouvé dans les choix: {choices}"
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-msgid ""
-"\n"
-"        There was an error rendering your report.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-msgid ""
-"\n"
-"        Warning:\n"
-"      "
-msgstr ""
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-msgid ""
-"\n"
-"            Charts cannot be displayed with more than 25 categories. Please "
-"filter the data or change your report to limit the number of rows.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
-msgid "Fit all data into view"
-msgstr "Ajuster tous les données dans l'affichage"
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-msgid ""
-"\n"
-"            Note:\n"
-"          "
-msgstr ""
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-msgid "Base Query/Queries"
-msgstr ""
 
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap3/quarter_filter.html
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap5/quarter_filter.html
@@ -36115,6 +36050,12 @@ msgstr ""
 #: corehq/apps/sms/models.py
 msgid "Domain is not enabled for FCM Push Notifications"
 msgstr ""
+
+#: corehq/apps/sms/models.py
+#, fuzzy
+#| msgid "Recipient has no email address."
+msgid "Recipient did not match filters:"
+msgstr "Le destinataire n'a pas d'adresse mail. "
 
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
@@ -39571,6 +39512,44 @@ msgstr ""
 
 #: corehq/apps/userreports/tasks.py
 msgid "There was an error rebuilding Your UCR table {} in {}."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/base.html
+msgid ""
+"\n"
+"        There was an error rendering your report.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/base.html
+msgid ""
+"\n"
+"        Warning:\n"
+"      "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/base.html
+msgid ""
+"\n"
+"            Charts cannot be displayed with more than 25 categories. Please "
+"filter the data or change your report to limit the number of rows.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/base.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+msgid "Fit all data into view"
+msgstr "Ajuster tous les données dans l'affichage"
+
+#: corehq/apps/userreports/templates/userreports/base.html
+msgid ""
+"\n"
+"            Note:\n"
+"          "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/base.html
+msgid "Base Query/Queries"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/base_report_builder.html
@@ -47398,6 +47377,10 @@ msgid "Gateways"
 msgstr "Passerelles"
 
 #: corehq/tabs/tabclasses.py
+msgid "Admin Reports"
+msgstr "Rapports administratifs"
+
+#: corehq/tabs/tabclasses.py
 msgid "Management"
 msgstr "Gestion"
 
@@ -48420,5 +48403,5 @@ msgstr "Le Score à la Fonctionnalité"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
-#~ msgid "There was an issue with your custom instances: {}"
-#~ msgstr "Il y a eu un problème avec vos exemples personnalisées: {}"
+#~ msgid "Hour vs. Weekday"
+#~ msgstr "Heure VS. jour de semaine"

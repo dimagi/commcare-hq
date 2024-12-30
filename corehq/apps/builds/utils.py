@@ -98,10 +98,13 @@ def is_out_of_date(version_in_use, latest_version):
 
 
 def _parse_version(version_str):
-    """Convert version string to comparable tuple"""
+    """Convert version string to comparable tuple, padding with zeros."""
+    SEMANTIC_VERSION_PARTS = 3  # Major, minor, patch
     if version_str:
         try:
-            return tuple(int(n) for n in version_str.split('.'))
+            version_parts = [int(n) for n in version_str.split('.')]
+            # Pad the version tuple to ensure both versions have the same length
+            return tuple(version_parts + [0] * (SEMANTIC_VERSION_PARTS - len(version_parts)))
         except (ValueError, AttributeError):
             return None
     return None
