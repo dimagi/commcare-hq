@@ -1611,7 +1611,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
-        setPersistantMenuRegionWidth: function() {
+        setPersistantMenuRegionWidth: function () {
             const contentPlusContainer = $('#content-plus-persistent-menu-container');
 
             const persistentMenuRegionClone = $('#persistent-menu-region').clone();
@@ -1635,7 +1635,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
             return regionWidth;
         },
-        fetchPersistantMenuRegionWidth: function() {
+        fetchPersistantMenuRegionWidth: function () {
             let persistantMenuRegionWidth = sessionStorage.getItem('persistantMenuRegionWidth');
             if (!persistantMenuRegionWidth) {
                 persistantMenuRegionWidth = this.setPersistantMenuRegionWidth();
