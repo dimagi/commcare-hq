@@ -676,6 +676,35 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         app_name_by_id = {}
         apps = get_app_ids_in_domain(domain)
 
+        for user, build, latest_version in self._get_user_builds(domain, apps):
+            if is_out_of_date(str(build['build_version']), str(latest_version)):
+                app_id = build['app_id']
+                if app_id not in app_name_by_id:
+                    app_name_by_id[app_id] = Application.get_db().get(app_id).get('name')
+                rows.append([
+                    user['username'],
+                    domain,
+                    app_name_by_id[app_id],
+                    latest_version,
+                    build['build_version'],
+                    self.format_date(DateTimeProperty.deserialize(build['build_version_date'])),
+                ])
+
+        return rows
+
+    def total_for_domain(self, domain):
+        apps = get_app_ids_in_domain(domain)
+        total_last_builds = 0
+        total_out_of_date = 0
+
+        for user, build, latest_version in self._get_user_builds(domain, apps):
+            total_last_builds += 1
+            if is_out_of_date(str(build['build_version']), str(latest_version)):
+                total_out_of_date += 1
+
+        return total_out_of_date, total_last_builds
+
+    def _get_user_builds(self, domain, apps):
         user_query = (UserES()
             .domain(domain)
             .mobile_users()
@@ -693,53 +722,10 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 build_version_date = DateTimeProperty.deserialize(build.get('build_version_date'))
                 all_builds = self.get_app_builds(domain, app_id, limit=self.INITIAL_QUERY_LIMIT)
                 latest_version = self.get_latest_build_version_at_time(all_builds, build_version_date)
-                # If the latest version is not found within the limit, all builds are fetched as a fallback.
                 if not latest_version:
                     all_builds = self.get_app_builds(domain, app_id)
                     latest_version = self.get_latest_build_version_at_time(all_builds, build_version_date)
-                if is_out_of_date(str(build_version), str(latest_version)):
-                    if app_id not in app_name_by_id:
-                        app_name_by_id[app_id] = Application.get_db().get(app_id).get('name')
-                    rows.append([
-                        user['username'],
-                        domain,
-                        app_name_by_id[app_id],
-                        latest_version,
-                        build_version,
-                        self.format_date(build_version_date),
-                    ])
-
-        return rows
-
-    def total_for_domain(self, domain):
-        apps = get_app_ids_in_domain(domain)
-        total_last_builds = 0
-        total_out_of_date = 0
-
-        user_query = (UserES()
-            .domain(domain)
-            .mobile_users()
-            .source([
-                'reporting_metadata.last_builds',
-            ]))
-        for user in user_query.run().hits:
-            last_builds = user.get('reporting_metadata', {}).get('last_builds', [])
-            for build in last_builds:
-                app_id = build.get('app_id')
-                build_version = build.get('build_version')
-                if app_id not in apps or not build_version:
-                    continue
-                total_last_builds += 1
-                build_version_date = DateTimeProperty.deserialize(build.get('build_version_date'))
-                all_builds = self.get_app_builds(domain, app_id, limit=self.INITIAL_QUERY_LIMIT)
-                latest_version = self.get_latest_build_version_at_time(all_builds, build_version_date)
-                if not latest_version:
-                    all_builds = self.get_app_builds(domain, app_id)
-                    latest_version = self.get_latest_build_version_at_time(all_builds, build_version_date)
-                if is_out_of_date(str(build_version), str(latest_version)):
-                    total_out_of_date += 1
-
-        return total_out_of_date, total_last_builds
+                yield user, build, latest_version
 
     def get_app_builds(self, domain, app_id, limit=None):
         if app_id not in self.builds_by_app_id:
