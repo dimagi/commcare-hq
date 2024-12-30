@@ -42,10 +42,9 @@
 #persistent-menu-arrow-toggle {
   color: black;
   z-index: $zindex-persistent-menu-nav + 1;
-  // background-color: $cc-brand-mid;
-  // padding: $spacer / 2;
+  background-color: $call-to-action-hi;
   &:hover {
-    background-color: $cc-brand-low;
+    background-color: $call-to-action-mid;
   }
 }
 
