@@ -11,6 +11,7 @@ from corehq.apps.user_importer.validation import (
     TableauRoleValidator,
     CustomDataValidator,
     EmailValidator,
+    UserAccessValidator,
 )
 from corehq.apps.users.validation import validate_primary_location_assignment
 from corehq.apps.registration.validation import AdminInvitesUserFormValidator
@@ -80,6 +81,11 @@ class WebUserResourceValidator():
         spec = {'location_code': location_codes,
                 'username': editable_user}
         return location_validator.validate_spec(spec)
+
+    def validate_user_access(self, editable_user):
+        user_access_validator = UserAccessValidator(self.domain, self.requesting_user, True)
+        spec = {'username': editable_user}
+        return user_access_validator.validate_spec(spec)
 
     def validate_tableau_group(self, tableau_groups):
         allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(self.domain) or []
