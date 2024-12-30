@@ -639,6 +639,7 @@ class Enterprise2FAReport(EnterpriseReport):
 class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     title = gettext_lazy('Application Version Compliance')
     total_description = gettext_lazy('% of Applications Up-to-Date Across All Mobile Workers')
+    INITIAL_QUERY_LIMIT = 10
 
     def __init__(self, account, couch_user):
         super().__init__(account, couch_user)
@@ -678,9 +679,12 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 if app_id not in apps or not build_version:
                     continue
                 build_version_date = DateTimeProperty.deserialize(build.get('build_version_date'))
-                all_builds = self.get_app_builds(domain, app_id)
-                latest_version = self.get_latest_build_version_at_time(all_builds,
-                                                                       build_version_date)
+                all_builds = self.get_app_builds(domain, app_id, limit=self.INITIAL_QUERY_LIMIT)
+                latest_version = self.get_latest_build_version_at_time(all_builds, build_version_date)
+                # If the latest version is not found within the limit, all builds are fetched as a fallback.
+                if not latest_version:
+                    all_builds = self.get_app_builds(domain, app_id)
+                    latest_version = self.get_latest_build_version_at_time(all_builds, build_version_date)
                 if is_out_of_date(str(build_version), str(latest_version)):
                     if app_id not in app_name_by_id:
                         app_name_by_id[app_id] = Application.get_db().get(app_id).get('name')
@@ -698,7 +702,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     def total_for_domain(self, domain):
         return 0
 
-    def get_app_builds(self, domain, app_id):
+    def get_app_builds(self, domain, app_id, limit=None):
         if app_id not in self.builds_by_app_id:
             app_es = (
                 AppES()
@@ -709,6 +713,8 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 .is_released()
                 .source(['_id', 'version', 'last_released', 'built_on'])
             )
+            if limit:
+                app_es = app_es.size(limit)
             self.builds_by_app_id[app_id] = app_es.run().hits
 
         return self.builds_by_app_id[app_id]
