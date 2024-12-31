@@ -129,6 +129,17 @@ class TestWebUserResourceValidator(TestCase):
         self.assertIsNone(self.validator.validate_email(None, True))
 
     def test_validate_locations(self):
+        self.assertIsNone(self.validator.validate_locations(self.requesting_user.username,
+                                                            None, None))
+        self.assertEqual(
+            self.validator.validate_locations(self.requesting_user.username, ["loc1", "loc2"], None),
+            "Both primary_location and locations must be provided together."
+        )
+        self.assertEqual(
+            self.validator.validate_locations(self.requesting_user.username, None, 'loc1'),
+            "Both primary_location and locations must be provided together."
+        )
+
         with patch('corehq.apps.user_importer.validation.LocationValidator.validate_spec') as mock_validate_spec:
             mock_validate_spec.return_value = None
             self.assertIsNone(self.validator.validate_locations(self.requesting_user.username,

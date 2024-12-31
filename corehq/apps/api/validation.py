@@ -86,13 +86,18 @@ class WebUserResourceValidator():
         return email_validator.validate_spec(spec)
 
     def validate_locations(self, editable_user, assigned_location_codes, primary_location_code):
+        if assigned_location_codes is None and primary_location_code is None:
+            return
+        if ((assigned_location_codes is not None and primary_location_code is None)
+                or (assigned_location_codes is None and primary_location_code is not None)):
+            return _('Both primary_location and locations must be provided together.')
+
         error = validate_primary_location_assignment(primary_location_code, assigned_location_codes)
         if error:
             return error
 
         location_validator = LocationValidator(self.domain, self.requesting_user, self.location_cache, True)
-        location_codes = list(set(assigned_location_codes + [primary_location_code]))
-        spec = {'location_code': location_codes,
+        spec = {'location_code': assigned_location_codes,
                 'username': editable_user}
         return location_validator.validate_spec(spec)
 
