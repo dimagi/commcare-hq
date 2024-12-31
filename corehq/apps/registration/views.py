@@ -181,7 +181,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     self.request,
                     reg_form.cleaned_data['project_name'],
                     is_new_user=True,
-                    is_self_signup=reg_form.cleaned_data['is_self_signup']
                 )
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
