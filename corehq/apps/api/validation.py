@@ -1,5 +1,7 @@
 from memoized import memoized
 
+from django.utils.translation import gettext as _
+
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
 from corehq.apps.user_importer.importer import SiteCodeToLocationCache
@@ -38,13 +40,25 @@ class WebUserResourceValidator():
     def location_cache(self):
         return SiteCodeToLocationCache(self.domain)
 
-    def validate_parameters(self, parameters):
-        allowed_params = ['email', 'role', 'primary_location', 'assigned_locations',
+    def validate_parameters(self, parameters, is_post):
+        allowed_params = ['role', 'primary_location', 'assigned_locations',
                           'profile', 'custom_user_data', 'tableau_role', 'tableau_groups']
+        if is_post:
+            allowed_params.append('email')
         invalid_params = [param for param in parameters if param not in allowed_params]
         if invalid_params:
             return f"Invalid parameter(s): {', '.join(invalid_params)}"
         return AdminInvitesUserFormValidator.validate_parameters(self.domain, self.requesting_user, parameters)
+
+    def validate_required_fields(self, spec, is_post):
+        email = spec.get('email')
+        role = spec.get('role')
+        if is_post:
+            if not email or not role:
+                return _("'email' and 'role' are required for each user")
+        else:
+            if role == '':
+                return _("'role' is required for each user")
 
     def validate_role(self, role):
         spec = {'role': role}
