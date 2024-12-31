@@ -1571,47 +1571,162 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         events: {
             'click #app-main': 'onClickAppMain',
         },
-        handleSmallScreenChange: function (smallScreenEnabled) {
-            const offcanvas = 'offcanvas';
-            const collapse = 'collapse';
-            const containerDesktopClasses = collapse + ' position-relative';
-            const containerMobileClasses = offcanvas + ' offcanvas-start';
-            if (smallScreenEnabled) {
-                $('#persistent-menu-container').removeClass(containerDesktopClasses + ' show');
-                $('#persistent-menu-container').addClass(containerMobileClasses);
-                $('#persistent-menu-arrow-toggle').attr('aria-expanded', false);
-                $('#persistent-menu-close-button').removeAttr('data-bs-toggle');
-                $('#persistent-menu-close-button').attr('data-bs-dismiss', offcanvas);
-                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', offcanvas);
-            } else {
-                $('#persistent-menu-container').removeClass(containerMobileClasses);
-                $('#persistent-menu-container').addClass(containerDesktopClasses);
-                if (sessionStorage.showPersistentMenu !== 'false') {
-                    $('#persistent-menu-container').addClass('show');
-                }
-                $('#persistent-menu-arrow-toggle').attr('aria-expanded', true);
-                $('#persistent-menu-close-button').removeAttr('data-bs-dismiss');
-                $('#persistent-menu-close-button').attr('data-bs-toggle', collapse);
-                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', collapse);
+        setOffcanvasOrCollapsed: function (smallScreenEnabled) {
+            if (sessionStorage.showPersistentMenu !== 'false' && !smallScreenEnabled) {
+                this.makeOffcanvas();
             }
         },
-        initialize: function () {
+        handleSmallScreenChange: function (smallScreenEnabled) {
+            if (sessionStorage.showPersistentMenu) {
+                if (smallScreenEnabled) {
+                    this.makeOffcanvas(false);
+                } else {
+                    this.makeCollapse(true);
+                }
+            }
+        },
+        makeOffcanvas: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass(this.containerCollapseClasses);
+            persistentMenuContainer.addClass(this.containerOffCanvasClasses);
+        },
+        makeCollapse: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass(this.containerOffCanvasClasses);
+            persistentMenuContainer.addClass(this.collapse);
+        },
+        initialize: function (options) {
+            $('#persistent-menu-region').removeClass('d-none');
+            this.sidebarEnabled = options.sidebarEnabled;
+            this.menuExpanded;
+            this.splitScreenToggleEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+            this.offcanvas = 'offcanvas';
+            this.collapse = 'collapse';
+            this.containerCollapseClasses = this.collapse + ' position-relative';
+            this.containerOffCanvasClasses = this.offcanvas + ' offcanvas-start';
             self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
             self.smallScreenListener.listen();
+            sessionStorage.removeItem('persistantMenuRegionWidth');
         },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
+        setPersistantMenuRegionWidth: function () {
+            const contentPlusContainer = $('#content-plus-persistent-menu-container');
+
+            const persistentMenuRegionClone = $('#persistent-menu-region').clone();
+            persistentMenuRegionClone.attr("id","pmr-clone");
+            persistentMenuRegionClone.prependTo(contentPlusContainer);
+
+            const containerClone = persistentMenuRegionClone.find('#persistent-menu-container');
+            containerClone.attr("id","pmc-clone");
+            containerClone.css({'width': '', 'padding': '1.5rem', 'visibility': 'hidden'});
+            containerClone.removeClass('position-absolute');
+            containerClone.addClass('position-relative');
+
+            const containerContentClone = containerClone.find('#persistent-menu-container-content');
+            containerContentClone.attr("id","pmcc-clone");
+            containerContentClone.removeClass('d-none');
+
+            const regionWidth = persistentMenuRegionClone.outerWidth();
+            console.log("set to: ", regionWidth);
+            sessionStorage.setItem('persistantMenuRegionWidth', regionWidth);
+            persistentMenuRegionClone.remove();
+
+            return regionWidth;
+        },
+        fetchPersistantMenuRegionWidth: function () {
+            let persistantMenuRegionWidth = sessionStorage.getItem('persistantMenuRegionWidth');
+            if (!persistantMenuRegionWidth) {
+                persistantMenuRegionWidth = this.setPersistantMenuRegionWidth();
+            }
+            return persistantMenuRegionWidth;
+        },
+        showMenu: function () {
+            const persistantMenuRegionWidth = this.fetchPersistantMenuRegionWidth();
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.css('transition', 'width 0.25s');
+            persistentMenuContainer.css('width', persistantMenuRegionWidth);
+            $('#persistent-menu-container-content').removeClass('d-none');
+            this.menuExpanded = true;
+        },
+        hideMenu: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.css('width', '100%');
+            $('#persistent-menu-container-content').addClass('d-none');
+            this.menuExpanded = false;
+        },
+        lockMenu: function () {
+            const persistantMenuRegionWidth = this.fetchPersistantMenuRegionWidth();
+            const persistentMenuRegion = $('#persistent-menu-region');
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuRegion.css('width', persistantMenuRegionWidth);
+            persistentMenuContainer.removeClass('position-absolute');
+            persistentMenuContainer.addClass('position-relative');
+            sessionStorage.showPersistentMenu = true;
+        },
+        unlockMenu: function () {
+            const persistentMenuRegion = $('#persistent-menu-region');
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass('position-relative');
+            persistentMenuContainer.addClass('position-absolute');
+            persistentMenuRegion.css('width', '');
+            sessionStorage.showPersistentMenu = false;
+        },
+        flipArrowRight: function () {
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            arrowToggle.find('i').removeClass('fa-chevron-left');
+            arrowToggle.find('i').addClass('fa-chevron-right');
+        },
+        flipArrowLeft: function () {
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            arrowToggle.find('i').removeClass('fa-chevron-right');
+            arrowToggle.find('i').addClass('fa-chevron-left');
+        },
         onAttach: function () {
-            this.handleSmallScreenChange(cloudcareUtils.smallScreenIsEnabled());
-            $('#persistent-menu-container').on('hidden.bs.collapse', function () {
-                sessionStorage.showPersistentMenu = false;
+            const self = this;
+            const smallScreenEnabledOnStartup = cloudcareUtils.smallScreenIsEnabled();
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            self.makeCollapse(sessionStorage.showPersistentMenu);
+
+            if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
+                self.hideMenu();
+                self.unlockMenu();
+                self.flipArrowRight();
+                sessionStorage.setItem('handledDefaultClosed', true);
+            } else if (sessionStorage.showPersistentMenu === 'true' && !smallScreenEnabledOnStartup) {
+                self.showMenu();
+                self.flipArrowLeft();
+                self.lockMenu();
+            }
+            arrowToggle.click(function () {
+                if (!self.menuExpanded) {
+                    self.showMenu();
+                    self.flipArrowLeft();
+                    self.lockMenu();
+                } else if (self.menuExpanded && sessionStorage.showPersistentMenu === 'true') {
+                    self.hideMenu();
+                    self.unlockMenu();
+                    self.flipArrowRight();
+                } else if (self.menuExpanded && sessionStorage.showPersistentMenu !== 'true') {
+                    self.flipArrowLeft();
+                    self.lockMenu();
+                }
             });
-            $('#persistent-menu-container').on('show.bs.collapse', function () {
-                sessionStorage.showPersistentMenu = true;
-            });
+            $('#persistent-menu-container').hover(
+                function () {
+                    if (!self.menuExpanded) {
+                        self.showMenu();
+                    }
+                },
+                function () {
+                    if (sessionStorage.showPersistentMenu !== 'true') {
+                        self.hideMenu();
+                    }
+                }
+            );
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
