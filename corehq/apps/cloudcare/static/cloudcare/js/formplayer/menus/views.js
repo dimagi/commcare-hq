@@ -1599,6 +1599,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             $('#persistent-menu-region').removeClass('d-none');
             this.sidebarEnabled = options.sidebarEnabled;
             this.menuExpanded;
+            this.splitScreenToggleEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
             this.offcanvas = 'offcanvas';
             this.collapse = 'collapse';
             this.containerCollapseClasses = this.collapse + ' position-relative';
@@ -1690,7 +1691,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const arrowToggle = $('#persistent-menu-arrow-toggle');
             self.makeCollapse(sessionStorage.showPersistentMenu);
 
-            if (sessionStorage.showPersistentMenu === 'true' && !smallScreenEnabledOnStartup) {
+            if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
+                self.hideMenu();
+                self.deLockMenu();
+                self.flipArrowRight();
+                sessionStorage.setItem('handledDefaultClosed', true)
+            } else if (sessionStorage.showPersistentMenu === 'true' && !smallScreenEnabledOnStartup) {
                 self.showMenu();
                 self.flipArrowLeft();
                 self.lockMenu();
