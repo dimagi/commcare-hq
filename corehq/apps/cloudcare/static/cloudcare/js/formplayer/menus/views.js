@@ -1631,7 +1631,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             containerContentClone.removeClass('d-none');
 
             const regionWidth = persistentMenuRegionClone.outerWidth();
-
+            console.log("set to: ", regionWidth);
             sessionStorage.setItem('persistantMenuRegionWidth', regionWidth);
             persistentMenuRegionClone.remove();
 
@@ -1667,7 +1667,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             persistentMenuContainer.addClass('position-relative');
             sessionStorage.showPersistentMenu = true;
         },
-        deLockMenu: function () {
+        unlockMenu: function () {
             const persistentMenuRegion = $('#persistent-menu-region');
             const persistentMenuContainer = $('#persistent-menu-container');
             persistentMenuContainer.removeClass('position-relative');
@@ -1693,7 +1693,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
             if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
                 self.hideMenu();
-                self.deLockMenu();
+                self.unlockMenu();
                 self.flipArrowRight();
                 sessionStorage.setItem('handledDefaultClosed', true);
             } else if (sessionStorage.showPersistentMenu === 'true' && !smallScreenEnabledOnStartup) {
@@ -1708,7 +1708,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     self.lockMenu();
                 } else if (self.menuExpanded && sessionStorage.showPersistentMenu === 'true') {
                     self.hideMenu();
-                    self.deLockMenu();
+                    self.unlockMenu();
                     self.flipArrowRight();
                 } else if (self.menuExpanded && sessionStorage.showPersistentMenu !== 'true') {
                     self.flipArrowLeft();
