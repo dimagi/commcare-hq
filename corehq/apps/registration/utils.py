@@ -7,7 +7,7 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.translation import gettext
 
-from celery import chord
+from celery import group
 
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
@@ -191,24 +191,18 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
         if settings.IS_SAAS_ENVIRONMENT:
             #  Load template apps to the user's new domain in parallel
             from corehq.apps.app_manager.tasks import load_appcues_template_app
-            header = [
+            load_template_apps = group([
                 load_appcues_template_app.si(new_domain.name, current_user.username, slug)
                 for slug in APPCUES_APP_SLUGS
-            ]
-            callback = send_domain_registration_email.si(
-                request.user.email,
-                dom_req.domain,
-                dom_req.activation_guid,
-                request.user.get_full_name(),
-                request.user.first_name
-            )
-            chord(header)(callback)
-        else:
-            send_domain_registration_email(request.user.email,
-                                           dom_req.domain,
-                                           dom_req.activation_guid,
-                                           request.user.get_full_name(),
-                                           request.user.first_name)
+            ])
+            load_template_apps()
+
+        send_domain_registration_email(request.user.email,
+                                       dom_req.domain,
+                                       dom_req.activation_guid,
+                                       request.user.get_full_name(),
+                                       request.user.first_name)
+
     send_new_request_update_email(
         request.user,
         get_ip(request),
