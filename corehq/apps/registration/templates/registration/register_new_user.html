@@ -74,14 +74,7 @@
   <div class="container">
     <div class="row">
       <div class="col-xs-12">
-
-        {% if is_saas_environment %}
-          {% include 'registration/partials/choose_your_plan.html' %}
-        {% endif %}
-
-        <div id="registration-form-container"
-             class="reg-form-container"
-             {% if is_saas_environment %}style="display: none;"{% endif %}>
+        <div id="registration-form-container" class="reg-form-container">
           <ul class="form-step-progress">
             <li class="active">{% trans "Create Account" %}</li>
             <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>
@@ -130,7 +123,4 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-  {% if is_saas_environment %}
-    {% include "registration/partials/start_trial_modal.html" %}
-  {% endif %}
 {% endblock modals %}
