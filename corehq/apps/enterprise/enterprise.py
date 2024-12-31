@@ -148,11 +148,16 @@ class EnterpriseDomainReport(EnterpriseReport):
     title = gettext_lazy('Project Spaces')
     total_description = gettext_lazy('# of Project Spaces')
 
+    def __init__(self, account, couch_user):
+        super().__init__(account, couch_user)
+        self.export_fetcher = ODataExportFetcher()
+
     @property
     def headers(self):
         headers = super().headers
         return [_('Created On [UTC]'), _('# of Apps'), _('# of Mobile Users'), _('# of Web Users'),
-                _('# of SMS (last 30 days)'), _('Last Form Submission [UTC]')] + headers
+                _('# of SMS (last 30 days)'), _('Last Form Submission [UTC]'),
+                _('OData Feeds Used'), _('OData Feeds Available')] + headers
 
     def rows_for_domain(self, domain_obj):
         return [[
@@ -162,6 +167,8 @@ class EnterpriseDomainReport(EnterpriseReport):
             get_web_user_count(domain_obj.name, include_inactive=False),
             sms_in_last(domain_obj.name, 30),
             self.format_date(get_last_form_submission_received(domain_obj.name)),
+            self.export_fetcher.get_export_count(domain_obj.name),
+            domain_obj.get_odata_feed_limit(),
         ] + self.domain_properties(domain_obj)]
 
     def total_for_domain(self, domain_obj):
@@ -369,56 +376,27 @@ class EnterpriseODataReport(EnterpriseReport):
 
     @property
     def headers(self):
-        headers = super().headers
-        return [_('Odata feeds used'), _('Odata feeds available'), _('Report Names'),
-            _('Number of rows')] + headers
+        return [_('Project Space'), _('Name'), _('Number of Rows')]
 
     def total_for_domain(self, domain_obj):
         return self.export_fetcher.get_export_count(domain_obj.name)
 
     def rows_for_domain(self, domain_obj):
         export_count = self.total_for_domain(domain_obj)
-        if export_count == 0 or export_count > self.MAXIMUM_EXPECTED_EXPORTS:
-            return [self._get_domain_summary_line(domain_obj, export_count)]
+        if export_count > self.MAXIMUM_EXPECTED_EXPORTS:
+            return [
+                [
+                    domain_obj.name,
+                    _('ERROR: Too many exports. Please contact customer service'),
+                    None,
+                ]
+            ]
 
         exports = self.export_fetcher.get_exports(domain_obj.name)
-
-        export_line_counts = self._get_export_line_counts(exports)
-
-        domain_summary_line = self._get_domain_summary_line(domain_obj, export_count, export_line_counts)
-        individual_export_rows = self._get_individual_export_rows(exports, export_line_counts)
-
-        rows = [domain_summary_line]
-        rows.extend(individual_export_rows)
-        return rows
-
-    def _get_export_line_counts(self, exports):
-        return {export._id: export.get_count() for export in exports}
-
-    def _get_domain_summary_line(self, domain_obj, export_count, export_line_counts={}):
-        if export_count > self.MAXIMUM_EXPECTED_EXPORTS:
-            total_line_count = _('ERROR: Too many exports. Please contact customer service')
-        else:
-            total_line_count = sum(export_line_counts.values())
-
-        return [
-            export_count,
-            domain_obj.get_odata_feed_limit(),
-            None,  # Report Name
-            total_line_count
-        ] + self.domain_properties(domain_obj)
-
-    def _get_individual_export_rows(self, exports, export_line_counts):
         rows = []
 
         for export in exports:
-            count = export_line_counts[export._id]
-            rows.append([
-                None,  # OData feeds used
-                None,  # OData feeds available
-                export.name,
-                count]
-            )
+            rows.append([domain_obj.name, export.name, export.get_count()])
 
         return rows
 
