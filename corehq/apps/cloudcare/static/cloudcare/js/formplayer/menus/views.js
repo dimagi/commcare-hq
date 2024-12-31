@@ -1695,7 +1695,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 self.hideMenu();
                 self.deLockMenu();
                 self.flipArrowRight();
-                sessionStorage.setItem('handledDefaultClosed', true)
+                sessionStorage.setItem('handledDefaultClosed', true);
             } else if (sessionStorage.showPersistentMenu === 'true' && !smallScreenEnabledOnStartup) {
                 self.showMenu();
                 self.flipArrowLeft();
