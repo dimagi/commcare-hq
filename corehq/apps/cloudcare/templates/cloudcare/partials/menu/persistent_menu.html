@@ -1,32 +1,33 @@
 {% load i18n %}
 
 <script type="text/template" id="persistent-menu-template">
-  <button id="persistent-menu-arrow-toggle"
-     role="button"
-     aria-label="Expand Persistent Menu"
-     tabindex="1"
-     data-bs-target="#persistent-menu-container"
-     aria-expanded="true"
-     aria-controls="persistent-menu-container"
-     class="position-fixed top-50 start-0 rounded-end persistent-menu-toggle">
-    <i class="fa fa-chevron-right"></i>
-  </button>
-  <div id="persistent-menu-container" class="bg-white h-100 position-relative overflow-scroll"
+  <div id="persistent-menu-container" class="d-none d-lg-block bg-white h-100 position-absolute border-end border-dark-subtle border-1"
+    style="width: 30px;"
     aria-labelledby="persistent-menu-label">
-    <button type="button" id="persistent-menu-close-button" class="btn-close text-reset position-absolute"
-      data-bs-target="#persistent-menu-container" aria-label="Close"></button>
-    <h2 class="title position-relative me-4" id="persistent-menu-label">
-      <% if (imageUri) { %>
-        <i class="fcc persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"
-            style="background-image: url('<%- imageUri %>');"></i>
-      <% } else { %>
-        <i class="fcc fcc-flower persistent-menu-image" aria-hidden="true"></i>
-      <% } %>
-      <a id="app-main" class="align-middle stretched-link text-reset" href="#">
-        <%- appName %>
-      </a>
-    </h2>
-    <div id="persistent-menu-content" class="persistent-menu"></div>
+    <button id="persistent-menu-arrow-toggle"
+      role="button"
+      aria-label="Expand Persistent Menu"
+      tabindex="1"
+      aria-expanded="true"
+      aria-controls="persistent-menu-container"
+      class="btn btn-outline-primary me-1 rounded-circle position-absolute top-50 end-0">
+      <i class="fa fs-3 fa-chevron-right"></i>
+      <span></span>
+    </button>
+    <div id="persistent-menu-container-content" class="d-none">
+      <h2 class="title position-relative me-4" id="persistent-menu-label">
+        <% if (imageUri) { %>
+          <i class="fcc persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"
+              style="background-image: url('<%- imageUri %>');"></i>
+        <% } else { %>
+          <i class="fcc fcc-flower persistent-menu-image" aria-hidden="true"></i>
+        <% } %>
+        <a id="app-main" class="align-middle stretched-link text-reset" href="#">
+          <%- appName %>
+        </a>
+      </h2>
+      <div id="persistent-menu-content" class="persistent-menu"></div>
+    </div>
   </div>
 </script>
 
