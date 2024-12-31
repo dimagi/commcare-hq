@@ -111,7 +111,7 @@ def activate_new_user(
     return new_user
 
 
-def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False, is_self_signup=False):
+def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user, strict=True)
 
@@ -166,7 +166,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
             new_domain.delete()
             raise ErrorInitializingDomain(f"Subscription setup failed for '{name}'")
 
-        if is_self_signup:
+        if settings.IS_SAAS_ENVIRONMENT:
             SelfSignupWorkflow.objects.create(domain=new_domain.name, initiating_user=current_user.username)
 
     initialize_domain_with_default_roles(new_domain.name)

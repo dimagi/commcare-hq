@@ -95,52 +95,6 @@ hqDefine('analytix/js/hubspot', [
     };
 
     /**
-     * Activates the Hubspot Request Trial form
-     */
-    _utils.loadTrialForm = function () {
-        let $modal = $('#cta-form-start-trial'),
-            $form = $('#get-trial-cta-form-content'),
-            hasInteractedWithForm = false,
-            trialForm;
-
-        if ($form.length === 0) {
-            return;
-        }
-
-        trialForm = ctaForms.hubspotCtaForm({
-            hubspotFormId: '9c8ecc33-b088-474e-8f4c-1b10fae50c2f',
-            showContactMethod: true,
-            showPreferredLanguage: true,
-            useWhatsApp: true,
-            useGoogleHangouts: false,
-            nextButtonText: gettext("Next"),
-            phoneNumberSelector: $form.find('input[name="phone"]'),
-            submitCallbackFn: function () {
-                kissmetrics.track.event("Get Trial Workflow - Contact Info Received");
-
-                $('#choose-callback-options').toggleClass('hidden').toggleClass('d-none'); // todo after bootstrap 5 migration
-                $('#get-trial-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
-                $('#start-trial-modal-header').text(gettext("Your trial request has been received!"));
-            },
-        });
-        $form.koApplyBindings(trialForm);
-
-        $modal.on('shown.bs.modal', function () {
-            kissmetrics.track.event("Get Trial Workflow - Viewed Form");
-        });
-        $modal.on('hide.bs.modal', function () {
-            kissmetrics.track.event("Get Trial Workflow - Dismissed Form");
-        });
-
-        $form.find('input').click(function () {
-            if (!hasInteractedWithForm) {
-                kissmetrics.track.event("Get Trial Workflow - Interacted With Form");
-                hasInteractedWithForm = true;
-            }
-        });
-    };
-
-    /**
      * Sends data to Hubspot to identify the current session.
      * @param {object} data
      */
