@@ -1,4 +1,12 @@
-hqDefine('reports/js/charts/multibar_chart', function () {
+hqDefine('reports/js/charts/multibar_chart', [
+    'jquery',
+    'd3/d3.min',
+    'nvd3/nv.d3.min',
+], function (
+    $,
+    d3,
+    nv
+) {
     var init = function (data) {
         nv.addGraph(function () {
             var chartConfig = data.configDict,
