@@ -1596,6 +1596,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             persistentMenuContainer.addClass(this.collapse);
         },
         initialize: function (options) {
+            $('#persistent-menu-region').removeClass('d-none');
             this.sidebarEnabled = options.sidebarEnabled;
             this.menuExpanded;
             this.offcanvas = 'offcanvas';
