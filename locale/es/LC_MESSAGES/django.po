@@ -32,8 +32,7 @@ msgstr "Tipo de cuenta"
 
 #: corehq/apps/accounting/filters.py
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/recovery_measures_history.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/recovery_measures_history.html
+#: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/filters.py
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
@@ -59,8 +58,8 @@ msgstr "Nombre de la cuenta"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/enterprise/filters.py
-#: corehq/apps/enterprise/interface.py
+#: corehq/apps/domain/forms.py corehq/apps/enterprise/enterprise.py
+#: corehq/apps/enterprise/filters.py corehq/apps/enterprise/interface.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/smsbillables/filters.py
 msgid "Project Space"
@@ -467,8 +466,7 @@ msgstr "Se requiere un nombre para este nuevo rol."
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/commtrack_action_table.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/commtrack_action_table.html
+#: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/events/forms.py
 #: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/events/views.py
@@ -512,8 +510,7 @@ msgid "Company / Organization"
 msgstr "Empresa/Organización"
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 #: corehq/apps/reminders/forms.py corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/sms.py
@@ -1004,8 +1001,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/commtrack_action_table.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/commtrack_action_table.html
+#: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
@@ -2793,8 +2789,7 @@ msgstr "Razón"
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/recovery_measures_history.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/recovery_measures_history.html
+#: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/hqadmin/reports.py corehq/apps/linked_domain/views.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/standard/deployments.py
@@ -3016,7 +3011,6 @@ msgstr "Ir a Todas las Facturas para este Espacio del Proyecto"
 
 #: corehq/apps/accounting/templates/accounting/partials/invoice_table.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Export to Excel"
 msgstr "Exportar a Excel"
@@ -3191,8 +3185,7 @@ msgstr "Razón de \"No Facturar\""
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
 #: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
@@ -3804,8 +3797,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/geospatial/templates/geospatial/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -3881,8 +3873,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
@@ -5208,8 +5199,7 @@ msgid "Enable Menu Display Setting Per-Module"
 msgstr "Habilitar Configuración de Visualización de Menú por Módulo"
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqadmin/forms.py
@@ -6798,6 +6788,7 @@ msgstr "Instale CommCare"
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/standard/bootstrap3/submission_error_report.html
 #: corehq/apps/reports/templates/reports/standard/bootstrap5/submission_error_report.html
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/html_guide/attribute_wrap_length.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/users/templates/users/mobile_workers.html
@@ -9936,8 +9927,7 @@ msgstr "Reporte"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/download_data_files.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
@@ -11256,8 +11246,9 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
-msgid "There was an issue with your custom instances: {}"
-msgstr "Hubo un problema con sus instancias personalizadas: {}"
+#, python-brace-format
+msgid "'{val}' is an invalid custom instance {key}"
+msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid "Unable to validate form due to server error."
@@ -13116,7 +13107,6 @@ msgid "Dropdown toggle"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
 msgid "Print"
@@ -13443,7 +13433,6 @@ msgid "Additional Information"
 msgstr "Información Adicional"
 
 #: corehq/apps/custom_data_fields/edit_entity.py
-#: corehq/apps/registration/forms.py
 msgid "Invalid profile selected. Please select a valid profile."
 msgstr ""
 
@@ -16252,7 +16241,8 @@ msgstr "Permitir que usuarios desconocidos soliciten acceso web al dominio"
 msgid "HIPAA compliant"
 msgstr "Reclamo HIPAA"
 
-#: corehq/apps/domain/forms.py corehq/apps/settings/views.py
+#: corehq/apps/domain/forms.py corehq/apps/enterprise/enterprise.py
+#: corehq/apps/settings/views.py
 msgid "Two Factor Authentication"
 msgstr "Autenticación de Dos Factores"
 
@@ -16648,380 +16638,43 @@ msgstr ""
 msgid "There has been a transfer of ownership of {domain}"
 msgstr "Ha habido una transferencia de derechos de propiedad del {domain}"
 
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/commtrack_action_table.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/commtrack_action_table.html
-msgid "SMS Keyword"
-msgstr "Palabra clave SMS"
+#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
+msgid "Transfer project ownership"
+msgstr "Transferir derechos de propiedad"
 
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/commtrack_action_table.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/commtrack_action_table.html
-msgid "Action Type"
-msgstr "Tipo de Acción"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/edit_alert.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/edit_alert.html
-msgid "Edit Alert"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-#: corehq/apps/domain/views/settings.py corehq/apps/linked_domain/const.py
-msgid "Feature Previews"
-msgstr "Vistas Previas de Función"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid "What are Feature Previews?"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid ""
-"\n"
-"          Before we invest in making certain product features generally\n"
-"          available, we release them as Feature Previews to learn the\n"
-"          following two things from usage data and qualitative feedback.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid ""
-"\n"
-"              <strong>Perceived Value:</strong>\n"
-"              The biggest risk in product development is to\n"
-"              build something that offers little value to our users. As "
-"such,\n"
-"              we make Feature Previews generally available only if they "
-"have\n"
-"              high perceived value.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid ""
-"\n"
-"              <strong>User Experience:</strong>\n"
-"              Even if a feature has high perceived value,\n"
-"              it is important that the user experience of the feature is\n"
-"              optimized such that our users actually receive the value.\n"
-"              As such, we make high value Feature Previews generally\n"
-"              available after we optimize the user experience.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid ""
-"\n"
-"          Feature Previews are in active product development, therefore\n"
-"          should not be used for business critical workflows. We encourage\n"
-"          you to use Feature Previews and provide us feedback, however\n"
-"          please note that Feature Previews:\n"
-"        "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid ""
-"\n"
-"              May not be optimized for performance\n"
-"            "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid ""
-"\n"
-"              Are not supported by the CommCare Support Team\n"
-"            "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid ""
-"\n"
-"              May change at any time without notice\n"
-"            "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid ""
-"\n"
-"              Are not subject to any warranties on current and future\n"
-"              availability. Please refer to our\n"
-"              <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"                 target=\"_blank\">terms</a> to\n"
-"              learn more.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid ""
-"\n"
-"            Looking for something that used to be here?\n"
-"          "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid ""
-"\n"
-"            The feature flags <strong>Control Mapping in Case List</"
-"strong>,\n"
-"            <strong>Custom Calculations in Case List</strong>, "
-"<strong>Custom\n"
-"            Single and Multiple Answer Questions</strong>, and <strong>Icons "
-"in\n"
-"            Case List</strong> are now add-ons for individual apps. To turn\n"
-"            them on, go to the application's settings and choose the\n"
-"            <strong>Add-Ons</strong> tab.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid "Update previews"
-msgstr "Actualizar vistas previas"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-msgid "Feature Name"
-msgstr "Nombre de la Función"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/feature_previews.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/feature_previews.html
-#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-msgid "More information"
-msgstr "Más información"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/global_sms_rates.html
-msgid "SMS Pricing"
-msgstr "Precios SMS"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/global_sms_rates.html
-#: corehq/apps/userreports/views.py
-msgid "Pricing"
-msgstr "Precios"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/global_sms_rates.html
-msgid ""
-"\n"
-"      View SMS prices for using Dimagi's connections in each country.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/global_sms_rates.html
-msgid ""
-"\n"
-"      You can choose a connection for your project under Messaging -> SMS "
-"Connectivity\n"
-"    "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/sms_rates.html
-msgid ""
-"\n"
-"        Calculating SMS Rate...\n"
-"      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/global_sms_rates.html
-msgid "Connection"
-msgstr "Conexión"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/global_sms_rates.html
-#: corehq/apps/enterprise/interface.py corehq/apps/reports/standard/sms.py
-#: corehq/apps/smsbillables/forms.py corehq/apps/smsbillables/interface.py
-#: corehq/messaging/scheduling/views.py
-msgid "Incoming"
-msgstr "Entrantes"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/global_sms_rates.html
-#: corehq/apps/enterprise/interface.py corehq/apps/reports/standard/sms.py
-#: corehq/apps/smsbillables/forms.py corehq/apps/smsbillables/interface.py
-#: corehq/messaging/scheduling/views.py
-msgid "Outgoing"
-msgstr "Salientes"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/global_sms_rates.html
-msgid "Your own Android Gateway"
-msgstr "Su propia Entrada Android"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/global_sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/global_sms_rates.html
-msgid ""
-"\n"
-"        Pricing is per message sent or received. Fees are subject to change "
-"based on provider rates and exchange rates and are computed at the time the "
-"SMS is sent or received.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/location_fixture.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/location_fixture.html
-msgid "Location Fixture Settings"
-msgstr "Configuración de Fixture de Ubicación"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
-msgid "Add New Alert"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "Available Alerts"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
-msgid "You can only have 3 alerts activated at any one time"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
-#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
-#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
-msgid "Start Time"
-msgstr "Tiempo de Inicio"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
-msgid "End Time"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "Added By"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "Activate Alert"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "De-activate Alert"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/manage_alerts.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/manage_alerts.html
-msgid "No alerts added yet for the project."
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/recovery_measures_history.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/recovery_measures_history.html
-msgid "Measure"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/recovery_measures_history.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/recovery_measures_history.html
-msgid "Sequence Number"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/recovery_measures_history.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/recovery_measures_history.html
-msgid "App Versions"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/recovery_measures_history.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/recovery_measures_history.html
-msgid "CC Versions"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/recovery_measures_history.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/recovery_measures_history.html
-#: corehq/apps/users/templates/users/edit_commcare_user.html
-msgid "Created On"
-msgstr "Creado En..."
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/recovery_measures_history.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/recovery_measures_history.html
-msgid "Notes"
-msgstr "Notas"
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/recovery_measures_history.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/recovery_measures_history.html
-msgid "No measures have been initiated for this application"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/sms_rates.html
-msgid ""
-"\n"
-"        Use this form to get a cost estimation per 160 character SMS,\n"
-"        given a <strong>connection</strong>, <strong>direction</strong>,\n"
-"        and <strong>country code</strong>.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/sms_rates.html
-msgid ""
-"\n"
-"        The fee will be applied to the most specific criteria available.\n"
-"        A fee for a specific country code (if available) will be used\n"
-"        over the default of 'Any Country'.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/sms_rates.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/sms_rates.html
-msgid ""
-"\n"
-"        Fees are subject to change based on updates to each carrier and are\n"
-"        computed at the time the SMS is sent.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/transfer_domain.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/transfer_domain.html
-msgid ""
-"\n"
-"        Use this to transfer your project to another user.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/transfer_domain_pending.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/transfer_domain_pending.html
+#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
 #, python-format
 msgid ""
 "\n"
-"          You have a pending transfer with %(username)s\n"
-"        "
+"              By clicking \"accept\" below you acknowledge that you accept "
+"full ownership of this project space (\"%(domain)s\").\n"
+"              You agree to be bound by the terms of Dimagi's <a "
+"href=\"https://www.dimagi.com/terms/latest/privacy/\">Terms of Service and "
+"Business Agreement</a>.\n"
+"              By accepting this agreement, your are acknowledging you have "
+"permission and authority to accept these terms. A Dimagi representative will "
+"notify you when the transfer is complete.\n"
+"            "
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/transfer_domain_pending.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/transfer_domain_pending.html
+#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
+#: corehq/apps/domain/templates/domain/bootstrap3/select.html
+#: corehq/apps/domain/templates/domain/bootstrap5/select.html
+#: corehq/apps/registration/templates/registration/domain_request.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+msgid "Accept"
+msgstr "Aceptar"
+
+#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
+msgid "Decline"
+msgstr "Rechazar"
+
+#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
 msgid ""
 "\n"
-"          Resend Transfer Request\n"
-"        "
+"              Sorry this transfer request has expired.\n"
+"            "
 msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/bootstrap3/transfer_domain_pending.html
-#: corehq/apps/domain/templates/domain/admin/bootstrap5/transfer_domain_pending.html
-msgid "Cancel Transfer"
-msgstr "Cancelar Transferencia"
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Enable Case Search"
@@ -17107,21 +16760,12 @@ msgid "Sync Cases On Form Entry"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                    These filters are not displayed to report viewers and "
-#| "are always applied to the data.\n"
-#| "                  "
 msgid ""
 "\n"
 "                  Update local case data immediately before entering a web "
 "apps form.\n"
 "                "
 msgstr ""
-"\n"
-"Estos filtros no se muestran a los que ven el reporte y siempre son "
-"aplicados a los datos."
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid ""
@@ -17149,6 +16793,303 @@ msgstr ""
 msgid "Add case property"
 msgstr "Agregar propiedad de caso"
 
+#: corehq/apps/domain/templates/domain/admin/edit_alert.html
+msgid "Edit Alert"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+#: corehq/apps/domain/views/settings.py corehq/apps/linked_domain/const.py
+msgid "Feature Previews"
+msgstr "Vistas Previas de Función"
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid "What are Feature Previews?"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid ""
+"\n"
+"          Before we invest in making certain product features generally\n"
+"          available, we release them as Feature Previews to learn the\n"
+"          following two things from usage data and qualitative feedback.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid ""
+"\n"
+"              <strong>Perceived Value:</strong>\n"
+"              The biggest risk in product development is to\n"
+"              build something that offers little value to our users. As "
+"such,\n"
+"              we make Feature Previews generally available only if they "
+"have\n"
+"              high perceived value.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid ""
+"\n"
+"              <strong>User Experience:</strong>\n"
+"              Even if a feature has high perceived value,\n"
+"              it is important that the user experience of the feature is\n"
+"              optimized such that our users actually receive the value.\n"
+"              As such, we make high value Feature Previews generally\n"
+"              available after we optimize the user experience.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid ""
+"\n"
+"          Feature Previews are in active product development, therefore\n"
+"          should not be used for business critical workflows. We encourage\n"
+"          you to use Feature Previews and provide us feedback, however\n"
+"          please note that Feature Previews:\n"
+"        "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid ""
+"\n"
+"              May not be optimized for performance\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid ""
+"\n"
+"              Are not supported by the CommCare Support Team\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid ""
+"\n"
+"              May change at any time without notice\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid ""
+"\n"
+"              Are not subject to any warranties on current and future\n"
+"              availability. Please refer to our\n"
+"              <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                 target=\"_blank\">terms</a> to\n"
+"              learn more.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid ""
+"\n"
+"            Looking for something that used to be here?\n"
+"          "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid ""
+"\n"
+"            The feature flags <strong>Control Mapping in Case List</"
+"strong>,\n"
+"            <strong>Custom Calculations in Case List</strong>, "
+"<strong>Custom\n"
+"            Single and Multiple Answer Questions</strong>, and <strong>Icons "
+"in\n"
+"            Case List</strong> are now add-ons for individual apps. To turn\n"
+"            them on, go to the application's settings and choose the\n"
+"            <strong>Add-Ons</strong> tab.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid "Update previews"
+msgstr "Actualizar vistas previas"
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+msgid "Feature Name"
+msgstr "Nombre de la Función"
+
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+msgid "More information"
+msgstr "Más información"
+
+#: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
+msgid "SMS Pricing"
+msgstr "Precios SMS"
+
+#: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
+#: corehq/apps/userreports/views.py
+msgid "Pricing"
+msgstr "Precios"
+
+#: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
+msgid ""
+"\n"
+"      View SMS prices for using Dimagi's connections in each country.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
+msgid ""
+"\n"
+"      You can choose a connection for your project under Messaging -> SMS "
+"Connectivity\n"
+"    "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
+#: corehq/apps/domain/templates/domain/admin/sms_rates.html
+msgid ""
+"\n"
+"        Calculating SMS Rate...\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
+msgid "Connection"
+msgstr "Conexión"
+
+#: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
+#: corehq/apps/enterprise/interface.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/smsbillables/forms.py corehq/apps/smsbillables/interface.py
+#: corehq/messaging/scheduling/views.py
+msgid "Incoming"
+msgstr "Entrantes"
+
+#: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
+#: corehq/apps/enterprise/interface.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/smsbillables/forms.py corehq/apps/smsbillables/interface.py
+#: corehq/messaging/scheduling/views.py
+msgid "Outgoing"
+msgstr "Salientes"
+
+#: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
+msgid "Your own Android Gateway"
+msgstr "Su propia Entrada Android"
+
+#: corehq/apps/domain/templates/domain/admin/global_sms_rates.html
+msgid ""
+"\n"
+"        Pricing is per message sent or received. Fees are subject to change "
+"based on provider rates and exchange rates and are computed at the time the "
+"SMS is sent or received.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/location_fixture.html
+msgid "Location Fixture Settings"
+msgstr "Configuración de Fixture de Ubicación"
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+msgid "Add New Alert"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Available Alerts"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+msgid "You can only have 3 alerts activated at any one time"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
+#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
+msgid "Start Time"
+msgstr "Tiempo de Inicio"
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+msgid "End Time"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Added By"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Activate Alert"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "De-activate Alert"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+msgid "No alerts added yet for the project."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
+msgid "SMS Keyword"
+msgstr "Palabra clave SMS"
+
+#: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
+msgid "Action Type"
+msgstr "Tipo de Acción"
+
+#: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
+msgid "Measure"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
+msgid "Sequence Number"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
+msgid "App Versions"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
+msgid "CC Versions"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
+#: corehq/apps/users/templates/users/edit_commcare_user.html
+msgid "Created On"
+msgstr "Creado En..."
+
+#: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
+msgid "Notes"
+msgstr "Notas"
+
+#: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
+msgid "No measures have been initiated for this application"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/sms_rates.html
+msgid ""
+"\n"
+"          Use this form to get a cost estimation per 160 character SMS,\n"
+"          given a <strong>connection</strong>, <strong>direction</strong>,\n"
+"          and <strong>country code</strong>.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/sms_rates.html
+msgid ""
+"\n"
+"          The fee will be applied to the most specific criteria available.\n"
+"          A fee for a specific country code (if available) will be used\n"
+"          over the default of 'Any Country'.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/sms_rates.html
+msgid ""
+"\n"
+"          Fees are subject to change based on updates to each carrier and "
+"are\n"
+"          computed at the time the SMS is sent.\n"
+"        "
+msgstr ""
+
 #: corehq/apps/domain/templates/domain/admin/sms_settings.html
 msgid "Stock Actions"
 msgstr "Almacenar Acciones"
@@ -17161,48 +17102,31 @@ msgstr "Nueva Acción"
 msgid "Save Settings"
 msgstr "Guardar Configuraciones"
 
-#: corehq/apps/domain/templates/domain/bootstrap3/activate_transfer_domain.html
-#: corehq/apps/domain/templates/domain/bootstrap5/activate_transfer_domain.html
-msgid "Transfer project ownership"
-msgstr "Transferir derechos de propiedad"
+#: corehq/apps/domain/templates/domain/admin/transfer_domain.html
+msgid ""
+"\n"
+"      Use this to transfer your project to another user.\n"
+"    "
+msgstr ""
 
-#: corehq/apps/domain/templates/domain/bootstrap3/activate_transfer_domain.html
-#: corehq/apps/domain/templates/domain/bootstrap5/activate_transfer_domain.html
+#: corehq/apps/domain/templates/domain/admin/transfer_domain_pending.html
 #, python-format
 msgid ""
 "\n"
-"              By clicking \"accept\" below you acknowledge that you accept "
-"full ownership of this project space (\"%(domain)s\").\n"
-"              You agree to be bound by the terms of Dimagi's <a "
-"href=\"https://www.dimagi.com/terms/latest/privacy/\">Terms of Service and "
-"Business Agreement</a>.\n"
-"              By accepting this agreement, your are acknowledging you have "
-"permission and authority to accept these terms. A Dimagi representative will "
-"notify you when the transfer is complete.\n"
-"            "
+"          You have a pending transfer with %(username)s\n"
+"        "
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/bootstrap3/activate_transfer_domain.html
-#: corehq/apps/domain/templates/domain/bootstrap3/select.html
-#: corehq/apps/domain/templates/domain/bootstrap5/activate_transfer_domain.html
-#: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/domain_request.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-msgid "Accept"
-msgstr "Aceptar"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/activate_transfer_domain.html
-#: corehq/apps/domain/templates/domain/bootstrap5/activate_transfer_domain.html
-msgid "Decline"
-msgstr "Rechazar"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/activate_transfer_domain.html
-#: corehq/apps/domain/templates/domain/bootstrap5/activate_transfer_domain.html
+#: corehq/apps/domain/templates/domain/admin/transfer_domain_pending.html
 msgid ""
 "\n"
-"              Sorry this transfer request has expired.\n"
-"            "
+"          Resend Transfer Request\n"
+"        "
 msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/transfer_domain_pending.html
+msgid "Cancel Transfer"
+msgstr "Cancelar Transferencia"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
@@ -17767,16 +17691,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/insufficient_privilege_notification.html
 msgid "Change My Plan"
 msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/internal_calculations.html
-#: corehq/apps/domain/templates/domain/bootstrap5/internal_calculations.html
-msgid "Load EVERYTHING"
-msgstr "Cargar TODO"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/internal_calculations.html
-#: corehq/apps/domain/templates/domain/bootstrap5/internal_calculations.html
-msgid "Load Property"
-msgstr "Cargar Propiedad"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/internal_subscription_management.html
 #: corehq/apps/domain/templates/domain/bootstrap5/internal_subscription_management.html
@@ -18419,6 +18333,14 @@ msgid ""
 "this email. To find out more about CommCare HQ visit http://www.commcarehq."
 "org/.\n"
 msgstr ""
+
+#: corehq/apps/domain/templates/domain/internal_calculations.html
+msgid "Load EVERYTHING"
+msgstr "Cargar TODO"
+
+#: corehq/apps/domain/templates/domain/internal_calculations.html
+msgid "Load Property"
+msgstr "Cargar Propiedad"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/license_explanations.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/license_explanations.html
@@ -19642,10 +19564,6 @@ msgid "Email Settings"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-msgid "Enterprise Report"
-msgstr ""
-
-#: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 msgid "Project Space Name"
 msgstr ""
@@ -19664,6 +19582,10 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid "Project Spaces"
 msgstr "Espacios de Proyectos"
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# of Project Spaces"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Created On [UTC]"
@@ -19720,6 +19642,10 @@ msgid "Invited"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
+msgid "# of Mobile Workers"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Created Date [UTC]"
 msgstr ""
 
@@ -19741,11 +19667,7 @@ msgid "Mobile Form Submissions"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-msgid "{} to {}"
-msgstr ""
-
-#: corehq/apps/enterprise/enterprise.py
-msgid "past {} days"
+msgid "# of Mobile Form Submissions"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
@@ -19789,6 +19711,10 @@ msgid "OData Feeds"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
+msgid "# of OData Feeds"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Odata feeds used"
 msgstr ""
 
@@ -19806,6 +19732,85 @@ msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "ERROR: Too many exports. Please contact customer service"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "CommCare Version Compliance"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+#, python-format
+msgid "% of Mobile Workers on the Latest CommCare Version"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/sms/models.py corehq/apps/sms/views.py
+msgid "Mobile Worker"
+msgstr "Usuario Móvil"
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Latest Version Available at Submission"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Version in Use"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py corehq/apps/reports/standard/sms.py
+msgid "SMS Usage"
+msgstr "Uso de SMS"
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# of SMS Sent"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# Sent"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# Received"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# Errors"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "API Usage"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# of Active API Keys"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/sms/models.py
+msgid "Web User"
+msgstr "Usuario Web"
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "API Key Name"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py corehq/motech/forms.py
+msgid "Scope"
+msgstr "Alcance"
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Expiration Date [UTC]"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Last Used On [UTC]"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# of Project Spaces without 2FA"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Project Space without 2FA"
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
@@ -20098,10 +20103,8 @@ msgid "Platform Overview for {}"
 msgstr ""
 
 #: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Days for Review"
 msgid "Platform Overview"
-msgstr "Días para Revisión"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
@@ -20115,10 +20118,8 @@ msgid "Security Center for {}"
 msgstr ""
 
 #: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Security"
 msgid "Security Center"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py corehq/apps/reports/views.py
 msgid ""
@@ -20228,15 +20229,15 @@ msgstr ""
 msgid "All Locations"
 msgstr ""
 
-#: corehq/apps/events/forms.py corehq/apps/users/forms.py
+#: corehq/apps/events/forms.py corehq/apps/users/validation.py
 msgid "One or more of the locations was not found."
 msgstr "Una o más de las ubicaciones no fueron encontradas."
 
-#: corehq/apps/events/forms.py corehq/apps/users/forms.py
+#: corehq/apps/events/forms.py corehq/apps/users/validation.py
 msgid "Primary location must be one of the user's locations"
 msgstr ""
 
-#: corehq/apps/events/forms.py corehq/apps/users/forms.py
+#: corehq/apps/events/forms.py corehq/apps/users/validation.py
 msgid "Primary location can't be empty if the user has any locations set"
 msgstr ""
 
@@ -22243,6 +22244,10 @@ msgstr ""
 #: corehq/apps/export/views/download.py
 msgid "Form did not validate."
 msgstr "El formulario no se validó."
+
+#: corehq/apps/export/views/download.py
+msgid "Could not find download. Please refresh page and try again."
+msgstr ""
 
 #: corehq/apps/export/views/download.py
 msgid ""
@@ -24522,19 +24527,11 @@ msgid "Case actions"
 msgstr "Acciones del caso"
 
 #: corehq/apps/hqadmin/templates/hqadmin/disable_two_factor.html
-msgid "Temporarily Disable Two-factor Authentication"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/disable_two_factor.html
 #, python-format
 msgid ""
 "You are about to temporarily disable two-factor authentication for "
 "%(username)s. This\n"
 "    compromises their account security, are you sure?"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/disable_user.html
-msgid "User Account"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/disable_user.html
@@ -24559,26 +24556,10 @@ msgstr "Año Mes"
 msgid "Download as CSV"
 msgstr "Descargar como CSV"
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
-#: corehq/tabs/tabclasses.py
-msgid "Admin Reports"
-msgstr "Administrar Reportes"
-
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
-#: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
-#: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
-msgid "Email report"
-msgstr "Envíar reporte por correo electrónico"
-
 #: corehq/apps/hqadmin/templates/hqadmin/malt_downloader.html
 msgid "Enter a month to download all MALT data as csv for that month"
 msgstr ""
 "Ingrese un mes para descargar todos los datos MALT como un csv para ese mes"
-
-#: corehq/apps/hqadmin/templates/hqadmin/messaging_case_updates.html
-#: corehq/apps/hqadmin/views/operations.py corehq/tabs/tabclasses.py
-msgid "Reprocess Messaging Case Updates"
-msgstr "Reprocesar Actualizaciones de Caso de Mensajería"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 msgid ""
@@ -24695,6 +24676,10 @@ msgstr ""
 #: corehq/apps/hqadmin/views/operations.py
 msgid "Check Callcenter UCR tables"
 msgstr "Revisar tablas UCR de Centro de Llamadas"
+
+#: corehq/apps/hqadmin/views/operations.py corehq/tabs/tabclasses.py
+msgid "Reprocess Messaging Case Updates"
+msgstr "Reprocesar Actualizaciones de Caso de Mensajería"
 
 #: corehq/apps/hqadmin/views/operations.py
 msgid "Processed the following case ids: {}"
@@ -25431,15 +25416,6 @@ msgstr "Desarrollo de Aplicación"
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
 msgid "Case Group"
 msgstr "Grupo de Casos"
-
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py
-msgid "Mobile Worker"
-msgstr "Usuario Móvil"
-
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-msgid "Web User"
-msgstr "Usuario Web"
 
 #: corehq/apps/hqwebapp/forms.py
 msgid ""
@@ -29519,22 +29495,6 @@ msgid "Send Invite"
 msgstr "Enviar Invitación"
 
 #: corehq/apps/registration/forms.py
-msgid ""
-"A user with this email address is already in this project or has a pending "
-"invitation."
-msgstr ""
-"Un usuario con este correo electrónico ya está en este proyecto o tiene una "
-"invitación pendiente."
-
-#: corehq/apps/registration/forms.py
-msgid "A user with this email address is deactivated. "
-msgstr ""
-
-#: corehq/apps/registration/forms.py corehq/apps/users/forms.py
-msgid "You do not have permission to edit Tableau Configuraion."
-msgstr ""
-
-#: corehq/apps/registration/forms.py
 msgid "Tableau Groups"
 msgstr ""
 
@@ -30213,6 +30173,30 @@ msgstr ""
 
 #: corehq/apps/registration/utils.py
 msgid "Visit CommCareHQ on your computer!"
+msgstr ""
+
+#: corehq/apps/registration/validation.py
+msgid "You do not have permission to edit Tableau Configuration."
+msgstr ""
+
+#: corehq/apps/registration/validation.py
+msgid "This domain does not have user profile privileges."
+msgstr ""
+
+#: corehq/apps/registration/validation.py
+msgid "This domain does not have locations privileges."
+msgstr ""
+
+#: corehq/apps/registration/validation.py
+msgid ""
+"A user with this email address is already in this project or has a pending "
+"invitation."
+msgstr ""
+"Un usuario con este correo electrónico ya está en este proyecto o tiene una "
+"invitación pendiente."
+
+#: corehq/apps/registration/validation.py
+msgid "A user with this email address is deactivated. "
 msgstr ""
 
 #: corehq/apps/registration/views.py
@@ -32667,10 +32651,6 @@ msgid "New Performing Users"
 msgstr "Nuevos Usuarios Rindiendo"
 
 #: corehq/apps/reports/standard/sms.py
-msgid "SMS Usage"
-msgstr "Uso de SMS"
-
-#: corehq/apps/reports/standard/sms.py
 msgid ""
 "This report will only show data for users whose phone numbers have been "
 "verified. Phone numbers can be verified from the Settings and Users tab."
@@ -33819,15 +33799,13 @@ msgstr "¿Cómo puedo usar este reporte?"
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/description.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/description.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
+#: corehq/apps/userreports/templates/userreports/base.html
 msgid "Why can't I see any data?"
 msgstr "¿Por qué no puedo ver ningún dato?"
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/description.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/description.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
+#: corehq/apps/userreports/templates/userreports/base.html
 msgid ""
 "Please choose your filters above and click <strong>Apply</strong> to see "
 "report data."
@@ -33852,11 +33830,6 @@ msgstr "Usted no tiene ningún favorito"
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 msgid "Email Supported"
 msgstr "Correo electrónico Soportado"
-
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/punchcard.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/punchcard.html
-msgid "Hour vs. Weekday"
-msgstr "Hora vs. Día de la Semana"
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
@@ -34213,6 +34186,11 @@ msgstr "Opciones de Filtro"
 msgid "Export to"
 msgstr "Exportar a "
 
+#: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
+#: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
+msgid "Email report"
+msgstr "Envíar reporte por correo electrónico"
+
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/user_history_changes.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/user_history_changes.html
 #, python-format
@@ -34504,50 +34482,6 @@ msgstr "Filtro Numérico"
 #, python-brace-format
 msgid "Choice \"{choice}\" not found in choices: {choices}"
 msgstr "La Opción \"{choice}\" no se encuentra en las opciones: {choices}"
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-msgid ""
-"\n"
-"        There was an error rendering your report.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-msgid ""
-"\n"
-"        Warning:\n"
-"      "
-msgstr ""
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-msgid ""
-"\n"
-"            Charts cannot be displayed with more than 25 categories. Please "
-"filter the data or change your report to limit the number of rows.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
-msgid "Fit all data into view"
-msgstr "Muestre todos los datos en la vista"
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-msgid ""
-"\n"
-"            Note:\n"
-"          "
-msgstr ""
-
-#: corehq/apps/reports_core/templates/reports_core/bootstrap3/base_template_new.html
-#: corehq/apps/reports_core/templates/reports_core/bootstrap5/base_template_new.html
-msgid "Base Query/Queries"
-msgstr ""
 
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap3/quarter_filter.html
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap5/quarter_filter.html
@@ -36115,6 +36049,10 @@ msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "Domain is not enabled for FCM Push Notifications"
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "Recipient did not match filters:"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/backend_map.html
@@ -38233,6 +38171,29 @@ msgstr ""
 msgid "Examples"
 msgstr "Ejemplos"
 
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/html_guide/block_and_inline.html
+msgid ""
+"\n"
+"      Translated text within a paragraph tag should always be indented like "
+"this\n"
+"    "
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/html_guide/block_and_inline.html
+msgid "Short titles are fine"
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/html_guide/block_and_inline.html
+msgid "Translated text within attributes"
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/html_guide/indentation.html
+msgid ""
+"\n"
+"              Not Active\n"
+"            "
+msgstr ""
+
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
 msgid ""
 "\n"
@@ -38988,6 +38949,13 @@ msgstr ""
 "'{new_name}' en su lugar. "
 
 #: corehq/apps/user_importer/importer.py
+msgid ""
+"Only users with 'Manage Tableau Configuration' edit permission in domains "
+"where Tableau User Syncing is enabled can upload files with 'Tableau Role' "
+"and/or 'Tableau Groups' fields."
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
 #, python-brace-format
 msgid "The following are {label} column headers: {headers}."
 msgstr "Los siguientes son {label} encabezados de columnas: {headers}."
@@ -39038,13 +39006,6 @@ msgstr ""
 
 #: corehq/apps/user_importer/importer.py
 msgid "You can only set 'Is Account Confirmed' to 'False' on a new User."
-msgstr ""
-
-#: corehq/apps/user_importer/importer.py
-msgid ""
-"Only users with 'Manage Tableau Configuration' edit permission can upload "
-"files with'Tableau Role and/or 'Tableau Groups' fields. Please remove those "
-"fields from your file."
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
@@ -39185,12 +39146,6 @@ msgstr ""
 
 #: corehq/apps/user_importer/validation.py
 msgid "You do not have permission to assign or remove these locations: {}"
-msgstr ""
-
-#: corehq/apps/user_importer/validation.py
-msgid ""
-"These locations cannot have users assigned because of their organization "
-"level settings: {}."
 msgstr ""
 
 #: corehq/apps/userreports/columns.py
@@ -39573,6 +39528,44 @@ msgstr ""
 
 #: corehq/apps/userreports/tasks.py
 msgid "There was an error rebuilding Your UCR table {} in {}."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/base.html
+msgid ""
+"\n"
+"        There was an error rendering your report.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/base.html
+msgid ""
+"\n"
+"        Warning:\n"
+"      "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/base.html
+msgid ""
+"\n"
+"            Charts cannot be displayed with more than 25 categories. Please "
+"filter the data or change your report to limit the number of rows.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/base.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+msgid "Fit all data into view"
+msgstr "Muestre todos los datos en la vista"
+
+#: corehq/apps/userreports/templates/userreports/base.html
+msgid ""
+"\n"
+"            Note:\n"
+"          "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/base.html
+msgid "Base Query/Queries"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/base_report_builder.html
@@ -41023,10 +41016,6 @@ msgstr ""
 "ubicaciones de arriba "
 
 #: corehq/apps/users/forms.py
-msgid "One or more of the locations you specified cannot have users assigned."
-msgstr ""
-
-#: corehq/apps/users/forms.py
 msgid "You do not have permissions to assign one of those locations."
 msgstr ""
 
@@ -41103,6 +41092,10 @@ msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "* and ? are not allowed"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid "You do not have permission to edit Tableau Configuraion."
 msgstr ""
 
 #: corehq/apps/users/landing_pages.py corehq/messaging/scheduling/views.py
@@ -42772,6 +42765,12 @@ msgstr ""
 
 #: corehq/apps/users/validation.py
 msgid "A profile assignment is required for Mobile Workers."
+msgstr ""
+
+#: corehq/apps/users/validation.py
+msgid ""
+"These locations cannot have users assigned because of their organization "
+"level settings: {}."
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py
@@ -46000,10 +45999,6 @@ msgid "Send the client ID in the body of the token request"
 msgstr ""
 
 #: corehq/motech/forms.py
-msgid "Scope"
-msgstr "Alcance"
-
-#: corehq/motech/forms.py
 msgid "Space-separated list of scopes e.g. \"read write\""
 msgstr ""
 
@@ -47410,6 +47405,10 @@ msgid "Gateways"
 msgstr "Portales"
 
 #: corehq/tabs/tabclasses.py
+msgid "Admin Reports"
+msgstr "Administrar Reportes"
+
+#: corehq/tabs/tabclasses.py
 msgid "Management"
 msgstr "Administración"
 
@@ -48396,6 +48395,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Calendar Fixture Settings"
-#~ msgstr "Configuración de Fixture del Calendario"
