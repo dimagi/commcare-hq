@@ -92,11 +92,17 @@ class CommCareBuild(BlobMixin, Document):
         ).one()
 
         if not self:
-            raise KeyError("Can't find build {label}. For instructions on how to add it, see https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/README.md".format(label=BuildSpec(
-                version=version,
-                build_number=build_number,
-                latest=latest
-            )))
+            raise KeyError(
+                "Can't find build {label}. For instructions on how to add it, see "
+                "https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/"
+                "README.rst#adding-commcare-builds-to-commcare-hq".format(
+                    label=BuildSpec(
+                        version=version,
+                        build_number=build_number,
+                        latest=latest
+                    )
+                )
+            )
         return self
 
     @classmethod
