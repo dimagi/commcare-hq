@@ -3,7 +3,17 @@ from looseversion import LooseVersion
 
 from couchdbkit.exceptions import BadValueError, ResourceNotFound
 
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
+)
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
