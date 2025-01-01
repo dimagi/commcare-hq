@@ -797,26 +797,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             return promise;
         },
 
-        /*
-         *  Send request to formplayer to validate fields. Displays any errors.
-         *  Returns a promise that contains the formplayer response.
-         */
-        validateAllFields: function () {
-            var self = this;
-            var promise = $.Deferred();
-            var updatingModels = self.updateModelsForValidation || self._updateModelsForValidation();
-
-            $.when(updatingModels).done(function (response) {
-                var invalidFields = self.displayErrors();
-                if (invalidFields.length) {
-                    promise.reject(response);
-                } else {
-                    promise.resolve(response);
-                }
-            });
-            return promise;
-        },
-
         _updateModelsForValidation: function (initiatedByTag) {
             var self = this;
             var promise = $.Deferred();
