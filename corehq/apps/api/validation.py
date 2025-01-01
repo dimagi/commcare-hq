@@ -24,6 +24,30 @@ class WebUserResourceValidator():
         self.domain = domain
         self.requesting_user = requesting_user
 
+    def is_valid(self, data, is_post):
+        errors = []
+
+        validators = [
+            (self.validate_parameters, [data.keys(), is_post]),
+            (self.validate_required_fields, [data, is_post]),
+            (self.validate_role, [data.get("role")]),
+            (self.validate_profile, [data.get("profile"), is_post]),
+            (self.validate_custom_data, [data.get("custom_user_data"), data.get("profile")]),
+            (self.validate_email, [data.get("email"), is_post]),
+            (self.validate_locations, [data.get("username"), data.get("assigned_locations"),
+                                       data.get("primary_location")]),
+            (self.validate_user_access, [data.get("username")]),
+            (self.validate_tableau_group, [data.get("tableau_groups", [])]),
+            (self.validate_tableau_role, [data.get("tableau_role")]),
+        ]
+
+        for validator, args in validators:
+            error = validator(*args)
+            if error:
+                errors.append(error)
+
+        return errors
+
     @property
     def roles_by_name(self):
         from corehq.apps.users.views.utils import get_editable_role_choices

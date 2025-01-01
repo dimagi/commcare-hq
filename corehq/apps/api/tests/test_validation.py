@@ -31,6 +31,10 @@ class TestWebUserResourceValidator(TestCase):
         cls.requesting_user.delete(None, None)
         super().tearDownClass()
 
+    def test_simple_is_valid(self):
+        data = {"email": "test@example.com", "role": "Admin"}
+        self.assertEqual(self.validator.is_valid(data, True), [])
+
     def test_validate_parameters(self):
         params = {"email": "test@example.com", "role": "Admin"}
         self.assertIsNone(self.validator.validate_parameters(params, True))
