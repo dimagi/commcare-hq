@@ -652,7 +652,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
             _('Mobile Worker'),
             _('Project Space'),
             _('Application'),
-            _('Latest Version Available at Submission'),
+            _('Latest Version Available when Last Used'),
             _('Version in Use'),
             _('Last Used [UTC]'),
         ]
