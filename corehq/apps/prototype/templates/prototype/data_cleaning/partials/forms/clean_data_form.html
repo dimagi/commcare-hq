@@ -1,0 +1,33 @@
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<div
+  id="{{ container_id }}"
+  hx-swap="outerHTML"
+  hq-hx-refresh="{{ table_selector }}"
+>
+  {% if num_changes is not None %}
+    <div
+      class="alert alert-success alert-dismissible fade show"
+      id="numChangesDCAlert"
+      role="alert"
+    >
+      {% blocktrans %}
+        {{ num_changes }} changes made
+      {% endblocktrans %}
+      <button
+        class="btn-close" type="button" aria-label="{% trans "Close" %}"
+        data-bs-dismiss="alert"
+      ></button>
+    </div>
+  {% endif %}
+
+  <form
+    hx-post="{{ request.path_info }}"
+    hx-target="#{{ container_id }}"
+    hx-disabled-elt="find button"
+    hq-hx-loading="{{ table_loading_id }}"
+  >
+    {% crispy clean_data_form %}
+  </form>
+</div>
