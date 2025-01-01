@@ -71,6 +71,7 @@ from corehq.apps.api.util import (
     parse_str_to_date,
     cursor_based_query_for_datasource
 )
+from corehq.apps.api.validation import WebUserResourceValidator
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.case_importer.views import require_can_edit_data
@@ -404,6 +405,13 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
         authentication = RequirePermissionAuthentication(HqPermissions.edit_web_users)
         allowed_methods = ['post']
         always_return_data = True
+
+    def obj_create(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        validator = WebUserResourceValidator(domain, bundle.request.couch_user)
+        errors = validator.is_valid(bundle.data, True)
+        if errors:
+            raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
 
 
 class WebUserResource(v0_1.WebUserResource):
