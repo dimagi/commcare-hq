@@ -49,7 +49,7 @@ beautifulsoup4==4.10.0
     # via -r base-requirements.in
 billiard==3.6.4.0
     # via celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
@@ -289,7 +289,7 @@ git-build-branch==0.1.16
     # via -r dev-requirements.in
 gnureadline==8.1.2
     # via -r dev-requirements.in
-google-api-core==2.11.0
+google-api-core[grpc]==2.11.0
     # via
     #   firebase-admin
     #   google-api-python-client
@@ -553,7 +553,7 @@ pygments==2.15.0
     #   sphinx
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.7.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   firebase-admin
@@ -808,7 +808,7 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.19
+urllib3==1.26.20
     # via
     #   -r docs-requirements.in
     #   botocore
