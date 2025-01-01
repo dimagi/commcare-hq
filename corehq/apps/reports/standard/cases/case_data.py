@@ -522,7 +522,7 @@ def resave_case_view(request, domain, case_id):
     resave_case(domain, case)
     messages.success(
         request,
-        _('Case %s was successfully saved. Please allow a few minutes for the change to be reflected in all reports.' % case.name),  # noqa: E501
+        _('Case {} was successfully saved. Please allow a few minutes for the change to be reflected in all reports.').format(case.name),  # noqa: E501
     )
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
