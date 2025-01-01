@@ -1,6 +1,5 @@
 from datetime import datetime
 from looseversion import LooseVersion
-from zipfile import ZipFile
 
 from couchdbkit.exceptions import BadValueError, ResourceNotFound
 
@@ -8,7 +7,6 @@ from dimagi.ext.couchdbkit import *
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
-from corehq.apps.domain import SHARED_DOMAIN
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.util.quickcache import quickcache
