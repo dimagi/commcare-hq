@@ -728,18 +728,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         submitAction: function (e) {
             var self = this;
             e.preventDefault();
-            self.performSubmit(null, formplayerConstants.USER_CLICK_SUBMIT);
+            self.performSubmit();
+            self.displayErrors();
         },
 
-        performSubmit: function (initiatedBy, userClickSubmit = null) {
+        performSubmit: function (initiatedBy) {
             var self = this;
             if (!self.inputsHaveErrors()) {
                 self.executeSearch(initiatedBy).done(function (response) {
                     self.updateModels(response);
                 });
-            }
-            if (userClickSubmit === formplayerConstants.USER_CLICK_SUBMIT) {
-                self.displayErrors();
             }
         },
 

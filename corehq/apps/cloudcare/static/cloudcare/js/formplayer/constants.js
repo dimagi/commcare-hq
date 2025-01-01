@@ -39,8 +39,6 @@ hqDefine("cloudcare/js/formplayer/constants", [], function () {
             CLICKABLE_ICON: "clickable_icon",
         },
 
-        USER_CLICK_SUBMIT: "userClickSubmit",
-
         //Custom Properties
         POST_FORM_SYNC: "cc-sync-after-form",
 
