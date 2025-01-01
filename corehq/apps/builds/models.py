@@ -91,13 +91,13 @@ class CommCareBuild(BlobMixin, Document):
             startkey = [version, build_number]
 
         self = cls.view('builds/all',
-            startkey=startkey + [{}],
-            endkey=startkey,
-            descending=True,
-            limit=1,
-            include_docs=True,
-            reduce=False,
-        ).one()
+                        startkey=startkey + [{}],
+                        endkey=startkey,
+                        descending=True,
+                        limit=1,
+                        include_docs=True,
+                        reduce=False,
+                        ).one()
 
         if not self:
             raise KeyError(
