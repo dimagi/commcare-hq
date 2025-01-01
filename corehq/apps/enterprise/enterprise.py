@@ -638,7 +638,7 @@ class Enterprise2FAReport(EnterpriseReport):
 
 class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     title = gettext_lazy('Application Version Compliance')
-    total_description = gettext_lazy('% of Applications Up-to-Date Across All Mobile Workers')
+    total_description = gettext_lazy('% of Applications Up to Date Across All Mobile Workers')
     INITIAL_QUERY_LIMIT = 10
 
     def __init__(self, account, couch_user):
@@ -648,9 +648,14 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
     @property
     def headers(self):
-        return [_('Mobile Worker'), _('Project Space'), _('Application'),
-                _('Latest Version Available at Submission'),
-                _('Version in Use'), _('Last Used [UTC]')]
+        return [
+            _('Mobile Worker'),
+            _('Project Space'),
+            _('Application'),
+            _('Latest Version Available at Submission'),
+            _('Version in Use'),
+            _('Last Used [UTC]'),
+        ]
 
     @property
     def rows(self):
