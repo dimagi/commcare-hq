@@ -27,7 +27,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
+from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs, retry_on_couch_error
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from corehq import privileges, toggles
@@ -255,6 +255,7 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
         return hashlib.md5(data).hexdigest()
 
     @classmethod
+    @retry_on_couch_error
     def get_by_hash(cls, file_hash):
         result = cls.view('hqmedia/by_hash', key=file_hash, include_docs=True).first()
         if not result:
