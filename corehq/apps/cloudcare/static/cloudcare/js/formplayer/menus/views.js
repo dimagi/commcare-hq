@@ -1613,7 +1613,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
-        setPersistantMenuRegionWidth: function () {
+        calcPersistantMenuRegionWidth: function () {
             const contentPlusContainer = $('#content-plus-persistent-menu-container');
 
             const persistentMenuRegionClone = $('#persistent-menu-region').clone();
@@ -1632,20 +1632,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
             const regionWidth = persistentMenuRegionClone.outerWidth();
 
-            sessionStorage.setItem('persistantMenuRegionWidth', regionWidth);
             persistentMenuRegionClone.remove();
 
             return regionWidth;
         },
-        fetchPersistantMenuRegionWidth: function () {
+        getPersistantMenuRegionWidth: function () {
             let persistantMenuRegionWidth = sessionStorage.getItem('persistantMenuRegionWidth');
             if (!persistantMenuRegionWidth) {
-                persistantMenuRegionWidth = this.setPersistantMenuRegionWidth();
+                persistantMenuRegionWidth = this.calcPersistantMenuRegionWidth();
+                sessionStorage.setItem('persistantMenuRegionWidth', persistantMenuRegionWidth);
             }
             return persistantMenuRegionWidth;
         },
         showMenu: function () {
-            const persistantMenuRegionWidth = this.fetchPersistantMenuRegionWidth();
+            const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
             const persistentMenuContainer = $('#persistent-menu-container');
             persistentMenuContainer.css('transition', 'width 0.25s');
             persistentMenuContainer.css('width', persistantMenuRegionWidth);
@@ -1659,7 +1659,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             this.menuExpanded = false;
         },
         lockMenu: function () {
-            const persistantMenuRegionWidth = this.fetchPersistantMenuRegionWidth();
+            const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
             const persistentMenuRegion = $('#persistent-menu-region');
             const persistentMenuContainer = $('#persistent-menu-container');
             persistentMenuRegion.css('width', persistantMenuRegionWidth);
