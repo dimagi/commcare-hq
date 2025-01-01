@@ -88,6 +88,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
+from corehq.apps.user_importer.importer import get_location_from_site_code
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -101,6 +102,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
+from corehq.apps.reports.util import get_tableau_group_ids_by_names
 from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
@@ -121,6 +123,7 @@ from corehq.apps.users.models import (
     CouchUser,
     HqPermissions,
     WebUser,
+    Invitation,
 )
 from corehq.apps.users.util import (
     generate_mobile_username,
@@ -412,6 +415,37 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
         errors = validator.is_valid(bundle.data, True)
         if errors:
             raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
+
+        profile = validator.profiles_by_name.get(bundle.data.get('profile'), None)
+        role_id = validator.roles_by_name.get(bundle.data.get('role'), None)
+        tableau_group_ids = get_tableau_group_ids_by_names(bundle.data.get('tableau_groups', []), domain)
+
+        primary_loc = None
+        assigned_locs = []
+        if bundle.data.get('assigned_locations'):
+            primary_loc = get_location_from_site_code(
+                bundle.data.get('primary_location'), validator.location_cache
+            )
+            assigned_locs = [
+                get_location_from_site_code(loc, validator.location_cache)
+                for loc in bundle.data.get('assigned_locations')
+            ]
+
+        invite = Invitation.objects.create(
+            domain=domain,
+            email=bundle.data.get('email').lower(),
+            role=role_id,
+            primary_location=primary_loc,
+            profile=profile,
+            custom_user_data=bundle.data.get('custom_user_data', {}),
+            tableau_role=bundle.data.get('tableau_role'),
+            tableau_group_ids=tableau_group_ids,
+            invited_by=bundle.request.couch_user.user_id,
+            invited_on=datetime.utcnow(),
+        )
+        invite.assigned_locations.set(assigned_locs)
+        bundle.obj = invite
+        return bundle
 
 
 class WebUserResource(v0_1.WebUserResource):
