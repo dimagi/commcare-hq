@@ -4,7 +4,6 @@ hqDefine('registration/js/register_new_user', [
     'underscore',
     'registration/js/new_user.ko',
     'hqwebapp/js/initial_page_data',
-    'analytix/js/kissmetrix',
     'registration/js/login',
     'commcarehq',
 ], function (
@@ -12,8 +11,7 @@ hqDefine('registration/js/register_new_user', [
     ko,
     _,
     newUser,
-    initialPageData,
-    kissmetrics
+    initialPageData
 ) {
     'use strict';
 
