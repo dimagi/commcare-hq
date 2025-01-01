@@ -388,8 +388,25 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         return self.create_response(request, {}, response_class=http.HttpAccepted)
 
 
-class WebUserResource(v0_1.WebUserResource):
+class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
+    id = fields.CharField(attribute='uuid', readonly=True, unique=True)
+    email = fields.CharField(attribute='email')
+    role = fields.CharField()
+    primary_location = fields.CharField(null=True)
+    assigned_locations = fields.ListField(null=True)
+    profile = fields.CharField(null=True)
+    custom_user_data = fields.DictField(attribute='custom_user_data')
+    tableau_role = fields.CharField(attribute='tableau_role', null=True)
+    tableau_groups = fields.ListField(null=True)
 
+    class Meta(CustomResourceMeta):
+        resource_name = "invitation"
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_web_users)
+        allowed_methods = ['post']
+        always_return_data = True
+
+
+class WebUserResource(v0_1.WebUserResource):
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if bundle_or_obj is None:
             return super().get_resource_uri(None, url_name)
