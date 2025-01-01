@@ -1070,7 +1070,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def delete_item(self, rule_id):
         (rule, error) = self._get_rule(rule_id)
         if rule is None:
-            return {'success': False, 'error': error}
+            raise PaginatedItemException(error)
 
         rule.soft_delete()
 
