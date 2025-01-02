@@ -102,7 +102,10 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
-from corehq.apps.reports.util import get_tableau_group_ids_by_names
+from corehq.apps.reports.util import (
+    get_tableau_group_ids_by_names,
+    get_tableau_groups_by_ids,
+)
 from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
@@ -408,6 +411,24 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
         authentication = RequirePermissionAuthentication(HqPermissions.edit_web_users)
         allowed_methods = ['post']
         always_return_data = True
+
+    def dehydrate_role(self, bundle):
+        return bundle.obj.get_role_name()
+
+    def dehydrate_assigned_locations(self, bundle):
+        return [loc.site_code for loc in bundle.obj.assigned_locations.all() if loc is not None]
+
+    def dehydrate_primary_location(self, bundle):
+        if bundle.obj.primary_location:
+            return bundle.obj.primary_location.site_code
+
+    def dehydrate_tableau_groups(self, bundle):
+        return [group.name for group in get_tableau_groups_by_ids(bundle.obj.tableau_group_ids,
+                                                                 bundle.request.domain)]
+
+    def dehydrate_profile(self, bundle):
+        if bundle.obj.profile:
+            return bundle.obj.profile.name
 
     def obj_create(self, bundle, **kwargs):
         domain = kwargs['domain']
