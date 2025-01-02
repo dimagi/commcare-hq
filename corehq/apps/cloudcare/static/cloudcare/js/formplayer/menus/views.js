@@ -1647,7 +1647,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         showMenu: function () {
             const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
             const persistentMenuContainer = $('#persistent-menu-container');
-            persistentMenuContainer.css('transition', 'width 0.25s');
+            if (sessionStorage.showPersistentMenu === "false") {
+                persistentMenuContainer.css('transition', 'width 0.25s');
+            }
             persistentMenuContainer.css('width', persistantMenuRegionWidth);
             $('#persistent-menu-container-content').removeClass('d-none');
             this.menuExpanded = true;
