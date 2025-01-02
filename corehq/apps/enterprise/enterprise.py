@@ -727,14 +727,28 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 if app_id not in apps or not build_version:
                     continue
                 build_version_date = DateTimeProperty.deserialize(build.get('build_version_date'))
-                all_builds = self.get_app_builds(domain, app_id, limit=self.INITIAL_QUERY_LIMIT)
-                latest_version = self.get_latest_build_version_at_time(all_builds, build_version_date)
-                if not latest_version:
-                    all_builds = self.get_app_builds(domain, app_id)
-                    latest_version = self.get_latest_build_version_at_time(all_builds, build_version_date)
+                latest_version = self.get_latest_build_version_at_time(domain, app_id, build_version_date)
                 yield user, build, latest_version
 
-    def get_app_builds(self, domain, app_id, limit=None):
+    def get_latest_build_version_at_time(self, domain, app_id, time):
+        """
+        Get the latest build version available at the given time.
+
+        :param domain: The domain of the app
+        :param app_id: The application id
+        :param time: A datetime object representing the date of the build version to compare against
+        :return: The latest build version available at the given date
+        """
+        builds = self.get_app_builds(domain, app_id, limit=self.INITIAL_QUERY_LIMIT)
+        latest_build = self._find_latest_build_version_from_builds(builds, time)
+
+        if latest_build is None:
+            builds = self.get_app_builds(domain, app_id, start=self.INITIAL_QUERY_LIMIT)
+            latest_build = self._find_latest_build_version_from_builds(builds, time)
+
+        return latest_build
+
+    def get_app_builds(self, domain, app_id, limit=None, start=0):
         if app_id not in self.builds_by_app_id:
             app_es = (
                 AppES()
@@ -744,6 +758,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 .sort('version', desc=True)
                 .is_released()
                 .source(['_id', 'version', 'last_released', 'built_on'])
+                .start(start)
             )
             if limit:
                 app_es = app_es.size(limit)
@@ -751,13 +766,13 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
         return self.builds_by_app_id[app_id]
 
-    def get_latest_build_version_at_time(self, all_builds, time):
+    def _find_latest_build_version_from_builds(self, all_builds, time):
         """
         Get the latest build version at the time
 
         :param all_builds: List of raw build documents sorted by version in descending order
-        :param time: The date of the build version to compare against
-        :return: The latest build version available at the given date
+        :param time: A datetime object representing the date of the build version to compare against
+        :return: The latest build version available at the given date.
         """
 
         for build_doc in all_builds:
