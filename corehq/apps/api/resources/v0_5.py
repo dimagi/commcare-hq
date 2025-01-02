@@ -71,7 +71,6 @@ from corehq.apps.api.util import (
     parse_str_to_date,
     cursor_based_query_for_datasource
 )
-from corehq.apps.api.validation import WebUserResourceValidator
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.case_importer.views import require_can_edit_data
@@ -88,7 +87,6 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
-from corehq.apps.user_importer.importer import get_location_from_site_code
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -101,10 +99,6 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
-)
-from corehq.apps.reports.util import (
-    get_tableau_group_ids_by_names,
-    get_tableau_groups_by_ids,
 )
 from corehq.apps.userreports.reports.view import (
     get_filter_values,
@@ -126,7 +120,6 @@ from corehq.apps.users.models import (
     CouchUser,
     HqPermissions,
     WebUser,
-    Invitation,
 )
 from corehq.apps.users.util import (
     generate_mobile_username,
@@ -393,80 +386,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         self.log_throttled_access(request)
         return self.create_response(request, {}, response_class=http.HttpAccepted)
-
-
-class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
-    id = fields.CharField(attribute='uuid', readonly=True, unique=True)
-    email = fields.CharField(attribute='email')
-    role = fields.CharField()
-    primary_location = fields.CharField(null=True)
-    assigned_locations = fields.ListField(null=True)
-    profile = fields.CharField(null=True)
-    custom_user_data = fields.DictField(attribute='custom_user_data')
-    tableau_role = fields.CharField(attribute='tableau_role', null=True)
-    tableau_groups = fields.ListField(null=True)
-
-    class Meta(CustomResourceMeta):
-        resource_name = "invitation"
-        authentication = RequirePermissionAuthentication(HqPermissions.edit_web_users)
-        allowed_methods = ['post']
-        always_return_data = True
-
-    def dehydrate_role(self, bundle):
-        return bundle.obj.get_role_name()
-
-    def dehydrate_assigned_locations(self, bundle):
-        return [loc.site_code for loc in bundle.obj.assigned_locations.all() if loc is not None]
-
-    def dehydrate_primary_location(self, bundle):
-        if bundle.obj.primary_location:
-            return bundle.obj.primary_location.site_code
-
-    def dehydrate_tableau_groups(self, bundle):
-        return [group.name for group in get_tableau_groups_by_ids(bundle.obj.tableau_group_ids,
-                                                                 bundle.request.domain)]
-
-    def dehydrate_profile(self, bundle):
-        if bundle.obj.profile:
-            return bundle.obj.profile.name
-
-    def obj_create(self, bundle, **kwargs):
-        domain = kwargs['domain']
-        validator = WebUserResourceValidator(domain, bundle.request.couch_user)
-        errors = validator.is_valid(bundle.data, True)
-        if errors:
-            raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
-
-        profile = validator.profiles_by_name.get(bundle.data.get('profile'), None)
-        role_id = validator.roles_by_name.get(bundle.data.get('role'), None)
-        tableau_group_ids = get_tableau_group_ids_by_names(bundle.data.get('tableau_groups', []), domain)
-
-        primary_loc = None
-        assigned_locs = []
-        if bundle.data.get('assigned_locations'):
-            primary_loc = get_location_from_site_code(
-                bundle.data.get('primary_location'), validator.location_cache
-            )
-            assigned_locs = [
-                get_location_from_site_code(loc, validator.location_cache)
-                for loc in bundle.data.get('assigned_locations')
-            ]
-
-        invite = Invitation.objects.create(
-            domain=domain,
-            email=bundle.data.get('email').lower(),
-            role=role_id,
-            primary_location=primary_loc,
-            profile=profile,
-            custom_user_data=bundle.data.get('custom_user_data', {}),
-            tableau_role=bundle.data.get('tableau_role'),
-            tableau_group_ids=tableau_group_ids,
-            invited_by=bundle.request.couch_user.user_id,
-            invited_on=datetime.utcnow(),
-        )
-        invite.assigned_locations.set(assigned_locs)
-        bundle.obj = invite
-        return bundle
 
 
 class WebUserResource(v0_1.WebUserResource):
