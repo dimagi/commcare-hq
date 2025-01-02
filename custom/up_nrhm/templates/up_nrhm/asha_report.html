@@ -6,7 +6,7 @@
 {% block js %}
     {{ block.super }}
     {% if rendered_as == 'print' %}
-        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script><!-- TODO: what is this? -->
     {% endif %}
     <style>
         @page {

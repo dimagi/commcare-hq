@@ -1,4 +1,18 @@
-hqDefine("reports/js/bootstrap3/async", function () {
+hqDefine("reports/js/bootstrap3/async", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/bootstrap3/alert_user',
+    'reports/js/charts/main',
+    'reports/js/filters/bootstrap3/main',
+    'reports/js/util',
+], function (
+    $,
+    _,
+    alertUser,
+    chartsMain,
+    filtersMain,
+    reportsUtil
+) {
     return function (o) {
         'use strict';
         var self = {};
@@ -35,7 +49,7 @@ hqDefine("reports/js/bootstrap3/async", function () {
             self.filterRequest = null;
             try {
                 $('#hq-report-filters').html(data.filters);
-                hqImport("reports/js/filters/bootstrap3/main").init();
+                filtersMain.init();
             } catch (e) {
                 console.log(e);
             }
@@ -58,12 +72,12 @@ hqDefine("reports/js/bootstrap3/async", function () {
                 self.standardReport.filterSubmitButton.addClass('disabled');
             }
             self.filterForm.submit(function () {
-                var params = hqImport('reports/js/util').urlSerialize(this);
+                var params = reportsUtil.urlSerialize(this);
                 if (self.isCaseListRelated(pathName)) {
                     var url = window.location.href.replace(self.standardReport.urlRoot,
                         self.standardReport.urlRoot + 'async/') + "?" + "&" + params;
                     if (url.length > self.maxInputLimit) {
-                        hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(self.humanReadableErrors['maxInputError'], "danger");
+                        alertUser.alert_user(self.humanReadableErrors['maxInputError'], "danger");
                     } else {
                         self.getQueryId(params, false, true, pathName);
                     }
@@ -155,7 +169,7 @@ hqDefine("reports/js/bootstrap3/async", function () {
                     }
                     self.hqLoading = $(self.loaderClass);
                     self.reportContent.html(data.report);
-                    hqImport('reports/js/charts/main').init();
+                    chartsMain.init();
                     // clear lingering popovers
                     _.each($('body > .popover'), function (popover) {
                         $(popover).remove();
