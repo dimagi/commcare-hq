@@ -21,7 +21,7 @@ from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number
+from corehq.apps.sms.api import MessageMetadata, send_message_to_verified_number
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.parsers.ledgers.helpers import (
@@ -50,7 +50,7 @@ def handle(verified_contact, text, msg):
     except Exception as e:
         if settings.UNIT_TESTING or settings.DEBUG:
             raise
-        send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
+        send_message_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
         return True
 
     process(domain_obj.name, data)
@@ -372,4 +372,4 @@ def send_confirmation(v, data):
         ' '.join(sorted(summarize_action(a, txs) for a, txs in tx_by_action.items()))
     )
 
-    send_sms_to_verified_number(v, msg, metadata=metadata)
+    send_message_to_verified_number(v, msg, metadata=metadata)
