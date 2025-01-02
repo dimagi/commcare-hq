@@ -130,14 +130,18 @@
               {% endif %}
 
               {% if not request.is_view_only %}
-                <button type="submit" class="btn btn-primary">
-                  {% if location.get_id %}
-                    {% trans 'Update' %}
-                  {% else %}
-                    {% trans 'Create' %}
-                  {% endif %}
-                  {% trans 'Location' %}
-                </button>
+                <div class="row form-actions">
+                  <div class="field-control">
+                    <button type="submit" class="btn btn-primary">
+                      {% if location.get_id %}
+                        {% trans 'Update' %}
+                      {% else %}
+                        {% trans 'Create' %}
+                      {% endif %}
+                      {% trans 'Location' %}
+                    </button>
+                  </div>
+                </div>
               {% endif %}
             </form>
           </div>
