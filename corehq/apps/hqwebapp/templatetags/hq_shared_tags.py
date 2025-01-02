@@ -246,19 +246,13 @@ def can_use_restore_as(request):
 
 @register.simple_tag
 def css_label_class():
-    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS, CSS_LABEL_CLASS_BOOTSTRAP5
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
-    if get_bootstrap_version() == BOOTSTRAP_5:
-        return CSS_LABEL_CLASS_BOOTSTRAP5
+    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS
     return CSS_LABEL_CLASS
 
 
 @register.simple_tag
 def css_field_class():
-    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_FIELD_CLASS_BOOTSTRAP5
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
-    if get_bootstrap_version() == BOOTSTRAP_5:
-        return CSS_FIELD_CLASS_BOOTSTRAP5
+    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS
     return CSS_FIELD_CLASS
 
 
