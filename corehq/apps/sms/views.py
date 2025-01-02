@@ -1104,7 +1104,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         except (BadSMSConfigException, SQLMobileBackend.DoesNotExist, TypeError, ValueError):
             raise Http404()
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         item_id, backend = self._get_backend_from_item_id(item_id)
 
         if backend.is_global or backend.domain != self.domain:
@@ -1456,7 +1456,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
         except (BadSMSConfigException, SQLMobileBackend.DoesNotExist, TypeError, ValueError):
             raise Http404()
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         item_id, backend = self._get_backend_from_item_id(item_id)
 
         if not backend.is_global:

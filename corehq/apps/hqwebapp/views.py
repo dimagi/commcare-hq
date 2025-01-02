@@ -1154,7 +1154,7 @@ class CRUDPaginatedViewMixin(object):
     @property
     def delete_response(self):
         try:
-            response = self.get_deleted_item_data(self.item_id)
+            response = self.delete_item(self.item_id)
             return {
                 'deletedItem': response
             }
@@ -1253,7 +1253,7 @@ class CRUDPaginatedViewMixin(object):
         """
         raise NotImplementedError("You must implement get_updated_item_data")
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         """
         This should return a dict of data for the deleted item.
         {
@@ -1264,7 +1264,7 @@ class CRUDPaginatedViewMixin(object):
             'template': <knockout template id>
         }
         """
-        raise NotImplementedError("You must implement get_deleted_item_data")
+        raise NotImplementedError("You must implement delete_item")
 
 
 @login_required
