@@ -143,7 +143,7 @@ def _update_or_create_domain_metrics(domain, all_stats):
         )
     except Exception as e:
         notify_exception(
-            None, message='Domain {} failed on stats calculations with {}'.format(domain, e)
+            None, message='Failed to create or update domain metrics for {domain}: {}'.format(domain, e)
         )
 
 
