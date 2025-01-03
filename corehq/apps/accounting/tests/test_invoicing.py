@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core import mail
 from django.test import override_settings
 
-from corehq.apps.accounting import tasks, utils
+from corehq.apps.accounting import utils
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
@@ -162,11 +162,6 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertTrue(autopay_invoice.balance <= SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(autopay_invoice.date_due)
 
-    def create_invoices(self, date, calculate_users=True):
-        if calculate_users:
-            calculate_users_in_all_domains(date)
-        tasks.generate_invoices_based_on_date(date)
-
 
 class TestContractedInvoices(BaseInvoiceTestCase):
 
@@ -187,9 +182,7 @@ class TestContractedInvoices(BaseInvoiceTestCase):
         """
 
         expected_recipient = ["accounts@example.com"]
-
-        calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices_based_on_date(self.invoice_date)
+        self.create_invoices(self.invoice_date)
 
         self.assertEqual(Invoice.objects.count(), 1)
         actual_recipient = Invoice.objects.first().email_recipients
@@ -200,9 +193,7 @@ class TestContractedInvoices(BaseInvoiceTestCase):
         Emails for contracted invoices should use the contracted invoices template
         """
         expected_template = BillingRecord.INVOICE_CONTRACTED_HTML_TEMPLATE
-
-        calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices_based_on_date(self.invoice_date)
+        self.create_invoices(self.invoice_date)
 
         self.assertEqual(BillingRecord.objects.count(), 1)
         actual_template = BillingRecord.objects.first().html_template
@@ -216,8 +207,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
         self._setup_implementation_subscription_with_dimagi_contact()
 
         invoice_date = utils.months_from_date(self.subscription.date_start, 1)
-        calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
 
         self.assertEqual(len(mail.outbox), 1)
         sent_email = mail.outbox[0]
@@ -228,8 +218,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
         self._setup_implementation_subscription_without_dimagi_contact()
 
         invoice_date = utils.months_from_date(self.subscription.date_start, 1)
-        calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
 
         self.assertEqual(len(mail.outbox), 1)
         sent_email = mail.outbox[0]
@@ -240,8 +229,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
         self._setup_product_subscription()
 
         invoice_date = utils.months_from_date(self.subscription.date_start, 1)
-        calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
 
         self.assertEqual(len(mail.outbox), 2)
         self.assertListEqual(mail.outbox[0].to, ['client1@test.com'])
@@ -265,8 +253,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
         self._setup_product_subscription_with_admin_user()
 
         invoice_date = utils.months_from_date(self.subscription.date_start, 1)
-        calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertListEqual(mail.outbox[0].to, ['adminwebuser@test.com'])

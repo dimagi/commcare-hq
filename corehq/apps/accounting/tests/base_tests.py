@@ -6,6 +6,10 @@ from dateutil.relativedelta import relativedelta
 from django_prbac.models import Role
 
 from corehq.apps.accounting import utils
+from corehq.apps.accounting.tasks import (
+    calculate_users_in_all_domains,
+    generate_invoices_based_on_date,
+)
 from corehq.apps.accounting.tests import generator
 
 
@@ -65,3 +69,8 @@ class BaseInvoiceTestCase(BaseAccountingTest):
             utils.clear_plan_version_cache()
 
         super(BaseInvoiceTestCase, cls).tearDownClass()
+
+    def create_invoices(self, date, calculate_users=True):
+        if calculate_users:
+            calculate_users_in_all_domains(date)
+        generate_invoices_based_on_date(date)
