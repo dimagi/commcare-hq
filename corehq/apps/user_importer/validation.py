@@ -49,7 +49,8 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain),
         ProfileValidator(domain, upload_user, is_web_user_import, all_user_profiles_by_name),
-        LocationValidator(domain, upload_user, location_cache, is_web_user_import)
+        LocationValidator(domain, upload_user, location_cache, is_web_user_import),
+        UserAccessValidator(domain, upload_user, is_web_user_import)
     ]
     if is_web_user_import:
         return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
@@ -501,9 +502,33 @@ class ConfirmationSmsValidator(ImportValidator):
                     return self.error_existing_user.format(self.confirmation_sms_header, errors_formatted)
 
 
-class LocationValidator(ImportValidator):
+class UserAccessValidator(ImportValidator):
     error_message_user_access = _("Based on your locations you do not have permission to edit this user or user "
                                   "invitation")
+
+    def __init__(self, domain, upload_user, is_web_user_import):
+        super().__init__(domain)
+        self.upload_user = upload_user
+        self.is_web_user_import = is_web_user_import
+
+    def validate_spec(self, spec):
+        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
+        user_access_error = self._validate_uploading_user_access_to_editable_user_or_invitation(user_result)
+        if user_access_error:
+            return user_access_error
+
+    def _validate_uploading_user_access_to_editable_user_or_invitation(self, user_result):
+        # Get current locations for editable user or user invitation and ensure uploading user
+        # can access those locations
+        if user_result.invitation:
+            if not user_can_access_invite(self.domain, self.upload_user, user_result.invitation):
+                return self.error_message_user_access.format(user_result.invitation.email)
+        elif user_result.editable_user:
+            if not user_can_access_other_user(self.domain, self.upload_user, user_result.editable_user):
+                return self.error_message_user_access.format(user_result.editable_user.username)
+
+
+class LocationValidator(ImportValidator):
     error_message_location_access = _("You do not have permission to assign or remove these locations: {}")
 
     def __init__(self, domain, upload_user, location_cache, is_web_user_import):
@@ -513,12 +538,8 @@ class LocationValidator(ImportValidator):
         self.is_web_user_import = is_web_user_import
 
     def validate_spec(self, spec):
-        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
-        user_access_error = self._validate_uploading_user_access_to_editable_user_or_invitation(user_result)
-        if user_access_error:
-            return user_access_error
-
         if 'location_code' in spec:
+            user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
             locs_being_assigned = self._get_locs_ids_being_assigned(spec)
             current_locs = self._get_current_locs(user_result)
 
@@ -542,16 +563,6 @@ class LocationValidator(ImportValidator):
         elif user_result.editable_user:
             current_locs = user_result.editable_user.get_location_ids(self.domain)
         return current_locs
-
-    def _validate_uploading_user_access_to_editable_user_or_invitation(self, user_result):
-        # Get current locations for editable user or user invitation and ensure uploading user
-        # can access those locations
-        if user_result.invitation:
-            if not user_can_access_invite(self.domain, self.upload_user, user_result.invitation):
-                return self.error_message_user_access.format(user_result.invitation.email)
-        elif user_result.editable_user:
-            if not user_can_access_other_user(self.domain, self.upload_user, user_result.editable_user):
-                return self.error_message_user_access.format(user_result.editable_user.username)
 
     def _validate_user_location_permission(self, current_locs, locs_ids_being_assigned):
         # Ensure the uploading user is only adding the user to/removing from *new locations* that
