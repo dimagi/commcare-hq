@@ -1,5 +1,5 @@
 from django.test import TestCase
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch
 
 from corehq.apps.api.validation import WebUserResourceValidator
 from corehq.apps.custom_data_fields.models import (
@@ -26,8 +26,23 @@ class TestWebUserResourceValidator(TestCase):
         cls.requesting_user.set_role(cls.domain.name, 'admin')
         cls.requesting_user.save()
         cls.validator = WebUserResourceValidator(cls.domain.name, cls.requesting_user)
+
         cls.definition = CustomDataFieldsDefinition.get_or_create(cls.domain.name, UserFieldsView.field_type)
         cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='imaginary',
+                label='Imaginary Person',
+                choices=['yes', 'no'],
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='character',
+            fields={'imaginary': 'yes'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -103,15 +118,9 @@ class TestWebUserResourceValidator(TestCase):
     def test_validate_profile_with_no_profile_input(self):
         self.definition.profile_required_for_user_type = [UserFieldsView.WEB_USER]
         self.definition.save()
-        with patch.object(WebUserResourceValidator,
-                          'profiles_by_name', new_callable=PropertyMock) as mock_profiles_by_name:
-            mock_profiles_by_name.return_value = {"fake_profile": CustomDataFieldsProfile(
-                name="fake_profile",
-                definition=self.definition
-            )}
-            self.assertIsNone(self.validator.validate_profile(None, False))
-            self.assertEqual(self.validator.validate_profile(None, True),
-                "A profile must be assigned to users of the following type(s): Web Users")
+        self.assertIsNone(self.validator.validate_profile(None, False))
+        self.assertEqual(self.validator.validate_profile(None, True),
+            "A profile must be assigned to users of the following type(s): Web Users")
         self.definition.profile_required_for_user_type = []
         self.definition.save()
 
