@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 import re
-from django.db.models import Count
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.db.models import Count, Subquery, Q
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -36,7 +37,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, Invitation
+from corehq.apps.users.models import CouchUser, HQApiKey, Invitation, WebUser
 
 
 class EnterpriseReport(ABC):
@@ -47,6 +48,8 @@ class EnterpriseReport(ABC):
     ODATA_FEEDS = 'odata_feeds'
     COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
     SMS = 'sms'
+    API_USAGE = 'api_usage'
+    TWO_FACTOR_AUTH = '2fa'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
@@ -94,6 +97,10 @@ class EnterpriseReport(ABC):
             report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
         elif slug == cls.SMS:
             report = EnterpriseSMSReport(account, couch_user, **kwargs)
+        elif slug == cls.API_USAGE:
+            report = EnterpriseAPIReport(account, couch_user, **kwargs)
+        elif slug == cls.TWO_FACTOR_AUTH:
+            report = Enterprise2FAReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
@@ -561,3 +568,70 @@ class EnterpriseSMSReport(EnterpriseReport):
         num_errors = sum([result['direction_count'] for result in results if result['error']])
 
         return [(domain_obj.name, num_sent, num_received, num_errors), ]
+
+
+class EnterpriseAPIReport(EnterpriseReport):
+    title = gettext_lazy('API Usage')
+    total_description = gettext_lazy('# of Active API Keys')
+
+    @property
+    def headers(self):
+        return [_('Web User'), _('API Key Name'), _('Scope'), _('Expiration Date [UTC]'), _('Created On [UTC]'),
+                _('Last Used On [UTC]')]
+
+    @property
+    def rows(self):
+        return [self._get_api_key_row(api_key) for api_key in self.unique_api_keys()]
+
+    @property
+    def total(self):
+        return self.unique_api_keys().count()
+
+    def unique_api_keys(self):
+        usernames = self.account.get_web_user_usernames()
+        user_ids = User.objects.filter(username__in=usernames).values_list('id', flat=True)
+        domains = self.account.get_domains()
+
+        return HQApiKey.objects.filter(
+            user_id__in=Subquery(user_ids),
+            is_active=True
+        ).filter(
+            Q(domain__in=domains) | Q(domain='')
+        )
+
+    def _get_api_key_row(self, api_key):
+        if api_key.domain:
+            scope = api_key.domain
+        else:
+            user_domains = set(WebUser.get_by_username(api_key.user.username).get_domains())
+            account_domains = set(self.account.get_domains())
+            intersected_domains = user_domains.intersection(account_domains)
+            scope = ', '.join((intersected_domains))
+
+        return [
+            api_key.user.username,
+            api_key.name,
+            scope,
+            self.format_date(api_key.expiration_date),
+            self.format_date(api_key.created),
+            self.format_date(api_key.last_used),
+        ]
+
+
+class Enterprise2FAReport(EnterpriseReport):
+    title = gettext_lazy('Two Factor Authentication')
+    total_description = gettext_lazy('# of Project Spaces without 2FA')
+
+    @property
+    def headers(self):
+        return [_('Project Space without 2FA'),]
+
+    def total_for_domain(self, domain_obj):
+        if domain_obj.two_factor_auth:
+            return 0
+        return 1
+
+    def rows_for_domain(self, domain_obj):
+        if domain_obj.two_factor_auth:
+            return []
+        return [(domain_obj.name,)]
