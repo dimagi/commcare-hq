@@ -37,7 +37,7 @@ class WebUserResourceValidator():
             (self.validate_locations, [data.get("username"), data.get("assigned_locations"),
                                        data.get("primary_location")]),
             (self.validate_user_access, [data.get("username")]),
-            (self.validate_tableau_group, [data.get("tableau_groups", [])]),
+            (self.validate_tableau_group, [data.get("tableau_groups", None)]),
             (self.validate_tableau_role, [data.get("tableau_role")]),
         ]
 
@@ -131,8 +131,12 @@ class WebUserResourceValidator():
         return user_access_validator.validate_spec(spec)
 
     def validate_tableau_group(self, tableau_groups):
+        if tableau_groups is None:
+            return
         allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(self.domain) or []
         return TableauGroupsValidator.validate_tableau_groups(allowed_groups_for_domain, tableau_groups)
 
     def validate_tableau_role(self, tableau_role):
+        if tableau_role is None:
+            return
         return TableauRoleValidator.validate_tableau_role(tableau_role)
