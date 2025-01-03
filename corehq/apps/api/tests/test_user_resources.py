@@ -29,6 +29,7 @@ from corehq.apps.users.models import (
     UserHistory,
     UserRole,
     WebUser,
+    Invitation,
 )
 from corehq.apps.users.role_utils import (
     UserRolePresets,
@@ -745,3 +746,92 @@ class TestCommCareAnalyticsUserResource(APIResourceTest):
             'roles': ['sql_lab', 'dataset_editor']
         }
         self.assertEqual(response.json(), expected_response_obj)
+
+
+class TestInvitationResource(APIResourceTest):
+    resource = v1_0.InvitationResource
+    api_name = 'v1'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        initialize_domain_with_default_roles(cls.domain.name)
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain.name,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='imaginary',
+                label='Imaginary Person',
+                choices=['yes', 'no'],
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='character',
+            fields={'imaginary': 'yes'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+        cls.loc_type = LocationType.objects.create(domain=cls.domain.name, name='loc_type')
+        cls.loc1 = SQLLocation.objects.create(
+            site_code='loc1', location_type=cls.loc_type, domain=cls.domain.name)
+        cls.loc2 = SQLLocation.objects.create(
+            site_code='loc2', location_type=cls.loc_type, domain=cls.domain.name)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.definition.delete()
+        super().tearDownClass()
+
+    @patch('corehq.apps.api.validation.WebUserResourceValidator.is_valid')
+    @patch('corehq.apps.api.resources.v1_0.get_tableau_group_ids_by_names')
+    @patch('corehq.apps.api.resources.v1_0.get_tableau_groups_by_ids')
+    def test_create(self, mock_get_tableau_groups_by_ids,
+                    mock_get_tableau_group_ids_by_names, mock_is_valid):
+        mock_is_valid.return_value = []
+        mock_get_tableau_group_ids_by_names.return_value = ["123", "456"]
+        from corehq.apps.reports.util import TableauGroupTuple
+        mock_get_tableau_groups_by_ids.return_value = [TableauGroupTuple("group1", "123")]
+        self.assertEqual(0, Invitation.objects.all().count())
+
+        user_json = {
+            "email": "jdoe1@example.org",
+            "role": "App Editor",
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        invitation = Invitation.objects.get(email="jdoe1@example.org")
+        self.addCleanup(invitation.delete)
+        self.assertEqual(invitation.get_role_name(), "App Editor")
+
+        user_json = {
+            "email": "jdoe2@example.org",
+            "role": "App Editor",
+            "primary_location": "loc1",
+            "assigned_locations": ["loc1", "loc2"],
+            "profile": "character",
+            "custom_user_data": {
+                "favorite_subject": "math",
+            },
+            "tableau_role": "Viewer",
+            "tableau_groups": ["group1", "group2"]
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(mock_is_valid.call_count, 2)
+
+        invitation = Invitation.objects.get(email="jdoe2@example.org")
+        self.addCleanup(invitation.delete)
+        self.assertEqual(invitation.get_role_name(), "App Editor")
+        self.assertEqual(invitation.primary_location, self.loc1)
+        self.assertEqual(list(invitation.assigned_locations.all()), [self.loc1, self.loc2])
+        self.assertEqual(invitation.profile, self.profile)
+        self.assertEqual(invitation.custom_user_data["favorite_subject"], "math")
+        self.assertEqual(invitation.tableau_role, "Viewer")
+        self.assertEqual(invitation.tableau_group_ids, ["123", "456"])
