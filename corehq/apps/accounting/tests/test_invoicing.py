@@ -17,10 +17,8 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     BillingRecord,
     DefaultProductPlan,
-    DomainUserHistory,
     Invoice,
     SoftwarePlanEdition,
-    Subscriber,
     Subscription,
     SubscriptionType,
 )
@@ -30,7 +28,6 @@ from corehq.apps.accounting.tests.base_tests import (
     BaseAccountingTest,
     BaseInvoiceTestCase,
 )
-from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_previous_month_date_range
 
@@ -41,18 +38,25 @@ class TestInvoice(BaseInvoiceTestCase):
     of a subscription for a domain.
     """
 
+    def setUp(self):
+        super().setUp()
+        self.community = DefaultProductPlan.get_default_plan_version()
+        generator.arbitrary_commcare_users_for_domain(
+            self.domain.name, self.community.user_limit + 1
+        )
+        self.invoice_start, self.invoice_end = get_previous_month_date_range()
+
     def test_no_invoice_before_start(self):
         """
         No invoice gets created if the subscription didn't start in the previous month.
         """
-        tasks.generate_invoices_based_on_date(self.subscription.date_start)
+        self.create_invoices(self.subscription.date_start, calculate_users=False)
         self.assertEqual(self.subscription.invoice_set.count(), 0)
 
     def test_subscription_invoice(self):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
-        calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
         self.assertEqual(self.subscription.invoice_set.count(), 1)
         self.assertEqual(self.subscription.subscriber.domain, self.domain.name)
 
@@ -71,7 +75,7 @@ class TestInvoice(BaseInvoiceTestCase):
         No invoices should be generated for the months after the end date of the subscription.
         """
         invoice_date = utils.months_from_date(self.subscription.date_end, 2)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date, calculate_users=False)
         self.assertEqual(self.subscription.invoice_set.count(), 0)
 
     def test_no_subscription_no_charges_no_invoice(self):
@@ -79,43 +83,59 @@ class TestInvoice(BaseInvoiceTestCase):
         No invoices should be generated for domains that are not on a subscription and do not
         have any per_excess charges on users or SMS messages
         """
-        domain = generator.arbitrary_domain()
-        self.addCleanup(domain.delete)
-        tasks.generate_invoices_based_on_date(datetime.date.today())
+        self.create_invoices(datetime.date.today(), calculate_users=False)
         self.assertRaises(Invoice.DoesNotExist,
-                          lambda: Invoice.objects.get(subscription__subscriber__domain=domain.name))
+                          lambda: Invoice.objects.get(subscription__subscriber__domain=self.domain.name))
 
     def test_community_invoice(self):
         """
         For community-subscribed domain with any charges over the community limit for the month of invoicing,
         make sure that an invoice is generated.
         """
-        domain = generator.arbitrary_domain()
-        self.addCleanup(domain.delete)
-        generator.create_excess_community_users(domain)
-        account = BillingAccount.get_or_create_account_by_domain(
-            domain, created_by=self.dimagi_user)[0]
-        generator.arbitrary_contact_info(account, self.dimagi_user)
+        today = datetime.date.today()
         generator.generate_domain_subscription(
-            account, domain, self.subscription_start_date, None,
+            self.account, self.domain, self.subscription_start_date, None,
             plan_version=generator.subscribable_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
         )
-        account.date_confirmed_extra_charges = datetime.date.today()
-        account.save()
-        today = datetime.date.today()
-        calculate_users_in_all_domains(datetime.date(today.year, today.month, 1))
-        tasks.generate_invoices_based_on_date(today)
-        subscriber = Subscriber.objects.get(domain=domain.name)
-        invoices = Invoice.objects.filter(subscription__subscriber=subscriber)
+        generator.create_excess_community_users(self.domain)
+        self.account.date_confirmed_extra_charges = today
+        self.account.save()
+        self.create_invoices(datetime.date(today.year, today.month, 1))
+
+        invoices = Invoice.objects.filter(subscription__subscriber__domain=self.domain)
         self.assertEqual(invoices.count(), 1)
+
         invoice = invoices.get()
-        self.assertEqual(invoice.subscription.subscriber.domain, domain.name)
+        self.assertEqual(invoice.subscription.subscriber.domain, self.domain.name)
+
+    def test_paused_plan_generates_no_invoice(self):
+        """
+        Ensure that Paused plans do not generate invoices.
+        """
+        paused_plan = generator.subscribable_plan_version(
+            edition=SoftwarePlanEdition.PAUSED
+        )
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain.name, paused_plan,
+            date_start=self.invoice_start,
+            date_end=self.invoice_end + datetime.timedelta(days=1),
+        )
+
+        self.create_invoices(self.invoice_end, calculate_users=False)
+        invoice_count = subscription.invoice_set.count()
+        self.assertEqual(invoice_count, 0)
+
+    def test_feature_charges(self):
+        domain_under_limits = generator.arbitrary_domain()
+        self.addCleanup(domain_under_limits.delete)
+
+        self.assertTrue(self.community.feature_charges_exist_for_domain(self.domain))
+        self.assertFalse(self.community.feature_charges_exist_for_domain(domain_under_limits))
 
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is small"""
         invoice_date_small = utils.months_from_date(self.subscription.date_start, 1)
-        calculate_users_in_all_domains(invoice_date_small)
-        tasks.generate_invoices_based_on_date(invoice_date_small)
+        self.create_invoices(invoice_date_small)
         small_invoice = self.subscription.invoice_set.first()
 
         self.assertTrue(small_invoice.balance <= SMALL_INVOICE_THRESHOLD)
@@ -126,8 +146,7 @@ class TestInvoice(BaseInvoiceTestCase):
         self.subscription.plan_version = generator.subscribable_plan_version(SoftwarePlanEdition.ADVANCED)
         self.subscription.save()
         invoice_date_large = utils.months_from_date(self.subscription.date_start, 3)
-        calculate_users_in_all_domains(invoice_date_large)
-        tasks.generate_invoices_based_on_date(invoice_date_large)
+        self.create_invoices(invoice_date_large)
         large_invoice = self.subscription.invoice_set.last()
 
         self.assertTrue(large_invoice.balance > SMALL_INVOICE_THRESHOLD)
@@ -137,12 +156,16 @@ class TestInvoice(BaseInvoiceTestCase):
         """Date due always gets set for autopay """
         self.subscription.account.update_autopay_user(self.billing_contact, self.domain)
         invoice_date_autopay = utils.months_from_date(self.subscription.date_start, 1)
-        calculate_users_in_all_domains(invoice_date_autopay)
-        tasks.generate_invoices_based_on_date(invoice_date_autopay)
+        self.create_invoices(invoice_date_autopay)
 
         autopay_invoice = self.subscription.invoice_set.last()
         self.assertTrue(autopay_invoice.balance <= SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(autopay_invoice.date_due)
+
+    def create_invoices(self, date, calculate_users=True):
+        if calculate_users:
+            calculate_users_in_all_domains(date)
+        tasks.generate_invoices_based_on_date(date)
 
 
 class TestContractedInvoices(BaseInvoiceTestCase):
@@ -300,81 +323,6 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
         self.assertListEqual(mail.outbox[0].cc, [])
         self.assertListEqual(mail.outbox[1].to, ['recipient2@test.com'])
         self.assertListEqual(mail.outbox[1].cc, [])
-
-
-class TestDomainInvoiceFactory(BaseAccountingTest):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestDomainInvoiceFactory, cls).setUpClass()
-        generator.bootstrap_test_software_plan_versions()
-
-    def setUp(self):
-        super(TestDomainInvoiceFactory, self).setUp()
-        self.invoice_start, self.invoice_end = get_previous_month_date_range()
-
-        self.domain = generator.arbitrary_domain()
-        self.account = BillingAccount.get_or_create_account_by_domain(
-            domain=self.domain.name, created_by="TEST"
-        )[0]
-        self.community = DefaultProductPlan.get_default_plan_version()
-        generator.arbitrary_commcare_users_for_domain(
-            self.domain.name, self.community.user_limit + 1
-        )
-
-        self.invoice_factory = DomainInvoiceFactory(
-            self.invoice_start, self.invoice_end, self.domain
-        )
-
-    def tearDown(self):
-        self.domain.delete()
-        super(TestDomainInvoiceFactory, self).tearDown()
-
-    @classmethod
-    def tearDownClass(cls):
-        clear_plan_version_cache()
-        super(TestDomainInvoiceFactory, cls).tearDownClass()
-
-    def test_feature_charges(self):
-        # TODO: move under TestInvoice
-        domain_under_limits = generator.arbitrary_domain()
-        self.assertTrue(self.community.feature_charges_exist_for_domain(self.domain))
-        self.assertFalse(self.community.feature_charges_exist_for_domain(domain_under_limits))
-        domain_under_limits.delete()
-
-    def test_community_plan_generates_invoice(self):
-        # TODO: consolidate with TestInvoice::test_community_invoice
-        """
-        Ensure that Community plans can generate invoices.
-        """
-        subscription = generator.generate_domain_subscription(
-            self.account, self.domain, self.invoice_start, None,
-            plan_version=generator.subscribable_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
-        )
-        DomainUserHistory.objects.create(
-            domain=self.domain.name, record_date=self.invoice_end, num_users=10)
-
-        self.invoice_factory.create_invoices()
-        invoice_count = subscription.invoice_set.count()
-        self.assertEqual(invoice_count, 1)
-
-    def test_paused_plan_generates_no_invoice(self):
-        # TODO: move under TestInvoice
-        """
-        Ensure that Paused plans do not generate invoices.
-        """
-        paused_plan = generator.subscribable_plan_version(
-            edition=SoftwarePlanEdition.PAUSED
-        )
-        subscription = Subscription.new_domain_subscription(
-            self.account, self.domain.name, paused_plan,
-            date_start=self.invoice_start,
-            date_end=self.invoice_end + datetime.timedelta(days=1),
-        )
-
-        self.invoice_factory.create_invoices()
-        invoice_count = subscription.invoice_set.count()
-        self.assertEqual(invoice_count, 0)
 
 
 class TestInvoicingMethods(BaseAccountingTest):
