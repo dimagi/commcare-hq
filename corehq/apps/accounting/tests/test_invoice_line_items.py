@@ -17,7 +17,6 @@ from corehq.apps.accounting.models import (
     Subscriber,
     Subscription,
 )
-from corehq.apps.accounting.tasks import calculate_users_in_all_domains
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -54,8 +53,7 @@ class TestProductLineItem(BaseInvoiceTestCase):
         """
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
-        calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
 
         product_line_items = invoice.lineitem_set.filter(feature_rate__exact=None)
@@ -85,9 +83,9 @@ class TestProductLineItem(BaseInvoiceTestCase):
         - subtotal = unit_cost * quantity
         """
         first_invoice_date = utils.months_from_date(self.subscription.date_start, 1)
-        tasks.generate_invoices_based_on_date(first_invoice_date)
         last_invoice_date = utils.months_from_date(self.subscription.date_end, 1)
-        tasks.generate_invoices_based_on_date(last_invoice_date)
+        self.create_invoices(first_invoice_date, calculate_users=False)
+        self.create_invoices(last_invoice_date, calculate_users=False)
 
         for invoice in self.subscription.invoice_set.all():
             product_line_items = invoice.lineitem_set.filter(feature_rate__exact=None)
@@ -152,8 +150,8 @@ class TestUserLineItem(BaseInvoiceTestCase):
         num_inactive = num_users()
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_inactive, is_active=False)
 
-        calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
+
         invoice = self.subscription.invoice_set.latest('date_created')
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
 
@@ -186,8 +184,8 @@ class TestUserLineItem(BaseInvoiceTestCase):
         num_inactive = num_users()
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_inactive, is_active=False)
 
-        calculate_users_in_all_domains(datetime.date(invoice_date.year, invoice_date.month, 1))
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
+
         invoice = self.subscription.invoice_set.latest('date_created')
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
 
@@ -229,8 +227,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
             date_start=datetime.date(today.year, today.month, 1) - relativedelta(months=1),
         )
 
-        calculate_users_in_all_domains(datetime.date(today.year, today.month, 1))
-        tasks.generate_invoices_based_on_date(today)
+        self.create_invoices(datetime.date(today.year, today.month, 1))
         subscriber = Subscriber.objects.get(domain=domain.name)
         invoice = Invoice.objects.filter(subscription__subscriber=subscriber).get()
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
@@ -356,9 +353,7 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         num_inactive = num_users()
         generator.arbitrary_webusers_for_domain(self.domain.name, num_inactive, is_active=False)
 
-        calculate_users_in_all_domains(invoice_date)
-        tasks.calculate_web_users_in_all_billing_accounts(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date, calculate_web_users=True)
         invoice = self.subscription.invoice_set.latest('date_created')
         web_user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).get()
 
@@ -391,9 +386,7 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         num_inactive = num_users()
         generator.arbitrary_webusers_for_domain(self.domain.name, num_inactive, is_active=False)
 
-        calculate_users_in_all_domains(datetime.date(invoice_date.year, invoice_date.month, 1))
-        tasks.calculate_web_users_in_all_billing_accounts(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date, calculate_web_users=True)
         invoice = self.subscription.invoice_set.latest('date_created')
         web_user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).get()
 
@@ -427,9 +420,7 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         num_inactive = num_users()
         generator.arbitrary_webusers_for_domain(self.domain.name, num_inactive, is_active=False)
 
-        calculate_users_in_all_domains(datetime.date(invoice_date.year, invoice_date.month, 1))
-        tasks.calculate_web_users_in_all_billing_accounts(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date, calculate_web_users=True)
         invoice = self.subscription.invoice_set.latest('date_created')
         self.assertEqual(invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).count(), 0)
 
@@ -572,8 +563,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         self.assertEqual(sms_line_item.total, sms_cost)
 
     def _create_sms_line_item(self):
-        calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices_based_on_date(self.invoice_date)
+        self.create_invoices(self.invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
         return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
 
