@@ -358,7 +358,7 @@ def domain_metrics(domain_obj, id, all_stats):
     metrics_dict['domain'] = domain_obj.name
     metrics_dict['last_modified'] = datetime.now(tz=timezone.utc)
 
-    # these are properties on the Django model, so don't try to write them
+    # these are calculated fields on the Django model, so don't try to write them
     del metrics_dict['cp_has_app']
     del metrics_dict['cp_sms_30_d']
     del metrics_dict['cp_sms_ever']
