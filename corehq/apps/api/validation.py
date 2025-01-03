@@ -17,6 +17,7 @@ from corehq.apps.user_importer.validation import (
 )
 from corehq.apps.users.validation import validate_primary_location_assignment
 from corehq.apps.registration.validation import AdminInvitesUserFormValidator
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 
 
 class WebUserResourceValidator():
@@ -33,6 +34,7 @@ class WebUserResourceValidator():
             (self.validate_role, [data.get("role")]),
             (self.validate_profile, [data.get("profile"), is_post]),
             (self.validate_custom_data, [data.get("custom_user_data"), data.get("profile")]),
+            (self.validate_custom_data_with_profile, [data.get("custom_user_data"), data.get("profile")]),
             (self.validate_email, [data.get("email"), is_post]),
             (self.validate_locations, [data.get("username"), data.get("assigned_locations"),
                                        data.get("primary_location")]),
@@ -43,8 +45,10 @@ class WebUserResourceValidator():
 
         for validator, args in validators:
             error = validator(*args)
-            if error:
+            if error and isinstance(error, str):
                 errors.append(error)
+            elif isinstance(error, list):
+                errors += error
 
         return errors
 
@@ -99,6 +103,21 @@ class WebUserResourceValidator():
         custom_data_validator = CustomDataValidator(self.domain, self.profiles_by_name, True)
         spec = {'data': custom_data, 'user_profile': profile_name}
         return custom_data_validator.validate_spec(spec)
+
+    def validate_custom_data_with_profile(self, custom_data, profile_name):
+        if custom_data is None or profile_name is None:
+            return
+
+        errors = []
+        profile = self.profiles_by_name.get(profile_name)
+
+        system_fields = set(profile.fields.keys()) if profile else set()
+        system_fields.add(PROFILE_SLUG)
+
+        for key in custom_data.keys():
+            if key in system_fields:
+                errors.append(_("'{}' cannot be set directly").format(key))
+        return errors
 
     def validate_email(self, email, is_post):
         if is_post and email is not None:

@@ -5,6 +5,7 @@ from corehq.apps.api.validation import WebUserResourceValidator
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
+    Field,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -123,6 +124,10 @@ class TestWebUserResourceValidator(TestCase):
             "A profile must be assigned to users of the following type(s): Web Users")
         self.definition.profile_required_for_user_type = []
         self.definition.save()
+
+    def test_validate_profile_with_conflicting_user_data(self):
+        self.assertEqual(self.validator.validate_custom_data_with_profile({'imaginary': 'yes'}, 'character'),
+            ["'imaginary' cannot be set directly"])
 
     def test_validate_email(self):
         self.assertIsNone(self.validator.validate_email("newtest@example.com", True))
