@@ -20,7 +20,6 @@ from corehq.apps.users.models import (
     HqPermissions,
     Invitation,
 )
-
 from corehq.apps.reports.util import (
     get_tableau_group_ids_by_names,
     get_tableau_groups_by_ids,

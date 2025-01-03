@@ -389,6 +389,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
 
 class WebUserResource(v0_1.WebUserResource):
+
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if bundle_or_obj is None:
             return super().get_resource_uri(None, url_name)
