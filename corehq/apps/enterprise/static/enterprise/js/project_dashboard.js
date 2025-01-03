@@ -216,6 +216,8 @@ hqDefine("enterprise/js/project_dashboard", [
                 undefined,
                 {minimumFractionDigits: 1,  maximumFractionDigits: 1}
             ) + '%';
+        } else if (input === "--") {
+            return input;
         } else {
             return Number(input).toLocaleString();
         }

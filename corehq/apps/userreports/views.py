@@ -1947,7 +1947,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             "template": "base-ucr-statement-template",
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         deleted_expression = self.base_query.get(id=item_id)
         deleted_expression.delete()
         return {
