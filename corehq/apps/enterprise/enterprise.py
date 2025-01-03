@@ -681,9 +681,9 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     def rows_for_domain(self, domain):
         rows = []
         app_name_by_id = {}
-        apps = get_app_ids_in_domain(domain)
+        app_ids = get_app_ids_in_domain(domain)
 
-        for user, build, latest_version in self._get_user_builds(domain, apps):
+        for user, build, latest_version in self._get_user_builds(domain, app_ids):
             if is_out_of_date(str(build['build_version']), str(latest_version)):
                 app_id = build['app_id']
                 if app_id not in app_name_by_id:
@@ -700,18 +700,18 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         return rows
 
     def total_for_domain(self, domain):
-        apps = get_app_ids_in_domain(domain)
+        app_ids = get_app_ids_in_domain(domain)
         total_last_builds = 0
         total_out_of_date = 0
 
-        for user, build, latest_version in self._get_user_builds(domain, apps):
+        for user, build, latest_version in self._get_user_builds(domain, app_ids):
             total_last_builds += 1
             if is_out_of_date(str(build['build_version']), str(latest_version)):
                 total_out_of_date += 1
 
         return total_out_of_date, total_last_builds
 
-    def _get_user_builds(self, domain, apps):
+    def _get_user_builds(self, domain, app_ids):
         user_query = (UserES()
             .domain(domain)
             .mobile_users()
@@ -724,7 +724,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
             for build in last_builds:
                 app_id = build.get('app_id')
                 build_version = build.get('build_version')
-                if app_id not in apps or not build_version:
+                if app_id not in app_ids or not build_version:
                     continue
                 build_version_date = DateTimeProperty.deserialize(build.get('build_version_date'))
                 latest_version = self.get_latest_build_version_at_time(domain, app_id, build_version_date)
