@@ -31,5 +31,6 @@
     <n1:userID>f7f0c79e-8b79-11df-b7de-005056c00008</n1:userID>
     <n1:instanceID>5d3d01561f584e85b53669a48bfc6039</n1:instanceID>
     <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
+    <n1:formLoadTime>111</n1:formLoadTime>
   </n1:meta>
 </data>

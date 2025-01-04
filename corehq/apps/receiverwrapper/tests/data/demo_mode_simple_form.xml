@@ -7,6 +7,7 @@
 	    <username>someuser</username>
 	    <userID>demo_user</userID>
 	    <uid>ad38211be256653bceac8e2156475664</uid>
+        <formLoadTime>111</formLoadTime>
 	</meta>
 	<foo>bar</foo>
 	<baz>
