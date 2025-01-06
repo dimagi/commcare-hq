@@ -29,6 +29,7 @@ from corehq.apps.enterprise.exceptions import (
 from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.es import AppES, forms as form_es
 from corehq.apps.es.users import UserES
+from corehq.apps.es.filters import OR, range_filter
 from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.reports.util import (
     get_commcare_version_and_date_from_last_usage,
@@ -730,69 +731,24 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 latest_version = self.get_latest_build_version_at_time(domain, app_id, build_version_date)
                 yield user, build, latest_version
 
-    def get_latest_build_version_at_time(self, domain, app_id, time):
-        """
-        Get the latest build version available at the given time.
-
-        :param domain: The domain of the app
-        :param app_id: The application id
-        :param time: A datetime object representing the date of the build version to compare against
-        :return: The latest build version available at the given date
-        """
-        builds = self.get_app_builds(domain, app_id, limit=self.INITIAL_QUERY_LIMIT)
-        latest_build = self._find_latest_build_version_from_builds(builds, time)
-
-        if latest_build is None:
-            builds = self.get_app_builds(domain, app_id, start=self.INITIAL_QUERY_LIMIT)
-            latest_build = self._find_latest_build_version_from_builds(builds, time)
-
-        return latest_build
-
-    def get_app_builds(self, domain, app_id, limit=None, start=0):
-        if app_id not in self.builds_by_app_id:
-            app_es = (
-                AppES()
-                .domain(domain)
-                .is_build()
-                .app_id(app_id)
-                .sort('version', desc=True)
-                .is_released()
-                .source(['_id', 'version', 'last_released', 'built_on'])
-                .start(start)
+    def get_latest_build_version_at_time(self, domain, app_id, before_date):
+        app_es = (
+            AppES()
+            .domain(domain)
+            .is_build()
+            .app_id(app_id)
+            .sort('version', desc=True)
+            .is_released()
+            .source(['_id', 'version'])
+            .filter(
+                OR(
+                    range_filter('last_released', lte=before_date),
+                    range_filter('built_on', lte=before_date)
+                )
             )
-            if limit:
-                app_es = app_es.size(limit)
-            self.builds_by_app_id[app_id] = app_es.run().hits
-
-        return self.builds_by_app_id[app_id]
-
-    def _find_latest_build_version_from_builds(self, all_builds, time):
-        """
-        Get the latest build version at the time
-
-        :param all_builds: List of raw build documents sorted by version in descending order
-        :param time: A datetime object representing the date of the build version to compare against
-        :return: The latest build version available at the given date.
-        """
-
-        for build_doc in all_builds:
-            build_id = build_doc['_id']
-            if build_id in self.build_by_build_id:
-                build_info = self.build_by_build_id[build_id]
-            else:
-                # last_released is added in 2019, build before 2019 don't have this field
-                # TODO: have a migration to populate last_released from built_on
-                # Then this code can be modified to use last_released only
-                released_date = build_doc['last_released'] or build_doc['built_on']
-                build_info = {
-                    'version': build_doc['version'],
-                    'last_released': DateTimeProperty.deserialize(released_date)
-                }
-                self.build_by_build_id[build_id] = build_info
-
-            if build_info['last_released'] <= time:
-                return build_info['version']
-        return None
+            .size(1)
+        )
+        return app_es.run().hits
 
 
 def _format_percentage_for_enterprise_tile(dividend, divisor):
