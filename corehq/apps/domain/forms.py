@@ -1275,7 +1275,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             )
 
         self.helper = hqcrispy.HQFormHelper()
-        self.helper.form_class = "form-horizontal"
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),

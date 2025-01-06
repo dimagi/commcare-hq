@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from django.test import SimpleTestCase
 import jsonobject
 from jsonobject.exceptions import BadValueError
@@ -12,13 +12,12 @@ class Foo(jsonobject.JsonObject):
 class TransitionalExactDateTimePropertyTest(SimpleTestCase):
     def test_wrap_old(self):
         foo = Foo.wrap({'bar': '2015-01-01T12:00:00Z'})
-        self.assertEqual(foo.bar, datetime.datetime(2015, 1, 1, 12, 0, 0, 0))
+        self.assertEqual(foo.bar, datetime(2015, 1, 1, 12, 0, 0, 0))
         self.assertEqual(foo.to_json()['bar'], '2015-01-01T12:00:00.000000Z')
 
     def test_wrap_new(self):
         foo = Foo.wrap({'bar': '2015-01-01T12:00:00.120054Z'})
-        self.assertEqual(foo.bar, datetime.datetime(2015, 1, 1, 12, 0, 0,
-                                                    120054))
+        self.assertEqual(foo.bar, datetime(2015, 1, 1, 12, 0, 0, 120054))
         self.assertEqual(foo.to_json()['bar'], '2015-01-01T12:00:00.120054Z')
 
     def test_wrap_milliseconds_only(self):
@@ -48,3 +47,20 @@ class TestDateRegex(SimpleTestCase):
         ]
         for candidate, expected in cases:
             self.assertEqual(bool(re_trans_datetime.match(candidate)), expected, candidate)
+
+
+class DateTimePropertyTests(SimpleTestCase):
+    def test_wrap(self):
+        prop = DateTimeProperty()
+        result = prop.wrap('2015-01-01T12:00:00.120054Z')
+        self.assertEqual(result, datetime(year=2015, month=1, day=1, hour=12, microsecond=120054))
+
+    def test_unwrap(self):
+        prop = DateTimeProperty()
+        (value, unwrapped) = prop.unwrap(datetime(year=2015, month=1, day=1, hour=12, microsecond=120054))
+        self.assertEqual(value, datetime(year=2015, month=1, day=1, hour=12, microsecond=120054))
+        self.assertEqual(unwrapped, '2015-01-01T12:00:00.120054Z')
+
+    def test_deserialize(self):
+        result = DateTimeProperty.deserialize('2015-01-01T12:00:00.120054Z')
+        self.assertEqual(result, datetime(year=2015, month=1, day=1, hour=12, microsecond=120054))
