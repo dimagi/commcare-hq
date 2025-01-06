@@ -122,6 +122,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
         initialize: function (options) {
             this.shouldShowIncompleteForms = options.shouldShowIncompleteForms;
             sessionStorage.removeItem('handledDefaultClosed');
+            sessionStorage.removeItem('persistantMenuRegionWidth');
         },
 
         templateContext: function () {

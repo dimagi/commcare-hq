@@ -1608,7 +1608,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
             self.smallScreenListener.listen();
-            sessionStorage.removeItem('persistantMenuRegionWidth');
         },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
