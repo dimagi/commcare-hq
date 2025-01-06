@@ -60,7 +60,6 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 
 from corehq.const import USER_DATE_FORMAT
-from corehq import toggles
 
 
 @use_tempusdominus
@@ -91,8 +90,10 @@ def platform_overview(request, domain):
             EnterpriseReport.MOBILE_USERS,
             EnterpriseReport.FORM_SUBMISSIONS,
             EnterpriseReport.ODATA_FEEDS,
+            EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,
             EnterpriseReport.SMS,
         )],
+        'uses_date_range': [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS],
         'metric_type': 'Platform Overview',
     })
 
@@ -104,7 +105,6 @@ def platform_overview(request, domain):
 @always_allow_project_access
 @require_enterprise_admin
 @login_and_domain_required
-@toggles.ENTERPRISE_DASHBOARD_IMPROVEMENTS.required_decorator()
 def security_center(request, domain):
     if not has_privilege(request, privileges.PROJECT_ACCESS):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
@@ -121,8 +121,13 @@ def security_center(request, domain):
     )
 
     context.update({
-        'reports': [],
+        'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
+            EnterpriseReport.API_USAGE,
+            EnterpriseReport.TWO_FACTOR_AUTH,
+        )],
         'metric_type': 'Security Center',
+        'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
+        'uses_date_range': [],
     })
 
     return render(request, "enterprise/project_dashboard.html", context)

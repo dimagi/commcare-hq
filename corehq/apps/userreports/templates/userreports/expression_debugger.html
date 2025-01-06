@@ -1,10 +1,9 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% block js %}{{ block.super }}
-  <script src="{% static 'userreports/js/expression_evaluator.js' %}"></script>
-  <script src="{% static 'userreports/js/expression_debugger.js' %}"></script>
-{% endblock %}
+
+{% js_entry_b3 'userreports/js/expression_debugger' %}
+
 {% block page_content %}
   {% registerurl "expression_evaluator" domain %}
   {% initial_page_data "input_type" request.GET.input_type %}
@@ -73,7 +72,7 @@
      <div class="form-group" data-bind="visible: inputType() === 'raw', css: {'has-error': hasDocParseError}">
       <label for="" class="col-sm-2 control-label">{% trans "Document JSON" %}</label>
       <div class="col-sm-10">
-        <textarea id="raw_document" class="form-control jsonwidget" ></textarea>
+        <textarea id="raw_document" class="form-control" ></textarea>
         <div class="help-block" data-bind="visible: hasDocParseError">
           {% blocktrans %}
             Your document JSON has parse errors!
@@ -128,7 +127,7 @@
     <div class="form-group" data-bind="hidden: ucrExpressionId, css: {'has-error': hasParseError}">
       <label for="" class="col-sm-2 control-label">{% trans "Expression JSON" %}</label>
       <div class="col-sm-10">
-        <textarea id="expression" class="form-control jsonwidget"></textarea>
+        <textarea id="expression" class="form-control"></textarea>
         <div class="help-block" data-bind="visible: hasParseError">
           {% blocktrans %}
             Your expression has parse errors!

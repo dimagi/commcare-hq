@@ -177,7 +177,7 @@ class LocationForm(forms.Form):
         if not self.location.external_id:
             self.fields['external_id'].widget = forms.HiddenInput()
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'

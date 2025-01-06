@@ -2569,11 +2569,12 @@ WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ENTERPRISE_DASHBOARD_IMPROVEMENTS = StaticToggle(
-    'enterprise_dashboard_improvements',
-    'Shows an improved version of enterprise dashboard during development',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER]
+CALCULATED_PROPERTIES_FROM_DOMAIN_METRICS = FeatureRelease(
+    'calced_props_from_domain_metrics',
+    'Read domain calculated properties from DomainMetrics model instead of ElasticSearch doc.',
+    TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='emapson@dimagi.com'
 )
 
 
