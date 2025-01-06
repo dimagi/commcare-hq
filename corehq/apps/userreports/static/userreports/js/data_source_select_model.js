@@ -25,8 +25,8 @@ hqDefine("userreports/js/data_source_select_model", [
 
     self.sourceOptions = ko.computed(function () {
         return _.union(
-            self.sourcesMap[self.application()][self.sourceType()],
-            self.sourcesMap[self.registrySlug()][self.sourceType()],
+            self.sourcesMap[self.application()]?.[self.sourceType()],
+            self.sourcesMap[self.registrySlug()]?.[self.sourceType()],
         )
     });
 
