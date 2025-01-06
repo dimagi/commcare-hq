@@ -204,6 +204,15 @@ class RepeaterManagerTests(RepeaterTestCase):
                 {self.repeater.domain: [self.repeater.repeater_id]}
             )
 
+    def test_all_ready_count_distinct(self):
+        with (
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+        ):
+            count = Repeater.objects.all_ready_count()
+            self.assertEqual(count, 1)
+
 
 @contextmanager
 def make_repeat_record(repeater, state):
