@@ -1579,9 +1579,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         handleSmallScreenChange: function (smallScreenEnabled) {
             if (sessionStorage.showPersistentMenu) {
                 if (smallScreenEnabled) {
-                    this.makeOffcanvas(false);
+                    this.makeOffcanvas();
                 } else {
-                    this.makeCollapse(true);
+                    this.makeCollapse();
                 }
             }
         },
