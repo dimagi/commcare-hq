@@ -569,12 +569,14 @@ class LocationFilterForm(forms.Form):
                 ),
                 crispy.Field('location_status_active',),
             ),
-            StrictButton(
-                _("Download Locations"),
-                type="submit",
-                css_class="btn btn-primary",
-                data_bind="html: buttonHTML",
-            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Download Locations"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                    data_bind="html: buttonHTML",
+                ),
+            )
         )
 
     def clean_location_id(self):
