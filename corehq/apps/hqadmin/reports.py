@@ -91,10 +91,7 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
         return rows
 
     def _filter_logs(self):
-        logs = DeviceReportEntry.objects.filter(
-            date__range=[self.datespan.startdate_param_utc,
-                         self.datespan.enddate_param_utc]
-        ).filter(type='soft-assert')
+        logs = DeviceReportEntry.objects.filter(type='soft-assert')
 
         if self.selected_domain is not None:
             logs = logs.filter(domain__exact=self.selected_domain)
