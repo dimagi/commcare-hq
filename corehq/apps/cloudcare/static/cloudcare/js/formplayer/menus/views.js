@@ -1571,11 +1571,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         events: {
             'click #app-main': 'onClickAppMain',
         },
-        setOffcanvasOrCollapsed: function (smallScreenEnabled) {
-            if (sessionStorage.showPersistentMenu !== 'false' && !smallScreenEnabled) {
-                this.makeOffcanvas();
-            }
-        },
         handleSmallScreenChange: function (smallScreenEnabled) {
             if (sessionStorage.showPersistentMenu) {
                 if (smallScreenEnabled) {
