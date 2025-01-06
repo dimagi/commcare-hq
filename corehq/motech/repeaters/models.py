@@ -266,6 +266,7 @@ class RepeaterManager(models.Manager):
             .filter(is_paused=False)
             .filter(next_attempt_at__isnull=True)
             .filter(repeat_records__state__in=(State.Pending, State.Fail))
+            .distinct()
         )
 
     def _all_ready_next_attempt_now(self):
@@ -275,6 +276,7 @@ class RepeaterManager(models.Manager):
             .filter(is_paused=False)
             .filter(next_attempt_at__lte=timezone.now())
             .filter(repeat_records__state__in=(State.Pending, State.Fail))
+            .distinct()
         )
 
     def get_queryset(self):
