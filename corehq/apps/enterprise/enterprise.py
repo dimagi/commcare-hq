@@ -743,12 +743,13 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         latest_build = self._find_latest_build_version_from_builds(builds, time)
 
         if latest_build is None:
-            builds = self.get_app_builds(domain, app_id, start=self.INITIAL_QUERY_LIMIT)
+            del self.builds_by_app_id[app_id]
+            builds = self.get_app_builds(domain, app_id)
             latest_build = self._find_latest_build_version_from_builds(builds, time)
 
         return latest_build
 
-    def get_app_builds(self, domain, app_id, limit=None, start=0):
+    def get_app_builds(self, domain, app_id, limit=None):
         if app_id not in self.builds_by_app_id:
             app_es = (
                 AppES()
@@ -758,7 +759,6 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 .sort('version', desc=True)
                 .is_released()
                 .source(['_id', 'version', 'last_released', 'built_on'])
-                .start(start)
             )
             if limit:
                 app_es = app_es.size(limit)
