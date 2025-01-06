@@ -720,6 +720,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 'username',
                 'reporting_metadata.last_builds',
             ]))
+        results = []
         for user in user_query.run().hits:
             last_builds = user.get('reporting_metadata', {}).get('last_builds', [])
             for build in last_builds:
@@ -729,7 +730,8 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                     continue
                 build_version_date = DateTimeProperty.deserialize(build.get('build_version_date'))
                 latest_version = self.get_latest_build_version_at_time(domain, app_id, build_version_date)
-                yield user, build, latest_version
+                results.append((user, build, latest_version))
+        return results
 
     def get_latest_build_version_at_time(self, domain, app_id, before_date):
         app_es = (
