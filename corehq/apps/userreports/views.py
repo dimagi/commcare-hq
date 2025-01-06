@@ -1218,6 +1218,8 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                     return HttpResponseRedirect(reverse(
                         EditDataSourceView.urlname, args=[self.domain, config._id])
                     )
+            else:
+                messages.error(request, _('Data source not saved. Please check the form for errors.'))
         except BadSpecError as e:
             messages.error(request, str(e))
         return self.get(request, *args, **kwargs)
@@ -1324,8 +1326,8 @@ def undelete_data_source(request, domain, config_id):
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
 
-    if toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
-        number_of_records = _number_of_records_to_be_iterated_for_rebuild(datasource_configuration=config)
+    if not config.asynchronous and toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
+        number_of_records = number_of_records_to_be_processed(datasource_configuration=config)
         if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
             messages.error(
                 request,
@@ -1382,7 +1384,7 @@ def _report_metric_report_counts_by_datasource(domain, data_source_id, action):
         )
 
 
-def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
+def number_of_records_to_be_processed(datasource_configuration):
     if datasource_configuration.referenced_doc_type == 'CommCareCase':
         es_query = CaseSearchES().domain(datasource_configuration.domain)
         case_types = [
@@ -1416,11 +1418,10 @@ def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
         'Rebuilt was not initiated due to high number of records this data source is expected to '
         'iterate during a rebuild. Expected records to be processed is currently {number_of_records} '
         'which is above the limit of {rebuild_limit}. '
-        'Please consider creating a new data source instead or reach out to support if '
-        'you need to rebuild this data source.'
+        'Please update the data source to have asynchronous processing.'
     ).format(
         number_of_records=number_of_records_to_be_iterated,
-        rebuild_limit=DATA_SOURCE_REBUILD_RESTRICTED_AT
+        rebuild_limit=f"{DATA_SOURCE_REBUILD_RESTRICTED_AT:,}"
     )
 
 
@@ -1947,7 +1948,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             "template": "base-ucr-statement-template",
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         deleted_expression = self.base_query.get(id=item_id)
         deleted_expression.delete()
         return {
