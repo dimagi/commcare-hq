@@ -2,10 +2,12 @@ hqDefine("app_manager/js/forms/case_knockout_bindings", [
     'jquery',
     'knockout',
     'underscore',
+    'DOMPurify/dist/purify.min',
 ], function (
     $,
     ko,
-    _
+    _,
+    DOMPurify
 ) {
     var utils = {
         _getIcon: function (question) {
