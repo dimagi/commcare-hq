@@ -544,9 +544,9 @@ class LocationValidator(ImportValidator):
             return self.validate_location_ids(user_result, locs_being_assigned)
 
     def validate_location_ids(self, user_result, location_ids_being_assigned):
-        current_locs = self._get_current_locs(user_result)
+        current_loc_ids = self._get_current_loc_ids(user_result)
 
-        user_location_access_error = self._validate_user_location_permission(current_locs,
+        user_location_access_error = self._validate_user_location_permission(current_loc_ids,
                                                                              location_ids_being_assigned)
         location_cannot_have_users_error = None
         if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
@@ -560,19 +560,19 @@ class LocationValidator(ImportValidator):
         locs_ids_being_assigned = find_location_id(location_codes, self.location_cache)
         return locs_ids_being_assigned
 
-    def _get_current_locs(self, user_result):
-        current_locs = []
+    def _get_current_loc_ids(self, user_result):
+        current_loc_ids = []
         if user_result.invitation:
-            current_locs = user_result.invitation.assigned_locations.all()
+            current_loc_ids = [loc.location_id for loc in user_result.invitation.assigned_locations.all()]
         elif user_result.editable_user:
-            current_locs = user_result.editable_user.get_location_ids(self.domain)
-        return current_locs
+            current_loc_ids = user_result.editable_user.get_location_ids(self.domain)
+        return current_loc_ids
 
-    def _validate_user_location_permission(self, current_locs, locs_ids_being_assigned):
+    def _validate_user_location_permission(self, current_loc_ids, locs_ids_being_assigned):
         # Ensure the uploading user is only adding the user to/removing from *new locations* that
         # the uploading user has permission to access.
         problem_location_ids = user_can_change_locations(self.domain, self.upload_user,
-                                                        current_locs, locs_ids_being_assigned)
+                                                        current_loc_ids, locs_ids_being_assigned)
         if problem_location_ids:
             return self.error_message_location_access.format(
                 ', '.join(SQLLocation.objects.filter(
