@@ -1368,13 +1368,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             'keydown .lang': 'onKeyActionChangeLang',
         },
         initialize: function (options) {
+            const currentLang = UsersModels.getCurrentUser().displayOptions.language;
+            this.isLangSelected = this.options.model.get('lang_code') === currentLang;
             this.languageOptionsEnabled = options.languageOptionsEnabled;
         },
         templateContext: function () {
-            const currentLang = UsersModels.getCurrentUser().displayOptions.language;
             return {
                 languageOptionsEnabled: this.languageOptionsEnabled,
-                isLangSelected: this.options.model.get('lang_code') === currentLang,
+                isLangSelected: this.isLangSelected,
             };
         },
         onKeyActionChangeLang: function (e) {
@@ -1383,8 +1384,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
         },
         onChangeLang: function (e) {
-            const lang = e.target.id;
-            $.publish('formplayer.change_lang', lang);
+            if (!this.isLangSelected) {
+                const lang = e.target.id;
+                $.publish('formplayer.change_lang', lang);
+            }
         },
     });
 

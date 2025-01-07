@@ -25,8 +25,9 @@
   <% if (languageOptionsEnabled) { %>
     <a
       tabindex="0"
-      class="lang dropdown-item <% if (isLangSelected) { %>active<% } %>"
+      class="lang dropdown-item <% if (isLangSelected) { %>active pe-none<% } %>"
       id="<%- lang_code %>"
+      <% if (isLangSelected) { %>aria-disabled="true"<% } %>
     >
       <%- lang_label %>
     </a>
