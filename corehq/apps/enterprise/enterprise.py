@@ -639,7 +639,6 @@ class Enterprise2FAReport(EnterpriseReport):
 class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     title = gettext_lazy('Application Version Compliance')
     total_description = gettext_lazy('% of Applications Up to Date Across All Mobile Workers')
-    INITIAL_QUERY_LIMIT = 10
 
     def __init__(self, account, couch_user):
         super().__init__(account, couch_user)
@@ -739,17 +738,12 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         :param time: A datetime object representing the date of the build version to compare against
         :return: The latest build version available at the given date
         """
-        builds = self.get_app_builds(domain, app_id, limit=self.INITIAL_QUERY_LIMIT)
+        builds = self.get_app_builds(domain, app_id)
         latest_build = self._find_latest_build_version_from_builds(builds, time)
-
-        if latest_build is None:
-            del self.builds_by_app_id[app_id]
-            builds = self.get_app_builds(domain, app_id)
-            latest_build = self._find_latest_build_version_from_builds(builds, time)
 
         return latest_build
 
-    def get_app_builds(self, domain, app_id, limit=None):
+    def get_app_builds(self, domain, app_id):
         if app_id not in self.builds_by_app_id:
             app_es = (
                 AppES()
@@ -760,10 +754,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 .is_released()
                 .source(['_id', 'version', 'last_released', 'built_on'])
             )
-            if limit:
-                app_es = app_es.size(limit)
             self.builds_by_app_id[app_id] = app_es.run().hits
-
         return self.builds_by_app_id[app_id]
 
     def _find_latest_build_version_from_builds(self, all_builds, time):
