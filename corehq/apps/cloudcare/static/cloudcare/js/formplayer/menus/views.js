@@ -1371,8 +1371,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             this.languageOptionsEnabled = options.languageOptionsEnabled;
         },
         templateContext: function () {
+            const currentLang = UsersModels.getCurrentUser().displayOptions.language;
             return {
                 languageOptionsEnabled: this.languageOptionsEnabled,
+                isLangSelected: this.options.model.get('lang_code') === currentLang,
             };
         },
         onKeyActionChangeLang: function (e) {

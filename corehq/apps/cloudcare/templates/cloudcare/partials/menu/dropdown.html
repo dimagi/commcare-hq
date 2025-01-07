@@ -23,6 +23,12 @@
 
 <script type="text/template" id="language-option-template">
   <% if (languageOptionsEnabled) { %>
-  <a tabindex="0" class="lang dropdown-item" id="<%- lang_code %>"><%- lang_label %></a>
+    <a
+      tabindex="0"
+      class="lang dropdown-item <% if (isLangSelected) { %>active<% } %>"
+      id="<%- lang_code %>"
+    >
+      <%- lang_label %>
+    </a>
   <% } %>
 </script>
