@@ -1,3 +1,4 @@
+/* globals mapboxgl, MapboxGeocoder */
 hqDefine("geospatial/js/gps_capture", [
     "jquery",
     "knockout",
@@ -18,7 +19,7 @@ hqDefine("geospatial/js/gps_capture", [
 
     var map;
     var selectedDataListObject;
-    var mapMarker = new mapboxgl.Marker({  // eslint-disable-line no-undef
+    var mapMarker = new mapboxgl.Marker({
         draggable: true,
     });
     mapMarker.on('dragend', function () {
@@ -312,11 +313,11 @@ hqDefine("geospatial/js/gps_capture", [
     var initMap = function () {
         'use strict';
 
-        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
+        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
 
         let centerCoordinates = [2.43333330, 9.750]; // should be domain specific
 
-        map = new mapboxgl.Map({  // eslint-disable-line no-undef
+        map = new mapboxgl.Map({
             container: MAP_CONTAINER_ID, // container ID
             style: 'mapbox://styles/mapbox/streets-v12', // style URL
             center: centerCoordinates, // starting position [lng, lat]
@@ -326,8 +327,8 @@ hqDefine("geospatial/js/gps_capture", [
         });
 
         map.addControl(
-            new MapboxGeocoder({  // eslint-disable-line no-undef
-                accessToken: mapboxgl.accessToken,  // eslint-disable-line no-undef
+            new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
                 mapboxgl: map,
                 types: 'address',
                 proximity: centerCoordinates.toString(),  // bias results to this point
