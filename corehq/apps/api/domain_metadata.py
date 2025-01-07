@@ -55,16 +55,12 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         }
 
     def dehydrate_calculated_properties(self, bundle):
-        from corehq.toggles import CALCULATED_PROPERTIES_FROM_DOMAIN_METRICS, NAMESPACE_DOMAIN
         calc_prop_prefix = 'cp_'
         domain_obj = _get_domain(bundle)
         try:
-            if CALCULATED_PROPERTIES_FROM_DOMAIN_METRICS.enabled(domain_obj.name, namespace=NAMESPACE_DOMAIN):
-                base_properties = self._get_base_properties_from_domain_metrics(domain_obj.name)
-            else:
-                base_properties = self._get_base_properties_from_elasticsearch(domain_obj.name, calc_prop_prefix)
+            base_properties = self._get_base_properties_from_domain_metrics(domain_obj.name)
             properties = self._add_extra_calculated_properties(base_properties, domain_obj.name, calc_prop_prefix)
-        except (DomainMetrics.DoesNotExist, IndexError):
+        except (DomainMetrics.DoesNotExist):
             logging.exception('Problem getting calculated properties for {}'.format(domain_obj.name))
             return {}
         return properties
