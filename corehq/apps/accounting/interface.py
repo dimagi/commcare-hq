@@ -143,6 +143,7 @@ class AccountingInterface(AddItemInterface):
     slug = "accounts"
     dispatcher = AccountingAdminInterfaceDispatcher
     hide_filters = False
+    is_admin_report = True
     item_name = "Billing Account"
 
     fields = [
