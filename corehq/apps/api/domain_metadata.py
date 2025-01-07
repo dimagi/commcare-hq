@@ -71,19 +71,6 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         return domain_metrics.to_calculated_properties()
 
     @staticmethod
-    def _get_base_properties_from_elasticsearch(domain, calc_prop_prefix):
-        es_data = (DomainES()
-                   .in_domains([domain])
-                   .size(1)
-                   .run()
-                   .hits[0])
-        return {
-            prop_name: es_data[prop_name]
-            for prop_name in es_data
-            if prop_name.startswith(calc_prop_prefix)
-        }
-
-    @staticmethod
     def _add_extra_calculated_properties(properties, domain, calc_prop_prefix):
         try:
             audit_record = DomainAuditRecordEntry.objects.get(domain=domain)
