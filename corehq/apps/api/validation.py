@@ -4,7 +4,7 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
-from corehq.apps.user_importer.importer import SiteCodeToLocationCache
+from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.user_importer.validation import (
     RoleValidator,
     ProfileValidator,
@@ -14,6 +14,7 @@ from corehq.apps.user_importer.validation import (
     CustomDataValidator,
     EmailValidator,
     UserAccessValidator,
+    UserRetrievalResult,
 )
 from corehq.apps.users.validation import validate_primary_location_assignment
 from corehq.apps.registration.validation import AdminInvitesUserFormValidator
@@ -36,8 +37,8 @@ class WebUserResourceValidator():
             (self.validate_custom_data, [data.get("custom_user_data"), data.get("profile")]),
             (self.validate_custom_data_with_profile, [data.get("custom_user_data"), data.get("profile")]),
             (self.validate_email, [data.get("email"), is_post]),
-            (self.validate_locations, [data.get("email"), data.get("assigned_locations"),
-                                       data.get("primary_location")]),
+            (self.validate_locations, [data.get("email"), data.get("assigned_location_ids"),
+                                       data.get("primary_location_id")]),
             (self.validate_user_access, [data.get("email")]),
             (self.validate_tableau_group, [data.get("tableau_groups", None)]),
             (self.validate_tableau_role, [data.get("tableau_role")]),
@@ -64,12 +65,8 @@ class WebUserResourceValidator():
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         return CustomDataFieldsDefinition.get_profiles_by_name(self.domain, UserFieldsView.field_type)
 
-    @property
-    def location_cache(self):
-        return SiteCodeToLocationCache(self.domain)
-
     def validate_parameters(self, parameters, is_post):
-        allowed_params = ['role', 'primary_location', 'assigned_locations',
+        allowed_params = ['role', 'primary_location_id', 'assigned_location_ids',
                           'profile', 'custom_user_data', 'tableau_role', 'tableau_groups']
         if is_post:
             allowed_params.append('email')
@@ -128,21 +125,19 @@ class WebUserResourceValidator():
         spec = {'email': email}
         return email_validator.validate_spec(spec)
 
-    def validate_locations(self, editable_user, assigned_location_codes, primary_location_code):
-        if assigned_location_codes is None and primary_location_code is None:
+    def validate_locations(self, editable_user, assigned_location_ids, primary_location_id):
+        if assigned_location_ids is None and primary_location_id is None:
             return
-        if ((assigned_location_codes is not None and primary_location_code is None)
-                or (assigned_location_codes is None and primary_location_code is not None)):
+        if ((assigned_location_ids is not None and primary_location_id is None)
+                or (assigned_location_ids is None and primary_location_id is not None)):
             return _('Both primary_location and locations must be provided together.')
 
-        error = validate_primary_location_assignment(primary_location_code, assigned_location_codes)
+        error = validate_primary_location_assignment(primary_location_id, assigned_location_ids)
         if error:
             return error
-
-        location_validator = LocationValidator(self.domain, self.requesting_user, self.location_cache, True)
-        spec = {'location_code': assigned_location_codes,
-                'username': editable_user}
-        return location_validator.validate_spec(spec)
+        location_validator = LocationValidator(self.domain, self.requesting_user, None, True)
+        user_result = self._get_invitation_or_editable_user(editable_user, self.domain)
+        return location_validator.validate_location_ids(user_result, assigned_location_ids)
 
     def validate_user_access(self, editable_user):
         user_access_validator = UserAccessValidator(self.domain, self.requesting_user, True)
@@ -159,3 +154,12 @@ class WebUserResourceValidator():
         if tableau_role is None:
             return
         return TableauRoleValidator.validate_tableau_role(tableau_role)
+
+    def _get_invitation_or_editable_user(self, username_or_email, domain) -> UserRetrievalResult:
+        editable_user = None
+        try:
+            invitation = Invitation.objects.get(domain=domain, email=username_or_email, is_accepted=False)
+            return UserRetrievalResult(invitation=invitation)
+        except Invitation.DoesNotExist:
+            editable_user = CouchUser.get_by_username(username_or_email, strict=True)
+        return UserRetrievalResult(editable_user=editable_user)

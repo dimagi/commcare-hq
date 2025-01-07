@@ -15,6 +15,7 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.users.role_utils import get_commcare_analytics_access_for_user_domain
 from corehq import toggles
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import (
     CouchUser,
     HqPermissions,
@@ -25,7 +26,6 @@ from corehq.apps.reports.util import (
     get_tableau_groups_by_ids,
 )
 from corehq.apps.api.validation import WebUserResourceValidator
-from corehq.apps.user_importer.importer import get_location_from_site_code
 
 
 class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -70,8 +70,8 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='uuid', readonly=True, unique=True)
     email = fields.CharField(attribute='email')
     role = fields.CharField()
-    primary_location = fields.CharField(null=True)
-    assigned_locations = fields.ListField(null=True)
+    primary_location_id = fields.CharField(null=True)
+    assigned_location_ids = fields.ListField(null=True)
     profile = fields.CharField(null=True)
     custom_user_data = fields.DictField(attribute='custom_user_data')
     tableau_role = fields.CharField(attribute='tableau_role', null=True)
@@ -86,12 +86,12 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
     def dehydrate_role(self, bundle):
         return bundle.obj.get_role_name()
 
-    def dehydrate_assigned_locations(self, bundle):
-        return [loc.site_code for loc in bundle.obj.assigned_locations.all() if loc is not None]
+    def dehydrate_assigned_location_ids(self, bundle):
+        return [loc.location_id for loc in bundle.obj.assigned_locations.all() if loc is not None]
 
-    def dehydrate_primary_location(self, bundle):
+    def dehydrate_primary_location_id(self, bundle):
         if bundle.obj.primary_location:
-            return bundle.obj.primary_location.site_code
+            return bundle.obj.primary_location.location_id
 
     def dehydrate_tableau_groups(self, bundle):
         return [group.name for group in get_tableau_groups_by_ids(bundle.obj.tableau_group_ids,
@@ -114,14 +114,16 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
 
         primary_loc = None
         assigned_locs = []
-        if bundle.data.get('assigned_locations'):
-            primary_loc = get_location_from_site_code(
-                bundle.data.get('primary_location'), validator.location_cache
-            )
-            assigned_locs = [
-                get_location_from_site_code(loc, validator.location_cache)
-                for loc in bundle.data.get('assigned_locations')
-            ]
+        if bundle.data.get('assigned_location_ids'):
+            primary_loc = SQLLocation.active_objects.get(
+                location_id=bundle.data.get('primary_location_id'))
+            assigned_locs = SQLLocation.active_objects.filter(
+                location_id__in=bundle.data.get('assigned_location_ids'), domain=domain)
+            real_ids = [loc.location_id for loc in assigned_locs]
+
+            if missing_ids := set(bundle.data.get('assigned_location_ids')) - set(real_ids):
+                raise ImmediateHttpResponse(JsonResponse(
+                    {"errors": f"Could not find location ids: {', '.join(missing_ids)}."}, status=400))
 
         invite = Invitation.objects.create(
             domain=domain,

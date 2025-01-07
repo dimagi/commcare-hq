@@ -157,12 +157,14 @@ class TestWebUserResourceValidator(TestCase):
             "Both primary_location and locations must be provided together."
         )
 
-        with patch('corehq.apps.user_importer.validation.LocationValidator.validate_spec') as mock_validate_spec:
-            mock_validate_spec.return_value = None
+        with patch(
+            'corehq.apps.user_importer.validation.LocationValidator.validate_location_ids'
+        ) as mock_validate_location_ids:
+            mock_validate_location_ids.return_value = None
             self.assertIsNone(self.validator.validate_locations(self.requesting_user.username,
                                                                 ["loc1", "loc2"], "loc1"))
 
-            actual_spec = mock_validate_spec.call_args[0][0]
+            actual_spec = mock_validate_location_ids.call_args[0][0]
             self.assertEqual(actual_spec['username'], self.requesting_user.username)
             self.assertCountEqual(actual_spec['location_code'], ["loc1", "loc2"])
 
