@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 from corehq.apps.locations.models import SQLLocation
@@ -10,45 +12,15 @@ from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
-from corehq.apps.user_importer.helpers import find_differences_in_list
+from corehq.apps.user_importer.helpers import find_differences_in_list, UserChangeLogger
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.user_data import UserDataError
 from corehq.apps.users.validation import validate_profile_required
 
 
-def update_commcare_user(user, field, value, user_change_logger=None):
-    """
-    Used to update user fields via the API
-    Raises exceptions if errors are encountered, otherwise the update is successful
-    :param user: CommCareUser object
-    :param field: the attribute on the user to update
-    :param value: the value to update the attribute to
-    :param user_change_logger: optional UserChangeLogger obj to log changes
-    """
-    user_updates = CommcareUserUpdate(user, user.domain, user_change_logger)
-    update_fn = {
-        'default_phone_number': user_updates._update_default_phone_number,
-        'email': user_updates._update_email,
-        'first_name': user_updates._update_first_name,
-        'groups': user_updates._update_groups,
-        'language': user_updates._update_language,
-        'last_name': user_updates._update_last_name,
-        'password': user_updates._update_password,
-        'phone_numbers': user_updates._update_phone_numbers,
-        'user_data': user_updates._update_user_data,
-        'role': user_updates._update_user_role,
-        'location': user_updates._update_location,
-    }.get(field)
-
-    if not update_fn:
-        raise UpdateUserException(_("Attempted to update unknown or non-editable field '{}'").format(field))
-
-    update_fn(value)
-
-
 class UserUpdates():
-    def __init__(self, user, domain, user_change_logger):
+    def __init__(self, user, domain, user_change_logger: Optional[UserChangeLogger] = None):
         self.user = user
         self.domain = domain
         self.user_change_logger = user_change_logger
@@ -152,7 +124,33 @@ class UserUpdates():
             self.user_change_logger.add_info(UserChangeMessage.assigned_locations_info(locations))
 
 
-class CommcareUserUpdate(UserUpdates):
+class CommcareUserUpdates(UserUpdates):
+
+    def update(self, field, value):
+        """
+        Used to update user fields via the API
+        Raises exceptions if errors are encountered, otherwise the update is successful
+        :param field: the attribute on the user to update
+        :param value: the value to update the attribute to
+        """
+        update_fn = {
+            'default_phone_number': self._update_default_phone_number,
+            'email': self._update_email,
+            'first_name': self._update_first_name,
+            'groups': self._update_groups,
+            'language': self._update_language,
+            'last_name': self._update_last_name,
+            'password': self._update_password,
+            'phone_numbers': self._update_phone_numbers,
+            'user_data': self._update_user_data,
+            'role': self._update_user_role,
+            'location': self._update_location,
+        }.get(field)
+
+        if not update_fn:
+            raise UpdateUserException(_("Attempted to update unknown or non-editable field '{}'").format(field))
+
+        update_fn(value)
 
     def _update_email(self, email):
         self._simple_update('email', email.lower())
