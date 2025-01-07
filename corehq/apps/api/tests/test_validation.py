@@ -93,18 +93,18 @@ class TestWebUserResourceValidator(TestCase):
 
     @patch('corehq.apps.registration.validation.domain_has_privilege', return_value=True)
     def test_validate_parameters_with_location_privilege(self, mock_domain_has_privilege):
-        params = {"email": "test@example.com", "role": "Admin", "primary_location": "some_location"}
+        params = {"email": "test@example.com", "role": "Admin", "primary_location_id": "some_location"}
         self.assertIsNone(self.validator.validate_parameters(params, True))
-        params = {"email": "test@example.com", "role": "Admin", "assigned_locations": "some_location"}
+        params = {"email": "test@example.com", "role": "Admin", "assigned_location_ids": "some_location"}
         self.assertIsNone(self.validator.validate_parameters(params, True))
 
     @patch('corehq.apps.registration.validation.domain_has_privilege', return_value=False)
     def test_validate_parameters_without_location_privilege(self, mock_domain_has_privilege):
-        params = {"email": "test@example.com", "role": "Admin", "primary_location": "some_location"}
+        params = {"email": "test@example.com", "role": "Admin", "primary_location_id": "some_location"}
         self.assertEqual(self.validator.validate_parameters(params, True),
                          "This domain does not have locations privileges.")
 
-        params = {"email": "test@example.com", "role": "Admin", "assigned_locations": "some_location"}
+        params = {"email": "test@example.com", "role": "Admin", "assigned_location_ids": "some_location"}
         self.assertEqual(self.validator.validate_parameters(params, True),
                          "This domain does not have locations privileges.")
 
