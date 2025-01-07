@@ -56,57 +56,57 @@ class TestWebUserResourceValidator(TestCase):
 
     def test_validate_parameters(self):
         params = {"email": "test@example.com", "role": "Admin"}
-        self.assertIsNone(self.validator.validate_parameters(params, True))
+        self.assertEqual(self.validator.validate_parameters(params, True), [])
 
         params = {"email": "test@example.com", "role": "Admin"}
-        self.assertEqual(self.validator.validate_parameters(params, False), "Invalid parameter(s): email")
+        self.assertEqual(self.validator.validate_parameters(params, False), ["Invalid parameter(s): email"])
 
         invalid_params = {"invalid_param": "value"}
         self.assertEqual(self.validator.validate_parameters(invalid_params, True),
-                         "Invalid parameter(s): invalid_param")
+                         ["Invalid parameter(s): invalid_param"])
         self.assertEqual(self.validator.validate_parameters(invalid_params, False),
-                         "Invalid parameter(s): invalid_param")
+                         ["Invalid parameter(s): invalid_param"])
 
     @flag_enabled('TABLEAU_USER_SYNCING')
     @patch('corehq.apps.users.models.WebUser.has_permission', return_value=True)
     def test_validate_parameters_with_tableau_edit_permission(self, mock_has_permission):
         params = {"email": "test@example.com", "role": "Admin", "tableau_role": "Viewer"}
-        self.assertIsNone(self.validator.validate_parameters(params, True))
+        self.assertEqual(self.validator.validate_parameters(params, True), [])
 
     @flag_disabled('TABLEAU_USER_SYNCING')
     @patch('corehq.apps.users.models.WebUser.has_permission', return_value=False)
     def test_validate_parameters_without_tableau_edit_permission(self, mock_has_permission):
         params = {"email": "test@example.com", "role": "Admin", "tableau_role": "Viewer"}
         self.assertEqual(self.validator.validate_parameters(params, True),
-                         "You do not have permission to edit Tableau Configuration.")
+                         ["You do not have permission to edit Tableau Configuration."])
 
-    @patch('corehq.apps.registration.validation.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.api.validation.domain_has_privilege', return_value=True)
     def test_validate_parameters_with_profile_permission(self, mock_domain_has_privilege):
         params = {"email": "test@example.com", "role": "Admin", "profile": "some_profile"}
-        self.assertIsNone(self.validator.validate_parameters(params, True))
+        self.assertEqual(self.validator.validate_parameters(params, True), [])
 
-    @patch('corehq.apps.registration.validation.domain_has_privilege', return_value=False)
+    @patch('corehq.apps.api.validation.domain_has_privilege', return_value=False)
     def test_validate_parameters_without_profile_permission(self, mock_domain_has_privilege):
         params = {"email": "test@example.com", "role": "Admin", "profile": "some_profile"}
         self.assertEqual(self.validator.validate_parameters(params, True),
-                         "This domain does not have user profile privileges.")
+                         ["This domain does not have user profile privileges."])
 
-    @patch('corehq.apps.registration.validation.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.api.validation.domain_has_privilege', return_value=True)
     def test_validate_parameters_with_location_privilege(self, mock_domain_has_privilege):
         params = {"email": "test@example.com", "role": "Admin", "primary_location_id": "some_location"}
-        self.assertIsNone(self.validator.validate_parameters(params, True))
+        self.assertEqual(self.validator.validate_parameters(params, True), [])
         params = {"email": "test@example.com", "role": "Admin", "assigned_location_ids": "some_location"}
-        self.assertIsNone(self.validator.validate_parameters(params, True))
+        self.assertEqual(self.validator.validate_parameters(params, True), [])
 
-    @patch('corehq.apps.registration.validation.domain_has_privilege', return_value=False)
+    @patch('corehq.apps.api.validation.domain_has_privilege', return_value=False)
     def test_validate_parameters_without_location_privilege(self, mock_domain_has_privilege):
         params = {"email": "test@example.com", "role": "Admin", "primary_location_id": "some_location"}
         self.assertEqual(self.validator.validate_parameters(params, True),
-                         "This domain does not have locations privileges.")
+                         ["This domain does not have locations privileges."])
 
         params = {"email": "test@example.com", "role": "Admin", "assigned_location_ids": "some_location"}
         self.assertEqual(self.validator.validate_parameters(params, True),
-                         "This domain does not have locations privileges.")
+                         ["This domain does not have locations privileges."])
 
     def test_validate_role(self):
         self.assertIsNone(self.validator.validate_role("App Editor"))

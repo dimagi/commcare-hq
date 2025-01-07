@@ -2,7 +2,12 @@ from memoized import memoized
 
 from django.utils.translation import gettext as _
 
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    PROFILE_SLUG,
+)
 from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.user_importer.validation import (
@@ -18,7 +23,7 @@ from corehq.apps.user_importer.validation import (
 )
 from corehq.apps.users.validation import validate_primary_location_assignment
 from corehq.apps.registration.validation import AdminInvitesUserFormValidator
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+from corehq.toggles import TABLEAU_USER_SYNCING
 
 
 class WebUserResourceValidator():
@@ -66,14 +71,31 @@ class WebUserResourceValidator():
         return CustomDataFieldsDefinition.get_profiles_by_name(self.domain, UserFieldsView.field_type)
 
     def validate_parameters(self, parameters, is_post):
+        errors = []
         allowed_params = ['role', 'primary_location_id', 'assigned_location_ids',
                           'profile', 'custom_user_data', 'tableau_role', 'tableau_groups']
         if is_post:
             allowed_params.append('email')
         invalid_params = [param for param in parameters if param not in allowed_params]
         if invalid_params:
-            return f"Invalid parameter(s): {', '.join(invalid_params)}"
-        return AdminInvitesUserFormValidator.validate_parameters(self.domain, self.requesting_user, parameters)
+            errors.append(f"Invalid parameter(s): {', '.join(invalid_params)}")
+
+        if 'tableau_role' in parameters or 'tableau_groups' in parameters:
+            can_edit_tableau_config = (
+                self.requesting_user.has_permission(self.domain, 'edit_user_tableau_config')
+                and TABLEAU_USER_SYNCING.enabled(self.domain)
+            )
+            if not can_edit_tableau_config:
+                errors.append(_("You do not have permission to edit Tableau Configuration."))
+
+        if 'profile' in parameters and not domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
+            errors.append(_("This domain does not have user profile privileges."))
+
+        if (('primary_location_id' in parameters or 'assigned_location_ids' in parameters)
+           and not domain_has_privilege(self.domain, privileges.LOCATIONS)):
+            errors.append(_("This domain does not have locations privileges."))
+
+        return errors
 
     def validate_required_fields(self, spec, is_post):
         email = spec.get('email')
