@@ -359,9 +359,9 @@ def domain_metrics(domain_obj, id, all_stats):
     metrics_dict['last_modified'] = datetime.now(tz=timezone.utc)
 
     # these are calculated fields on the Django model, so don't try to write them
-    del metrics_dict['cp_has_app']
-    del metrics_dict['cp_sms_30_d']
-    del metrics_dict['cp_sms_ever']
+    for key in ['has_app', 'has_used_sms', 'has_used_sms_in_last_30_days']:
+        del metrics_dict[key]
+
     return metrics_dict
 
 
