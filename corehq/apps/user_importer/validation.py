@@ -541,13 +541,17 @@ class LocationValidator(ImportValidator):
         if 'location_code' in spec:
             user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
             locs_being_assigned = self._get_locs_ids_being_assigned(spec)
-            current_locs = self._get_current_locs(user_result)
+            return self.validate_location_ids(user_result, locs_being_assigned)
 
-            user_location_access_error = self._validate_user_location_permission(current_locs, locs_being_assigned)
-            location_cannot_have_users_error = None
-            if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
-                location_cannot_have_users_error = self._validate_locations_allow_users(locs_being_assigned)
-            return user_location_access_error or location_cannot_have_users_error
+    def validate_location_ids(self, user_result, location_ids_being_assigned):
+        current_locs = self._get_current_locs(user_result)
+
+        user_location_access_error = self._validate_user_location_permission(current_locs,
+                                                                             location_ids_being_assigned)
+        location_cannot_have_users_error = None
+        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
+            location_cannot_have_users_error = self._validate_locations_allow_users(location_ids_being_assigned)
+        return user_location_access_error or location_cannot_have_users_error
 
     def _get_locs_ids_being_assigned(self, spec):
         from corehq.apps.user_importer.importer import find_location_id
