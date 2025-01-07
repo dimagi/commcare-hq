@@ -34,7 +34,7 @@ from corehq.apps.enterprise.models import (
     EnterprisePermissions,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.crispy import HQModalFormHelper
+from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput, Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
@@ -356,7 +356,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         self.fields['language'].label = gettext_lazy("My Language")
 
-        self.new_helper = FormHelper()
+        self.new_helper = HQFormHelper()
         self.new_helper.form_method = 'POST'
         self.new_helper.attrs = {
             'name': 'user_information',
@@ -393,10 +393,12 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 gettext_lazy("Basic"),
                 *basic_fields
             ),
-            twbscrispy.StrictButton(
-                gettext_lazy("Update My Information"),
-                type='submit',
-                css_class='btn-primary',
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    gettext_lazy("Update My Information"),
+                    type='submit',
+                    css_class='btn-primary',
+                )
             )
         )
 
@@ -961,14 +963,15 @@ class GroupMembershipForm(forms.Form):
         super(GroupMembershipForm, self).__init__(*args, **kwargs)
         self.fields['selected_ids'].widget.set_url(group_api_url)
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'form-label'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
             crispy.Field('selected_ids'),
-            crispy.ButtonHolder(
-                Submit('submit', _('Update'))
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Update'))
+                )
             )
         )
 
@@ -1028,16 +1031,13 @@ class MultipleSelectionForm(forms.Form):
 
         from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
         is_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
-        submit_button_holder = crispy.ButtonHolder(Submit('submit', submit_label))
-        if not is_bootstrap5:
-            submit_button_holder = hqcrispy.FormActions(submit_button_holder)
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 fieldset_title,
                 crispy.Field('selected_ids', css_class="d-none" if is_bootstrap5 else "hide"),
             ),
-            submit_button_holder
+            hqcrispy.FormActions(crispy.ButtonHolder(Submit('submit', submit_label)))
         )
 
 
@@ -1412,18 +1412,19 @@ class AddPhoneNumberForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(AddPhoneNumberForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             Fieldset(
                 _('Add a Phone Number'),
                 'form_type',
                 twbscrispy.PrependedText('phone_number', '+', type='tel', pattern=r'\d+')
             ),
-            StrictButton(
-                _('Add Number'),
-                css_class='btn-primary disable-on-submit',
-                type='submit',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Add Number'),
+                    css_class='btn-primary disable-on-submit',
+                    type='submit',
+                )
             )
         )
         self.fields['phone_number'].label = gettext_lazy('Phone number')
