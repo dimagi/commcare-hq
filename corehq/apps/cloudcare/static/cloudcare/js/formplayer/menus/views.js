@@ -132,6 +132,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
+                badgeText: this.options.model.attributes.badgeText,
                 menuIndex: this.menuIndex,
             };
         },
