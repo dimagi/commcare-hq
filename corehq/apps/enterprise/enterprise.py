@@ -652,7 +652,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
             _('Mobile Worker'),
             _('Project Space'),
             _('Application'),
-            _('Latest Version Available when Last Used'),
+            _('Latest Version Available When Last Used'),
             _('Version in Use'),
             _('Last Used [UTC]'),
         ]
@@ -666,17 +666,17 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
     @property
     def total(self):
-        total_out_of_date_rows = 0
-        total_last_builds = 0
+        total_out_of_date_builds = 0
+        total_builds = 0
 
         for domain in self.account.get_domains():
-            domain_out_of_date_rows, domain_last_builds = self.total_for_domain(domain)
-            total_out_of_date_rows += domain_out_of_date_rows
-            total_last_builds += domain_last_builds
+            domain_out_of_date_builds, domain_builds = self.total_for_domain(domain)
+            total_out_of_date_builds += domain_out_of_date_builds
+            total_builds += domain_builds
 
-        total_up_to_date = total_last_builds - total_out_of_date_rows
+        total_up_to_date_builds = total_builds - total_out_of_date_builds
 
-        return _format_percentage_for_enterprise_tile(total_up_to_date, total_last_builds)
+        return _format_percentage_for_enterprise_tile(total_up_to_date_builds, total_builds)
 
     def rows_for_domain(self, domain):
         rows = []
