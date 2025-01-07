@@ -36,9 +36,9 @@ class WebUserResourceValidator():
             (self.validate_custom_data, [data.get("custom_user_data"), data.get("profile")]),
             (self.validate_custom_data_with_profile, [data.get("custom_user_data"), data.get("profile")]),
             (self.validate_email, [data.get("email"), is_post]),
-            (self.validate_locations, [data.get("username"), data.get("assigned_locations"),
+            (self.validate_locations, [data.get("email"), data.get("assigned_locations"),
                                        data.get("primary_location")]),
-            (self.validate_user_access, [data.get("username")]),
+            (self.validate_user_access, [data.get("email")]),
             (self.validate_tableau_group, [data.get("tableau_groups", None)]),
             (self.validate_tableau_role, [data.get("tableau_role")]),
         ]
