@@ -234,7 +234,8 @@ hqDefine('geospatial/js/models', [
                 'https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png',
                 (error, image) => {
                     if (error) {
-                        throw error;
+                        alertUser.alert_user(unexpectedErrorMessage, 'danger');
+                        return;
                     }
                     self.mapInstance.addImage('custom-marker', image, {sdf: true});
                     self.createMarkerLayer('case-points', self.dataPointsSourceName, 'case', caseMarkerColors.default, caseMarkerColors.selected);
