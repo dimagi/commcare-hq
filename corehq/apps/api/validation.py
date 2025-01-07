@@ -46,10 +46,10 @@ class WebUserResourceValidator():
 
         for validator, args in validators:
             error = validator(*args)
-            if error and isinstance(error, str):
-                errors.append(error)
-            elif isinstance(error, list):
+            if isinstance(error, list):
                 errors += error
+            elif error:
+                errors.append(error)
 
         return errors
 
