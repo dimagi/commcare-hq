@@ -61,6 +61,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
         let picker = new tempusDominus.TempusDominus(
             el, {
                 dateRange: true,
+                useCurrent: false,
                 multipleDatesSeparator: separator,
                 display: {
                     theme: 'light',
