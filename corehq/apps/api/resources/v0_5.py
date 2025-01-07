@@ -134,7 +134,7 @@ from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
 
 from ..exceptions import UpdateUserException
-from ..user_updates import update
+from ..user_updates import update_commcare_user
 from . import (
     ApiVersioningMixin,
     CorsResourceMixin,
@@ -344,7 +344,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         for key, value in items_to_update:
             try:
-                update(bundle.obj, key, value, user_change_logger)
+                update_commcare_user(bundle.obj, key, value, user_change_logger)
             except UpdateUserException as e:
                 errors.append(e.message)
 
