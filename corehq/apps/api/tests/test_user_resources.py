@@ -775,9 +775,9 @@ class TestInvitationResource(APIResourceTest):
         cls.profile.save()
         cls.loc_type = LocationType.objects.create(domain=cls.domain.name, name='loc_type')
         cls.loc1 = SQLLocation.objects.create(
-            site_code='loc1', location_type=cls.loc_type, domain=cls.domain.name)
+            location_id='loc1', location_type=cls.loc_type, domain=cls.domain.name)
         cls.loc2 = SQLLocation.objects.create(
-            site_code='loc2', location_type=cls.loc_type, domain=cls.domain.name)
+            location_id='loc2', location_type=cls.loc_type, domain=cls.domain.name)
 
     @classmethod
     def tearDownClass(cls):
@@ -811,8 +811,8 @@ class TestInvitationResource(APIResourceTest):
         user_json = {
             "email": "jdoe2@example.org",
             "role": "App Editor",
-            "primary_location": "loc1",
-            "assigned_locations": ["loc1", "loc2"],
+            "primary_location_id": "loc1",
+            "assigned_location_ids": ["loc1", "loc2"],
             "profile": "character",
             "custom_user_data": {
                 "favorite_subject": "math",
