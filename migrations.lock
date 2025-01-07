@@ -309,6 +309,7 @@ data_analytics
  0009_remove_girrow_wam
  0010_maltrow_last_run_date
  0011_domainmetrics
+ 0012_update_domainmetrics_fields
 data_dictionary
  0001_squashed_0002_auto_20161116_2209
  0002_auto_20161118_1537

@@ -159,19 +159,81 @@ class GIRRow(models.Model):
         )
 
 
+DOMAIN_METRICS_TO_PROPERTIES_MAP = {
+    'active_cases': 'cp_n_active_cases',
+    'active_mobile_workers': 'cp_n_active_cc_users',
+    'active_mobile_workers_in_last_365_days': 'cp_n_active_cc_users_365_days',
+    'apps': 'cp_n_apps',
+    'apps_with_icon': 'cp_n_apps_with_icon',
+    'apps_with_multiple_languages': 'cp_n_apps_with_multi_lang',
+    'case_exports': 'cp_n_case_exports',
+    'case_sharing_groups': 'cp_n_case_sharing_groups',
+    'case_sharing_locations': 'cp_n_case_sharing_olevels',
+    'cases': 'cp_n_cases',
+    'cases_modified_in_last_30_days': 'cp_n_30_day_cases',
+    'cases_modified_in_last_60_days': 'cp_n_60_day_cases',
+    'cases_modified_in_last_90_days': 'cp_n_90_day_cases',
+    'custom_exports': 'cp_n_saved_custom_exports',
+    'custom_roles': 'cp_n_custom_roles',
+    'deid_exports': 'cp_n_deid_exports',
+    'first_form_submission': 'cp_first_form',
+    'forms': 'cp_n_forms',
+    'forms_submitted_in_last_30_days': 'cp_n_forms_30_d',
+    'forms_submitted_in_last_60_days': 'cp_n_forms_60_d',
+    'forms_submitted_in_last_90_days': 'cp_n_forms_90_d',
+    'has_app': 'cp_has_app',  # read-only property
+    'has_project_icon': 'cp_has_project_icon',
+    'has_used_sms': 'cp_sms_ever',  # read-only property
+    'has_used_sms_in_last_30_days': 'cp_sms_30_d',  # read-only property
+    'has_users_with_location': 'cp_using_locations',
+    'has_security_settings': 'cp_use_domain_security',
+    'inactive_cases': 'cp_n_inactive_cases',
+    'incoming_sms': 'cp_n_in_sms',
+    'incoming_sms_in_last_30_days': 'cp_n_sms_in_30_d',
+    'incoming_sms_in_last_60_days': 'cp_n_sms_in_60_d',
+    'incoming_sms_in_last_90_days': 'cp_n_sms_in_90_d',
+    'is_active': 'cp_is_active',
+    'is_first_domain_for_creating_user': 'cp_first_domain_for_user',
+    'last_modified': 'cp_last_updated',
+    'location_restricted_roles': 'cp_n_loc_restricted_roles',
+    'lookup_tables': 'cp_n_lookup_tables',
+    'mobile_workers': 'cp_n_cc_users',
+    'most_recent_form_submission': 'cp_last_form',
+    'outgoing_sms': 'cp_n_out_sms',
+    'outgoing_sms_in_last_30_days': 'cp_n_sms_out_30_d',
+    'outgoing_sms_in_last_60_days': 'cp_n_sms_out_60_d',
+    'outgoing_sms_in_last_90_days': 'cp_n_sms_out_90_d',
+    'repeaters': 'cp_n_repeaters',
+    'report_builder_reports': 'cp_n_rb_reports',
+    'saved_exports': 'cp_n_saved_exports',
+    'sms_in_last_30_days': 'cp_n_sms_30_d',
+    'sms_in_last_60_days': 'cp_n_sms_60_d',
+    'sms_in_last_90_days': 'cp_n_sms_90_d',
+    'telerivet_backends': 'cp_n_trivet_backends',
+    'three_hundredth_form_submission': 'cp_300th_form',
+    'total_sms': 'cp_n_sms_ever',
+    'ucrs': 'cp_n_ucr_reports',
+    'usercases_modified_in_last_30_days': 'cp_n_30_day_user_cases',
+    'users_with_submission': 'cp_n_users_submitted_form',
+    'web_users': 'cp_n_web_users',
+}
+
+
 class DomainMetrics(models.Model):
 
     domain = models.TextField(unique=True, db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
-    has_project_icon = models.BooleanField()
-    has_security_settings = models.BooleanField()
     is_active = models.BooleanField()
     is_first_domain_for_creating_user = models.BooleanField()
+    has_project_icon = models.BooleanField()
+    has_security_settings = models.BooleanField()
+    has_users_with_location = models.BooleanField()
 
     lookup_tables = models.IntegerField()
     repeaters = models.IntegerField()
+    report_builder_reports = models.IntegerField()
     ucrs = models.IntegerField()
 
     # App Metrics
@@ -183,14 +245,13 @@ class DomainMetrics(models.Model):
     mobile_workers = models.IntegerField()
     web_users = models.IntegerField()
 
+    users_with_submission = models.IntegerField()
     active_mobile_workers = models.IntegerField()
     active_mobile_workers_in_last_365_days = models.IntegerField()
     case_sharing_groups = models.IntegerField()
     case_sharing_locations = models.IntegerField()
-    has_custom_roles = models.BooleanField()
-    has_locations = models.BooleanField()
-    location_restricted_users = models.IntegerField()
-    users_with_submission = models.IntegerField()
+    custom_roles = models.IntegerField()
+    location_restricted_roles = models.IntegerField()
 
     # Case Metrics
     cases = models.IntegerField()
@@ -248,3 +309,9 @@ class DomainMetrics(models.Model):
     @property
     def has_used_sms_in_last_30_days(self):
         return bool(self.sms_in_last_30_days)
+
+    def to_calculated_properties(self):
+        return {
+            calced_props_key: getattr(self, metrics_attr, None)
+            for metrics_attr, calced_props_key in DOMAIN_METRICS_TO_PROPERTIES_MAP.items()
+        }

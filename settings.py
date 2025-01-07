@@ -389,8 +389,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.ucla',
 
-    'custom.up_nrhm',
-
     'custom.common',
 
     'custom.hki',
@@ -1910,8 +1908,6 @@ STATIC_UCR_REPORTS = [
 
 
 STATIC_DATA_SOURCES = [
-    os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
-    os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
@@ -1949,8 +1945,6 @@ CUSTOM_UCR_EXPRESSIONS = [
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
 
-    'up-nrhm': 'custom.up_nrhm',
-    'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
 
     'onse-iss': 'custom.onse',  # Required by self-hosted ONSE-ISS project
