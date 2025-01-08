@@ -103,7 +103,7 @@ class UserUpdates():
 
     def _update_primary_location(self, primary_location_id):
         primary_location = SQLLocation.active_objects.get(location_id=primary_location_id)
-        self.user.set_location(primary_location, commit=False)
+        self._set_location(primary_location)
         if self.user_change_logger:
             self.user_change_logger.add_changes({'location_id': primary_location_id})
             self.user_change_logger.add_info(UserChangeMessage.primary_location_info(primary_location))
@@ -118,10 +118,16 @@ class UserUpdates():
         return locations
 
     def _update_assigned_locations(self, locations, location_ids):
-        self.user.reset_locations(location_ids, commit=False)
+        self._reset_locations(location_ids)
         if self.user_change_logger:
             self.user_change_logger.add_changes({'assigned_location_ids': location_ids})
             self.user_change_logger.add_info(UserChangeMessage.assigned_locations_info(locations))
+
+    def _set_location(self, primary_location):
+        raise NotImplementedError("Subclasses must implement reset_locations method")
+
+    def _reset_locations(self, location_ids):
+        raise NotImplementedError("Subclasses must implement reset_locations method")
 
 
 class CommcareUserUpdates(UserUpdates):
@@ -235,3 +241,18 @@ class CommcareUserUpdates(UserUpdates):
 
         if change_messages:
             self.user_change_logger.add_change_message({'phone_numbers': change_messages})
+
+    def _set_location(self, primary_location):
+        self.user.set_location(primary_location, commit=False)
+
+    def _reset_locations(self, location_ids):
+        self.user.reset_locations(location_ids, commit=False)
+
+
+class WebUserUpdates(UserUpdates):
+
+    def _set_location(self, primary_location):
+        self.user.set_location(self.domain, primary_location, commit=False)
+
+    def _reset_locations(self, location_ids):
+        self.user.reset_locations(self.domain, location_ids, commit=False)
