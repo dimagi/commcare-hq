@@ -2,6 +2,8 @@ import 'commcarehq';
 
 import $ from 'jquery';
 import _ from 'underscore';
+import {Popover} from 'bootstrap5';
+
 import initialPageData from 'hqwebapp/js/initial_page_data';
 import datatablesConfig from 'reports/js/bootstrap5/datatables_config';
 import standardHQReportModule from 'reports/js/bootstrap5/standard_hq_report';
@@ -66,10 +68,14 @@ function renderPage(slug, tableOptions) {
         reportTables.render();
     }
 
-    $('.header-popover').popover({  /* todo B5: plugin:popover */
-        trigger: 'hover',
-        placement: 'bottom',
-        container: 'body',
+    $('.header-popover').each(function () {
+        new Popover($(this).get(0), {
+            title: $(this).data('title'),
+            content: $(this).data('content'),
+            trigger: 'hover',
+            placement: 'bottom',
+            container: 'body',
+        });
     });
 }
 
