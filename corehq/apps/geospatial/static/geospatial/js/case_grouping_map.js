@@ -404,7 +404,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         return self;
     }
 
-    async function setCaseGroups() {
+    function setCaseGroups() {
         const sourceFeatures = mapModel.mapInstance.querySourceFeatures('caseWithGPS', {
             sourceLayer: 'clusters',
             filter: ['==', 'cluster', true],
@@ -412,59 +412,61 @@ hqDefine("geospatial/js/case_grouping_map",[
         const clusterSource = mapModel.mapInstance.getSource('caseWithGPS');
         let caseGroups = {};
         let failedClustersCount = 0;
-        processedCluster = {};
+        let processedCluster = {};
 
-        var groupCount = 1;
-        var groups = [DEFAULT_GROUP];
+        let groupCount = 1;
+        let groups = [DEFAULT_GROUP];
 
-        for (const cluster of sourceFeatures) {
+        const clusterPromises = sourceFeatures.map(cluster => {
             const clusterId = cluster.properties.cluster_id;
             if (processedCluster[clusterId] === undefined) {
                 processedCluster[clusterId] = true;
-            }
-            else {
-                continue;
+            } else {
+                return Promise.resolve(); // Skip already processed clusters
             }
 
             const pointCount = cluster.properties.point_count;
+            return getClusterLeavesAsync(clusterSource, clusterId, pointCount)
+                .then(casePoints => {
+                    if (casePoints.length) {
+                        const groupUUID = utils.uuidv4();
+                        const groupName = _.template(gettext("Group <%- pageNumber %>-<%- groupCount %>"))({
+                            groupCount: groupCount,
+                            pageNumber: currentPage,
+                        });
+                        groupCount += 1;
 
-            try {
-                const casePoints = await getClusterLeavesAsync(clusterSource, clusterId, pointCount);
-                const groupUUID =  utils.uuidv4();
-
-                if (casePoints.length) {
-                    groupName = _.template(gettext("Group <%- pageNumber %>-<%- groupCount %>"))({
-                        groupCount: groupCount,
-                        pageNumber: currentPage,
-                    });
-                    groupCount += 1;
-
-                    groups.push({
-                        name: groupName,
-                        groupId: groupUUID,
-                        color: utils.getRandomRGBColor(),
-                        coordinates: {
-                            lng: cluster.geometry.coordinates[0],
-                            lat: cluster.geometry.coordinates[1],
-                        }
-                    });
-                    for (const casePoint of casePoints) {
-                        const caseId = casePoint.properties.id;
-                        caseGroups[caseId] = groupUUID;
+                        groups.push({
+                            name: groupName,
+                            groupId: groupUUID,
+                            color: utils.getRandomRGBColor(),
+                            coordinates: {
+                                lng: cluster.geometry.coordinates[0],
+                                lat: cluster.geometry.coordinates[1],
+                            },
+                        });
+                        casePoints.forEach(casePoint => {
+                            const caseId = casePoint.properties.id;
+                            caseGroups[caseId] = groupUUID;
+                        });
                     }
-                }
-            } catch (error) {
-                failedClustersCount += 1;
+                })
+                .catch(() => {
+                    failedClustersCount += 1;
+                });
+        });
+
+        // Wait for all cluster promises to complete
+        Promise.all(clusterPromises).then(() => {
+            if (failedClustersCount > 0) {
+                const message = _.template(gettext("Something went wrong processing <%- failedClusters %> groups. These groups will not be exported."))({
+                    failedClusters: failedClustersCount,
+                });
+                alertUser.alert_user(message, 'danger');
             }
-        }
-        if (failedClustersCount > 0) {
-            const message = _.template(gettext("Something went wrong processing <%- failedClusters %> groups. These groups will not be exported."))({
-                failedClusters: failedClustersCount,
-            });
-            alertUser.alert_user(message, 'danger');
-        }
-        exportModelInstance.addGroupDataToCases(caseGroups, groups, true);
-        caseGroupsInstance.loadCaseGroups(caseGroups, groups);
+            exportModelInstance.addGroupDataToCases(caseGroups, groups, true);
+            caseGroupsInstance.loadCaseGroups(caseGroups, groups);
+        });
     }
 
     function clearCaseGroups() {
