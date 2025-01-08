@@ -73,6 +73,17 @@ module.exports = {
             },
 
             {
+                test: /mapbox\.js\/dist\/mapbox/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "L",
+                    },
+                },
+            },
+            {
                 test: /nvd3\/nv\.d3\.min/,
                 loader: "exports-loader",
                 options: {
