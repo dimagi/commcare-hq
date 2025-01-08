@@ -71,7 +71,8 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
         super(BaseInvoiceTestCase, cls).tearDownClass()
 
-    def create_invoices(self, date, calculate_users=True, calculate_web_users=False):
+    @staticmethod
+    def create_invoices(date, calculate_users=True, calculate_web_users=False):
         if calculate_users:
             calculate_users_in_all_domains(date)
 

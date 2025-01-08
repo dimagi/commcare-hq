@@ -8,7 +8,7 @@ from stripe.stripe_object import StripeObject
 
 from dimagi.utils.dates import add_months_to_date
 
-from corehq.apps.accounting import tasks, utils
+from corehq.apps.accounting import utils
 from corehq.apps.accounting.models import (
     Invoice,
     PaymentRecord,
@@ -37,7 +37,10 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         super(TestBillingAutoPay, cls).setUpClass()
         cls._generate_autopayable_entities()
         cls._generate_non_autopayable_entities()
-        cls._generate_invoices()
+
+        # invoice date is 2 months before the end of the subscription (this is arbitrary)
+        invoice_date = utils.months_from_date(cls.subscription.date_start, cls.subscription_length - 2)
+        cls.create_invoices(invoice_date)
 
     @classmethod
     def tearDownClass(cls):
@@ -83,16 +86,6 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
             date_start=cls.subscription.date_start,
             date_end=add_months_to_date(cls.subscription.date_start, cls.subscription_length),
         )
-
-    @classmethod
-    def _generate_invoices(cls):
-        """
-        Create invoices for both autopayable and non-autopayable subscriptions
-        """
-        # invoice date is 2 months before the end of the subscription (this is arbitrary)
-        invoice_date = utils.months_from_date(cls.subscription.date_start, cls.subscription_length - 2)
-        tasks.calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
 
     @mocked_stripe_api()
     @mock.patch.object(StripePaymentMethod, 'customer')
