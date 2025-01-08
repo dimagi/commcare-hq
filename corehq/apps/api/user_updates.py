@@ -11,6 +11,7 @@ from corehq.apps.custom_data_fields.models import PROFILE_SLUG, CustomDataFields
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.util import get_tableau_groups_by_names, update_tableau_user
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.user_importer.helpers import find_differences_in_list, UserChangeLogger
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -271,10 +272,11 @@ class WebUserUpdates(UserUpdates):
         update_fn(value)
 
     def _update_tableau_role(self, tableau_role):
-        pass
+        update_tableau_user(self.domain, self.user.username, tableau_role)
 
-    def _update_tableau_groups(self, tableau_groups):
-        pass
+    def _update_tableau_groups(self, tableau_group_names):
+        tableau_groups = get_tableau_groups_by_names(tableau_group_names, self.domain)
+        update_tableau_user(self.domain, self.user.username, groups=tableau_groups)
 
     def _set_location(self, primary_location):
         self.user.set_location(self.domain, primary_location, commit=False)
