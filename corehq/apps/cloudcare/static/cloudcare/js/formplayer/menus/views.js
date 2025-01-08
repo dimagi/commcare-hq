@@ -1655,6 +1655,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             $('#persistent-menu-container-content').addClass('d-none');
             this.menuExpanded = false;
         },
+        menuCollapseExpandTransitionListener: function () {
+            const persistentMenuContentContainer = $('#persistent-menu-container-content');
+            const targetElement = $('#persistent-menu-container')[0]
+            targetElement.addEventListener('transitionend', (event) => {
+                    if (this.menuExpanded && event.target == targetElement) {
+                        persistentMenuContentContainer.removeClass('d-none');
+                    }
+                });
+        },
         lockMenu: function () {
             const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
             const persistentMenuRegion = $('#persistent-menu-region');
@@ -1687,6 +1696,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const smallScreenEnabledOnStartup = cloudcareUtils.smallScreenIsEnabled();
             const arrowToggle = $('#persistent-menu-arrow-toggle');
             self.makeCollapse(sessionStorage.showPersistentMenu);
+            self.menuCollapseExpandTransitionListener();
 
             if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
                 self.hideMenu();
