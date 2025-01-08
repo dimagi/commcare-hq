@@ -35,7 +35,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
 
     var handleLocationRequest = function (optionsFromLastRequest) {
         var success = function (position) {
-            hqRequire(["cloudcare/js/formplayer/menus/controller"], function (MenusController) {
+            import("cloudcare/js/formplayer/menus/controller").then(function (MenusController) {
                 FormplayerFrontend.regions.getRegion('loadingProgress').empty();
                 recordPosition(position);
                 MenusController.selectMenu(optionsFromLastRequest);
