@@ -494,10 +494,7 @@ def _metrics_wait_duration(repeat_record):
         bucket_tag='duration',
         buckets=buckets,
         bucket_unit='s',
-        tags={
-            'domain': repeat_record.domain,
-            'repeater': f'{repeat_record.domain}: {repeat_record.repeater.name}',
-        },
+        tags={'domain': repeat_record.domain},
         documentation=cleandoc(_metrics_wait_duration.__doc__)
     )
 
