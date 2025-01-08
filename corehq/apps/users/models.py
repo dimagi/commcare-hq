@@ -3124,7 +3124,7 @@ class HQApiKey(models.Model):
     @property
     def plaintext_key(self):
         try:
-            decrypted_key = b64_aes_cbc_decrypt(self.encrypted_key)
+            decrypted_key = b64_aes_cbc_decrypt(self.encrypted_key) if self.encrypted_key else ''
             if decrypted_key == self.key:
                 return decrypted_key
             else:

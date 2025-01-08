@@ -1,3 +1,4 @@
+/* globals mapboxgl */
 'use strict';
 hqDefine('geospatial/js/utils', [], function () {
 
@@ -26,7 +27,7 @@ hqDefine('geospatial/js/utils', [], function () {
 
     var createMapPopup = function (coordinates, popupDiv, openEventFunc, closeEventFunc) {
         popupDiv.setAttribute("data-bind", "template: 'select-case'");
-        const popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
+        const popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })
             .setLngLat(coordinates)
             .setDOMContent(popupDiv)
             .on('open', openEventFunc)

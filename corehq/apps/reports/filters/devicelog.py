@@ -6,10 +6,8 @@ from phonelog.models import DeviceReportEntry
 from corehq.apps.reports.filters.base import (
     BaseMultipleOptionFilter,
     BaseReportFilter,
-    BaseSingleOptionFilter,
-    BaseTagsFilter,
 )
-from corehq.util.queries import fast_distinct, fast_distinct_in_domain
+from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.quickcache import quickcache
 
 
@@ -41,22 +39,6 @@ class DeviceLogTagFilter(BaseReportFilter):
             self.errors_only_slug: errors_only,
         }
         return context
-
-
-class DeviceLogDomainFilter(BaseSingleOptionFilter):
-    slug = "domain"
-    label = gettext_lazy("Filter Logs by Domain")
-
-    @property
-    @quickcache([], timeout=60 * 60)
-    def options(self):
-        return [(d, d) for d in fast_distinct(DeviceReportEntry, 'domain')]
-
-
-class DeviceLogCommCareVersionFilter(BaseTagsFilter):
-    slug = "commcare_version"
-    label = gettext_lazy("Filter Logs by CommCareVersion")
-    placeholder = gettext_lazy("Enter the CommCare Version you want e.g '2.28.1'")
 
 
 class BaseDeviceLogFilter(BaseMultipleOptionFilter):

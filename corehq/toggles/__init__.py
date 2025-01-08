@@ -2581,6 +2581,14 @@ WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+CALCULATED_PROPERTIES_FROM_DOMAIN_METRICS = FeatureRelease(
+    'calced_props_from_domain_metrics',
+    'Read domain calculated properties from DomainMetrics model instead of ElasticSearch doc.',
+    TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='emapson@dimagi.com'
+)
+
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege

@@ -49,7 +49,6 @@ from corehq.apps.case_search.views import CSQLFixtureExpressionView
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
-    DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
     UCRDataLoadReport,
@@ -1650,6 +1649,10 @@ class ProjectUsersTab(UITab):
                         'urlname': 'invite_web_user'
                     },
                     {
+                        'title': _("Edit Web User Invite"),
+                        'urlname': 'edit_invitation'
+                    },
+                    {
                         'title': _get_web_username,
                         'urlname': EditWebUserView.urlname
                     },
@@ -2621,7 +2624,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [DeviceLogSoftAssertReport, UserAuditReport, UCRDataLoadReport]
+            } for report in [UserAuditReport, UCRDataLoadReport]
         ]))
         return sections
 
