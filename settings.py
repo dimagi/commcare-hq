@@ -1018,6 +1018,9 @@ LOAD_BALANCED_APPS = {}
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+EPIC_PRIVATE_KEY = None
+EPIC_CLIENT_ID = None
+
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
 
@@ -2019,6 +2022,8 @@ DOMAIN_MODULE_MAP = {
     'co-carecoordination-uat': 'custom.bha',
 
     'ccqa': 'custom.ccqa',
+
+    'epic-integration-test': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)
