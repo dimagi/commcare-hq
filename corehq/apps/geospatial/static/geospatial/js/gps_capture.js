@@ -1,17 +1,22 @@
-/* globals mapboxgl, MapboxGeocoder */
 hqDefine("geospatial/js/gps_capture", [
     "jquery",
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'mapbox-gl/dist/mapbox-gl',
+    '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
     "hqwebapp/js/components/pagination",
     "hqwebapp/js/components/search_box",
-    'select2/dist/js/select2.full.min',
+    'reports/js/bootstrap3/base',
+    'hqwebapp/js/select2_knockout_bindings.ko',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
+    mapboxgl,
+    MapboxGeocoder
 ) {
     'use strict';
     const MAP_CONTAINER_ID = "geospatial-map";
