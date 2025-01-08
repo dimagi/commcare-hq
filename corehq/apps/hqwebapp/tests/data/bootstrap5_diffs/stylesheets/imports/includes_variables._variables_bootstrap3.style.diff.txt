@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,125 +1,72 @@
+@@ -1,126 +1,73 @@
 -@import "@{b3-import-variables}";
 +/*
 +These are Boostrap 3 variables that were carried over in the
@@ -154,6 +154,7 @@
 -@zindex-select2-results:             1056;  // higher than $zindex-modal so select2s can be used in modals
 -@zindex-cloudcare-debugger:          1040;
 -@zindex-persistent-menu-nav:         1030;
+-@zindex-persistent-menu-nav-arrow:   @zindex-persistent-menu-nav + 1;
 -@zindex-navbar:                      1000;
 -@zindex-app-preview:                  998;
 -@zindex-navbar-cloudcare:             995;
@@ -166,6 +167,7 @@
 +$zindex-select2-results:             1056;  // higher than $zindex-modal so select2s can be used in modals
 +$zindex-cloudcare-debugger:          1040;
 +$zindex-persistent-menu-nav:         1030;
++$zindex-persistent-menu-nav-arrow:   $zindex-persistent-menu-nav + 1;
 +$zindex-navbar:                      1000;
 +$zindex-app-preview:                  998;
 +$zindex-navbar-cloudcare:             995;
