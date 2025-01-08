@@ -53,7 +53,7 @@ hqDefine("reports/js/bootstrap5/async", [
             } catch (e) {
                 console.log(e);
             }
-            $('#reportFiltersAccordion').removeClass('hide');
+            $('#reportFiltersAccordion').removeClass('d-none');
             self.standardReport.resetFilterState();
         };
 
@@ -149,9 +149,9 @@ hqDefine("reports/js/bootstrap5/async", [
                 processFilters = processFilters + "&filterSet=" + setFilters;
             }
             if (setFilters) {
-                $(self.standardReport.exportReportButton).removeClass('hide');
-                $(self.standardReport.emailReportButton).removeClass('hide');
-                $(self.standardReport.printReportButton).removeClass('hide');
+                $(self.standardReport.exportReportButton).removeClass('d-none');
+                $(self.standardReport.emailReportButton).removeClass('d-none');
+                $(self.standardReport.printReportButton).removeClass('d-none');
             }
 
             self.reportRequest = $.ajax({
@@ -175,10 +175,10 @@ hqDefine("reports/js/bootstrap5/async", [
                         $(popover).remove();
                     });
                     self.reportContent.append(self.hqLoading);
-                    self.hqLoading.removeClass('hide');
+                    self.hqLoading.removeClass('d-none');
 
                     // Assorted UI cleanup/initialization
-                    $('.hq-report-time-notice').removeClass('hide');
+                    $('.hq-report-time-notice').removeClass('d-none');
 
                     $('.loading-backdrop').fadeOut();
                     self.hqLoading.fadeOut();
@@ -249,7 +249,7 @@ hqDefine("reports/js/bootstrap5/async", [
 
         self.loadingIssueModal.on('hide hide.bs.modal', function () {
             self.hqLoading = $(self.loaderClass);
-            self.hqLoading.find('.js-loading-spinner').addClass('hide');
+            self.hqLoading.find('.js-loading-spinner').addClass('d-none');
             self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
                 .attr('style', 'margin-bottom: 10px;');
         });
