@@ -1638,14 +1638,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
             return persistantMenuRegionWidth;
         },
-        showMenu: function () {
+        showMenu: function (firstLoad=false) {
             const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
             const persistentMenuContainer = $('#persistent-menu-container');
             if (sessionStorage.showPersistentMenu === "false") {
                 persistentMenuContainer.css('transition', 'width 0.25s');
             }
+            if (firstLoad) {
+                $('#persistent-menu-container-content').removeClass('d-none');
+            }
             persistentMenuContainer.css('width', persistantMenuRegionWidth);
-            $('#persistent-menu-container-content').removeClass('d-none');
             this.menuExpanded = true;
         },
         hideMenu: function () {
@@ -1704,7 +1706,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 self.flipArrowRight();
                 sessionStorage.setItem('handledDefaultClosed', true);
             } else if (sessionStorage.showPersistentMenu === 'true' && !smallScreenEnabledOnStartup) {
-                self.showMenu();
+                self.showMenu(true);
                 self.flipArrowLeft();
                 self.lockMenu();
             }
