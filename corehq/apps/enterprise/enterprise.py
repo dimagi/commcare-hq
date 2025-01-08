@@ -682,18 +682,20 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         app_name_by_id = {}
         app_ids = get_app_ids_in_domain(domain)
 
-        for user, build, latest_version in self._get_user_builds(domain, app_ids):
-            if is_out_of_date(str(build['build_version']), str(latest_version)):
-                app_id = build['app_id']
+        for build_info in self._get_user_builds(domain, app_ids):
+            version_in_use = str(build_info['build']['build_version'])
+            latest_version = str(build_info['latest_version'])
+            if is_out_of_date(version_in_use, latest_version):
+                app_id = build_info['build']['app_id']
                 if app_id not in app_name_by_id:
                     app_name_by_id[app_id] = Application.get_db().get(app_id).get('name')
                 rows.append([
-                    user['username'],
+                    build_info['username'],
                     domain,
                     app_name_by_id[app_id],
                     latest_version,
-                    build['build_version'],
-                    self.format_date(DateTimeProperty.deserialize(build['build_version_date'])),
+                    version_in_use,
+                    self.format_date(DateTimeProperty.deserialize(build_info['build']['build_version_date'])),
                 ])
 
         return rows
@@ -703,9 +705,9 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         total_last_builds = 0
         total_out_of_date = 0
 
-        for user, build, latest_version in self._get_user_builds(domain, app_ids):
+        for build_info in self._get_user_builds(domain, app_ids):
             total_last_builds += 1
-            if is_out_of_date(str(build['build_version']), str(latest_version)):
+            if is_out_of_date(str(build_info['build']['build_version']), str(build_info['latest_version'])):
                 total_out_of_date += 1
 
         return total_out_of_date, total_last_builds
@@ -727,7 +729,11 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                     continue
                 build_version_date = DateTimeProperty.deserialize(build.get('build_version_date'))
                 latest_version = self.get_latest_build_version_at_time(domain, app_id, build_version_date)
-                yield user, build, latest_version
+                yield {
+                    'username': user['username'],
+                    'build': build,
+                    'latest_version': latest_version,
+                }
 
     def get_latest_build_version_at_time(self, domain, app_id, time):
         """
