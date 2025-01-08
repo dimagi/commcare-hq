@@ -353,6 +353,11 @@ def iter_ready_repeater_ids_forever():
             if lock.acquire(blocking=False, token=lock_token):
                 yielded = True
                 yield domain, repeater_id, lock_token
+            else:
+                metrics_counter(
+                    'commcare.repeaters.process_repeaters.repeater_locked',
+                    tags={'domain': domain},
+                )
 
         if not yielded:
             # No repeaters are ready, or their domains can't forward or
@@ -528,10 +533,7 @@ def update_repeater(repeat_record_states, repeater_id, lock_token):
             # All the payloads that were sent failed. Try again later.
             metrics_counter(
                 'commcare.repeaters.process_repeaters.repeater_backoff',
-                tags={
-                    'domain': repeater.domain,
-                    'repeater': f'{repeater.domain}: {repeater.name}',
-                },
+                tags={'domain': repeater.domain},
             )
             repeater.set_backoff()
     finally:
