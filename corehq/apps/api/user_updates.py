@@ -251,6 +251,31 @@ class CommcareUserUpdates(UserUpdates):
 
 class WebUserUpdates(UserUpdates):
 
+    def update(self, field, value):
+        """
+        Used to update user fields via the API
+        Raises exceptions if errors are encountered, otherwise the update is successful
+        :param field: the attribute on the user to update
+        :param value: the value to update the attribute to
+        """
+        update_fn = {
+            'role': self._update_user_role,
+            'location': self._update_location,
+            'user_data': self._update_user_data,
+            'tableau_role': self._update_tableau_role,
+            'tableau_groups': self._update_tableau_groups,
+        }.get(field)
+
+        if not update_fn:
+            raise UpdateUserException(_("Attempted to update unknown or non-editable field '{}'").format(field))
+        update_fn(value)
+
+    def _update_tableau_role(self, tableau_role):
+        pass
+
+    def _update_tableau_groups(self, tableau_groups):
+        pass
+
     def _set_location(self, primary_location):
         self.user.set_location(self.domain, primary_location, commit=False)
 
