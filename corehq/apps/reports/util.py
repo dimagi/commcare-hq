@@ -491,6 +491,13 @@ def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
     return _group_json_to_tuples(filtered_group_json)
 
 
+def get_tableau_groups_by_names(interested_group_names: List, domain: str,
+                            session: TableauAPISession = None) -> List[TableauGroupTuple]:
+    group_json = get_tableau_group_json(domain, session)
+    filtered_group_json = [group for group in group_json if group['name'] in interested_group_names]
+    return _group_json_to_tuples(filtered_group_json)
+
+
 def get_tableau_group_ids_by_names(group_names: List, domain: str,
                               session: TableauAPISession = None) -> List[str]:
     '''

@@ -11,6 +11,7 @@ from corehq.apps.custom_data_fields.models import PROFILE_SLUG, CustomDataFields
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.models import TableauAPISession
 from corehq.apps.reports.util import get_tableau_groups_by_names, update_tableau_user
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.user_importer.helpers import find_differences_in_list, UserChangeLogger
@@ -252,6 +253,11 @@ class CommcareUserUpdates(UserUpdates):
 
 class WebUserUpdates(UserUpdates):
 
+    def __init__(self, user, domain, keys_to_update=None, user_change_logger=None):
+        super().__init__(user, domain, user_change_logger)
+        self._tableau_session = None
+        self.keys_to_update = keys_to_update
+
     def update(self, field, value):
         """
         Used to update user fields via the API
@@ -271,12 +277,20 @@ class WebUserUpdates(UserUpdates):
             raise UpdateUserException(_("Attempted to update unknown or non-editable field '{}'").format(field))
         update_fn(value)
 
+    @property
+    def tableau_session(self):
+        if self._tableau_session is None and (
+            'tableau_role' in self.keys_to_update or 'tableau_groups' in self.keys_to_update
+        ):
+            self._tableau_session = TableauAPISession.create_session_for_domain(self.domain)
+        return self._tableau_session
+
     def _update_tableau_role(self, tableau_role):
-        update_tableau_user(self.domain, self.user.username, tableau_role)
+        update_tableau_user(self.domain, self.user.username, tableau_role, session=self.tableau_session)
 
     def _update_tableau_groups(self, tableau_group_names):
         tableau_groups = get_tableau_groups_by_names(tableau_group_names, self.domain)
-        update_tableau_user(self.domain, self.user.username, groups=tableau_groups)
+        update_tableau_user(self.domain, self.user.username, groups=tableau_groups, session=self.tableau_session)
 
     def _set_location(self, primary_location):
         self.user.set_location(self.domain, primary_location, commit=False)
