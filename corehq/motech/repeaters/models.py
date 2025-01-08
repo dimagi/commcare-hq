@@ -235,15 +235,6 @@ class RepeaterSuperProxy(models.Model):
 
 class RepeaterManager(models.Manager):
 
-    def all_ready(self):
-        """
-        Return all Repeaters ready to be forwarded.
-        """
-        return self._all_ready_next_attempt_null().union(
-            self._all_ready_next_attempt_now(),
-            all=True,
-        )
-
     def get_all_ready_ids_by_domain(self):
         next_attempt_null = self._all_ready_next_attempt_null().values_list('domain', 'id')
         next_attempt_now = self._all_ready_next_attempt_now().values_list('domain', 'id')
