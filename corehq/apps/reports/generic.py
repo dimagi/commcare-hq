@@ -40,7 +40,10 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.reports.util import DatatablesParams
+from corehq.apps.reports.util import (
+    DatatablesPagination,
+    DatatablesServerSideParams,
+)
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
@@ -946,12 +949,28 @@ class GenericTabularReport(GenericReportView):
     @property
     def pagination(self):
         if self._pagination is None:
-            self._pagination = DatatablesParams.from_request_dict(
-                self.request.POST if self.request.method == 'POST' else self.request.GET
-            )
+            if self.use_bootstrap5:
+                self._pagination = DatatablesPagination.from_datatables_params(
+                    self.datatables_params
+                )
+            else:
+                self._pagination = DatatablesPagination.from_request_dict(
+                    self.request.POST if self.request.method == 'POST' else self.request.GET
+                )
             if self._pagination.count > self.max_rows:
                 raise BadRequestError(gettext("Row count is too large"))
         return self._pagination
+
+    @property
+    @memoized
+    def datatables_params(self):
+        """Use only for bootstrap 5 reports using Datatables > 1.10
+        """
+        if not self.use_bootstrap5:
+            raise NotImplementedError(
+                "'datatables_params' should only be used by Bootstrap 5 reports"
+            )
+        return DatatablesServerSideParams.from_request(self.request)
 
     @property
     def json_dict(self):
