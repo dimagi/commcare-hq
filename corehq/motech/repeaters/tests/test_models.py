@@ -210,14 +210,17 @@ class RepeaterManagerTests(RepeaterTestCase):
                 {self.repeater.domain: [self.repeater.repeater_id]}
             )
 
-    def test_all_ready_count_distinct(self):
+    def test_distinct(self):
         with (
             make_repeat_record(self.repeater, RECORD_PENDING_STATE),
             make_repeat_record(self.repeater, RECORD_PENDING_STATE),
             make_repeat_record(self.repeater, RECORD_PENDING_STATE),
         ):
-            count = Repeater.objects.all_ready_count()
-            self.assertEqual(count, 1)
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
 
 
 @contextmanager
@@ -807,6 +810,15 @@ class TestRepeatRecordManager(RepeaterTestCase):
         )
         self.assertCountEqual([actual.id], ids)
 
+    def test_count(self):
+        with (
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+        ):
+            count = RepeatRecord.objects.count_all_ready()
+            self.assertEqual(count, 3)
+
     def new_record(self, next_check=before_now, state=State.Pending, domain=DOMAIN, payload_id="c0ffee"):
         return self.new_record_for_repeater(
             self.repeater, next_check=next_check, state=state, domain=domain, payload_id=payload_id
@@ -1001,8 +1013,3 @@ class TestIsSuccessResponse(SimpleTestCase):
 
     def test_none_response(self):
         self.assertFalse(is_success_response(None))
-
-
-def test_repeater_all_ready_union_all_sql():
-    sql_str = str(Repeater.objects.get_all_ready_ids_by_domain().query)
-    assert_in('UNION ALL', sql_str)

@@ -551,11 +551,11 @@ metrics_gauge_task(
 )
 
 
-# This metric monitors the number of Repeaters with RepeatRecords ready to
-# be sent. A steep increase indicates a problem with `process_repeaters()`.
+# This metric monitors the number of RepeatRecords ready to be sent. An
+# unexpected increase indicates a problem with `process_repeaters()`.
 metrics_gauge_task(
-    'commcare.repeaters.process_repeaters.all_ready_count',
-    Repeater.objects.all_ready_count,
+    'commcare.repeaters.process_repeaters.count_all_ready',
+    RepeatRecord.objects.count_all_ready,
     run_every=crontab(minute='*/5'),  # every five minutes
     multiprocess_mode=MPM_MAX
 )

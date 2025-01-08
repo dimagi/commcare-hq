@@ -236,38 +236,42 @@ class RepeaterSuperProxy(models.Model):
 class RepeaterManager(models.Manager):
 
     def get_all_ready_ids_by_domain(self):
-        next_attempt_null = self._all_ready_next_attempt_null().values_list('domain', 'id')
-        next_attempt_now = self._all_ready_next_attempt_now().values_list('domain', 'id')
+        next_attempt_null = (
+            self.get_all_ready_next_attempt_null()
+            .distinct()
+            .values_list('domain', 'id')
+        )
+        next_attempt_now = (
+            self.get_all_ready_next_attempt_now()
+            .distinct()
+            .values_list('domain', 'id')
+        )
         query = next_attempt_null.union(next_attempt_now, all=True)
         results = defaultdict(list)
         for (domain, id_uuid) in query.all():
             results[domain].append(id_uuid.hex)
         return results
 
-    def all_ready_count(self):
-        return (
-            self._all_ready_next_attempt_null().count()
-            + self._all_ready_next_attempt_now().count()
-        )
-
-    def _all_ready_next_attempt_null(self):
-        # Slower query. Uses deleted_partial_idx
+    def get_all_ready_next_attempt_null(self):
+        # See `_all_ready_next_attempt_now()`. Splitting the queries
+        # speeds up total query time by using different indexes.
+        # NOTE: Returns one row per RepeatRecord, not per Repeater.
         return (
             self.get_queryset()
             .filter(is_paused=False)
             .filter(next_attempt_at__isnull=True)
             .filter(repeat_records__state__in=(State.Pending, State.Fail))
-            .distinct()
         )
 
-    def _all_ready_next_attempt_now(self):
-        # Fast query. Uses deleted_paused_partial_idx and state_partial_idx
+    def get_all_ready_next_attempt_now(self):
+        # See `_all_ready_next_attempt_null()`. Splitting the queries
+        # speeds up total query time by using different indexes.
+        # NOTE: Returns one row per RepeatRecord, not per Repeater.
         return (
             self.get_queryset()
             .filter(is_paused=False)
             .filter(next_attempt_at__lte=timezone.now())
             .filter(repeat_records__state__in=(State.Pending, State.Fail))
-            .distinct()
         )
 
     def get_queryset(self):
@@ -1003,6 +1007,15 @@ class RepeatRecordManager(models.Manager):
             next_check__isnull=False,
             next_check__lt=datetime.utcnow() - threshold
         ).count()
+
+    @staticmethod
+    def count_all_ready():
+        # Uses *Repeater* queries that return one row per RepeatRecord.
+        # See `RepeaterManager.get_all_ready_ids_by_domain()`.
+        return (
+            Repeater.objects.get_all_ready_next_attempt_null().count()
+            + Repeater.objects.get_all_ready_next_attempt_now().count()
+        )
 
     def iterate(self, domain, repeater_id=None, state=None, chunk_size=1000):
         db = router.db_for_read(self.model)
