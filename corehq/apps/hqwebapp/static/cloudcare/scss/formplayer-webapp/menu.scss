@@ -41,7 +41,7 @@
 
 #persistent-menu-arrow-toggle {
   color: black;
-  z-index: $zindex-persistent-menu-nav + 1;
+  z-index: $zindex-persistent-menu-nav-arrow;
   background-color: $call-to-action-hi;
   &:hover {
     background-color: $call-to-action-mid;
