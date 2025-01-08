@@ -134,7 +134,7 @@ from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
 
 from ..exceptions import UpdateUserException
-from ..user_updates import CommcareUserUpdates
+from ..user_updates import CommcareUserUpdates, WebUserUpdates
 from . import (
     ApiVersioningMixin,
     CorsResourceMixin,
@@ -389,6 +389,15 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
 
 class WebUserResource(v0_1.WebUserResource):
+    primary_location_id = fields.CharField()
+    assigned_location_ids = fields.ListField(null=True)
+    user_data = fields.DictField()
+    tableau_role = fields.CharField(null=True)
+    tableau_groups = fields.ListField(null=True)
+
+    class Meta(v0_1.WebUserResource.Meta):
+        detail_allowed_methods = ['get', 'put']
+        always_return_data = True
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if bundle_or_obj is None:
@@ -399,6 +408,37 @@ class WebUserResource(v0_1.WebUserResource):
             'api_name': self.api_name,
             'pk': bundle_or_obj.obj._id,
         })
+
+    def obj_update(self, bundle, **kwargs):
+        bundle.obj = WebUser.get(kwargs['pk'])
+        user_change_logger = self._get_user_change_logger(bundle)
+        errors = self._update(bundle, user_change_logger)
+        if errors:
+            formatted_errors = ', '.join(errors)
+            raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
+        bundle.obj.save()
+        user_change_logger.save()
+        return bundle
+
+    @classmethod
+    def _update(cls, bundle, user_change_logger=None):
+        errors = []
+
+        location_object = {'primary_location': bundle.data.pop('primary_location_id', None),
+                           'locations': bundle.data.pop('assigned_location_ids', None)}
+
+        items_to_update = {**bundle.data, 'location': location_object}
+        updater = WebUserUpdates(bundle.obj, bundle.request.domain,
+                                 keys_to_update=items_to_update.keys(),
+                                 user_change_logger=user_change_logger)
+
+        for key, value in items_to_update.items():
+            try:
+                updater.update(key, value)
+            except UpdateUserException as e:
+                errors.append(e.message)
+
+        return errors
 
 
 class AdminWebUserResource(v0_1.UserResource):
