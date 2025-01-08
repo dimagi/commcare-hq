@@ -1638,7 +1638,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
             return persistantMenuRegionWidth;
         },
-        showMenu: function (firstLoad=false) {
+        showMenu: function (firstLoad = false) {
             const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
             const persistentMenuContainer = $('#persistent-menu-container');
             if (sessionStorage.showPersistentMenu === "false") {
@@ -1659,9 +1659,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         menuCollapseExpandTransitionListener: function () {
             const persistentMenuContentContainer = $('#persistent-menu-container-content');
-            const targetElement = $('#persistent-menu-container')[0]
+            const targetElement = $('#persistent-menu-container')[0];
             targetElement.addEventListener('transitionend', (event) => {
-                    if (this.menuExpanded && event.target == targetElement) {
+                    if (this.menuExpanded && event.target === targetElement) {
                         persistentMenuContentContainer.removeClass('d-none');
                     }
                 });
