@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import _ from 'underscore';
 import googleAnalytics from 'analytix/js/google';
+import {Tooltip} from 'bootstrap5';
 
 import 'datatables.bootstrap';
 import 'datatables.fixedColumns';
@@ -84,7 +85,7 @@ var HQReportDataTables = function (options) {
         });
         function applyBootstrapMagic() {
             $('[data-datatable-tooltip]').each(function () {
-                $(this).tooltip({  /* todo B5: plugin:tooltip */
+                new Tooltip($(this).get(0), {
                     placement: $(this).attr('data-datatable-tooltip'),
                     title: $(this).attr('data-datatable-tooltip-text'),
                 });
