@@ -735,22 +735,25 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
     def _find_latest_build_version_from_builds(self, all_builds, at_datetime):
         for build_doc in all_builds:
-            build_id = build_doc['_id']
-            build_info = self.build_info_cache.get(build_id)
-            if not build_info:
-                # last_released is added in 2019, build before 2019 don't have this field
-                # TODO: have a migration to populate last_released from built_on
-                # Then this code can be modified to use last_released only
-                released_date = build_doc['last_released'] or build_doc['built_on']
-                build_info = {
-                    'version': build_doc['version'],
-                    'last_released': DateTimeProperty.deserialize(released_date)
-                }
-                self.build_info_cache[build_id] = build_info
-
+            build_info = self._get_build_info(build_doc)
             if build_info['last_released'] <= at_datetime:
                 return build_info['version']
         return None
+
+    def _get_build_info(self, build_doc):
+        build_id = build_doc['_id']
+        build_info = self.build_info_cache.get(build_id)
+        if not build_info:
+            # last_released is added in 2019, build before 2019 don't have this field
+            # TODO: have a migration to populate last_released from built_on
+            # Then this code can be modified to use last_released only
+            released_date = build_doc.get('last_released') or build_doc['built_on']
+            build_info = {
+                'version': build_doc['version'],
+                'last_released': DateTimeProperty.deserialize(released_date)
+            }
+            self.build_info_cache[build_id] = build_info
+        return build_info
 
 
 def _format_percentage_for_enterprise_tile(dividend, divisor):
