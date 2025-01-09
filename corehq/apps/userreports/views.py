@@ -161,6 +161,7 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import (
     add_event,
     allowed_report_builder_reports,
+    get_configurable_and_static_reports_for_data_source,
     get_indicator_adapter,
     get_referring_apps,
     has_report_builder_access,
@@ -179,6 +180,7 @@ from corehq.motech.repeaters.models import DataSourceRepeater
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
@@ -1216,6 +1218,8 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                     return HttpResponseRedirect(reverse(
                         EditDataSourceView.urlname, args=[self.domain, config._id])
                     )
+            else:
+                messages.error(request, _('Data source not saved. Please check the form for errors.'))
         except BadSpecError as e:
             messages.error(request, str(e))
         return self.get(request, *args, **kwargs)
@@ -1322,8 +1326,8 @@ def undelete_data_source(request, domain, config_id):
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
 
-    if toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
-        number_of_records = _number_of_records_to_be_iterated_for_rebuild(datasource_configuration=config)
+    if not config.asynchronous and toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
+        number_of_records = number_of_records_to_be_processed(datasource_configuration=config)
         if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
             messages.error(
                 request,
@@ -1344,13 +1348,43 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id, request.user.username, domain=domain)
+    rebuild_indicators.delay(config_id, request.user.username, domain=domain, source='edit_data_source_rebuild')
+    _report_ucr_rebuild_metrics(domain, config, 'rebuild_datasource')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
 
 
-def _number_of_records_to_be_iterated_for_rebuild(datasource_configuration):
+def _report_ucr_rebuild_metrics(domain, config, action):
+    metrics_counter(
+        f'commcare.ucr.{action}.count',
+        tags={
+            'domain': domain,
+            'datasource_id': config.get_id,
+        }
+    )
+    metrics_gauge(
+        f'commcare.ucr.{action}.columns.count',
+        len(config.get_columns()),
+        tags={'domain': domain}
+    )
+    _report_metric_report_counts_by_datasource(domain, config.get_id, action)
+
+
+def _report_metric_report_counts_by_datasource(domain, data_source_id, action):
+    try:
+        reports = get_configurable_and_static_reports_for_data_source(domain, data_source_id)
+    except Exception:
+        pass
+    else:
+        metrics_gauge(
+            f'commcare.ucr.{action}.reports_per_datasource.count',
+            len(reports),
+            tags={'domain': domain}
+        )
+
+
+def number_of_records_to_be_processed(datasource_configuration):
     if datasource_configuration.referenced_doc_type == 'CommCareCase':
         es_query = CaseSearchES().domain(datasource_configuration.domain)
         case_types = [
@@ -1384,11 +1418,10 @@ def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
         'Rebuilt was not initiated due to high number of records this data source is expected to '
         'iterate during a rebuild. Expected records to be processed is currently {number_of_records} '
         'which is above the limit of {rebuild_limit}. '
-        'Please consider creating a new data source instead or reach out to support if '
-        'you need to rebuild this data source.'
+        'Please update the data source to have asynchronous processing.'
     ).format(
         number_of_records=number_of_records_to_be_iterated,
-        rebuild_limit=DATA_SOURCE_REBUILD_RESTRICTED_AT
+        rebuild_limit=f"{DATA_SOURCE_REBUILD_RESTRICTED_AT:,}"
     )
 
 
@@ -1442,6 +1475,7 @@ def build_data_source_in_place(request, domain, config_id):
         source='edit_data_source_build_in_place',
         domain=config.domain,
     )
+    _report_ucr_rebuild_metrics(domain, config, 'rebuild_datasource_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1914,7 +1948,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             "template": "base-ucr-statement-template",
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         deleted_expression = self.base_query.get(id=item_id)
         deleted_expression.delete()
         return {

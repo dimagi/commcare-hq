@@ -9,14 +9,12 @@
      {% for header, rate_infos in project_limits %}
      <h1>{{ header }}</h1>
      <table class="table table-striped">
-@@ -23,8 +23,8 @@
+@@ -23,7 +23,7 @@
            <td>{{ rate_info.key }}</td>
            <td>
              {{ rate_info.percent_usage }}%
 -            <div class="progress">
--              <div class="progress-bar progress-bar-striped" style="width: {{ rate_info.percent_usage }}%"></div>
-+            <div class="progress">  {# todo B5: css-progress #}
-+              <div class="progress-bar progress-bar-striped" style="width: {{ rate_info.percent_usage }}%"></div>  {# todo B5: inline-style #}
++            <div class="progress" role="progressbar" aria-label="Percent Usage" aria-valuemin="0" aria-valuemax="100">
+               <div class="progress-bar progress-bar-striped" style="width: {{ rate_info.percent_usage }}%"></div>
              </div>
            </td>
-           <td>{{ rate_info.current_usage }}</td>

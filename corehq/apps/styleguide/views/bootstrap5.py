@@ -59,6 +59,60 @@ def styleguide_javascript_guide(request):
 
 
 @use_bootstrap5
+def styleguide_html_guide(request):
+    context = get_navigation_context("styleguide_html_guide_b5")
+    context.update({
+        "examples": {
+            'indentation': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/indentation.html'),
+                language="Django",
+            ),
+            'block_and_inline': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/block_and_inline.html'),
+                language="Django",
+            ),
+            'standard_attributes': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/standard_attributes.html'),
+                language="Django",
+            ),
+            'attribute_js': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/attribute_js.html'),
+                language="Django",
+            ),
+            'attribute_json': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/attribute_json.html'),
+                language="Django",
+            ),
+            'attribute_no_wrap': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/attribute_no_wrap.html'),
+                language="Django",
+            ),
+            'attribute_wrap_data': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/attribute_wrap_data.html'),
+                language="Django",
+            ),
+            'attribute_wrap_length': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/attribute_wrap_length.html'),
+                language="Django",
+            ),
+            'self_closing': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/self_closing.html'),
+                language="Django",
+            ),
+            'self_closing_line': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/self_closing_line.html'),
+                language="Django",
+            ),
+            'final_example': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/final_example.html'),
+                language="Django",
+            ),
+        },
+    })
+    return render(request, 'styleguide/bootstrap5/html_guide.html', context)
+
+
+@use_bootstrap5
 def styleguide_htmx_and_alpine(request):
     context = get_navigation_context("styleguide_htmx_and_alpine_b5")
     context.update({
@@ -273,6 +327,26 @@ def styleguide_molecules_pagination(request):
     context.update({
         'examples': {
             'pagination': get_example_context('styleguide/bootstrap5/examples/pagination.html'),
+            'htmx_pagination_data': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_data.py'),
+                language="Python",
+            ),
+            'htmx_pagination_host_view': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_host_view.py'),
+                language="Python",
+            ),
+            'htmx_pagination_table': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_table.py'),
+                language="Python",
+            ),
+            'htmx_pagination_table_view': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_table_view.py'),
+                language="Python",
+            ),
+            'htmx_pagination_template': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_pagination.html'),
+                language="Django",
+            ),
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/pagination.html', context)

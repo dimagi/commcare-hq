@@ -65,7 +65,7 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
 
         var reportOptions = initialPageData.get('js_options') || {};
         if (reportOptions.slug && reportOptions.async) {
-            var asyncHQReport = hqImport("reports/js/bootstrap3/reports.async")({
+            var asyncHQReport = hqImport("reports/js/bootstrap3/async")({
                 standardReport: getStandard(),
             });
             asyncHQReport.init();

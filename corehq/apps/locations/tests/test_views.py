@@ -252,7 +252,7 @@ class BulkLocationUploadAPITest(TestCase):
         return self.client.post(
             self.url,
             {'bulk_upload_file': file},
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.plaintext_key}',
             format='multipart'
         )
 
@@ -298,7 +298,7 @@ class BulkLocationUploadAPITest(TestCase):
     def test_no_file_uploaded(self):
         response = self.client.post(
             self.url,
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.plaintext_key}',
             format='multipart'
         )
         self.assertEqual(response.status_code, 400)
@@ -351,7 +351,7 @@ class BulkLocationUploadAPITest(TestCase):
         response = self.client.post(
             self.url,
             {'bulk_upload_file': file1, 'another_file': file2},
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.plaintext_key}',
             format='multipart'
         )
 

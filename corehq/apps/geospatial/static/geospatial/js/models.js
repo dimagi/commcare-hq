@@ -1,3 +1,4 @@
+/* globals mapboxgl, MapboxDraw, turf */
 'use strict';
 hqDefine('geospatial/js/models', [
     'jquery',
@@ -131,13 +132,15 @@ hqDefine('geospatial/js/models', [
 
         self.caseGroupsIndex = {};
 
+        self.DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
+
         self.initMap = function (mapDivId, centerCoordinates) {
-            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
+            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
             if (!centerCoordinates) {
                 centerCoordinates = [-91.874, 42.76]; // should be domain specific
             }
 
-            self.mapInstance = new mapboxgl.Map({  // eslint-disable-line no-undef
+            self.mapInstance = new mapboxgl.Map({
                 container: mapDivId, // container ID
                 style: 'mapbox://styles/mapbox/streets-v12', // style URL
                 center: centerCoordinates, // starting position [lng, lat]
@@ -146,7 +149,7 @@ hqDefine('geospatial/js/models', [
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
 
-            self.drawControls = new MapboxDraw({  // eslint-disable-line no-undef
+            self.drawControls = new MapboxDraw({
                 // API: https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md
                 displayControlsDefault: false,
                 boxSelect: true, // enables box selection
@@ -158,7 +161,7 @@ hqDefine('geospatial/js/models', [
             self.mapInstance.addControl(self.drawControls);
 
             // Add zoom and rotation controls to the map.
-            self.mapInstance.addControl(new mapboxgl.NavigationControl());  // eslint-disable-line no-undef
+            self.mapInstance.addControl(new mapboxgl.NavigationControl());
 
             if (self.usesClusters) {
                 createClusterLayers();
@@ -368,7 +371,7 @@ hqDefine('geospatial/js/models', [
         function addMarker(itemId, itemData, colors) {
             const coordinates = itemData.coordinates;
             // Create the marker
-            const marker = new mapboxgl.Marker({ color: colors.default, draggable: false });  // eslint-disable-line no-undef
+            const marker = new mapboxgl.Marker({ color: colors.default, draggable: false });
             marker.setLngLat(coordinates);
 
             // Add the marker to the map
@@ -472,8 +475,8 @@ hqDefine('geospatial/js/models', [
                 return false;
             }
             const coordinatesArr = [coordinates.lng, coordinates.lat];
-            const point = turf.point(coordinatesArr);  // eslint-disable-line no-undef
-            return turf.booleanPointInPolygon(point, polygonFeature.geometry);  // eslint-disable-line no-undef
+            const point = turf.point(coordinatesArr);
+            return turf.booleanPointInPolygon(point, polygonFeature.geometry);
         }
 
         self.mapHasPolygons = function () {
@@ -504,7 +507,7 @@ hqDefine('geospatial/js/models', [
                 if (coord) {
                     return bounds.extend(coord);
                 }
-            }, new mapboxgl.LngLatBounds(firstCoord, firstCoord));  // eslint-disable-line no-undef
+            }, new mapboxgl.LngLatBounds(firstCoord, firstCoord));
 
             self.mapInstance.fitBounds(bounds, {
                 padding: 50,  // in pixels
@@ -513,24 +516,38 @@ hqDefine('geospatial/js/models', [
             });
         };
 
-        self.hasDisbursementLayers = function () {
-            const mapLayers = self.mapInstance.getStyle().layers;
-            return _.any(
-                mapLayers,
-                function (layer) { return layer.id.includes(DISBURSEMENT_LAYER_PREFIX); }
-            );
+        self.hasDisbursementLayer = function () {
+            return self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID);
         };
 
-        self.removeDisbursementLayers = function () {
-            const mapLayers = self.mapInstance.getStyle().layers;
-            let layerRemoved = false;
-            mapLayers.forEach(function (layer) {
-                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
-                    self.mapInstance.removeLayer(layer.id);
-                    layerRemoved = true;
-                }
+        self.addDisbursementLinesLayer = function (source) {
+            let layerId = self.DISBURSEMENT_LINES_LAYER_ID;
+            self.mapInstance.addSource(layerId, {
+                'type': 'geojson',
+                'data': source,
             });
-            return layerRemoved;
+            self.mapInstance.addLayer({
+                id: layerId,
+                type: 'line',
+                source: layerId,
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round',
+                },
+                paint: {
+                    'line-color': '#808080',
+                    'line-width': 1,
+                },
+            });
+        };
+
+        self.removeDisbursementLayer = function () {
+            if (self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeLayer(self.DISBURSEMENT_LINES_LAYER_ID);
+            }
+            if (self.mapInstance.getSource(self.DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeSource(self.DISBURSEMENT_LINES_LAYER_ID);
+            }
         };
 
         self.hasSelectedUsers = function () {
@@ -685,11 +702,11 @@ hqDefine('geospatial/js/models', [
 
         function clearDisbursementBeforeProceeding() {
             let proceedFurther = true;
-            if (self.mapObj.hasDisbursementLayers()) {
+            if (self.mapObj.hasDisbursementLayer()) {
                 // hide it by default and show it only if necessary
                 $('#disbursement-clear-message').hide();
                 if (confirmForClearingDisbursement()) {
-                    self.mapObj.removeDisbursementLayers();
+                    self.mapObj.removeDisbursementLayer();
                     $('#disbursement-clear-message').show();
                     $('#disbursement-params').hide();
                 } else {
@@ -1002,29 +1019,15 @@ hqDefine('geospatial/js/models', [
         };
 
         self.finishAssignment = function () {
-            let userCasesToConnect = {};
-            let casesToClear = [];
             for (const caseItem of self.caseData) {
                 const userItem = self.mapModel.caseGroupsIndex[caseItem.assignedUserId];
                 const groupId = (userItem) ? userItem.groupId : null;
                 self.mapModel.caseGroupsIndex[caseItem.caseId].assignedUserId = caseItem.assignedUserId;
                 self.mapModel.caseGroupsIndex[caseItem.caseId].groupId = groupId;
-
-                casesToClear.push(caseItem.mapItem);
-                if (caseItem.assignedUserId) {
-                    if (!userCasesToConnect[caseItem.assignedUserId]) {
-                        userCasesToConnect[caseItem.assignedUserId] = [];
-                    }
-                    userCasesToConnect[caseItem.assignedUserId].push(caseItem.mapItem);
-                }
             }
 
-            self.disbursementModel.clearConnectionLines(casesToClear);
-            for (const userId in userCasesToConnect) {
-                const user = self.mapModel.caseGroupsIndex[userId].item;
-                const cases = userCasesToConnect[userId];
-                self.disbursementModel.connectUserWithCasesOnMap(user, cases);
-            }
+            self.mapModel.removeDisbursementLayer();
+            self.disbursementModel.connectUserWithCasesOnMap();
         };
 
         self.exportAssignments = function () {

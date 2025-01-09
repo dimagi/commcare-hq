@@ -1194,6 +1194,9 @@ class RepeatRecord(models.Model):
         if force_send or not self.succeeded:
             try:
                 self.repeater.fire_for_record(self, timing_context=timing_context)
+            except OSError as e:
+                self.handle_exception(str(e))
+                raise
             except Exception as e:
                 self.handle_payload_error(str(e), traceback_str=traceback.format_exc())
                 raise

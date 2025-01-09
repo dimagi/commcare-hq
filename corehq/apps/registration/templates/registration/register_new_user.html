@@ -8,7 +8,8 @@
 
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 
-{% block head %}{{ block.super }}
+{% block head %}
+  {{ block.super }}
   {% if is_saas_environment %}
     <!-- Facebook Pixel Code -->
     {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
@@ -29,7 +30,8 @@
   {% endif %}
 {% endblock %}
 
-{% block js %}{{ block.super }}
+{% block js %}
+  {{ block.super }}
   {% if is_saas_environment %}
     <!-- Google Code for Destination Lead Conversion Page -->
     <script>
@@ -45,13 +47,20 @@
     <script src="//www.googleadservices.com/pagead/conversion.js"></script>
     <noscript>
       <div style="display:inline;">
-        <img height="1" width="1" style="border-style:none;" alt="" src="//www.googleadservices.com/pagead/conversion/941515958/?label=glkzCMmv73UQtsn5wAM&amp;guid=ON&amp;script=0"/>
+        <img
+          height="1"
+          width="1"
+          style="border-style:none;"
+          alt=""
+          src="//www.googleadservices.com/pagead/conversion/941515958/?label=glkzCMmv73UQtsn5wAM&amp;guid=ON&amp;script=0"
+        />
       </div>
     </noscript>
     <!-- linked in -->
     <script>
       _linkedin_data_partner_id = "63907";
-    </script><script>
+    </script>
+    <script>
     (function(){var s = document.getElementsByTagName("script")[0];
       var b = document.createElement("script");
       b.type = "text/javascript";b.async = true;
@@ -59,7 +68,13 @@
       s.parentNode.insertBefore(b, s);})();
     </script>
     <noscript>
-      <img height="1" width="1" style="display:none;" alt="" src="https://dc.ads.linkedin.com/collect/?pid=63907&fmt=gif" />
+      <img
+        height="1"
+        width="1"
+        style="display:none;"
+        alt=""
+        src="https://dc.ads.linkedin.com/collect/?pid=63907&fmt=gif"
+      />
     </noscript>
     <!-- end linked in -->
   {% endif %}
@@ -68,28 +83,24 @@
 {% block content %}
   {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
   {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
-
   {% registerurl 'process_registration' %}
 
   <div class="container">
     <div class="row">
       <div class="col-xs-12">
-
-        {% if is_saas_environment %}
-          {% include 'registration/partials/choose_your_plan.html' %}
-        {% endif %}
-
-        <div id="registration-form-container"
-             class="reg-form-container"
-             {% if is_saas_environment %}style="display: none;"{% endif %}>
+        <div id="registration-form-container" class="reg-form-container">
           <ul class="form-step-progress">
             <li class="active">{% trans "Create Account" %}</li>
-            <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>
+            <li data-bind="css: { active: currentStep() > 0 }">
+              {% trans "Name Project" %}
+            </li>
           </ul>
-          <form method="post"
-                action=""
-                autocomplete="off"
-                class="form form-with-steps form-with-steps-primary form-with-steps-centered">
+          <form
+            method="post"
+            action=""
+            autocomplete="off"
+            class="form form-with-steps form-with-steps-primary form-with-steps-centered"
+          >
             <div class="form-bubble form-step loading-form-step">
               <h2>{% trans 'Loading...just a second!' %}</h2>
               <p class="commcare-icon">
@@ -97,13 +108,14 @@
               </p>
             </div>
             {% crispy reg_form %}
-            <div class="form-bubble form-step final-step" style="display: none;">
-
+            <div
+              class="form-bubble form-step final-step"
+              style="display: none;"
+            >
               {% include "registration/partials/register_new_user/submit_info.html" %}
               {% include "registration/partials/register_new_user/submit_errors.html" %}
               {% include "registration/partials/register_new_user/server_errors.html" %}
               {% include "registration/partials/register_new_user/success.html" %}
-
             </div>
           </form>
 
@@ -112,25 +124,22 @@
               {% blocktrans %}
                 Want to learn more before signing up?
               {% endblocktrans %}
-
               &nbsp;&nbsp;&nbsp;
-              <a href="#cta-form-get-demo"
-                 data-toggle="modal"
-                 id="cta-form-get-demo-button-body"
-                 class="btn btn-purple ">{% trans 'Schedule a Demo' %}</a>
-
+              <a
+                href="#cta-form-get-demo"
+                data-toggle="modal"
+                id="cta-form-get-demo-button-body"
+                class="btn btn-purple "
+                >{% trans 'Schedule a Demo' %}</a
+              >
             </div>
           {% endif %}
-
         </div> {# registration-form-container #}
-
       </div> {# .col-xs-12 #}
     </div> {# .row #}
   </div> {# .container #}
 {% endblock %}
 
-{% block modals %}{{ block.super }}
-  {% if is_saas_environment %}
-    {% include "registration/partials/start_trial_modal.html" %}
-  {% endif %}
+{% block modals %}
+  {{ block.super }}
 {% endblock modals %}
