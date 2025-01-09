@@ -25,7 +25,7 @@ from corehq.apps.reports.util import (
     get_tableau_group_ids_by_names,
     get_tableau_groups_by_ids,
 )
-from corehq.apps.api.validation import WebUserResourceValidator
+from corehq.apps.api.validation import WebUserResourceValidator, WebUserSpec
 
 
 class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -104,7 +104,18 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
     def obj_create(self, bundle, **kwargs):
         domain = kwargs['domain']
         validator = WebUserResourceValidator(domain, bundle.request.couch_user)
-        errors = validator.is_valid(bundle.data, True)
+        spec = WebUserSpec(
+            email=bundle.data.pop('email'),
+            role=bundle.data.pop('role'),
+            primary_location_id=bundle.data.pop('primary_location_id'),
+            assigned_location_ids=bundle.data.pop('assigned_location_ids'),
+            profile=bundle.data.pop('profile'),
+            custom_user_data=bundle.data.pop('custom_user_data'),
+            tableau_role=bundle.data.pop('tableau_role'),
+            tableau_groups=bundle.data.pop('tableau_groups'),
+            unhandled_data=bundle.data,
+        )
+        errors = validator.is_valid(spec, True)
         if errors:
             raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
 
