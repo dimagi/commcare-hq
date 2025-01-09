@@ -994,7 +994,7 @@ class ViewCaseRuleView(EditCaseRuleView):
 
 @method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
-    template_name = 'data_interfaces/list_deduplication_rules.html'
+    template_name = 'data_interfaces/bootstrap3/list_deduplication_rules.html'
     urlname = 'deduplication_rules'
     page_title = gettext_lazy("Deduplicate Cases")
 
