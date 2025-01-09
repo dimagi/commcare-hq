@@ -2,6 +2,8 @@ import 'commcarehq';
 
 import $ from 'jquery';
 
+import {Tooltip} from 'bootstrap5';
+
 import initialPageData from 'hqwebapp/js/initial_page_data';
 import filtersMain from 'reports/js/filters/bootstrap5/main';
 import reportConfigModels from 'reports/js/bootstrap5/report_config_models';
@@ -33,9 +35,11 @@ $(function () {
         reportConfigsView.setConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
     }
 
-    $('#email-enabled').tooltip({  /* todo B5: plugin:tooltip */
-        placement: 'right',
-        html: true,
-        title: gettext("You can email a saved version<br />of this report."),
-    });
+    if ($('#email-enabled').length) {
+        new Tooltip($('#email-enabled').get(0), {
+            placement: 'right',
+            html: true,
+            title: gettext("You can email a saved version<br />of this report."),
+        });
+    }
 });
