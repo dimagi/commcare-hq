@@ -253,7 +253,7 @@ class RepeaterManager(models.Manager):
         return results
 
     def get_all_ready_next_attempt_null(self):
-        # See `_all_ready_next_attempt_now()`. Splitting the queries
+        # See `get_all_ready_next_attempt_now()`. Splitting the queries
         # speeds up total query time by using different indexes.
         # NOTE: Returns one row per RepeatRecord, not per Repeater.
         return (
@@ -264,7 +264,7 @@ class RepeaterManager(models.Manager):
         )
 
     def get_all_ready_next_attempt_now(self):
-        # See `_all_ready_next_attempt_null()`. Splitting the queries
+        # See `get_all_ready_next_attempt_null()`. Splitting the queries
         # speeds up total query time by using different indexes.
         # NOTE: Returns one row per RepeatRecord, not per Repeater.
         return (
