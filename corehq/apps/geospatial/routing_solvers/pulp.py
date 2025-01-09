@@ -4,8 +4,11 @@ import pulp
 import copy
 
 from dataclasses import dataclass
+
+from dimagi.utils.chunked import chunked
 from .mapbox_utils import validate_routing_request
 from corehq.apps.geospatial.routing_solvers.base import DisbursementAlgorithmSolverInterface
+from ..const import MAPBOX_DIRECTIONS_MATRIX_API_COORDINATES_LIMIT
 
 
 @dataclass
@@ -184,40 +187,55 @@ class RoadNetworkSolver(RadialDistanceSolver):
     """
     Solves user-case location assignment based on driving distance
     """
-
     def calculate_distance_matrix(self, config):
-        # Todo; support more than Mapbox limit by chunking
-        if len(self.user_locations + self.case_locations) > 25:
-            raise Exception("This is more than Mapbox matrix API limit (25)")
+        # We need at least one case along with users, hence the below limit for users.
+        if len(self.user_locations) > (MAPBOX_DIRECTIONS_MATRIX_API_COORDINATES_LIMIT - 1):
+            raise Exception(f"Error: Users count for cluster exceeds the limit of "
+                            f"{MAPBOX_DIRECTIONS_MATRIX_API_COORDINATES_LIMIT - 1}")
 
-        coordinates = ';'.join([
-            f'{loc["lon"]},{loc["lat"]}'
-            for loc in self.user_locations + self.case_locations]
-        )
-        sources_count = len(self.user_locations)
-        destinations_count = len(self.case_locations)
+        cases_chunk_size = MAPBOX_DIRECTIONS_MATRIX_API_COORDINATES_LIMIT - len(self.user_locations)
+        result = {}
+        for case_locations_chunk in chunked(self.case_locations, cases_chunk_size):
+            case_locations_chunk = list(case_locations_chunk)
+            coordinates = ';'.join([
+                f'{loc["lon"]},{loc["lat"]}'
+                for loc in self.user_locations + case_locations_chunk]
+            )
+            sources_count = len(self.user_locations)
+            destinations_count = len(case_locations_chunk)
 
-        sources = ";".join(map(str, list(range(sources_count))))
-        destinations = ";".join(map(str, list(range(sources_count, sources_count + destinations_count))))
+            sources = ";".join(map(str, list(range(sources_count))))
+            destinations = ";".join(map(str, list(range(sources_count, sources_count + destinations_count))))
 
-        url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/{config.travel_mode}/{coordinates}'
+            url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/{config.travel_mode}/{coordinates}'
 
-        if config.max_case_travel_time:
-            annotations = "distance,duration"
-        else:
-            annotations = "distance"
+            if config.max_case_travel_time:
+                annotations = "distance,duration"
+            else:
+                annotations = "distance"
 
-        params = {
-            'sources': sources,
-            'destinations': destinations,
-            'annotations': annotations,
-            'access_token': config.plaintext_api_token,
-        }
+            params = {
+                'sources': sources,
+                'destinations': destinations,
+                'annotations': annotations,
+                'access_token': config.plaintext_api_token,
+            }
 
-        response = requests.get(url, params=params)
-        response.raise_for_status()
+            response = requests.get(url, params=params)
+            response.raise_for_status()
 
-        return self.sanitize_response(response.json())
+            if not result:
+                result = response.json()
+            else:
+                self.append_chunk_result(result, response.json())
+        return self.sanitize_response(result)
+
+    def append_chunk_result(self, result, chunk_result):
+        for idx, row in enumerate(result['distances']):
+            row.extend(chunk_result['distances'][idx])
+        if result.get('durations'):
+            for idx, row in enumerate(result['durations']):
+                row.extend(chunk_result['durations'][idx])
 
     def sanitize_response(self, response):
         distances_km = self._convert_m_to_km(response['distances'])
