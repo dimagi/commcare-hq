@@ -718,7 +718,7 @@ def find_by_id(request, domain):
 
 
 class AutomaticUpdateRuleListView(DataInterfaceSection):
-    template_name = 'data_interfaces/auto_update_rules.html'
+    template_name = 'data_interfaces/bootstrap3/auto_update_rules.html'
     urlname = 'automatic_update_rule_list'
     page_title = gettext_lazy("Automatically Update Cases")
 
