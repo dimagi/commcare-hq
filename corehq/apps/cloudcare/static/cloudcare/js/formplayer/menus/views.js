@@ -1666,6 +1666,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     }
                 });
         },
+        cloudcareNotificationListener: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            const cloudcareNotifications = $("#cloudcare-notifications");
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList') {
+                        if (cloudcareNotifications.children().length > 0) {
+                            persistentMenuContainer.addClass('border-top');
+                        } else {
+                            persistentMenuContainer.removeClass('border-top');
+                        }
+                    }
+                });
+            });
+              observer.observe(cloudcareNotifications[0], { childList: true });
+        },
         lockMenu: function () {
             const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
             const persistentMenuRegion = $('#persistent-menu-region');
@@ -1699,6 +1715,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const arrowToggle = $('#persistent-menu-arrow-toggle');
             self.makeCollapse(sessionStorage.showPersistentMenu);
             self.menuCollapseExpandTransitionListener();
+            self.cloudcareNotificationListener();
 
             if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
                 self.hideMenu();
