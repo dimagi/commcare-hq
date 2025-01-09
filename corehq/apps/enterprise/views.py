@@ -73,8 +73,8 @@ def platform_overview(request, domain):
 
     context = get_page_context(
         page_url=reverse('platform_overview', args=(domain,)),
-        page_title=_('Platform Overview for {}').format(request.account.name),
         page_name=_('Platform Overview'),
+        page_title='',
         domain=domain,
         section=Section(
             _('Enterprise Console'),
@@ -117,7 +117,7 @@ def security_center(request, domain):
 
     context = get_page_context(
         page_url=reverse('security_center', args=(domain,)),
-        page_title=_('Security Center for {}').format(request.account.name),
+        page_title='',
         page_name=_('Security Center'),
         domain=domain,
         section=Section(
