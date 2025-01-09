@@ -1,5 +1,5 @@
 
-hqDefine("data_interfaces/js/case_management",[
+hqDefine("data_interfaces/js/bootstrap3/case_management",[
     'jquery',
     'underscore',
     'knockout',

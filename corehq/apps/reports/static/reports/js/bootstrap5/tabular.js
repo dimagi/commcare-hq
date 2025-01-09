@@ -7,7 +7,7 @@ hqDefine("reports/js/bootstrap5/tabular", [
     'reports/js/datepicker',
 
     // Page-specific scripts
-    'data_interfaces/js/case_management',
+    'data_interfaces/js/bootstrap5/case_management',
     'data_interfaces/js/archive_forms',
     'reports/js/inspect_data',
     'reports/js/bootstrap5/project_health_dashboard',
