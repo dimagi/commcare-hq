@@ -1,4 +1,20 @@
-hqDefine('userreports/js/builder_view_models', function () {
+hqDefine('userreports/js/builder_view_models', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'analytix/js/kissmetrix',
+    'userreports/js/constants',
+    'userreports/js/report_analytix',
+    'userreports/js/utils',
+], function (
+    $,
+    ko,
+    _,
+    kissmetrics,
+    constants,
+    analytics,
+    utils
+) {
     'use strict';
 
     var getOrDefault = function (options, key, default_) {
@@ -8,7 +24,6 @@ hqDefine('userreports/js/builder_view_models', function () {
             return options[key];
         }
     };
-
 
     /**
      * Knockout view model representing a row in the filter property list
@@ -76,8 +91,6 @@ hqDefine('userreports/js/builder_view_models', function () {
             // This should also return true if the user has tried to submit the form
             return !self.displayTextIsValid() && (self.displayTextModifiedByUser() || self.showWarnings());
         });
-
-        var constants = hqImport('userreports/js/constants');
 
         // The format of the filter. This field is not used if the
         // PropertyListItem is representing columns
@@ -257,8 +270,8 @@ hqDefine('userreports/js/builder_view_models', function () {
         self.buttonHandler = function () {
             self.columns.push(self._createListItem());
             if (!_.isEmpty(self.analyticsAction) && !_.isEmpty(self.analyticsLabel)) {
-                hqImport('userreports/js/report_analytix').track.event(self.analyticsAction, self.analyticsLabel);
-                hqImport('analytix/js/kissmetrix').track.event("Clicked " + self.analyticsAction + " in Report Builder");
+                analytics.track.event(self.analyticsAction, self.analyticsLabel);
+                kissmetrics.track.event("Clicked " + self.analyticsAction + " in Report Builder");
             }
             if (_.isFunction(self.addItemCallback)) {
                 self.addItemCallback();
@@ -333,7 +346,6 @@ hqDefine('userreports/js/builder_view_models', function () {
         groupByInitialValue
     ) {
         var self = {};
-        var constants = hqImport('userreports/js/constants');
 
         self.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
             return o.type === 'question';
@@ -343,8 +355,6 @@ hqDefine('userreports/js/builder_view_models', function () {
         self.groupBy = ko.observable(groupByInitialValue);
         self.isGroupByRequired = ko.observable(isGroupByRequired);
         self.showGroupByValidationError = ko.observable(false);
-
-        var utils = hqImport("userreports/js/utils");
 
         // Convert the DataSourceProperty and ColumnOption passed through the template
         // context into objects with the correct format for the select2 and
@@ -404,7 +414,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             requireColumns: reportType !== "chart",
             requireColumnsText: "At least one column is required",
             noColumnsValidationCallback: function () {
-                hqImport('userreports/js/report_analytix').track.event(
+                analytics.track.event(
                     'Click On Done (No Columns)',
                     reportType
                 );
