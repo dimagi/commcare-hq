@@ -7,7 +7,6 @@ from django.http import (
 from memoized import memoized
 
 from tastypie import fields
-from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.xform import get_case_updates

@@ -354,7 +354,10 @@ class TestXFormPillow(TestCase):
         cleaned = form_adapter.to_json(bad_appVersion)
         self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
         self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
-        self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
+        self.assertTrue(
+            cleaned['form']['meta']['appVersion'],
+            "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013",
+        )
 
 
 class TestViewFormAttachment(TestCase):
