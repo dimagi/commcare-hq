@@ -1152,7 +1152,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
 @method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleCreateView(DataInterfaceSection):
-    template_name = "data_interfaces/edit_deduplication_rule.html"
+    template_name = "data_interfaces/bootstrap3/edit_deduplication_rule.html"
     urlname = 'add_deduplication_rule'
     page_title = gettext_lazy("Create Deduplication Rule")
 
