@@ -163,7 +163,7 @@ class StockReportParser(object):
 
                 try:
                     value = int(arg)
-                except:
+                except ValueError:
                     raise SMSError('could not understand product quantity "%s"' % arg)
 
                 for product in products:
@@ -268,9 +268,9 @@ def process_transfers(E, transfers):
         if transfers[0].action in [
             const.StockActions.RECEIPTS,
         ]:
-            here, there = ('dest', 'src')
+            here, there = ('dest', 'src')  # noqa: F841
         else:
-            here, there = ('src', 'dest')
+            here, there = ('src', 'dest')  # noqa: F841
 
         attr[here] = transfers[0].case_id
 
@@ -350,7 +350,7 @@ def to_instance(data):
 
 def truncate(text, maxlen, ellipsis='...'):
     if len(text) > maxlen:
-        return text[:maxlen-len(ellipsis)] + ellipsis
+        return text[:(maxlen - len(ellipsis))] + ellipsis
     else:
         return text
 
@@ -361,7 +361,9 @@ def send_confirmation(v, data):
     static_loc = data['location']
     location_name = static_loc.name
     metadata = MessageMetadata(location_id=static_loc.get_id)
-    tx_by_action = map_reduce(lambda tx: [(tx.action_config(C).name,)], data=data['transactions'], include_docs=True)
+    tx_by_action = map_reduce(lambda tx: [(tx.action_config(C).name,)],
+                              data=data['transactions'],
+                              include_docs=True)
 
     def summarize_action(action, txs):
         return '%s %s' % (txs[0].action_config(C).keyword.upper(), ' '.join(sorted(tx.fragment() for tx in txs)))
