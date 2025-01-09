@@ -1,4 +1,6 @@
 from memoized import memoized
+from dataclasses import dataclass, asdict
+from typing import List
 
 from django.utils.translation import gettext as _
 
@@ -26,27 +28,46 @@ from corehq.apps.registration.validation import AdminInvitesUserFormValidator
 from corehq.toggles import TABLEAU_USER_SYNCING
 
 
+@dataclass
+class WebUserSpec:
+    email: str
+    role: str = None
+    primary_location_id: str = None
+    assigned_location_ids: List[str] = None
+    profile: str = None
+    custom_user_data: dict = None
+    tableau_role: str = None
+    tableau_groups: List[str] = None
+    unhandled_data: dict = None
+
+    def get_full_spec(self):
+        spec_dict = {k: v for k, v in asdict(self).items()
+                     if k != 'unhandled_data' and v is not None}
+        if self.unhandled_data:
+            spec_dict.update(self.unhandled_data)
+        return spec_dict
+
+
 class WebUserResourceValidator():
     def __init__(self, domain, requesting_user):
         self.domain = domain
         self.requesting_user = requesting_user
 
-    def is_valid(self, data, is_post):
+    def is_valid(self, spec: WebUserSpec, is_post):
         errors = []
-
+        print(spec.get_full_spec())
         validators = [
-            (self.validate_parameters, [data.keys(), is_post]),
-            (self.validate_required_fields, [data, is_post]),
-            (self.validate_role, [data.get("role")]),
-            (self.validate_profile, [data.get("profile"), is_post]),
-            (self.validate_custom_data, [data.get("custom_user_data"), data.get("profile")]),
-            (self.validate_custom_data_with_profile, [data.get("custom_user_data"), data.get("profile")]),
-            (self.validate_email, [data.get("email"), is_post]),
-            (self.validate_locations, [data.get("email"), data.get("assigned_location_ids"),
-                                       data.get("primary_location_id")]),
-            (self.validate_user_access, [data.get("email")]),
-            (self.validate_tableau_group, [data.get("tableau_groups", None)]),
-            (self.validate_tableau_role, [data.get("tableau_role")]),
+            (self.validate_parameters, [set(spec.get_full_spec().keys()), is_post]),
+            (self.validate_required_fields, [spec, is_post]),
+            (self.validate_role, [spec.role]),
+            (self.validate_profile, [spec.profile, is_post]),
+            (self.validate_custom_data, [spec.custom_user_data, spec.profile]),
+            (self.validate_custom_data_with_profile, [spec.custom_user_data, spec.profile]),
+            (self.validate_email, [spec.email, is_post]),
+            (self.validate_locations, [spec.email, spec.assigned_location_ids, spec.primary_location_id]),
+            (self.validate_user_access, [spec.email]),
+            (self.validate_tableau_group, [spec.tableau_groups]),
+            (self.validate_tableau_role, [spec.tableau_role]),
         ]
 
         for validator, args in validators:
@@ -97,9 +118,9 @@ class WebUserResourceValidator():
 
         return errors
 
-    def validate_required_fields(self, spec, is_post):
-        email = spec.get('email')
-        role = spec.get('role')
+    def validate_required_fields(self, spec: WebUserSpec, is_post):
+        email = spec.email
+        role = spec.role
         if is_post:
             if not email or not role:
                 return _("'email' and 'role' are required for each user")

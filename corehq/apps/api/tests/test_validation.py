@@ -1,7 +1,7 @@
 from django.test import TestCase
 from unittest.mock import patch
 
-from corehq.apps.api.validation import WebUserResourceValidator
+from corehq.apps.api.validation import WebUserResourceValidator, WebUserSpec
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
@@ -51,8 +51,9 @@ class TestWebUserResourceValidator(TestCase):
         super().tearDownClass()
 
     def test_simple_is_valid(self):
-        data = {"email": "newtest@example.com", "role": "App Editor"}
-        self.assertEqual(self.validator.is_valid(data, True), [])
+        spec = WebUserSpec(email="newtest@example.com",
+                           role="App Editor")
+        self.assertEqual(self.validator.is_valid(spec, True), [])
 
     def test_validate_parameters(self):
         params = {"email": "test@example.com", "role": "Admin"}
