@@ -4,7 +4,7 @@ from redis.lock import Lock as RedisLock
 
 from dimagi.utils.couch import get_redis_lock
 
-from corehq.tests.noseplugins.redislocks import TestLock
+from corehq.tests.pytest_plugins.redislocks import TestLock
 from corehq.util.metrics.lockmeter import MeteredLock
 
 
@@ -12,8 +12,7 @@ def test_get_redis_lock_with_token():
     lock_name = 'test-1'
     metered_lock = get_redis_lock(key=lock_name, name=lock_name, timeout=1)
     assert isinstance(metered_lock, MeteredLock)
-    # metered_lock.lock is a TestLock instance because of
-    # corehq.tests.noseplugins.redislocks.RedisLockTimeoutPlugin
+    # metered_lock.lock is a TestLock instance
     test_lock = metered_lock.lock
     assert isinstance(test_lock, TestLock)
     redis_lock = test_lock.lock
