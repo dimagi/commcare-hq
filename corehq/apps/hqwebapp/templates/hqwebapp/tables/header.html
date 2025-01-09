@@ -1,0 +1,52 @@
+{% load querystring from django_tables2 %}
+
+<thead {{ table.attrs.thead.as_html }}>
+  <tr>
+    {% for column in table.columns %}
+      <th
+        scope="col"
+        {{ column.attrs.th.as_html }}
+      >
+        {% if column.orderable %}
+          {% if column.sort_desc %}
+            <a
+              {% if use_htmx_links %}
+                class="link"
+                hx-get="{{ request.path_info }}{% querystring without table.prefixed_order_by_field %}"
+                hx-replace-url="{% querystring without table.prefixed_order_by_field %}"
+                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+                hx-swap="outerHTML"
+                {% if table.loading_indicator_id %}
+                  hq-hx-loading="{{ table.loading_indicator_id }}"
+                {% endif %}
+              {% else %}
+                href="{% querystring without table.prefixed_order_by_field %}"
+              {% endif %}
+            >
+              {{ column.header }}
+            </a>
+          {% else %}
+            <a
+              {% if use_htmx_links %}
+                class="link"
+                hx-get="{{ request.path_info }}{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}"
+                hx-replace-url="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}"
+                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+                hx-swap="outerHTML"
+                {% if table.loading_indicator_id %}
+                  hq-hx-loading="{{ table.loading_indicator_id }}"
+                {% endif %}
+              {% else %}
+                href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}"
+              {% endif %}
+            >
+              {{ column.header }}
+            </a>
+          {% endif %}
+        {% else %}
+          {{ column.header }}
+        {% endif %}
+      </th>
+    {% endfor %}
+  </tr>
+</thead>
