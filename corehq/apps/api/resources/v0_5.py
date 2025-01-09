@@ -71,6 +71,7 @@ from corehq.apps.api.util import (
     parse_str_to_date,
     cursor_based_query_for_datasource
 )
+from corehq.apps.api.validation import WebUserResourceValidator, WebUserSpec
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.case_importer.views import require_can_edit_data
@@ -411,6 +412,22 @@ class WebUserResource(v0_1.WebUserResource):
 
     def obj_update(self, bundle, **kwargs):
         bundle.obj = WebUser.get(kwargs['pk'])
+        validator = WebUserResourceValidator(bundle.request.domain, bundle.request.couch_user)
+        spec = WebUserSpec(
+            email=bundle.obj.email,
+            role=bundle.data.pop('role', None),
+            primary_location_id=bundle.data.pop('primary_location_id', None),
+            assigned_location_ids=bundle.data.pop('assigned_location_ids', None),
+            profile=bundle.data.pop('profile', None),
+            custom_user_data=bundle.data.pop('user_data', None),
+            tableau_role=bundle.data.pop('tableau_role', None),
+            tableau_groups=bundle.data.pop('tableau_groups', None),
+            unhandled_data=bundle.data,
+        )
+        errors = validator.is_valid(spec, False)
+        if errors:
+            raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
+
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:

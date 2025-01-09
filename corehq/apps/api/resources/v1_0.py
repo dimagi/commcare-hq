@@ -106,7 +106,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
         validator = WebUserResourceValidator(domain, bundle.request.couch_user)
         spec = WebUserSpec(
             email=bundle.data.pop('email'),
-            role=bundle.data.pop('role'),
+            role=bundle.data.pop('role', None),
             primary_location_id=bundle.data.pop('primary_location_id', None),
             assigned_location_ids=bundle.data.pop('assigned_location_ids', None),
             profile=bundle.data.pop('profile', None),
