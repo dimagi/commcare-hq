@@ -50,7 +50,7 @@ repeaters that have repeat records ready to be sent. It does so in a
 round-robin fashion, cycling through the domains. It does this so that:
 
 * Domains and repeaters are not rate-limited unnecessarily.
-* Remote APIs are not unintentionally DDoS-attacked by CommCare HQ.
+* Remote APIs are not unintentionally DoS-attacked by CommCare HQ.
 * No domain has to wait while another domain consumes all the repeat
   record queue workers.
 
