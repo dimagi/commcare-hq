@@ -81,4 +81,8 @@ hqDefine("reports/js/bootstrap3/tabular", [
             renderPage(initialPageData.get("js_options").slug, initialPageData.get("report_table_js_options"));
         }
     });
+
+    return {
+        renderPage: renderPage,
+    };
 });
