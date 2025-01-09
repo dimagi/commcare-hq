@@ -1,4 +1,4 @@
-hqDefine("data_interfaces/js/case_dedupe_main", [
+hqDefine("data_interfaces/js/bootstrap3/case_dedupe_main", [
     'jquery',
     'knockout',
     'underscore',
