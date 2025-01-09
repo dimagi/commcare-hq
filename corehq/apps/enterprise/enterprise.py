@@ -720,17 +720,19 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         return latest_build
 
     def get_app_builds(self, domain, app_id):
-        if app_id not in self.builds_by_app_id:
-            app_es = (
-                AppES()
-                .domain(domain)
-                .is_build()
-                .app_id(app_id)
-                .sort('version', desc=True)
-                .is_released()
-                .source(['_id', 'version', 'last_released', 'built_on'])
-            )
-            self.builds_by_app_id[app_id] = app_es.run().hits
+        if app_id in self.builds_by_app_id:
+            return self.builds_by_app_id[app_id]
+
+        app_es = (
+            AppES()
+            .domain(domain)
+            .is_build()
+            .app_id(app_id)
+            .sort('version', desc=True)
+            .is_released()
+            .source(['_id', 'version', 'last_released', 'built_on'])
+        )
+        self.builds_by_app_id[app_id] = app_es.run().hits
         return self.builds_by_app_id[app_id]
 
     def _find_latest_build_version_from_builds(self, all_builds, at_datetime):
