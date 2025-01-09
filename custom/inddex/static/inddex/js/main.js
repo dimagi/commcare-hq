@@ -1,6 +1,15 @@
 // jls: just delete this file, eh?
-hqDefine("inddex/js/main", function () {
-    $(function () {     // jls: do on ajax success like in tabular.js?
+hqDefine("inddex/js/main", [     // jls: do on ajax success like in tabular.js?
+    'jquery',
+    'reports/js/bootstrap3/standard_hq_report',
+    'reports/js/bootstrap3/datatables_config',
+    'commcarehq',
+], function (
+    $,
+    standardHQReport,
+    datatablesConfig
+) {
+    $(function () {
         $("[data-report-table]").each(function (table) {
             const $table = $(table),
                 reportTable = $table.data("report-table");  // jls: report_table_js_options?
@@ -35,8 +44,8 @@ hqDefine("inddex/js/main", function () {
                 options.badRequestErrorText = "<span class='label label-danger'>Sorry!</span> " + reportTable.bad_request_error_text;
             }
 
-            var reportTables = hqImport("reports/js/bootstrap3/datatables_config").HQReportDataTables(options);
-            var standardHQReport = hqImport("reports/js/bootstrap3/standard_hq_report").getStandardHQReport();
+            var reportTables = datatablesConfig.HQReportDataTables(options);
+            var standardHQReport = standardHQReport.getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
             }
