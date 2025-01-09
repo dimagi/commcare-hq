@@ -1,29 +1,35 @@
-@media screen and (max-width: map-get($container-max-widths, "sm")) {
-  .row-offcanvas {
-    position: relative;
-  }
-
-  .sidebar-offcanvas {
-    display: none;
-  }
-
-  .row-offcanvas-left {
-    left: 0;
-  }
-
-  .row-offcanvas-left.active {
-    .sidebar-offcanvas {
-      display: block;
-    }
-  }
-}
-
 .btn-report-menu {
+  display: none;
   float: left;
-  margin-right: 13px;
   background: none;
   font-size: 14px;
   font-weight: bold;
   padding-top: 5px;
-  border-right: 1px solid #eeeeee;
+  border-right: 1px solid $border-color;
+  border-bottom: 1px solid $border-color;
+  border-radius: 0;
+
+  &:focus {
+    padding-top: 5px;
+    background-color: #ededec;
+    border-right: 1px solid $border-color;
+  }
+}
+
+@media (max-width: map-get($grid-breakpoints, "md")) {
+  .report-sidebar-row {
+    position: relative;
+    left: 0;
+  }
+
+  .report-sidebar {
+    display: none;
+  }
+
+  .report-sidebar.active {
+    display: block;
+  }
+  .btn-report-menu {
+    display: inline-block;
+  }
 }
