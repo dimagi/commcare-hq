@@ -1,3 +1,5 @@
+import time
+
 import haversine
 import requests
 import pulp
@@ -195,7 +197,10 @@ class RoadNetworkSolver(RadialDistanceSolver):
 
         cases_chunk_size = MAPBOX_DIRECTIONS_MATRIX_API_COORDINATES_LIMIT - len(self.user_locations)
         result = {}
+        count = 1
         for case_locations_chunk in chunked(self.case_locations, cases_chunk_size):
+            print(f"Fetching Distance Matrix for chunk: {count}...")
+            start_time = time.time()
             case_locations_chunk = list(case_locations_chunk)
             coordinates = ';'.join([
                 f'{loc["lon"]},{loc["lat"]}'
@@ -228,6 +233,14 @@ class RoadNetworkSolver(RadialDistanceSolver):
                 result = response.json()
             else:
                 self.append_chunk_result(result, response.json())
+
+            count = count + 1
+            print("Distance Matrix fetched successfully...")
+            # Avoid Mapbox rate limit of 60 requests per minute
+            time_elapsed = time.time() - start_time
+            if time_elapsed < 1:
+                time.sleep(1 - time_elapsed)
+
         return self.sanitize_response(result)
 
     def append_chunk_result(self, result, chunk_result):

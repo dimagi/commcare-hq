@@ -51,7 +51,7 @@ class Command(BaseCommand):
 
         start_time = time.time()
         n_clusters = max(len(gps_users_data), len(cases_data)) // cluster_chunk_size + 1
-        print(f"Creating {n_clusters} clusters of chunk size {cluster_chunk_size}... Be patient...")
+        print(f"Creating {n_clusters} clusters for {len(gps_users_data)} users and {len(cases_data)} cases...")
         clusters = self.create_clusters(gps_users_data, cases_data, n_clusters)
         print(f"Time taken for creating clusters: {time.time() - start_time}")
 
@@ -131,4 +131,7 @@ class Command(BaseCommand):
                 clusters[label]['users'].append(users[idx])
             else:
                 clusters[label]['cases'].append(cases[idx - n_users])
+        for key in clusters.keys():
+            print(f"cluster index: {key}, users: {len(clusters[key]['users'])},"
+                  f" cases: {len(clusters[key]['cases'])}")
         return clusters

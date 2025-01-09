@@ -77,13 +77,15 @@ def index_es_docs_with_location_props(domain):
 def clusters_disbursement_task(domain, clusters):
     config = GeoConfig.objects.get(domain=domain)
 
+    print(f"Processing disbursement for {len(clusters)} clusters ...")
     start_time = time.time()
     assignments = []
     for cluster_id in clusters.keys():
         users_chunk = clusters[cluster_id]['users']
         cases_chunk = clusters[cluster_id]['cases']
         if users_chunk and cases_chunk:
-            print(f"Starting disbursement for cluster: {cluster_id}")
+            print(f"Starting disbursement for cluster: {cluster_id}, total users: {len(users_chunk)},"
+                  f" total cases: {len(cases_chunk)}")
             try:
                 solver = RoadNetworkSolver(clusters[cluster_id])
                 result = solver.solve(config)
