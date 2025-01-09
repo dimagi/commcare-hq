@@ -329,6 +329,8 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
+joblib==1.4.2
+    # via scikit-learn
 jsonfield==3.1.0
     # via
     #   -r base-requirements.in
@@ -382,6 +384,11 @@ multidict==6.0.5
     #   yarl
 myst-parser==2.0.0
     # via -r docs-requirements.in
+numpy==2.0.2
+    # via
+    #   -r base-requirements.in
+    #   scikit-learn
+    #   scipy
 oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
@@ -561,6 +568,10 @@ s3transfer==0.6.0
     # via boto3
 schema==0.7.5
     # via -r base-requirements.in
+scikit-learn==1.6.0
+    # via -r base-requirements.in
+scipy==1.13.1
+    # via scikit-learn
 sentry-sdk==2.8.0
     # via -r base-requirements.in
 sh==2.0.3
@@ -643,6 +654,8 @@ suds-py3==1.4.5.0
     # via -r base-requirements.in
 text-unidecode==1.3
     # via -r base-requirements.in
+threadpoolctl==3.5.0
+    # via scikit-learn
 tinycss2==1.2.1
     # via bleach
 toolz==0.12.1
