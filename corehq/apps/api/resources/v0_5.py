@@ -415,13 +415,13 @@ class WebUserResource(v0_1.WebUserResource):
         validator = WebUserResourceValidator(bundle.request.domain, bundle.request.couch_user)
         spec = WebUserSpec(
             email=bundle.obj.email,
-            role=bundle.data.pop('role', None),
-            primary_location_id=bundle.data.pop('primary_location_id', None),
-            assigned_location_ids=bundle.data.pop('assigned_location_ids', None),
-            profile=bundle.data.pop('profile', None),
-            user_data=bundle.data.pop('user_data', None),
-            tableau_role=bundle.data.pop('tableau_role', None),
-            tableau_groups=bundle.data.pop('tableau_groups', None),
+            role=bundle.data.get('role'),
+            primary_location_id=bundle.data.get('primary_location_id'),
+            assigned_location_ids=bundle.data.get('assigned_location_ids'),
+            profile=bundle.data.get('profile'),
+            user_data=bundle.data.get('user_data'),
+            tableau_role=bundle.data.get('tableau_role'),
+            tableau_groups=bundle.data.get('tableau_groups'),
             parameters=bundle.data.keys(),
         )
         errors = validator.is_valid(spec, False)
