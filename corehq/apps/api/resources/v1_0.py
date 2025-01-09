@@ -107,43 +107,43 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
         spec = WebUserSpec(
             email=bundle.data.pop('email'),
             role=bundle.data.pop('role'),
-            primary_location_id=bundle.data.pop('primary_location_id'),
-            assigned_location_ids=bundle.data.pop('assigned_location_ids'),
-            profile=bundle.data.pop('profile'),
-            custom_user_data=bundle.data.pop('custom_user_data'),
-            tableau_role=bundle.data.pop('tableau_role'),
-            tableau_groups=bundle.data.pop('tableau_groups'),
+            primary_location_id=bundle.data.pop('primary_location_id', None),
+            assigned_location_ids=bundle.data.pop('assigned_location_ids', None),
+            profile=bundle.data.pop('profile', None),
+            custom_user_data=bundle.data.pop('custom_user_data', None),
+            tableau_role=bundle.data.pop('tableau_role', None),
+            tableau_groups=bundle.data.pop('tableau_groups', None),
             unhandled_data=bundle.data,
         )
         errors = validator.is_valid(spec, True)
         if errors:
             raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
 
-        profile = validator.profiles_by_name.get(bundle.data.get('profile'), None)
-        role_id = validator.roles_by_name.get(bundle.data.get('role'), None)
-        tableau_group_ids = get_tableau_group_ids_by_names(bundle.data.get('tableau_groups', []), domain)
+        profile = validator.profiles_by_name.get(spec.profile)
+        role_id = validator.roles_by_name.get(spec.role)
+        tableau_group_ids = get_tableau_group_ids_by_names(spec.tableau_groups or [], domain)
 
         primary_loc = None
         assigned_locs = []
-        if bundle.data.get('assigned_location_ids'):
+        if spec.assigned_location_ids:
             primary_loc = SQLLocation.active_objects.get(
-                location_id=bundle.data.get('primary_location_id'))
+                location_id=spec.primary_location_id)
             assigned_locs = SQLLocation.active_objects.filter(
-                location_id__in=bundle.data.get('assigned_location_ids'), domain=domain)
+                location_id__in=spec.assigned_location_ids, domain=domain)
             real_ids = [loc.location_id for loc in assigned_locs]
 
-            if missing_ids := set(bundle.data.get('assigned_location_ids')) - set(real_ids):
+            if missing_ids := set(spec.assigned_location_ids) - set(real_ids):
                 raise ImmediateHttpResponse(JsonResponse(
                     {"errors": f"Could not find location ids: {', '.join(missing_ids)}."}, status=400))
 
         invite = Invitation.objects.create(
             domain=domain,
-            email=bundle.data.get('email').lower(),
+            email=spec.email.lower(),
             role=role_id,
             primary_location=primary_loc,
             profile=profile,
-            custom_user_data=bundle.data.get('custom_user_data', {}),
-            tableau_role=bundle.data.get('tableau_role'),
+            custom_user_data=spec.custom_user_data or {},
+            tableau_role=spec.tableau_role,
             tableau_group_ids=tableau_group_ids,
             invited_by=bundle.request.couch_user.user_id,
             invited_on=datetime.utcnow(),
