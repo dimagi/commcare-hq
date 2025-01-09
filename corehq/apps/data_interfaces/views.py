@@ -702,7 +702,7 @@ def find_by_id(request, domain):
         raise Http403()
 
     name = _("Find Data by ID")
-    return render(request, 'data_interfaces/find_by_id.html', {
+    return render(request, 'data_interfaces/bootstrap3/find_by_id.html', {
         'domain': domain,
         'current_page': {
             'title': name,
