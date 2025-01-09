@@ -8,7 +8,7 @@ import initialPageData from 'hqwebapp/js/initial_page_data';
 import filtersMain from 'reports/js/filters/bootstrap5/main';
 import reportConfigModels from 'reports/js/bootstrap5/report_config_models';
 
-import 'reports/js/bootstrap3/tabular';
+import 'reports/js/bootstrap5/tabular';
 
 $(function () {
     filtersMain.init();
