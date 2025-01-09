@@ -55,7 +55,6 @@ class WebUserResourceValidator():
 
     def is_valid(self, spec: WebUserSpec, is_post):
         errors = []
-        print(spec.get_full_spec())
         validators = [
             (self.validate_parameters, [set(spec.get_full_spec().keys()), is_post]),
             (self.validate_required_fields, [spec, is_post]),
