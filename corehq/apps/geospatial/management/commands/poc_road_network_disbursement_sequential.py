@@ -11,6 +11,7 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import case_property_missing, wrap_case_search_hit
 from corehq.apps.es.users import missing_or_empty_user_data_property
 from corehq.apps.geospatial.utils import get_geo_case_property, get_geo_user_property
+from corehq.apps.geospatial.tasks import clusters_disbursement_task
 from corehq.apps.users.models import CouchUser, CommCareUser
 from couchforms.geopoint import GeoPoint
 from dimagi.utils.couch.database import iter_docs
@@ -25,6 +26,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('--cluster_chunk_size', required=False, default=10000, type=int)
+        parser.add_argument('--dry_run', action='store_true', help="skips running the disbursement task")
 
     def handle(self, *args, **options):
         domain = options['domain']
@@ -52,6 +54,9 @@ class Command(BaseCommand):
         print(f"Creating {n_clusters} clusters of chunk size {cluster_chunk_size}... Be patient...")
         clusters = self.create_clusters(gps_users_data, cases_data, n_clusters)
         print(f"Time taken for creating clusters: {time.time() - start_time}")
+
+        if not options['dry_run']:
+            clusters_disbursement_task.delay(domain, clusters)
 
     def get_users_with_gps(self, domain):
         """Mostly copied over from corehq.apps.geospatial.views.get_users_with_gps"""
