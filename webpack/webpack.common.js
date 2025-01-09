@@ -69,6 +69,17 @@ module.exports = {
             },
 
             {
+                test: /mapbox\.js\/dist\/mapbox/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "L",
+                    },
+                },
+            },
+            {
                 test: /nvd3\/nv\.d3\.min/,
                 loader: "exports-loader",
                 options: {
@@ -80,7 +91,7 @@ module.exports = {
                 },
             },
             {
-                test: /sentry\.browser/,
+                test: /sentry\/js\/sentry/,
                 loader: "exports-loader",
                 options: {
                     type: "commonjs",
