@@ -292,7 +292,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
 class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
     name = gettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
-    report_template_path = 'data_interfaces/interfaces/archive_forms.html'
+    report_template_path = 'data_interfaces/interfaces/bootstrap3/archive_forms.html'
 
     def __init__(self, request, **kwargs):
         super(BulkFormManagementInterface, self).__init__(request, **kwargs)
