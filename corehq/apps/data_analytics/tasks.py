@@ -151,6 +151,7 @@ def _update_or_create_domain_metrics(domain, all_stats):
         notify_exception(
             None, message='Failed to create or update domain metrics for {domain}: {}'.format(e, domain=domain)
         )
+        return None, False
 
 
 def get_domains_to_update():
