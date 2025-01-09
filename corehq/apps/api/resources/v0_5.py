@@ -422,7 +422,7 @@ class WebUserResource(v0_1.WebUserResource):
             user_data=bundle.data.pop('user_data', None),
             tableau_role=bundle.data.pop('tableau_role', None),
             tableau_groups=bundle.data.pop('tableau_groups', None),
-            unhandled_data=bundle.data,
+            parameters=bundle.data.keys(),
         )
         errors = validator.is_valid(spec, False)
         if errors:
