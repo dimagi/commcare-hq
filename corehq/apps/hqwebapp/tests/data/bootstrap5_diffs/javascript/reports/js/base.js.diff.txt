@@ -1,24 +1,18 @@
 --- 
 +++ 
-@@ -1,6 +1,6 @@
--hqDefine("reports/js/bootstrap3/base", function () {
-+hqDefine("reports/js/bootstrap5/base", function () {
-     $(function () {
--        hqImport("reports/js/filters/bootstrap3/main").init();
-+        hqImport("reports/js/filters/bootstrap5/main").init();
- 
-         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-         var defaultConfig = initialPageData.get('default_config') || {};
-@@ -15,7 +15,7 @@
- 
-         var $savedReports = $("#savedReports");
-         if ($savedReports.length) {
--            var reportConfigModels = hqImport("reports/js/bootstrap3/report_config_models"),
-+            var reportConfigModels = hqImport("reports/js/bootstrap5/report_config_models"),
-                 reportConfigsView = reportConfigModels.reportConfigsViewModel({
-                     filterForm: $("#reportFilters"),
-                     items: initialPageData.get('report_configs'),
-@@ -26,7 +26,7 @@
+@@ -1,8 +1,8 @@
+-hqDefine("reports/js/bootstrap3/base", [
++hqDefine("reports/js/bootstrap5/base", [
+     'jquery',
+     'hqwebapp/js/initial_page_data',
+-    'reports/js/filters/bootstrap3/main',
+-    'reports/js/bootstrap3/report_config_models',
++    'reports/js/filters/bootstrap5/main',
++    'reports/js/bootstrap5/report_config_models',
+     'reports/js/bootstrap3/tabular',
+     'commcarehq',
+ ], function (
+@@ -36,7 +36,7 @@
              reportConfigsView.setConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
          }
  
