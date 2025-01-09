@@ -1716,6 +1716,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.makeCollapse(sessionStorage.showPersistentMenu);
             self.menuCollapseExpandTransitionListener();
             self.cloudcareNotificationListener();
+            if ($("#cloudcare-notifications").children().length > 0) {
+                $('#persistent-menu-container').addClass('border-top');
+            }
 
             if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
                 self.hideMenu();
