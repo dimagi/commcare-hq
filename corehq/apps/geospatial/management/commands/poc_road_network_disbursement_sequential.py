@@ -1,5 +1,6 @@
 import math
 import time
+from itertools import islice
 
 from django.core.management import BaseCommand
 
@@ -27,6 +28,13 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('--cluster_chunk_size', required=False, default=10000, type=int)
         parser.add_argument('--dry_run', action='store_true', help="skips running the disbursement task")
+        parser.add_argument(
+            '--cluster_solve_percent',
+            required=False,
+            default=10,
+            type=int,
+            help="solves disbursement for percent of clusters specified",
+        )
 
     def handle(self, *args, **options):
         domain = options['domain']
@@ -56,7 +64,10 @@ class Command(BaseCommand):
         print(f"Time taken for creating clusters: {time.time() - start_time}")
 
         if not options['dry_run']:
-            clusters_disbursement_task.delay(domain, clusters)
+            cluster_solve_percent = options['cluster_solve_percent']
+            number_of_clusters_to_disburse = int(cluster_solve_percent / 100 * len(clusters))
+            clusters_to_disburse = dict(islice(clusters.items(), number_of_clusters_to_disburse))
+            clusters_disbursement_task.delay(domain, clusters_to_disburse)
 
     def get_users_with_gps(self, domain):
         """Mostly copied over from corehq.apps.geospatial.views.get_users_with_gps"""
