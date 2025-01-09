@@ -4,6 +4,17 @@ hqDefine("reports/js/bootstrap3/tabular", [
     'hqwebapp/js/initial_page_data',
     'reports/js/bootstrap3/datatables_config',
     'reports/js/bootstrap3/standard_hq_report',
+    'reports/js/datepicker',
+
+    // Page-specific scripts
+    'data_interfaces/js/case_management',
+    'data_interfaces/js/archive_forms',
+    'reports/js/inspect_data',
+    'reports/js/bootstrap3/project_health_dashboard',
+    'reports/js/bootstrap3/aggregate_user_status',
+    'reports/js/bootstrap3/application_status',
+    'reports/js/user_history',
+    'reports/js/case_activity',
 ], function (
     $,
     _,
@@ -81,4 +92,8 @@ hqDefine("reports/js/bootstrap3/tabular", [
             renderPage(initialPageData.get("js_options").slug, initialPageData.get("report_table_js_options"));
         }
     });
+
+    return {
+        renderPage: renderPage,
+    };
 });

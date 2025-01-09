@@ -1100,9 +1100,14 @@ class GenericTabularReport(GenericReportView):
             charts=charts,
             chart_span=CHART_SPAN_MAP[self.charts_per_row]
         )
-        report_table = context['report_table']
+        context['report_table_js_options'] = self.js_options(context['report_table'])
+        for provider_function in self.extra_context_providers:
+            context.update(provider_function(self))
+        return context
+
+    def js_options(self, report_table):
         pagination_on = report_table['pagination']['is_on']
-        context.update({
+        return {
             'report_table_js_options': {
                 'datatables': report_table['datatables'],
                 'force_page_size': report_table['force_page_size'],
@@ -1130,10 +1135,7 @@ class GenericTabularReport(GenericReportView):
                     } if report_table['left_col']['is_fixed'] else {},
                 },
             },
-        })
-        for provider_function in self.extra_context_providers:
-            context.update(provider_function(self))
-        return context
+        }
 
     def table_cell(self, value, html=None, zerostyle=False):
         empty_indicator = mark_safe('<span class="text-muted">0</span>')  # nosec: no user input
