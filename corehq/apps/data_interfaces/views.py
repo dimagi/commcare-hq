@@ -293,7 +293,7 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
 @method_decorator(require_permission(HqPermissions.edit_messaging), name="dispatch")
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
-    template_name = 'data_interfaces/manage_case_groups.html'
+    template_name = 'data_interfaces/bootstrap3/manage_case_groups.html'
     urlname = 'manage_case_groups'
     page_title = gettext_noop("Manage Case Group")
 
