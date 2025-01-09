@@ -57,11 +57,6 @@ from corehq.motech.repeaters.models import CommCareCase
 from corehq.util.view_utils import absolute_reverse
 from no_exceptions.exceptions import Http400
 
-# By the time a test case is running, the resource is already instantiated,
-# so as a hack until this can be remedied, there is a global that
-# can be set to provide a mock.
-MOCK_XFORM_ES = None
-
 
 class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     """This version of the form resource is built of Elasticsearch data
@@ -143,7 +138,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         return self.xform_es(domain).get_document(instance_id)
 
     def xform_es(self, domain):
-        return MOCK_XFORM_ES or FormESView(domain)
+        return FormESView(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
         try:
