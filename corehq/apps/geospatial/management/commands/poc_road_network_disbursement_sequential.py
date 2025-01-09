@@ -1,8 +1,11 @@
 import math
+import time
 
 from django.core.management import BaseCommand
 
 from jsonobject.exceptions import BadValueError
+from sklearn.cluster import KMeans
+import numpy as np
 
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import case_property_missing, wrap_case_search_hit
@@ -21,7 +24,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('--cluster_chunk_size', required=False, default=10000)
+        parser.add_argument('--cluster_chunk_size', required=False, default=10000, type=int)
 
     def handle(self, *args, **options):
         domain = options['domain']
@@ -43,6 +46,12 @@ class Command(BaseCommand):
                 self.get_cases_with_gps(domain, geo_case_property, offset=i * ES_QUERY_CHUNK_SIZE)
             )
         print("All cases fetched successfully")
+
+        start_time = time.time()
+        n_clusters = max(len(gps_users_data), len(cases_data)) // cluster_chunk_size + 1
+        print(f"Creating {n_clusters} clusters of chunk size {cluster_chunk_size}... Be patient...")
+        clusters = self.create_clusters(gps_users_data, cases_data, n_clusters)
+        print(f"Time taken for creating clusters: {time.time() - start_time}")
 
     def get_users_with_gps(self, domain):
         """Mostly copied over from corehq.apps.geospatial.views.get_users_with_gps"""
@@ -101,3 +110,20 @@ class Command(BaseCommand):
     def get_case_geo_location(self, case, geo_case_property):
         geo_point = case.get_case_property(geo_case_property)
         return self._get_location_from_string(geo_point)
+
+    def create_clusters(self, users, cases, n_clusters):
+        """
+        Uses k-means clustering to return a dictionary of ``n_clusters``
+        number of clusters of users and cases based on their coordinates.
+        """
+        n_users = len(users)
+        locations = users + cases
+        coordinates = np.array([[loc['lat'], loc['lon']] for loc in locations])
+        kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(coordinates)
+        clusters = {i: {'users': [], 'cases': []} for i in range(n_clusters)}
+        for idx, label in enumerate(kmeans.labels_):
+            if idx < n_users:
+                clusters[label]['users'].append(users[idx])
+            else:
+                clusters[label]['cases'].append(cases[idx - n_users])
+        return clusters
