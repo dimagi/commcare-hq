@@ -123,6 +123,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
             this.shouldShowIncompleteForms = options.shouldShowIncompleteForms;
             sessionStorage.removeItem('handledDefaultClosed');
             sessionStorage.removeItem('persistantMenuRegionWidth');
+            $('#persistent-menu-region').css('width', '');
         },
 
         templateContext: function () {
