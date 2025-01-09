@@ -41,14 +41,14 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
                 'headers': DataTablesHeader(
                     *(DataTablesColumn(header) for header in data_provider.headers),
                 ),
+                'js_options': data_provider.report_context.get('report_table_js_options', {}),
                 'rows': list(data_provider.rows),
             }
 
-        context = super().report_context
-        context.update({
+        context = {
             'name': self.name,
             'export_only': self.export_only
-        })
+        }
         if not self.export_only and not self.needs_filters:
             try:
                 context['data_providers'] = list(map(_to_context_dict, self.data_providers))
