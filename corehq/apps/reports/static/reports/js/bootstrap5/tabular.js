@@ -68,6 +68,9 @@ hqDefine("reports/js/bootstrap5/tabular", [
 
     // Handle async reports
     $(document).on('ajaxSuccess', function (e, xhr, ajaxOptions, data) {
+        if (!data || !data.slug) {
+            return;
+        }
         var jsOptions = initialPageData.get("js_options");
         if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
             return;
@@ -81,4 +84,8 @@ hqDefine("reports/js/bootstrap5/tabular", [
             renderPage(initialPageData.get("js_options").slug, initialPageData.get("report_table_js_options"));
         }
     });
+
+    return {
+        renderPage: renderPage,
+    };
 });
