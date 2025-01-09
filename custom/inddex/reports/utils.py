@@ -15,11 +15,21 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     exportable = True
     exportable_all = True
     export_only = False
+    fix_left_col = True
 
     @property
     def data_providers(self):
         # data providers should supply a title, slug, headers, and rows
         return []
+
+    @property
+    def fixed_cols_spec(self):
+        """
+            Override
+            Returns a dict formatted like:
+            dict(num=<num_cols_to_fix>, width=<width_of_total_fixed_cols>)
+        """
+        return dict(num=1, width=130)
 
     @property
     def report_context(self):
@@ -31,6 +41,7 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
                 'headers': DataTablesHeader(
                     *(DataTablesColumn(header) for header in data_provider.headers),
                 ),
+                'js_options': data_provider.report_context.get('report_table_js_options', {}),
                 'rows': list(data_provider.rows),
             }
 
