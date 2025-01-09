@@ -9,7 +9,6 @@ hqDefine("data_interfaces/js/case_management",[
     'hqwebapp/js/bootstrap3/alert_user',
 ], function ($, _, ko, casexmlModule, initialPageData, standardHqReport, alertUser) {
     var caseManagement = function (o) {
-        'use strict';
         var self = {};
 
         self.receiverUrl = o.receiverUrl;
