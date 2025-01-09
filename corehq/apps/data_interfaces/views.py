@@ -168,7 +168,7 @@ class DataInterfaceSection(BaseDomainView):
 
 @location_safe
 class ExploreCaseDataView(BaseDomainView):
-    template_name = "data_interfaces/explore_case_data.html"
+    template_name = "data_interfaces/bootstrap3/explore_case_data.html"
     urlname = "explore_case_data"
     page_title = gettext_lazy("Explore Case Data")
 
