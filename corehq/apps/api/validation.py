@@ -35,7 +35,7 @@ class WebUserSpec:
     primary_location_id: str = None
     assigned_location_ids: List[str] = None
     profile: str = None
-    custom_user_data: dict = None
+    user_data: dict = None
     tableau_role: str = None
     tableau_groups: List[str] = None
     unhandled_data: dict = None
@@ -60,8 +60,8 @@ class WebUserResourceValidator():
             (self.validate_required_fields, [spec, is_post]),
             (self.validate_role, [spec.role]),
             (self.validate_profile, [spec.profile, is_post]),
-            (self.validate_custom_data, [spec.custom_user_data, spec.profile]),
-            (self.validate_custom_data_with_profile, [spec.custom_user_data, spec.profile]),
+            (self.validate_custom_data, [spec.user_data, spec.profile]),
+            (self.validate_custom_data_with_profile, [spec.user_data, spec.profile]),
             (self.validate_email, [spec.email, is_post]),
             (self.validate_locations, [spec.email, spec.assigned_location_ids, spec.primary_location_id]),
             (self.validate_user_access, [spec.email]),
@@ -93,7 +93,7 @@ class WebUserResourceValidator():
     def validate_parameters(self, parameters, is_post):
         errors = []
         allowed_params = ['role', 'primary_location_id', 'assigned_location_ids',
-                          'profile', 'custom_user_data', 'tableau_role', 'tableau_groups']
+                          'profile', 'user_data', 'tableau_role', 'tableau_groups']
         if is_post:
             allowed_params.append('email')
         invalid_params = [param for param in parameters if param not in allowed_params]

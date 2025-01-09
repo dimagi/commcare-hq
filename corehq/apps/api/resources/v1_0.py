@@ -73,7 +73,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
     primary_location_id = fields.CharField(null=True)
     assigned_location_ids = fields.ListField(null=True)
     profile = fields.CharField(null=True)
-    custom_user_data = fields.DictField(attribute='custom_user_data')
+    user_data = fields.DictField(attribute='custom_user_data')
     tableau_role = fields.CharField(attribute='tableau_role', null=True)
     tableau_groups = fields.ListField(null=True)
 
@@ -110,7 +110,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
             primary_location_id=bundle.data.pop('primary_location_id', None),
             assigned_location_ids=bundle.data.pop('assigned_location_ids', None),
             profile=bundle.data.pop('profile', None),
-            custom_user_data=bundle.data.pop('custom_user_data', None),
+            user_data=bundle.data.pop('user_data', None),
             tableau_role=bundle.data.pop('tableau_role', None),
             tableau_groups=bundle.data.pop('tableau_groups', None),
             unhandled_data=bundle.data,
@@ -142,7 +142,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
             role=role_id,
             primary_location=primary_loc,
             profile=profile,
-            custom_user_data=spec.custom_user_data or {},
+            custom_user_data=spec.user_data or {},
             tableau_role=spec.tableau_role,
             tableau_group_ids=tableau_group_ids,
             invited_by=bundle.request.couch_user.user_id,
