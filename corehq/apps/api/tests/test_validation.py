@@ -52,7 +52,8 @@ class TestWebUserResourceValidator(TestCase):
 
     def test_simple_is_valid(self):
         spec = WebUserSpec(email="newtest@example.com",
-                           role="App Editor")
+                           role="App Editor",
+                           parameters=["email", "role"])
         self.assertEqual(self.validator.is_valid(spec, True), [])
 
     def test_validate_parameters(self):

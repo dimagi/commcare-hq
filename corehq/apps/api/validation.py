@@ -1,5 +1,5 @@
 from memoized import memoized
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, field
 from typing import List
 
 from django.utils.translation import gettext as _
@@ -38,14 +38,7 @@ class WebUserSpec:
     user_data: dict = None
     tableau_role: str = None
     tableau_groups: List[str] = None
-    unhandled_data: dict = None
-
-    def get_full_spec(self):
-        spec_dict = {k: v for k, v in asdict(self).items()
-                     if k != 'unhandled_data' and v is not None}
-        if self.unhandled_data:
-            spec_dict.update(self.unhandled_data)
-        return spec_dict
+    parameters: List[str] = field(default_factory=list)
 
 
 class WebUserResourceValidator():
@@ -56,7 +49,7 @@ class WebUserResourceValidator():
     def is_valid(self, spec: WebUserSpec, is_post):
         errors = []
         validators = [
-            (self.validate_parameters, [set(spec.get_full_spec().keys()), is_post]),
+            (self.validate_parameters, [spec.parameters, is_post]),
             (self.validate_required_fields, [spec, is_post]),
             (self.validate_role, [spec.role]),
             (self.validate_profile, [spec.profile, is_post]),
@@ -138,17 +131,17 @@ class WebUserResourceValidator():
         spec = {'user_profile': new_profile_name}
         return profile_validator.validate_spec(spec)
 
-    def validate_custom_data(self, custom_data, profile_name):
+    def validate_custom_data(self, custom_data, new_profile_name):
         custom_data_validator = CustomDataValidator(self.domain, self.profiles_by_name, True)
-        spec = {'data': custom_data, 'user_profile': profile_name}
+        spec = {'data': custom_data, 'user_profile': new_profile_name}
         return custom_data_validator.validate_spec(spec)
 
-    def validate_custom_data_with_profile(self, custom_data, profile_name):
-        if custom_data is None or profile_name is None:
+    def validate_custom_data_with_profile(self, custom_data, new_profile_name):
+        if custom_data is None or new_profile_name is None:
             return
 
         errors = []
-        profile = self.profiles_by_name.get(profile_name)
+        profile = self.profiles_by_name.get(new_profile_name)
 
         system_fields = set(profile.fields.keys()) if profile else set()
         system_fields.add(PROFILE_SLUG)
