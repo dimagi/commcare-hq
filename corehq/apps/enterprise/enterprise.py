@@ -643,7 +643,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     def __init__(self, account, couch_user):
         super().__init__(account, couch_user)
         self.builds_by_app_id = {}
-        self.build_by_build_id = {}
+        self.build_info_cache = {}
 
     @property
     def headers(self):
@@ -672,20 +672,20 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         app_name_by_id = {}
         app_ids = get_app_ids_in_domain(domain)
 
-        for build_info in self._get_user_builds(domain, app_ids):
-            version_in_use = str(build_info['build']['build_version'])
-            latest_version = str(build_info['latest_version'])
+        for row_data in self._get_user_builds(domain, app_ids):
+            version_in_use = str(row_data['build']['build_version'])
+            latest_version = str(row_data['latest_version'])
             if is_out_of_date(version_in_use, latest_version):
-                app_id = build_info['build']['app_id']
+                app_id = row_data['build']['app_id']
                 if app_id not in app_name_by_id:
                     app_name_by_id[app_id] = Application.get_db().get(app_id).get('name')
                 rows.append([
-                    build_info['username'],
+                    row_data['username'],
                     domain,
                     app_name_by_id[app_id],
                     latest_version,
                     version_in_use,
-                    self.format_date(DateTimeProperty.deserialize(build_info['build']['build_version_date'])),
+                    self.format_date(DateTimeProperty.deserialize(row_data['build']['build_version_date'])),
                 ])
 
         return rows
@@ -736,9 +736,8 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     def _find_latest_build_version_from_builds(self, all_builds, at_datetime):
         for build_doc in all_builds:
             build_id = build_doc['_id']
-            if build_id in self.build_by_build_id:
-                build_info = self.build_by_build_id[build_id]
-            else:
+            build_info = self.build_info_cache.get(build_id)
+            if not build_info:
                 # last_released is added in 2019, build before 2019 don't have this field
                 # TODO: have a migration to populate last_released from built_on
                 # Then this code can be modified to use last_released only
@@ -747,7 +746,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                     'version': build_doc['version'],
                     'last_released': DateTimeProperty.deserialize(released_date)
                 }
-                self.build_by_build_id[build_id] = build_info
+                self.build_info_cache[build_id] = build_info
 
             if build_info['last_released'] <= at_datetime:
                 return build_info['version']
