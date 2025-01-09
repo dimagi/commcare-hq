@@ -207,7 +207,7 @@ class ExploreCaseDataView(BaseDomainView):
 
 
 class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
-    template_name = "data_interfaces/list_case_groups.html"
+    template_name = "data_interfaces/bootstrap3/list_case_groups.html"
     urlname = 'case_group_list'
     page_title = gettext_lazy("Case Groups")
 
