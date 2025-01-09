@@ -4,9 +4,9 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block page_sidebar_classes %}sidebar-offcanvas col-sm-12 col-md-3 col-xl-2{% endblock %}
+{% block page_sidebar_classes %}report-sidebar col-sm-12 col-md-3 col-xl-2{% endblock %}
 
-{% block page_row_classes %}row-offcanvas row-offcanvas-left{% endblock %}
+{% block page_row_classes %}report-sidebar-row{% endblock %}
 
 {% block page_content_classes %}col-sm-12 col-md-9 col-xl-10{% endblock %}
 
@@ -28,22 +28,33 @@
 {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
 
 {% block page_breadcrumbs %}
-  <a href="#" class="btn btn-link btn-invisible d-xs-block btn-report-menu" data-bs-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
-  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">  {# todo B5: css:breadcrumb #}
-    <li>
-      <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
-    </li>
-    {% if report.breadcrumbs %}
-      {% for crumb in report.breadcrumbs %}
-        <li>
-          <a href="{{ crumb.link }}">{{ crumb.title }}</a>
-        </li>
-      {% endfor %}
-    {% endif %}
-    <li class="active">
-      {% trans report.title|default:"Untitled Report" %}
-    </li>
-  </ol>
+  <a
+    href="#"
+    class="btn btn-link btn-report-menu"
+    data-hq-toggle=".report-sidebar"
+  >
+    <i class="fa fa-bars"></i> {% trans "Reports Menu" %}
+  </a>
+  <nav aria-label="breadcrumb">
+    <ol
+      id="hq-breadcrumbs"
+      class="breadcrumb breadcrumb-hq-section"
+    >
+      <li class="breadcrumb-item">
+        <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
+      </li>
+      {% if report.breadcrumbs %}
+        {% for crumb in report.breadcrumbs %}
+          <li class="breadcrumb-item">
+            <a href="{{ crumb.link }}">{{ crumb.title }}</a>
+          </li>
+        {% endfor %}
+      {% endif %}
+      <li class="breadcrumb-item active" aria-current="page">
+        {% trans report.title|default:"Untitled Report" %}
+      </li>
+    </ol>
+  </nav>
 {% endblock %}
 
 {% block page_content %}
