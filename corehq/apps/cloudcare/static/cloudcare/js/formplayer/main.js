@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/main", [
     'hqwebapp/js/initial_page_data',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/sentry',
+    'commcarehq',
 ], function (
     $,
     initialPageData,
