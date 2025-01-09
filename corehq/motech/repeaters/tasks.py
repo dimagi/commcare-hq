@@ -395,8 +395,9 @@ def iter_ready_repeater_ids_once():
 
 def get_repeater_lock(repeater_id):
     name = f'process_repeater_{repeater_id}'
-    three_hours = 3 * 60 * 60
-    return get_redis_lock(key=name, name=name, timeout=three_hours)
+    # Requests will time out after 5 minutes. Set timeout to double to be safe.
+    ten_minutes = 10 * 60
+    return get_redis_lock(key=name, name=name, timeout=ten_minutes)
 
 
 def get_repeater_ids_by_domain():
