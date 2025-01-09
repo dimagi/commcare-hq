@@ -419,7 +419,7 @@ class WebUserResource(v0_1.WebUserResource):
             primary_location_id=bundle.data.pop('primary_location_id', None),
             assigned_location_ids=bundle.data.pop('assigned_location_ids', None),
             profile=bundle.data.pop('profile', None),
-            custom_user_data=bundle.data.pop('user_data', None),
+            user_data=bundle.data.pop('user_data', None),
             tableau_role=bundle.data.pop('tableau_role', None),
             tableau_groups=bundle.data.pop('tableau_groups', None),
             unhandled_data=bundle.data,

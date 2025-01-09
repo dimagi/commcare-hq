@@ -814,7 +814,7 @@ class TestInvitationResource(APIResourceTest):
             "primary_location_id": "loc1",
             "assigned_location_ids": ["loc1", "loc2"],
             "profile": "character",
-            "custom_user_data": {
+            "user_data": {
                 "favorite_subject": "math",
             },
             "tableau_role": "Viewer",
