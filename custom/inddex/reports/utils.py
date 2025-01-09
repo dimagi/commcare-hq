@@ -34,10 +34,11 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
                 'rows': list(data_provider.rows),
             }
 
-        context = {
+        context = super().report_context
+        context.update({
             'name': self.name,
             'export_only': self.export_only
-        }
+        })
         if not self.export_only and not self.needs_filters:
             try:
                 context['data_providers'] = list(map(_to_context_dict, self.data_providers))
