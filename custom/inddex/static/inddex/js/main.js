@@ -1,8 +1,9 @@
+// jls: just delete this file, eh?
 hqDefine("inddex/js/main", function () {
-    $(function () {
+    $(function () {     // jls: do on ajax success like in tabular.js?
         $("[data-report-table]").each(function (table) {
             const $table = $(table),
-                reportTable = $table.data("report-table");
+                reportTable = $table.data("report-table");  // jls: report_table_js_options?
 
             if (!reportTable || !reportTable.datatables) {
                 return;
