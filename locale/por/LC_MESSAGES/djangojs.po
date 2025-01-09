@@ -151,14 +151,6 @@ msgstr ""
 msgid "Submit Request"
 msgstr ""
 
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Next"
-msgstr "Próximo"
-
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Your trial request has been received!"
-msgstr ""
-
 #: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
 msgid "Seconds"
 msgstr ""
@@ -5278,3 +5270,6 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
+
+#~ msgid "Next"
+#~ msgstr "Próximo"
