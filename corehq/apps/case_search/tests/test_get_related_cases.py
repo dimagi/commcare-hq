@@ -11,6 +11,7 @@ from corehq.apps.app_manager.models import (
     Module,
 )
 from corehq.apps.case_search.const import IS_RELATED_CASE
+from corehq.apps.case_search.models import CaseSearchRequestConfig
 from corehq.apps.case_search.utils import (
     _get_all_related_cases,
     QueryHelper,
@@ -152,8 +153,16 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         def get_related_cases_helper(include_all_related_cases):
             with patch("corehq.apps.case_search.utils.get_app_context",
                        return_value=({"parent", "parent/parent"}, {"c", "d"})):
-                return get_and_tag_related_cases(QueryHelper(self.domain), None, {"c"}, source_cases, None,
-                    include_all_related_cases)
+                return get_and_tag_related_cases(
+                    QueryHelper(self.domain),
+                    None,
+                    request_config=CaseSearchRequestConfig(
+                        criteria=None,
+                        case_types={"c"},
+                        include_all_related_cases=include_all_related_cases,
+                    ),
+                    cases=source_cases,
+                )
 
         partial_related_cases = get_related_cases_helper(include_all_related_cases=False)
         EXPECTED_PARTIAL_RELATED_CASES = (source_cases_related["PATH_RELATED_CASE_ID"]
@@ -202,9 +211,17 @@ class TestGetRelatedCases(BaseCaseSearchTest):
 
         with patch("corehq.apps.case_search.utils.get_app_context",
                    return_value=({"parent"}, {"c"})):
-            include_all_related_cases = False
-            partial_related_cases = get_and_tag_related_cases(QueryHelper(self.domain), None, {"a"}, source_cases,
-                'custom_related_case_id', include_all_related_cases)
+            partial_related_cases = get_and_tag_related_cases(
+                QueryHelper(self.domain),
+                app_id=None,
+                request_config=CaseSearchRequestConfig(
+                    criteria=None,
+                    case_types={"a"},
+                    custom_related_case_property='custom_related_case_id',
+                    include_all_related_cases=False,
+                ),
+                cases=source_cases,
+            )
 
         EXPECTED_PARTIAL_RELATED_CASES = (source_cases_related["EXPANDED_CASE_ID"]
             | source_cases_related["PATH_RELATED_CASE_ID"]
