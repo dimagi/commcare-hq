@@ -665,17 +665,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
     @property
     def total(self):
-        total_out_of_date_builds = 0
-        total_builds = 0
-
-        for domain in self.account.get_domains():
-            domain_out_of_date_builds, domain_builds = self.total_for_domain(domain)
-            total_out_of_date_builds += domain_out_of_date_builds
-            total_builds += domain_builds
-
-        total_up_to_date_builds = total_builds - total_out_of_date_builds
-
-        return _format_percentage_for_enterprise_tile(total_up_to_date_builds, total_builds)
+        return '--'
 
     def rows_for_domain(self, domain):
         rows = []
@@ -699,18 +689,6 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
                 ])
 
         return rows
-
-    def total_for_domain(self, domain):
-        app_ids = get_app_ids_in_domain(domain)
-        total_last_builds = 0
-        total_out_of_date = 0
-
-        for build_info in self._get_user_builds(domain, app_ids):
-            total_last_builds += 1
-            if is_out_of_date(str(build_info['build']['build_version']), str(build_info['latest_version'])):
-                total_out_of_date += 1
-
-        return total_out_of_date, total_last_builds
 
     def _get_user_builds(self, domain, app_ids):
         user_query = (UserES()
