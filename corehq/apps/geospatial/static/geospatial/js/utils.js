@@ -1,6 +1,9 @@
-/* globals mapboxgl */
 'use strict';
-hqDefine('geospatial/js/utils', [], function () {
+hqDefine('geospatial/js/utils', [
+    'mapbox-gl',
+], function (
+    mapboxgl
+) {
 
     const DEFAULT_MARKER_OPACITY = 1.0;
     const MAX_URL_LENGTH = 4500;

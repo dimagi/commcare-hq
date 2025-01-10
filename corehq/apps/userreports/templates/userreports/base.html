@@ -10,27 +10,6 @@
   {% endcompress %}
 {% endblock stylesheets %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap3/datatables_config.js' %}"></script>
-    <script src="{% static 'reports_core/js/choice_list_utils.js' %}"></script>
-    <script src="{% static 'reports_core/js/charts.js' %}"></script>
-    <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
-  {% endcompress %}
-
-  {# don't compress this block related to maps. it causes strange issues with the default image path #}
-  {# see https://dimagi-dev.atlassian.net/browse/SAASP-179 #}
-  <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-  <script src="{% static 'reports/js/bootstrap3/maps_utils.js' %}"></script><!-- depends on leaflet -->
-  <script src="{% static 'reports_core/js/bootstrap3/maps.js' %}"></script>
-
-
-  {% include 'reports/partials/bootstrap3/filters_js.html' %}
-  {% include 'reports/partials/graphs/charts_js.html' %}
-  <script src="{% static 'userreports/js/base.js' %}"></script>
-{% endblock %}
-
 {% block head %}{{ block.super }}
   <style>
     #map-container {
@@ -38,7 +17,6 @@
     }
   </style>
 {% endblock %}
-
 
 {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
 
