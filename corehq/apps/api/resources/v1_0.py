@@ -109,7 +109,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
             role=bundle.data.get('role'),
             primary_location_id=bundle.data.get('primary_location_id'),
             assigned_location_ids=bundle.data.get('assigned_location_ids'),
-            profile=bundle.data.get('profile'),
+            new_or_existing_profile_name=bundle.data.get('profile'),
             user_data=bundle.data.get('user_data'),
             tableau_role=bundle.data.get('tableau_role'),
             tableau_groups=bundle.data.get('tableau_groups'),
@@ -119,7 +119,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
         if errors:
             raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
 
-        profile = validator.profiles_by_name.get(spec.profile)
+        profile = validator.profiles_by_name.get(spec.new_or_existing_profile_name)
         role_id = validator.roles_by_name.get(spec.role)
         tableau_group_ids = get_tableau_group_ids_by_names(spec.tableau_groups or [], domain)
 

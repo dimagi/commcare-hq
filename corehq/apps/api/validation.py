@@ -34,7 +34,7 @@ class WebUserSpec:
     role: str = None
     primary_location_id: str = None
     assigned_location_ids: List[str] = None
-    profile: str = None
+    new_or_existing_profile_name: str = None
     new_or_existing_user_data: dict = None
     tableau_role: str = None
     tableau_groups: List[str] = None
@@ -52,9 +52,10 @@ class WebUserResourceValidator():
             (self.validate_parameters, [spec.parameters, is_post]),
             (self.validate_required_fields, [spec, is_post]),
             (self.validate_role, [spec.role]),
-            (self.validate_profile, [spec.profile, is_post]),
-            (self.validate_custom_data, [spec.new_or_existing_user_data, spec.profile]),
-            (self.validate_custom_data_against_profile, [spec.new_or_existing_user_data, spec.profile]),
+            (self.validate_profile, [spec.new_or_existing_profile_name]),
+            (self.validate_custom_data, [spec.new_or_existing_user_data, spec.new_or_existing_profile_name]),
+            (self.validate_custom_data_against_profile,
+             [spec.new_or_existing_user_data, spec.new_or_existing_profile_name]),
             (self.validate_email, [spec.email, is_post]),
             (self.validate_locations, [spec.email, spec.assigned_location_ids, spec.primary_location_id]),
             (self.validate_user_access, [spec.email]),
@@ -124,24 +125,19 @@ class WebUserResourceValidator():
         spec = {'role': role}
         return RoleValidator(self.domain, self.roles_by_name).validate_spec(spec)
 
-    def validate_profile(self, new_profile_name, is_post):
-        if not is_post and new_profile_name is None:
-            return None
+    def validate_profile(self, new_or_existing_profile_name):
         profile_validator = ProfileValidator(self.domain, self.requesting_user, True, self.profiles_by_name)
-        spec = {'user_profile': new_profile_name}
+        spec = {'user_profile': new_or_existing_profile_name}
         return profile_validator.validate_spec(spec)
 
-    def validate_custom_data(self, new_or_existing_user_data, new_profile_name):
+    def validate_custom_data(self, new_or_existing_user_data, new_or_existing_profile_name):
         custom_data_validator = CustomDataValidator(self.domain, self.profiles_by_name, True)
-        spec = {'data': new_or_existing_user_data, 'user_profile': new_profile_name}
+        spec = {'data': new_or_existing_user_data, 'user_profile': new_or_existing_profile_name}
         return custom_data_validator.validate_spec(spec)
 
-    def validate_custom_data_against_profile(self, new_or_existing_user_data, new_profile_name):
-        if new_or_existing_user_data is None or new_profile_name is None:
-            return
-
+    def validate_custom_data_against_profile(self, new_or_existing_user_data, new_or_existing_profile_name):
         errors = []
-        profile = self.profiles_by_name.get(new_profile_name)
+        profile = self.profiles_by_name.get(new_or_existing_profile_name)
 
         system_fields = set(profile.fields.keys()) if profile else set()
         system_fields.add(PROFILE_SLUG)
