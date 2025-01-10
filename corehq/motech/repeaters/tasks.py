@@ -1,8 +1,84 @@
+"""
+check_repeaters() and process_repeaters()
+=========================================
+
+check_repeaters()
+-----------------
+
+The ``check_repeaters()`` task is how repeat records are sent, and its
+workflow was shaped by the fact that repeaters and repeat records were
+stored in CouchDB.
+
+``check_repeaters()`` iterates all **repeat records** where the value of
+``RepeatRecord.next_check`` is in the past.
+
+We iterate them in parallel by dividing them into partitions (four
+partitions in production). Repeat records are partitioned using their
+ID. (``partition = RepeatRecord.id % num_partitions``.)
+
+For each repeat record, ``check_repeaters_in_partition()`` calls
+``RepeatRecord.attempt_forward_now(is_retry=True)``. (``is_retry`` is
+set to ``True`` because when a repeat record is registered,
+``RepeatRecord.attempt_forward_now()`` is called immediately, and the
+repeat record is only enqueued if sending fails.)
+
+Execution ends up back in the ``tasks`` module when
+``RepeatRecord.attempt_forward_now()`` calls
+``_process_repeat_record()``. It runs a battery of checks, and if they
+all succeed, ``RepeatRecord.fire()`` is called.
+
+This process has several disadvantages:
+
+* It iterates many repeat records that will not be sent. It has no way
+  to filter out the repeat records of paused or deleted repeaters.
+
+* It attempts to forward all the repeat records of a repeater, even if
+  every previous repeat record has failed.
+
+
+process_repeaters()
+-------------------
+
+The ``process_repeaters()`` task sends repeat records, but does so in a
+way that takes advantage of foreign keys between repeaters and their
+repeat records.
+
+This process is enabled using the ``PROCESS_REPEATERS`` feature flag.
+
+The ``iter_ready_repeater_ids_once()`` generator yields the IDs of
+repeaters that have repeat records ready to be sent. It does so in a
+round-robin fashion, cycling through the domains. It does this so that:
+
+* Domains and repeaters are not rate-limited unnecessarily.
+* Remote APIs are not unintentionally DoS-attacked by CommCare HQ.
+* No domain has to wait while another domain consumes all the repeat
+  record queue workers.
+
+As long as there are repeat records ready to be sent, the
+``iter_ready_repeater_ids_forever()`` generator will continue to yield
+from ``iter_ready_repeater_ids_once()``. The ``process_repeaters()``
+task iterates these repeater IDs, and passes each one to the
+``process_repeater()`` task.
+
+``process_repeater()`` fetches a batch of repeat records (the number is
+set per repeater) and spawns tasks to send them in parallel. The results
+of all the send attempts are passed to ``update_repeater()``. If all the
+send attempts failed, the **repeater** (not the repeat record) is backed
+off. If any send attempts succeeded, the backoff is reset.
+
+The intention of this process is not only to share repeat record queue
+workers fairly across domains, but also to optimise workers by not
+trying to send repeat records that are unlikely to succeed.
+
+"""
 import random
+import uuid
 from datetime import datetime, timedelta
+from inspect import cleandoc
 
 from django.conf import settings
 
+from celery import group
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
@@ -11,6 +87,11 @@ from dimagi.utils.couch import get_redis_lock
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
+from corehq.motech.rate_limiter import (
+    rate_limit_repeater,
+    report_repeater_attempt,
+    report_repeater_usage,
+)
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,
     metrics_counter,
@@ -27,15 +108,16 @@ from .const import (
     CHECK_REPEATERS_PARTITION_COUNT,
     ENDPOINT_TIMER,
     MAX_RETRY_WAIT,
+    PROCESS_REPEATERS_INTERVAL,
+    PROCESS_REPEATERS_KEY,
     RATE_LIMITER_DELAY_RANGE,
     State,
 )
-from .models import RepeatRecord, domain_can_forward
-
-from ..rate_limiter import (
-    rate_limit_repeater,
-    report_repeater_attempt,
-    report_repeater_usage,
+from .models import (
+    Repeater,
+    RepeatRecord,
+    domain_can_forward,
+    domain_can_forward_now,
 )
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
@@ -215,9 +297,218 @@ def _process_repeat_record(repeat_record):
         )
 
 
+@periodic_task(
+    run_every=PROCESS_REPEATERS_INTERVAL,
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
+def process_repeaters():
+    """
+    Processes repeaters, instead of processing repeat records
+    independently the way that ``check_repeaters()`` does.
+    """
+
+    # NOTE: If `process_repeaters()` needs to be restarted and
+    #       `process_repeaters_lock` was not released, expire the lock
+    #       to allow `process_repeaters()` to start:
+    #
+    #           $ ./manage.py expire_process_repeaters_lock
+    #
+
+    process_repeaters_lock = get_redis_lock(
+        PROCESS_REPEATERS_KEY,
+        timeout=None,  # Iterating repeaters forever is fine
+        name=PROCESS_REPEATERS_KEY,
+    )
+    lock_token = uuid.uuid1().hex
+    if not process_repeaters_lock.acquire(blocking=False, token=lock_token):
+        return
+
+    metrics_counter('commcare.repeaters.process_repeaters.start')
+    process_repeaters_forever.delay(lock_token)
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeaters_forever(lock_token):
+    process_repeater_tasks = []
+    for domain, repeater_id in iter_ready_repeater_ids():
+        if not domain_can_forward_now(domain):
+            continue
+        if rate_limit_repeater(domain, repeater_id):
+            continue
+        process_repeater_tasks.append(process_repeater.s(domain, repeater_id))
+
+    if process_repeater_tasks:
+        task_group = group(process_repeater_tasks)
+        # Set `process_repeaters_forever()` as its own callback:
+        task_group.link(process_repeaters_forever.s(lock_token))
+        task_group.apply_async()
+
+    else:
+        # There are no more repeaters to be processed.
+        process_repeaters_lock = get_redis_lock(
+            PROCESS_REPEATERS_KEY,
+            timeout=None,
+            name=PROCESS_REPEATERS_KEY,
+        )
+        process_repeaters_lock.local.token = lock_token
+        process_repeaters_lock.release()
+
+
+def iter_ready_repeater_ids():
+    """
+    Yields domain-repeater_id tuples in a round-robin fashion.
+
+    e.g. ::
+        ('domain1', 'repeater_id1'),
+        ('domain2', 'repeater_id2'),
+        ('domain3', 'repeater_id3'),
+        ('domain1', 'repeater_id4'),
+        ('domain2', 'repeater_id5'),
+        ...
+
+    """
+    metrics_counter('commcare.repeaters.process_repeaters.iter_once')
+    repeater_ids_by_domain = get_repeater_ids_by_domain()
+    while True:
+        if not repeater_ids_by_domain:
+            return
+        for domain in list(repeater_ids_by_domain.keys()):
+            try:
+                repeater_id = repeater_ids_by_domain[domain].pop()
+            except IndexError:
+                # We've exhausted the repeaters for this domain
+                del repeater_ids_by_domain[domain]
+                continue
+            yield domain, repeater_id
+
+
+def get_repeater_ids_by_domain():
+    repeater_ids_by_domain = Repeater.objects.get_all_ready_ids_by_domain()
+    always_enabled_domains = set(toggles.PROCESS_REPEATERS.get_enabled_domains())
+    return {
+        domain: repeater_ids
+        for domain, repeater_ids in repeater_ids_by_domain.items()
+        if (
+            domain in always_enabled_domains
+            # FeatureRelease toggle: Check whether domain is randomly enabled
+            or toggles.PROCESS_REPEATERS.enabled(domain, toggles.NAMESPACE_DOMAIN)
+        )
+    }
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeater(domain, repeater_id):
+    repeater = Repeater.objects.get(domain=domain, id=repeater_id)
+    repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
+    results = [process_ready_repeat_record(rr.id) for rr in repeat_records]
+    update_repeater(results, repeater)
+
+
+def process_ready_repeat_record(repeat_record_id):
+    state_or_none = None
+    with TimingContext('process_repeat_record') as timer:
+        try:
+            repeat_record = (
+                RepeatRecord.objects
+                .prefetch_related('repeater', 'attempt_set')
+                .get(id=repeat_record_id)
+            )
+            if not is_repeat_record_ready(repeat_record):
+                return None
+
+            _metrics_wait_duration(repeat_record)
+            report_repeater_attempt(repeat_record.repeater.repeater_id)
+            with timer('fire_timing') as fire_timer:
+                state_or_none = repeat_record.fire(timing_context=fire_timer)
+            report_repeater_usage(
+                repeat_record.domain,
+                # round up to the nearest millisecond, meaning always at least 1ms
+                milliseconds=int(fire_timer.duration * 1000) + 1
+            )
+        except Exception:
+            logging.exception(f'Failed to process repeat record {repeat_record_id}')
+    return state_or_none
+
+
+def is_repeat_record_ready(repeat_record):
+    # Fail loudly if repeat_record is not ready.
+    # process_ready_repeat_record() will log an exception.
+    assert repeat_record.state in (State.Pending, State.Fail)
+
+    # The repeater could have been paused or rate-limited while it was
+    # being processed
+    return (
+        not repeat_record.repeater.is_paused
+        and domain_can_forward_now(repeat_record.domain)
+        and not rate_limit_repeater(
+            repeat_record.domain,
+            repeat_record.repeater.repeater_id
+        )
+    )
+
+
+def _metrics_wait_duration(repeat_record):
+    """
+    The duration since ``repeat_record`` was registered or last attempted.
+
+    Buckets are exponential: [1m, 6m, 36m, 3.6h, 21.6h, 5.4d]
+    """
+    buckets = [60 * (6 ** exp) for exp in range(6)]
+    metrics_histogram(
+        'commcare.repeaters.process_repeaters.repeat_record_wait',
+        _get_wait_duration_seconds(repeat_record),
+        bucket_tag='duration',
+        buckets=buckets,
+        bucket_unit='s',
+        tags={'domain': repeat_record.domain},
+        documentation=cleandoc(_metrics_wait_duration.__doc__)
+    )
+
+
+def _get_wait_duration_seconds(repeat_record):
+    last_attempt = repeat_record.attempt_set.last()
+    if last_attempt:
+        duration_start = last_attempt.created_at
+    else:
+        duration_start = repeat_record.registered_at
+    wait_duration = datetime.utcnow() - duration_start
+    return int(wait_duration.total_seconds())
+
+
+def update_repeater(repeat_record_states, repeater):
+    """
+    Determines whether the repeater should back off, based on the
+    results of ``_process_repeat_record()`` tasks.
+    """
+    if all(s in (State.Empty, None) for s in repeat_record_states):
+        # We can't tell anything about the remote endpoint.
+        return
+    success_or_invalid = (State.Success, State.InvalidPayload)
+    if any(s in success_or_invalid for s in repeat_record_states):
+        # The remote endpoint appears to be healthy.
+        repeater.reset_backoff()
+    else:
+        # All the payloads that were sent failed. Try again later.
+        metrics_counter(
+            'commcare.repeaters.process_repeaters.repeater_backoff',
+            tags={'domain': repeater.domain},
+        )
+        repeater.set_backoff()
+
+
 metrics_gauge_task(
     'commcare.repeaters.overdue',
     RepeatRecord.objects.count_overdue,
     run_every=crontab(),  # every minute
+    multiprocess_mode=MPM_MAX
+)
+
+
+# This metric monitors the number of RepeatRecords ready to be sent. An
+# unexpected increase indicates a problem with `process_repeaters()`.
+metrics_gauge_task(
+    'commcare.repeaters.process_repeaters.count_all_ready',
+    RepeatRecord.objects.count_all_ready,
+    run_every=crontab(minute='*/5'),  # every five minutes
     multiprocess_mode=MPM_MAX
 )
