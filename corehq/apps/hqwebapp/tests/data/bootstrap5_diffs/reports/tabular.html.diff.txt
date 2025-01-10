@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -15,17 +15,17 @@
+@@ -8,17 +8,17 @@
      {% if charts %}
        <div class="row">
          {% for chart in charts %}
@@ -24,7 +24,7 @@
          {% if not report.needs_filters %}
            {{ report.report_title }}
            {% for subtitle in report.report_subtitles %}
-@@ -39,7 +39,7 @@
+@@ -32,7 +32,7 @@
      <div class="panel-body-datatable">
        {% block reporttable %}
          {% if report.needs_filters %}
