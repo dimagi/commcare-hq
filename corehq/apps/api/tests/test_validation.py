@@ -121,8 +121,8 @@ class TestWebUserResourceValidator(TestCase):
     def test_validate_profile_with_no_profile_input(self):
         self.definition.profile_required_for_user_type = [UserFieldsView.WEB_USER]
         self.definition.save()
-        self.assertIsNone(self.validator.validate_profile(None, False))
-        self.assertEqual(self.validator.validate_profile(None, True),
+        self.assertIsNone(self.validator.validate_profile(None))
+        self.assertEqual(self.validator.validate_profile(None),
             "A profile must be assigned to users of the following type(s): Web Users")
         self.definition.profile_required_for_user_type = []
         self.definition.save()

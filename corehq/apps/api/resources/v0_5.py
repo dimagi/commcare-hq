@@ -75,6 +75,7 @@ from corehq.apps.api.validation import WebUserResourceValidator, WebUserSpec
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
@@ -415,19 +416,24 @@ class WebUserResource(v0_1.WebUserResource):
         validator = WebUserResourceValidator(bundle.request.domain, bundle.request.couch_user)
         user_data = bundle.obj.get_user_data(bundle.request.domain)
         original_user_data = user_data.raw
+        original_profile_id = user_data.profile_id
 
-        spec = WebUserSpec(
+        original_profile_name = ''
+        if original_profile_id:
+            original_profile_name = CustomDataFieldsProfile.objects.get(id=original_profile_id).name
+
+        self.spec = WebUserSpec(
             email=bundle.obj.email,
             role=bundle.data.get('role'),
             primary_location_id=bundle.data.get('primary_location_id'),
             assigned_location_ids=bundle.data.get('assigned_location_ids'),
-            profile=bundle.data.get('profile'),
+            new_or_existing_profile_name=bundle.data.get('profile') or original_profile_name,
             new_or_existing_user_data=bundle.data.get('user_data') or original_user_data,
             tableau_role=bundle.data.get('tableau_role'),
             tableau_groups=bundle.data.get('tableau_groups'),
             parameters=bundle.data.keys(),
         )
-        errors = validator.is_valid(spec, False)
+        errors = self.validator.is_valid(self.spec, False)
         if errors:
             raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
 
