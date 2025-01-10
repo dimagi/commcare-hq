@@ -1680,7 +1680,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     }
                 });
             });
-              observer.observe(cloudcareNotifications[0], { childList: true });
+            observer.observe(cloudcareNotifications[0], { childList: true });
         },
         lockMenu: function () {
             const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
