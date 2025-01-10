@@ -167,6 +167,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
             FormplayerFrontend.regions.getRegion('persistentMenu').show(
                 views.PersistentMenuView({
                     collection: _toMenuCommands(menuResponse.persistentMenu, [], menuResponse.selections),
+                    sidebarEnabled: sidebarEnabled,
                 }).render());
         } else {
             FormplayerFrontend.regions.getRegion('persistentMenu').empty();
