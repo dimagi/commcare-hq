@@ -1,3 +1,6 @@
+//import "source-map-support";
+require('source-map-support').install();
+
 import hqMocha from "mocha/js/main";
 
 import "hqwebapp/spec/assert_properties_spec";
