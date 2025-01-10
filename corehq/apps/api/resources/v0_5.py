@@ -393,6 +393,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 class WebUserResource(v0_1.WebUserResource):
     primary_location_id = fields.CharField()
     assigned_location_ids = fields.ListField(null=True)
+    profile = fields.CharField(null=True)
     user_data = fields.DictField()
     tableau_role = fields.CharField(null=True)
     tableau_groups = fields.ListField(null=True)
@@ -413,7 +414,7 @@ class WebUserResource(v0_1.WebUserResource):
 
     def obj_update(self, bundle, **kwargs):
         bundle.obj = WebUser.get(kwargs['pk'])
-        validator = WebUserResourceValidator(bundle.request.domain, bundle.request.couch_user)
+        self.validator = WebUserResourceValidator(bundle.request.domain, bundle.request.couch_user)
         user_data = bundle.obj.get_user_data(bundle.request.domain)
         original_user_data = user_data.raw
         original_profile_id = user_data.profile_id
@@ -446,12 +447,17 @@ class WebUserResource(v0_1.WebUserResource):
         user_change_logger.save()
         return bundle
 
-    @classmethod
-    def _update(cls, bundle, user_change_logger=None):
+    def _update(self, bundle, user_change_logger=None):
         errors = []
 
         location_object = {'primary_location': bundle.data.pop('primary_location_id', None),
                            'locations': bundle.data.pop('assigned_location_ids', None)}
+
+        bundle.data.pop('profile', None)
+        user_data = self.spec.new_or_existing_user_data
+        profile = self.validator.profiles_by_name.get(self.spec.new_or_existing_profile_name)
+        user_data[PROFILE_SLUG] = profile.id if profile else ''
+        bundle.data['user_data'] = user_data
 
         items_to_update = {**bundle.data, 'location': location_object}
         updater = WebUserUpdates(bundle.obj, bundle.request.domain,
