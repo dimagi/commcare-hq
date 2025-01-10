@@ -141,9 +141,10 @@ class WebUserResourceValidator():
 
         system_fields = set(profile.fields.keys()) if profile else set()
         system_fields.add(PROFILE_SLUG)
-
-        for key in new_or_existing_user_data.keys():
+        for key, value in new_or_existing_user_data.items():
             if key in system_fields:
+                if value == profile.fields.get(key, object()):
+                    continue
                 errors.append(_("'{}' cannot be set directly").format(key))
         return errors
 
