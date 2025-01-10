@@ -21,8 +21,7 @@ from corehq.motech.repeaters.tasks import (
     _process_repeat_record,
     delete_old_request_logs,
     get_repeater_ids_by_domain,
-    iter_ready_repeater_ids_forever,
-    iter_ready_repeater_ids_once,
+    iter_ready_repeater_ids,
     process_repeater,
     update_repeater,
 )
@@ -257,139 +256,6 @@ class TestProcessRepeatRecord(TestCase):
         self.addCleanup(patch_domain_can_forward.stop)
 
 
-class TestIterReadyRepeaterIDsForever(SimpleTestCase):
-
-    @staticmethod
-    def all_ready_ids_by_domain():
-        return [
-            {
-                # See test_iter_ready_repeater_ids_once()
-                'domain1': ['repeater_id1', 'repeater_id2', 'repeater_id3'],
-                'domain2': ['repeater_id4', 'repeater_id5'],
-                'domain3': ['repeater_id6'],
-            },
-            {
-                'domain1': ['repeater_id1', 'repeater_id2'],
-                'domain2': ['repeater_id4']
-            },
-            {},
-        ]
-
-    def test_no_ready_repeaters(self):
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
-                  return_value={}),  # <--
-            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
-                  return_value=True),
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
-                  return_value=['domain1', 'domain2', 'domain3']),
-        ):
-            self.assertFalse(next(iter_ready_repeater_ids_forever(), False))
-
-    def test_domain_cant_forward_now(self):
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
-                  side_effect=self.all_ready_ids_by_domain()),
-            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
-                  return_value=False),  # <--
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
-                  return_value=['domain1', 'domain2', 'domain3']),
-        ):
-            self.assertFalse(next(iter_ready_repeater_ids_forever(), False))
-
-    def test_process_repeaters_not_enabled(self):
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
-                  side_effect=self.all_ready_ids_by_domain()),
-            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
-                  return_value=True),
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
-                  return_value=[]),  # <--
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
-                  return_value=False),  # <--
-        ):
-            self.assertFalse(next(iter_ready_repeater_ids_forever(), False))
-
-    def test_successive_loops(self):
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
-                  side_effect=self.all_ready_ids_by_domain()),
-            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
-                  return_value=True),
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
-                  return_value=['domain1', 'domain2', 'domain3']),
-            patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
-                  return_value=False),
-            patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
-        ):
-            repeaters = list(iter_ready_repeater_ids_forever())
-            self.assertEqual(len(repeaters), 9)
-            repeater_ids = [(r[0], r[1]) for r in repeaters]
-            self.assertEqual(repeater_ids, [
-                # First loop
-                ('domain1', 'repeater_id3'),
-                ('domain2', 'repeater_id5'),
-                ('domain3', 'repeater_id6'),
-                ('domain1', 'repeater_id2'),
-                ('domain2', 'repeater_id4'),
-                ('domain1', 'repeater_id1'),
-
-                # Second loop
-                ('domain1', 'repeater_id2'),
-                ('domain2', 'repeater_id4'),
-                ('domain1', 'repeater_id1'),
-            ])
-
-    def test_rate_limit(self):
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
-                  side_effect=self.all_ready_ids_by_domain()),
-            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
-                  return_value=True),
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
-                  return_value=['domain1', 'domain2', 'domain3']),
-            patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
-                  side_effect=lambda dom, rep: dom == 'domain2' and rep == 'repeater_id4'),
-            patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
-        ):
-            repeaters = list(iter_ready_repeater_ids_forever())
-            self.assertEqual(len(repeaters), 7)
-            repeater_ids = [(r[0], r[1]) for r in repeaters]
-            self.assertEqual(repeater_ids, [
-                ('domain1', 'repeater_id3'),
-                ('domain2', 'repeater_id5'),
-                ('domain3', 'repeater_id6'),
-                ('domain1', 'repeater_id2'),
-                ('domain1', 'repeater_id1'),
-                ('domain1', 'repeater_id2'),
-                ('domain1', 'repeater_id1'),
-            ])
-
-    def test_disabled_domains_excluded(self):
-        with (
-            patch('corehq.motech.repeaters.tasks.Repeater.objects.get_all_ready_ids_by_domain',
-                  side_effect=self.all_ready_ids_by_domain()),
-            patch('corehq.motech.repeaters.tasks.domain_can_forward_now',
-                  return_value=True),
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
-                  return_value=['domain2']),  # <--
-            patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
-                  side_effect=lambda dom, __: dom == 'domain3'),  # <--
-            patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
-                  return_value=False),
-            patch('corehq.motech.repeaters.tasks.get_repeater_lock'),
-        ):
-            repeaters = list(iter_ready_repeater_ids_forever())
-            self.assertEqual(len(repeaters), 4)
-            repeater_ids = [(r[0], r[1]) for r in repeaters]
-            self.assertEqual(repeater_ids, [
-                ('domain2', 'repeater_id5'),
-                ('domain3', 'repeater_id6'),
-                ('domain2', 'repeater_id4'),
-                ('domain2', 'repeater_id4'),
-            ])
-
-
 def test_iter_ready_repeater_ids_once():
     with (
         patch(
@@ -405,7 +271,7 @@ def test_iter_ready_repeater_ids_once():
             return_value=['domain1', 'domain2', 'domain3'],
         ),
     ):
-        pairs = list(iter_ready_repeater_ids_once())
+        pairs = list(iter_ready_repeater_ids())
         assert_equal(pairs, [
             # First round of domains
             ('domain1', 'repeater_id3'),
@@ -482,10 +348,7 @@ class TestProcessRepeater(TestCase):
         )
         self.repeater.register(payload)
 
-        with (
-            patch('corehq.motech.repeaters.models.simple_request') as request_mock,
-            patch('corehq.motech.repeaters.tasks.get_repeater_lock')
-        ):
+        with patch('corehq.motech.repeaters.models.simple_request') as request_mock:
             request_mock.return_value = ResponseMock(status_code=200, reason='OK')
             process_repeater(DOMAIN, self.repeater.repeater_id, 'token')
 
@@ -500,10 +363,7 @@ class TestProcessRepeater(TestCase):
         )
         self.repeater.register(payload)
 
-        with (
-            patch('corehq.motech.repeaters.models.simple_request') as request_mock,
-            patch('corehq.motech.repeaters.tasks.get_repeater_lock')
-        ):
+        with patch('corehq.motech.repeaters.models.simple_request') as request_mock:
             request_mock.return_value = ResponseMock(
                 status_code=429,
                 reason='Too Many Requests',
@@ -516,62 +376,52 @@ class TestProcessRepeater(TestCase):
 @flag_enabled('PROCESS_REPEATERS')
 class TestUpdateRepeater(SimpleTestCase):
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_resets_backoff_on_success(self, mock_get_repeater, __):
+    def test_update_repeater_resets_backoff_on_success(self, mock_get_repeater):
         repeat_record_states = [State.Success, State.Fail, State.Empty, None]
-
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token')
+        update_repeater(repeat_record_states, 1)
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_resets_backoff_on_invalid(self, mock_get_repeater, __):
+    def test_update_repeater_resets_backoff_on_invalid(self, mock_get_repeater):
         repeat_record_states = [State.InvalidPayload, State.Fail, State.Empty, None]
-
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token')
+        update_repeater(repeat_record_states, 1)
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_sets_backoff_on_failure(self, mock_get_repeater, __):
+    def test_update_repeater_sets_backoff_on_failure(self, mock_get_repeater):
         repeat_record_states = [State.Fail, State.Empty, None]
-
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token')
+        update_repeater(repeat_record_states, 1)
 
         mock_repeater.set_backoff.assert_called_once()
         mock_repeater.reset_backoff.assert_not_called()
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_does_nothing_on_empty(self, mock_get_repeater, __):
+    def test_update_repeater_does_nothing_on_empty(self, mock_get_repeater):
         repeat_record_states = [State.Empty]
-
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token')
+        update_repeater(repeat_record_states, 1)
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_does_nothing_on_none(self, mock_get_repeater, __):
+    def test_update_repeater_does_nothing_on_none(self, mock_get_repeater):
         repeat_record_states = [None]
-
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token')
+        update_repeater(repeat_record_states, 1)
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()

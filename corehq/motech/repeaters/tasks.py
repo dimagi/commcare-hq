@@ -72,13 +72,12 @@ trying to send repeat records that are unlikely to succeed.
 
 """
 import random
-import uuid
 from datetime import datetime, timedelta
 from inspect import cleandoc
 
 from django.conf import settings
 
-from celery import chord
+from celery import chord, group
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
@@ -322,50 +321,35 @@ def process_repeaters():
     if not process_repeaters_lock.acquire(blocking=False):
         return
 
-    metrics_counter('commcare.repeaters.process_repeaters.start')
     try:
-        for domain, repeater_id, lock_token in iter_ready_repeater_ids_forever():
-            process_repeater(domain, repeater_id, lock_token)
-    finally:
-        process_repeater_lock.release()
+        metrics_counter('commcare.repeaters.process_repeaters.start')
+        while True:
+            metrics_counter('commcare.repeaters.process_repeaters.iter_once')
+            tasks = []
+            for domain, repeater_id in iter_ready_repeater_ids():
+                if not domain_can_forward_now(domain):
+                    continue
+                if rate_limit_repeater(domain, repeater_id):
+                    continue
+                tasks.append(process_repeater_chord(domain, repeater_id))
 
+            if tasks:
+                result = group(*tasks).apply_async()
+                # Waiting for the result of a subtask is discouraged
+                # https://docs.celeryq.dev/en/stable/userguide/tasks.html#avoid-launching-synchronous-subtasks
+                # but in this situation it is safe because the
+                # `process_repeater()` tasks use a different queue.
+                result.get(disable_sync_subtasks=False)
 
-def iter_ready_repeater_ids_forever():
-    """
-    Cycles through repeaters (repeatedly ;) ) until there are no more
-    repeat records ready to be sent.
-    """
-    while True:
-        yielded = False
-        for domain, repeater_id in iter_ready_repeater_ids_once():
-            if not domain_can_forward_now(domain):
-                continue
-            if rate_limit_repeater(domain, repeater_id):
-                continue
-
-            lock = get_repeater_lock(repeater_id)
-            # Generate a lock token using `uuid1()` the same way that
-            # `redis.lock.Lock` does. The `Lock` class uses the token to
-            # determine ownership, so that one process can acquire a
-            # lock and a different process can release it. This lock
-            # will be released by the `update_repeater()` task.
-            lock_token = uuid.uuid1().hex
-            if lock.acquire(blocking=False, token=lock_token):
-                yielded = True
-                yield domain, repeater_id, lock_token
             else:
-                metrics_counter(
-                    'commcare.repeaters.process_repeaters.repeater_locked',
-                    tags={'domain': domain},
-                )
+                break
 
-        if not yielded:
-            # No repeaters are ready, or their domains can't forward or
-            # are paused.
-            return
+    finally:
+        process_repeaters_lock.release()
+        metrics_counter('commcare.repeaters.process_repeaters.complete')
 
 
-def iter_ready_repeater_ids_once():
+def iter_ready_repeater_ids():
     """
     Yields domain-repeater_id tuples in a round-robin fashion.
 
@@ -378,7 +362,6 @@ def iter_ready_repeater_ids_once():
         ...
 
     """
-    metrics_counter('commcare.repeaters.process_repeaters.iter_once')
     repeater_ids_by_domain = get_repeater_ids_by_domain()
     while True:
         if not repeater_ids_by_domain:
@@ -391,13 +374,6 @@ def iter_ready_repeater_ids_once():
                 del repeater_ids_by_domain[domain]
                 continue
             yield domain, repeater_id
-
-
-def get_repeater_lock(repeater_id):
-    name = f'process_repeater_{repeater_id}'
-    # Requests will time out after 5 minutes. Set timeout to double to be safe.
-    ten_minutes = 10 * 60
-    return get_redis_lock(key=name, name=name, timeout=ten_minutes)
 
 
 def get_repeater_ids_by_domain():
@@ -414,7 +390,7 @@ def get_repeater_ids_by_domain():
     }
 
 
-def process_repeater(domain, repeater_id, lock_token):
+def process_repeater_chord(domain, repeater_id):
 
     def get_task_signature(repeat_record):
         task_ = {
@@ -426,7 +402,7 @@ def process_repeater(domain, repeater_id, lock_token):
     repeater = Repeater.objects.get(domain=domain, id=repeater_id)
     repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
     header_tasks = [get_task_signature(rr) for rr in repeat_records]
-    chord(header_tasks)(update_repeater.s(repeater_id, lock_token))
+    return chord(header_tasks, update_repeater.s(repeater_id))
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -515,31 +491,26 @@ def _get_wait_duration_seconds(repeat_record):
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def update_repeater(repeat_record_states, repeater_id, lock_token):
+def update_repeater(repeat_record_states, repeater_id):
     """
     Determines whether the repeater should back off, based on the
     results of ``_process_repeat_record()`` tasks.
     """
-    try:
-        if all(s in (State.Empty, None) for s in repeat_record_states):
-            # We can't tell anything about the remote endpoint.
-            return
-        success_or_invalid = (State.Success, State.InvalidPayload)
-        repeater = Repeater.objects.get(id=repeater_id)
-        if any(s in success_or_invalid for s in repeat_record_states):
-            # The remote endpoint appears to be healthy.
-            repeater.reset_backoff()
-        else:
-            # All the payloads that were sent failed. Try again later.
-            metrics_counter(
-                'commcare.repeaters.process_repeaters.repeater_backoff',
-                tags={'domain': repeater.domain},
-            )
-            repeater.set_backoff()
-    finally:
-        lock = get_repeater_lock(repeater_id)
-        lock.local.token = lock_token
-        lock.release()
+    if all(s in (State.Empty, None) for s in repeat_record_states):
+        # We can't tell anything about the remote endpoint.
+        return
+    success_or_invalid = (State.Success, State.InvalidPayload)
+    repeater = Repeater.objects.get(id=repeater_id)
+    if any(s in success_or_invalid for s in repeat_record_states):
+        # The remote endpoint appears to be healthy.
+        repeater.reset_backoff()
+    else:
+        # All the payloads that were sent failed. Try again later.
+        metrics_counter(
+            'commcare.repeaters.process_repeaters.repeater_backoff',
+            tags={'domain': repeater.domain},
+        )
+        repeater.set_backoff()
 
 
 metrics_gauge_task(
