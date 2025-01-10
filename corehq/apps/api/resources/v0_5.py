@@ -85,10 +85,12 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
+from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
+from corehq.apps.reports.util import get_tableau_groups_for_user
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -401,6 +403,31 @@ class WebUserResource(v0_1.WebUserResource):
     class Meta(v0_1.WebUserResource.Meta):
         detail_allowed_methods = ['get', 'put']
         always_return_data = True
+
+    def dehydrate_primary_location_id(self, bundle):
+        return bundle.obj.get_location_id(bundle.request.domain)
+
+    def dehydrate_assigned_location_ids(self, bundle):
+        return bundle.obj.get_location_ids(bundle.request.domain)
+
+    def dehydrate_tableau_groups(self, bundle):
+        return [t.name for t in get_tableau_groups_for_user(bundle.request.domain,
+                                                            bundle.obj.username)]
+
+    def dehydrate_tableau_role(self, bundle):
+        try:
+            t_user = TableauUser.objects.get(username=bundle.obj.username,
+                                             server__domain=bundle.request.domain)
+            return t_user.role
+        except TableauUser.DoesNotExist:
+            return None
+
+    def dehydrate_user_data(self, bundle):
+        user_data = bundle.obj.get_user_data(bundle.request.domain).to_dict()
+        if self.determine_format(bundle.request) == 'application/xml':
+            # attribute names can't start with digits in xml
+            user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}
+        return user_data
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if bundle_or_obj is None:
