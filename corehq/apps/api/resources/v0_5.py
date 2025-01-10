@@ -443,8 +443,11 @@ class WebUserResource(v0_1.WebUserResource):
         bundle.obj = WebUser.get(kwargs['pk'])
         self.validator = WebUserResourceValidator(bundle.request.domain, bundle.request.couch_user)
         user_data = bundle.obj.get_user_data(bundle.request.domain)
-        original_user_data = user_data.raw
         original_profile_id = user_data.profile_id
+        new_or_existing_user_data = {
+            **bundle.data.get('user_data', {}),
+            **{k: v for k, v in user_data.raw.items() if k not in bundle.data.get('user_data', {})}
+        }
 
         original_profile_name = ''
         if original_profile_id:
@@ -456,7 +459,7 @@ class WebUserResource(v0_1.WebUserResource):
             primary_location_id=bundle.data.get('primary_location_id'),
             assigned_location_ids=bundle.data.get('assigned_location_ids'),
             new_or_existing_profile_name=bundle.data.get('profile') or original_profile_name,
-            new_or_existing_user_data=bundle.data.get('user_data') or original_user_data,
+            new_or_existing_user_data=new_or_existing_user_data,
             tableau_role=bundle.data.get('tableau_role'),
             tableau_groups=bundle.data.get('tableau_groups'),
             parameters=bundle.data.keys(),
