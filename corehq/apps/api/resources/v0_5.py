@@ -483,7 +483,8 @@ class WebUserResource(v0_1.WebUserResource):
         bundle.data.pop('profile', None)
         user_data = self.spec.new_or_existing_user_data
         profile = self.validator.profiles_by_name.get(self.spec.new_or_existing_profile_name)
-        user_data[PROFILE_SLUG] = profile.id if profile else ''
+        if profile:
+            user_data[PROFILE_SLUG] = profile.id
         bundle.data['user_data'] = user_data
 
         items_to_update = {**bundle.data, 'location': location_object}
