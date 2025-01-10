@@ -7,8 +7,8 @@
        class="{{ report_filter_form_action_css_class }}">
     <button id="apply-filters" type="submit" class="filters btn disabled"
             disabled="disabled"
-            data-loading-text="{% trans 'Generating Report...' %}"  {# todo B5: stateful button #}
-            data-standard-text="{% trans 'Apply' %}">  {# todo B5: stateful button #}
+            data-loading-text="{% trans 'Generating Report...' %}"
+            data-standard-text="{% trans 'Apply' %}">
       {% trans 'Apply' %}
     </button>
     {% if not report.is_admin %}
