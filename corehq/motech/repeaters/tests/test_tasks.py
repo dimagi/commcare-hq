@@ -517,61 +517,51 @@ class TestProcessRepeater(TestCase):
 class TestUpdateRepeater(SimpleTestCase):
 
     @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
-    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_resets_backoff_on_success(self, mock_get_repeater, __):
+    def test_update_repeater_resets_backoff_on_success(self, __):
         repeat_record_states = [State.Success, State.Fail, State.Empty, None]
 
         mock_repeater = MagicMock()
-        mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token')
+        update_repeater(repeat_record_states, mock_repeater, 'token')
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
     @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
-    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_resets_backoff_on_invalid(self, mock_get_repeater, __):
+    def test_update_repeater_resets_backoff_on_invalid(self, __):
         repeat_record_states = [State.InvalidPayload, State.Fail, State.Empty, None]
 
         mock_repeater = MagicMock()
-        mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token')
+        update_repeater(repeat_record_states, mock_repeater, 'token')
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
     @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
-    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_sets_backoff_on_failure(self, mock_get_repeater, __):
+    def test_update_repeater_sets_backoff_on_failure(self, __):
         repeat_record_states = [State.Fail, State.Empty, None]
 
         mock_repeater = MagicMock()
-        mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token')
+        update_repeater(repeat_record_states, mock_repeater, 'token')
 
         mock_repeater.set_backoff.assert_called_once()
         mock_repeater.reset_backoff.assert_not_called()
 
     @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
-    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_does_nothing_on_empty(self, mock_get_repeater, __):
+    def test_update_repeater_does_nothing_on_empty(self, __):
         repeat_record_states = [State.Empty]
 
         mock_repeater = MagicMock()
-        mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token')
+        update_repeater(repeat_record_states, mock_repeater, 'token')
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
 
     @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
-    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_does_nothing_on_none(self, mock_get_repeater, __):
+    def test_update_repeater_does_nothing_on_none(self, __):
         repeat_record_states = [None]
 
         mock_repeater = MagicMock()
-        mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token')
+        update_repeater(repeat_record_states, mock_repeater, 'token')
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()

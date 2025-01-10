@@ -78,7 +78,7 @@ from inspect import cleandoc
 
 from django.conf import settings
 
-from celery import chord
+from celery import group
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
@@ -426,8 +426,11 @@ def process_repeater(domain, repeater_id, lock_token):
 
     repeater = Repeater.objects.get(domain=domain, id=repeater_id)
     repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
-    header_tasks = [get_task_signature(rr) for rr in repeat_records]
-    chord(header_tasks)(update_repeater.s(repeater_id, lock_token))
+    # Rather than using a Celery chord, process repeat records and then
+    # call `update_repeater()` synchronously to unlock repeater immediately.
+    task_group = group(get_task_signature(rr) for rr in repeat_records)
+    repeat_record_states = task_group().get()
+    update_repeater(repeat_record_states, repeater, lock_token)
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -515,8 +518,7 @@ def _get_wait_duration_seconds(repeat_record):
     return int(wait_duration.total_seconds())
 
 
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def update_repeater(repeat_record_states, repeater_id, lock_token):
+def update_repeater(repeat_record_states, repeater, lock_token):
     """
     Determines whether the repeater should back off, based on the
     results of ``_process_repeat_record()`` tasks.
@@ -526,7 +528,6 @@ def update_repeater(repeat_record_states, repeater_id, lock_token):
             # We can't tell anything about the remote endpoint.
             return
         success_or_invalid = (State.Success, State.InvalidPayload)
-        repeater = Repeater.objects.get(id=repeater_id)
         if any(s in success_or_invalid for s in repeat_record_states):
             # The remote endpoint appears to be healthy.
             repeater.reset_backoff()
@@ -538,7 +539,7 @@ def update_repeater(repeat_record_states, repeater_id, lock_token):
             )
             repeater.set_backoff()
     finally:
-        lock = get_repeater_lock(repeater_id)
+        lock = get_repeater_lock(repeater.repeater_id)
         lock.local.token = lock_token
         lock.release()
 
