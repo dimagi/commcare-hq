@@ -325,7 +325,7 @@ def process_repeaters():
     metrics_counter('commcare.repeaters.process_repeaters.start')
     try:
         for domain, repeater_id, lock_token in iter_ready_repeater_ids_forever():
-            process_repeater.delay(domain, repeater_id, lock_token)
+            process_repeater(domain, repeater_id, lock_token)
     finally:
         process_repeater_lock.release()
 
@@ -414,7 +414,6 @@ def get_repeater_ids_by_domain():
     }
 
 
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeater(domain, repeater_id, lock_token):
 
     def get_task_signature(repeat_record):
