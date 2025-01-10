@@ -94,15 +94,15 @@ class TestInvoice(BaseInvoiceTestCase):
         """
         today = datetime.date.today()
         generator.generate_domain_subscription(
-            self.account, self.domain, self.subscription_start_date, None,
-            plan_version=generator.subscribable_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+            self.account, self.domain, self.subscription.date_start, None,
+            plan_version=self.community
         )
         generator.create_excess_community_users(self.domain)
         self.account.date_confirmed_extra_charges = today
         self.account.save()
         self.create_invoices(datetime.date(today.year, today.month, 1))
 
-        invoices = Invoice.objects.filter(subscription__subscriber__domain=self.domain)
+        invoices = Invoice.objects.filter(subscription__subscriber__domain=self.domain.name)
         self.assertEqual(invoices.count(), 1)
 
         invoice = invoices.get()

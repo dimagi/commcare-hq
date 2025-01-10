@@ -246,22 +246,24 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
 class TestFormSubmittingMobileWorkerLineItem(BaseInvoiceTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.feature_rate = FeatureRate.objects.create(
+    def setUp(self):
+        super().setUp()
+        self.feature_rate = FeatureRate.objects.create(
             feature=Feature.objects.get(name=FeatureType.FORM_SUBMITTING_MOBILE_WORKER),
             monthly_limit=10,
             per_excess_fee=Decimal('3.00')
         )
-        plan_feature_rates = generator.default_feature_rates() + [cls.feature_rate]
+        plan_feature_rates = generator.default_feature_rates() + [self.feature_rate]
         plan_version = generator.custom_plan_version(feature_rates=plan_feature_rates)
-        cls.subscription = generator.generate_domain_subscription(
-            cls.account,
-            cls.domain,
-            date_start=cls.subscription_start_date,
-            date_end=cls.subscription_end_date,
-            is_active=cls.subscription_is_active,
+
+        # delete the old subscription first so our custom plan version doesn't compete with it
+        self.subscription.delete()
+        self.subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=self.subscription_start_date,
+            date_end=self.subscription_end_date,
+            is_active=self.subscription_is_active,
             plan_version=plan_version
         )
 
@@ -431,13 +433,16 @@ class TestSmsLineItem(BaseInvoiceTestCase):
     @classmethod
     def setUpClass(cls):
         super(TestSmsLineItem, cls).setUpClass()
-        cls.sms_rate = cls.subscription.plan_version.feature_rates.filter(
-            feature__feature_type=FeatureType.SMS
-        ).get()
         cls.invoice_date = utils.months_from_date(
-            cls.subscription.date_start, random.randint(2, cls.subscription_length)
+            cls.subscription_start_date, random.randint(2, cls.subscription_length)
         )
         cls.sms_date = utils.months_from_date(cls.invoice_date, -1)
+
+    def setUp(self):
+        super().setUp()
+        self.sms_rate = self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.SMS
+        ).get()
 
     @classmethod
     def tearDownClass(cls):

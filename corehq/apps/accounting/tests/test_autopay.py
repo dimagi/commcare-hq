@@ -32,45 +32,41 @@ from corehq.apps.accounting.tests.utils import mocked_stripe_api
 
 class TestBillingAutoPay(BaseInvoiceTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestBillingAutoPay, cls).setUpClass()
-        cls._generate_autopayable_entities()
-        cls._generate_non_autopayable_entities()
+    def setUp(self):
+        super().setUp()
+        self._generate_autopayable_entities()
+        self._generate_non_autopayable_entities()
 
         # invoice date is 2 months before the end of the subscription (this is arbitrary)
-        invoice_date = utils.months_from_date(cls.subscription.date_start, cls.subscription_length - 2)
-        cls.create_invoices(invoice_date)
+        invoice_date = utils.months_from_date(self.subscription.date_start, self.subscription_length - 2)
+        self.create_invoices(invoice_date)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.non_autopay_domain.delete()
-        super(TestBillingAutoPay, cls).tearDownClass()
+    def tearDown(self):
+        self.non_autopay_domain.delete()
+        super().tearDown()
 
-    @classmethod
-    def _generate_autopayable_entities(cls):
+    def _generate_autopayable_entities(self):
         """
         Create account, domain and subscription linked to the autopay user that have autopay enabled
         """
-        cls.autopay_account = cls.account
-        cls.autopay_account.created_by_domain = cls.domain
-        cls.autopay_account.save()
-        web_user = generator.arbitrary_user(domain_name=cls.domain.name, is_active=True, is_webuser=True)
-        cls.autopay_user_email = web_user.email
-        cls.fake_card = FakeStripeCardManager.create_card()
-        cls.fake_stripe_customer = FakeStripeCustomerManager.create_customer(cards=[cls.fake_card])
-        cls.autopay_account.update_autopay_user(cls.autopay_user_email, cls.domain)
+        self.autopay_account = self.account
+        self.autopay_account.created_by_domain = self.domain
+        self.autopay_account.save()
+        web_user = generator.arbitrary_user(domain_name=self.domain.name, is_active=True, is_webuser=True)
+        self.autopay_user_email = web_user.email
+        self.fake_card = FakeStripeCardManager.create_card()
+        self.fake_stripe_customer = FakeStripeCustomerManager.create_customer(cards=[self.fake_card])
+        self.autopay_account.update_autopay_user(self.autopay_user_email, self.domain)
 
-    @classmethod
-    def _generate_non_autopayable_entities(cls):
+    def _generate_non_autopayable_entities(self):
         """
         Create account, domain, and subscription linked to the autopay user, but that don't have autopay enabled
         """
-        cls.non_autopay_account = generator.billing_account(
+        self.non_autopay_account = generator.billing_account(
             web_user_creator=generator.create_arbitrary_web_user_name(is_dimagi=True),
-            web_user_contact=cls.autopay_user_email
+            web_user_contact=self.autopay_user_email
         )
-        cls.non_autopay_domain = generator.arbitrary_domain()
+        self.non_autopay_domain = generator.arbitrary_domain()
         # Non-autopay subscription has same parameters as the autopayable subscription
         cheap_plan = SoftwarePlan.objects.create(name='cheap')
         cheap_product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=cheap_plan.name)
@@ -79,12 +75,12 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
             product_rate=cheap_product_rate,
             role=Role.objects.first(),
         )
-        cls.non_autopay_subscription = generator.generate_domain_subscription(
-            cls.non_autopay_account,
-            cls.non_autopay_domain,
+        self.non_autopay_subscription = generator.generate_domain_subscription(
+            self.non_autopay_account,
+            self.non_autopay_domain,
             plan_version=cheap_plan_version,
-            date_start=cls.subscription.date_start,
-            date_end=add_months_to_date(cls.subscription.date_start, cls.subscription_length),
+            date_start=self.subscription.date_start,
+            date_end=add_months_to_date(self.subscription.date_start, self.subscription_length),
         )
 
     @mocked_stripe_api()

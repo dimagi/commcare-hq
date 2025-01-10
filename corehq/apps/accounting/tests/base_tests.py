@@ -30,46 +30,44 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
     @classmethod
     def setUpClass(cls):
-        super(BaseInvoiceTestCase, cls).setUpClass()
-
+        super().setUpClass()
         if cls.is_using_test_plans:
             generator.bootstrap_test_software_plan_versions()
 
-        cls.billing_contact = generator.create_arbitrary_web_user_name()
-        cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
-        cls.currency = generator.init_default_currency()
-        cls.account = generator.billing_account(
-            cls.dimagi_user, cls.billing_contact)
-        cls.domain = generator.arbitrary_domain()
-
         cls.subscription_length = 15  # months
         cls.subscription_start_date = datetime.date(2016, 2, 23)
-        cls.subscription_is_active = False
-        if cls.is_testing_web_user_feature:
-            # make sure the subscription is still active when we count web users
-            cls.subscription_is_active = True
         cls.subscription_end_date = cls.subscription_start_date + relativedelta(months=cls.subscription_length)
-        cls.subscription = generator.generate_domain_subscription(
-            cls.account,
-            cls.domain,
-            date_start=cls.subscription_start_date,
-            date_end=cls.subscription_end_date,
-            is_active=cls.subscription_is_active
+        # make sure the subscription is still active when we count web users
+        cls.subscription_is_active = cls.is_testing_web_user_feature
+
+    def setUp(self):
+        super().setUp()
+        self.billing_contact = generator.create_arbitrary_web_user_name()
+        self.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
+        self.currency = generator.init_default_currency()
+        self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
+        self.domain = generator.arbitrary_domain()
+        self.subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=self.subscription_start_date,
+            date_end=self.subscription_end_date,
+            is_active=self.subscription_is_active
         )
 
     def tearDown(self):
         for user in self.domain.all_users():
             user.delete(self.domain.name, deleted_by=None)
-        super(BaseAccountingTest, self).tearDown()
+
+        self.domain.delete()
+        super().tearDown()
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
-
         if cls.is_using_test_plans:
             utils.clear_plan_version_cache()
 
-        super(BaseInvoiceTestCase, cls).tearDownClass()
+        super().tearDownClass()
 
     @staticmethod
     def create_invoices(date, calculate_users=True, calculate_web_users=False):
