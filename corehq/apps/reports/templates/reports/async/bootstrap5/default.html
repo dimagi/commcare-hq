@@ -1,5 +1,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
+
 {% if show_time_notice %}{% include "hqwebapp/partials/bootstrap5/time_notice.html" with hide=1 %}{% endif %}
 
 {% block reportcontent %}
@@ -48,8 +49,8 @@
         <div class="modal-footer">
           <button
              class="btn btn-primary try-again"
-             data-loading-text="{% trans 'Trying Again...' %}"  {# todo B5: stateful button #}
-             data-fail-text="{% trans 'Loading Failed. Try Again?' %}">{% trans 'Try Again' %}  {# todo B5: stateful button #}
+             data-loading-text="{% trans 'Trying Again...' %}"
+             data-fail-text="{% trans 'Loading Failed. Try Again?' %}">{% trans 'Try Again' %}
           </button>
           <button class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
         </div>
