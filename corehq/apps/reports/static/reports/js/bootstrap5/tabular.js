@@ -69,6 +69,9 @@ hqDefine("reports/js/bootstrap5/tabular", [
     // Handle async reports
     $(document).on('ajaxSuccess', function (e, xhr, ajaxOptions, data) {
         if (!data || !data.slug) {
+            // This file is imported by inddex/main, which then gets this event handler, which it doesn't need,
+            // and which errors sometimes (presumably because there are ajax requests happening that aren't the
+            // same as what this handler expects). Checking for data.slug is pretty innocuous and fixes the issue.
             return;
         }
         var jsOptions = initialPageData.get("js_options");
