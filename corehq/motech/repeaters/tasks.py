@@ -306,20 +306,20 @@ def process_repeaters():
     Processes repeaters, instead of processing repeat records
     independently the way that ``check_repeaters()`` does.
     """
-    process_repeater_lock = get_redis_lock(
+
+    # NOTE: If `process_repeaters()` needs to be restarted and
+    #       `process_repeaters_lock` was not released, expire the lock
+    #       to allow `process_repeaters()` to start:
+    #
+    #           $ ./manage.py expire_process_repeaters_lock
+    #
+
+    process_repeaters_lock = get_redis_lock(
         PROCESS_REPEATERS_KEY,
         timeout=None,  # Iterating repeaters forever is fine
         name=PROCESS_REPEATERS_KEY,
     )
-    # How to recover from a crash: If `process_repeaters()` needs to be
-    # restarted and `process_repeater_lock` was not released, expire the
-    # lock to allow `process_repeaters()` to start:
-    #
-    # >>> from dimagi.utils.couch.cache.cache_core import get_redis_client
-    # >>> from corehq.motech.repeaters.const import PROCESS_REPEATERS_KEY
-    # >>> client = get_redis_client()
-    # >>> client.expire(PROCESS_REPEATERS_KEY, timeout=0)
-    if not process_repeater_lock.acquire(blocking=False):
+    if not process_repeaters_lock.acquire(blocking=False):
         return
 
     metrics_counter('commcare.repeaters.process_repeaters.start')
