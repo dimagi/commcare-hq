@@ -1572,30 +1572,33 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             'click #app-main': 'onClickAppMain',
         },
         handleSmallScreenChange: function (smallScreenEnabled) {
-            const offcanvas = 'offcanvas';
-            const collapse = 'collapse';
-            const containerDesktopClasses = collapse + ' position-relative';
-            const containerMobileClasses = offcanvas + ' offcanvas-start';
-            if (smallScreenEnabled) {
-                $('#persistent-menu-container').removeClass(containerDesktopClasses + ' show');
-                $('#persistent-menu-container').addClass(containerMobileClasses);
-                $('#persistent-menu-arrow-toggle').attr('aria-expanded', false);
-                $('#persistent-menu-close-button').removeAttr('data-bs-toggle');
-                $('#persistent-menu-close-button').attr('data-bs-dismiss', offcanvas);
-                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', offcanvas);
-            } else {
-                $('#persistent-menu-container').removeClass(containerMobileClasses);
-                $('#persistent-menu-container').addClass(containerDesktopClasses);
-                if (sessionStorage.showPersistentMenu !== 'false') {
-                    $('#persistent-menu-container').addClass('show');
+            if (sessionStorage.showPersistentMenu) {
+                if (smallScreenEnabled) {
+                    this.makeOffcanvas();
+                } else {
+                    this.makeCollapse();
                 }
-                $('#persistent-menu-arrow-toggle').attr('aria-expanded', true);
-                $('#persistent-menu-close-button').removeAttr('data-bs-dismiss');
-                $('#persistent-menu-close-button').attr('data-bs-toggle', collapse);
-                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', collapse);
             }
         },
-        initialize: function () {
+        makeOffcanvas: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass(this.containerCollapseClasses);
+            persistentMenuContainer.addClass(this.containerOffCanvasClasses);
+        },
+        makeCollapse: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass(this.containerOffCanvasClasses);
+            persistentMenuContainer.addClass(this.collapse);
+        },
+        initialize: function (options) {
+            $('#persistent-menu-region').removeClass('d-none');
+            this.sidebarEnabled = options.sidebarEnabled;
+            this.menuExpanded;
+            this.splitScreenToggleEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+            this.offcanvas = 'offcanvas';
+            this.collapse = 'collapse';
+            this.containerCollapseClasses = this.collapse + ' position-relative';
+            this.containerOffCanvasClasses = this.offcanvas + ' offcanvas-start';
             self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
@@ -1604,14 +1607,155 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
+        calcPersistantMenuRegionWidth: function () {
+            const contentPlusContainer = $('#content-plus-persistent-menu-container');
+
+            const persistentMenuRegionClone = $('#persistent-menu-region').clone();
+            persistentMenuRegionClone.attr("id","pmr-clone");
+            persistentMenuRegionClone.prependTo(contentPlusContainer);
+
+            const containerClone = persistentMenuRegionClone.find('#persistent-menu-container');
+            containerClone.attr("id","pmc-clone");
+            containerClone.css({'width': '', 'padding': '1.5rem', 'visibility': 'hidden'});
+            containerClone.removeClass('position-absolute');
+            containerClone.addClass('position-relative');
+
+            const containerContentClone = containerClone.find('#persistent-menu-container-content');
+            containerContentClone.attr("id","pmcc-clone");
+            containerContentClone.removeClass('d-none');
+
+            const regionWidth = persistentMenuRegionClone.outerWidth();
+
+            persistentMenuRegionClone.remove();
+
+            return regionWidth;
+        },
+        getPersistantMenuRegionWidth: function () {
+            let persistantMenuRegionWidth = sessionStorage.getItem('persistantMenuRegionWidth');
+            if (!persistantMenuRegionWidth) {
+                persistantMenuRegionWidth = this.calcPersistantMenuRegionWidth();
+                sessionStorage.setItem('persistantMenuRegionWidth', persistantMenuRegionWidth);
+            }
+            return persistantMenuRegionWidth;
+        },
+        showMenu: function (firstLoad = false) {
+            const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
+            const persistentMenuContainer = $('#persistent-menu-container');
+            if (sessionStorage.showPersistentMenu === "false") {
+                persistentMenuContainer.css('transition', 'width 0.25s');
+            }
+            if (firstLoad) {
+                $('#persistent-menu-container-content').removeClass('d-none');
+            }
+            persistentMenuContainer.css('width', persistantMenuRegionWidth);
+            this.menuExpanded = true;
+        },
+        hideMenu: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.css('transition', 'width 0.25s');
+            persistentMenuContainer.css('width', '100%');
+            $('#persistent-menu-container-content').addClass('d-none');
+            this.menuExpanded = false;
+        },
+        menuCollapseExpandTransitionListener: function () {
+            const persistentMenuContentContainer = $('#persistent-menu-container-content');
+            const targetElement = $('#persistent-menu-container')[0];
+            targetElement.addEventListener('transitionend', (event) => {
+                    if (this.menuExpanded && event.target === targetElement) {
+                        persistentMenuContentContainer.removeClass('d-none');
+                    }
+                });
+        },
+        cloudcareNotificationListener: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            const cloudcareNotifications = $("#cloudcare-notifications");
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList') {
+                        if (cloudcareNotifications.children().length > 0) {
+                            persistentMenuContainer.addClass('border-top');
+                        } else {
+                            persistentMenuContainer.removeClass('border-top');
+                        }
+                    }
+                });
+            });
+            observer.observe(cloudcareNotifications[0], { childList: true });
+        },
+        lockMenu: function () {
+            const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
+            const persistentMenuRegion = $('#persistent-menu-region');
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuRegion.css('width', persistantMenuRegionWidth);
+            persistentMenuContainer.removeClass('position-absolute');
+            persistentMenuContainer.addClass('position-relative');
+            sessionStorage.showPersistentMenu = true;
+        },
+        unlockMenu: function () {
+            const persistentMenuRegion = $('#persistent-menu-region');
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass('position-relative');
+            persistentMenuContainer.addClass('position-absolute');
+            persistentMenuRegion.css('width', '');
+            sessionStorage.showPersistentMenu = false;
+        },
+        flipArrowRight: function () {
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            arrowToggle.find('i').removeClass('fa-chevron-left');
+            arrowToggle.find('i').addClass('fa-chevron-right');
+        },
+        flipArrowLeft: function () {
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            arrowToggle.find('i').removeClass('fa-chevron-right');
+            arrowToggle.find('i').addClass('fa-chevron-left');
+        },
         onAttach: function () {
-            this.handleSmallScreenChange(cloudcareUtils.smallScreenIsEnabled());
-            $('#persistent-menu-container').on('hidden.bs.collapse', function () {
-                sessionStorage.showPersistentMenu = false;
+            const self = this;
+            const smallScreenEnabledOnStartup = cloudcareUtils.smallScreenIsEnabled();
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            self.makeCollapse(sessionStorage.showPersistentMenu);
+            self.menuCollapseExpandTransitionListener();
+            self.cloudcareNotificationListener();
+            if ($("#cloudcare-notifications").children().length > 0) {
+                $('#persistent-menu-container').addClass('border-top');
+            }
+
+            if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
+                self.hideMenu();
+                self.unlockMenu();
+                self.flipArrowRight();
+                sessionStorage.setItem('handledDefaultClosed', true);
+            } else if (sessionStorage.showPersistentMenu === 'true' && !smallScreenEnabledOnStartup) {
+                self.showMenu(true);
+                self.flipArrowLeft();
+                self.lockMenu();
+            }
+            arrowToggle.click(function () {
+                if (!self.menuExpanded) {
+                    self.showMenu();
+                    self.flipArrowLeft();
+                    self.lockMenu();
+                } else if (self.menuExpanded && sessionStorage.showPersistentMenu === 'true') {
+                    self.hideMenu();
+                    self.unlockMenu();
+                    self.flipArrowRight();
+                } else if (self.menuExpanded && sessionStorage.showPersistentMenu !== 'true') {
+                    self.flipArrowLeft();
+                    self.lockMenu();
+                }
             });
-            $('#persistent-menu-container').on('show.bs.collapse', function () {
-                sessionStorage.showPersistentMenu = true;
-            });
+            $('#persistent-menu-container').hover(
+                function () {
+                    if (!self.menuExpanded) {
+                        self.showMenu();
+                    }
+                },
+                function () {
+                    if (sessionStorage.showPersistentMenu !== 'true') {
+                        self.hideMenu();
+                    }
+                }
+            );
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
