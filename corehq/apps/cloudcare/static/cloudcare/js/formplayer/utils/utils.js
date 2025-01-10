@@ -484,7 +484,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             }
         }
 
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+        import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
             if (!FormplayerFrontend.syncInterval) {
                 FormplayerFrontend.syncInterval = setInterval(function () {
                     const urlObject = Utils.currentUrlToObject(),
@@ -506,7 +506,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     }
 
     function stopSyncInterval() {
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+        import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
             clearInterval(FormplayerFrontend.syncInterval);
             FormplayerFrontend.syncInterval = null;
         });
