@@ -35,7 +35,7 @@ class WebUserSpec:
     primary_location_id: str = None
     assigned_location_ids: List[str] = None
     profile: str = None
-    user_data: dict = None
+    new_or_existing_user_data: dict = None
     tableau_role: str = None
     tableau_groups: List[str] = None
     parameters: List[str] = field(default_factory=list)
@@ -53,8 +53,8 @@ class WebUserResourceValidator():
             (self.validate_required_fields, [spec, is_post]),
             (self.validate_role, [spec.role]),
             (self.validate_profile, [spec.profile, is_post]),
-            (self.validate_custom_data, [spec.user_data, spec.profile]),
-            (self.validate_custom_data_with_profile, [spec.user_data, spec.profile]),
+            (self.validate_custom_data, [spec.new_or_existing_user_data, spec.profile]),
+            (self.validate_custom_data_against_profile, [spec.new_or_existing_user_data, spec.profile]),
             (self.validate_email, [spec.email, is_post]),
             (self.validate_locations, [spec.email, spec.assigned_location_ids, spec.primary_location_id]),
             (self.validate_user_access, [spec.email]),
@@ -131,13 +131,13 @@ class WebUserResourceValidator():
         spec = {'user_profile': new_profile_name}
         return profile_validator.validate_spec(spec)
 
-    def validate_custom_data(self, custom_data, new_profile_name):
+    def validate_custom_data(self, new_or_existing_user_data, new_profile_name):
         custom_data_validator = CustomDataValidator(self.domain, self.profiles_by_name, True)
-        spec = {'data': custom_data, 'user_profile': new_profile_name}
+        spec = {'data': new_or_existing_user_data, 'user_profile': new_profile_name}
         return custom_data_validator.validate_spec(spec)
 
-    def validate_custom_data_with_profile(self, custom_data, new_profile_name):
-        if custom_data is None or new_profile_name is None:
+    def validate_custom_data_against_profile(self, new_or_existing_user_data, new_profile_name):
+        if new_or_existing_user_data is None or new_profile_name is None:
             return
 
         errors = []
@@ -146,7 +146,7 @@ class WebUserResourceValidator():
         system_fields = set(profile.fields.keys()) if profile else set()
         system_fields.add(PROFILE_SLUG)
 
-        for key in custom_data.keys():
+        for key in new_or_existing_user_data.keys():
             if key in system_fields:
                 errors.append(_("'{}' cannot be set directly").format(key))
         return errors
