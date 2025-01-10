@@ -413,13 +413,16 @@ class WebUserResource(v0_1.WebUserResource):
     def obj_update(self, bundle, **kwargs):
         bundle.obj = WebUser.get(kwargs['pk'])
         validator = WebUserResourceValidator(bundle.request.domain, bundle.request.couch_user)
+        user_data = bundle.obj.get_user_data(bundle.request.domain)
+        original_user_data = user_data.raw
+
         spec = WebUserSpec(
             email=bundle.obj.email,
             role=bundle.data.get('role'),
             primary_location_id=bundle.data.get('primary_location_id'),
             assigned_location_ids=bundle.data.get('assigned_location_ids'),
             profile=bundle.data.get('profile'),
-            user_data=bundle.data.get('user_data'),
+            new_or_existing_user_data=bundle.data.get('user_data') or original_user_data,
             tableau_role=bundle.data.get('tableau_role'),
             tableau_groups=bundle.data.get('tableau_groups'),
             parameters=bundle.data.keys(),
