@@ -1,4 +1,14 @@
-hqDefine("reports/js/bootstrap3/aggregate_user_status", function () {
+hqDefine("reports/js/bootstrap3/aggregate_user_status", [
+    "jquery",
+    "d3/d3.min",
+    "nvd3/nv.d3.min",
+    "hqwebapp/js/bootstrap3/main",
+], function (
+    $,
+    d3,
+    nv,
+    hqMain
+) {
     function aggregateTooltip(key, x, y, e) {
         return '<p><strong>' + key + '</strong></p>' +
            '<p>' + Math.round(e.value) + '% since ' + x + '</p>';
@@ -60,9 +70,8 @@ hqDefine("reports/js/bootstrap3/aggregate_user_status", function () {
                 var tooltipFunction = $(this).data('is-aggregate') ? aggregateTooltip : undefined;
                 setupCharts($("#" + $(this).data('chart-data')).data("value"), $(this).data('chart-div'), tooltipFunction);
             });
-            var mainJs = hqImport("hqwebapp/js/bootstrap3/main");
             $('.hq-help-template').each(function () {
-                mainJs.transformHelpTemplate($(this), true);
+                hqMain.transformHelpTemplate($(this), true);
             });
         }
     });
