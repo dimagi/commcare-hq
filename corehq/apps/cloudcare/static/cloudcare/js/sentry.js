@@ -5,9 +5,9 @@ hqDefine('cloudcare/js/sentry', [
     'sentry_captureconsole',    // needed for Sentry.Integrations.CaptureConsole
 ], function (
     initialPageData,
-    Sentry
+    Sentry,
+    SentryCaptureConsole
 ) {
-
     let initSentry = function () {
         const sentryConfig = initialPageData.get('sentry');
 
@@ -27,7 +27,7 @@ hqDefine('cloudcare/js/sentry', [
                         dom: false,
                         console: false,
                     }),
-                    new Sentry.Integrations.CaptureConsole({
+                    new SentryCaptureConsole.Integrations.CaptureConsole({
                         levels: ["error"],
                     }),
                 ],
