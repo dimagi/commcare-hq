@@ -1,4 +1,3 @@
-/* globals mapboxgl, MapboxDraw, turf */
 'use strict';
 hqDefine('geospatial/js/models', [
     'jquery',
@@ -7,13 +6,19 @@ hqDefine('geospatial/js/models', [
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
+    'mapbox-gl',
+    '@mapbox/mapbox-gl-draw',
+    '@turf/turf',
 ], function (
     $,
     ko,
     _,
     initialPageData,
     utils,
-    alertUser
+    alertUser,
+    mapboxgl,
+    MapboxDraw,
+    turf
 ) {
     const FEATURE_QUERY_PARAM = 'features';
     const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
