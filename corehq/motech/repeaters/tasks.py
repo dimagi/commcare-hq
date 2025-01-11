@@ -17,13 +17,8 @@ partitions in production). Repeat records are partitioned using their
 ID. (``partition = RepeatRecord.id % num_partitions``.)
 
 For each repeat record, ``check_repeaters_in_partition()`` calls
-``RepeatRecord.attempt_forward_now(is_retry=True)``. (``is_retry`` is
-set to ``True`` because when a repeat record is registered,
-``RepeatRecord.attempt_forward_now()`` is called immediately, and the
-repeat record is only enqueued if sending fails.)
-
-Execution ends up back in the ``tasks`` module when
-``RepeatRecord.attempt_forward_now()`` calls
+``RepeatRecord.attempt_forward_now()``. Execution ends up back in the
+``tasks`` module when ``RepeatRecord.attempt_forward_now()`` calls
 ``_process_repeat_record()``. It runs a battery of checks, and if they
 all succeed, ``RepeatRecord.fire()`` is called.
 
@@ -35,6 +30,12 @@ This process has several disadvantages:
 * It attempts to forward all the repeat records of a repeater, even if
   every previous repeat record has failed.
 
+* We don't have a way to send repeat records in chronological order.
+
+* Controlling the rate at which repeat records are sent is difficult.
+  (e.g. Currently we use a separate queue to reduce the rate of sending
+  the payloads of data source repeaters.)
+
 
 process_repeaters()
 -------------------
@@ -45,30 +46,29 @@ repeat records.
 
 This process is enabled using the ``PROCESS_REPEATERS`` feature flag.
 
-The ``iter_ready_repeater_ids_once()`` generator yields the IDs of
-repeaters that have repeat records ready to be sent. It does so in a
-round-robin fashion, cycling through the domains. It does this so that:
+The ``iter_ready_repeater_ids()`` generator yields the IDs of repeaters
+that have repeat records ready to be sent. It does so in a round-robin
+fashion, cycling through their domains. It does this so that:
 
 * Domains and repeaters are not rate-limited unnecessarily.
-* Remote APIs are not unintentionally DoS-attacked by CommCare HQ.
+* CommCare HQ does not DoS-attack remote APIs by unintentionally sending
+  repeat records in large chunks.
 * No domain has to wait while another domain consumes all the repeat
   record queue workers.
 
-As long as there are repeat records ready to be sent, the
-``iter_ready_repeater_ids_forever()`` generator will continue to yield
-from ``iter_ready_repeater_ids_once()``. The ``process_repeaters()``
-task iterates these repeater IDs, and passes each one to the
-``process_repeater()`` task.
+``process_repeaters()`` creates a group of Celery tasks where each task
+is a Celery chord for one repeater. The chord sends the next batch of
+the repeater's repeat records, and then updates the repeater with the
+results of those send attempts. The batch size defaults to 7, and can
+be configured per repeater. Setting the batch size to 1 will send
+repeat records in chronological order. If the remote endpoint is
+offline or consistently returns errors, then the repeater will be
+updated to back off. If any send attempts succeeded and a backoff had
+been set, then the backoff is reset.
 
-``process_repeater()`` fetches a batch of repeat records (the number is
-set per repeater) and spawns tasks to send them in parallel. The results
-of all the send attempts are passed to ``update_repeater()``. If all the
-send attempts failed, the **repeater** (not the repeat record) is backed
-off. If any send attempts succeeded, the backoff is reset.
-
-The intention of this process is not only to share repeat record queue
-workers fairly across domains, but also to optimise workers by not
-trying to send repeat records that are unlikely to succeed.
+``process_repeaters()`` runs the group of tasks in parallel. When they
+have completed, ``process_repeaters()`` loops through the repeaters
+again, until there are no more repeat records ready to be sent.
 
 """
 import random
@@ -391,6 +391,9 @@ def get_repeater_ids_by_domain():
 
 
 def process_repeater_chord(domain, repeater_id):
+    """
+    Returns a Celery chord to process a repeater.
+    """
 
     def get_task_signature(repeat_record):
         task_ = {
@@ -494,7 +497,7 @@ def _get_wait_duration_seconds(repeat_record):
 def update_repeater(repeat_record_states, repeater_id):
     """
     Determines whether the repeater should back off, based on the
-    results of ``_process_repeat_record()`` tasks.
+    results of ``process_ready_repeat_record()``.
     """
     if all(s in (State.Empty, None) for s in repeat_record_states):
         # We can't tell anything about the remote endpoint.
