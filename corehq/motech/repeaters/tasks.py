@@ -494,7 +494,7 @@ def _get_wait_duration_seconds(repeat_record):
 def update_repeater(repeat_record_states, repeater_id):
     """
     Determines whether the repeater should back off, based on the
-    results of ``_process_repeat_record()`` tasks.
+    results of ``process_ready_repeat_record()``.
     """
     if all(s in (State.Empty, None) for s in repeat_record_states):
         # We can't tell anything about the remote endpoint.
