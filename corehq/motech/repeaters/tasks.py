@@ -307,9 +307,9 @@ def process_repeaters():
     independently the way that ``check_repeaters()`` does.
     """
 
-    # NOTE: If `process_repeaters()` needs to be restarted and
-    #       `process_repeaters_lock` was not released, expire the lock
-    #       to allow `process_repeaters()` to start:
+    # NOTE: If `process_repeaters()` was killed and `process_repeaters_lock`
+    #       was not released, expire the lock to allow `process_repeaters()`
+    #       to start:
     #
     #           $ ./manage.py expire_process_repeaters_lock
     #
@@ -480,13 +480,13 @@ def _get_wait_duration_seconds(repeat_record):
 def update_repeater(repeat_record_states, repeater):
     """
     Determines whether the repeater should back off, based on the
-    results of ``_process_repeat_record()`` tasks.
+    results of ``process_ready_repeat_record()``.
     """
-    if all(s in (State.Empty, None) for s in repeat_record_states):
+    if all(state in (State.Empty, None) for state in repeat_record_states):
         # We can't tell anything about the remote endpoint.
         return
     success_or_invalid = (State.Success, State.InvalidPayload)
-    if any(s in success_or_invalid for s in repeat_record_states):
+    if any(state in success_or_invalid for state in repeat_record_states):
         # The remote endpoint appears to be healthy.
         repeater.reset_backoff()
     else:
