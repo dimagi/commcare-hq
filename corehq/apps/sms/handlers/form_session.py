@@ -9,7 +9,7 @@ from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
     log_sms_exception,
-    send_sms_to_verified_number,
+    send_message_to_verified_number,
 )
 from corehq.apps.sms.messages import (
     MSG_CHOICE_OUT_OF_RANGE,
@@ -59,7 +59,7 @@ def form_session_handler(verified_number, text, msg):
                         "message_id": msg.couch_id
                     })
                     session.mark_completed(False)  # this will also release the channel
-                    send_sms_to_verified_number(
+                    send_message_to_verified_number(
                         verified_number, get_message(MSG_GENERIC_ERROR, verified_number)
                     )
                     return True
@@ -77,7 +77,7 @@ def form_session_handler(verified_number, text, msg):
                 verified_number.domain, verified_number.owner_id
             )
             if multiple:
-                send_sms_to_verified_number(verified_number, get_message(MSG_GENERIC_ERROR, verified_number))
+                send_message_to_verified_number(verified_number, get_message(MSG_GENERIC_ERROR, verified_number))
                 return True
 
         if session:
@@ -102,7 +102,7 @@ def form_session_handler(verified_number, text, msg):
             except Exception:
                 # Catch any touchforms errors
                 log_sms_exception(msg)
-                send_sms_to_verified_number(verified_number, get_message(MSG_TOUCHFORMS_DOWN, verified_number))
+                send_message_to_verified_number(verified_number, get_message(MSG_TOUCHFORMS_DOWN, verified_number))
             return True
         else:
             return False
@@ -152,12 +152,12 @@ def answer_next_question(verified_number, text, msg, session, subevent_id):
         events = get_events_from_responses(responses)
         if len(text_responses) > 0:
             response_text = format_message_list(text_responses)
-            send_sms_to_verified_number(verified_number, response_text,
+            send_message_to_verified_number(verified_number, response_text,
                                         metadata=outbound_metadata, events=events)
     else:
         mark_as_invalid_response(msg)
         response_text = "%s %s" % (error_msg, event.text_prompt)
-        send_sms_to_verified_number(verified_number, response_text,
+        send_message_to_verified_number(verified_number, response_text,
                                     metadata=outbound_metadata, events=[event])
 
 
