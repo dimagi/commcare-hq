@@ -869,8 +869,12 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     def headers(self):
         EMAIL_ADDRRESS = _('Email Address')
         PHONE_NUMBER = _('Phone Number')
-        if self.messaging_event and self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
-            contact_column = EMAIL_ADDRRESS
+        CONNECT_ID = _('ConnectID')
+        if self.messaging_event:
+            if self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
+                contact_column = EMAIL_ADDRRESS
+            elif self.messaging_event.content_type == MessagingEvent.CONTENT_CONNECT:
+                contact_column = CONNECT_ID
         else:
             contact_column = PHONE_NUMBER
         return DataTablesHeader(
