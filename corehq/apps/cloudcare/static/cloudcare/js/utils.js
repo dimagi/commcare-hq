@@ -148,14 +148,11 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var showProminentLoading = function () {
-        hqRequire([
-            "cloudcare/js/formplayer/app",
-            "cloudcare/js/formplayer/layout/views/progress_bar",
-        ], function (FormplayerFrontend, ProgressBar) {
+        import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
             setTimeout(function () {
                 const formplayerQueryInProgress = sessionStorage.formplayerQueryInProgress && JSON.parse(sessionStorage.formplayerQueryInProgress);
                 if (formplayerQueryInProgress) {
-                    const progressView = ProgressBar({
+                    const progressView = new ProgressBar({
                         progressMessage: gettext("Loading..."),
                     });
                     if (!FormplayerFrontend.regions) {
@@ -249,7 +246,7 @@ hqDefine('cloudcare/js/utils', [
         if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
             $('#breadcrumb-region').css('z-index', '');
             clearInterval(sessionStorage.progressIncrementInterval);
-            hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
                 const progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);

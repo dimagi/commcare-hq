@@ -97,7 +97,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
                     var loginAsNextOptions = FormplayerFrontend.getChannel().request('getLoginAsNextOptions');
                     if (loginAsNextOptions) {
                         FormplayerFrontend.trigger("clearLoginAsNextOptions");
-                        hqRequire(["cloudcare/js/formplayer/menus/controller"], function (MenusController) {
+                        import("cloudcare/js/formplayer/menus/controller").then(function (MenusController) {
                             MenusController.selectMenu(loginAsNextOptions);
                         });
                     } else {
