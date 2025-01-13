@@ -13,7 +13,9 @@
 
   {% for group in groups %}
     <div class="row mt-4">
-      <h3>{{ group.name }}</h3>
+      {% if group.name %}
+        <h3>{{ group.name }}</h3>
+      {% endif %}
       {% for report in group.reports %}
         <div class="col-md-6 col-lg-6 col-xl-3 mb-3">
           {% include 'enterprise/partials/project_tile.html' with report=report uses_date_range=uses_date_range %}
