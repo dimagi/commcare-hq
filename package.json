@@ -88,6 +88,7 @@
         "webpack-cli": "5.1.4",
         "webpack-merge": "6.0.1",
         "webpack-modernizr-loader": "5.0.0",
+        "webpack-source-map-support": "^2.0.1",
         "xpath": "dimagi/js-xpath#v0.0.8",
         "zxcvbn": "4.4.2"
     },

@@ -6213,6 +6213,13 @@ socks@^2.7.1:
     ip-address "^9.0.5"
     smart-buffer "^4.2.0"
 
+source-map-support@0.4.11:
+  version "0.4.11"
+  resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.4.11.tgz#647f939978b38535909530885303daf23279f322"
+  integrity sha512-MAwZjagh0wTUKqy7IzpCAIbg5v8uDHpq59NRdL8isGfN58TuXPN0lEA2vWRTb+robwrhFyvK3vTM/YiDpPm1FA==
+  dependencies:
+    source-map "^0.5.3"
+
 source-map-support@^0.5.21, source-map-support@~0.5.20:
   version "0.5.21"
   resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.21.tgz#04fe7c7f9e1ed2d662233c28cb2b35b9f63f6e4f"
@@ -6220,6 +6227,11 @@ source-map-support@^0.5.21, source-map-support@~0.5.20:
   dependencies:
     buffer-from "^1.0.0"
     source-map "^0.6.0"
+
+source-map@^0.5.3:
+  version "0.5.7"
+  resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
+  integrity sha512-LbrmJOMUSdEVxIKvdcJzQC+nQhe8FUZQTXQy6+I75skNgn3OoQ0DZA8YnFa7gp8tqtL3KPf1kmo0R5DoApeSGQ==
 
 source-map@^0.6.0, source-map@^0.6.1, source-map@~0.6.0:
   version "0.6.1"
@@ -6871,6 +6883,13 @@ webpack-modernizr-loader@5.0.0:
   dependencies:
     loader-utils "^1.0.0"
     modernizr "^3.7.1"
+
+webpack-source-map-support@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/webpack-source-map-support/-/webpack-source-map-support-2.0.1.tgz#6c9b9f782ae84f86fb4b2f7032a298e63e8ad43d"
+  integrity sha512-cc3zj0233eBa6UsyhwwPAxxG7FX/pTPC8nAQbc1zwm+jOOY9abLAyr8ne3bhqJPYrsRvlK8vD9YskuwtxXGqjA==
+  dependencies:
+    source-map-support "0.4.11"
 
 webpack-sources@^3.2.3:
   version "3.2.3"
