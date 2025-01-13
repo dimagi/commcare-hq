@@ -1,6 +1,8 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+
+{% block page_title %}{{ current_page.title }}{% endblock %}
 {% js_entry 'enterprise/js/project_dashboard' %}
 
 {% block page_content %}
@@ -9,15 +11,16 @@
   {% initial_page_data 'max_date_range_days' max_date_range_days %}
   {% initial_page_data 'metric_type' metric_type %}
 
-  {% for group in groups %}
-    <div class="row {% if not forloop.first %}mt-4{% endif %}">
-      <h3 class="mb-3">{{ group.name }}</h3>
+  <div class="row mt-4">
+    {% for group in groups %}
+      <h3>{{ group.name }}</h3>
       {% for report in group.reports %}
         <div class="col-md-6 col-lg-6 col-xl-3 mb-3">
           {% include 'enterprise/partials/project_tile.html' with report=report uses_date_range=uses_date_range %}
         </div>
       {% endfor %}
-    </div>
-  {% endfor %}
+    {% endfor %}
+  </div>
+
   {% include 'enterprise/partials/date_range_modal.html' %}
 {% endblock %}
