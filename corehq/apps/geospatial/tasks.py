@@ -26,6 +26,15 @@ def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict):
     try:
         flag_assigned_cases = get_flag_assigned_cases_config(domain)
         update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases, celery_task_tracker)
+    except Exception as e:
+        notify_exception(
+            None,
+            'Something went wrong while reassigning cases to mobile workers.',
+            details={
+                'error': str(e),
+                'domain': domain
+            }
+        )
     finally:
         celery_task_tracker.mark_completed()
 
