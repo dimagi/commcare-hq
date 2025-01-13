@@ -709,9 +709,9 @@ class MessagingEventsReport(BaseMessagingEventReport):
         event_status = EventStatusFilter.get_value(self.request, self.domain)
         if event_status == MessagingEvent.STATUS_ERROR:
             event_status_filter = (
-                Q(status=event_status) |
-                Q(messagingsubevent__status=event_status) |
-                Q(messagingsubevent__sms__error=True)
+                Q(status=event_status)
+                | Q(messagingsubevent__status=event_status)
+                | Q(messagingsubevent__sms__error=True)
             )
         elif event_status == MessagingEvent.STATUS_IN_PROGRESS:
             # We need to check for id__isnull=False below because the
@@ -720,22 +720,22 @@ class MessagingEventsReport(BaseMessagingEventReport):
             # session_is_open=True if there actually are
             # subevent and xforms session records
             event_status_filter = (
-                Q(status=event_status) |
-                Q(messagingsubevent__status=event_status) |
-                (Q(messagingsubevent__xforms_session__id__isnull=False) &
-                 Q(messagingsubevent__xforms_session__session_is_open=True))
+                Q(status=event_status)
+                | Q(messagingsubevent__status=event_status)
+                | (Q(messagingsubevent__xforms_session__id__isnull=False)
+                   & Q(messagingsubevent__xforms_session__session_is_open=True))
             )
         elif event_status == MessagingEvent.STATUS_NOT_COMPLETED:
             event_status_filter = (
-                Q(status=event_status) |
-                Q(messagingsubevent__status=event_status) |
-                (Q(messagingsubevent__xforms_session__session_is_open=False) &
-                 Q(messagingsubevent__xforms_session__submission_id__isnull=True))
+                Q(status=event_status)
+                | Q(messagingsubevent__status=event_status)
+                | (Q(messagingsubevent__xforms_session__session_is_open=False)
+                   & Q(messagingsubevent__xforms_session__submission_id__isnull=True))
             )
         elif event_status == MessagingEvent.STATUS_EMAIL_DELIVERED:
             event_status_filter = (
-                Q(status=event_status) |
-                Q(messagingsubevent__status=event_status)
+                Q(status=event_status)
+                | Q(messagingsubevent__status=event_status)
             )
 
         return source_filter, content_type_filter, event_status_filter, error_code_filter
@@ -773,8 +773,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
         if content_type_filter:
             data = data.filter(
-                (Q(content_type__in=content_type_filter) |
-                 Q(messagingsubevent__content_type__in=content_type_filter))
+                (Q(content_type__in=content_type_filter)
+                 | Q(messagingsubevent__content_type__in=content_type_filter))
             )
 
         if event_status_filter:
@@ -911,11 +911,11 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     def view_response(self):
         subevents = self.messaging_subevents
         if (
-            len(subevents) == 1 and
-            subevents[0].content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
-                                          MessagingEvent.CONTENT_IVR_SURVEY) and
-            subevents[0].xforms_session_id and
-            subevents[0].status != MessagingEvent.STATUS_ERROR
+            len(subevents) == 1
+            and subevents[0].content_type in (
+                MessagingEvent.CONTENT_SMS_SURVEY, MessagingEvent.CONTENT_IVR_SURVEY
+            ) and subevents[0].xforms_session_id
+            and subevents[0].status != MessagingEvent.STATUS_ERROR
         ):
             # There's only one survey to report on here - just redirect to the
             # survey detail page
@@ -1205,9 +1205,9 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     @property
     def _show_users_without_phone_numbers(self):
         return (
-            self.filter_type == 'contact' and
-            self.contact_type == 'users' and
-            self.has_phone_number != 'has_phone_number'
+            self.filter_type == 'contact'
+            and self.contact_type == 'users'
+            and self.has_phone_number != 'has_phone_number'
         )
 
     @property
@@ -1229,9 +1229,9 @@ class PhoneNumberReport(BaseCommConnectLogReport):
         elif number.pending_verification:
             return "Verification Pending"
         elif (
-                not (number.is_two_way or number.pending_verification) and
-                PhoneNumber.get_reserved_number(number.phone_number)
-             ):
+            not (number.is_two_way or number.pending_verification)
+            and PhoneNumber.get_reserved_number(number.phone_number)
+        ):
             return "Already In Use"
         return "Not Verified"
 

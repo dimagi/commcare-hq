@@ -6,8 +6,8 @@ from corehq.apps.reports.util import DatatablesServerSideParams
 
 
 class SubmitToggle(HQToggle):
-    
-    def __init__(self,  type, show, name, doc_type):
+
+    def __init__(self, type, show, name, doc_type):
         super(SubmitToggle, self).__init__(type, show, name)
         self.doc_type = doc_type
 

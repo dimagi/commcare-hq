@@ -30,8 +30,8 @@ class LocationGroupFilter(ExpandedMobileWorkerFilter):
     def selected(self):
         selected_ids = DatatablesServerSideParams.get_value_from_request(self.request, self.slug, as_list=True)
 
-        selected = (self._selected_group_entries(selected_ids) +
-                    self._selected_location_entries(selected_ids))
+        selected = (self._selected_group_entries(selected_ids)
+                    + self._selected_location_entries(selected_ids))
         known_ids = dict(selected)
 
         return [
