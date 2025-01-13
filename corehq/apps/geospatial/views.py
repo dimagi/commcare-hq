@@ -78,7 +78,7 @@ class BaseGeospatialView(BaseDomainView):
     def main_context(self):
         context = super().main_context
         celery_task_tracker = get_celery_task_tracker(self.domain, task_slug=ES_INDEX_TASK_HELPER_BASE_KEY)
-        context['task_status'] = celery_task_tracker.get_status()
+        context['index_task_status'] = celery_task_tracker.get_status()
         return context
 
 
