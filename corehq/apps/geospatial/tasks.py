@@ -25,7 +25,7 @@ def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict):
     celery_task_tracker = get_celery_task_tracker(domain, ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY)
     try:
         flag_assigned_cases = get_flag_assigned_cases_config(domain)
-        update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases)
+        update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases, celery_task_tracker)
     finally:
         celery_task_tracker.mark_completed()
 
