@@ -13,9 +13,6 @@ from memoized import memoized
 
 from dimagi.utils.logging import notify_exception
 
-from phonelog.models import DeviceReportEntry
-from phonelog.reports import BaseDeviceLogReport
-
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.auditcare.utils.export import navigation_events_by_user
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -45,71 +42,6 @@ class AdminReport(GenericTabularReport):
     section_name = gettext_noop("ADMINREPORT")
     default_params = {}
     is_admin_report = True
-
-
-class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
-    slug = 'device_log_soft_asserts'
-    name = gettext_lazy("Global Device Logs Soft Asserts")
-
-    fields = [
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.filters.devicelog.DeviceLogDomainFilter',
-        'corehq.apps.reports.filters.devicelog.DeviceLogCommCareVersionFilter',
-    ]
-    emailable = False
-    default_rows = 10
-
-    _username_fmt = "{username}"
-    _device_users_fmt = "{username}"
-    _device_id_fmt = "{device}"
-    _log_tag_fmt = "<label class='{classes}'>{text}</label>"
-
-    @property
-    def selected_domain(self):
-        selected_domain = self.request.GET.get('domain', None)
-        return selected_domain if selected_domain != '' else None
-
-    @property
-    def selected_commcare_version(self):
-        commcare_version = self.request.GET.get('commcare_version', None)
-        return commcare_version if commcare_version != '' else None
-
-    @property
-    def headers(self):
-        headers = super(DeviceLogSoftAssertReport, self).headers
-        headers.add_column(DataTablesColumn("Domain"))
-        return headers
-
-    @property
-    def rows(self):
-        logs = self._filter_logs()
-        rows = self._create_rows(
-            logs,
-            range=slice(self.pagination.start,
-                        self.pagination.start + self.pagination.count)
-        )
-        return rows
-
-    def _filter_logs(self):
-        logs = DeviceReportEntry.objects.filter(
-            date__range=[self.datespan.startdate_param_utc,
-                         self.datespan.enddate_param_utc]
-        ).filter(type='soft-assert')
-
-        if self.selected_domain is not None:
-            logs = logs.filter(domain__exact=self.selected_domain)
-
-        if self.selected_commcare_version is not None:
-            logs = logs.filter(app_version__contains='"{}"'.format(
-                self.selected_commcare_version))
-
-        return logs
-
-    def _create_row(self, log, *args, **kwargs):
-        row = super(DeviceLogSoftAssertReport, self)._create_row(
-            log, *args, **kwargs)
-        row.append(log.domain)
-        return row
 
 
 class AdminPhoneNumberReport(PhoneNumberReport):

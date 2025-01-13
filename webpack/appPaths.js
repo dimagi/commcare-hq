@@ -30,7 +30,6 @@ const nonStandardAppPaths = {
     // custom apps:
     "inddex": path.resolve(CUSTOM_PATH, 'inddex'),
     "mc": path.resolve(CUSTOM_PATH, 'reports', 'mc'),
-    "up_nrhm": path.resolve(CUSTOM_PATH, 'up_nrhm'),
 };
 
 // workaround for apps that have different folder names in the static directory (rare)

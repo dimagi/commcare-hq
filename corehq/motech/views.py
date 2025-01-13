@@ -241,7 +241,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
 
         return data
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         connection_settings = ConnectionSettings.objects.get(
             pk=item_id,
             domain=self.domain,
