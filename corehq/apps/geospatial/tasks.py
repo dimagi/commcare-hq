@@ -1,5 +1,8 @@
 import math
+import time
 
+from corehq.apps.geospatial.models import GeoConfig
+from corehq.apps.geospatial.routing_solvers.pulp import RoadNetworkSolver
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.celery import task
@@ -68,3 +71,32 @@ def index_es_docs_with_location_props(domain):
         )
     else:
         celery_task_tracker.mark_completed()
+
+
+@task(queue='geospatial_queue', ignore_result=True)
+def clusters_disbursement_task(domain, clusters):
+    config = GeoConfig.objects.get(domain=domain)
+
+    print(f"Processing disbursement for {len(clusters)} clusters ...")
+    start_time = time.time()
+    assignments = []
+    for cluster_id in clusters.keys():
+        users_chunk = clusters[cluster_id]['users']
+        cases_chunk = clusters[cluster_id]['cases']
+        if users_chunk and cases_chunk:
+            print(f"Starting disbursement for cluster: {cluster_id}, total users: {len(users_chunk)},"
+                  f" total cases: {len(cases_chunk)}")
+            try:
+                solver = RoadNetworkSolver(clusters[cluster_id])
+                result = solver.solve(config)
+                assignments.append(result)
+            except Exception as e:
+                print(f"Error occurred for disbursement for cluster: {cluster_id} : {str(e)}")
+                continue
+            print(f"Completed disbursement for cluster: {cluster_id}")
+        elif users_chunk:
+            print(f"No cases available for mobile workers in cluster: {cluster_id}")
+        elif cases_chunk:
+            print(f"No mobile workers available for cases in cluster: {cluster_id}")
+    print(f"Total Time for solving disbursements: {time.time() - start_time}")
+    return assignments
