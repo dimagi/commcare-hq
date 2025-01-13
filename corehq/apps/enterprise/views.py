@@ -85,17 +85,17 @@ def platform_overview(request, domain):
     context.update({
         'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
         'groups': [
-            {'name': 'Projects Overview',
+            {'name': _('Projects Overview'),
              'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
                         for slug in (EnterpriseReport.DOMAINS,
                                      EnterpriseReport.FORM_SUBMISSIONS,
                                      EnterpriseReport.SMS,)]},
-            {'name': 'User Management',
+            {'name': _('User Management'),
              'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
                         for slug in (EnterpriseReport.WEB_USERS,
                                      EnterpriseReport.MOBILE_USERS,
                                      EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,)]},
-            {'name': 'Data Management & Export',
+            {'name': _('Data Management & Export'),
              'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
                         for slug in (EnterpriseReport.ODATA_FEEDS,)]},
         ],
