@@ -487,7 +487,7 @@ class DatatablesServerSideParams:
     """These are the datatables parameters which accept queries
     using datatables 1.10 or greater using serverSide = True.
     """
-    def __init__(self, draw, start, length, columns, order, search):
+    def __init__(self, draw, start, length, columns, order, search, data):
         """See docs here for reference: https://datatables.net/manual/server-side
         :param draw: int
         :param start: int
@@ -506,6 +506,7 @@ class DatatablesServerSideParams:
                 'dir': str('asc' or 'desc'),
             }
         :param search: dict with format {'value': str(), 'regex': boolean}
+        :param data: QueryDict from `request.GET` or `request.POST`
         """
         self.columns = columns
         self.order = order
@@ -513,6 +514,7 @@ class DatatablesServerSideParams:
         self.start = start
         self.length = length
         self.search = search
+        self.data = data
 
     @classmethod
     def from_request(cls, request):
@@ -520,7 +522,7 @@ class DatatablesServerSideParams:
         :param request: a standard request object
         :return instance of DatatablesServerSideParams:
         """
-        data = request.POST if request.method == 'POST' else request.GET
+        data = cls.get_request_data(request)
         draw = int(data.get('draw', 0))
         start = int(data.get('start', 0))
         length = int(data.get('length', 10))
@@ -530,7 +532,7 @@ class DatatablesServerSideParams:
             'value': data.get('search[value]', ''),
             'regex': bool(data.get('search[regex]') == 'true'),
         }
-        return cls(draw, start, length, columns, order, search)
+        return cls(draw, start, length, columns, order, search, data)
 
     @staticmethod
     def _get_columns(request_data):
@@ -567,6 +569,31 @@ class DatatablesServerSideParams:
             except (ValueError, TypeError):
                 break
         return order
+
+    @classmethod
+    def get_request_data(cls, request):
+        return request.POST if request.method == 'POST' else request.GET
+
+    def get_value(self, param, default_value=None, as_list=False):
+        return self.get_value_from_data(self.data, param,
+                                        default_value=default_value, as_list=as_list)
+
+    @staticmethod
+    def get_value_from_data(data, param, default_value=None, as_list=False):
+        if param in data:
+            return data.getlist(param) if as_list else data.get(param)
+        # for bootstrap 5 reports using Datatables > 1.10
+        for hq_param in [f"hq[{param}][]", f"hq[{param}]"]:
+            if hq_param in data:
+                return data.getlist(hq_param) if as_list else data.get(hq_param)
+        if default_value is None and as_list:
+            return []
+        return default_value
+
+    @classmethod
+    def get_value_from_request(cls, request, param, default_value=None, as_list=False):
+        return cls.get_value_from_data(cls.get_request_data(request), param,
+                                       default_value=default_value, as_list=as_list)
 
 
 # --- Tableau API util methods ---

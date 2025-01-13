@@ -52,7 +52,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     def _build_query(self):
         query = self._base_query()
         query.es_query['sort'] = self.get_sorting_block()
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
 
         if self.case_filter:
             query = query.filter(self.case_filter)
@@ -119,7 +119,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def case_owners(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
         return get_case_owners(self.request, self.domain, mobile_user_and_group_slugs)
 
     def get_case(self, row):
@@ -138,10 +138,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
     @property
     def shared_pagination_GET_params(self):
-        shared_params = super(CaseListMixin, self).shared_pagination_GET_params
+        shared_params = super().shared_pagination_GET_params
         shared_params.append(dict(
             name=SelectOpenCloseFilter.slug,
-            value=self.request.GET.get(SelectOpenCloseFilter.slug, '')
+            value=self.get_request_param(SelectOpenCloseFilter.slug, ''),
         ))
         return shared_params
 

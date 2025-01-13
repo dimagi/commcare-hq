@@ -77,7 +77,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     @property
     def es_query(self):
         time_filter = form_es.submitted if self.by_submission_time else form_es.completed
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
 
         query = (form_es.FormES()
                  .domain(self.domain)

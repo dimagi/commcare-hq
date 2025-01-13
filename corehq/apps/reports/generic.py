@@ -201,7 +201,9 @@ class GenericReportView(object):
             raise ValueError("Class property dispatcher should point to a subclass of ReportDispatcher.")
 
         self.request = request
-        self.request_params = json_request(self.request.GET if self.request.method == 'GET' else self.request.POST)
+        self._request_params = json_request(
+            self.request.GET if self.request.method == 'GET' else self.request.POST
+        )
         self.domain = normalize_domain_name(domain)
         self.context = base_context or {}
         self._update_initial_context()
@@ -232,7 +234,7 @@ class GenericReportView(object):
 
         return dict(
             request=request,
-            request_params=self.request_params,
+            request_params=self._request_params,
             domain=self.domain,
             context={}
         )
@@ -272,8 +274,35 @@ class GenericReportView(object):
                           (self.name, e))
         self.request = request
         self._caching = True
-        self.request_params = state.get('request_params')
+        self._request_params = state.get('request_params')
         self._update_initial_context()
+
+    def get_request_param(self, param, default_value=None, as_list=False, from_json=False):
+        """
+        Retrieves the value of a given parameter from the request GET/POST QueryDicts
+        or from a json_request wrapped version of that data stored in self._request_params.
+
+        :param param: (string) slug of parameter in request data
+        :param default_value: default value if parameter is not found in request data
+        :param as_list: (boolean) True if you want to retrieve the data using `getlist`
+        :param from_json: (boolean) True if you want to retrieve data from the `json_request`
+            object stored in `self._request_params`
+        """
+        if from_json:
+            return self._request_params.get(param, default_value)
+        request_data = self.request.POST if self.request.method == 'POST' else self.request.GET
+        return request_data.getlist(param) if as_list else request_data.get(param, default_value)
+
+    @property
+    def request_params(self):
+        if self.use_bootstrap5:
+            # Datatables 1.10+ introduces new formatting for request parameters that changes the
+            # keys passed to HQ from a Datatables request. `GenericTabularReport.get_request_param`
+            # includes utilities to work with these changes.
+            raise ValueError("Please use `get_request_param` to access request parameters.")
+        # Bootstrap 3 reports can still access self.request_params directly without issue, until
+        # that usage is cleaned up
+        return self._request_params
 
     @property
     @memoized
@@ -365,7 +394,7 @@ class GenericReportView(object):
     @memoized
     def export_format(self):
         from couchexport.models import Format
-        return self.export_format_override or self.request.GET.get('format', Format.XLS_2007)
+        return self.export_format_override or self.get_request_param('format', Format.XLS_2007)
 
     @property
     def export_name(self):
@@ -450,9 +479,10 @@ class GenericReportView(object):
         is a query string. This gets carried to additional asynchronous calls
         """
         are_filters_set = bool(self.request.META.get('QUERY_STRING'))
-        if "filterSet" in self.request.GET:
+        filter_set_value = self.get_request_param("filterSet")
+        if filter_set_value is not None:
             try:
-                are_filters_set = string_to_boolean(self.request.GET.get("filterSet"))
+                are_filters_set = string_to_boolean(filter_set_value)
             except ValueError:
                 # not a parseable boolean
                 pass
@@ -481,7 +511,7 @@ class GenericReportView(object):
         """
         report_configs = ReportConfig.by_domain_and_owner(self.domain,
             self.request.couch_user._id, report_slug=self.slug)
-        current_config_id = self.request.GET.get('config_id', '')
+        current_config_id = self.get_request_param('config_id', '')
         default_config = ReportConfig.default()
 
         def is_editable_datespan(field):
@@ -649,7 +679,7 @@ class GenericReportView(object):
         self.update_report_context()
 
         rendered_filters = None
-        if bool(self.request.GET.get('hq_filters')):
+        if bool(self.get_request_param('hq_filters')):
             self.update_filter_context()
             rendered_filters = render_to_string(
                 self.template_filters, self.context, request=self.request
@@ -971,6 +1001,15 @@ class GenericTabularReport(GenericReportView):
                 "'datatables_params' should only be used by Bootstrap 5 reports"
             )
         return DatatablesServerSideParams.from_request(self.request)
+
+    def get_request_param(self, param, default_value=None, as_list=False, from_json=False):
+        if self.use_bootstrap5:
+            return self.datatables_params.get_value_from_data(
+                self._request_params, param, default_value=default_value
+            ) if from_json else self.datatables_params.get_value(
+                param, default_value=default_value, as_list=as_list
+            )
+        return super().get_request_param(param, default_value=default_value, as_list=as_list, from_json=from_json)
 
     @property
     def json_dict(self):
