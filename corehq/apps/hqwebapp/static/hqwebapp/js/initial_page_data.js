@@ -100,7 +100,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
     var reverse = function (name) {
         var args = arguments;
         var index = 1;
-        if (!urls[name]) {
+        if (!urls2[name]) {
             _.extend(urls, gather(urlSelector, urls));
             if (!urls[name]) {
                 throw new Error("URL '" + name + "' not found in registry");
