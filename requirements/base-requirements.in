@@ -66,7 +66,7 @@ kafka-python
 looseversion
 lxml
 markdown
-numpy   # Temporary requirement for POC.
+numpy==1.26.4    # Temporary requirement for POC.
 oic
 pulp  # Used in Geospatial features to solve routing problems - SolTech
 openpyxl

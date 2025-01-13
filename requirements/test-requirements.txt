@@ -383,7 +383,7 @@ multidict==6.0.5
     # via
     #   aiohttp
     #   yarl
-numpy==2.0.2
+numpy==1.26.4
     # via
     #   -r base-requirements.in
     #   scikit-learn

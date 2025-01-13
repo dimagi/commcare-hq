@@ -384,7 +384,7 @@ multidict==6.0.5
     #   yarl
 myst-parser==2.0.0
     # via -r docs-requirements.in
-numpy==2.0.2
+numpy==1.26.4
     # via
     #   -r base-requirements.in
     #   scikit-learn
