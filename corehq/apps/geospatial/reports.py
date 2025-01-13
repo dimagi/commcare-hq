@@ -25,7 +25,10 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.util.quickcache import quickcache
 
 from .dispatchers import CaseManagementMapDispatcher
-from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
+from corehq.apps.geospatial.const import (
+    ES_INDEX_TASK_HELPER_BASE_KEY,
+    ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
+)
 from .es import (
     BUCKET_CASES_AGG,
     CASE_PROPERTIES_AGG,
@@ -102,6 +105,14 @@ class CaseManagementMap(BaseCaseMapReport):
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
+
+    @property
+    def template_context(self):
+        context = super(CaseManagementMap, self).template_context
+        celery_task_tracker = get_celery_task_tracker(self.domain, ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY)
+        if celery_task_tracker.is_active():
+            context['reassignment_task_status'] = celery_task_tracker.get_status()
+        return context
 
     @property
     def headers(self):
