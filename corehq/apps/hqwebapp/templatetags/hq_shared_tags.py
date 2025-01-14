@@ -754,8 +754,8 @@ class WebpackMainNode(RequireJSMainNode):
 import logging
 @register.filter
 def webpack_bundles(entry_name):
-    #if settings.UNIT_TESTING:
-    #    return []
+    if settings.UNIT_TESTING:
+        return []
     logger = logging.getLogger('webpack')
 
     logger.info("[WEBPACK] in webpack_bundles")
