@@ -1,5 +1,5 @@
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 
 from django.test import TestCase
 from django.urls import reverse
@@ -623,6 +623,69 @@ class TestWebUserResource(APIResourceTest):
                 self.assertEqual(response_json['profile'], value)
 
         return updated_user
+
+    @patch('corehq.apps.api.validation.WebUserResourceValidator.is_valid')
+    @patch('corehq.apps.reports.util.get_tableau_group_json')
+    @patch('corehq.apps.api.resources.v0_5.get_tableau_groups_for_user')
+    @patch('corehq.apps.api.user_updates.update_tableau_user')
+    @patch('corehq.apps.api.user_updates.TableauAPISession.create_session_for_domain')
+    def test_update_tableau_role(self, mock_create_session, mock_update_tableau_user,
+                                 mock_get_tableau_groups_for_user, mock_get_tableau_group_json, mock_is_valid):
+        from corehq.apps.reports.util import TableauGroupTuple
+        mock_is_valid.return_value = []
+        mock_create_session.return_value = "fake_session"
+        mock_get_tableau_group_json.return_value = [{"name": "group1", "id": "id1"},
+                                                    {"name": "group2", "id": "id2"},
+                                                    {"name": "group3", "id": "id3"}]
+
+        editable_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
+        self.addCleanup(editable_user.delete, self.domain.name, deleted_by=None)
+
+        # Set up for testing dehydration
+        mock_get_tableau_groups_for_user.return_value = [
+            TableauGroupTuple('group1', 'id1'),
+            TableauGroupTuple('group2', 'id2')
+        ]
+        from corehq.apps.reports.models import TableauServer, TableauUser
+        test_server = TableauServer.objects.create(
+            domain=self.domain.name,
+            server_type='server',
+            server_name='test_server',
+            validate_hostname='host name',
+            target_site='target site'
+        )
+        self.addCleanup(test_server.delete)
+        tableau_user = TableauUser.objects.create(
+            server=test_server,
+            username='anotherguy',
+            tableau_user_id='dfg789poi',
+            role='Viewer'
+        )
+        self.addCleanup(tableau_user.delete)
+
+        update_json = {
+            'tableau_role': 'Viewer',
+            'tableau_groups': ['group1', 'group2'],
+        }
+
+        backend_id = editable_user._id
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
+                                                   json.dumps(update_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(response_json['tableau_role'], 'Viewer')
+        self.assertEqual(response_json['tableau_groups'], ['group1', 'group2'])
+
+        mock_create_session.assert_called_once_with(self.domain.name)
+        mock_update_tableau_user.assert_has_calls([
+            call(self.domain.name, editable_user.username, 'Viewer', session="fake_session"),
+            call(self.domain.name, editable_user.username,
+                 groups=[TableauGroupTuple(name='group1', id='id1'), TableauGroupTuple(name='group2', id='id2')],
+                 session="fake_session")
+        ])
 
 
 class FakeUserES(object):
