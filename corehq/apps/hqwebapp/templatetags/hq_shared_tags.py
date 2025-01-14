@@ -779,8 +779,8 @@ logger = logging.getLogger('webpack')
 @register.filter
 def webpack_bundles(entry_name):
     logger.warning(f"[WEBPACK] settings.UNIT_TESTING = {settings.UNIT_TESTING}")
-    if settings.UNIT_TESTING:
-        return []
+    #if settings.UNIT_TESTING:
+    #    return []
 
     logger.warning("[WEBPACK] in webpack_bundles")
     from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
