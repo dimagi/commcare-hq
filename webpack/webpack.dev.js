@@ -11,7 +11,7 @@ module.exports = [
     merge(
         common, {
             mode: 'development',
-            devtool: 'eval-cheap-module-source-map',
+            devtool: 'inline-source-map',
             output: {
                 filename: '[name].js',
                 path: utils.WEBPACK_PATH,
@@ -24,7 +24,7 @@ module.exports = [
     merge(
         b3Common, {
             mode: 'development',
-            devtool: 'eval-cheap-module-source-map',
+            devtool: 'inline-source-map',
             output: {
                 filename: '[name].js',
                 path: utils.WEBPACK_B3_PATH,
