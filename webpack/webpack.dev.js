@@ -11,6 +11,9 @@ module.exports = [
     merge(
         common, {
             mode: 'development',
+            node: {
+                global: true,
+            },
             devtool: 'inline-source-map',
             output: {
                 filename: '[name].js',
@@ -24,6 +27,9 @@ module.exports = [
     merge(
         b3Common, {
             mode: 'development',
+            node: {
+                global: true,
+            },
             devtool: 'inline-source-map',
             output: {
                 filename: '[name].js',
