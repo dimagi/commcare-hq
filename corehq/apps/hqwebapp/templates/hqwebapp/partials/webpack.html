@@ -6,6 +6,7 @@
     console.log("Loaded JS entry point: {{ js_entry }}");
     console.log("Bundles: {{ js_entry|webpack_bundles }}");
     console.log("end of this block");
+    console.log("jenny debug: {% jenny_debug %}");
   </script>
   {% for bundle_path in js_entry|webpack_bundles %}
     <script>
