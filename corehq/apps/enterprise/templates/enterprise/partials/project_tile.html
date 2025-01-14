@@ -8,10 +8,20 @@
     <h4 class="fs-5 pt-2">{{ report.title }}</h4>
   </div>
   <div class="card-body pb-1">
-    <div class="js-total fw-bold fs-1">
-      <i class="fa fa-spin fa-spinner"></i>
+    <div class="row justify-content-center">
+      <div class="col-auto align-items-center position-relative">
+        <div class="js-total fw-bold fs-1">
+          <i class="fa fa-spin fa-spinner"></i>
+        </div>
+        {% if report.total_description %}
+          <div class="position-absolute start-100" style="top: 25%">
+            <span class="hq-help-template" data-content="{{ report.total_description }}" data-placement="right">
+              <i class="fa fa-info-circle"></i>
+            </span>
+          </div>
+        {% endif %}
+      </div>
     </div>
-    <div class="fs-5 ">{{ report.total_description }}</div>
   </div>
   <div class="card-footer bg-transparent border-0 pt-0">
     <div class="pb-2">
