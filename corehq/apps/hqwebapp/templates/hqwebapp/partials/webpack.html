@@ -6,6 +6,9 @@
     console.log("Loaded JS entry point: {{ js_entry }}");
   </script>
   {% for bundle_path in js_entry|webpack_bundles %}
+    <script>
+        console.log("Writing script tag for {% static bundle_path %}");
+    </script>
     <script src="{% static bundle_path %}"></script>
   {% endfor %}
 {% endif %}

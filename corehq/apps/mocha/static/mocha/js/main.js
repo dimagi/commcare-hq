@@ -24,8 +24,12 @@ hqDefine("mocha/js/main", [
     kissAnalytics.track.event = sinon.spy();
 
     var run = function () {
+console.log("\n\nuserAgent: " + navigator.userAgent + "\n\n");
         if (navigator.userAgent.indexOf('PhantomJS') < 0) {
+console.log("so i am RUNNING");
             mocha.run();
+        } else {
+console.log("so i do nothing");
         }
     };
 
