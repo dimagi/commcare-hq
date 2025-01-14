@@ -752,11 +752,12 @@ class WebpackMainNode(RequireJSMainNode):
 
 
 import logging
+logger = logging.getLogger('webpack')
 @register.filter
 def webpack_bundles(entry_name):
+    logger.info(f"[WEBPACK] settings.UNIT_TESTING = {settings.UNIT_TESTING}")
     if settings.UNIT_TESTING:
         return []
-    logger = logging.getLogger('webpack')
 
     logger.info("[WEBPACK] in webpack_bundles")
     from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
