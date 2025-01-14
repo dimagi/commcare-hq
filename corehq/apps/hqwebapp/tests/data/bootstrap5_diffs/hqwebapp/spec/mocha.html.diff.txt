@@ -4,8 +4,8 @@
  {% extends "mocha/base.html" %}
  {% load hq_shared_tags %}
  
--{% requirejs_main "hqwebapp/spec/bootstrap3/main" %}
-+{% requirejs_main_b5 "hqwebapp/spec/bootstrap5/main" %}
+-{% js_entry_b3 "hqwebapp/spec/bootstrap3/main" %}
++{% js_entry "hqwebapp/spec/bootstrap5/main" %}
  
  {% block fixtures %}
  {% endblock %}

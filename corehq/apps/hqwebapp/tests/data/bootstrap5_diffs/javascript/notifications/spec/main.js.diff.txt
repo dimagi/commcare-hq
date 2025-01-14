@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ import hqMocha from "mocha/js/main";
+ import "commcarehq";
+ 
+-import "notifications/spec/bootstrap3/service_spec";
++import "notifications/spec/bootstrap5/service_spec";
+ 
+ $(function () {
+     hqMocha.run();
