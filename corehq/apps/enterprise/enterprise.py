@@ -59,12 +59,11 @@ class EnterpriseReport(ABC):
         pass
 
     @property
-    @abstractmethod
     def total_description(self):
         """
         To provide a description of the total number we displayed in tile
         """
-        pass
+        return ''
 
     def __init__(self, account, couch_user, **kwargs):
         self.account = account
@@ -146,7 +145,6 @@ class EnterpriseReport(ABC):
 class EnterpriseDomainReport(EnterpriseReport):
 
     title = gettext_lazy('Project Spaces')
-    total_description = gettext_lazy('# of Project Spaces')
 
     @property
     def headers(self):
@@ -171,7 +169,6 @@ class EnterpriseDomainReport(EnterpriseReport):
 class EnterpriseWebUserReport(EnterpriseReport):
 
     title = gettext_lazy('Web Users')
-    total_description = gettext_lazy('# of Web Users')
 
     @property
     def headers(self):
@@ -218,7 +215,6 @@ class EnterpriseWebUserReport(EnterpriseReport):
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
     title = gettext_lazy('Mobile Workers')
-    total_description = gettext_lazy('# of Mobile Workers')
 
     @property
     def headers(self):
@@ -250,7 +246,6 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 class EnterpriseFormReport(EnterpriseReport):
     title = gettext_lazy('Mobile Form Submissions')
-    total_description = gettext_lazy('# of Mobile Form Submissions')
 
     MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
     MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
@@ -359,7 +354,6 @@ class EnterpriseFormReport(EnterpriseReport):
 
 class EnterpriseODataReport(EnterpriseReport):
     title = gettext_lazy('OData Feeds')
-    total_description = gettext_lazy('# of OData Feeds')
 
     MAXIMUM_EXPECTED_EXPORTS = 150
 
