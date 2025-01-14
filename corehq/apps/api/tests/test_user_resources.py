@@ -576,6 +576,7 @@ class TestWebUserResource(APIResourceTest):
     def test_update(self, mock_is_valid):
         mock_is_valid.return_value = []
         editable_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
+        self.addCleanup(editable_user.delete, self.domain.name, deleted_by=None)
 
         expected_json = {}
 
