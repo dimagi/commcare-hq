@@ -51,8 +51,8 @@ that have repeat records ready to be sent. It does so in a round-robin
 fashion, cycling through their domains. It does this so that:
 
 * Domains and repeaters are not rate-limited unnecessarily.
-* CommCare HQ does not DoS-attack remote APIs by unintentionally sending
-  repeat records in large chunks.
+* CommCare HQ tries to avoid flooding remote APIs by distributing the
+  load among all active repeaters.
 * No domain has to wait while another domain consumes all the repeat
   record queue workers.
 
