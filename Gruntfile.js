@@ -72,7 +72,7 @@ module.exports = function (grunt) {
 
         // For running in docker
         if (process.env.PUPPETEER_SKIP_DOWNLOAD) {
-            //runnerOptions.executablePath = 'google-chrome-stable';
+            runnerOptions.executablePath = 'google-chrome-stable';
         }
 
         grunt.log.writeln("\n");
