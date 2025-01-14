@@ -70,7 +70,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='uuid', readonly=True, unique=True)
     email = fields.CharField(attribute='email')
     role = fields.CharField()
-    primary_location_id = fields.CharField(null=True)
+    primary_location_id = fields.CharField(attribute='primary_location_id', null=True)
     assigned_location_ids = fields.ListField(null=True)
     profile = fields.CharField(null=True)
     custom_user_data = fields.DictField(attribute='custom_user_data')
@@ -87,11 +87,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
         return bundle.obj.get_role_name()
 
     def dehydrate_assigned_location_ids(self, bundle):
-        return [loc.location_id for loc in bundle.obj.assigned_locations.all() if loc is not None]
-
-    def dehydrate_primary_location_id(self, bundle):
-        if bundle.obj.primary_location:
-            return bundle.obj.primary_location.location_id
+        return list(bundle.obj.assigned_locations.values_list('location_id', flat=True))
 
     def dehydrate_tableau_groups(self, bundle):
         return [group.name for group in get_tableau_groups_by_ids(bundle.obj.tableau_group_ids,
@@ -134,7 +130,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
 
             if missing_ids := set(spec.assigned_location_ids) - set(real_ids):
                 raise ImmediateHttpResponse(JsonResponse(
-                    {"errors": f"Could not find location ids: {', '.join(missing_ids)}."}, status=400))
+                    {"error": f"Could not find location ids: {', '.join(missing_ids)}."}, status=400))
 
         invite = Invitation.objects.create(
             domain=domain,
