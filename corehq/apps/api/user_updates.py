@@ -95,8 +95,8 @@ class UserUpdates():
         return True
 
     def _remove_all_locations(self):
-        self.user.unset_location(commit=False)
-        self.user.reset_locations([], commit=False)
+        self._unset_location()
+        self._reset_locations([])
         if self.user_change_logger:
             self.user_change_logger.add_changes({'location_id': None})
             self.user_change_logger.add_info(UserChangeMessage.primary_location_removed())
@@ -126,6 +126,9 @@ class UserUpdates():
             self.user_change_logger.add_info(UserChangeMessage.assigned_locations_info(locations))
 
     def _set_location(self, primary_location):
+        raise NotImplementedError("Subclasses must implement reset_locations method")
+
+    def _unset_location(self):
         raise NotImplementedError("Subclasses must implement reset_locations method")
 
     def _reset_locations(self, location_ids):
@@ -247,6 +250,9 @@ class CommcareUserUpdates(UserUpdates):
     def _set_location(self, primary_location):
         self.user.set_location(primary_location, commit=False)
 
+    def _unset_location(self):
+        self.user.unset_location(commit=False)
+
     def _reset_locations(self, location_ids):
         self.user.reset_locations(location_ids, commit=False)
 
@@ -294,6 +300,9 @@ class WebUserUpdates(UserUpdates):
 
     def _set_location(self, primary_location):
         self.user.set_location(self.domain, primary_location, commit=False)
+
+    def _unset_location(self):
+        self.user.unset_location(self.domain, commit=False)
 
     def _reset_locations(self, location_ids):
         self.user.reset_locations(self.domain, location_ids, commit=False)
