@@ -436,7 +436,7 @@ class WebUserResource(v0_1.WebUserResource):
         profile_id = bundle.obj.get_user_data(bundle.request.domain).profile_id
         if profile_id:
             return CustomDataFieldsProfile.objects.get(id=profile_id).name
-        return None
+        return ''
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if bundle_or_obj is None:
