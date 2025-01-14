@@ -35,7 +35,7 @@ class WebUserSpec:
     primary_location_id: str = None
     assigned_location_ids: List[str] = None
     new_or_existing_profile_name: str = None
-    new_or_existing_user_data: dict = None
+    new_or_existing_user_data: dict = field(default_factory=dict)
     tableau_role: str = None
     tableau_groups: List[str] = None
     parameters: List[str] = field(default_factory=list)

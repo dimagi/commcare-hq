@@ -110,7 +110,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
             primary_location_id=bundle.data.get('primary_location_id'),
             assigned_location_ids=bundle.data.get('assigned_location_ids'),
             new_or_existing_profile_name=bundle.data.get('profile'),
-            new_or_existing_user_data=bundle.data.get('user_data'),
+            new_or_existing_user_data=bundle.data.get('user_data') or {},
             tableau_role=bundle.data.get('tableau_role'),
             tableau_groups=bundle.data.get('tableau_groups'),
             parameters=bundle.data.keys(),
