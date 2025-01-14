@@ -155,7 +155,7 @@ class WebUserResourceValidator():
 
         for key in custom_data.keys():
             if key in system_fields:
-                errors.append(_("'{}' cannot be set directly").format(key))
+                errors.append(_("'{}' is defined by the profile so cannot be set directly").format(key))
         return errors
 
     def validate_email(self, email, is_post):
