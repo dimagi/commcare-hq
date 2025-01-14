@@ -755,29 +755,29 @@ import logging
 logger = logging.getLogger('webpack')
 @register.filter
 def webpack_bundles(entry_name):
-    logger.info(f"[WEBPACK] settings.UNIT_TESTING = {settings.UNIT_TESTING}")
+    logger.warning(f"[WEBPACK] settings.UNIT_TESTING = {settings.UNIT_TESTING}")
     if settings.UNIT_TESTING:
         return []
 
-    logger.info("[WEBPACK] in webpack_bundles")
+    logger.warning("[WEBPACK] in webpack_bundles")
     from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
     from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
     bootstrap_version = get_bootstrap_version()
-    logger.info(f"[WEBPACK] bootstrap_version = {bootstrap_version}")
+    logger.warning(f"[WEBPACK] bootstrap_version = {bootstrap_version}")
 
     try:
         if bootstrap_version == BOOTSTRAP_5:
-            logger.info("[WEBPACK] getting B5 manifest")
+            logger.warning("[WEBPACK] getting B5 manifest")
             manifest = get_webpack_manifest()
             webpack_folder = 'webpack'
-            logger.info("[WEBPACK] got B5 manifest")
+            logger.warning("[WEBPACK] got B5 manifest")
         else:
-            logger.info("[WEBPACK] getting B3 manifest")
+            logger.warning("[WEBPACK] getting B3 manifest")
             manifest = get_webpack_manifest('manifest_b3.json')
             webpack_folder = 'webpack_b3'
-            logger.info("[WEBPACK] got B3 manifest")
+            logger.warning("[WEBPACK] got B3 manifest")
     except WebpackManifestNotFoundError:
-        logger.info("[WEBPACK] hit TemplateSyntaxError")
+        logger.warning("[WEBPACK] hit TemplateSyntaxError")
         raise TemplateSyntaxError(
             f"No webpack manifest found!\n"
             f"'{entry_name}' will not load correctly.\n\n"
@@ -785,7 +785,7 @@ def webpack_bundles(entry_name):
         )
 
     bundles = manifest.get(entry_name, [])
-    logger.info(f"[WEBPACK] got bundles: {bundles}")
+    logger.warning(f"[WEBPACK] got bundles: {bundles}")
     if not bundles:
         webpack_error = (
             f"No webpack manifest entry found for '{entry_name}'.\n\n"
