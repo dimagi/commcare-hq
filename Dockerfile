@@ -73,4 +73,4 @@ RUN npm -g install \
 # referencing google-chrome-unstable have completed (at least a few weeks or
 # months after the PR in which this was introduced is merged). Old PRs can be
 # updated to use google-chrome-stable by merging master into them.
-RUN ln -s /usr/bin/google-chrome-stable /usr/bin/google-chrome-unstable
+#RUN ln -s /usr/bin/google-chrome-stable /usr/bin/google-chrome-unstable
