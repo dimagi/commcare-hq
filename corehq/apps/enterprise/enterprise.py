@@ -48,7 +48,7 @@ class EnterpriseReport(ABC):
     ODATA_FEEDS = 'odata_feeds'
     COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
     SMS = 'sms'
-    API_USAGE = 'api_usage'
+    API_KEYS = 'api_keys'
     TWO_FACTOR_AUTH = '2fa'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
@@ -96,7 +96,7 @@ class EnterpriseReport(ABC):
             report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
         elif slug == cls.SMS:
             report = EnterpriseSMSReport(account, couch_user, **kwargs)
-        elif slug == cls.API_USAGE:
+        elif slug == cls.API_KEYS:
             report = EnterpriseAPIReport(account, couch_user, **kwargs)
         elif slug == cls.TWO_FACTOR_AUTH:
             report = Enterprise2FAReport(account, couch_user, **kwargs)
@@ -565,8 +565,7 @@ class EnterpriseSMSReport(EnterpriseReport):
 
 
 class EnterpriseAPIReport(EnterpriseReport):
-    title = gettext_lazy('API Usage')
-    total_description = gettext_lazy('# of Active API Keys')
+    title = gettext_lazy('API Keys')
 
     @property
     def headers(self):
