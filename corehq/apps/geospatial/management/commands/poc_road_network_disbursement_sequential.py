@@ -35,8 +35,13 @@ class Command(BaseCommand):
             type=int,
             help="solves disbursement for percent of clusters specified",
         )
+        parser.add_argument('--limit_memory', required=False, type=int, help="limits memory usage to size in MB")
 
     def handle(self, *args, **options):
+        limit_memory = options.get('limit_memory')
+        if limit_memory:
+            set_max_memory(limit_memory)
+
         domain = options['domain']
         cluster_chunk_size = options['cluster_chunk_size']
         print(f"Cluster chunk size: {cluster_chunk_size}")
@@ -146,3 +151,11 @@ class Command(BaseCommand):
             print(f"cluster index: {key}, users: {len(clusters[key]['users'])},"
                   f" cases: {len(clusters[key]['cases'])}")
         return clusters
+
+
+# Can be used to set max memory for the process (used for low memory machines, like india django server)
+# Example: 800 MB set_max_memory(1024 * 1000 * 800)
+def set_max_memory(size_in_mb):  # size (in bytes)
+    import resource
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    resource.setrlimit(resource.RLIMIT_AS, (1024 * 1000 * size_in_mb, hard))
