@@ -576,26 +576,72 @@ class TestWebUserResource(APIResourceTest):
     def test_update(self, mock_is_valid):
         mock_is_valid.return_value = []
         editable_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
-        role = UserRole.objects.get(domain=self.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
-        editable_user.set_role(self.domain.name, role.get_qualified_id())
-        editable_user.set_location(self.domain.name, self.loc1)
-        editable_user.save()
-        self.addCleanup(editable_user.delete, self.domain.name, deleted_by=None)
 
-        self.assertEqual(editable_user.get_role(self.domain.name).name, UserRolePresets.FIELD_IMPLEMENTER)
-        self.assertEqual(editable_user.get_user_data(self.domain.name).raw, {})
-        self.assertEqual(editable_user.get_location_id(self.domain.name), self.loc1.location_id)
+        expected_json = {}
+
         update_json = {
             'role': 'App Editor',
-            'user_data': {'fake_field': 'updated'},
+            'user_data': {
+                'fake_field': 'updated',
+                'another_field': 'value',
+            },
             'profile': 'test_profile',
             'primary_location_id': 'loc2',
             'assigned_location_ids': ['loc1', 'loc2'],
         }
+        expected_json.update(update_json)
+        self._update_and_assert_user(editable_user, update_json, expected_json)
 
-        self._update_and_assert_user(editable_user, update_json)
+        update_json_minimal = {
+            'role': 'Field Implementer',
+        }
+        expected_json.update(update_json_minimal)
+        self._update_and_assert_user(editable_user, update_json_minimal, expected_json)
 
-    def _update_and_assert_user(self, editable_user, update_json):
+        update_json_removing_user_data = {
+            'user_data': {
+                'fake_field': 'updated',
+                'another_field': ''
+            },
+        }
+        expected_json.update(update_json_removing_user_data)
+        self._update_and_assert_user(editable_user, update_json_removing_user_data, expected_json)
+
+        update_json_update_only_one_user_data_field = {
+            'user_data': {
+                'another_field': 'updated',
+            },
+        }
+        expected_json['user_data'].update(update_json_update_only_one_user_data_field['user_data'])
+        self._update_and_assert_user(editable_user, update_json_update_only_one_user_data_field, expected_json)
+
+        update_json_different_profile = {
+            'profile': 'test_profile2',
+        }
+        expected_json.update(update_json_different_profile)
+        self._update_and_assert_user(editable_user, update_json_different_profile, expected_json)
+
+        update_json_different_location = {
+            'primary_location_id': 'loc1',
+            'assigned_location_ids': ['loc1'],
+        }
+        expected_json.update(update_json_different_location)
+        self._update_and_assert_user(editable_user, update_json_different_location, expected_json)
+
+        update_json_empty = {
+            'user_data': {},
+            'profile': '',
+            'primary_location_id': '',
+            'assigned_location_ids': [],
+        }
+        expected_json.update({
+            'profile': '',
+            'primary_location_id': '',
+            'assigned_location_ids': [],
+        })
+        self._update_and_assert_user(editable_user, update_json_empty, expected_json)
+
+    def _update_and_assert_user(self, editable_user, update_json, expected_json):
         backend_id = editable_user._id
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                                    json.dumps(update_json),
@@ -604,12 +650,12 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 200, response.content)
         updated_user = WebUser.get(backend_id)
         response_json = response.json()
-        for key, value in update_json.items():
+        for key, value in expected_json.items():
             if key == "role":
                 self.assertEqual(updated_user.get_role(self.domain.name).name, value)
                 self.assertEqual(response_json['role'], value)
             elif key == "primary_location_id":
-                self.assertEqual(updated_user.get_location_id(self.domain.name), value)
+                self.assertEqual(updated_user.get_location_id(self.domain.name) or '', value)
                 self.assertEqual(response_json['primary_location_id'], value)
             elif key == "assigned_location_ids":
                 self.assertEqual(updated_user.get_location_ids(self.domain.name), value)
@@ -619,7 +665,8 @@ class TestWebUserResource(APIResourceTest):
                 self.assertEqual(response_json['user_data'],
                                  updated_user.get_user_data(self.domain.name).to_dict())
             elif key == "profile":
-                self.assertEqual(updated_user.get_user_data(self.domain.name).profile.name, value)
+                profile_data = updated_user.get_user_data(self.domain.name).profile
+                self.assertEqual(profile_data.name if profile_data else '', value)
                 self.assertEqual(response_json['profile'], value)
 
         return updated_user
