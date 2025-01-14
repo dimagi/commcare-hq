@@ -405,7 +405,7 @@ class WebUserResource(v0_1.WebUserResource):
         always_return_data = True
 
     def dehydrate_primary_location_id(self, bundle):
-        return bundle.obj.get_location_id(bundle.request.domain)
+        return bundle.obj.get_location_id(bundle.request.domain) or ''
 
     def dehydrate_assigned_location_ids(self, bundle):
         return bundle.obj.get_location_ids(bundle.request.domain)
