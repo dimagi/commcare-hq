@@ -44,7 +44,7 @@
  * and is taken advantage of in this code.
  * */
 hqDefine('app_manager/js/releases/app_diff', function () {
-    var reverse = hqImport('hqwebapp/js/initial_page_data').reverse;
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     var sanitize = DOMPurify.sanitize;
 
     var init = function (selector, options) {
@@ -389,7 +389,7 @@ hqDefine('app_manager/js/releases/app_diff', function () {
         var cache = {};
 
         self.getAppData = function (appId) {
-            var url = reverse('app_data_json', appId),
+            var url = initialPageData.reverse('app_data_json', appId),
                 deferred = $.Deferred();
 
             if (_.has(cache, appId)) {
