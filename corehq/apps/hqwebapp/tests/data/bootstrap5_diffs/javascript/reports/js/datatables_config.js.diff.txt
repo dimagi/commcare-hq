@@ -6,7 +6,7 @@
      'jquery',
      'underscore',
      'analytix/js/google',
-@@ -86,7 +86,7 @@
+@@ -87,7 +87,7 @@
              });
              function applyBootstrapMagic() {
                  $('[data-datatable-tooltip]').each(function () {
