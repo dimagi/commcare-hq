@@ -5,6 +5,7 @@ from django_redis import get_redis_connection
 
 from corehq import toggles
 from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
+from corehq.util.metrics import metrics_counter, metrics_histogram
 
 DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try again in a minute."
 DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
@@ -42,10 +43,22 @@ class DeviceRateLimiter:
         if self._device_has_been_used(key, device_id):
             return False
 
-        if self._device_count(key) < self.device_limit_per_user(domain):
+        device_count = self._device_count(key)
+        if device_count < self.device_limit_per_user(domain):
             self._track_usage(key, device_id)
+            # this intentionally doesn't capture users with 1 device, only those with multiple
+            metrics_histogram(
+                'commcare.devices_per_user.device_count',
+                device_count + 1,
+                bucket_tag='count',
+                buckets=[3, 5, 8, 10],
+                tags={'domain': domain, 'user_id': user_id},
+            )
             return False
 
+        metrics_counter(
+            'commcare.devices_per_user.rate_limit_exceeded', tags={'domain': domain, 'user_id': user_id}
+        )
         return True
 
     def _get_redis_key(self, user_id):
