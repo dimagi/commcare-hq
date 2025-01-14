@@ -267,6 +267,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 errorMessage: this.errorMessage,
                 itemsetChoicesDict: itemsetChoicesDict,
                 contentTag: this.parentView.options.sidebarEnabled ? "div" : "td",
+                cid: this.options.model.cid,
             };
         },
 
@@ -474,7 +475,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             });
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.each(function (index, el) {
-                hqTempusDominus.createDefaultDateRangePicker(el, {
+                hqTempusDominus.createDefaultDateRangePicker(el.parentNode, {
                     localization: {
                         format: dateFormat,
                     },
