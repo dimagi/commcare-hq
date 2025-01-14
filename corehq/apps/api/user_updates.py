@@ -34,7 +34,7 @@ class UserUpdates():
         except UserDataError as e:
             raise UpdateUserException(str(e))
         try:
-            if profile_id != ...:
+            if profile_id != ... and profile_id is not None:
                 profile = CustomDataFieldsProfile.objects.get(id=profile_id)
                 if profile:
                     profile_name = profile.name
