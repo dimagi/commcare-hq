@@ -44,22 +44,15 @@
         <% } %>
     </select>
 
-    <% } else if (input === "date") { %>
+    <% } else if (input === "date" || input === "datetime") { %>
     <div class="input-group">
       <input id="<%- text ? text : "" %>"
              type="text"
-             class="date query-field form-control<% if (errorMessage) { %> is-invalid<% } %>"
+             class="<%- input %> query-field form-control<% if (errorMessage) { %> is-invalid<% } %>"
              value="<%- value %>"
              <% if (required) { %> aria-required="true"<% } %>>
       <span class="input-group-text"><i class="fa-solid fa-calendar-days"></i></span>
     </div>
-
-    <% } else if (input === "daterange") { %>
-    <input id="<%- text ? text : "" %>"
-           type="text"
-           class="daterange query-field form-control<% if (errorMessage) { %> is-invalid<% } %>"
-           value="<%- value %>"
-           <% if (required) { %> aria-required="true"<% } %>>
 
     <% } else if (input === "checkbox") { %>
     <fieldset multiple
