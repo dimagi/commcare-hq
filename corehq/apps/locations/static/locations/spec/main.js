@@ -1,3 +1,5 @@
+console.log("i am in locations/spec/main");
+
 import hqMocha from "mocha/js/main";
 import "commcarehq";
 
