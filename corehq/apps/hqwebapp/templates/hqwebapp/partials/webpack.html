@@ -11,4 +11,8 @@
     </script>
     <script src="{% static bundle_path %}"></script>
   {% endfor %}
+{% else %}
+  <script>
+    console.log("No JS entry point found");
+  </script>
 {% endif %}
