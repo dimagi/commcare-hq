@@ -9,6 +9,7 @@ from corehq.util.test_utils import flag_enabled
 
 @freeze_time("2024-12-10 12:05:43")
 @override_settings(DEVICE_LIMIT_PER_USER=1)
+@override_settings(ENABLE_DEVICE_RATE_LIMITER=True)
 class TestDeviceRateLimiter(SimpleTestCase):
 
     domain = 'device-rate-limit-test'
@@ -60,3 +61,8 @@ class TestDeviceRateLimiter(SimpleTestCase):
         self.assertTrue(device_rate_limiter.rate_limit_device(self.domain, 'user-id', 'new-device-id'))
         with flag_enabled('INCREASE_DEVICE_LIMIT_PER_USER'):
             self.assertFalse(device_rate_limiter.rate_limit_device(self.domain, 'user-id', 'new-device-id'))
+
+    @override_settings(ENABLE_DEVICE_RATE_LIMITER=False)
+    def test_allowed_if_rate_limiter_is_disabled(self):
+        device_rate_limiter.rate_limit_device(self.domain, 'user-id', 'existing-device-id')
+        self.assertFalse(device_rate_limiter.rate_limit_device(self.domain, 'user-id', 'new-device-id'))

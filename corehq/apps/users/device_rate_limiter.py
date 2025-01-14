@@ -59,7 +59,7 @@ class DeviceRateLimiter:
         metrics_counter(
             'commcare.devices_per_user.rate_limit_exceeded', tags={'domain': domain, 'user_id': user_id}
         )
-        return True
+        return settings.ENABLE_DEVICE_RATE_LIMITER
 
     def _get_redis_key(self, user_id):
         """
