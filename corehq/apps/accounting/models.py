@@ -531,7 +531,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     def get_domains(self):
         return list(Subscription.visible_objects.filter(account_id=self.id, is_active=True).values_list(
-                    'subscriber__domain', flat=True))
+                    'subscriber__domain', flat=True).order_by('subscriber__domain'))
 
     def has_enterprise_admin(self, email):
         lower_emails = [e.lower() for e in self.enterprise_admin_emails]
