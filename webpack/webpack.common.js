@@ -3,6 +3,7 @@ const path = require('path');
 const webpack = require('webpack');
 const utils = require('./utils');
 const hqPlugins = require('./plugins');
+const nodeExternals = require('webpack-node-externals');
 
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
@@ -28,6 +29,7 @@ const aliases = {
 
 module.exports = {
     entry: utils.getEntries(),
+    externals: [nodeExternals()],
 
     module: {
         rules: [
