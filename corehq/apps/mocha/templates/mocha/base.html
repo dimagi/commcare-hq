@@ -21,7 +21,6 @@
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
     {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=False %}
-    {% include "hqwebapp/partials/webpack.html" %}
 
     {% if not use_js_bundler %}
       <script src="{% static 'mocha/mocha.js' %}"></script>
@@ -66,5 +65,7 @@
         hqImport("mocha/js/main").run();
       </script>
     {% endif %}
+
+    {% include "hqwebapp/partials/webpack.html" %}
   </body>
 </html>
