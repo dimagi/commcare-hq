@@ -6,6 +6,7 @@ from django_redis import get_redis_connection
 from corehq import toggles
 from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
 
+DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try again in a minute."
 DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
 
 
