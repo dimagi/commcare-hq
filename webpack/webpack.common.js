@@ -115,4 +115,10 @@ module.exports = {
     resolve: {
         alias: utils.getAllAliases(aliases),
     },
+
+    snapshot: {
+        managedPaths: [
+            /^node_modules\//,
+        ],
+    },
 };
