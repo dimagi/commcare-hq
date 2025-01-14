@@ -472,6 +472,29 @@ class TestWebUserResource(APIResourceTest):
     def setUpClass(cls):
         super().setUpClass()
         initialize_domain_with_default_roles(cls.domain.name)
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain.name,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.addClassCleanup(cls.definition.delete)
+
+        cls.profile = CustomDataFieldsProfile(
+            name='test_profile',
+            fields={'test_field': 'test'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+        cls.profile2 = CustomDataFieldsProfile(
+            name='test_profile2',
+            fields={'test_field2': 'test2'},
+            definition=cls.definition,
+        )
+        cls.profile2.save()
+        cls.addClassCleanup(cls.profile.delete)
+        cls.loc_type = LocationType.objects.create(domain=cls.domain.name, name='loc_type')
+        cls.loc1 = SQLLocation.objects.create(
+            location_id='loc1', location_type=cls.loc_type, domain=cls.domain.name)
+        cls.loc2 = SQLLocation.objects.create(
+            location_id='loc2', location_type=cls.loc_type, domain=cls.domain.name)
 
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
@@ -548,6 +571,58 @@ class TestWebUserResource(APIResourceTest):
         user = WebUser.get_by_username(username)
         if user:
             user.delete(self.domain.name, deleted_by=None)
+
+    @patch('corehq.apps.api.validation.WebUserResourceValidator.is_valid')
+    def test_update(self, mock_is_valid):
+        mock_is_valid.return_value = []
+        editable_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
+        role = UserRole.objects.get(domain=self.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
+        editable_user.set_role(self.domain.name, role.get_qualified_id())
+        editable_user.set_location(self.domain.name, self.loc1)
+        editable_user.save()
+        self.addCleanup(editable_user.delete, self.domain.name, deleted_by=None)
+
+        self.assertEqual(editable_user.get_role(self.domain.name).name, UserRolePresets.FIELD_IMPLEMENTER)
+        self.assertEqual(editable_user.get_user_data(self.domain.name).raw, {})
+        self.assertEqual(editable_user.get_location_id(self.domain.name), self.loc1.location_id)
+        update_json = {
+            'role': 'App Editor',
+            'user_data': {'fake_field': 'updated'},
+            'profile': 'test_profile',
+            'primary_location_id': 'loc2',
+            'assigned_location_ids': ['loc1', 'loc2'],
+        }
+
+        self._update_and_assert_user(editable_user, update_json)
+
+    def _update_and_assert_user(self, editable_user, update_json):
+        backend_id = editable_user._id
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
+                                                   json.dumps(update_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 200, response.content)
+        updated_user = WebUser.get(backend_id)
+        response_json = response.json()
+        for key, value in update_json.items():
+            if key == "role":
+                self.assertEqual(updated_user.get_role(self.domain.name).name, value)
+                self.assertEqual(response_json['role'], value)
+            elif key == "primary_location_id":
+                self.assertEqual(updated_user.get_location_id(self.domain.name), value)
+                self.assertEqual(response_json['primary_location_id'], value)
+            elif key == "assigned_location_ids":
+                self.assertEqual(updated_user.get_location_ids(self.domain.name), value)
+                self.assertEqual(response_json['assigned_location_ids'], value)
+            elif key == "user_data":
+                self.assertEqual(updated_user.get_user_data(self.domain.name).raw, value)
+                self.assertEqual(response_json['user_data'],
+                                 updated_user.get_user_data(self.domain.name).to_dict())
+            elif key == "profile":
+                self.assertEqual(updated_user.get_user_data(self.domain.name).profile.name, value)
+                self.assertEqual(response_json['profile'], value)
+
+        return updated_user
 
 
 class FakeUserES(object):
@@ -756,9 +831,10 @@ class TestInvitationResource(APIResourceTest):
     def setUpClass(cls):
         super().setUpClass()
         initialize_domain_with_default_roles(cls.domain.name)
-        cls.definition = CustomDataFieldsDefinition(domain=cls.domain.name,
-                                                    field_type=UserFieldsView.field_type)
-        cls.definition.save()
+        cls.definition = CustomDataFieldsDefinition.objects.create(
+            domain=cls.domain.name,
+            field_type=UserFieldsView.field_type
+        )
         cls.definition.set_fields([
             Field(
                 slug='imaginary',
@@ -767,12 +843,11 @@ class TestInvitationResource(APIResourceTest):
             ),
         ])
         cls.definition.save()
-        cls.profile = CustomDataFieldsProfile(
+        cls.profile = CustomDataFieldsProfile.objects.create(
             name='character',
             fields={'imaginary': 'yes'},
             definition=cls.definition,
         )
-        cls.profile.save()
         cls.loc_type = LocationType.objects.create(domain=cls.domain.name, name='loc_type')
         cls.loc1 = SQLLocation.objects.create(
             location_id='loc1', location_type=cls.loc_type, domain=cls.domain.name)
