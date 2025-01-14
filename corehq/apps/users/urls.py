@@ -108,6 +108,7 @@ urlpatterns = [
     url(r'^web/remove/(?P<couch_user_id>[ \w-]+)/$', remove_web_user, name='remove_web_user'),
     url(r'^web/undo_remove/(?P<record_id>[ \w-]+)/$', undo_remove_web_user, name='undo_remove_web_user'),
     url(r'^web/invite/$', InviteWebUserView.as_view(), name=InviteWebUserView.urlname),
+    url(r'^web/invite/edit/(?P<invitation_id>[ \w-]+)/$', InviteWebUserView.as_view(), name='edit_invitation'),
     url(r'^web/reinvite/$', reinvite_web_user, name='reinvite_web_user'),
     url(r'^web/request/$', DomainRequestView.as_view(), name=DomainRequestView.urlname),
     url(r'^web/delete_invitation/$', delete_invitation, name='delete_invitation'),
