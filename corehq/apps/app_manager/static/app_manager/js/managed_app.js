@@ -1,17 +1,25 @@
-hqDefine("app_manager/js/managed_app", function () {
+hqDefine("app_manager/js/managed_app", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/ui_elements/ui-element-langcode-button',
+    'app_manager/js/app_manager',
+], function (
+    $,
+    initialPageData,
+    langCodeButton,
+    appManager
+) {
     $(function () {
-        var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-            init = hqImport('app_manager/js/app_manager').init,
-            app = initialPageData.get('app_subset');
+        const app = initialPageData.get('app_subset');
 
-        init({
+        appManager.init({
             appVersion: app.version || -1,
             commcareVersion: String(app.commcare_minor_release),
             latestCommcareVersion: initialPageData.get('latest_commcare_version') || null,
         });
 
         $('.btn-langcode-preprocessed').each(function () {
-            hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').new($(this), $(this).text());
+            langCodeButton.new($(this), $(this).text());
             if ($(this).hasClass('langcode-input')) {
                 var $langcodeInput = $(this).parent().find("input");
                 var that = this;
