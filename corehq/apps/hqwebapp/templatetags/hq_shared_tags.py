@@ -750,6 +750,29 @@ class WebpackMainNode(RequireJSMainNode):
     def __repr__(self):
         return "<WebpackMain Node: %r>" % (self.value,)
 
+@register.simple_tag
+def jenny_debug():
+    from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
+    bootstrap_version = get_bootstrap_version()
+    got_manifest = "unknown"
+    manifest_length = "unknown"
+    other_info = "none"
+    try:
+        if bootstrap_version == BOOTSTRAP_5:
+            manifest = get_webpack_manifest()
+            manifest_length = len(manifest)
+        else:
+            manifest = get_webpack_manifest('manifest_b3.json')
+            manifest_length = len(manifest)
+        got_manifest = "yes"
+    except Exception as e:
+        got_manifest = "no"
+        other_info = str(e)
+
+    return f"This is info from Jenny: UNIT_TESTING = {settings.UNIT_TESTING}; bootstrap_version = {bootstrap_version}; got manifest = {got_manifest}; manifest length = {manifest_length}; other: {other_info}"
+
+
 
 import logging
 logger = logging.getLogger('webpack')
