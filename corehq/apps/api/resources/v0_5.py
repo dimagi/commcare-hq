@@ -85,7 +85,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
-from corehq.apps.reports.models import TableauUser
+from corehq.apps.reports.models import TableauUser, TableauConnectedApp
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
@@ -411,8 +411,11 @@ class WebUserResource(v0_1.WebUserResource):
         return bundle.obj.get_location_ids(bundle.request.domain)
 
     def dehydrate_tableau_groups(self, bundle):
-        return [t.name for t in get_tableau_groups_for_user(bundle.request.domain,
-                                                            bundle.obj.username)]
+        try:
+            return [t.name for t in get_tableau_groups_for_user(bundle.request.domain,
+                                                                bundle.obj.username)]
+        except TableauConnectedApp.DoesNotExist:
+            return []
 
     def dehydrate_tableau_role(self, bundle):
         try:
