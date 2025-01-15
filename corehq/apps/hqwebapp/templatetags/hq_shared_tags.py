@@ -765,7 +765,7 @@ def webpack_bundles(entry_name):
             manifest = get_webpack_manifest('manifest_b3.json')
             webpack_folder = 'webpack_b3'
     except WebpackManifestNotFoundError:
-        # If we're in tests, the manifestly genuinely may not be available,
+        # If we're in tests, the manifest genuinely may not be available,
         # as it's only generated for the test job that includes javascript.
         if settings.UNIT_TESTING:
             return []
