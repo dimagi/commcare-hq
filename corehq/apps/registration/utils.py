@@ -59,7 +59,6 @@ def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admi
     new_user = activate_new_user(
         username=form.cleaned_data['email'],
         password=form.cleaned_data['password'],
-        email=form.cleaned_data['email'],
         created_by=created_by,
         created_via=created_via,
         first_name=full_name[0],
@@ -75,8 +74,7 @@ def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admi
 
 def activate_new_user(
     username, password, created_by, created_via, first_name=None, last_name=None,
-    is_domain_admin=False, domain=None, ip=None, atypical_user=False, commit=True,
-    email=None
+    is_domain_admin=False, domain=None, ip=None, atypical_user=False, commit=True
 ):
     now = datetime.utcnow()
 
@@ -89,7 +87,7 @@ def activate_new_user(
         is_admin=is_domain_admin,
         by_domain_required_for_log=bool(domain),
         commit=commit,
-        email=email
+        email=username
     )
     new_user.first_name = first_name
     new_user.last_name = last_name
