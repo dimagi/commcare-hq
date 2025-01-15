@@ -309,9 +309,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 self.getFormattedQuestions(callback);
             });
             $.subscribe('formplayer.' + constants.DIRTY, function (e) {
-                hqRequire([
-                    "cloudcare/js/formplayer/app",
-                ], function (FormplayerFrontend) {
+                import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
                     FormplayerFrontend.trigger('setUnsavedFormInProgress');
                 });
             });
@@ -622,7 +620,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     }
 
     function changeLang(lang) {
-        hqRequire(["cloudcare/js/formplayer/menus/controller"], function (menusController) {
+        import("cloudcare/js/formplayer/menus/controller").then(function (menusController) {
             var urlObject = utils.currentUrlToObject();
             urlObject.changeLang = lang;
             menusController.selectMenu(urlObject);
