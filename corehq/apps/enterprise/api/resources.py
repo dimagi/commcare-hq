@@ -6,7 +6,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from dateutil import tz
-from datetime import timezone
 from tastypie import fields, http
 from tastypie.exceptions import ImmediateHttpResponse
 
