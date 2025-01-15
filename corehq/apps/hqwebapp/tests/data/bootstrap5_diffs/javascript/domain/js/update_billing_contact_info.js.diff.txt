@@ -1,0 +1,16 @@
+--- 
++++ 
+@@ -1,11 +1,11 @@
+ 'use strict';
+-hqDefine('domain/js/bootstrap3/update_billing_contact_info', [
++hqDefine('domain/js/bootstrap5/update_billing_contact_info', [
+     'jquery',
+     'hqwebapp/js/initial_page_data',
+     'accounting/js/stripe_card_manager',
+     'stripe',
+     'accounting/js/widgets',
+-    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // openModal
++    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
+ ], function (
+     $,
+     initialPageData,

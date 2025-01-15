@@ -1,0 +1,67 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends "domain/bootstrap3/base_change_plan.html" %}
++{% extends "domain/bootstrap5/base_change_plan.html" %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 'accounting/js/confirm_plan' %}
++{% js_entry 'accounting/js/confirm_plan' %}
+ 
+ {% block form_content %}
+   {% initial_page_data 'is_upgrade' is_upgrade %}
+@@ -43,7 +43,7 @@
+         </p>
+       {% endif %}
+       <div class="text-center plan-next">
+-        <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default btn-lg">
++        <a href="{% url 'domain_select_plan' domain %}" class="btn btn-outline-primary btn-lg">
+           {% if is_paused %}
+             {% trans 'Select different option' %}
+           {% else %}
+@@ -69,7 +69,7 @@
+     <div class="modal-dialog">
+       <div class="modal-content">
+         <div class="modal-header">
+-          <button type="button" class="close" data-dismiss="modal">
++          <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
+             <span aria-hidden="true">&times;</span>
+             <span class="sr-only">{% trans "Close" %}</span>
+           </button>
+@@ -99,7 +99,7 @@
+                 Why are you downgrading your subscription today?
+               {% endblocktrans %}
+             {% endif %}
+-            <select multiple="multiple"
++            <select multiple="multiple"  {# todo B5: css-select-form-control #}
+                     class="form-control"
+                     data-bind="selectedOptions: oDowngradeReason,
+                                options: downgradeReasonList"></select>
+@@ -110,7 +110,7 @@
+               {% blocktrans %}
+                 Do you think your project may start again?
+               {% endblocktrans %}
+-              <select class="form-control"
++              <select class="form-select"
+                       data-bind="value: oWillProjectRestart">
+                 <option value="yes">
+                   {% trans "Yes" %}
+@@ -135,7 +135,7 @@
+               {% blocktrans %}
+                 Why are you switching to a new tool?
+               {% endblocktrans %}
+-              <select multiple="multiple"
++              <select multiple="multiple"  {# todo B5: css-select-form-control #}
+                       class="form-control"
+                       data-bind="selectedOptions: oNewToolReason,
+                                  options: newToolReasonList"></select>
+@@ -172,7 +172,7 @@
+           <!-- ko ifnot: oRequiredQuestionsAnswered -->
+             <button type="button"
+                     disabled="disabled"
+-                    class="btn btn-default">
++                    class="btn btn-outline-primary">
+               {% trans "Continue" %}
+             </button>
+           <!-- /ko -->

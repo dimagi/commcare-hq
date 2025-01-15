@@ -2,21 +2,26 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from unittest import mock
+from urllib.parse import urlencode
 
 from django.http import HttpResponse
 from django.test import Client, TestCase
 from django.urls import reverse
 
+import django_digest.test
 from oauth2_provider.models import get_access_token_model
-from urllib.parse import urlencode
 
 from couchforms import openrosa_response
 
-import django_digest.test
+from corehq import toggles
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
-from corehq.apps.receiverwrapper.views import post_api, secure_post
+from corehq.apps.receiverwrapper.views import (
+    _verify_access,
+    post_api,
+    secure_post,
+)
 from corehq.apps.users.models import (
     CommCareUser,
     HqPermissions,
@@ -422,3 +427,52 @@ class TestAPIEndpoint(TestCase):
     def test_access_api_required(self):
         self._create_user(edit_data=True, access_api=False)
         self.assert_api_response(403)
+
+
+@mock.patch('corehq.apps.receiverwrapper.views.is_from_formplayer')
+@mock.patch('corehq.toggles.set_toggle')
+@mock.patch('corehq.apps.receiverwrapper.views.cache.get', mock.MagicMock(return_value=None))
+@mock.patch('corehq.apps.receiverwrapper.views.cache.set', mock.MagicMock)
+class TestHasMobileAccess(TestCase):
+    domain = "test-has-mobile-access"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain_obj = create_domain(cls.domain)
+        cls.user_without_permission = cls._create_user(access_mobile_endpoints=False)
+        cls.user_with_permission = cls._create_user(access_mobile_endpoints=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+
+    @classmethod
+    def _create_user(cls, access_mobile_endpoints=False):
+        role = UserRole.create(
+            cls.domain, 'api-user', permissions=HqPermissions(access_mobile_endpoints=access_mobile_endpoints)
+        )
+        return WebUser.create(cls.domain, str(uuid.uuid4()), 'p@$$w0rd',
+                              None, None, role_id=role.get_id)
+
+    def _verify_access(self, user):
+        _verify_access(self.domain, user.user_id, mock.MagicMock(couch_user=user))
+
+    def test_formplayer_request_without_permission(self, set_toggle, is_from_formplayer):
+        is_from_formplayer.return_value = True
+        self._verify_access(self.user_without_permission)
+        set_toggle.assert_not_called()
+
+    def test_regular_request_without_permission(self, set_toggle, is_from_formplayer):
+        is_from_formplayer.return_value = False
+        self._verify_access(self.user_without_permission)
+        set_toggle.assert_called_with('open_submission_endpoint', self.domain, True, toggles.NAMESPACE_DOMAIN)
+
+    def test_formplayer_request_with_permission(self, set_toggle, is_from_formplayer):
+        is_from_formplayer.return_value = True
+        self._verify_access(self.user_with_permission)
+        set_toggle.assert_not_called()
+
+    def test_regular_request_with_permission(self, set_toggle, is_from_formplayer):
+        is_from_formplayer.return_value = False
+        self._verify_access(self.user_with_permission)
+        set_toggle.assert_not_called()

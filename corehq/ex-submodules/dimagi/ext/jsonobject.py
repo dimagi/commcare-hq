@@ -1,7 +1,8 @@
 import datetime
 import decimal
 from jsonobject.base_properties import AbstractDateProperty
-from jsonobject import *
+from jsonobject import *  # noqa: F401 unnamed jsonobject imports are imported from here by other modules
+from jsonobject import DateTimeProperty, JsonObject
 import re
 from jsonobject.api import re_date, re_time, re_decimal
 from dimagi.utils.dates import safe_strftime
@@ -41,6 +42,15 @@ class DateTimeProperty(AbstractDateProperty):
     _type = datetime.datetime
 
     def _wrap(self, value):
+        return self.deserialize(value)
+
+    def _unwrap(self, value):
+        _assert(value.tzinfo is None,
+                "Can't set a USecDateTimeProperty to an offset-aware datetime")
+        return value, safe_strftime(value, ISO_DATETIME_FORMAT)
+
+    @classmethod
+    def deserialize(cls, value):
         if '.' in value:
             fmt = ISO_DATETIME_FORMAT
             if len(value.split('.')[-1]) != 7:
@@ -61,11 +71,6 @@ class DateTimeProperty(AbstractDateProperty):
         _assert(result.tzinfo is None,
                 "USecDateTimeProperty shouldn't ever return offset-aware!")
         return result
-
-    def _unwrap(self, value):
-        _assert(value.tzinfo is None,
-                "Can't set a USecDateTimeProperty to an offset-aware datetime")
-        return value, safe_strftime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
 
 
 re_trans_datetime = re.compile(r"""

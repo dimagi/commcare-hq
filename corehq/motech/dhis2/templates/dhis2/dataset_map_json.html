@@ -2,17 +2,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{# Required to define ACE #}
-{% load compress %}
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
-
 {% js_entry "dhis2/js/dataset_map_json" %}
 
 {% block page_content %}

@@ -24,14 +24,14 @@ class RemoteAuthTest(TestCase):
         self.assertEqual(resp.status_code, 401)
 
     def test_returns_403_if_valid_api_key_but_no_linked_domain_access(self):
-        headers = {'HTTP_AUTHORIZATION': f'apikey test:{self.api_key.key}'}
+        headers = {'HTTP_AUTHORIZATION': f'apikey test:{self.api_key.plaintext_key}'}
         with patch.object(decorators, 'can_user_access_linked_domains', return_value=False):
             resp = self.client.get(self.url, **headers)
 
         self.assertEqual(resp.status_code, 403)
 
     def test_returns_200_if_valid_api_key_and_linked_domain_access(self):
-        headers = {'HTTP_AUTHORIZATION': f'apikey test:{self.api_key.key}'}
+        headers = {'HTTP_AUTHORIZATION': f'apikey test:{self.api_key.plaintext_key}'}
 
         with patch.object(decorators, 'can_user_access_linked_domains', return_value=True):
             resp = self.client.get(self.url, **headers)

@@ -1,10 +1,9 @@
 hqDefine("sms/js/compose",[
     "jquery",
-    "hqwebapp/js/initial_page_data",
-    'jquery-ui/ui/widgets/sortable',
-    "hqwebapp/js/bootstrap-multi-typeahead",
+    "hqwebapp/js/bootstrap3/widgets",
+    "jquery-ui/ui/widgets/sortable",
     "commcarehq",
-], function ($, intialPageData) {
+], function ($) {
     $(function () {
         $("#hint_id_recipients").addClass("alert alert-info");
         $("#hint_id_message").addClass("alert alert-info");
@@ -26,9 +25,5 @@ hqDefine("sms/js/compose",[
             message = message + " (" + maxChar + " max)";
             $charCount.text(message);
         });
-
-        $('.sms-typeahead').multiTypeahead({
-            source: intialPageData.get('sms_contacts'),
-        }).focus();
     });
 });

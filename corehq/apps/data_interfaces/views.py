@@ -281,7 +281,7 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'template': 'new-group-template',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         case_group = CommCareCaseGroup.get(item_id)
         item_data = self._get_item_data(case_group)
         case_group.soft_delete()
@@ -474,7 +474,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'template': 'new-case-template',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         if not item_id:
             raise PaginatedItemException("The case's ID was blank.")
         current_cases = set(self.case_group.cases)
@@ -1067,10 +1067,10 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def deactivate_response(self):
         return self.update_rule()
 
-    def get_deleted_item_data(self, rule_id):
+    def delete_item(self, rule_id):
         (rule, error) = self._get_rule(rule_id)
         if rule is None:
-            return {'success': False, 'error': error}
+            raise PaginatedItemException(error)
 
         rule.soft_delete()
 

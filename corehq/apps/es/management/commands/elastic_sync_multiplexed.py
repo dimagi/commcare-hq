@@ -42,7 +42,7 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname, reindex_batch_size=1000, requests_per_second=None):
+    def start_reindex(self, cname, reindex_batch_size=1000, requests_per_second=None, purge_ids=False):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -57,7 +57,8 @@ class ESSyncUtil:
 
         logger.info("Starting ReIndex process")
         task_id = es_manager.reindex(
-            source_index, destination_index, requests_per_second=requests_per_second
+            source_index, destination_index,
+            requests_per_second=requests_per_second, batch_size=reindex_batch_size, purge_ids=purge_ids
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_number = task_id.split(':')[1]
@@ -161,17 +162,23 @@ class ESSyncUtil:
         """
         es_manager.index_refresh(adapter.primary.index_name)
         es_manager.index_refresh(adapter.secondary.index_name)
-
         self.perform_cleanup(adapter)
 
-        greenlets = gevent.joinall([
-            gevent.spawn(adapter.count, {}),
-            gevent.spawn(adapter.secondary.count, {})
-        ])
-        primary_count, secondary_count = [g.get() for g in greenlets]
+        def get_doc_count(_adapter):
+            return {_adapter.index_name: _adapter.count({})}
 
-        print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
-        print(f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
+        greenlets = gevent.joinall([
+            gevent.spawn(get_doc_count, adapter.primary),
+            gevent.spawn(get_doc_count, adapter.secondary)
+        ])
+        counts = {}
+        for greenlet in greenlets:
+            counts.update(greenlet.get())
+
+        print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {counts[adapter.primary.index_name]}")
+        print(
+            f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {counts[adapter.secondary.index_name]}\n"
+        )
 
     def display_backfill_subindex_doc_counts_for_domain(self, source_adapter, destination_adapter, domain):
         if not destination_adapter.parent_index_cname:
@@ -297,7 +304,7 @@ class ESSyncUtil:
 
     def estimate_disk_space_for_reindex(self, stdout=None):
         indices_info = es_manager.indices_info()
-        index_cname_map = self._get_index_name_cname_map()
+        index_cname_map = self._get_index_name_cname_map(ignore_subindices=True)
         index_size_rows = []
         total_size = 0
         for index_name in index_cname_map.keys():
@@ -314,8 +321,13 @@ class ESSyncUtil:
         print("\n\n")
         print(f"Minimum free disk space recommended before starting the reindex: {recommended_disk}")
 
-    def _get_index_name_cname_map(self):
-        return {adapter.index_name: cname for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items()}
+    def _get_index_name_cname_map(self, ignore_subindices=False):
+        index_name_cname_map = {}
+        for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items():
+            if ignore_subindices and adapter.parent_index_cname:
+                continue
+            index_name_cname_map[adapter.index_name] = cname
+        return index_name_cname_map
 
     def _format_bytes(self, size):
         units = ['B', 'KB', 'MB', 'GB', 'TB']
@@ -457,7 +469,7 @@ class Command(BaseCommand):
 
     For getting current count of both the indices
         ```bash
-        /manage.py elastic_sync_multiplexed display_doc_counts <index_cname>
+        ./manage.py elastic_sync_multiplexed display_doc_counts <index_cname>
         ```
 
     For getting current shard allocation status for the cluster
@@ -596,7 +608,12 @@ class Command(BaseCommand):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
-            cmd_func(options['index_cname'], options['batch_size'], options['requests_per_second'])
+            cmd_func(
+                options['index_cname'],
+                options['batch_size'],
+                options['requests_per_second'],
+                options['purge_ids']
+            )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
         elif sub_cmd == 'cleanup' or sub_cmd == 'display_doc_counts':

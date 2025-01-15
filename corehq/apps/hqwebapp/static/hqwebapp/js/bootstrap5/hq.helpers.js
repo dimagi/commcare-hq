@@ -4,6 +4,7 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     'underscore',
     'analytix/js/google',
     'es6!hqwebapp/js/bootstrap5_loader',
+    'jquery.cookie/jquery.cookie',  // $.cookie
 ], function (
     $,
     ko,

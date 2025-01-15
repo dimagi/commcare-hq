@@ -54,6 +54,7 @@ from corehq.apps.enterprise.tasks import email_enterprise_report
 
 from corehq.apps.export.utils import get_default_export_settings_if_available
 
+from corehq.apps.hqwebapp.context import get_page_context, Section
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
@@ -66,35 +67,87 @@ from corehq.const import USER_DATE_FORMAT
 @always_allow_project_access
 @require_enterprise_admin
 @login_and_domain_required
-def enterprise_dashboard(request, domain):
+def platform_overview(request, domain):
     if not has_privilege(request, privileges.PROJECT_ACCESS):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
 
-    context = {
-        'account': request.account,
-        'domain': domain,
+    context = get_page_context(
+        page_url=reverse('platform_overview', args=(domain,)),
+        page_title=_('Platform Overview for {}').format(request.account.name),
+        page_name=_('Platform Overview'),
+        domain=domain,
+        section=Section(
+            _('Enterprise Console'),
+            reverse('platform_overview', args=(domain,)),
+        ),
+    )
+
+    context.update({
         'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
-        'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
-            EnterpriseReport.DOMAINS,
-            EnterpriseReport.WEB_USERS,
-            EnterpriseReport.MOBILE_USERS,
-            EnterpriseReport.FORM_SUBMISSIONS,
-            EnterpriseReport.ODATA_FEEDS,
-        )],
-        'current_page': {
-            'page_name': _('Enterprise Dashboard'),
-            'title': _('Enterprise Dashboard'),
-        }
-    }
-    return render(request, "enterprise/enterprise_dashboard.html", context)
+        'groups': [
+            {'name': _('Projects Overview'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.DOMAINS,
+                                     EnterpriseReport.FORM_SUBMISSIONS,
+                                     EnterpriseReport.SMS,)]},
+            {'name': _('User Management'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.WEB_USERS,
+                                     EnterpriseReport.MOBILE_USERS,
+                                     EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,)]},
+            {'name': _('Data Management & Export'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.ODATA_FEEDS,)]},
+        ],
+        'uses_date_range': [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS],
+        'metric_type': 'Platform Overview',
+    })
+
+    return render(request, "enterprise/project_dashboard.html", context)
+
+
+@use_tempusdominus
+@use_bootstrap5
+@always_allow_project_access
+@require_enterprise_admin
+@login_and_domain_required
+def security_center(request, domain):
+    if not has_privilege(request, privileges.PROJECT_ACCESS):
+        return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
+
+    context = get_page_context(
+        page_url=reverse('security_center', args=(domain,)),
+        page_title=_('Security Center for {}').format(request.account.name),
+        page_name=_('Security Center'),
+        domain=domain,
+        section=Section(
+            _('Enterprise Console'),
+            reverse('platform_overview', args=(domain,)),
+        ),
+    )
+
+    context.update({
+        'groups': [
+            {'name': '',
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.API_USAGE,
+                                     EnterpriseReport.TWO_FACTOR_AUTH)]},
+        ],
+        'metric_type': 'Security Center',
+        'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
+        'uses_date_range': [],
+    })
+
+    return render(request, "enterprise/project_dashboard.html", context)
 
 
 @require_enterprise_admin
 @login_and_domain_required
 def enterprise_dashboard_total(request, domain, slug):
     kwargs = {}
-    if slug == EnterpriseReport.FORM_SUBMISSIONS:
-        kwargs = get_form_submission_report_kwargs(request)
+    date_range_slugs = [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS]
+    if slug in date_range_slugs:
+        kwargs = get_date_range_kwargs(request)
     try:
         report = EnterpriseReport.create(slug, request.account.id, request.couch_user, **kwargs)
     except TooMuchRequestedDataError as e:
@@ -141,8 +194,9 @@ def _get_export_filename(request, slug):
 @login_and_domain_required
 def enterprise_dashboard_email(request, domain, slug):
     kwargs = {}
-    if slug == EnterpriseReport.FORM_SUBMISSIONS:
-        kwargs = get_form_submission_report_kwargs(request)
+    date_range_slugs = [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS]
+    if slug in date_range_slugs:
+        kwargs = get_date_range_kwargs(request)
     try:
         report = EnterpriseReport.create(slug, request.account.id, request.couch_user, **kwargs)
     except TooMuchRequestedDataError as e:
@@ -158,7 +212,7 @@ def enterprise_dashboard_email(request, domain, slug):
     return JsonResponse({'message': message})
 
 
-def get_form_submission_report_kwargs(request):
+def get_date_range_kwargs(request):
     kwargs = {}
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
@@ -220,7 +274,7 @@ class BaseEnterpriseAdminView(BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse('enterprise_dashboard', args=(self.domain,))
+        return reverse('platform_overview', args=(self.domain,))
 
     @property
     def page_url(self):
@@ -229,7 +283,7 @@ class BaseEnterpriseAdminView(BaseDomainView):
 
 @method_decorator(require_enterprise_admin, name='dispatch')
 class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
-    template_name = 'domain/billing_statements.html'
+    template_name = 'domain/bootstrap3/billing_statements.html'
     urlname = 'enterprise_billing_statements'
     page_title = gettext_lazy("Billing Statements")
 

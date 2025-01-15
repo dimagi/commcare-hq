@@ -6,7 +6,15 @@
  {% load hq_shared_tags %}
  
  {% block page_content %}
-@@ -18,7 +18,7 @@
+@@ -10,14 +10,14 @@
+ {% initial_page_data "viz_id" viz_id %}
+ {% registerurl 'get_tableau_server_ticket' request.domain %}
+ 
+-{% js_entry_b3 "reports/js/tableau" %}
++{% js_entry "reports/js/tableau" %}
+ 
+ <body>
+     <div id="loadingDiv" class="fa-5x">
          <i class="fa fa-spin fa-spinner"></i>
      </div>
      <div id="vizContainer"></div>

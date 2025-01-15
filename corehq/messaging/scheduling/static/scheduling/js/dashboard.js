@@ -4,6 +4,7 @@ hqDefine("scheduling/js/dashboard",[
     'hqwebapp/js/initial_page_data',
     'd3/d3.min',
     'nvd3/nv.d3.min',
+    'commcarehq',
 ], function ($, ko, initialPageData, d3, nv) {
     var dashboardUrl = initialPageData.reverse("messaging_dashboard");
 

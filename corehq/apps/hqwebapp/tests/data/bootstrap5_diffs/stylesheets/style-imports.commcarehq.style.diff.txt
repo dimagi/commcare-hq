@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,44 +1,95 @@
+@@ -1,44 +1,96 @@
 -@import "_hq/includes/variables.less";
 -@import "_hq/includes/mixins.less";
  
@@ -123,6 +123,7 @@
 +@import "commcarehq/form_steps";
 +@import "commcarehq/helpbubble";
 +@import "commcarehq/hubspot";
++@import "commcarehq/htmx";
 +@import "commcarehq/icons";
 +@import "commcarehq/inline_edit";
 +@import "commcarehq/label";

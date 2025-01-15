@@ -5,6 +5,7 @@ hqDefine("userreports/js/ucr_expression", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',
     'hqwebapp/js/bootstrap3/alert_user',
+    'commcarehq',
 ], function (
     moment,
     ko,
