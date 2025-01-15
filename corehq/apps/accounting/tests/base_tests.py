@@ -6,19 +6,6 @@ from dateutil.relativedelta import relativedelta
 from django_prbac.models import Role
 
 from corehq.apps.accounting import utils
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    BillingRecord,
-    CreditAdjustment,
-    CreditLine,
-    CustomerBillingRecord,
-    CustomerInvoice,
-    Invoice,
-    InvoiceCommunicationHistory,
-    LineItem,
-    Subscription,
-    SubscriptionAdjustment,
-)
 from corehq.apps.accounting.tasks import (
     calculate_users_in_all_domains,
     calculate_web_users_in_all_billing_accounts,
@@ -73,26 +60,6 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         for user in self.domain.all_users():
             user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
-
-        def delete_objects(obj_cls):
-            obj_cls.objects.all().delete()
-
-        # order is important as many of these have protected foreign keys on each other
-        for obj_cls in [
-            CreditAdjustment,
-            CreditLine,
-            SubscriptionAdjustment,
-            BillingRecord,
-            InvoiceCommunicationHistory,
-            LineItem,
-            Invoice,
-            CustomerBillingRecord,
-            CustomerInvoice,
-        ]:
-            delete_objects(obj_cls)
-
-        Subscription.visible_and_suppressed_objects.all().delete()
-        delete_objects(BillingAccount)
 
     @classmethod
     def tearDownClass(cls):
