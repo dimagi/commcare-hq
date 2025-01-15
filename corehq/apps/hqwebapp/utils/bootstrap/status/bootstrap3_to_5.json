@@ -51,6 +51,9 @@
   "dashboard": {
     "is_complete": true
   },
+  "data_interfaces": {
+    "in_progress": true
+  },
   "domain": {
     "in_progress": true,
     "templates": [

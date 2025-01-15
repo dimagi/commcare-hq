@@ -1,4 +1,4 @@
-hqDefine("data_interfaces/js/manage_case_groups", [
+hqDefine("data_interfaces/js/bootstrap3/manage_case_groups", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
