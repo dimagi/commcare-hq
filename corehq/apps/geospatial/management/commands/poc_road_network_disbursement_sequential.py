@@ -35,6 +35,7 @@ class Command(BaseCommand):
             type=int,
             help="solves disbursement for percent of clusters specified",
         )
+        parser.add_argument('--limit_total_cases', required=False, type=int)
         parser.add_argument('--limit_memory', required=False, type=int, help="limits memory usage to size in MB")
 
     def handle(self, *args, **options):
@@ -53,9 +54,12 @@ class Command(BaseCommand):
 
         total_cases = CaseSearchES().domain(domain).NOT(case_property_missing(geo_case_property)).count()
         print(f"Total GPS Cases: {total_cases}")
-        cases_data = self.get_cases_with_gps(domain, geo_case_property)
-        print("All cases fetched successfully")
+        limit_total_cases = options.get('limit_total_cases')
+        if limit_total_cases:
+            print(f"Limiting total cases to: {limit_total_cases}")
 
+        cases_data = self.get_cases_with_gps(domain, geo_case_property, limit_total_cases)
+        print("All cases fetched successfully")
         start_time = time.time()
         n_clusters = max(len(gps_users_data), len(cases_data)) // cluster_chunk_size + 1
         print(f"Creating {n_clusters} clusters for {len(gps_users_data)} users and {len(cases_data)} cases...")
@@ -106,12 +110,13 @@ class Command(BaseCommand):
         except BadValueError:
             return None
 
-    def get_cases_with_gps(self, domain, geo_case_property):
+    def get_cases_with_gps(self, domain, geo_case_property, limit_total_cases):
         query = CaseSearchES().domain(domain).size(ES_QUERY_CHUNK_SIZE)
         query = query.NOT(case_property_missing(geo_case_property))
 
         cases_data = []
-        for row in with_progress_bar(query.scroll(), query.count(), prefix="Fetching cases"):
+        total_cases = limit_total_cases if limit_total_cases else query.count()
+        for row in with_progress_bar(query.scroll(), total_cases, prefix="Fetching cases"):
             case = wrap_case_search_hit(row)
             coordinates = self.get_case_geo_location(case, geo_case_property)
             if coordinates:
@@ -120,6 +125,8 @@ class Command(BaseCommand):
                     'lon': coordinates['lng'],
                     'lat': coordinates['lat'],
                 })
+            if limit_total_cases and len(cases_data) >= limit_total_cases:
+                break
         return cases_data
 
     def get_case_geo_location(self, case, geo_case_property):
