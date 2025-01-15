@@ -436,9 +436,6 @@ class EnterpriseDataExportReport(EnterpriseReport):
     title = gettext_lazy('Data Exports')
     total_description = gettext_lazy('# of Exports')
 
-    def __init__(self, account, couch_user):
-        super().__init__(account, couch_user)
-
     @property
     def headers(self):
         return [
