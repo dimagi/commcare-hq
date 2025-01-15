@@ -161,14 +161,6 @@ msgstr ""
 msgid "Submit Request"
 msgstr "Soumettre la demande"
 
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Next"
-msgstr "Suivant"
-
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Your trial request has been received!"
-msgstr ""
-
 #: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
 msgid "Seconds"
 msgstr ""

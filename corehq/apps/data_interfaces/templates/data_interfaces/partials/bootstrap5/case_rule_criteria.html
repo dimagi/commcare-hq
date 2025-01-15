@@ -1,0 +1,260 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{# Container template for adding/removing criteria #}
+
+{% initial_page_data 'criteria_initial' form.current_values %}
+{% initial_page_data 'criteria_constants' form.constants %}
+
+<script type="text/html" id="case-filters">
+  {% if form.errors %}
+    <div class="alert alert-danger">
+      <span class="help-block"><strong>{% trans "Error:" %}</strong></span>
+      {% for field, errors in form.errors.items %}
+        {% for error in errors %}
+          <span class="help-block">{{ error }}</span>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  {% endif %}
+  {% if criteria_form.form_beginning_helper %}
+    {% crispy criteria_form criteria_form.form_beginning_helper %}  {# todo B5: crispy #}
+  {% endif %}
+  <div data-bind="template: {name: getKoTemplateId, foreach: criteria, afterRender:disableCriteriaField}"></div>
+  <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">  {# todo B5: css-form-group #}
+    <label class="col-sm-12 col-md-4 col-lg-4 col-xl-2 form-label">
+      {% trans "Add Filter" %}
+    </label>
+    <div class="col-sm-12 col-md-8 col-lg-8 col-xl-6 controls ">
+      <div class="btn-group">
+        <button class="btn btn-outline-primary" type="button" data-bs-toggle="dropdown">  {# todo B5: css-dropdown #}
+          <i class="fa fa-plus"></i>
+          {% trans "Select a filter" %}
+        </button>
+        <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">  {# todo B5: css-dropdown #}
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          {% if form.allow_case_modified_filter %}
+            <li data-bind="click: function() { addFilter('case-modified-filter'); }"><a>{% trans "Case not modified since" %}</a></li>
+          {% endif %}
+          {% if form.allow_case_property_filter %}
+            <li data-bind="click: function() { addFilter('case-property-filter'); }"><a>{% trans "Case property" %}</a></li>
+          {% endif %}
+          {% if form.allow_date_case_property_filter %}
+            <li data-bind="click: function() { addFilter('date-case-property-filter'); }"><a>{% trans "Date case property" %}</a></li>
+            <li data-bind="click: function() { addFilter('advanced-date-case-property-filter'); }"><a>{% trans "Date case property (advanced)" %}</a></li>
+          {% endif %}
+          {% if form.allow_locations_filter %}
+            <li data-bind="click: function() { addFilter('locations-filter'); }"><a>{% trans "Location" %}</a></li>
+          {% endif %}
+          {% if form.allow_parent_case_references %}
+            <li data-bind="click: function() { addFilter('parent-closed-filter'); }"><a>{% trans "Parent case is closed" %}</a></li>
+          {% endif %}
+          {% if form.is_system_admin and form.allow_custom_filter %}
+            <li data-bind="click: function() { addFilter('custom-filter'); }"><a>{% trans "Custom filter" %}</a></li>
+          {% endif %}
+          {% if form.allow_ucr_filter %}
+          <li data-bind="click: function() { addFilter('ucr-filter'); }"><a>{% trans "UCR Filter" %}</a></li>
+        {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</script>
+
+{# Template for the button that removes a filter #}
+
+<script type="text/html" id="remove-filter">
+  <div class="col-sm-1">
+    <div class="row">
+      <div class="col-sm-6 text-center">
+        <button type="button" class="btn btn-outline-danger" data-bind="click: $parent.removeFilter"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="col-sm-6 text-center">
+        <!-- ko if: $index() > 0 && $parent.criteriaOperator() == 'ALL' -->
+          <label class="form-label">{% trans "AND" %}</label>
+        <!-- /ko -->
+        <!-- ko if: $index() > 0 && $parent.criteriaOperator() == 'ANY' -->
+          <label class="form-label">{% trans "OR" %}</label>
+        <!-- /ko -->
+      </div>
+    </div>
+  </div>
+</script>
+
+{# Template for case not modified since filter #}
+{# An instance of this template is bound to an instance of the js object NotModifiedSinceDefinition #}
+
+<script type="text/html" id="case-modified-filter">
+  <div class="form-group">  {# todo B5: css-form-group #}
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="form-label col-sm-2">{% trans "Case not modified in" %}</label>
+    <div class="controls col-sm-1">
+      <input required type="number" min="0" step="1" data-bind="value: days" class="textinput form-control" />
+    </div>
+    <div class="controls col-sm-1">
+      <label class="form-label">{% trans "days" %}</label>
+    </div>
+  </div>
+</script>
+
+{# Template for case property filter #}
+{# An instance of this template is bound to an instance of the js object MatchPropertyDefinition #}
+
+<script type="text/html" id="case-property-filter">
+  <div class="form-group card">  {# todo B5: css-form-group, css-well #}
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="form-label col-sm-2">{% trans "Case property" %}</label>
+    <div class="controls col-sm-2">
+      <case-property-input params="
+        valueObservable: property_name,
+        caseTypeObservable: $root.caseType,
+      "></case-property-input>
+    </div>
+    <div class="controls col-sm-2">
+      <select class="select form-select" data-bind="value: match_type">
+        <option value="{{ form.constants.MATCH_EQUAL }}">{% trans "equals" %}</option>
+        <option value="{{ form.constants.MATCH_NOT_EQUAL }}">{% trans "does not equal" %}</option>
+        <option value="{{ form.constants.MATCH_HAS_VALUE }}">{% trans "has a value" %}</option>
+        <option value="{{ form.constants.MATCH_HAS_NO_VALUE }}">{% trans "does not have a value" %}</option>
+        {% if form.allow_regex_case_property_match %}
+          <option value="{{ form.constants.MATCH_REGEX }}">{% trans "matches the regular expression" %}</option>
+        {% endif %}
+      </select>
+    </div>
+    <div class="controls col-sm-2" data-bind="visible: showPropertyValueInput()">
+      <input type="text" class="textinput form-control" data-bind="value: property_value, attr: {'required': showPropertyValueInput()}" />
+    </div>
+  </div>
+</script>
+
+{# Template for date case property filter #}
+{# An instance of this template is bound to an instance of the js object MatchPropertyDefinition #}
+
+<script type="text/html" id="date-case-property-filter">
+  <div class="form-group card">  {# todo B5: css-form-group, css-well #}
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="form-label col-sm-2">{% trans "When the current date is" %}</label>
+    <div class="controls col-sm-2">
+      <select class="select form-select" data-bind="value: match_type">
+        <option value="{{ form.constants.MATCH_DAYS_GREATER_THAN }}">{% trans "greater than" %}</option>
+        <option value="{{ form.constants.MATCH_DAYS_GREATER_OR_EQUAL }}">{% trans "greater than or equal" %}</option>
+        <option value="{{ form.constants.MATCH_DAYS_LESS_THAN }}">{% trans "less than" %}</option>
+        <option value="{{ form.constants.MATCH_DAYS_LESS_OR_EQUAL }}">{% trans "less than or equal" %}</option>
+      </select>
+    </div>
+    <div class="col-sm-2">
+      <label class="form-label">{% trans "the date in case property" %}</label>
+    </div>
+    <div class="controls col-sm-2">
+      <case-property-input params="
+        valueObservable: property_name,
+        caseTypeObservable: $root.caseType,
+      "></case-property-input>
+    </div>
+  </div>
+</script>
+
+{# Template for advanced date case property filter #}
+{# An instance of this template is bound to an instance of the js object MatchPropertyDefinition #}
+
+<script type="text/html" id="advanced-date-case-property-filter">
+  <div class="form-group card">  {# todo B5: css-form-group, css-well #}
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="form-label col-sm-2">{% trans "When the current date is" %}</label>
+    <div class="controls col-sm-2">
+      <select class="select form-select" data-bind="value: match_type">
+        <option value="{{ form.constants.MATCH_DAYS_GREATER_OR_EQUAL }}">{% trans "greater than" %}</option>
+        <option value="{{ form.constants.MATCH_DAYS_LESS_THAN }}">{% trans "less than" %}</option>
+      </select>
+    </div>
+    <div class="col-sm-2">
+      <label class="form-label">{% trans "the date in case property" %}</label>
+    </div>
+    <div class="controls col-sm-2">
+      <case-property-input params="
+        valueObservable: property_name,
+        caseTypeObservable: $root.caseType,
+      "></case-property-input>
+    </div>
+    <div class="controls col-sm-1">
+      <select class="select form-select" data-bind="value: plus_minus">
+        <option value="+">{% trans "plus" %}</option>
+        <option value="-">{% trans "minus" %}</option>
+      </select>
+    </div>
+    <div class="controls col-sm-1">
+      <input type="number" min="0" step="1" class="textinput form-control" data-bind="value: property_value" required placeholder="{% trans 'days' %}" />
+    </div>
+    <div class="controls col-sm-1">
+      <label class="form-label">{% trans "days" %}</label>
+    </div>
+  </div>
+</script>
+
+{# Template for parent case is closed filter #}
+{# An instance of this template is bound to an instance of the js object ClosedParentDefinition #}
+
+<script type="text/html" id="parent-closed-filter">
+  <div class="form-group card">  {# todo B5: css-form-group, css-well #}
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="form-label col-sm-2">{% trans "The parent case is closed" %}</label>
+  </div>
+</script>
+
+{# Template for custom filter #}
+{# An instance of this template is bound to an instance of the js object CustomMatchDefinition #}
+
+<script type="text/html" id="custom-filter">
+  <div class="form-group card">  {# todo B5: css-form-group, css-well #}
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="form-label col-sm-2">{% trans "Custom filter ID" %}</label>
+    <div class="controls col-sm-4">
+      <select class="select form-select" data-bind="value: name">
+        {% for custom_filter in form.custom_filters %}
+          <option value="{{ custom_filter }}">{{ custom_filter }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <label class="col-sm-1 form-label">
+      <span class="badge text-bg-primary">Requires System Admin</span>
+    </label>
+  </div>
+</script>
+
+{# Template for location filter #}
+
+<script type="text/html" id="locations-filter">
+  <div class="form-group card">  {# todo B5: css-form-group, css-well #}
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="form-label col-sm-2">{% trans "Case belongs to location" %}</label>
+    <div class="controls col-sm-4">
+      <select class="select form-select" data-bind="value: location_id">
+        {% for location in form.user_locations %}
+          <option value="{{ location.location_id }}">{{ location.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="controls col-sm-4">
+      <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-4">
+        {% trans "Include cases from child locations" %}
+      </label>
+      <input type="checkbox" data-bind="checked: include_child_locations" name="include_child_locations" />  {# todo B5: css-checkbox #}
+    </div>
+  </div>
+</script>
+
+{# Template for ucr filter #}
+{# An instance of this template is bound to an instance of the js object UCRFilterDefinition #}
+
+<script type="text/html" id="ucr-filter">
+  <div class="form-group card">  {# todo B5: css-form-group, css-well #}
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="form-label col-sm-2">{% trans "Filter Definition" %}</label>
+    <div class="controls col-sm-4" data-bind="{template: {afterRender: $parent.enableAce}}">
+      <textarea class="formcontrol observablejsonwidget" name="configured_filter" data-bind="value: configured_filter"></textarea>
+    </div>
+  </div>
+</script>

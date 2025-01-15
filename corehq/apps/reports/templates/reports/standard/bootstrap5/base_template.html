@@ -10,38 +10,7 @@
 
 {% block page_content_classes %}col-sm-12 col-md-9 col-xl-10{% endblock %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/datatables_config.js' %}"></script>
-    <script src="{% static 'reports/js/datepicker.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/util.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/async.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/standard_hq_report.js' %}"></script>
-    <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
-  {% endcompress %}
-  {% include 'reports/partials/bootstrap5/filters_js.html' %}
-  {% include 'reports/partials/graphs/charts_js.html' %}
-
-  {% compress js %}
-    <script src="{% static '@turf/turf/turf.min.js' %}"></script>
-    <script src="{% static 'case/js/cheapxml.js' %}"></script>
-    <script src="{% static 'case/js/casexml.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/tabular.js' %}"></script>
-
-    <!-- Scripts that are specific to a single report or interface -->
-    <script src="{% static 'data_interfaces/js/case_management.js' %}"></script>
-    <script src="{% static 'data_interfaces/js/archive_forms.js' %}"></script>
-    <script src="{% static 'reports/js/inspect_data.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/project_health_dashboard.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/aggregate_user_status.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/application_status.js' %}"></script>
-    <script src="{% static 'reports/js/user_history.js' %}"></script>
-    <script src="{% static 'reports/js/case_activity.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/bootstrap5/widgets.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% js_entry "reports/js/bootstrap5/tabular" %}
 
 {% block stylesheets %}
   {{ block.super }}

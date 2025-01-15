@@ -57,6 +57,10 @@ def is_bootstrap5_path(path):
     return '/bootstrap5/' in str(path)
 
 
+def is_mocha_path(path):
+    return str(path).endswith('mocha.html')
+
+
 def get_app_name_and_slug(app_name):
     app_parts = app_name.split(".")
     if len(app_parts) == 2:
