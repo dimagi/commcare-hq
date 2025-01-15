@@ -142,8 +142,7 @@ function run_tests {
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
             logmsg INFO "Building Webpack"
             chown -R cchq:cchq ./webpack
-            #su cchq -c "yarn build"
-            su cchq -c "yarn dev"
+            su cchq -c "yarn build"
         fi
 
         log_group_begin "Django test suite: $TEST"
