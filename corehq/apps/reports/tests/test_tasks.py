@@ -1,4 +1,3 @@
-
 from tempfile import NamedTemporaryFile
 from unittest.mock import patch
 from uuid import uuid4
