@@ -665,6 +665,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
 
     @property
     def total(self):
+        # Skip the stat for this report due to performance issue
         return '--'
 
     def rows_for_domain(self, domain):
