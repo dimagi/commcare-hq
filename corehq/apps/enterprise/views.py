@@ -84,15 +84,21 @@ def platform_overview(request, domain):
 
     context.update({
         'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
-        'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
-            EnterpriseReport.DOMAINS,
-            EnterpriseReport.WEB_USERS,
-            EnterpriseReport.MOBILE_USERS,
-            EnterpriseReport.FORM_SUBMISSIONS,
-            EnterpriseReport.ODATA_FEEDS,
-            EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,
-            EnterpriseReport.SMS,
-        )],
+        'groups': [
+            {'name': _('Projects Overview'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.DOMAINS,
+                                     EnterpriseReport.FORM_SUBMISSIONS,
+                                     EnterpriseReport.SMS,)]},
+            {'name': _('User Management'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.WEB_USERS,
+                                     EnterpriseReport.MOBILE_USERS,
+                                     EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,)]},
+            {'name': _('Data Management & Export'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.ODATA_FEEDS,)]},
+        ],
         'uses_date_range': [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS],
         'metric_type': 'Platform Overview',
     })
@@ -121,10 +127,12 @@ def security_center(request, domain):
     )
 
     context.update({
-        'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
-            EnterpriseReport.API_USAGE,
-            EnterpriseReport.TWO_FACTOR_AUTH,
-        )],
+        'groups': [
+            {'name': '',
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.API_USAGE,
+                                     EnterpriseReport.TWO_FACTOR_AUTH)]},
+        ],
         'metric_type': 'Security Center',
         'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
         'uses_date_range': [],

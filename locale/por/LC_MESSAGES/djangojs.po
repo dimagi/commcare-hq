@@ -6,7 +6,7 @@
 # Translators:
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
 # Claire O'Grady <cogrady@dimagi.com>, 2019
-# Séfora Vazirna <seforan@gmail.com>, 2022
+# Séfora Vazirna <seforan@gmail.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2024
 #
 #, fuzzy
@@ -149,14 +149,6 @@ msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
 msgid "Submit Request"
-msgstr ""
-
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Next"
-msgstr "Próximo"
-
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Your trial request has been received!"
 msgstr ""
 
 #: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js

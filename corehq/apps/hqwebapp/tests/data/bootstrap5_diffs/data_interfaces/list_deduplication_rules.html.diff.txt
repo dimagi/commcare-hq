@@ -1,0 +1,92 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends 'hqwebapp/bootstrap3/base_paginated_crud.html' %}
++{% extends 'hqwebapp/bootstrap5/base_paginated_crud.html' %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 'data_interfaces/js/bootstrap3/deduplication_rules' %}
++{% js_entry 'data_interfaces/js/bootstrap5/deduplication_rules' %}
+ 
+ {% block page_title %}
+   {{ current_page.title }}
+@@ -10,7 +10,7 @@
+ 
+ {% block pagination_header %}
+   <div class="row">
+-    <div class="col-sm-8">
++    <div class="col-md-8">
+       <p>
+         {% blocktrans %}
+           Create rules for finding duplicate cases.
+@@ -38,26 +38,26 @@
+       </a>
+     </td>
+     <td>
+-      <span data-bind="text: case_type" style="display: inline-block;"></span>
+-      <span class="label label-warning" data-bind="visible: is_case_type_deprecated" style="display: inline-block;">{% trans "deprecated" %}</span>
++      <span data-bind="text: case_type" style="display: inline-block;"></span>  {# todo B5: inline-style #}
++      <span class="badge text-bg-warning" data-bind="visible: is_case_type_deprecated" style="display: inline-block;">{% trans "deprecated" %}</span>  {# todo B5: inline-style #}
+     </td>
+     <td>
+-      <span class="label label-success" data-bind="visible: active">{% trans "Active" %}</span>
+-      <span class="label label-danger" data-bind="visible: !active">{% trans "Inactive" %}</span>
++      <span class="badge text-bg-success" data-bind="visible: active">{% trans "Active" %}</span>
++      <span class="badge text-bg-danger" data-bind="visible: !active">{% trans "Inactive" %}</span>
+     </td>
+     <td data-bind="text: duplicates_count"></td>
+-    <td data-bind="css: {'has-error': action_error}">
+-      <a class="btn btn-default" data-bind="attr: {href: explore_url}">
++    <td data-bind="css: {'has-error': action_error}">  {# todo B5: css-has-error #}
++      <a class="btn btn-outline-primary" data-bind="attr: {href: explore_url}">
+         {% trans "Explore Duplicates" %}
+       </a>
+-      <button type="button" class="btn btn-default" data-action="activate" data-bind="visible: !active">
++      <button type="button" class="btn btn-outline-primary" data-action="activate" data-bind="visible: !active">
+         {% trans "Activate" %}
+       </button>
+-      <button type="button" class="btn btn-default" data-action="deactivate" data-bind="visible: active">
++      <button type="button" class="btn btn-outline-primary" data-action="deactivate" data-bind="visible: active">
+         {% trans "Deactivate" %}
+       </button>
+-      <button type="button" data-toggle="modal" class="btn btn-danger"
+-              data-bind="attr: { 'data-target': '#delete-rule-' + id }">
++      <button type="button" data-bs-toggle="modal" class="btn btn-outline-danger"
++              data-bind="attr: { 'data-bs-target': '#delete-rule-' + id }">
+         <i class="fa fa-remove"></i>
+         {% trans "Delete" %}
+       </button>
+@@ -65,7 +65,7 @@
+         <div class="modal-dialog">
+           <div class="modal-content">
+             <div class="modal-header">
+-              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
++              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>  {# todo B5: css-close #}
+               <h3>{% trans "Delete this rule?" %}</h3>
+             </div>
+             <div class="modal-body">
+@@ -77,11 +77,11 @@
+               <p class="lead"><strong data-bind="text: name"></strong></p>
+             </div>
+             <div class="modal-footer">
+-              <button type="button" class="btn btn-default" data-dismiss="modal">
++              <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+                 {% trans "Cancel" %}
+               </button>
+-              <button type="button" class="btn btn-danger delete-item-confirm"
+-                      data-loading-text="Deleting Rule...">
++              <button type="button" class="btn btn-outline-danger delete-item-confirm"
++                      data-loading-text="Deleting Rule...">  {# todo B5: stateful button #}
+                 <i class="fa fa-remove"></i>
+                 {% trans "Delete Rule" %}
+               </button>
+@@ -98,7 +98,7 @@
+   <script type="text/html" id="rule-deleted-template">
+     <td colspan="5">
+       <span data-bind="text: name"></span>
+-      <span class="label label-default">{% trans 'Removed' %}</span>
++      <span class="badge text-bg-secondary">{% trans 'Removed' %}</span>
+     </td>
+   </script>
+ {% endblock pagination_templates %}

@@ -467,6 +467,7 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
@@ -1467,6 +1468,7 @@ msgstr ""
 #: corehq/apps/settings/views.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 #: corehq/apps/sms/views.py corehq/apps/sso/forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/ex-submodules/casexml/apps/case/views.py
@@ -2525,7 +2527,7 @@ msgstr ""
 #: corehq/apps/reports/standard/sms.py
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
-#: corehq/apps/users/templates/users/web_users.html custom/up_nrhm/sql_data.py
+#: corehq/apps/users/templates/users/web_users.html
 msgid "Date"
 msgstr ""
 
@@ -2953,6 +2955,7 @@ msgstr ""
 #: corehq/apps/reports/views.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
@@ -3213,7 +3216,6 @@ msgstr ""
 
 #: corehq/apps/aggregate_ucrs/column_specs.py
 #: corehq/apps/reports/standard/monitoring.py
-#: custom/up_nrhm/reports/block_level_month_report.py
 msgid "Average"
 msgstr ""
 
@@ -3990,6 +3992,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/linked_domain/const.py
 #: corehq/apps/reports/filters/forms.py corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/apps/translations/forms.py
 msgid "Application"
 msgstr ""
@@ -6362,7 +6365,6 @@ msgstr ""
 #: corehq/apps/integration/templates/integration/base_cloudcare_template.html
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
-#: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/standard/bootstrap3/submission_error_report.html
@@ -6398,7 +6400,6 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-#: custom/up_nrhm/filters.py
 msgid "Language"
 msgstr ""
 
@@ -9511,7 +9512,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_actions.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/description.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/description.html
 msgid "Learn More"
@@ -12730,10 +12730,7 @@ msgstr ""
 msgid "Phone Settings"
 msgstr ""
 
-#: corehq/apps/commtrack/forms.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/form_list_form.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/form_list_form.html
-#: corehq/apps/translations/forms.py
+#: corehq/apps/commtrack/forms.py corehq/apps/translations/forms.py
 msgid "Submit"
 msgstr ""
 
@@ -13954,6 +13951,7 @@ msgstr ""
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Owner"
 msgstr ""
@@ -17073,6 +17071,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/pagination.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_pagination.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/pagination.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
 #: corehq/apps/registration/forms.py
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/drilldown_options.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/drilldown_options.html
@@ -18931,7 +18930,7 @@ msgstr ""
 msgid "# of Mobile Form Submissions"
 msgstr ""
 
-#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/enterprise/iterators.py
 msgid "Date ranges with more than {} days are not supported"
 msgstr ""
 
@@ -18959,11 +18958,11 @@ msgid ""
 "the date range to fetch a smaller amount of data"
 msgstr ""
 
-#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/enterprise/iterators.py
 msgid "Unnamed"
 msgstr ""
 
-#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/enterprise/iterators.py
 msgid "App not found"
 msgstr ""
 
@@ -19372,6 +19371,18 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
 #: corehq/apps/sso/forms.py
 msgid "Enterprise Console"
+msgstr ""
+
+#: corehq/apps/enterprise/views.py
+msgid "Projects Overview"
+msgstr ""
+
+#: corehq/apps/enterprise/views.py corehq/reports.py corehq/tabs/tabclasses.py
+msgid "User Management"
+msgstr ""
+
+#: corehq/apps/enterprise/views.py
+msgid "Data Management & Export"
 msgstr ""
 
 #: corehq/apps/enterprise/views.py
@@ -22734,18 +22745,27 @@ msgid "Show All Groups"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
+msgid ""
+"\n"
+"        Case reassignment request in progress. Please be patient.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Mobile Worker Filters"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
-"                <strong>There was an issue retrieving mobile workers from "
-"the server.</strong>\n"
-"                If this problem continues, please\n"
-"                <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
-"an issue</a>.\n"
-"            "
+"          <strong\n"
+"            >There was an issue retrieving mobile workers from the\n"
+"            server.</strong\n"
+"          >\n"
+"          If this problem continues, please\n"
+"          <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an "
+"issue</a>.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
@@ -22755,9 +22775,8 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
-"                            Only users at this location will be shown on the "
-"map.\n"
-"                        "
+"                Only users at this location will be shown on the map.\n"
+"              "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
@@ -22779,22 +22798,24 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
-"    We couldn't match every case to a user with the current disbursement "
-"settings.\n"
-"    Please follow any of the below steps to rectify this.\n"
-"    <ul>\n"
-"      <li>Ensure that your settings are correct</li>\n"
-"      <li>Allocate more users to the area</li>\n"
-"      <li>Use filtered areas to reduce the number of cases such that the "
-"algorithm can ensure all cases are assigned.</li>\n"
-"    </ul>\n"
-"    "
+"        We couldn't match every case to a user with the current "
+"disbursement\n"
+"        settings. Please follow any of the below steps to rectify this.\n"
+"        <ul>\n"
+"          <li>Ensure that your settings are correct</li>\n"
+"          <li>Allocate more users to the area</li>\n"
+"          <li>\n"
+"            Use filtered areas to reduce the number of cases such that the\n"
+"            algorithm can ensure all cases are assigned.\n"
+"          </li>\n"
+"        </ul>\n"
+"      "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
-"        Previous disbursement was cleared.\n"
+"      Previous disbursement was cleared.\n"
 "    "
 msgstr ""
 
@@ -22979,30 +23000,31 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/index_alert.html
 msgid ""
 "\n"
-"        Existing cases in the domain were not processed to be available in "
-"Microplanning reports\n"
-"        because there were too many to be processed. New or updated cases "
-"will still be available\n"
-"        for use for Microplanning. Please reach out to support if you need "
-"support with existing cases.\n"
-"      "
+"          Existing cases in the domain were not processed to be available "
+"in\n"
+"          Microplanning reports because there were too many to be processed. "
+"New\n"
+"          or updated cases will still be available for use for "
+"Microplanning.\n"
+"          Please reach out to support if you need support with existing "
+"cases.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/index_alert.html
 msgid ""
 "\n"
-"        Oops! Something went wrong while processing existing cases to be "
-"available in Microplanning\n"
-"        reports. Please reach out to support.\n"
-"      "
+"          Oops! Something went wrong while processing existing cases to be\n"
+"          available in Microplanning reports. Please reach out to support.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/index_alert.html
 msgid ""
 "\n"
-"      Existing cases in the domain are being processed to be available in\n"
-"      Microplanning reports. Please be patient.\n"
-"    "
+"        Existing cases in the domain are being processed to be available in\n"
+"        Microplanning reports. Please be patient.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
@@ -23609,10 +23631,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
 msgid "ADMINREPORT"
-msgstr ""
-
-#: corehq/apps/hqadmin/reports.py
-msgid "Global Device Logs Soft Asserts"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
@@ -25718,11 +25736,6 @@ msgstr ""
 msgid "Business Agreement"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/form_list_form.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/form_list_form.html
-msgid "Form has errors"
-msgstr ""
-
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/get_demo_modals.html
 msgid "Request a CommCare Demo"
@@ -25810,6 +25823,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/pagination.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_pagination.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/pagination.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
 msgid "Previous"
 msgstr ""
 
@@ -26021,6 +26035,30 @@ msgid ""
 "    "
 msgstr ""
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
+#, python-format
+msgid ""
+"\n"
+"                    Showing %(start)s to %(end)s of %(total)s entries\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
+#, python-format
+msgid ""
+"\n"
+"                      %(p)s per page\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
+#: corehq/apps/hqwebapp/views.py
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
+#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
+msgid "Loading..."
+msgstr ""
+
 #: corehq/apps/hqwebapp/templates/password_change.html
 msgid "Change User Password"
 msgstr ""
@@ -26110,12 +26148,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/views.py
 msgid "You have no items."
-msgstr ""
-
-#: corehq/apps/hqwebapp/views.py
-#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
-#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
-msgid "Loading..."
 msgstr ""
 
 #: corehq/apps/hqwebapp/views.py
@@ -28524,7 +28556,25 @@ msgid "Select a role"
 msgstr ""
 
 #: corehq/apps/registration/forms.py
+msgid "Send Invite"
+msgstr ""
+
+#: corehq/apps/registration/forms.py
 msgid "Information for new Web User"
+msgstr ""
+
+#: corehq/apps/registration/forms.py
+#: corehq/apps/sso/templates/sso/partials/manage_sso_exempt_users.html
+#: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
+msgid "Add User"
+msgstr ""
+
+#: corehq/apps/registration/forms.py
+msgid "Update Invite"
+msgstr ""
+
+#: corehq/apps/registration/forms.py
+msgid "Update invitation for new Web User"
 msgstr ""
 
 #: corehq/apps/registration/forms.py
@@ -28535,16 +28585,6 @@ msgstr ""
 
 #: corehq/apps/registration/forms.py corehq/apps/users/forms.py
 msgid "Tableau Configuration"
-msgstr ""
-
-#: corehq/apps/registration/forms.py
-#: corehq/apps/sso/templates/sso/partials/manage_sso_exempt_users.html
-#: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
-msgid "Add User"
-msgstr ""
-
-#: corehq/apps/registration/forms.py
-msgid "Send Invite"
 msgstr ""
 
 #: corehq/apps/registration/forms.py
@@ -28978,64 +29018,6 @@ msgid ""
 "Your username to login is %(username)s\n"
 msgstr ""
 
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"            For organizations managing projects.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"            See <a href=\"https://dimagi.com/commcare-pricing/\" "
-"target=\"_blank\">pricing</a> options.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              Request a Trial\n"
-"            "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"                Watch Demo\n"
-"              "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid "Know what you need?"
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid "Get started here!"
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"            For individuals learning about data collection.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"            Free for personal use.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              Create Account\n"
-"            "
-msgstr ""
-
 #: corehq/apps/registration/templates/registration/partials/register_new_user/server_errors.html
 msgid "Oh, no!"
 msgstr ""
@@ -29174,16 +29156,6 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
-msgid "Request a CommCare Professional trial"
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
-msgid ""
-"A member of our team will call you soon to complete the setup of your "
-"CommCare trial account."
-msgstr ""
-
 #: corehq/apps/registration/templates/registration/register_new_user.html
 #: corehq/apps/users/templates/users/accept_invite.html
 msgid "Create an Account"
@@ -29248,50 +29220,6 @@ msgstr ""
 msgid ""
 "This email is managed by {}. You will be asked to login with Single Sign-On "
 "after the next step."
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "Custom mobile app builder"
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "Powerful case management"
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "Field staff reports"
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "125+ mobile users"
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "Full suite of data tools"
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "3rd party integrations"
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "2-way SMS workflows"
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "Guaranteed tech support"
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "Access to Dimagi's Customer Success team"
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "Basic case management"
-msgstr ""
-
-#: corehq/apps/registration/views.py
-msgid "5 mobile users"
 msgstr ""
 
 #: corehq/apps/registration/views.py
@@ -30415,18 +30343,6 @@ msgid "Filter Logs by Tag"
 msgstr ""
 
 #: corehq/apps/reports/filters/devicelog.py
-msgid "Filter Logs by Domain"
-msgstr ""
-
-#: corehq/apps/reports/filters/devicelog.py
-msgid "Filter Logs by CommCareVersion"
-msgstr ""
-
-#: corehq/apps/reports/filters/devicelog.py
-msgid "Enter the CommCare Version you want e.g '2.28.1'"
-msgstr ""
-
-#: corehq/apps/reports/filters/devicelog.py
 msgid "Filter Logs By"
 msgstr ""
 
@@ -30926,10 +30842,9 @@ msgid "Case %s was rebuilt from its forms."
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/case_data.py
-#, python-format
 msgid ""
-"Case %s was successfully saved. Hopefully it will show up in all reports "
-"momentarily."
+"Case {} was successfully saved. Please allow a few minutes for the change to "
+"be reflected in all reports."
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/case_data.py
@@ -36745,6 +36660,7 @@ msgid "Column"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
 msgid "Color"
 msgstr ""
@@ -36755,6 +36671,19 @@ msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_hq_hx_action.py
 msgid "New Item"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+msgid "Big Cats"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+msgid "Date of Birth"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Opened On"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
@@ -37014,6 +36943,22 @@ msgid ""
 "\n"
 "              Not Active\n"
 "            "
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+msgid "Simple Pagination: HTMX + Django Tables2"
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+msgid ""
+"\n"
+"        This button will trigger a refresh on the table once its HTMX "
+"request is complete:\n"
+"      "
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+msgid "Refresh Table After Request"
 msgstr ""
 
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
@@ -39216,6 +39161,13 @@ msgstr ""
 msgid "Problem with data source spec: {}"
 msgstr ""
 
+#: corehq/apps/userreports/ui/forms.py
+#, python-brace-format
+msgid ""
+"This data source covers more than {record_limit} records. Please mark it for "
+"asynchronous processing for effective building/rebuilding"
+msgstr ""
+
 #: corehq/apps/userreports/ui/forms.py corehq/apps/userreports/views.py
 msgid "Create Data Source from Application"
 msgstr ""
@@ -39405,6 +39357,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/views.py
+msgid "Data source not saved. Please check the form for errors."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
 msgid ""
 "Data source \"{}\" has no associated table.\n"
 "Click \"Rebuild Data Source\" to recreate the table."
@@ -39441,8 +39397,7 @@ msgid ""
 "Rebuilt was not initiated due to high number of records this data source is "
 "expected to iterate during a rebuild. Expected records to be processed is "
 "currently {number_of_records} which is above the limit of {rebuild_limit}. "
-"Please consider creating a new data source instead or reach out to support "
-"if you need to rebuild this data source."
+"Please update the data source to have asynchronous processing."
 msgstr ""
 
 #: corehq/apps/userreports/views.py
@@ -41411,7 +41366,10 @@ msgid "Undeliverable"
 msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html
-msgid "Resend Invitation"
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Resend"
 msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html
@@ -42013,10 +41971,6 @@ msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Open"
-msgstr ""
-
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Opened On"
 msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/views.py
@@ -44568,19 +44522,19 @@ msgid "FHIR version"
 msgstr ""
 
 #: corehq/motech/fhir/forms.py
-msgid "Register new patients on the remote FHIR service?"
-msgstr ""
-
-#: corehq/motech/fhir/forms.py
 msgid "Enable patient registration"
 msgstr ""
 
 #: corehq/motech/fhir/forms.py
-msgid "Search the remote FHIR service for matching patients?"
+msgid "Register new patients on the remote FHIR service?"
 msgstr ""
 
 #: corehq/motech/fhir/forms.py
 msgid "Enable patient search"
+msgstr ""
+
+#: corehq/motech/fhir/forms.py
+msgid "Search the remote FHIR service for matching patients?"
 msgstr ""
 
 #: corehq/motech/fhir/repeaters.py corehq/motech/fhir/views.py
@@ -44636,11 +44590,11 @@ msgid "Space-separated list of scopes e.g. \"read write\""
 msgstr ""
 
 #: corehq/motech/forms.py
-msgid "Do not use in a production environment"
+msgid "Skip certificate verification"
 msgstr ""
 
 #: corehq/motech/forms.py
-msgid "Skip certificate verification"
+msgid "Do not use in a production environment"
 msgstr ""
 
 #: corehq/motech/forms.py corehq/motech/openmrs/forms.py
@@ -45271,12 +45225,6 @@ msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Resend"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Cancel selected records"
 msgstr ""
 
@@ -45846,10 +45794,6 @@ msgstr ""
 msgid "Domain Stats"
 msgstr ""
 
-#: corehq/reports.py corehq/tabs/tabclasses.py
-msgid "User Management"
-msgstr ""
-
 #: corehq/reports.py
 msgid "Microplanning"
 msgstr ""
@@ -45971,6 +45915,10 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Grant other CommCare HQ users access to your project."
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Edit Web User Invite"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
@@ -46806,245 +46754,6 @@ msgstr ""
 #: custom/samveg/case_importer/validators.py
 #, python-brace-format
 msgid "Required columns are {column_names}"
-msgstr ""
-
-#: custom/up_nrhm/filters.py
-msgid "Hierarchy"
-msgstr ""
-
-#: custom/up_nrhm/filters.py
-msgid "Report type"
-msgstr ""
-
-#: custom/up_nrhm/filters.py
-msgid "Last Reporting month of the quarter"
-msgstr ""
-
-#: custom/up_nrhm/filters.py
-msgid "Hindi"
-msgstr ""
-
-#: custom/up_nrhm/reports/__init__.py
-msgid "Custom Reports"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_facilitators_report.py
-msgid "Format-2 Consolidation of the Functionality numbers"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_facilitators_report.py
-msgid "Total no. of ASHAs functional"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_facilitators_report.py
-msgid "Total no. of ASHAs who did not report/not known"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_facilitators_report.py
-msgid "Remarks"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-msgid "Format-1 for ASHA Sanginis"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-msgid "ASHAs"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-msgid "Name of ASHAs"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-msgid "Date when cheklist was filled"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#: custom/up_nrhm/sql_data.py
-msgid "Newborn visits within first day of birth in case of home deliveries"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#: custom/up_nrhm/sql_data.py
-msgid ""
-"Set of home visits for newborn care as specified in the HBNC guidelines (six "
-"visits in case of Institutional delivery and seven in case of a home "
-"delivery)"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#: custom/up_nrhm/sql_data.py
-msgid "Attending VHNDs/Promoting immunization"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#: custom/up_nrhm/sql_data.py
-msgid "Supporting institutional delivery"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#: custom/up_nrhm/sql_data.py
-msgid "Management of childhood illness - especially diarrhea and pneumonia"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#: custom/up_nrhm/sql_data.py
-msgid "Household visits with nutrition counseling"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#: custom/up_nrhm/sql_data.py
-msgid "Fever cases seen/malaria slides made in malaria endemic area"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#: custom/up_nrhm/sql_data.py
-msgid "Acting as DOTS provider"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#: custom/up_nrhm/sql_data.py
-msgid "Holding or attending village/VHSNC meeting"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#: custom/up_nrhm/sql_data.py
-msgid ""
-"Successful referral of the IUD, female sterilization or male sterilization "
-"cases and/or providing OCPs/Condoms"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-msgid "Total of number of tasks on which ASHA reported being functional"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-#, python-format
-msgid "Total number of ASHAs who are functional on at least %s of the tasks"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-msgid "Remark"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_functionality_checklist_report.py
-msgid "Total no. of ASHAs functional on each tasks"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_reports.py
-msgid "ASHA Sangini Reports"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_reports.py
-#, python-brace-format
-msgid "Report: {0}"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_reports.py
-#, python-brace-format
-msgid "District: {0}"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_reports.py
-#, python-brace-format
-msgid "Block: {0}"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_reports.py
-#, python-brace-format
-msgid "AF: {0} {1}"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_reports.py
-#, python-brace-format
-msgid "Last Reporting Month of the Quarter: {0} {1}"
-msgstr ""
-
-#: custom/up_nrhm/reports/asha_reports.py
-#, python-brace-format
-msgid "For Date: {0} to {1}"
-msgstr ""
-
-#: custom/up_nrhm/reports/block_level_af_report.py
-msgid "Format-4 Block Consolidation of the functionality status"
-msgstr ""
-
-#: custom/up_nrhm/reports/block_level_af_report.py
-msgid "ASHA Sanginis"
-msgstr ""
-
-#: custom/up_nrhm/reports/block_level_af_report.py
-msgid "Total of the block"
-msgstr ""
-
-#: custom/up_nrhm/reports/block_level_af_report.py
-#: custom/up_nrhm/reports/block_level_month_report.py
-msgid "<b>Total number of ASHAs who did not report/not known</b>"
-msgstr ""
-
-#: custom/up_nrhm/reports/block_level_af_report.py
-msgid "<b>Total Number of ASHAs under each Facilitator</b>"
-msgstr ""
-
-#: custom/up_nrhm/reports/block_level_month_report.py
-msgid "Format-3 Block Consolidation of the functionality status"
-msgstr ""
-
-#: custom/up_nrhm/reports/block_level_month_report.py
-msgid "Number of ASHAs functional on-"
-msgstr ""
-
-#: custom/up_nrhm/reports/district_functionality_report.py
-msgid "Format-5 Functionality of ASHAs in blocks"
-msgstr ""
-
-#: custom/up_nrhm/reports/district_functionality_report.py
-msgid ""
-"Percentage of ASHAs functional on (Number of functional ASHAs/total number "
-"of ASHAs) x 100"
-msgstr ""
-
-#: custom/up_nrhm/reports/district_functionality_report.py
-#, python-format
-msgid "%s of ASHAs"
-msgstr ""
-
-#: custom/up_nrhm/reports/district_functionality_report.py
-msgid "Grade of Block"
-msgstr ""
-
-#: custom/up_nrhm/sql_data.py
-msgid "Total number of ASHAs under the Facilitator"
-msgstr ""
-
-#: custom/up_nrhm/sql_data.py
-msgid "Total number of ASHAs for whom functionality checklist was filled"
-msgstr ""
-
-#: custom/up_nrhm/sql_data.py
-msgid ""
-"Set of home visits for newborn care as specified in the HBNC guidelines<br/"
-">(six visits in case of Institutional delivery and seven in case of a home "
-"delivery)"
-msgstr ""
-
-#: custom/up_nrhm/sql_data.py
-#, python-format
-msgid ""
-"<b>Total number of ASHAs who are functional on at least %s of the tasks</b>"
-msgstr ""
-
-#: custom/up_nrhm/sql_data.py
-msgid "ASHA name"
-msgstr ""
-
-#: custom/up_nrhm/sql_data.py
-msgid "Date of last for submission"
-msgstr ""
-
-#: custom/up_nrhm/sql_data.py
-msgid "Functionality Score"
 msgstr ""
 
 #: manage.py

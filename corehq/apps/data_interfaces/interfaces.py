@@ -45,7 +45,7 @@ class BulkDataInterface(DataInterface):
 class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
     name = gettext_noop("Reassign Cases")
     slug = "reassign_cases"
-    report_template_path = 'data_interfaces/interfaces/case_management.html'
+    report_template_path = 'data_interfaces/interfaces/bootstrap3/case_management.html'
     action = "reassign"
     action_text = gettext_lazy("Reassign")
 
@@ -169,7 +169,7 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
 class CaseCopyInterface(CaseReassignmentInterface):
     name = gettext_noop("Copy Cases")
     slug = "copy_cases"
-    report_template_path = 'data_interfaces/interfaces/case_management.html'
+    report_template_path = 'data_interfaces/interfaces/bootstrap3/case_management.html'
     action = "copy"
     action_text = gettext_lazy("Copy")
 
@@ -292,7 +292,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
 class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
     name = gettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
-    report_template_path = 'data_interfaces/interfaces/archive_forms.html'
+    report_template_path = 'data_interfaces/interfaces/bootstrap3/archive_forms.html'
 
     def __init__(self, request, **kwargs):
         super(BulkFormManagementInterface, self).__init__(request, **kwargs)
