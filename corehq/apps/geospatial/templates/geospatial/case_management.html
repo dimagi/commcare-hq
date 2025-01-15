@@ -3,6 +3,14 @@
 
 {% block reportcontent %}
   {% include 'geospatial/partials/index_alert.html' %}
+  {% if reassignment_task_status %}
+    <div class="alert alert-info">
+      {% blocktrans %}
+        Case reassignment request in progress. Please be patient.
+      {% endblocktrans %}
+      ({{ reassignment_task_status.progress }}%)
+    </div>
+  {% endif %}
   <div class="panel panel-default" id="user-filters-panel">
     <div class="panel-body collapse in" aria-expanded="true">
       <legend>{% trans "Mobile Worker Filters" %}</legend>

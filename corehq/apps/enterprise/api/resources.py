@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urljoin
 
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFound
@@ -20,9 +20,9 @@ from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.api.resources.meta import get_hq_throttle
-from corehq.apps.enterprise.enterprise import (
-    EnterpriseReport,
-)
+from corehq.apps.api.keyset_paginator import KeysetPaginator
+from corehq.apps.enterprise.enterprise import EnterpriseReport
+from corehq.apps.enterprise.iterators import IterableEnterpriseFormQuery, EnterpriseFormReportConverter
 
 from corehq.apps.enterprise.tasks import generate_enterprise_report, ReportTaskProgress
 
@@ -61,7 +61,8 @@ class ODataResource(HqBaseResource):
         result['@odata.context'] = request.build_absolute_uri(path)
 
         meta = result['meta']
-        result['@odata.count'] = meta['total_count']
+        if 'total_count' in meta:
+            result['@odata.count'] = meta['total_count']
         if 'next' in meta and meta['next']:
             result['@odata.nextLink'] = request.build_absolute_uri(meta['next'])
 
@@ -140,7 +141,10 @@ class ODataResource(HqBaseResource):
         if not datetime_string:
             return None
 
-        time = datetime.strptime(datetime_string, EnterpriseReport.DATE_ROW_FORMAT)
+        if isinstance(datetime_string, str):
+            time = datetime.strptime(datetime_string, EnterpriseReport.DATE_ROW_FORMAT)
+        else:
+            time = datetime_string
         time = time.astimezone(tz.gettz('UTC'))
         return time.isoformat()
 
@@ -369,6 +373,7 @@ class ODataFeedResource(ODataEnterpriseReportResource):
 
 class FormSubmissionResource(ODataEnterpriseReportResource):
     class Meta(ODataEnterpriseReportResource.Meta):
+        paginator_class = KeysetPaginator
         limit = 10000
         max_limit = 20000
 
@@ -376,31 +381,33 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
     form_name = fields.CharField()
     submitted = fields.DateTimeField()
     app_name = fields.CharField()
-    mobile_user = fields.CharField()
+    username = fields.CharField()
     domain = fields.CharField()
 
     REPORT_SLUG = EnterpriseReport.FORM_SUBMISSIONS
 
-    def get_report_task(self, request):
-        enddate = datetime.strptime(request.GET['enddate'], '%Y-%m-%d') if 'enddate' in request.GET else None
-        startdate = datetime.strptime(request.GET['startdate'], '%Y-%m-%d') if 'startdate' in request.GET else None
+    def get_object_list(self, request):
+        start_date = request.GET.get('startdate', None)
+        if start_date:
+            start_date = datetime.fromisoformat(start_date).astimezone(timezone.utc)
+
+        end_date = request.GET.get('enddate', None)
+        if end_date:
+            end_date = datetime.fromisoformat(end_date).astimezone(timezone.utc)
+
         account = BillingAccount.get_account_by_domain(request.domain)
-        return generate_enterprise_report.s(
-            self.REPORT_SLUG,
-            account.id,
-            request.couch_user.username,
-            start_date=startdate,
-            end_date=enddate,
-            include_form_id=True,
-        )
+
+        converter = EnterpriseFormReportConverter()
+        query_kwargs = converter.get_kwargs_from_map(request.GET)
+        return IterableEnterpriseFormQuery(account, converter, start_date, end_date, **query_kwargs)
 
     def dehydrate(self, bundle):
-        bundle.data['form_id'] = bundle.obj[0]
-        bundle.data['form_name'] = bundle.obj[1]
-        bundle.data['submitted'] = self.convert_datetime(bundle.obj[2])
-        bundle.data['app_name'] = bundle.obj[3]
-        bundle.data['mobile_user'] = bundle.obj[4]
-        bundle.data['domain'] = bundle.obj[6]
+        bundle.data['form_id'] = bundle.obj['form_id']
+        bundle.data['form_name'] = bundle.obj['form_name']
+        bundle.data['submitted'] = self.convert_datetime(bundle.obj['submitted'])
+        bundle.data['app_name'] = bundle.obj['app_name']
+        bundle.data['username'] = bundle.obj['username']
+        bundle.data['domain'] = bundle.obj['domain']
 
         return bundle
 
