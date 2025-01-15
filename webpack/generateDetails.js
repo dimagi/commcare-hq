@@ -59,6 +59,10 @@ const scanTemplates = function (dir, entryRegex, allAppPaths, details, isProdMod
                     console.warn(`JavaScript file not found: ${fullEntryPath}`);
                     continue;
                 }
+                if (isProdMode && entryName.indexOf('/spec/') !== -1) {
+                    // Skip test files on prod, which doesn't have dev dependencies installed
+                    continue;
+                }
                 details.entries[entryName] = {
                     import: fullEntryPath,
                     // for cache-busting in production:
