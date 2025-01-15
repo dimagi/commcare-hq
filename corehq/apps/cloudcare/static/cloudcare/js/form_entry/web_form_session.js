@@ -550,7 +550,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                             if (resp.status === 'success') {
                                 const gtxEventData = {
                                     title: form.title(),
-                                    breadcrumbs: form.breadcrumbs().join(">"),
+                                    breadcrumbs: form.breadcrumbs() ? form.breadcrumbs().join(">") : "",
                                 };
                                 gtx.sendEvent("web_apps_submit_form", gtxEventData);
                                 self.onsubmit(resp);
