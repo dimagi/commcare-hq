@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/utils", [
     'underscore',
     'backbone',
@@ -24,7 +23,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
     UsersModels,
     utils,
     views,
-    gtx
+    gtx,
 ) {
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
@@ -47,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             FormplayerFrontend.trigger('showError',
                 getErrorMessage(err) +
                 "Without access to your location, computations that rely on the here() function will show up blank.",
-                false, false
+                false, false,
             );
         };
 

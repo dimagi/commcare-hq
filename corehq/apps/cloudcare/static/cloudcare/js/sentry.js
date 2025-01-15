@@ -1,4 +1,3 @@
-'use strict';
 hqDefine('cloudcare/js/sentry', [
     'hqwebapp/js/initial_page_data',
     'sentry_browser',
@@ -6,7 +5,7 @@ hqDefine('cloudcare/js/sentry', [
 ], function (
     initialPageData,
     Sentry,
-    SentryCaptureConsole
+    SentryCaptureConsole,
 ) {
     let initSentry = function () {
         const sentryConfig = initialPageData.get('sentry');

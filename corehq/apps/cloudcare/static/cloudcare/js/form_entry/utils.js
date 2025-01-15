@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/utils", [
     'jquery',
     'knockout',
@@ -21,7 +20,7 @@ hqDefine("cloudcare/js/form_entry/utils", [
     cloudcareUtils,
     UsersModels,
     formEntryConst,
-    errors
+    errors,
 ) {
     var module = {
         resourceMap: undefined,

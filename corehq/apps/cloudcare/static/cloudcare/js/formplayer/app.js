@@ -1,4 +1,3 @@
-'use strict';
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
@@ -43,7 +42,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     ProgressBar,
     UsersModels,
     WebFormSession,
-    TemplateCache
+    TemplateCache,
 ) {
     Marionette.setRenderer(TemplateCache.render);
 
@@ -354,7 +353,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 window.addEventListener(
                     "message",
                     HQEvents.Receiver(options.allowedHost),
-                    false
+                    false,
                 );
             });
         }
@@ -383,19 +382,19 @@ hqDefine("cloudcare/js/formplayer/app", [
                     $('.submit').prop('disabled', false);
                     $('.form-control, .form-select').prop('disabled', false);
                 }
-            }
+            },
         );
 
         window.addEventListener(
             'beforeprint', function () {
                 $('.card, .q').last().addClass('last');
-            }
+            },
         );
 
         window.addEventListener(
             'afterprint', function () {
                 $('.last').removeClass('last');
-            }
+            },
         );
     });
 

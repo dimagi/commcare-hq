@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/web_form_session", [
     'jquery',
     'knockout',
@@ -22,7 +21,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     formEntryUtils,
     formUI,
     utils,
-    UsersModels
+    UsersModels,
 ) {
     function WebFormSession(params) {
         var self = {};
@@ -151,7 +150,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 // use a blob here so that we can set the content type
                 let answerData = new Blob(
                     [JSON.stringify(_.omit(requestParams, "file"))],
-                    {type: 'application/json'}
+                    {type: 'application/json'},
                 );
                 newData.append("answer", answerData);
 
@@ -308,7 +307,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             $.subscribe('formplayer.' + constants.FORMATTED_QUESTIONS, function (e, callback) {
                 self.getFormattedQuestions(callback);
             });
-            $.subscribe('formplayer.' + constants.DIRTY, function (e) {
+            $.subscribe('formplayer.' + constants.DIRTY, function () {
                 import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
                     FormplayerFrontend.trigger('setUnsavedFormInProgress');
                 });
@@ -565,7 +564,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                         function () {
                             form.isSubmitting(false);
                             return true;
-                        }
+                        },
                     );
                 }, 250);
         };

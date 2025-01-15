@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     'jquery',
     'underscore',
@@ -13,7 +12,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     Marionette,
     FormplayerFrontend,
     AppsAPI,
-    UsersModels
+    UsersModels,
 ) {
     var slugs = {
         SET_LANG: 'lang',

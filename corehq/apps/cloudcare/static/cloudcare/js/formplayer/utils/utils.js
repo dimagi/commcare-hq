@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/utils/utils", [
     'jquery',
     'underscore',
@@ -18,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     initialPageData,
     toggles,
     constants,
-    AppsAPI
+    AppsAPI,
 ) {
     var Utils = {};
 

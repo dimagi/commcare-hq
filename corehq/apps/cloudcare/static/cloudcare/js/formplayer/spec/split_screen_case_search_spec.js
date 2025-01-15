@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", [
     "underscore",
@@ -25,7 +24,7 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", [
     FakeFormplayer,
     splitScreenCaseListResponse,
     Utils,
-    UsersModels
+    UsersModels,
 ) {
     describe('Split Screen Case Search', function () {
         const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' }),

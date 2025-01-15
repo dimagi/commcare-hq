@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/spec/utils_spec", [
     "hqwebapp/js/initial_page_data",
     "cloudcare/js/form_entry/spec/fixtures",
@@ -8,7 +7,7 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", [
     initialPageData,
     fixtures,
     formUI,
-    utils
+    utils,
 ) {
     describe('Formplayer utils', function () {
         it('Should determine if two answers are equal', function () {
