@@ -54,6 +54,9 @@
       <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
     {% endcompress %}
 
+    {% block head %}
+    {% endblock head %}
+
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
   </head>
   <body>

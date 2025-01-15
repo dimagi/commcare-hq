@@ -1,52 +1,77 @@
+from abc import ABC, abstractmethod
 import re
 from datetime import datetime, timedelta
 
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db.models import Count, Subquery, Q
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from django.conf import settings
 
 from memoized import memoized
 
 from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
-from corehq.apps.users.models import WebUser
 from corehq.apps.export.dbaccessors import (
     get_brief_exports,
     is_standard,
     is_daily_saved_export,
     is_excel_integration
 )
-from corehq.apps.enterprise.exceptions import EnterpriseReportError, TooMuchRequestedDataError
-from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
+from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.calculations import sms_in_last
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.exceptions import (
+    EnterpriseReportError,
+    TooMuchRequestedDataError,
+)
+from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.es import forms as form_es
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
+from corehq.apps.reports.util import (
+    get_commcare_version_and_date_from_last_usage,
+)
+from corehq.apps.sms.models import SMS, OUTGOING, INCOMING
 from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, Invitation
+from corehq.apps.users.models import CouchUser, HQApiKey, Invitation, WebUser
 
 
-class EnterpriseReport:
+class EnterpriseReport(ABC):
     DOMAINS = 'domains'
     WEB_USERS = 'web_users'
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
     DATA_EXPORTS = 'data_exports'
+    COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
+    SMS = 'sms'
+    API_USAGE = 'api_usage'
+    TWO_FACTOR_AUTH = '2fa'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
-    title = _('Enterprise Report')
-    subtitle = ''
+    @property
+    @abstractmethod
+    def title(self):
+        pass
+
+    @property
+    @abstractmethod
+    def total_description(self):
+        """
+        To provide a description of the total number we displayed in tile
+        """
+        pass
 
     def __init__(self, account, couch_user, **kwargs):
         self.account = account
@@ -77,6 +102,14 @@ class EnterpriseReport:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
         elif slug == cls.DATA_EXPORTS:
             report = EnterpriseDataExportReport(account, couch_user, **kwargs)
+        elif slug == cls.COMMCARE_VERSION_COMPLIANCE:
+            report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
+        elif slug == cls.SMS:
+            report = EnterpriseSMSReport(account, couch_user, **kwargs)
+        elif slug == cls.API_USAGE:
+            report = EnterpriseAPIReport(account, couch_user, **kwargs)
+        elif slug == cls.TWO_FACTOR_AUTH:
+            report = Enterprise2FAReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
@@ -120,7 +153,9 @@ class EnterpriseReport:
 
 
 class EnterpriseDomainReport(EnterpriseReport):
-    title = _('Project Spaces')
+
+    title = gettext_lazy('Project Spaces')
+    total_description = gettext_lazy('# of Project Spaces')
 
     @property
     def headers(self):
@@ -143,7 +178,9 @@ class EnterpriseDomainReport(EnterpriseReport):
 
 
 class EnterpriseWebUserReport(EnterpriseReport):
-    title = _('Web Users')
+
+    title = gettext_lazy('Web Users')
+    total_description = gettext_lazy('# of Web Users')
 
     @property
     def headers(self):
@@ -189,7 +226,8 @@ class EnterpriseWebUserReport(EnterpriseReport):
 
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
-    title = _('Mobile Workers')
+    title = gettext_lazy('Mobile Workers')
+    total_description = gettext_lazy('# of Mobile Workers')
 
     @property
     def headers(self):
@@ -220,7 +258,9 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 
 class EnterpriseFormReport(EnterpriseReport):
-    title = _('Mobile Form Submissions')
+    title = gettext_lazy('Mobile Form Submissions')
+    total_description = gettext_lazy('# of Mobile Form Submissions')
+
     MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
     MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
     MAX_DATE_RANGE_DAYS = 90
@@ -236,13 +276,8 @@ class EnterpriseFormReport(EnterpriseReport):
             if isinstance(start_date, str):
                 start_date = datetime.fromisoformat(start_date)
             self.datespan = DateSpan(start_date, end_date)
-            self.subtitle = _("{} to {}").format(
-                start_date.date(),
-                end_date.date(),
-            )
         else:
             self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
-            self.subtitle = _("past {} days").format(num_days)
 
         if self.datespan.enddate - self.datespan.startdate > timedelta(days=self.MAX_DATE_RANGE_DAYS):
             raise TooMuchRequestedDataError(
@@ -333,6 +368,8 @@ class EnterpriseFormReport(EnterpriseReport):
 
 class EnterpriseODataReport(EnterpriseReport):
     title = gettext_lazy('OData Feeds')
+    total_description = gettext_lazy('# of OData Feeds')
+
     MAXIMUM_EXPECTED_EXPORTS = 150
 
     def __init__(self, account, couch_user):
@@ -397,6 +434,7 @@ class EnterpriseODataReport(EnterpriseReport):
 
 class EnterpriseDataExportReport(EnterpriseReport):
     title = gettext_lazy('Data Exports')
+    total_description = gettext_lazy('# of Exports')
 
     def __init__(self, account, couch_user):
         super().__init__(account, couch_user)
@@ -458,3 +496,217 @@ class EnterpriseDataExportReport(EnterpriseReport):
 
     def total_for_domain(self, domain_obj):
         return len(self.get_exports(domain_obj))
+
+
+class EnterpriseCommCareVersionReport(EnterpriseReport):
+    title = gettext_lazy('CommCare Version Compliance')
+    total_description = gettext_lazy('% of Mobile Workers on the Latest CommCare Version')
+
+    @property
+    def headers(self):
+        return [
+            _('Mobile Worker'),
+            _('Project Space'),
+            _('Latest Version Available at Submission'),
+            _('Version in Use'),
+        ]
+
+    @property
+    def rows(self):
+        rows = []
+        config = CommCareBuildConfig.fetch()
+        version_cache = {}
+        for domain in self.account.get_domains():
+            rows.extend(self.rows_for_domain(domain, config, version_cache))
+        return rows
+
+    @property
+    def total(self):
+        total_mobile_workers = 0
+        total_up_to_date = 0
+        config = CommCareBuildConfig.fetch()
+        version_cache = {}
+
+        def total_for_domain(domain):
+            mobile_workers = get_mobile_user_count(domain, include_inactive=False)
+            if mobile_workers == 0:
+                return 0, 0
+            outdated_users = len(self.rows_for_domain(domain, config, version_cache))
+            return mobile_workers, outdated_users
+
+        for domain in self.account.get_domains():
+            domain_mobile_workers, outdated_users = total_for_domain(domain)
+            total_mobile_workers += domain_mobile_workers
+            total_up_to_date += domain_mobile_workers - outdated_users
+
+        return _format_percentage_for_enterprise_tile(total_up_to_date, total_mobile_workers)
+
+    def rows_for_domain(self, domain, config, cache):
+        rows = []
+
+        user_query = (UserES()
+            .domain(domain)
+            .mobile_users()
+            .source([
+                'username',
+                'reporting_metadata.last_submission_for_user.commcare_version',
+                'reporting_metadata.last_submission_for_user.submission_date',
+                'last_device.commcare_version',
+                'last_device.last_used'
+            ]))
+
+        for user in user_query.run().hits:
+            last_submission = user.get('reporting_metadata', {}).get('last_submission_for_user', {})
+            last_device = user.get('last_device', {})
+
+            version_in_use, date_of_use = get_commcare_version_and_date_from_last_usage(last_submission,
+                                                                                        last_device)
+
+            if not version_in_use:
+                continue
+
+            latest_version_at_time_of_use = get_latest_version_at_time(config, date_of_use, cache)
+
+            if is_out_of_date(version_in_use, latest_version_at_time_of_use):
+                rows.append([
+                    user['username'],
+                    domain,
+                    latest_version_at_time_of_use,
+                    version_in_use,
+                ])
+
+        return rows
+
+
+def _format_percentage_for_enterprise_tile(dividend, divisor):
+    if not divisor:
+        return '--'
+    return f"{dividend / divisor * 100:.1f}%"
+
+
+class EnterpriseSMSReport(EnterpriseReport):
+    title = gettext_lazy('SMS Usage')
+    total_description = gettext_lazy('# of SMS Sent')
+
+    MAX_DATE_RANGE_DAYS = 90
+
+    def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30):
+        super().__init__(account, couch_user)
+
+        if not end_date:
+            end_date = datetime.utcnow()
+        elif isinstance(end_date, str):
+            end_date = datetime.fromisoformat(end_date)
+
+        if start_date:
+            if isinstance(start_date, str):
+                start_date = datetime.fromisoformat(start_date)
+            self.datespan = DateSpan(start_date, end_date)
+        else:
+            self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
+
+        if self.datespan.enddate - self.datespan.startdate > timedelta(days=self.MAX_DATE_RANGE_DAYS):
+            raise TooMuchRequestedDataError(
+                _('Date ranges with more than {} days are not supported').format(self.MAX_DATE_RANGE_DAYS)
+            )
+
+    def total_for_domain(self, domain_obj):
+        query = SMS.objects.filter(
+            domain=domain_obj.name,
+            processed=True,
+            direction=OUTGOING,
+            error=False,
+            date__gte=self.datespan.startdate,
+            date__lt=self.datespan.enddate_adjusted
+        )
+
+        return query.count()
+
+    @property
+    def headers(self):
+        headers = [_('Project Space'), _('# Sent'), _('# Received'), _('# Errors')]
+
+        return headers
+
+    def rows_for_domain(self, domain_obj):
+        results = SMS.objects.filter(
+            domain=domain_obj.name,
+            processed=True,
+            date__gte=self.datespan.startdate,
+            date__lt=self.datespan.enddate_adjusted
+        ).values('direction', 'error').annotate(direction_count=Count('pk'))
+
+        num_sent = sum([result['direction_count'] for result in results
+                        if result['direction'] == OUTGOING and not result['error']])
+        num_received = sum([result['direction_count'] for result in results
+                            if result['direction'] == INCOMING and not result['error']])
+        num_errors = sum([result['direction_count'] for result in results if result['error']])
+
+        return [(domain_obj.name, num_sent, num_received, num_errors), ]
+
+
+class EnterpriseAPIReport(EnterpriseReport):
+    title = gettext_lazy('API Usage')
+    total_description = gettext_lazy('# of Active API Keys')
+
+    @property
+    def headers(self):
+        return [_('Web User'), _('API Key Name'), _('Scope'), _('Expiration Date [UTC]'), _('Created On [UTC]'),
+                _('Last Used On [UTC]')]
+
+    @property
+    def rows(self):
+        return [self._get_api_key_row(api_key) for api_key in self.unique_api_keys()]
+
+    @property
+    def total(self):
+        return self.unique_api_keys().count()
+
+    def unique_api_keys(self):
+        usernames = self.account.get_web_user_usernames()
+        user_ids = User.objects.filter(username__in=usernames).values_list('id', flat=True)
+        domains = self.account.get_domains()
+
+        return HQApiKey.objects.filter(
+            user_id__in=Subquery(user_ids),
+            is_active=True
+        ).filter(
+            Q(domain__in=domains) | Q(domain='')
+        )
+
+    def _get_api_key_row(self, api_key):
+        if api_key.domain:
+            scope = api_key.domain
+        else:
+            user_domains = set(WebUser.get_by_username(api_key.user.username).get_domains())
+            account_domains = set(self.account.get_domains())
+            intersected_domains = user_domains.intersection(account_domains)
+            scope = ', '.join((intersected_domains))
+
+        return [
+            api_key.user.username,
+            api_key.name,
+            scope,
+            self.format_date(api_key.expiration_date),
+            self.format_date(api_key.created),
+            self.format_date(api_key.last_used),
+        ]
+
+
+class Enterprise2FAReport(EnterpriseReport):
+    title = gettext_lazy('Two Factor Authentication')
+    total_description = gettext_lazy('# of Project Spaces without 2FA')
+
+    @property
+    def headers(self):
+        return [_('Project Space without 2FA'),]
+
+    def total_for_domain(self, domain_obj):
+        if domain_obj.two_factor_auth:
+            return 0
+        return 1
+
+    def rows_for_domain(self, domain_obj):
+        if domain_obj.two_factor_auth:
+            return []
+        return [(domain_obj.name,)]

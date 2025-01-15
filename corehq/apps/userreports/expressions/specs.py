@@ -708,6 +708,8 @@ def _get_user(domain, doc_id):
         else:
             doc[key] = getattr(user, key)
     doc['user_data'] = user.get_user_data(domain).to_dict()
+    # add location ID in here to not break existing reports - they _should_ just use user.location_id
+    doc['user_data']['commcare_location_id'] = user.get_location_id(domain)
     return doc
 
 

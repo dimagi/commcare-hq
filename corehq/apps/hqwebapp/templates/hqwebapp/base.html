@@ -415,13 +415,6 @@
       {% endif %}
     {% endif %}
 
-    {% if request.use_typeahead and not use_js_bundler and not use_bootstrap5 %}
-      {% compress js %}
-        <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
     {% if request.use_timepicker and not use_js_bundler and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>

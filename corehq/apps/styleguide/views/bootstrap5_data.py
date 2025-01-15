@@ -3,7 +3,7 @@ import time
 from collections import namedtuple
 from gettext import gettext
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
 from corehq.apps.styleguide.utils import get_fake_tabular_data
@@ -111,3 +111,8 @@ def paginated_table_data(request):
         "total": len(fake_data),
         "rows": fake_data[start:end],
     })
+
+
+def a_hanging_view(request):
+    time.sleep(10)
+    return HttpResponse("Done")

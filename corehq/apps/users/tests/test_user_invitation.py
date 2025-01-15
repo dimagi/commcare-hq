@@ -3,7 +3,7 @@ import datetime
 from unittest.mock import Mock, patch
 
 from corehq.apps.users.models import Invitation, WebUser
-from corehq.apps.users.views.web import UserInvitationView, WebUserInvitationForm
+from corehq.apps.users.views.web import UserInvitationView, AcceptedWebUserInvitationForm
 
 from django import forms
 from django.contrib.auth.models import AnonymousUser
@@ -17,7 +17,7 @@ class InvitationTestException(Exception):
     pass
 
 
-class StubbedWebUserInvitationForm(WebUserInvitationForm):
+class StubbedAcceptedWebUserInvitationForm(AcceptedWebUserInvitationForm):
 
     def __init__(self, *args, **kwargs):
         self.request_email = kwargs.pop('request_email', False)
@@ -76,7 +76,7 @@ class TestUserInvitation(TestCase):
         self.assertEqual("/accounts/login/", response.url)
 
     def test_redirect_if_invite_email_does_not_match(self):
-        form = StubbedWebUserInvitationForm(
+        form = StubbedAcceptedWebUserInvitationForm(
             {
                 "email": "other_test@dimagi.com",
                 "full_name": "asdf",
@@ -95,7 +95,7 @@ class TestUserInvitation(TestCase):
             str(ve.exception),
             "['You can only sign up with the email address your invitation was sent to.']")
 
-        form = WebUserInvitationForm(
+        form = AcceptedWebUserInvitationForm(
             {
                 "email": "other_test@dimagi.com",
                 "full_name": "asdf",
@@ -110,7 +110,7 @@ class TestUserInvitation(TestCase):
         print(form.errors)
         self.assertTrue(form.is_valid())
 
-        form = WebUserInvitationForm(
+        form = AcceptedWebUserInvitationForm(
             {
                 "email": "test@dimagi.com",
                 "full_name": "asdf",

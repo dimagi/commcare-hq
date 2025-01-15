@@ -2105,9 +2105,11 @@ SKIP_FIXTURES_ON_RESTORE = StaticToggle(
 
 SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     'skip_updating_user_reporting_metadata',
-    'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
-    TAG_CUSTOM,
+    'Disable user reporting metadata updates',
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
+    description="This is used as a temporary block in case of issues caused by the metadata updates. This"
+                "typically occurs if a large number of devices share the same user account.",
 )
 
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
@@ -2472,17 +2474,6 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     """
 )
 
-GOOGLE_SHEETS_INTEGRATION = StaticToggle(
-    'google-sheet-integration',
-    'Unlock the Google Sheets view in Exports',
-    TAG_SAAS_CONDITIONAL,
-    namespaces=[NAMESPACE_USER],
-    description="""
-    Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
-    on the Exports page.
-    """
-)
-
 APP_DEPENDENCIES = StaticToggle(
     slug='app-dependencies',
     label='Set Android app dependencies that must be installed before using a CommCare app',
@@ -2578,11 +2569,12 @@ WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ENTERPRISE_DASHBOARD_IMPROVEMENTS = StaticToggle(
-    'enterprise_dashboard_improvements',
-    'Shows an improved version of enterprise dashboard during development',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER]
+CALCULATED_PROPERTIES_FROM_DOMAIN_METRICS = FeatureRelease(
+    'calced_props_from_domain_metrics',
+    'Read domain calculated properties from DomainMetrics model instead of ElasticSearch doc.',
+    TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='emapson@dimagi.com'
 )
 
 
@@ -2612,13 +2604,28 @@ ATTENDANCE_TRACKING = StaticToggle(
     save_fn=_handle_attendance_tracking_role,
 )
 
+
+def _handle_geospatial_es_index(domain, is_enabled):
+    from corehq.apps.geospatial.tasks import index_es_docs_with_location_props
+    from corehq.apps.geospatial.utils import get_celery_task_tracker
+    from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
+
+    if is_enabled:
+        celery_task_tracker = get_celery_task_tracker(domain, ES_INDEX_TASK_HELPER_BASE_KEY)
+        # This check simply enforces that each domain's task is handled in serial.
+        if not celery_task_tracker.is_active():
+            index_es_docs_with_location_props.delay(domain)
+
+
 MICROPLANNING = StaticToggle(
     'microplanning',
     'Allows access to Microplanning GIS functionality',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description='Additional views will be added allowing for visually viewing '
-                'and assigning cases on a map.'
+                'and assigning cases on a map.',
+    save_fn=_handle_geospatial_es_index,
+
 )
 
 COMMCARE_CONNECT = StaticToggle(
@@ -2970,6 +2977,14 @@ SMART_LINKS_FOR_WEB_USERS = StaticToggle(
 MODULE_BADGES = StaticToggle(
     slug='module_badges',
     label='USH: Show case counts from CSQL queries as badges on modules',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+INCLUDE_ALL_LOCATIONS = StaticToggle(
+    slug='include_all_locations',
+    label='USH: When sending conditional alerts that target locations expand them to users that are assigned to '
+          'the location no matter if it is their primary location or not.',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
