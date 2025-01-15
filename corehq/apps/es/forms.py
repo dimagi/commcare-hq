@@ -43,6 +43,7 @@ class FormES(HQESQuery):
             form_ids,
             xmlns,
             app,
+            inserted,
             submitted,
             completed,
             user_id,
@@ -184,6 +185,10 @@ def app(app_ids):
 
 def submitted(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('received_on', gt, gte, lt, lte)
+
+
+def inserted(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('inserted_at', gt, gte, lt, lte)
 
 
 def completed(gt=None, gte=None, lt=None, lte=None):
