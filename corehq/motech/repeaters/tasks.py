@@ -72,6 +72,7 @@ again, until there are no more repeat records ready to be sent.
 
 """
 import random
+import uuid
 from datetime import datetime, timedelta
 from inspect import cleandoc
 
@@ -331,14 +332,34 @@ def process_repeaters():
                     continue
                 if rate_limit_repeater(domain, repeater_id):
                     continue
-                tasks.append(process_repeater_chord(domain, repeater_id))
+
+                lock = get_repeater_lock(repeater_id)
+                # Generate a lock token using `uuid1()` the same way that
+                # `redis.lock.Lock` does. The `Lock` class uses the token to
+                # determine ownership, so that one process can acquire a
+                # lock and a different process can release it. This lock
+                # will be released by the `update_repeater()` task.
+                lock_token = uuid.uuid1().hex
+                if lock.acquire(blocking=False, token=lock_token):
+                    tasks.append(process_repeater_chord(
+                        domain,
+                        repeater_id,
+                        lock_token,
+                    ))
 
             if tasks:
-                result = group(*tasks).apply_async()
-                # Waiting for the result of a subtask is discouraged
-                # https://docs.celeryq.dev/en/stable/userguide/tasks.html#avoid-launching-synchronous-subtasks
-                # but in this situation it is safe because the
-                # `process_repeater()` tasks use a different queue.
+                random_task_num = random.randrange(len(tasks))
+                random_task = tasks.pop(random_task_num)
+                if tasks:
+                    group(*tasks).apply_async()
+                result = random_task.apply_async()
+                # Wait for at least one task to complete so that
+                # `iter_ready_repeater_ids()` will return a different
+                # set of results. Waiting for the result of a subtask is
+                # discouraged, but in this situation it is safe because
+                # the tasks for processing a repeater use a different
+                # queue.
+                # cf. https://docs.celeryq.dev/en/stable/userguide/tasks.html#avoid-launching-synchronous-subtasks
                 result.get(disable_sync_subtasks=False)
 
             else:
@@ -376,6 +397,13 @@ def iter_ready_repeater_ids():
             yield domain, repeater_id
 
 
+def get_repeater_lock(repeater_id):
+    name = f'process_repeater_{repeater_id}'
+    # Requests will time out after 5 minutes. Set timeout to double to be safe.
+    ten_minutes = 10 * 60
+    return get_redis_lock(key=name, name=name, timeout=ten_minutes)
+
+
 def get_repeater_ids_by_domain():
     repeater_ids_by_domain = Repeater.objects.get_all_ready_ids_by_domain()
     always_enabled_domains = set(toggles.PROCESS_REPEATERS.get_enabled_domains())
@@ -390,7 +418,7 @@ def get_repeater_ids_by_domain():
     }
 
 
-def process_repeater_chord(domain, repeater_id):
+def process_repeater_chord(domain, repeater_id, lock_token):
     """
     Returns a Celery chord to process a repeater.
     """
@@ -405,7 +433,7 @@ def process_repeater_chord(domain, repeater_id):
     repeater = Repeater.objects.get(domain=domain, id=repeater_id)
     repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
     header_tasks = [get_task_signature(rr) for rr in repeat_records]
-    return chord(header_tasks, update_repeater.s(repeater_id))
+    return chord(header_tasks, update_repeater.s(repeater_id, lock_token))
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -494,26 +522,31 @@ def _get_wait_duration_seconds(repeat_record):
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def update_repeater(repeat_record_states, repeater_id):
+def update_repeater(repeat_record_states, repeater_id, lock_token):
     """
     Determines whether the repeater should back off, based on the
     results of ``process_ready_repeat_record()``.
     """
-    if all(s in (State.Empty, None) for s in repeat_record_states):
-        # We can't tell anything about the remote endpoint.
-        return
-    success_or_invalid = (State.Success, State.InvalidPayload)
-    repeater = Repeater.objects.get(id=repeater_id)
-    if any(s in success_or_invalid for s in repeat_record_states):
-        # The remote endpoint appears to be healthy.
-        repeater.reset_backoff()
-    else:
-        # All the payloads that were sent failed. Try again later.
-        metrics_counter(
-            'commcare.repeaters.process_repeaters.repeater_backoff',
-            tags={'domain': repeater.domain},
-        )
-        repeater.set_backoff()
+    try:
+        if all(s in (State.Empty, None) for s in repeat_record_states):
+            # We can't tell anything about the remote endpoint.
+            return
+        success_or_invalid = (State.Success, State.InvalidPayload)
+        repeater = Repeater.objects.get(id=repeater_id)
+        if any(s in success_or_invalid for s in repeat_record_states):
+            # The remote endpoint appears to be healthy.
+            repeater.reset_backoff()
+        else:
+            # All the payloads that were sent failed. Try again later.
+            metrics_counter(
+                'commcare.repeaters.process_repeaters.repeater_backoff',
+                tags={'domain': repeater.domain},
+            )
+            repeater.set_backoff()
+    finally:
+        lock = get_repeater_lock(repeater_id)
+        lock.local.token = lock_token
+        lock.release()
 
 
 metrics_gauge_task(
