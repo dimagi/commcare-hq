@@ -1,4 +1,3 @@
-import math
 import time
 from itertools import islice
 
@@ -14,6 +13,7 @@ from corehq.apps.es.users import missing_or_empty_user_data_property
 from corehq.apps.geospatial.utils import get_geo_case_property, get_geo_user_property
 from corehq.apps.geospatial.tasks import clusters_disbursement_task
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.util.log import with_progress_bar
 from couchforms.geopoint import GeoPoint
 from dimagi.utils.couch.database import iter_docs
 
@@ -53,13 +53,7 @@ class Command(BaseCommand):
 
         total_cases = CaseSearchES().domain(domain).NOT(case_property_missing(geo_case_property)).count()
         print(f"Total GPS Cases: {total_cases}")
-        cases_data = []
-        batch_count = math.ceil(total_cases / ES_QUERY_CHUNK_SIZE)
-        for i in range(batch_count):
-            print(f"Fetching Cases: Processing Batch {i + 1} of {batch_count}...")
-            cases_data.extend(
-                self.get_cases_with_gps(domain, geo_case_property, offset=i * ES_QUERY_CHUNK_SIZE)
-            )
+        cases_data = self.get_cases_with_gps(domain, geo_case_property)
         print("All cases fetched successfully")
 
         start_time = time.time()
@@ -112,12 +106,12 @@ class Command(BaseCommand):
         except BadValueError:
             return None
 
-    def get_cases_with_gps(self, domain, geo_case_property, offset):
-        query = CaseSearchES().domain(domain).size(ES_QUERY_CHUNK_SIZE).start(offset)
+    def get_cases_with_gps(self, domain, geo_case_property):
+        query = CaseSearchES().domain(domain).size(ES_QUERY_CHUNK_SIZE)
         query = query.NOT(case_property_missing(geo_case_property))
 
         cases_data = []
-        for row in query.run().raw['hits'].get('hits', []):
+        for row in with_progress_bar(query.scroll(), query.count(), prefix="Fetching cases"):
             case = wrap_case_search_hit(row)
             coordinates = self.get_case_geo_location(case, geo_case_property)
             if coordinates:
