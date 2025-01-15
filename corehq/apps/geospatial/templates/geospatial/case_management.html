@@ -211,7 +211,7 @@
                 </thead>
                 <tbody data-bind="foreach: selectedUsers">
                   <tr>
-                    <td data-bind="html: $data.itemData.link"></td>
+                    <td data-bind="html: $data.link"></td>
                   </tr>
                 </tbody>
               </table>
@@ -246,7 +246,7 @@
                 </thead>
                 <tbody data-bind="foreach: userModels">
                   <tr>
-                    <td data-bind="html: $data.itemData.link"></td>
+                    <td data-bind="html: $data.link"></td>
                   </tr>
                 </tbody>
               </table>
@@ -282,7 +282,7 @@
                 </thead>
                 <tbody data-bind="foreach: selectedCases">
                   <tr>
-                    <td data-bind="html: $data.itemData.link"></td>
+                    <td data-bind="html: $data.link"></td>
                   </tr>
                 </tbody>
               </table>
@@ -315,7 +315,7 @@
                 </thead>
                 <tbody data-bind="foreach: caseModels">
                   <tr>
-                    <td data-bind="html: $data.itemData.link"></td>
+                    <td data-bind="html: $data.link"></td>
                   </tr>
                 </tbody>
               </table>
@@ -336,7 +336,7 @@
       />
       <label
         class="form-check-label"
-        data-bind="html: $data.itemData.link, attr: {for: selectCssId}"
+        data-bind="html: $data.link, attr: {for: selectCssId}"
       ></label>
     </div>
   </script>
