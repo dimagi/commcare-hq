@@ -371,7 +371,7 @@ class ODataFeedResource(ODataEnterpriseReportResource):
 
     domain = fields.CharField()
     report_name = fields.CharField()
-    report_rows = fields.IntegerField(null=True)
+    report_rows = fields.IntegerField()
 
     REPORT_SLUG = EnterpriseReport.ODATA_FEEDS
 
