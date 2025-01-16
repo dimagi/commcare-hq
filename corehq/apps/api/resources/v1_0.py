@@ -119,11 +119,10 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
         role_id = validator.roles_by_name.get(spec.role)
         tableau_group_ids = get_tableau_group_ids_by_names(spec.tableau_groups or [], domain)
 
-        primary_loc = None
+        primary_loc_id = None
         assigned_locs = []
         if spec.assigned_location_ids:
-            primary_loc = SQLLocation.active_objects.get(
-                location_id=spec.primary_location_id)
+            primary_loc_id = spec.primary_location_id
             assigned_locs = SQLLocation.active_objects.filter(
                 location_id__in=spec.assigned_location_ids, domain=domain)
             real_ids = [loc.location_id for loc in assigned_locs]
@@ -136,7 +135,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
             domain=domain,
             email=spec.email.lower(),
             role=role_id,
-            primary_location=primary_loc,
+            primary_location_id=primary_loc_id,
             profile=profile,
             custom_user_data=spec.custom_user_data or {},
             tableau_role=spec.tableau_role,
