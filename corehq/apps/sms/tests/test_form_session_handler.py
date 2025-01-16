@@ -222,7 +222,7 @@ class FormSessionMultipleContactsTestCase(TestCase):
         self.assertEqual(session_info.session_id, session.session_id)
 
     @patch('corehq.apps.sms.handlers.form_session.answer_next_question', MagicMock(return_value=None))
-    @patch('corehq.apps.sms.handlers.form_session.send_sms_to_verified_number', MagicMock(return_value=None))
+    @patch('corehq.apps.sms.handlers.form_session.send_message_to_verified_number', MagicMock(return_value=None))
     def test_incoming_sms_linked_form_session__session_contact_different_from_incoming(self):
         session = self._make_session(self.number2)
         self._claim_channel(session)
