@@ -39,6 +39,24 @@ module.exports = {
                 exclude: /node_modules/,
             },
 
+{
+    test: /\.png/,
+    type: 'asset/resource',
+},
+/*{
+  test: /\.(gif|png|jpe?g|svg)$/i,
+  use: [
+    'file-loader',
+    {
+      loader: 'image-webpack-loader',
+      options: {
+        bypassOnDebug: true, // webpack@1.x
+        disable: true, // webpack@2.x and newer
+      },
+    },
+  ],
+},*/
+
             // this rule ensures that hqDefine is renamed to define AMD module
             // definition syntax that webpack understands
             {

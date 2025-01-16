@@ -10,6 +10,17 @@ hqDefine('reports_core/js/bootstrap3/maps', [
     mapsUtils,
     L
 ) {
+    delete L.Icon.Default.prototype._getIconUrl;
+
+jls = require('leaflet/dist/images/marker-icon-2x.png');
+console.log(jls);
+    L.Icon.Default.mergeOptions({
+        //iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+        iconRetinaUrl: require('leaflet/dist/images/marker-icon.png'),
+        iconUrl: require('leaflet/dist/images/marker-icon.png'),
+        shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+    });
+
     var module = {},
         privates = {};
 
