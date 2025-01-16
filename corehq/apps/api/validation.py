@@ -158,7 +158,7 @@ class WebUserResourceSpec:
             if key in system_fields:
                 if value == profile.fields.get(key, object()):
                     continue
-                errors.append(_("'{}' cannot be set directly").format(key))
+                errors.append(_("'{}' is defined by the profile so cannot be set directly").format(key))
         if errors:
             raise WebUserValidationException(errors)
 

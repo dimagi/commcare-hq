@@ -133,7 +133,7 @@ class TestWebUserResourceValidator(TestCase):
 
         with self.assertRaises(WebUserValidationException) as e:
             self.spec.new_or_existing_user_data = {'imaginary': 'no'}
-        self.assertEqual(e.exception.message, ["'imaginary' cannot be set directly"])
+        self.assertEqual(e.exception.message, ["'imaginary' is defined by the profile so cannot be set directly"])
 
     def test_validate_email(self):
         self.spec.email = "newtest@example.com"
