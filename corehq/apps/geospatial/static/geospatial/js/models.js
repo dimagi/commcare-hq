@@ -997,7 +997,6 @@ hqDefine('geospatial/js/models', [
                 }));
             }
             self.totalItems(self.filteredCaseData().length);
-            self.goToPage(1);
         });
 
         self.hasCheckedRows = ko.computed(function () {
