@@ -220,6 +220,8 @@ class DomainResource(ODataEnterpriseReportResource):
     num_web_users = fields.IntegerField()
     num_sms_last_30_days = fields.IntegerField()
     last_form_submission = fields.DateTimeField()
+    num_odata_feeds_used = fields.IntegerField(null=True)
+    num_odata_feeds_available = fields.IntegerField(null=True)
 
     REPORT_SLUG = EnterpriseReport.DOMAINS
 
@@ -231,6 +233,8 @@ class DomainResource(ODataEnterpriseReportResource):
         bundle.data['num_web_users'] = bundle.obj[3]
         bundle.data['num_sms_last_30_days'] = bundle.obj[4]
         bundle.data['last_form_submission'] = self.convert_datetime(bundle.obj[5])
+        bundle.data['num_odata_feeds_used'] = bundle.obj[6]
+        bundle.data['num_odata_feeds_available'] = bundle.obj[7]
 
         return bundle
 
@@ -350,25 +354,21 @@ class ODataFeedResource(ODataEnterpriseReportResource):
     Currently includes summary rows as well as individual reports
     '''
 
-    domain = fields.CharField(null=True)
-    num_feeds_used = fields.IntegerField(null=True)
-    num_feeds_available = fields.IntegerField(null=True)
-    report_name = fields.CharField(null=True)
-    report_rows = fields.IntegerField(null=True)
+    domain = fields.CharField()
+    report_name = fields.CharField()
+    report_rows = fields.IntegerField()
 
     REPORT_SLUG = EnterpriseReport.ODATA_FEEDS
 
     def dehydrate(self, bundle):
-        bundle.data['num_feeds_used'] = bundle.obj[0]
-        bundle.data['num_feeds_available'] = bundle.obj[1]
-        bundle.data['report_name'] = bundle.obj[2]
-        bundle.data['report_rows'] = bundle.obj[3]
-        bundle.data['domain'] = bundle.obj[5] if len(bundle.obj) >= 5 else None
+        bundle.data['domain'] = bundle.obj[0]
+        bundle.data['report_name'] = bundle.obj[1]
+        bundle.data['report_rows'] = bundle.obj[2]
 
         return bundle
 
     def get_primary_keys(self):
-        return ('report_name',)  # very odd report that makes coming up with an actual key challenging
+        return ('domain', 'report_name',)
 
 
 class FormSubmissionResource(ODataEnterpriseReportResource):
