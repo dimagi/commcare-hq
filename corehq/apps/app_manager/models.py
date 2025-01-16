@@ -4491,7 +4491,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if app_has_custom_intents():
             metrics_counter(
                 'commcare.app_build.custom_app_callout',
-                tags={'domain': new_build.domain},
+                tags={'domain': new_build.domain, 'app_id': new_build.copy_of},
             )
 
     def check_build_dependencies(self, new_build):
