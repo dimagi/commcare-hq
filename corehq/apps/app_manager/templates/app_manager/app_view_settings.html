@@ -6,7 +6,8 @@
 {% load xforms_extras %}
 
 {% block title %}
-  {% trans "Settings" %} -
+  {% trans "Settings" %}
+  -
   {% if app.name %}
     {{ app.name|html_name }}
   {% else %}
@@ -14,14 +15,16 @@
   {% endif %}
 {% endblock %}
 
-{% block js %}{{ block.super }}
+{% block js %}
+  {{ block.super }}
   {% compress js %}
     <script src="{% static 'app_manager/js/settings/app_logos.js' %}"></script>
     <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
-    <script src="{% static 'app_manager/js/widgets.js' %}"></script><!-- version when copying app -->
+    <script src="{% static 'app_manager/js/widgets.js' %}"></script>
+    <!-- version when copying app -->
   {% endcompress %}
   {% compress js %}
-    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
+    <script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
   {% endcompress %}
 {% endblock js %}
 

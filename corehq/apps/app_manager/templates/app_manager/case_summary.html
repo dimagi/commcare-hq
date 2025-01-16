@@ -2,8 +2,11 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{% trans "Case Summary" %} - {% trans "Version" %} {{ app_version }}{% endblock %}
-
+{% block title %}
+  {% trans "Case Summary" %}
+  - {% trans "Version" %}
+  {{ app_version }}
+{% endblock %}
 {% js_entry_b3 'app_manager/js/summary/case_summary' %}
 
 {% block content_extra %}
@@ -13,28 +16,45 @@
     <div class="page-header" style="margin-top: 0;">
       <h3>
         <i class="fcc fcc-fd-external-case"></i>
-        {% trans "Case Summary" %} - {% trans "Version" %} <select id="version-selector" class="form-control" data-bind="value: firstAppId"></select>
-        <a class="btn btn-default" data-bind="click: changeVersions, visible: showChangeVersions">{% trans "Go" %}</a>
+        {% trans "Case Summary" %} - {% trans "Version" %}
+        <select
+          id="version-selector"
+          class="form-control"
+          data-bind="value: firstAppId"
+        ></select>
+        <a
+          class="btn btn-default"
+          data-bind="click: changeVersions, visible: showChangeVersions"
+          >{% trans "Go" %}</a
+        >
       </h3>
       <div class="row">
         <div class="col-xs-3">
-          <search-box data-apply-bindings="false"
-                      params="value: query,
+          <search-box
+            data-apply-bindings="false"
+            params="value: query,
                               action: onQuery,
                               immediate: true,
-                              placeholder: queryLabel"></search-box>
+                              placeholder: queryLabel"
+          ></search-box>
         </div>
         <div class="col-xs-9">
           <div class="btn-toolbar pull-right" role="toolbar">
             <!-- ko template: 'label-id-toggle' --><!-- /ko -->
-            <div class="btn-group btn-group-separated" role="group" >
-              <button type="button" class="btn btn-default"
-                      data-bind="click: toggleConditions, css: { active : showConditions }">
+            <div class="btn-group btn-group-separated" role="group">
+              <button
+                type="button"
+                class="btn btn-default"
+                data-bind="click: toggleConditions, css: { active : showConditions }"
+              >
                 <i class="fa fa-sitemap"></i>
                 &nbsp;{% trans "Show Conditions" %}
               </button>
-              <button type="button" class="btn btn-default"
-                      data-bind="click: toggleCalculations, css: { active : showCalculations }">
+              <button
+                type="button"
+                class="btn btn-default"
+                data-bind="click: toggleCalculations, css: { active : showCalculations }"
+              >
                 <i class="fa fa-calculator"></i>
                 &nbsp;{% trans "Show Calculations" %}
               </button>
@@ -49,8 +69,8 @@
       <div class="alert alert-danger">
         {% url 'app_form_summary' domain latest_app_id as form_summary_url %}
         {% blocktrans %}
-          Your app's forms contain errors.
-          Please visit the <a href='{{ form_summary_url }}'>form summary</a> for more details.
+          Your app's forms contain errors. Please visit the
+          <a href="{{ form_summary_url }}">form summary</a> for more details.
         {% endblocktrans %}
       </div>
     {% endif %}
@@ -72,18 +92,25 @@
                   <strong>{% trans "Relationships:" %}</strong>
                   <ul class="fa-ul" data-bind="foreach: relationshipList">
                     <li>
-                      <span class="label label-primary" data-bind="text: relationship"></span>
+                      <span
+                        class="label label-primary"
+                        data-bind="text: relationship"
+                      ></span>
                       <!-- ko text: caseType --><!-- /ko -->
                     </li>
                   </ul>
                 </div>
                 <div class="col-md-4">
                   <strong>{% trans "Opened by:" %}</strong>
-                  <div data-bind="template: {name: 'opened-closed-by', data: openedByList }"></div>
+                  <div
+                    data-bind="template: {name: 'opened-closed-by', data: openedByList }"
+                  ></div>
                 </div>
                 <div class="col-md-4">
                   <strong>{% trans "Closed by:" %}</strong>
-                  <div data-bind="template: {name: 'opened-closed-by', data: closedByList }"></div>
+                  <div
+                    data-bind="template: {name: 'opened-closed-by', data: closedByList }"
+                  ></div>
                 </div>
               </div>
               <!-- ko if:has_errors -->
@@ -95,7 +122,9 @@
                     <!-- ko foreach: properties -->
                     <!-- ko if: has_errors -->
                     <li>
-                      <a data-bind="attr: {href: '#' + $parent.name + ':' + encodeURIComponent(name)}, text: name"></a>
+                      <a
+                        data-bind="attr: {href: '#' + $parent.name + ':' + encodeURIComponent(name)}, text: name"
+                      ></a>
                     </li>
                     <!-- /ko -->
                     <!-- /ko -->
@@ -106,72 +135,85 @@
             </div>
             <table class="case-properties table">
               <thead>
-              <tr>
-                <th>{% trans "Case Property" %}</th>
-                <th>{% trans "Form" %}</th>
-                <th>{% trans "Load questions" %}</th>
-                <th>{% trans "Save questions" %}</th>
-                <th>{% trans "Case Lists" %}</th>
-                <th>{% trans "Case Details" %}</th>
-              </tr>
+                <tr>
+                  <th>{% trans "Case Property" %}</th>
+                  <th>{% trans "Form" %}</th>
+                  <th>{% trans "Load questions" %}</th>
+                  <th>{% trans "Save questions" %}</th>
+                  <th>{% trans "Case Lists" %}</th>
+                  <th>{% trans "Case Details" %}</th>
+                </tr>
               </thead>
               <tbody data-bind="foreach: properties">
-              <!-- ko if: !is_detail_calculation || $root.showCalculations() -->
-              <!-- ko foreach: forms -->
-              <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, visible: $parent.isVisible">
-                <!-- ko if: !$index() -->
-                <td data-bind="attr: {rowspan: $parent.forms.length}">
-                  <dl>
-                    <dt data-bind="text: $parent.name"></dt>
-                    <dd data-bind="text: $parent.description"></dd>
-                  </dl>
-                </td>
-                <!-- /ko -->
-                <td>
-                  <span data-bind="html: $root.moduleFormReference(form_id)"></span>
-                  <!-- ko foreach: errors -->
-                  <i class="fa-solid fa-triangle-exclamation text-danger"
-                     data-bind="popover: { content: $data, placement: 'bottom', trigger: 'hover' }"></i>
+                <!-- ko if: !is_detail_calculation || $root.showCalculations() -->
+                <!-- ko foreach: forms -->
+                <tr
+                  data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, visible: $parent.isVisible"
+                >
+                  <!-- ko if: !$index() -->
+                  <td data-bind="attr: {rowspan: $parent.forms.length}">
+                    <dl>
+                      <dt data-bind="text: $parent.name"></dt>
+                      <dd data-bind="text: $parent.description"></dd>
+                    </dl>
+                  </td>
                   <!-- /ko -->
-                </td>
-                <td>
-                  {% include 'app_manager/partials/load_save_questions.html' with questions='load_questions' %}
-                </td>
-                <td>
-                  {% include 'app_manager/partials/load_save_questions.html' with questions='save_questions' %}
-                </td>
-                <!-- ko if: !$index() -->
-                <td>
-                  {% include 'app_manager/partials/case_summary_case_details.html' with detail='$parent.short_details' %}
-                </td>
-                <td>
-                  {% include 'app_manager/partials/case_summary_case_details.html' with detail='$parent.long_details' %}
-                </td>
+                  <td>
+                    <span
+                      data-bind="html: $root.moduleFormReference(form_id)"
+                    ></span>
+                    <!-- ko foreach: errors -->
+                    <i
+                      class="fa-solid fa-triangle-exclamation text-danger"
+                      data-bind="popover: { content: $data, placement: 'bottom', trigger: 'hover' }"
+                    ></i>
+                    <!-- /ko -->
+                  </td>
+                  <td>
+                    {% include 'app_manager/partials/load_save_questions.html' with questions='load_questions' %}
+                  </td>
+                  <td>
+                    {% include 'app_manager/partials/load_save_questions.html' with questions='save_questions' %}
+                  </td>
+                  <!-- ko if: !$index() -->
+                  <td>
+                    {% include 'app_manager/partials/case_summary_case_details.html' with detail='$parent.short_details' %}
+                  </td>
+                  <td>
+                    {% include 'app_manager/partials/case_summary_case_details.html' with detail='$parent.long_details' %}
+                  </td>
+                  <!-- /ko -->
+                </tr>
                 <!-- /ko -->
-              </tr>
-              <!-- /ko -->
-              <!-- ko if: !forms.length && (short_details.length || long_details.length) -->
-              {# There is a property referenced in the case details screen that isn't referenced in any form #}
-              <tr data-bind="attr: {id: $parent.name + ':' + encodeURIComponent(name)}, css: {'danger': has_errors}, visible: isVisible">
-                <td>
-                  <dl>
-                    <dt>
-                      <!-- ko if: is_detail_calculation --><i class="fa fa-calculator"></i><!-- /ko -->
-                      <!-- ko text: name --><!-- /ko -->
-                    </dt>
-                    <dd data-bind="text: description"></dd>
-                  </dl>
-                </td>
-                <td></td><td></td><td></td>
-                <td>
-                  {% include 'app_manager/partials/case_summary_case_details.html' with detail='short_details' %}
-                </td>
-                <td>
-                  {% include 'app_manager/partials/case_summary_case_details.html' with detail='long_details' %}
-                </td>
-              </tr>
-              <!-- /ko -->
-              <!-- /ko -->
+                <!-- ko if: !forms.length && (short_details.length || long_details.length) -->
+                {# There is a property referenced in the case details screen that isn't referenced in any form #}
+                <tr
+                  data-bind="attr: {id: $parent.name + ':' + encodeURIComponent(name)}, css: {'danger': has_errors}, visible: isVisible"
+                >
+                  <td>
+                    <dl>
+                      <dt>
+                        <!-- ko if: is_detail_calculation --><i
+                          class="fa fa-calculator"
+                        ></i
+                        ><!-- /ko -->
+                        <!-- ko text: name --><!-- /ko -->
+                      </dt>
+                      <dd data-bind="text: description"></dd>
+                    </dl>
+                  </td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td>
+                    {% include 'app_manager/partials/case_summary_case_details.html' with detail='short_details' %}
+                  </td>
+                  <td>
+                    {% include 'app_manager/partials/case_summary_case_details.html' with detail='long_details' %}
+                  </td>
+                </tr>
+                <!-- /ko -->
+                <!-- /ko -->
               </tbody>
             </table>
           </div>
@@ -186,7 +228,10 @@
         <li>
           <span data-bind="html: $root.moduleFormReference(formId)"></span>
           <!-- ko if: conditions -->
-          <ul class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
+          <ul
+            class="fa-ul"
+            data-bind="visible: $root.showConditions, foreach: conditions"
+          >
             <li>
               <i class="fa fa-sitemap"></i>
               <!-- ko text: question --><!-- /ko -->
@@ -199,5 +244,4 @@
       </ul>
     </script>
   </div>
-
 {% endblock content_extra %}

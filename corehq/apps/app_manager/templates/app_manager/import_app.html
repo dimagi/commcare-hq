@@ -4,10 +4,12 @@
 {% load compress %}
 
 {% comment %}
-  Despite inheriting from apps_base.html, this template does not necessarily have an app.
+  Despite inheriting from apps_base.html, this template does not necessarily
+  have an app.
 {% endcomment %}
 
-{% block js %}{{ block.super }}
+{% block js %}
+  {{ block.super }}
   {% compress js %}
     <script src="{% static 'app_manager/js/import_app.js' %}"></script>
   {% endcompress %}
@@ -22,28 +24,47 @@
   <div class="appmanager-content-single-page">
     <h1>Import Application</h1>
     {% initial_page_data 'export_json' app.export_json %}
-    <form action="{% url "import_app" domain %}" id="app-import-form" method="post" enctype="multipart/form-data">
+    <form
+      action="{% url "import_app" domain %}"
+      id="app-import-form"
+      method="post"
+      enctype="multipart/form-data"
+    >
       {% csrf_token %}
       {% if app %}
-        <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
+        <p>
+          Import application <strong>{{ app.name }}</strong> from domain
+          <strong>{{ app.domain }}</strong>?
+        </p>
       {% endif %}
       <div class="form-horizontal">
         <div class="form-group">
           <label class="{% css_label_class %} control-label">Name</label>
           <div class="{% css_field_class %}">
-            <input class="form-control" type="text" name="name"/>
+            <input class="form-control" type="text" name="name" />
           </div>
         </div>
         <div class="form-group">
-          <label for="source_file" class="{% css_label_class %} control-label">{% trans "Application Source File" %}</label>
+          <label for="source_file" class="{% css_label_class %} control-label"
+            >{% trans "Application Source File" %}</label
+          >
           <div class="{% css_field_class %}">
-            <input id="source_file" type="file" name="source_file" data-bind="value: file"/>
+            <input
+              id="source_file"
+              type="file"
+              name="source_file"
+              data-bind="value: file"
+            />
           </div>
         </div>
         <div class="form-actions">
           <div class="{% css_action_class %}">
-            <a href="#" class="btn btn-default historyBack">No, take me back.</a>
-            <button class="btn btn-primary" type="submit">{% trans 'Yes, import application' %}</button>
+            <a href="#" class="btn btn-default historyBack"
+              >No, take me back.</a
+            >
+            <button class="btn btn-primary" type="submit">
+              {% trans 'Yes, import application' %}
+            </button>
           </div>
         </div>
       </div>

@@ -13,18 +13,19 @@
   appmanager-sidebar
 {% endblock %}
 
-
 {% block page_content_classes %}
-  appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
+  appmanager-main-container{% if formdesigner %}formdesigner-content-wrapper{% endif %}
 {% endblock %}
 
 {% block title %}{% trans "Applications" %}{% endblock %}
 
-{% block stylesheets %}{{ block.super }}
+{% block stylesheets %}
+  {{ block.super }}
   {% include 'app_manager/partials/apps_stylesheets.html' %}
 {% endblock %}
 
-{% block js %}{{ block.super }}
+{% block js %}
+  {{ block.super }}
   <!--
       jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
       tooltip widgets conflict. The B3 base template takes care of that when you use the
@@ -60,9 +61,7 @@
     <script src="{% static 'jquery-ui/ui/widgets/menu.js' %}"></script>
     <script src="{% static 'jquery-ui/ui/widgets/sortable.js' %}"></script>
   {% endcompress %}
-
   {% include 'hqwebapp/includes/atwho.html' %}
-
   {% include 'hqwebapp/includes/ui_element_js.html' %}
   {% compress js %}
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
@@ -70,25 +69,30 @@
   {% endcompress %}
 {% endblock %}
 
-{% block page_breadcrumbs %}{% endblock %}
+{% block page_breadcrumbs %}
+{% endblock %}
 
-{% block content %}{{ block.super }}
+{% block content %}
+  {{ block.super }}
   {% registerurl "dashboard_default" domain %}
-  {% include 'app_manager/partials/preview_app.html'%}
+  {% include 'app_manager/partials/preview_app.html' %}
 {% endblock %}
 
 {% block page_content %}
-  <div class="appmanager-loading-bg">
-  </div>
-  <div class="js-unhide-on-unsaved appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
-       id="js-appmanager-body">
+  <div class="appmanager-loading-bg"></div>
+  <div
+    class="js-unhide-on-unsaved appmanager-content appmanager-content-transition-all{% if not formdesigner %}appmanager-settings-content{% endif %}"
+    id="js-appmanager-body"
+  >
     {% include 'app_manager/partials/vellum_case_management_warning.html' %}
 
-    {% block app-content %}{% endblock %}
+    {% block app-content %}
+    {% endblock %}
   </div>
 {% endblock %}
 
-{% block column_style %}{% endblock %}
+{% block column_style %}
+{% endblock %}
 
 {% block modals %}
   {{ block.super }}

@@ -5,7 +5,8 @@
 {% load i18n %}
 {% load xforms_extras %}
 
-{% block js %}{{  block.super }}
+{% block js %}
+  {{ block.super }}
   {% compress js %}
     <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
     <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
@@ -37,7 +38,8 @@
   </div>
 
   <div class="appmanager-edit-title appmanager-edit-app-title">
-    <inline-edit params="
+    <inline-edit
+      params="
         value: '{{ app.name|escapejs }}',
         containerClass: 'h3 app-title',
         url: '{% url "edit_app_attr" domain app.id 'name' %}',
@@ -47,18 +49,21 @@
         saveValueName: 'name',
         nodeName: 'input',
         disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
-    "></inline-edit>
+    "
+    ></inline-edit>
   </div>
 
   <div class="appmanager-edit-description">
-    <inline-edit params="
+    <inline-edit
+      params="
         value: '{{ app.short_comment|escapejs }}',
         url: '{% url "edit_app_attr" domain app.id 'comment' %}',
         placeholder: '{% trans "Enter app description here"|escapejs %}',
         saveValueName: 'comment',
         cols: 50,
         disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
-    "></inline-edit>
+    "
+    ></inline-edit>
   </div>
 {% endblock %}
 
@@ -69,7 +74,8 @@
   </div>
 {% endblock %}
 
-{% block modals %}{{ block.super }}
+{% block modals %}
+  {{ block.super }}
   {% for uploader in uploaders %}
     {% include 'hqmedia/partials/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
   {% endfor %}
