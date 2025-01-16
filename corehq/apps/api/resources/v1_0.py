@@ -25,7 +25,7 @@ from corehq.apps.reports.util import (
     get_tableau_group_ids_by_names,
     get_tableau_groups_by_ids,
 )
-from corehq.apps.api.validation import WebUserResourceValidator, WebUserSpec
+from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
 
 
 class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -103,24 +103,26 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_create(self, bundle, **kwargs):
         domain = kwargs['domain']
-        validator = WebUserResourceValidator(domain, bundle.request.couch_user)
-        spec = WebUserSpec(
-            email=bundle.data.get('email'),
-            role=bundle.data.get('role'),
-            primary_location_id=bundle.data.get('primary_location_id'),
-            assigned_location_ids=bundle.data.get('assigned_location_ids'),
-            new_or_existing_profile_name=bundle.data.get('profile'),
-            new_or_existing_user_data=bundle.data.get('user_data') or {},
-            tableau_role=bundle.data.get('tableau_role'),
-            tableau_groups=bundle.data.get('tableau_groups'),
-            parameters=bundle.data.keys(),
-        )
-        errors = validator.is_valid(spec, True)
-        if errors:
-            raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
+        try:
+            spec = WebUserResourceSpec(
+                domain=domain,
+                requesting_user=bundle.request.couch_user,
+                email=bundle.data.get('email'),
+                is_post=True,
+                role=bundle.data.get('role'),
+                primary_location_id=bundle.data.get('primary_location_id'),
+                assigned_location_ids=bundle.data.get('assigned_location_ids'),
+                new_or_existing_profile_name=bundle.data.get('profile'),
+                new_or_existing_user_data=bundle.data.get('user_data') or {},
+                tableau_role=bundle.data.get('tableau_role'),
+                tableau_groups=bundle.data.get('tableau_groups'),
+                parameters=bundle.data.keys(),
+            )
+        except WebUserValidationException as e:
+            raise ImmediateHttpResponse(JsonResponse({"errors": e.message}, status=400))
 
-        profile = validator.profiles_by_name.get(spec.new_or_existing_profile_name)
-        role_id = validator.roles_by_name.get(spec.role)
+        profile = spec.profiles_by_name.get(spec.new_or_existing_profile_name)
+        role_id = spec.roles_by_name.get(spec.role)
         tableau_group_ids = get_tableau_group_ids_by_names(spec.tableau_groups or [], domain)
 
         primary_loc = None
