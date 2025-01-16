@@ -128,7 +128,7 @@ class TestWebUserResourceValidator(TestCase):
 
     def test_validate_profile_with_conflicting_user_data(self):
         self.assertEqual(self.validator.validate_custom_data_with_profile({'imaginary': 'yes'}, 'character'),
-            ["'imaginary' cannot be set directly"])
+            ["'imaginary' is defined by the profile so cannot be set directly"])
 
     def test_validate_email(self):
         self.assertIsNone(self.validator.validate_email("newtest@example.com", True))
