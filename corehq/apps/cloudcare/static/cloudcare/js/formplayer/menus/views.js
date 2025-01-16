@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
@@ -34,7 +33,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     formplayerUtils,
     markdown,
     cloudcareUtils,
-    L
+    L,
 ) {
     const MenuView = Marionette.View.extend({
         isGrid: function () {
@@ -132,6 +131,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
+                badgeText: this.options.model.attributes.badgeText,
                 menuIndex: this.menuIndex,
             };
         },
@@ -873,7 +873,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                     "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                hqRequire(["hqwebapp/js/bootstrap5/alert_user"], function (alertUser) {
+                import("hqwebapp/js/bootstrap5/alert_user").then(function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
             }
@@ -1061,7 +1061,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const paginateItems = formplayerUtils.paginateOptions(
                 this.options.currentPage,
                 this.options.pageCount,
-                this.options.collection.length
+                this.options.collection.length,
             );
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
             let description = this.options.description;
@@ -1662,10 +1662,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const persistentMenuContentContainer = $('#persistent-menu-container-content');
             const targetElement = $('#persistent-menu-container')[0];
             targetElement.addEventListener('transitionend', (event) => {
-                    if (this.menuExpanded && event.target === targetElement) {
-                        persistentMenuContentContainer.removeClass('d-none');
-                    }
-                });
+                if (this.menuExpanded && event.target === targetElement) {
+                    persistentMenuContentContainer.removeClass('d-none');
+                }
+            });
         },
         cloudcareNotificationListener: function () {
             const persistentMenuContainer = $('#persistent-menu-container');
@@ -1755,7 +1755,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     if (sessionStorage.showPersistentMenu !== 'true') {
                         self.hideMenu();
                     }
-                }
+                },
             );
         },
         templateContext: function () {
