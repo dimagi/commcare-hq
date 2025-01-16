@@ -572,9 +572,7 @@ class TestWebUserResource(APIResourceTest):
         if user:
             user.delete(self.domain.name, deleted_by=None)
 
-    @patch('corehq.apps.api.validation.WebUserResourceValidator.is_valid')
-    def test_update(self, mock_is_valid):
-        mock_is_valid.return_value = []
+    def test_update(self):
         editable_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
         self.addCleanup(editable_user.delete, self.domain.name, deleted_by=None)
 
@@ -672,15 +670,21 @@ class TestWebUserResource(APIResourceTest):
 
         return updated_user
 
-    @patch('corehq.apps.api.validation.WebUserResourceValidator.is_valid')
+    @patch('corehq.apps.api.validation.WebUserResourceSpec._validate_param_permissions',
+           return_value=[])
+    @patch('corehq.apps.api.validation.TableauGroupsValidator.validate_tableau_groups',
+           return_value=[])
+    @patch('corehq.apps.api.validation.TableauRoleValidator.validate_tableau_role',
+           return_value=[])
     @patch('corehq.apps.reports.util.get_tableau_group_json')
     @patch('corehq.apps.api.resources.v0_5.get_tableau_groups_for_user')
     @patch('corehq.apps.api.user_updates.update_tableau_user')
     @patch('corehq.apps.api.user_updates.TableauAPISession.create_session_for_domain')
     def test_update_tableau_role(self, mock_create_session, mock_update_tableau_user,
-                                 mock_get_tableau_groups_for_user, mock_get_tableau_group_json, mock_is_valid):
+                                 mock_get_tableau_groups_for_user, mock_get_tableau_group_json,
+                                 mock_validate_tableau_role, mock_validate_tableau_group,
+                                 mock_validate_parameters):
         from corehq.apps.reports.util import TableauGroupTuple
-        mock_is_valid.return_value = []
         mock_create_session.return_value = "fake_session"
         mock_get_tableau_group_json.return_value = [{"name": "group1", "id": "id1"},
                                                     {"name": "group2", "id": "id2"},
@@ -970,12 +974,20 @@ class TestInvitationResource(APIResourceTest):
         cls.definition.delete()
         super().tearDownClass()
 
-    @patch('corehq.apps.api.validation.WebUserResourceValidator.is_valid')
+    @patch('corehq.apps.api.validation.WebUserResourceSpec._validate_param_permissions',
+           return_value=[])
+    @patch('corehq.apps.api.validation.get_allowed_tableau_groups_for_domain',
+        return_value=[])
+    @patch('corehq.apps.api.validation.TableauGroupsValidator.validate_tableau_groups',
+           return_value=[])
+    @patch('corehq.apps.api.validation.TableauRoleValidator.validate_tableau_role',
+           return_value=[])
     @patch('corehq.apps.api.resources.v1_0.get_tableau_group_ids_by_names')
     @patch('corehq.apps.api.resources.v1_0.get_tableau_groups_by_ids')
     def test_create(self, mock_get_tableau_groups_by_ids,
-                    mock_get_tableau_group_ids_by_names, mock_is_valid):
-        mock_is_valid.return_value = []
+                    mock_get_tableau_group_ids_by_names,
+                    mock_validate_tableau_role, mock_validate_tableau_group,
+                    mock_get_allowed_tableau_groups, mock_validate_param_permission):
         mock_get_tableau_group_ids_by_names.return_value = ["123", "456"]
         from corehq.apps.reports.util import TableauGroupTuple
         mock_get_tableau_groups_by_ids.return_value = [TableauGroupTuple("group1", "123")]
@@ -1010,7 +1022,6 @@ class TestInvitationResource(APIResourceTest):
                                                    json.dumps(user_json),
                                                    content_type='application/json')
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(mock_is_valid.call_count, 2)
 
         invitation = Invitation.objects.get(email="jdoe2@example.org")
         self.addCleanup(invitation.delete)

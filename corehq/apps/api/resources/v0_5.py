@@ -71,7 +71,7 @@ from corehq.apps.api.util import (
     parse_str_to_date,
     cursor_based_query_for_datasource
 )
-from corehq.apps.api.validation import WebUserResourceValidator, WebUserSpec
+from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.case_importer.views import require_can_edit_data
@@ -450,7 +450,6 @@ class WebUserResource(v0_1.WebUserResource):
 
     def obj_update(self, bundle, **kwargs):
         bundle.obj = WebUser.get(kwargs['pk'])
-        self.validator = WebUserResourceValidator(bundle.request.domain, bundle.request.couch_user)
         user_data = bundle.obj.get_user_data(bundle.request.domain)
         new_or_existing_user_data = {
             **bundle.data.get('user_data', {}),
@@ -461,21 +460,23 @@ class WebUserResource(v0_1.WebUserResource):
             else CustomDataFieldsProfile.objects.get(id=user_data.profile_id).name if user_data.profile_id
             else ''
         )
-
-        self.spec = WebUserSpec(
-            email=bundle.obj.email,
-            role=bundle.data.get('role'),
-            primary_location_id=bundle.data.get('primary_location_id'),
-            assigned_location_ids=bundle.data.get('assigned_location_ids'),
-            new_or_existing_profile_name=new_or_existing_profile_name,
-            new_or_existing_user_data=new_or_existing_user_data,
-            tableau_role=bundle.data.get('tableau_role'),
-            tableau_groups=bundle.data.get('tableau_groups'),
-            parameters=bundle.data.keys(),
-        )
-        errors = self.validator.is_valid(self.spec, False)
-        if errors:
-            raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
+        try:
+            self.spec = WebUserResourceSpec(
+                domain=bundle.request.domain,
+                requesting_user=bundle.request.couch_user,
+                email=bundle.obj.email,
+                is_post=False,
+                role=bundle.data.get('role'),
+                primary_location_id=bundle.data.get('primary_location_id'),
+                assigned_location_ids=bundle.data.get('assigned_location_ids'),
+                new_or_existing_profile_name=new_or_existing_profile_name,
+                new_or_existing_user_data=new_or_existing_user_data,
+                tableau_role=bundle.data.get('tableau_role'),
+                tableau_groups=bundle.data.get('tableau_groups'),
+                parameters=bundle.data.keys(),
+            )
+        except WebUserValidationException as e:
+            raise ImmediateHttpResponse(JsonResponse({"errors": e.message}, status=400))
 
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
@@ -494,7 +495,7 @@ class WebUserResource(v0_1.WebUserResource):
 
         bundle.data.pop('profile', None)
         user_data = self.spec.new_or_existing_user_data
-        profile = self.validator.profiles_by_name.get(self.spec.new_or_existing_profile_name)
+        profile = self.spec.profiles_by_name.get(self.spec.new_or_existing_profile_name)
         user_data[PROFILE_SLUG] = profile.id if profile else None
         bundle.data['user_data'] = user_data
 
