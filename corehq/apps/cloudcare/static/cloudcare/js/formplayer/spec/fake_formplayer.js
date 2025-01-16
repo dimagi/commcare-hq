@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Generates mock formplayer responses. Use as a fake for queryFormplayer.
  *
@@ -17,7 +16,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", [
     "hqwebapp/js/assert_properties",
 ], function (
     _,
-    AssertProperties
+    AssertProperties,
 ) {
     let module = {},
         apps = {

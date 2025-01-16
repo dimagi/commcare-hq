@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/entries", [
     'jquery',
     'knockout',
@@ -31,7 +30,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     constants,
     formEntryUtils,
     SignaturePad,
-    L
+    L,
 ) {
     /**
      * The base Object for all entries. Each entry takes a question object
@@ -895,7 +894,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
                 var changedPicker = $(change.target)[0],
                     newDate = self._calendarInstance.parseDate(
                         self._calendarInstance.local.dateFormat,
-                        changedPicker.value
+                        changedPicker.value,
                     );
 
                 if (newDate && (self.answer() !== self._formatDateForAnswer(newDate.toJSDate()))) {
