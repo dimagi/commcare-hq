@@ -410,7 +410,7 @@ hqDefine('cloudcare/js/utils', [
         if (date.isValid()) {
             options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date);
         }
-        return hqTempusDominus.createTimePicker($el.get(0), options);
+        return hqTempusDominus.createTimePicker($el[0].parentNode, options);
     };
 
     var smallScreenIsEnabled = function () {
