@@ -85,9 +85,15 @@ hqDefine("hqwebapp/js/tempus_dominus", [
             picker.dates.setValue(new tempusDominus.DateTime(end), 1);
         }
 
+        picker.subscribe("change.td", function () {
+            // This won't close automatically on single-date ranges
+            if (picker.dates.picked.length === 2) {
+                picker.hide();
+            }
+        });
 
-        // Handle single-date ranges
         picker.subscribe("hide.td", function () {
+            // Handle single-date ranges
             if (picker.dates.picked.length === 1) {
                 picker.dates.setValue(picker.dates.picked[0], 0);
                 picker.dates.setValue(picker.dates.picked[0], 1);
