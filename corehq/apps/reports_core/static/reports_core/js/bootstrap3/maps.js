@@ -3,7 +3,7 @@ hqDefine('reports_core/js/bootstrap3/maps', [
     'underscore',
     'reports/js/bootstrap3/maps_utils',
     'leaflet',
-    'leaflet-defaulticon-compatibility',
+    //'leaflet-defaulticon-compatibility',
 ], function (
     $,
     _,
@@ -12,11 +12,9 @@ hqDefine('reports_core/js/bootstrap3/maps', [
 ) {
     delete L.Icon.Default.prototype._getIconUrl;
 
-jls = require('leaflet/dist/images/marker-icon-2x.png');
-console.log(jls);
     L.Icon.Default.mergeOptions({
-        //iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-        iconRetinaUrl: require('leaflet/dist/images/marker-icon.png'),
+        iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+        //iconRetinaUrl: require('leaflet/dist/images/marker-icon.png'),
         iconUrl: require('leaflet/dist/images/marker-icon.png'),
         shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
     });
