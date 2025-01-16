@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/users/models", [
     "underscore",
     "backbone",
@@ -8,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/users/models", [
     _,
     Backbone,
     kissmetrics,
-    Const
+    Const,
 ) {
     var self = {};
 
@@ -39,7 +38,7 @@ hqDefine("cloudcare/js/formplayer/users/models", [
                 {
                     previousVersion: model.previous('versionInfo'),
                     currentVersion: model.get('versionInfo'),
-                }
+                },
             );
         },
     });
@@ -90,7 +89,7 @@ hqDefine("cloudcare/js/formplayer/users/models", [
 
         var savedDisplayOptions = _.pick(
             self.getSavedDisplayOptions(),
-            Const.ALLOWED_SAVED_OPTIONS
+            Const.ALLOWED_SAVED_OPTIONS,
         );
         userInstance.displayOptions = _.defaults(savedDisplayOptions, {
             singleAppMode: options.singleAppMode,
