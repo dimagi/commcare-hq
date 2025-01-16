@@ -6,7 +6,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from dateutil import tz
-from datetime import timezone
 from tastypie import fields, http
 from tastypie.exceptions import ImmediateHttpResponse
 
@@ -413,6 +412,36 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
     def get_primary_keys(self):
         return ('form_id', 'submitted',)
+
+
+class DataExportReportResource(ODataEnterpriseReportResource):
+    domain = fields.CharField()
+    name = fields.CharField()
+    export_type = fields.CharField()
+    export_subtype = fields.CharField()
+    owner = fields.CharField()
+
+    REPORT_SLUG = EnterpriseReport.DATA_EXPORTS
+
+    def get_report_task(self, request):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username
+        )
+
+    def dehydrate(self, bundle):
+        bundle.data['domain'] = bundle.obj[0]
+        bundle.data['name'] = bundle.obj[1]
+        bundle.data['export_type'] = bundle.obj[2]
+        bundle.data['export_subtype'] = bundle.obj[3]
+        bundle.data['owner'] = bundle.obj[4]
+
+        return bundle
+
+    def get_primary_keys(self):
+        return ('domain', 'export_type', 'export_subtype', 'name')
 
 
 class TwoFactorAuthResource(ODataEnterpriseReportResource):

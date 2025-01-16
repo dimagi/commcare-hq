@@ -13,6 +13,12 @@ from memoized import memoized
 from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.export.dbaccessors import (
+    get_brief_exports,
+    is_standard,
+    is_daily_saved_export,
+    is_excel_integration
+)
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
@@ -46,6 +52,7 @@ class EnterpriseReport(ABC):
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
+    DATA_EXPORTS = 'data_exports'
     COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
     SMS = 'sms'
     API_USAGE = 'api_usage'
@@ -93,6 +100,8 @@ class EnterpriseReport(ABC):
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
+        elif slug == cls.DATA_EXPORTS:
+            report = EnterpriseDataExportReport(account, couch_user, **kwargs)
         elif slug == cls.COMMCARE_VERSION_COMPLIANCE:
             report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
         elif slug == cls.SMS:
@@ -399,6 +408,69 @@ class EnterpriseODataReport(EnterpriseReport):
             rows.append([domain_obj.name, export.name, export.get_count()])
 
         return rows
+
+
+class EnterpriseDataExportReport(EnterpriseReport):
+    title = gettext_lazy('Data Exports')
+    total_description = gettext_lazy('# of Exports')
+
+    @property
+    def headers(self):
+        return [
+            _('Project Space'),
+            _('Name'),
+            _('Type'),
+            _('SubType'),
+            _('Created By'),
+        ]
+
+    def type_lookup(self, doc_type):
+        from corehq.apps.export.models.new import FormExportInstance, CaseExportInstance
+        if doc_type == FormExportInstance.__name__:
+            return _('Form')
+        elif doc_type == CaseExportInstance.__name__:
+            return _('Case')
+        else:
+            return _('Unknown')
+
+    SUBTYPE_MAP = {
+        is_standard: gettext_lazy('Standard'),
+        is_daily_saved_export: gettext_lazy('Daily Saved Export'),
+        is_excel_integration: gettext_lazy('Excel Integration'),
+    }
+
+    def subtype_lookup(self, export):
+        for (is_subtype_fn, subtype) in self.SUBTYPE_MAP.items():
+            if is_subtype_fn(export):
+                return subtype
+
+        return _('Unknown')
+
+    def user_lookup(self, owner_id):
+        if not owner_id:
+            return _('Unknown')
+
+        owner = WebUser.get_by_user_id(owner_id)
+        return owner.username
+
+    def get_exports(self, domain_obj):
+        valid_subtypes = self.SUBTYPE_MAP.values()
+        return [
+            export for export in get_brief_exports(domain_obj.name)
+            if self.subtype_lookup(export) in valid_subtypes
+        ]
+
+    def rows_for_domain(self, domain_obj):
+        return [[
+            domain_obj.name,
+            export['name'],
+            self.type_lookup(export['doc_type']),
+            self.subtype_lookup(export),
+            self.user_lookup(export['owner_id']),
+        ] for export in self.get_exports(domain_obj)]
+
+    def total_for_domain(self, domain_obj):
+        return len(self.get_exports(domain_obj))
 
 
 class EnterpriseCommCareVersionReport(EnterpriseReport):
