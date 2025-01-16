@@ -2,10 +2,12 @@ hqDefine('reports_core/js/bootstrap3/maps', [
     'jquery',
     'underscore',
     'reports/js/bootstrap3/maps_utils',
+    'mapbox.js/dist/mapbox.uncompressed',
 ], function (
     $,
     _,
-    mapsUtils
+    mapsUtils,
+    L
 ) {
     var module = {},
         privates = {};
