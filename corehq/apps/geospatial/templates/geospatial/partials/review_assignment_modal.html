@@ -40,30 +40,32 @@
                         </select>
                     </div>
                 </div>
-                <table class="table table-striped table-bordered">
-                    <thead>
-                    <tr>
-                        <th class="col-sm-3">
-                            <span>{% trans 'Select' %}</span>
-                            <button class="btn btn-xs btn-default" data-bind="click: toggleSelectAll(true)">{% trans 'All' %}</button>
-                            <button class="btn btn-xs btn-default" data-bind="click: toggleSelectAll(false)">{% trans 'None' %}</button>
-                        </th>
-                        <th>{% trans "Case Name" %}</th>
-                        <th>{% trans "Potential Mobile Worker" %}</th>
-                        <th>{% trans "Mobile Worker Primary Location" %}</th>
-                    </tr>
-                    </thead>
-                    <tbody data-bind="foreach: caseDataPage">
-                        <tr data-bind="css: { active: isSelected }">
-                            <td>
-                                <input type="checkbox" data-bind="checked: isSelected" />
-                            </td>
-                            <td data-bind="text: $data.caseName"></td>
-                            <td data-bind="text: $data.assignedUsername"></td>
-                            <td data-bind="text: $data.assignedUserPrimaryLocName"></td>
+                <div style="overflow-y: auto; max-height: 40vh">
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                        <tr>
+                            <th class="col-sm-3">
+                                <span>{% trans 'Select' %}</span>
+                                <button class="btn btn-xs btn-default" data-bind="click: toggleSelectAll(true)">{% trans 'All' %}</button>
+                                <button class="btn btn-xs btn-default" data-bind="click: toggleSelectAll(false)">{% trans 'None' %}</button>
+                            </th>
+                            <th>{% trans "Case Name" %}</th>
+                            <th>{% trans "Potential Mobile Worker" %}</th>
+                            <th>{% trans "Mobile Worker Primary Location" %}</th>
                         </tr>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody data-bind="foreach: caseDataPage">
+                            <tr data-bind="css: { active: isSelected }">
+                                <td>
+                                    <input type="checkbox" data-bind="checked: isSelected" />
+                                </td>
+                                <td data-bind="text: $data.caseName"></td>
+                                <td data-bind="text: $data.assignedUsername"></td>
+                                <td data-bind="text: $data.assignedUserPrimaryLocName"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <pagination data-apply-bindings="false"
                             params="goToPage: goToPage,
                                     slug: 'assigned-cases',
