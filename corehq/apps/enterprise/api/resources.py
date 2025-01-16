@@ -468,3 +468,26 @@ class APIUsageResource(ODataEnterpriseReportResource):
 
     def get_primary_keys(self):
         return ('web_user', 'api_key_name',)
+
+
+class ApplicationVersionComplianceResource(ODataEnterpriseReportResource):
+    mobile_worker = fields.CharField()
+    domain = fields.CharField()
+    application = fields.CharField()
+    latest_version_available_when_last_used = fields.CharField()
+    version_in_use = fields.CharField()
+    last_used = fields.DateTimeField()
+
+    REPORT_SLUG = EnterpriseReport.APP_VERSION_COMPLIANCE
+
+    def dehydrate(self, bundle):
+        bundle.data['mobile_worker'] = bundle.obj[0]
+        bundle.data['domain'] = bundle.obj[1]
+        bundle.data['application'] = bundle.obj[2]
+        bundle.data['latest_version_available_when_last_used'] = bundle.obj[3]
+        bundle.data['version_in_use'] = bundle.obj[4]
+        bundle.data['last_used'] = self.convert_datetime(bundle.obj[5])
+        return bundle
+
+    def get_primary_keys(self):
+        return ('mobile_worker', 'application',)
