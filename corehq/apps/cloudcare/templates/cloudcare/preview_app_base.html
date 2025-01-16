@@ -2,7 +2,7 @@
 {% load compress %}
 {% load statici18n %}
 
-{% requirejs_main_b5 "cloudcare/js/preview_app/main" %}
+{% js_entry "cloudcare/js/preview_app/main" %}
 
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
@@ -50,14 +50,14 @@
 
   <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
-  {% include "hqwebapp/partials/requirejs.html" %}
+  {% include "hqwebapp/partials/webpack.html" %}
 
   <style id="list-cell-layout-style"></style>
   <!-- For Formplayer's app preview -->
 
-  {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
+  {# This is fine as an inline script; it'll be removed once all of HQ is using webpack #}
   <script>
-    window.USE_REQUIREJS = true;
+    window.USE_WEBPACK = true;
   </script>
 </head>
 <body>
@@ -77,6 +77,7 @@
     {# do not override this block, use initial_page_data template tag to populate #}
   {% endblock %}
 </div>
+{% registerurl 'notifications_service' %}
 <div class="commcarehq-urls" class="d-none">
   {% block registered_urls %}
     {# do not override this block, use registerurl template tag to populate #}
