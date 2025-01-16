@@ -3,6 +3,7 @@ hqDefine('reports_core/js/bootstrap3/maps', [
     'underscore',
     'reports/js/bootstrap3/maps_utils',
     'leaflet',
+    'leaflet-defaulticon-compatibility',
 ], function (
     $,
     _,
