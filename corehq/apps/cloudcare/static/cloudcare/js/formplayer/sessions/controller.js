@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/sessions/controller", [
     'jquery',
     'cloudcare/js/formplayer/constants',
@@ -9,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/sessions/controller", [
     $,
     constants,
     FormplayerFrontend,
-    Views
+    Views,
 ) {
     return {
         listSessions: function listSessions(pageNumber, pageSize) {
