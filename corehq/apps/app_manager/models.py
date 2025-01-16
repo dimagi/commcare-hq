@@ -4468,9 +4468,31 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         assert copy._id
         prune_auto_generated_builds.delay(self.domain, self._id)
 
-        self.check_build_dependencies(new_build=copy)
+        self.analyse_app_build(new_build=copy)
 
         return copy
+
+    def analyse_app_build(self, new_build):
+        self.check_for_custom_callouts(new_build)
+        self.check_build_dependencies(new_build)
+
+    def check_for_custom_callouts(self, new_build):
+        from corehq.apps.app_manager.util import app_callout_templates
+
+        templates = next(app_callout_templates)
+        template_ids = set([t['id'] for t in templates])
+
+        def app_has_custom_intents():
+            return any(
+                any(set(form.wrapped_xform().odk_intents) - template_ids)
+                for form in new_build.get_forms()
+            )
+
+        if app_has_custom_intents():
+            metrics_counter(
+                'commcare.app_build.custom_app_callout',
+                tags={'domain': new_build.domain},
+            )
 
     def check_build_dependencies(self, new_build):
         """
