@@ -6,7 +6,7 @@ hqDefine("userreports/spec/PropertyListItem.spec", [
     describe("PropertyListItem Behavior", function () {
 
         var identityFunc = function (x) {return x;};
-        var nullFunc = function (x) { return null; };
+        var nullFunc = function () { return null; };
 
         it("Validates display text", function () {
             var item = models.propertyListItem(identityFunc, nullFunc, true);
