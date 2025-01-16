@@ -1,8 +1,10 @@
 'use strict';
 hqDefine('geospatial/js/utils', [
     'mapbox-gl',
+    'underscore',
 ], function (
-    mapboxgl
+    mapboxgl,
+    _
 ) {
 
     const DEFAULT_MARKER_OPACITY = 1.0;

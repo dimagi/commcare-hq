@@ -9,6 +9,7 @@ hqDefine('geospatial/js/models', [
     'mapbox-gl',
     '@mapbox/mapbox-gl-draw',
     '@turf/turf',
+    'hqwebapp/js/components/pagination',
 ], function (
     $,
     ko,

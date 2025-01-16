@@ -2,6 +2,7 @@
 
 hqDefine("geospatial/js/case_management", [
     "jquery",
+    "underscore",
     "hqwebapp/js/initial_page_data",
     "knockout",
     'geospatial/js/models',
@@ -12,6 +13,7 @@ hqDefine("geospatial/js/case_management", [
     'commcarehq',
 ], function (
     $,
+    _,
     initialPageData,
     ko,
     models,
