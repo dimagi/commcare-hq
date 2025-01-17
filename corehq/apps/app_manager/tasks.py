@@ -15,6 +15,8 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 from corehq.util.decorators import serial_task
+from corehq.util.metrics import metrics_counter
+from corehq.apps.app_manager.dbaccessors import get_latest_build_doc
 
 logger = get_task_logger(__name__)
 
@@ -91,3 +93,50 @@ def update_linked_app_and_notify_task(domain, app_id, master_app_id, user_id, em
 def load_appcues_template_app(domain, username, app_slug):
     from corehq.apps.app_manager.views.apps import load_app_from_slug
     load_app_from_slug(domain, username, app_slug)
+
+
+@task(serializer='pickle', queue='background_queue', ignore_result=True)
+def analyse_app_build(new_build):
+    check_for_custom_callouts(new_build)
+    check_build_dependencies(new_build)
+
+
+def check_for_custom_callouts(new_build):
+    from corehq.apps.app_manager.util import app_callout_templates
+
+    templates = next(app_callout_templates)
+    template_ids = set([t['id'] for t in templates])
+
+    def app_has_custom_intents():
+        return any(
+            any(set(form.wrapped_xform().odk_intents) - template_ids)
+            for form in new_build.get_forms()
+        )
+
+    if app_has_custom_intents():
+        metrics_counter(
+            'commcare.app_build.custom_app_callout',
+            tags={'domain': new_build.domain, 'app_id': new_build.copy_of},
+        )
+
+
+def check_build_dependencies(new_build):
+    """
+    Reports whether the app dependencies have been added or removed.
+    """
+
+    def has_dependencies(build):
+        return bool(
+            build.profile.get('features', {}).get('dependencies')
+        )
+
+    new_build_has_dependencies = has_dependencies(new_build)
+
+    last_build = get_latest_build_doc(new_build.domain, new_build.copy_of)
+    last_build = new_build.__class__.wrap(last_build) if last_build else None
+    last_build_has_dependencies = has_dependencies(last_build) if last_build else False
+
+    if not last_build_has_dependencies and new_build_has_dependencies:
+        metrics_counter('commcare.app_build.dependencies_added')
+    elif last_build_has_dependencies and not new_build_has_dependencies:
+        metrics_counter('commcare.app_build.dependencies_removed')
