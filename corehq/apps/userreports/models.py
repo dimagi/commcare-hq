@@ -187,6 +187,7 @@ class DataSourceBuildInformation(DocumentSchema):
     # same as previous attributes but used for rebuilding tables in place
     finished_in_place = BooleanProperty(default=False)
     initiated_in_place = DateTimeProperty()
+    # rebuilt via the management command
     rebuilt_asynchronously = BooleanProperty(default=False)
 
     @property
@@ -745,6 +746,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         # and so we don't know. Treating `None` as falsy allows calling
         # code to give `rebuild_has_died` the benefit of the doubt.
         return self.meta.build.rebuild_failed(self._id)
+
+    @property
+    def rebuild_awaiting_or_in_progress(self):
+        return self.meta.build.awaiting or (self.meta.build.is_rebuild_in_progress and not self.rebuild_failed)
 
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):
