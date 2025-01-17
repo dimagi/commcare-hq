@@ -15,13 +15,12 @@
           <i class="fa fa-spin fa-spinner"></i>
         </div>
         {% if report.total_description %}
-          <div class="position-absolute start-100" style="top: 25%">
+          <div class="position-absolute start-100 top-25">
             <span
               class="hq-help-template"
               data-content="{{ report.total_description }}"
               data-placement="right"
             >
-              <i class="fa fa-info-circle"></i>
             </span>
           </div>
         {% endif %}
