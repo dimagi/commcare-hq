@@ -1364,12 +1364,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         tagName: "li",
         template: _.template($("#language-option-template").html() || ""),
         events: {
-            'click': 'onChangeLang',
             'keydown .lang': 'onKeyActionChangeLang',
+        },
+        triggers: {
+            click: 'change:lang'
         },
         initialize: function (options) {
             const currentLang = UsersModels.getCurrentUser().displayOptions.language;
-            this.isLangSelected = this.options.model.get('lang_code') === currentLang;
+            this.isLangSelected = options.model.get('lang_code') === currentLang;
             this.languageOptionsEnabled = options.languageOptionsEnabled;
         },
         templateContext: function () {
@@ -1383,7 +1385,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 this.onChangeLang(e);
             }
         },
-        onChangeLang: function (e) {
+        onChangeLang: function (view, e) {
             if (!this.isLangSelected) {
                 const lang = e.target.id;
                 $.publish('formplayer.change_lang', lang);
@@ -1418,6 +1420,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         behaviors: {
             print: printBehavior,
+        },
+        childViewEvents: {
+            'change:lang': 'render',
         },
         childViewOptions: function () {
             return {
