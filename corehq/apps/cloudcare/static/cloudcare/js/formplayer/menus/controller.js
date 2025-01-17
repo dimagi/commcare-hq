@@ -17,6 +17,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     'cloudcare/js/formplayer/menus/views/query',
     'cloudcare/js/formplayer/menus/views',
     'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
+    'analytix/js/gtx',
 ], function (
     $,
     _,
@@ -33,8 +34,14 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     Collection,
     menusUtils,
     queryView,
-    views
+    views,
+    api,
+    gtx
 ) {
+
+    let lastNavigationTimeMs = Date.now();
+    let lastSelections = "";
+    let lastSelectionsChangeTimeMs = Date.now();
     var selectMenu = function (options) {
 
         options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
@@ -52,6 +59,22 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                 promise.reject();
                 return;
             }
+
+            const selections = menuResponse.selections ? menuResponse.selections.join(">") : "";
+            const selectionsChanged = selections !== lastSelections;
+            const gtxEventData = {
+                timeSinceLastNavigationMs: Date.now() - lastNavigationTimeMs,
+                selections: selections,
+                previousSelections: lastSelections,
+                selectionsChanged: selectionsChanged,
+                timeSinceLastSelectionChange: Date.now() - lastSelectionsChangeTimeMs,
+            };
+            if (selectionsChanged) {
+                lastSelections = selections;
+                lastSelectionsChangeTimeMs = Date.now();
+            }
+            lastNavigationTimeMs = Date.now();
+            gtx.sendEvent("web_apps_navigate", gtxEventData);
 
             //set title of tab to application name
             if (menuResponse.breadcrumbs) {
