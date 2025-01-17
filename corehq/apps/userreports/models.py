@@ -746,6 +746,14 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         # code to give `rebuild_has_died` the benefit of the doubt.
         return self.meta.build.rebuild_failed(self._id)
 
+    @cached_property
+    def awaiting_build_to_finish(self):
+        return (
+            not self.meta.build.awaiting
+            and not self.meta.build.is_rebuild_in_progress
+            and not self.rebuild_failed
+        )
+
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):
     """This is a special data source that can contain data from
