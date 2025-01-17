@@ -11,6 +11,7 @@ from corehq.apps.enterprise.api.resources import (
     SMSResource,
     APIUsageResource,
     TwoFactorAuthResource,
+    ApplicationVersionComplianceResource,
 )
 
 v1_api = Api(api_name='v1')
@@ -24,3 +25,4 @@ v1_api.register(CommCareVersionComplianceResource())
 v1_api.register(SMSResource())
 v1_api.register(APIUsageResource())
 v1_api.register(TwoFactorAuthResource())
+v1_api.register(ApplicationVersionComplianceResource())
