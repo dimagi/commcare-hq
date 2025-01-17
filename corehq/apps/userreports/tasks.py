@@ -219,6 +219,9 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=True):
+        if not id_is_static(indicator_config_id):
+            config.meta.build.awaiting = False
+            config.save()
         resume_helper = DataSourceResumeHelper(config)
         adapter = get_indicator_adapter(config)
         adapter.log_table_build(
