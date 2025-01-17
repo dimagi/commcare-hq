@@ -1,8 +1,7 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/spec/case_list_pagination_spec", [
     "cloudcare/js/formplayer/utils/utils",
 ], function (
-    paginateItems
+    paginateItems,
 ) {
     describe('#paginateOptions', function () {
         it('Should return paginateOptions', function () {
