@@ -1460,6 +1460,9 @@ def resume_building_data_source(request, domain, config_id):
             )
         )
     else:
+        if not is_static:
+            config.meta.build.awaiting = True
+            config.save()
         messages.success(
             request,
             _('Resuming rebuilding table "{}".').format(config.display_name)
