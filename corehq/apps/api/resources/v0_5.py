@@ -401,7 +401,7 @@ class WebUserResource(v0_1.WebUserResource):
     tableau_groups = fields.ListField(null=True)
 
     class Meta(v0_1.WebUserResource.Meta):
-        detail_allowed_methods = ['get', 'put']
+        detail_allowed_methods = ['get', 'patch']
         always_return_data = True
 
     def dehydrate_primary_location_id(self, bundle):
@@ -449,7 +449,9 @@ class WebUserResource(v0_1.WebUserResource):
         })
 
     def obj_update(self, bundle, **kwargs):
-        bundle.obj = WebUser.get(kwargs['pk'])
+        if bundle.obj and bundle.obj._id is None:
+            bundle.obj = WebUser.get(kwargs['pk'])
+        bundle.data = json.loads(bundle.request.body)
         user_data = bundle.obj.get_user_data(bundle.request.domain)
         new_or_existing_user_data = {
             **bundle.data.get('user_data', {}),

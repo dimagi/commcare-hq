@@ -645,8 +645,8 @@ class TestWebUserResource(APIResourceTest):
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                                    json.dumps(update_json),
                                                    content_type='application/json',
-                                                   method='PUT')
-        self.assertEqual(response.status_code, 200, response.content)
+                                                   method='PATCH')
+        self.assertEqual(response.status_code, 202, response.content)
         updated_user = WebUser.get(backend_id)
         response_json = response.json()
         for key, value in expected_json.items():
@@ -724,8 +724,8 @@ class TestWebUserResource(APIResourceTest):
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                                    json.dumps(update_json),
                                                    content_type='application/json',
-                                                   method='PUT')
-        self.assertEqual(response.status_code, 200, response.content)
+                                                   method='PATCH')
+        self.assertEqual(response.status_code, 202, response.content)
 
         response_json = response.json()
         self.assertEqual(response_json['tableau_role'], 'Viewer')
