@@ -483,7 +483,7 @@ class CasesReassignmentView(BaseDomainView):
     REQUEST_CASES_LIMIT = CaseManagementMap.default_rows
     # Below values denotes the number of cases to be reassigned including the related cases
     ASYNC_CASES_UPDATE_THRESHOLD = 500  # threshold for asynchronous operation
-    TOTAL_CASES_LIMIT = 14_000  # maximum number of cases that can be reassigned
+    TOTAL_CASES_LIMIT = 10_000  # maximum number of cases that can be reassigned
 
     def post(self, request, domain, *args, **kwargs):
         try:
