@@ -1,10 +1,12 @@
 import uuid
 from unittest.mock import MagicMock, patch
+from datetime import datetime, timezone
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
@@ -14,7 +16,7 @@ from corehq.tests.util.context import add_context
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import mock_out_couch
 
-from ..models import CommCareUser, WebUser
+from ..models import CouchUser, CommCareUser, WebUser
 from ..signals import update_user_in_es
 
 # Note that you can't directly patch the signal handler, as that code has
@@ -140,3 +142,26 @@ class TestElasticSyncPatch(SimpleTestCase):
         with patch.object(user_adapter, 'from_python', simple_doc):
             update_user_in_es(None, user)
         self.assertTrue(user_adapter.exists(user.user_id))
+
+
+class TestDjangoUserPostSaveSignal(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'django-user-test'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+    def test_signal_can_handle_stale_django_user(self):
+        couch_user = WebUser.create(self.domain, 'test@example.com', '***', created_by=None, created_via=None)
+        stale_django_user = couch_user.get_django_user()
+        # make stale_django_user stale
+        couch_user.email = 'test@example.com'
+        couch_user.save()
+        self.addCleanup(couch_user.delete, '', deleted_by=None)
+
+        CouchUser.django_user_post_save_signal('test', stale_django_user, datetime.now(tz=timezone.utc))
+
+        fresh_web_user = WebUser.get_by_username('test@example.com')
+        self.assertEqual('test@example.com', fresh_web_user.email)
