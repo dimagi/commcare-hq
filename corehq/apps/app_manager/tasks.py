@@ -95,7 +95,7 @@ def load_appcues_template_app(domain, username, app_slug):
     load_app_from_slug(domain, username, app_slug)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def analyse_new_app_build(domain, app_id):
     new_build_id = get_latest_build_id(domain, app_id)
     new_build = get_app(domain, new_build_id)
