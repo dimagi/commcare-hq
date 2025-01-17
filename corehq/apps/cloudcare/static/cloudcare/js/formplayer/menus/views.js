@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
@@ -1367,7 +1366,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             'keydown .lang': 'onKeyActionChangeLang',
         },
         triggers: {
-            click: 'change:lang'
+            click: 'change:lang',
         },
         initialize: function (options) {
             this.isLangSelected = options.model.get('lang_code') === options.currentLang;
@@ -1683,5 +1682,4 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return new PersistentMenuView(options);
         },
     };
-})
-;
+});
