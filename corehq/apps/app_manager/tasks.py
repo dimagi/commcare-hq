@@ -7,6 +7,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_auto_generated_built_apps,
     get_latest_build_id,
+    get_build_ids,
 )
 from corehq.apps.app_manager.exceptions import (
     AppValidationError,
@@ -16,7 +17,6 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_counter
-from corehq.apps.app_manager.dbaccessors import get_latest_build_doc
 
 logger = get_task_logger(__name__)
 
@@ -96,7 +96,10 @@ def load_appcues_template_app(domain, username, app_slug):
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
-def analyse_app_build(new_build):
+def analyse_new_app_build(domain, app_id):
+    new_build_id = get_latest_build_id(domain, app_id)
+    new_build = get_app(domain, new_build_id)
+
     check_for_custom_callouts(new_build)
     check_build_dependencies(new_build)
 
@@ -131,10 +134,14 @@ def check_build_dependencies(new_build):
         )
 
     new_build_has_dependencies = has_dependencies(new_build)
+    app_build_ids = get_build_ids(new_build.domain, new_build.copy_of)
 
-    last_build = get_latest_build_doc(new_build.domain, new_build.copy_of)
-    last_build = new_build.__class__.wrap(last_build) if last_build else None
-    last_build_has_dependencies = has_dependencies(last_build) if last_build else False
+    last_build_has_dependencies = False
+
+    if len(app_build_ids) > 1:
+        previous_build_id = app_build_ids[app_build_ids.index(new_build.id) + 1]
+        previous_build = get_app(new_build.domain, previous_build_id)
+        last_build_has_dependencies = has_dependencies(previous_build) if previous_build else False
 
     if not last_build_has_dependencies and new_build_has_dependencies:
         metrics_counter('commcare.app_build.dependencies_added')
