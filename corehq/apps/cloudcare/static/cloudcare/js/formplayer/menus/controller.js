@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/controller", [
     'jquery',
     'underscore',
@@ -33,7 +32,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     Collection,
     menusUtils,
     queryView,
-    views
+    views,
 ) {
     var selectMenu = function (options) {
 
@@ -212,7 +211,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     disableDynamicSearch: !sessionStorage.submitPerformed,
                     groupHeaders: queryResponse.groupHeaders,
                     searchOnClear: queryResponse.searchOnClear,
-                }).render()
+                }).render(),
             );
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
         } else if (menuResponse.type === constants.QUERY) {
@@ -226,7 +225,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     disableDynamicSearch: true,
                     groupHeaders: menuResponse.groupHeaders,
                     searchOnClear: menuResponse.searchOnClear,
-                }).render()
+                }).render(),
             );
 
             menuData["triggerEmptyCaseList"] = true;

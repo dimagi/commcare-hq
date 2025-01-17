@@ -1,4 +1,3 @@
-'use strict';
 /**
  * NOTE: MONKEYPATCHED to support form clicks and other actions
  *
@@ -38,9 +37,7 @@ hqDefine("cloudcare/js/preview_app/dragscroll", ["jquery"], function ($) {
                     mousedown,
                     cont.md = function (e) {
                         if (!el.hasAttribute('nochilddrag') ||
-                            _document.elementFromPoint(
-                                e.pageX, e.pageY
-                            ) === cont
+                            _document.elementFromPoint(e.pageX, e.pageY) === cont
                         ) {
                             pushed = 1;
                             lastClientX = e.clientX;
@@ -56,11 +53,11 @@ hqDefine("cloudcare/js/preview_app/dragscroll", ["jquery"], function ($) {
                             }
 
                         }
-                    }, 0
+                    }, 0,
                 );
 
                 _window[addEventListener](
-                    mouseup, cont.mu = function () {pushed = 0;}, 0
+                    mouseup, cont.mu = function () {pushed = 0;}, 0,
                 );
 
                 _window[addEventListener](
@@ -72,7 +69,7 @@ hqDefine("cloudcare/js/preview_app/dragscroll", ["jquery"], function ($) {
                             scroller.scrollTop -=
                                 (- lastClientY + (lastClientY = e.clientY));
                         }
-                    }, 0
+                    }, 0,
                 );
             })(dragged[i++]);
         }
