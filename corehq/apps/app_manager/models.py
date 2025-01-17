@@ -181,7 +181,6 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.util import bitly, view_utils
-from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
@@ -4468,52 +4467,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         assert copy._id
         prune_auto_generated_builds.delay(self.domain, self._id)
 
-        self.analyse_app_build(new_build=copy)
-
         return copy
-
-    def analyse_app_build(self, new_build):
-        self.check_for_custom_callouts(new_build)
-        self.check_build_dependencies(new_build)
-
-    def check_for_custom_callouts(self, new_build):
-        from corehq.apps.app_manager.util import app_callout_templates
-
-        templates = next(app_callout_templates)
-        template_ids = set([t['id'] for t in templates])
-
-        def app_has_custom_intents():
-            return any(
-                any(set(form.wrapped_xform().odk_intents) - template_ids)
-                for form in new_build.get_forms()
-            )
-
-        if app_has_custom_intents():
-            metrics_counter(
-                'commcare.app_build.custom_app_callout',
-                tags={'domain': new_build.domain, 'app_id': new_build.copy_of},
-            )
-
-    def check_build_dependencies(self, new_build):
-        """
-        Reports whether the app dependencies have been added or removed.
-        """
-
-        def has_dependencies(build):
-            return bool(
-                build.profile.get('features', {}).get('dependencies')
-            )
-
-        new_build_has_dependencies = has_dependencies(new_build)
-
-        last_build = get_latest_build_doc(self.domain, self.id)
-        last_build = self.__class__.wrap(last_build) if last_build else None
-        last_build_has_dependencies = has_dependencies(last_build) if last_build else False
-
-        if not last_build_has_dependencies and new_build_has_dependencies:
-            metrics_counter('commcare.app_build.dependencies_added')
-        elif last_build_has_dependencies and not new_build_has_dependencies:
-            metrics_counter('commcare.app_build.dependencies_removed')
 
     def convert_app_to_build(self, copy_of, user_id, comment=None):
         self.copy_of = copy_of
