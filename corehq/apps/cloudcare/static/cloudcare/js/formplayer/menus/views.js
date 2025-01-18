@@ -15,6 +15,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
+    'mapbox-gl/dist/mapbox-gl',
+    'leaflet',
     'leaflet-fullscreen/dist/Leaflet.fullscreen.min',   // adds L.control.fullscreen to L
 ], function (
     $,
@@ -33,6 +35,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     formplayerUtils,
     markdown,
     cloudcareUtils,
+    mapboxgl,
     L,
 ) {
     const MenuView = Marionette.View.extend({
@@ -937,7 +940,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
                 const popupIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS_POPUP; });
-                L.mapbox.accessToken = token;
+                mapboxgl.accessToken = token;
 
                 const allCoordinates = [];
                 const markers = [];
