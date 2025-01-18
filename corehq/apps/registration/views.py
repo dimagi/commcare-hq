@@ -52,6 +52,7 @@ from corehq.apps.registration.models import (
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
     project_logo_emails_context,
+    rate_limit_check_username_availability,
     request_new_domain,
     send_domain_registration_email,
     send_mobile_experience_reminder,
@@ -213,6 +214,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def check_username_availability(self, data):
+        if rate_limit_check_username_availability():
+            return {
+                'isValid': None,
+                'message': _("Please try again."),
+            }
+
         email = data['email'].strip()
         duplicate = CouchUser.get_by_username(email)
         is_existing = User.objects.filter(username__iexact=email).count() > 0 or duplicate
