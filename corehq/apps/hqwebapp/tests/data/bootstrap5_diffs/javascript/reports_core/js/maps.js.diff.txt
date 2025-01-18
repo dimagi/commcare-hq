@@ -7,6 +7,6 @@
      'underscore',
 -    'reports/js/bootstrap3/maps_utils',
 +    'reports/js/bootstrap5/maps_utils',
+     'leaflet',
  ], function (
      $,
-     _,

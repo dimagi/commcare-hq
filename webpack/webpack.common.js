@@ -38,6 +38,10 @@ module.exports = {
                 loader: 'babel-loader',
                 exclude: /node_modules/,
             },
+            {
+                test: /\.png/,
+                type: 'asset/resource',
+            },
 
             // this rule ensures that hqDefine is renamed to define AMD module
             // definition syntax that webpack understands
