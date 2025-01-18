@@ -37,7 +37,6 @@ from corehq.motech.const import (
 )
 from corehq.motech.utils import (
     b64_aes_decrypt,
-    b64_aes_encrypt,
     b64_aes_cbc_decrypt,
     b64_aes_cbc_encrypt,
 )
@@ -165,8 +164,13 @@ class ConnectionSettings(models.Model):
     @property
     def last_token(self) -> Optional[dict]:
         if self.last_token_aes:
-            plaintext = b64_aes_decrypt(self.last_token_aes)
-            return json.loads(plaintext)
+            if self.last_token_aes.startswith(f'${ALGO_AES_CBC}$'):
+                ciphertext = self.client_secret.split('$', 2)[2]
+                return b64_aes_cbc_decrypt(ciphertext)
+            else:
+                # This will be deleted after migration to cbc is done
+                plaintext = b64_aes_decrypt(self.last_token_aes)
+                return json.loads(plaintext)
         return None
 
     @last_token.setter
@@ -175,7 +179,8 @@ class ConnectionSettings(models.Model):
             self.last_token_aes = ''
         else:
             plaintext = json.dumps(token)
-            self.last_token_aes = b64_aes_encrypt(plaintext)
+            ciphertext = b64_aes_cbc_encrypt(plaintext)
+            self.last_token_aes_cbc = f'${ALGO_AES_CBC}${ciphertext}'
 
     @property
     def notify_addresses(self):
