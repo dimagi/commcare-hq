@@ -24,6 +24,7 @@ from corehq.motech.auth import (
 )
 from corehq.motech.const import (
     ALGO_AES,
+    ALGO_AES_CBC,
     AUTH_TYPES,
     BASIC_AUTH,
     BEARER_AUTH,
@@ -34,7 +35,12 @@ from corehq.motech.const import (
     OAUTH2_PWD,
     PASSWORD_PLACEHOLDER, APIKEY_AUTH,
 )
-from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
+from corehq.motech.utils import (
+    b64_aes_decrypt,
+    b64_aes_encrypt,
+    b64_aes_cbc_decrypt,
+    b64_aes_cbc_encrypt,
+)
 from corehq.util import as_json_text, as_text
 
 
@@ -126,7 +132,10 @@ class ConnectionSettings(models.Model):
 
     @property
     def plaintext_password(self):
-        if self.password.startswith(f'${ALGO_AES}$'):
+        if self.password.startswith(f'${ALGO_AES_CBC}$'):
+            ciphertext = self.password.split('$', 2)[2]
+            return b64_aes_cbc_decrypt(ciphertext)
+        elif self.password.startswith(f'${ALGO_AES}$'):  # This will be deleted after migration to cbc is done
             ciphertext = self.password.split('$', 2)[2]
             return b64_aes_decrypt(ciphertext)
         return self.password
@@ -134,12 +143,15 @@ class ConnectionSettings(models.Model):
     @plaintext_password.setter
     def plaintext_password(self, plaintext):
         if plaintext != PASSWORD_PLACEHOLDER:
-            ciphertext = b64_aes_encrypt(plaintext)
-            self.password = f'${ALGO_AES}${ciphertext}'
+            ciphertext = b64_aes_cbc_encrypt(plaintext)
+            self.password = f'${ALGO_AES_CBC}${ciphertext}'
 
     @property
     def plaintext_client_secret(self):
-        if self.client_secret.startswith(f'${ALGO_AES}$'):
+        if self.client_secret.startswith(f'${ALGO_AES_CBC}$'):
+            ciphertext = self.client_secret.split('$', 2)[2]
+            return b64_aes_cbc_decrypt(ciphertext)
+        elif self.client_secret.startswith(f'${ALGO_AES}$'):  # This will be deleted after migration to cbc is done
             ciphertext = self.client_secret.split('$', 2)[2]
             return b64_aes_decrypt(ciphertext)
         return self.client_secret
@@ -147,8 +159,8 @@ class ConnectionSettings(models.Model):
     @plaintext_client_secret.setter
     def plaintext_client_secret(self, plaintext):
         if plaintext != PASSWORD_PLACEHOLDER:
-            ciphertext = b64_aes_encrypt(plaintext)
-            self.client_secret = f'${ALGO_AES}${ciphertext}'
+            ciphertext = b64_aes_cbc_encrypt(plaintext)
+            self.client_secret = f'${ALGO_AES_CBC}${ciphertext}'
 
     @property
     def last_token(self) -> Optional[dict]:
