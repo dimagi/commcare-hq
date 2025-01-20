@@ -1,6 +1,10 @@
-"use strict";
-/* globals moment */
-hqDefine('app_manager/js/forms/app_notifications', function () {
+hqDefine("app_manager/js/forms/app_notifications", [
+    "moment",
+    "hqwebapp/js/bootstrap3/alert_user",
+], function (
+    moment,
+    alertUser,
+) {
     var getMessage = function (redisMessage, userId) {
         var msgObj = JSON.parse(redisMessage);
         // only show notifications from other users
@@ -12,7 +16,7 @@ hqDefine('app_manager/js/forms/app_notifications', function () {
 
     var alertUser = function (userId, callback, context) {
         if (!callback) {
-            callback = hqImport("hqwebapp/js/bootstrap3/alert_user").alert_user;
+            callback = alertUser.alert_user;
         }
         return function (redisMessage) {
             var message = getMessage(redisMessage, userId);
