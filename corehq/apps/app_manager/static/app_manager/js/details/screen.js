@@ -11,11 +11,29 @@
  * @param config A detailScreenConfig object.
  * @param options
  */
-hqDefine("app_manager/js/details/screen", function () {
-    const Utils = hqImport('app_manager/js/details/utils'),
-        ColumnModel = hqImport("app_manager/js/details/column"),
-        uiMapList = hqImport("hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list");
-
+hqDefine("app_manager/js/details/screen", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "app_manager/js/details/utils",
+    "app_manager/js/details/column",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
+    "hqwebapp/js/bootstrap3/main",
+    "hqwebapp/js/toggles",
+    "app_manager/js/app_manager",
+    "analytix/js/google",
+], function (
+    $,
+    ko,
+    _,
+    Utils,
+    ColumnModel,
+    uiMapList,
+    main,
+    toggles,
+    appManager,
+    google,
+) {
     const getPropertyTitle = function (property) {
         // Strip "<prefix>:" before converting to title case.
         // This is aimed at prefixes like ledger: and attachment:
@@ -28,7 +46,7 @@ hqDefine("app_manager/js/details/screen", function () {
         var self = {};
         var i,
             columns;
-        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
+        main.eventize(self);
         self.moduleId = options.moduleId;
         self.type = spec.type;
         self.saveUrl = options.saveUrl;
@@ -61,7 +79,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.allowsTabs = options.allowsTabs;
 
         let baseCaseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")]];
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
+        if (toggles.toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
             baseCaseTileTemplateOptions = baseCaseTileTemplateOptions.concat([["custom", gettext("Manually configure Case Tiles")]]);
         }
         if (self.columnKey === 'short') {
@@ -97,12 +115,12 @@ hqDefine("app_manager/js/details/screen", function () {
             return self.columns();
         });
         self.showCaseTileConfigColumns = ko.computed(function () {
-            const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM');
+            const featureFlag = toggles.toggleEnabled('CASE_LIST_TILE_CUSTOM');
             const template = self.caseTileTemplate();
             return featureFlag && template === "custom";
         });
         self.showCaseTileMappingColumn = ko.computed(function () {
-            const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
+            const featureFlag = toggles.toggleEnabled('CASE_LIST_TILE');
             const caseTileTemplate = self.caseTileTemplate() && self.caseTileTemplate() !== "custom";
             return caseTileTemplate && featureFlag;
         });
@@ -114,7 +132,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.caseTileGroupHeaderRows = ko.observable(detail.case_tile_group.header_rows);
 
         self.customVariablesViewModel = {
-            enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
+            enabled: toggles.toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
             dict: detail.custom_variables_dict || {},
         };
         const customDataEditor = uiMapList.new(`${ self.moduleId }-${self.columnKey}`, gettext("Edit Custom Variables"));
@@ -370,7 +388,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 column.field.setOptions(options);
                 column.field.val(column.original.field);
                 column.field.observableVal(column.original.field);
-                hqImport('app_manager/js/details/utils').setUpAutocomplete(column.field, self.properties);
+                Utils.setUpAutocomplete(column.field, self.properties);
             }
             column.header.on('change', function (e) {
                 if (e.oldValue !== e.newValue) {
@@ -434,7 +452,7 @@ hqDefine("app_manager/js/details/screen", function () {
         };
         self.updateTileRowMaxForColumns(self.caseTileRowMax());
 
-        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+        self.saveButton = main.initSaveButton({
             unsavedMessage: gettext('You have unsaved detail screen configurations.'),
             save: function () {
                 self.save();
@@ -544,7 +562,7 @@ hqDefine("app_manager/js/details/screen", function () {
                     data: self.serialize(),
                     dataType: 'json',
                     success: function (data) {
-                        hqImport('app_manager/js/app_manager').updateDOM(data.update);
+                        appManager.updateDOM(data.update);
                     },
                 });
             }
@@ -682,7 +700,7 @@ hqDefine("app_manager/js/details/screen", function () {
         };
         self.addProperty = function () {
             var type = self.columnKey === "short" ? "List" : "Detail";
-            hqImport('analytix/js/google').track.event('Case Management', 'Module Level Case ' + type, 'Add Property');
+            google.track.event('Case Management', 'Module Level Case ' + type, 'Add Property');
             self.addItem({
                 hasAutocomplete: true,
             });
