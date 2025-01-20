@@ -14,6 +14,7 @@ from corehq.apps.accounting.utils.account import (
     get_account_or_404,
     request_has_permissions_for_enterprise_admin,
 )
+from corehq.apps.analytics.tasks import record_event
 from corehq.apps.api.odata.utils import FieldMetadata
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
@@ -21,6 +22,7 @@ from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.api.resources.meta import get_hq_throttle
 from corehq.apps.api.keyset_paginator import KeysetPaginator
 from corehq.apps.enterprise.enterprise import EnterpriseReport
+from corehq.apps.enterprise.metrics import ENTERPRISE_API_ACCESS
 from corehq.apps.enterprise.iterators import IterableEnterpriseFormQuery, EnterpriseFormReportConverter
 
 from corehq.apps.enterprise.tasks import generate_enterprise_report, ReportTaskProgress
@@ -188,6 +190,9 @@ class ODataEnterpriseReportResource(ODataResource):
             return data
         elif status == ReportTaskProgress.STATUS_NEW:
             progress.start_task(self.get_report_task(request))
+            record_event(ENTERPRISE_API_ACCESS, request.couch_user, {
+                'api_type': self.REPORT_SLUG
+            })
 
         # PowerBI respects delays with only two response codes:
         # 429 (TooManyRequests) and 503 (ServiceUnavailable). Although 503 is likely more semantically
@@ -398,6 +403,11 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
         converter = EnterpriseFormReportConverter()
         query_kwargs = converter.get_kwargs_from_map(request.GET)
+        if converter.is_initial_query(request.GET):
+            record_event(ENTERPRISE_API_ACCESS, request.couch_user, {
+                'api_type': self.REPORT_SLUG
+            })
+
         return IterableEnterpriseFormQuery(account, converter, start_date, end_date, **query_kwargs)
 
     def dehydrate(self, bundle):
