@@ -1,11 +1,10 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/session_middleware_spec", [
     "sinon/pkg/sinon",
     "cloudcare/js/formplayer/middleware",
 ], function (
     sinon,
-    Middleware
+    Middleware,
 ) {
     describe('SessionMiddle', function () {
         it('Should call middleware and apis with same arguments', function () {
