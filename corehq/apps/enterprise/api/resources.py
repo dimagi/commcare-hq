@@ -417,4 +417,4 @@ class CaseManagementResource(ODataEnterpriseReportResource):
         return bundle
 
     def get_primary_keys(self):
-        return ('domain',)  # very odd report that makes coming up with an actual key challenging
+        return ('domain',)
