@@ -20,11 +20,6 @@ var HQReportDataTables = function (options) {
     self.customSort = options.customSort || null;
     self.ajaxParams = options.ajaxParams || {};
     self.ajaxSource = options.ajaxSource;
-    self.loadingTemplateSelector = options.loadingTemplateSelector;
-    if (self.loadingTemplateSelector !== undefined) {
-        var loadingTemplate = _.template($(self.loadingTemplateSelector).html() || self.loadingText);
-        self.loadingText = loadingTemplate({});
-    }
     self.loadingText = options.loadingText || gettext("Loading");
     self.emptyText = options.emptyText || gettext("No data available to display. " +
                                                   "Please try changing your filters.");
