@@ -1,7 +1,24 @@
-/* globals Clipboard */
-hqDefine('app_manager/js/settings/commcare_settings', function () {
+hqDefine("app_manager/js/settings/commcare_settings", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "app_manager/js/app_manager",
+    "app_manager/js/section_changer",
+    "hqwebapp/js/bootstrap3/main",
+    "app_manager/js/settings/app_logos",
+    "clipboard",
+], function (
+    $,
+    ko,
+    _,
+    appManager,
+    sectionChanger,
+    main,
+    appLogos,
+    Clipboard,
+) {
     function CommcareSettings(options) {
-        var app_manager = hqImport('app_manager/js/app_manager');
+        var app_manager = appManager;
         var self = this;
         var initialValues = options.values;
         self.sections = options.sections;
@@ -16,7 +33,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         self.customProperties.sort(function (left, right) {
             return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
-        self.customPropertiesCollapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", "custom-properties", false);
+        self.customPropertiesCollapse = sectionChanger.shouldCollapse("app-settings", "custom-properties", false);
 
         self.settings = [];
         self.settingsIndex = {};
@@ -272,7 +289,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     return setting.visible();
                 });
             });
-            section.collapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", section.id, section.collapse);
+            section.collapse = sectionChanger.shouldCollapse("app-settings", section.id, section.collapse);
             section.isVisible = ko.computed(function () {
                 return section.always_show !== false;
             });
@@ -331,14 +348,14 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         });
 
         var $saveContainer = $("#settings-save-btn");
-        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+        self.saveButton = main.initSaveButton({
             unsavedMessage: gettext("You have unsaved settings."),
             save: function () {
                 self.saveButton.ajax(self.saveOptions());
             },
         });
         self.saveButton.ui.appendTo($saveContainer);
-        hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
+        sectionChanger.attachToForm($saveContainer);
 
         self.onAddCustomProperty = function () {
             self.customProperties.push({ key: ko.observable(), value: ko.observable() });
@@ -454,7 +471,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
     };
 
     CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
-        var app_manager = hqImport('app_manager/js/app_manager');
+        var app_manager = appManager;
         function update(appVersion) {
             var major = appVersion.split('/')[0].split('.')[0];
             var opts = self.options_map[major];
@@ -477,7 +494,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
     };
 
     CommcareSettings.widgets.image_uploader = function (self) {
-        self.manager = hqImport("app_manager/js/settings/app_logos").LogoManager;
+        self.manager = appLogos.LogoManager;
         self.slug = "hq_" + self.id;
         self.href = "#" + self.slug;
         self.path = self.manager.getPathFromSlug(self.slug);
@@ -515,7 +532,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
     CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
 
     $(function () {
-        hqImport('app_manager/js/app_manager').setPrependedPageTitle(gettext("Settings"));
+        appManager.setPrependedPageTitle(gettext("Settings"));
     });
 
     return {
