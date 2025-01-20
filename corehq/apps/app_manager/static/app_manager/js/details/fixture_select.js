@@ -1,7 +1,11 @@
 /**
  * Model for Lookup Table Case Selection in case list configuration.
  */
-hqDefine("app_manager/js/details/fixture_select", function () {
+hqDefine("app_manager/js/details/fixture_select", [
+    "knockout",
+], function (
+    ko,
+) {
     return function (init) {
         var self = {};
         self.active = ko.observable(init.active);
