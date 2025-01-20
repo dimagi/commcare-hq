@@ -423,14 +423,6 @@ class CaseManagementResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.CASE_MANAGEMENT
 
-    def get_report_task(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        return generate_enterprise_report.s(
-            self.REPORT_SLUG,
-            account.id,
-            request.couch_user.username,
-        )
-
     def dehydrate(self, bundle):
         bundle.data['domain'] = bundle.obj[0]
         bundle.data['num_applications'] = bundle.obj[1]
@@ -452,14 +444,6 @@ class DataExportReportResource(ODataEnterpriseReportResource):
     owner = fields.CharField()
 
     REPORT_SLUG = EnterpriseReport.DATA_EXPORTS
-
-    def get_report_task(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        return generate_enterprise_report.s(
-            self.REPORT_SLUG,
-            account.id,
-            request.couch_user.username,
-        )
 
     def dehydrate(self, bundle):
         bundle.data['domain'] = bundle.obj[0]
