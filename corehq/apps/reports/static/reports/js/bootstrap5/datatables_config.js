@@ -24,10 +24,10 @@ var HQReportDataTables = function (options) {
     self.loadingText = options.loadingText || gettext("Loading");
     self.emptyText = options.emptyText || gettext("No data available to display. " +
                                                   "Please try changing your filters.");
-    self.errorText = options.errorText || "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
+    self.errorText = options.errorText || "<span class='badge text-bg-danger'>" + gettext("Sorry!") + "</span> " +
                      gettext("There was an error with your query, it has been logged, please try another query.");
     self.badRequestErrorText = options.badRequestErrorText || options.errorText ||
-                               "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
+                               "<span class='badge text-bg-danger'>" + gettext("Sorry!") + "</span> " +
                                gettext("Your search query is invalid, please adjust the formatting and try again.");
     self.fixColumns = !!(options.fixColumns);
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
