@@ -1,11 +1,13 @@
 hqDefine("userreports/js/data_source_select_model", [
     'knockout',
+    'underscore',
     'hqwebapp/js/initial_page_data',
 ], function (
     ko,
+    _,
     initialPageData
 ) {
-    return {
+    var self = {
         application: ko.observable(""),
         sourceType: ko.observable(""),
         sourcesMap: initialPageData.get("sources_map"),
@@ -20,4 +22,13 @@ hqDefine("userreports/js/data_source_select_model", [
         isDataFromOneProject: ko.observable(""),
         isDataFromManyProjects: ko.observable(""),
     };
+
+    self.sourceOptions = ko.computed(function () {
+        return _.union(
+            self.sourcesMap[self.application()]?.[self.sourceType()],
+            self.sourcesMap[self.registrySlug()]?.[self.sourceType()],
+        )
+    });
+
+    return self;
 });

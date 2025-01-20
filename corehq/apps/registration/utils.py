@@ -86,7 +86,8 @@ def activate_new_user(
         created_via,
         is_admin=is_domain_admin,
         by_domain_required_for_log=bool(domain),
-        commit=commit
+        commit=commit,
+        email=username
     )
     new_user.first_name = first_name
     new_user.last_name = last_name

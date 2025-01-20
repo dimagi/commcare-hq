@@ -5,7 +5,7 @@ import stripe
 
 from dimagi.utils.dates import add_months_to_date
 
-from corehq.apps.accounting import tasks, utils
+from corehq.apps.accounting import utils
 from corehq.apps.accounting.models import (
     Invoice,
     PaymentRecord,
@@ -28,48 +28,48 @@ import uuid
 
 class TestBillingAutoPay(BaseInvoiceTestCase):
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         # Dependabot-created PRs do not have access to secrets.
         # We skip test so the tests do not fail when dependabot creates new PR for dependency upgrades.
         # Or for developers running tests locally if they do not have stripe API key in their localsettings.
         if not settings.STRIPE_PRIVATE_KEY:
             raise SkipTest("Stripe API Key not set")
-        super(TestBillingAutoPay, cls).setUpClass()
-        cls._generate_autopayable_entities()
-        cls._generate_non_autopayable_entities()
-        cls._generate_invoices()
+        super().setUp()
+        self._generate_autopayable_entities()
+        self._generate_non_autopayable_entities()
 
-    @classmethod
-    def _generate_autopayable_entities(cls):
+        # invoice date is 2 months before the end of the subscription (this is arbitrary)
+        invoice_date = utils.months_from_date(self.subscription.date_start, self.subscription_length - 2)
+        self.create_invoices(invoice_date)
+
+    def _generate_autopayable_entities(self):
         """
         Create account, domain and subscription linked to the autopay user that have autopay enabled
         """
-        cls.autopay_account = cls.account
-        cls.autopay_account.created_by_domain = cls.domain
-        cls.autopay_account.save()
-        web_user = generator.arbitrary_user(domain_name=cls.domain.name, is_active=True, is_webuser=True)
-        cls.autopay_user_email = web_user.email
-        cls.stripe_customer = stripe.Customer.create(email=cls.autopay_user_email)
-        cls.addClassCleanup(cls.stripe_customer.delete)
-        cls.payment_method = StripePaymentMethod(web_user=cls.autopay_user_email,
-                                                customer_id=cls.stripe_customer.id)
-        cls.card = cls.payment_method.create_card('tok_visa', cls.autopay_account, None)
-        cls.payment_method.set_autopay(cls.card, cls.autopay_account, cls.domain)
-        cls.payment_method.save()
-        cls.autopay_account.update_autopay_user(cls.autopay_user_email, cls.domain)
+        self.autopay_account = self.account
+        self.autopay_account.created_by_domain = self.domain
+        self.autopay_account.save()
+        web_user = generator.arbitrary_user(domain_name=self.domain.name, is_active=True, is_webuser=True)
+        self.autopay_user_email = web_user.email
+        self.stripe_customer = stripe.Customer.create(email=self.autopay_user_email)
+        self.addClassCleanup(self.stripe_customer.delete)
+        self.payment_method = StripePaymentMethod(web_user=self.autopay_user_email,
+                                                customer_id=self.stripe_customer.id)
+        self.card = self.payment_method.create_card('tok_visa', self.autopay_account, None)
+        self.payment_method.set_autopay(self.card, self.autopay_account, self.domain)
+        self.payment_method.save()
+        self.autopay_account.update_autopay_user(self.autopay_user_email, self.domain)
 
-    @classmethod
-    def _generate_non_autopayable_entities(cls):
+    def _generate_non_autopayable_entities(self):
         """
         Create account, domain, and subscription linked to the autopay user, but that don't have autopay enabled
         """
-        cls.non_autopay_account = generator.billing_account(
+        self.non_autopay_account = generator.billing_account(
             web_user_creator=generator.create_arbitrary_web_user_name(is_dimagi=True),
-            web_user_contact=cls.autopay_user_email
+            web_user_contact=self.autopay_user_email
         )
-        cls.non_autopay_domain = generator.arbitrary_domain()
-        cls.addClassCleanup(cls.non_autopay_domain.delete)
+        self.non_autopay_domain = generator.arbitrary_domain()
+        self.addClassCleanup(self.non_autopay_domain.delete)
         # Non-autopay subscription has same parameters as the autopayable subscription
         cheap_plan = SoftwarePlan.objects.create(name='cheap')
         cheap_product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=cheap_plan.name)
@@ -78,23 +78,13 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
             product_rate=cheap_product_rate,
             role=Role.objects.first(),
         )
-        cls.non_autopay_subscription = generator.generate_domain_subscription(
-            cls.non_autopay_account,
-            cls.non_autopay_domain,
+        self.non_autopay_subscription = generator.generate_domain_subscription(
+            self.non_autopay_account,
+            self.non_autopay_domain,
             plan_version=cheap_plan_version,
-            date_start=cls.subscription.date_start,
-            date_end=add_months_to_date(cls.subscription.date_start, cls.subscription_length),
+            date_start=self.subscription.date_start,
+            date_end=add_months_to_date(self.subscription.date_start, self.subscription_length),
         )
-
-    @classmethod
-    def _generate_invoices(cls):
-        """
-        Create invoices for both autopayable and non-autopayable subscriptions
-        """
-        # invoice date is 2 months before the end of the subscription (this is arbitrary)
-        invoice_date = utils.months_from_date(cls.subscription.date_start, cls.subscription_length - 2)
-        tasks.calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
 
     def test_get_autopayable_invoices(self):
         """

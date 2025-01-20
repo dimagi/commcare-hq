@@ -1,6 +1,6 @@
 "use strict";
 hqDefine("app_manager/js/details/case_claim", function () {
-    var get = hqImport('hqwebapp/js/initial_page_data').get,
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
         generateSemiRandomId = function () {
             // https://stackoverflow.com/a/2117523
             return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function (c) {
@@ -35,7 +35,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     self.nodeset(null);
                 } else {
                     self.instance_id(value);
-                    var itemList = _.filter(get('js_options').item_lists, function (item) {
+                    var itemList = _.filter(initialPageData.get('js_options').item_lists, function (item) {
                         return item.id === value;
                     });
                     if (itemList && itemList.length === 1) {
@@ -53,7 +53,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             if (self.nodeset() === null) {
                 return true;
             }
-            var itemLists = _.map(get('js_options').item_lists, function (item) {
+            var itemLists = _.map(initialPageData.get('js_options').item_lists, function (item) {
                 return itemsetValue(item);
             });
             if (self.nodeset().split("/").length === 0) {
@@ -139,7 +139,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.receiverExpression = ko.observable(options.receiverExpression);
         self.itemListOptions = ko.computed(function () {
-            var itemLists = get('js_options').item_lists;
+            var itemLists = initialPageData.get('js_options').item_lists;
             return _.map(
                 _.filter(itemLists, function (p) {
                     return (
