@@ -155,6 +155,7 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
 
     name = gettext_lazy('Case List')
     slug = 'case_list'
+    use_bootstrap5 = True
 
     @classmethod
     def get_subpages(cls):
