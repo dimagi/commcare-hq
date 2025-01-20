@@ -27,7 +27,7 @@ function (
         var self = {
             "message": ko.observable(message),
             "alert_class": ko.observable(
-                "alert alert-dismissible message-alert"
+                "alert alert-dismissible message-alert mt-3 mb-2"
             ),
         };
         if (tags) {
