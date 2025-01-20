@@ -1,7 +1,27 @@
-hqDefine("app_manager/js/releases/app_view_release_manager", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
-    hqImport('app_manager/js/app_manager').setPrependedPageTitle(gettext("Releases"));
+hqDefine("app_manager/js/releases/app_view_release_manager", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "app_manager/js/app_manager",
+    "app_manager/js/releases/releases",
+    "app_manager/js/releases/language_profiles",
+    "app_manager/js/preview_app",
+    "analytix/js/kissmetrix",
+    "analytix/js/google",
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    appManager,
+    releases,
+    languageProfiles,
+    previewApp,
+    kissmetrix,
+    google,
+) {
+    appManager.setPrependedPageTitle(gettext("Releases"));
 
     var appReleaseLogsModel = function () {
         let self = {};
@@ -62,7 +82,6 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
     }
 
     // Main releases content
-    var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel;
     var o = {
         currentAppVersion: initialPageData.get('app_version') || -1,
         recipient_contacts: initialPageData.get('sms_contacts'),
@@ -73,7 +92,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
         appReleaseLogs: appReleaseLogs,
     };
     var el = $('#releases-table');
-    var releasesMain = releasesMainModel(o);
+    var releasesMain = releases.releasesMainModel(o);
     if (el.length) {
         el.koApplyBindings(releasesMain);
         _.defer(function () { releasesMain.goToPage(1); });
@@ -107,28 +126,26 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
     // Build profiles
     var $profilesTab = $('#profiles-tab');
     if ($profilesTab.length) {
-        var profiles = hqImport('app_manager/js/releases/language_profiles');
         var latestEnabledVersions = initialPageData.get('latest_version_for_build_profiles');
-        profiles.setProfileUrl(initialPageData.get('application_profile_url'));
-        var profileManagerModel = profiles.profileManager;
+        languageProfiles.setProfileUrl(initialPageData.get('application_profile_url'));
         var appLangs = initialPageData.get('langs');
         var appProfiles = initialPageData.get('build_profiles');
         var enablePracticeUsers = initialPageData.get('enable_practice_users');
         var practiceUsers = initialPageData.get('practice_users');
-        var profileManager = profileManagerModel(appProfiles, appLangs, enablePracticeUsers, practiceUsers,
+        var profileManager = languageProfiles.profileManager(appProfiles, appLangs, enablePracticeUsers, practiceUsers,
             latestEnabledVersions);
         $profilesTab.koApplyBindings(profileManager);
     }
 
     $(function () {
         if (initialPageData.get('intro_only')) {
-            hqImport('app_manager/js/preview_app').forceShowPreview();
+            previewApp.forceShowPreview();
         }
 
-        hqImport('analytix/js/kissmetrix').track.event('Visited the Release Manager');
+        kissmetrix.track.event('Visited the Release Manager');
         if (initialPageData.get('confirm')) {
-            hqImport('analytix/js/google').track.event('User actions', 'User created login', window.location.pathname);
-            hqImport('analytix/js/google').track.event('User actions', 'Forms', 'Name Your First Project');
+            google.track.event('User actions', 'User created login', window.location.pathname);
+            google.track.event('User actions', 'Forms', 'Name Your First Project');
         }
     });
 });
