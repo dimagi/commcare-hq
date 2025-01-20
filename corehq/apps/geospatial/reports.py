@@ -102,6 +102,9 @@ class CaseManagementMap(BaseCaseMapReport):
 
     base_template = "geospatial/case_management_base.html"
     report_template_path = "geospatial/case_management.html"
+    max_rows = 5_000
+    default_rows = 5_000
+    force_page_size = True
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
@@ -131,6 +134,9 @@ class CaseManagementMap(BaseCaseMapReport):
 
     @property
     def rows(self):
+        from time import time
+
+        start = time()
         cases = []
         for row in self.es_results['hits'].get('hits', []):
             display = CaseDisplayES(
@@ -144,6 +150,8 @@ class CaseManagementMap(BaseCaseMapReport):
                 display.case_link,
                 display.case_name,
             ])
+        end = time() - start
+        print("Total time:", end)
         return cases
 
 
