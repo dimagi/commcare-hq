@@ -59,6 +59,7 @@
         "leaflet": "1.9.4",
         "leaflet-fullscreen": "^1.0.2",
         "less": "3.10.3",
+        "mapbox-gl": "2.14.1",
         "mapbox.js": "3.3.1",
         "marionette.approuter": "^1.0.2",
         "marionette.templatecache": "^1.0.0",
@@ -129,6 +130,7 @@
         "postinstall": "yarn run -s build:modernizr",
         "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib",
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
+        "test": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js",
         "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js"
     }
 }

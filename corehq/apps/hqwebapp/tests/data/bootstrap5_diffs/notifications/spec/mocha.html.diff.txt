@@ -1,21 +1,14 @@
 --- 
 +++ 
-@@ -2,15 +2,15 @@
+@@ -1,9 +1,9 @@
+ {% extends 'mocha/base.html' %}
  {% load hq_shared_tags %}
- 
- {% block dependencies %}
--  <script src="{% static 'notifications/js/bootstrap3/notifications_service.js' %}"></script>
-+  <script src="{% static 'notifications/js/bootstrap5/notifications_service.js' %}"></script>
- {% endblock %}
+-{% js_entry_b3 "notifications/spec/bootstrap3/main" %}
++{% js_entry "notifications/spec/bootstrap5/main" %}
  
  {% block fixtures %}
    <ul>
 -    {% include 'notifications/partials/bootstrap3/global_notifications.html' %}
 +    {% include 'notifications/partials/bootstrap5/global_notifications.html' %}
    </ul>
- {% endblock %}
- 
- {% block mocha_tests %}
--  <script src="{% static 'notifications/spec/bootstrap3/NotificationsService.spec.mo.js' %}"></script>
-+  <script src="{% static 'notifications/spec/bootstrap5/NotificationsService.spec.mo.js' %}"></script>
  {% endblock %}
