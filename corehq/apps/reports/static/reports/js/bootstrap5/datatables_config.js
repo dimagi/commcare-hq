@@ -246,7 +246,7 @@ var HQReportDataTables = function (options) {
             if ($dataTablesLength) {
                 let $selectField = $dataTablesLength.find("select");
                 if (self.showAllRowsOption) {
-                    $selectField.append($('<option value="-1" />').text("All Rows"));
+                    $selectField.append($('<option value="-1" />').text(gettext("All Rows")));
                 }
                 $selectField.on("change", function () {
                     var selectedValue = $selectField.find('option:selected').val();
