@@ -333,7 +333,7 @@ $.fn.dataTableExt.oSort['title-date-asc']  = function (a,b) { return sortSpecial
 
 $.fn.dataTableExt.oSort['title-date-desc']  = function (a,b) { return sortSpecial(a, b, false, convertDate); };
 
-export const datatablesConfig = {
+export default {
     HQReportDataTables: function (options) {
         return new HQReportDataTables(options);
     },
