@@ -121,6 +121,7 @@
 
 {% block form-view %}
   {% initial_page_data 'all_other_forms_require_a_case' form.all_other_forms_require_a_case %}
+  {% initial_page_data 'allow_form_copy' allow_form_copy %}
   {% initial_page_data 'allow_form_filtering' allow_form_filtering %}
   {% initial_page_data 'auto_gps_capture' form.auto_gps_capture %}
   {% initial_page_data 'case_config_options' case_config_options %}
@@ -137,6 +138,7 @@
   {% initial_page_data 'is_case_list_form' is_case_list_form %}
   {% initial_page_data 'is_usercase_in_use' is_usercase_in_use %}
   {% initial_page_data 'langs' app.langs %}
+  {% initial_page_data 'module_doc_type' module.doc_type %}
   {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
   {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
   {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
