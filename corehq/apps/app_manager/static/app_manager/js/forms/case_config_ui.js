@@ -1,10 +1,30 @@
-hqDefine('app_manager/js/forms/case_config_ui', function () {
+hqDefine("app_manager/js/forms/case_config_ui", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "app_manager/js/case_config_utils",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/privileges",
+    "hqwebapp/js/toggles",
+    "hqwebapp/js/bootstrap3/main",
+    "app_manager/js/app_manager",
+    "analytix/js/kissmetrix",
+    "analytix/js/google",
+], function (
+    $,
+    ko,
+    _,
+    caseConfigUtils,
+    initialPageData,
+    privileges,
+    toggles,
+    main,
+    appManager,
+    kissmetrix,
+    google,
+) {
     $(function () {
-        var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
-            initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            addOnsPrivileges = initialPageData.get('add_ons_privileges'),
-            privileges = hqImport('hqwebapp/js/privileges'),
-            toggles = hqImport("hqwebapp/js/toggles");
+        const addOnsPrivileges = initialPageData.get('add_ons_privileges');
         var actionNames = ["open_case", "update_case", "close_case", "case_preload",
             // Usercase actions are managed in the User Properties tab.
             "usercase_update", "usercase_preload",
@@ -39,7 +59,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.allowUsercase = params.allowUsercase;
 
             self.trackGoogleEvent = function () {
-                hqImport('analytix/js/google').track.event(...arguments);
+                google.track.event(...arguments);
             };
 
             self.setPropertiesMap = function (propertiesMap) {
@@ -55,7 +75,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.descriptionDict = params.propertyDescriptions;
             self.deprecatedPropertiesDict = params.deprecatedProperties;
 
-            self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+            self.saveButton = main.initSaveButton({
                 unsavedMessage: gettext("You have unchanged case settings"),
                 save: function () {
                     var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
@@ -75,13 +95,12 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         },
                         dataType: 'json',
                         success: function (data) {
-                            var appManager = hqImport('app_manager/js/app_manager');
                             appManager.updateDOM(data.update);
                             self.requires(requires);
                             self.setPropertiesMap(data.propertiesMap);
 
                             if (_(data.propertiesMap).has(self.caseType)) {
-                                hqImport('analytix/js/kissmetrix').track.event("Saved question as a Case Property", {
+                                kissmetrix.track.event("Saved question as a Case Property", {
                                     questionsSaved: _.property(self.caseType)(data.propertiesMap).length,
                                 });
                             }
@@ -90,7 +109,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 },
             });
 
-            self.saveUsercaseButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+            self.saveUsercaseButton = main.initSaveButton({
                 unsavedMessage: gettext("You have unchanged user properties settings"),
                 save: function () {
                     var actions = JSON.stringify(_(self.actions).extend(
@@ -104,7 +123,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         },
                         dataType: 'json',
                         success: function (data) {
-                            var appManager = hqImport('app_manager/js/app_manager');
                             appManager.updateDOM(data.update);
                             self.setUsercasePropertiesMap(data.setUsercasePropertiesMap);
                         },
@@ -381,14 +399,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
                 self.case_properties.push(property);
                 self.visible_case_properties.push(property);
-                hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Save Properties');
+                google.track.event('Case Management', analyticsAction, 'Save Properties');
             };
 
             self.removeProperty = function (property) {
                 if (!self.hasPrivilege) {
                     return;
                 }
-                hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Save Properties (remove)');
+                google.track.event('Case Management', analyticsAction, 'Save Properties (remove)');
                 self.case_properties.remove(property);
                 self.visible_case_properties.remove(property);
                 if (!self.visible_case_properties().length) {
@@ -403,9 +421,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 }
                 var checked = event.target.checked;
                 if (checked) {
-                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Checked "Save only if edited"');
+                    google.track.event('Case Management', analyticsAction, 'Checked "Save only if edited"');
                 } else {
-                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Unchecked "Save only if edited"');
+                    google.track.event('Case Management', analyticsAction, 'Unchecked "Save only if edited"');
                 }
                 var updatedCaseProp = caseProperty.wrap(_.extend(ko.mapping.toJS(property), {save_only_if_edited: checked}), self);
                 self.case_properties.replace(property, updatedCaseProp);
