@@ -75,6 +75,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
     primary_sort_prop = None
+    use_bootstrap5 = True
 
     @property
     def _columns(self):
