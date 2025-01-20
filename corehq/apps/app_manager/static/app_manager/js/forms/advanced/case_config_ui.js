@@ -1,13 +1,27 @@
-hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
-
+hqDefine("app_manager/js/forms/advanced/case_config_ui", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "app_manager/js/case_config_utils",
+    "app_manager/js/forms/advanced/case_properties",
+    "app_manager/js/forms/advanced/actions",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/bootstrap3/main",
+    "app_manager/js/app_manager",
+    "app_manager/js/visit_scheduler",
+], function (
+    $,
+    ko,
+    _,
+    caseConfigUtils,
+    casePropertiesModels,
+    actions,
+    initialPageData,
+    main,
+    appManager,
+    visitSchedulerModel,
+) {
     $(function () {
-        var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
-            caseProperty = hqImport("app_manager/js/forms/advanced/case_properties").caseProperty,
-            casePreloadProperty = hqImport("app_manager/js/forms/advanced/case_properties").casePreloadProperty,
-            loadUpdateAction = hqImport("app_manager/js/forms/advanced/actions").loadUpdateAction,
-            openCaseAction = hqImport("app_manager/js/forms/advanced/actions").openCaseAction,
-            initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
         var DEFAULT_CONDITION = function (type) {
             return {
                 type: type,
@@ -52,7 +66,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             self.descriptionDict = params.propertyDescriptions;
             self.deprecatedPropertiesDict = params.deprecatedProperties;
 
-            self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+            self.saveButton = main.initSaveButton({
                 unsavedMessage: "You have unchanged case settings",
                 save: function () {
                     var actions = JSON.stringify(self.caseConfigViewModel.unwrap());
@@ -65,7 +79,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                         },
                         dataType: 'json',
                         success: function (data) {
-                            hqImport('app_manager/js/app_manager').updateDOM(data.update);
+                            appManager.updateDOM(data.update);
                             self.setPropertiesMap(data.propertiesMap);
                             self.requires(self.caseConfigViewModel.load_update_cases().length > 0 ? 'case' : 'none');
                         },
@@ -219,7 +233,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     });
 
                     $('.hq-help-template').each(function () {
-                        hqImport("hqwebapp/js/bootstrap3/main").transformHelpTemplate($(this), true);
+                        main.transformHelpTemplate($(this), true);
                     });
 
                     caseConfigUtils.initRefreshQuestions(self.questions);
@@ -288,15 +302,15 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 var caseProperties = caseConfigUtils.propertyDictToArray([], a.case_properties, caseConfig);
                 a.preload = [];
                 a.case_properties = [];
-                var action = loadUpdateAction.wrap(a, caseConfig);
+                var action = actions.loadUpdateAction.wrap(a, caseConfig);
                 // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
                 // before it is defined
                 _(caseProperties).each(function (p) {
-                    action.case_properties.push(caseProperty.wrap(p, action));
+                    action.case_properties.push(casePropertiesModels.caseProperty.wrap(p, action));
                 });
 
                 _(preload).each(function (p) {
-                    action.preload.push(casePreloadProperty.wrap(p, action));
+                    action.preload.push(casePropertiesModels.casePreloadProperty.wrap(p, action));
                 });
                 return action;
             }));
@@ -326,11 +340,11 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 }];
                 var caseProperties = caseConfigUtils.propertyDictToArray(requiredProperties, a.case_properties, caseConfig);
                 a.case_properties = [];
-                var action = openCaseAction.wrap(a, caseConfig);
+                var action = actions.openCaseAction.wrap(a, caseConfig);
                 // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
                 // before it is defined
                 _(caseProperties).each(function (p) {
-                    action.case_properties.push(caseProperty.wrap(p, action));
+                    action.case_properties.push(casePropertiesModels.caseProperty.wrap(p, action));
                 });
 
                 return action;
@@ -425,11 +439,11 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                             arbitrary_datum_function: '',
                         };
                     }
-                    self.load_update_cases.push(loadUpdateAction.wrap(actionData, self.caseConfig));
+                    self.load_update_cases.push(actions.loadUpdateAction.wrap(actionData, self.caseConfig));
                     self.caseConfig.applyAccordion('load', index);
                 } else if (action.value === 'open') {
                     index = self.open_cases().length;
-                    self.open_cases.push(openCaseAction.wrap({
+                    self.open_cases.push(actions.openCaseAction.wrap({
                         case_type: caseConfig.caseType,
                         name_update: '',
                         case_tag: 'open_' + caseConfig.caseType + '_' + index,
@@ -469,8 +483,8 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
             self.unwrap = function () {
                 return {
-                    load_update_cases: _(self.load_update_cases()).map(loadUpdateAction.unwrap),
-                    open_cases: _(self.open_cases()).map(openCaseAction.unwrap),
+                    load_update_cases: _(self.load_update_cases()).map(actions.loadUpdateAction.unwrap),
+                    open_cases: _(self.open_cases()).map(actions.openCaseAction.unwrap),
                 };
             };
             return self;
@@ -484,8 +498,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             caseConfig.init();
 
             if (initialPageData.get("schedule_options")) {
-                var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
-                var visitScheduler = VisitScheduler.schedulerModel(_.extend({}, initialPageData.get("schedule_options"), {
+                var visitScheduler = visitSchedulerModel.schedulerModel(_.extend({}, initialPageData.get("schedule_options"), {
                     home: $('#visit-scheduler'),
                 }));
                 visitScheduler.init();
