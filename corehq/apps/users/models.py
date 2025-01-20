@@ -1587,6 +1587,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         else:
             couch_user = cls.from_django_user(django_user)
             if couch_user:
+                # ensure we sync from an up to date django user
+                django_user.refresh_from_db()
                 couch_user.sync_from_django_user(django_user)
 
                 try:
