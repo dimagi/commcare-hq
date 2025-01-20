@@ -453,12 +453,7 @@ class EnterpriseCaseManagementReport(EnterpriseReport):
                     num_domains_using_case_management += 1
                 num_domains_with_apps += 1
 
-        if num_domains_with_apps == 0:
-            return '--'
-
-        case_management_percent = num_domains_using_case_management / num_domains_with_apps * 100
-
-        return "{:.1f}%".format(case_management_percent)
+        return _format_percentage_for_enterprise_tile(num_domains_using_case_management, num_domains_with_apps)
 
     def total_for_domain(self, domain_obj):
         app_query = self.app_query(domain_obj.name)
