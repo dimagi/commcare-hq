@@ -909,6 +909,8 @@ scheduling_partitioned
  0006_unique_indexes
  0007_index_cleanup
  0008_track_attempts
+science
+ 0001_initial
 sessions
  0001_initial
 sites

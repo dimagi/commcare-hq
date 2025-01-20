@@ -282,6 +282,7 @@ HQ_APPS = (
     'corehq.apps.products',
     'corehq.apps.programs',
     'corehq.apps.registry.app_config.RegistryAppConfig',
+    'corehq.apps.science',
     'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',

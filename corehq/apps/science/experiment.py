@@ -31,8 +31,10 @@ def experiment(
         example, if the old code path takes 1 second and the new code
         path takes 2 seconds, the percentage is 2 / 1 or 200%.
     """
+    from .models import is_enabled, should_record_metrics
+
     if func is None:
-        return partial(
+        part = partial(
             experiment,
             campaign=campaign,
             path=path,
@@ -42,6 +44,9 @@ def experiment(
             time_buckets=time_buckets,
             percent_buckets=percent_buckets,
         )
+        part.campaign = campaign
+        part.path = path
+        return part
     if campaign is None:
         raise ValueError("campaign is required")
     if path is None:
@@ -60,32 +65,45 @@ def experiment(
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        enabled = is_enabled(campaign, path)
+        metrics_enabled = enabled or should_record_metrics(campaign, path)
         old_error = new_error = None
         start = time.time()
-        try:
-            old_result = func(*args, **kwargs, **old_args)
-        except Exception as err:
-            old_error = err
-        mid = time.time()
-        try:
-            new_result = func(*args, **kwargs, **new_args)
-        except Exception as err:
-            if old_error is None:
-                notify_exception(None, "new code path failed in experiment",
-                                details={"campaign": campaign, "path": path})
-                new_error = True  # error reference not needed
-            else:
+        if enabled is not None:
+            try:
+                old_result = func(*args, **kwargs, **old_args)
+            except Exception as err:
+                old_error = err
+            mid = time.time()
+        if enabled or enabled is None:
+            try:
+                new_result = func(*args, **kwargs, **new_args)
+            except Exception as err:
+                if old_error is None and enabled:
+                    notify_exception(None, "new code path failed in experiment",
+                                    details={"campaign": campaign, "path": path})
                 new_error = err
+            if enabled is None:
+                # run new code path and not old
+                mid = time.time()
+                if new_error is None:
+                    old_result = new_result
+                else:
+                    old_error = new_error
 
-        end = time.time()
-        old_time = mid - start
+        if metrics_enabled:
+            end = time.time()
+            old_time = mid - start
+            metrics_histogram(
+                "commcare.science.time", old_time, tags=tags,
+                bucket_tag='duration', buckets=time_buckets, bucket_unit='s',
+            )
+        if not enabled:
+            if old_error is not None:
+                raise old_error
+            return old_result
         new_time = end - mid
-        print(old_time, new_time)
         diff_pct = (new_time / old_time * 100) if old_time else over_the_top
-        metrics_histogram(
-            "commcare.science.time", old_time, tags=tags,
-            bucket_tag='duration', buckets=time_buckets, bucket_unit='s',
-        )
         metrics_histogram(
             "commcare.science.diff", diff_pct, tags=tags,
             bucket_tag='percent', buckets=percent_buckets, bucket_unit='%',
@@ -110,4 +128,7 @@ def experiment(
                 details={"campaign": campaign, "path": path},
             )
         return old_result
+
+    wrapper.campaign = campaign
+    wrapper.path = path
     return wrapper

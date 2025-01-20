@@ -95,6 +95,7 @@ IGNORE_MODELS = {
     "registry.RegistryGrant",
     "registry.RegistryInvitation",
 
+    "science.ExperimentEnabler",
     "sessions.Session",
     "sites.Site",
     "tastypie.ApiAccess",  # not tagged by domain
