@@ -1,8 +1,10 @@
 import gc
 from contextlib import contextmanager
 from time import sleep
+from unittest.mock import patch
 
 import pytest
+from unmagic import fixture
 
 from corehq.util.metrics.tests.utils import capture_metrics
 from corehq.util.test_utils import capture_log_output
@@ -150,6 +152,15 @@ def test_experiment_with_long_arg():
         assert func("ha" * 100) == 2
     haha = repr("ha" * 40)[:20] + "..."
     assert log.get_output() == f"func({haha}): 2 != 4\n"
+
+
+@fixture(scope="module", autouse=__file__)
+def enable_all_experiments():
+    with (
+        patch("corehq.apps.experiments.models.is_enabled", return_value=True),
+        patch("corehq.apps.experiments.models.should_record_metrics", return_value=True),
+    ):
+        yield
 
 
 @contextmanager

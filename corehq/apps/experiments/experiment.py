@@ -44,33 +44,49 @@ class Experiment:
         return {"campaign": self.campaign, "path": self.path}
 
     def decorate(self, func):
+        from .models import is_enabled, should_record_metrics
+
         @wraps(func)
         def wrapper(*args, **kwargs):
+            enabled = is_enabled(self.campaign, self.path)
+            metrics_enabled = enabled or should_record_metrics(self.campaign, self.path)
             old_error = new_error = None
             start = time.time()
-            try:
-                old_result = func(*args, **kwargs, **self.old_args)
-            except Exception as err:
-                old_error = err
-            mid = time.time()
-            try:
-                new_result = func(*args, **kwargs, **self.new_args)
-            except Exception as err:
-                if old_error is None:
-                    notify_exception(None, "new code path failed in experiment",
-                                    details=self.tags)
-                    new_error = True  # error reference not needed
-                else:
+            if enabled is not None:
+                try:
+                    old_result = func(*args, **kwargs, **self.old_args)
+                except Exception as err:
+                    old_error = err
+                mid = time.time()
+            if enabled or enabled is None:
+                try:
+                    new_result = func(*args, **kwargs, **self.new_args)
+                except Exception as err:
+                    if old_error is None and enabled:
+                        notify_exception(None, "new code path failed in experiment",
+                                        details=self.tags)
                     new_error = err
+                if enabled is None:
+                    # run new code path and not old
+                    mid = time.time()
+                    if new_error is None:
+                        old_result = new_result
+                    else:
+                        old_error = new_error
 
-            end = time.time()
-            old_time = mid - start
+            if metrics_enabled:
+                end = time.time()
+                old_time = mid - start
+                metrics_histogram(
+                    "commcare.experiment.time", old_time, tags=self.tags,
+                    bucket_tag='duration', buckets=self.time_buckets, bucket_unit='s',
+                )
+            if not enabled:
+                if old_error is not None:
+                    raise old_error
+                return old_result
             new_time = end - mid
             diff_pct = (new_time / old_time * 100) if old_time else over_the_top
-            metrics_histogram(
-                "commcare.experiment.time", old_time, tags=self.tags,
-                bucket_tag='duration', buckets=self.time_buckets, bucket_unit='s',
-            )
             metrics_histogram(
                 "commcare.experiment.diff", diff_pct, tags=self.tags,
                 bucket_tag='duration', buckets=self.percent_buckets, bucket_unit='%',
