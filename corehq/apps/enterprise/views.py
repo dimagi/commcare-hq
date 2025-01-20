@@ -97,7 +97,7 @@ def platform_overview(request, domain):
                                      EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,)]},
             {'name': _('Data Management & Export'),
              'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
-                        for slug in (EnterpriseReport.ODATA_FEEDS,)]},
+                        for slug in (EnterpriseReport.ODATA_FEEDS, EnterpriseReport.DATA_EXPORTS)]},
         ],
         'uses_date_range': [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS],
         'metric_type': 'Platform Overview',
