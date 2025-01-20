@@ -262,7 +262,7 @@ var HQReportDataTables = function (options) {
                 $selectLabel.remove();
                 $selectField.children().append(" per page");
                 if (self.showAllRowsOption) {
-                    $selectField.append($('<option value="-1" />').text("All Rows"));
+                    $selectField.append($('<option value="-1" />').text(gettext("All Rows")));
                 }
                 $selectField.addClass('form-control');
                 $selectField.on("change", function () {
