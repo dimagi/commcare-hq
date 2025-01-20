@@ -5,12 +5,19 @@
  * each map to a display property column and have
  * sorting-related attributes like direction.
  */
-hqDefine("app_manager/js/details/sort_rows", function () {
-    var uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
-
+hqDefine("app_manager/js/details/sort_rows", [
+    "jquery",
+    "knockout",
+    "hqwebapp/js/bootstrap3/ui-element",
+    "app_manager/js/details/utils",
+], function (
+    $,
+    ko,
+    uiElement,
+    Utils,
+) {
     var sortRow = function (params, saveButton) {
-        var Utils = hqImport('app_manager/js/details/utils'),
-            self = {};
+        var self = {};
         params = params || {};
 
         self.selectField = uiElement.select(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
