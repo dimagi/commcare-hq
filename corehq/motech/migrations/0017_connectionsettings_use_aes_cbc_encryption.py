@@ -5,7 +5,8 @@ from corehq.motech.const import ALGO_AES, ALGO_AES_CBC
 from corehq.util.django_migrations import skip_on_fresh_install
 from corehq.motech.utils import (
     reencrypt_ecb_to_cbc_mode,
-    b64_aes_cbc_encrypt
+    b64_aes_cbc_encrypt,
+    AesEcbDecryptionError
 )
 
 
@@ -34,7 +35,10 @@ def reencrypted_password_with_cbc(connection):
     if connection.password == '':
         return ''
     elif connection.password.startswith(f'${ALGO_AES}$'):
-        return reencrypt_ecb_to_cbc_mode(connection.password, f'${ALGO_AES}$')
+        try:
+            return reencrypt_ecb_to_cbc_mode(connection.password, f'${ALGO_AES}$')
+        except AesEcbDecryptionError:
+            return ''
     else:
         ciphertext = b64_aes_cbc_encrypt(connection.password)
         return f'${ALGO_AES_CBC}${ciphertext}'
@@ -44,7 +48,10 @@ def reencrypted_client_secret_with_cbc(connection):
     if connection.client_secret == '':
         return ''
     elif connection.client_secret.startswith(f'${ALGO_AES}$'):
-        return reencrypt_ecb_to_cbc_mode(connection.client_secret, f'${ALGO_AES}$')
+        try:
+            return reencrypt_ecb_to_cbc_mode(connection.client_secret, f'${ALGO_AES}$')
+        except AesEcbDecryptionError:
+            return ''
     else:
         ciphertext = b64_aes_cbc_encrypt(connection.client_secret)
         return f'${ALGO_AES_CBC}${ciphertext}'
@@ -57,7 +64,10 @@ def reencrypted_last_token_with_cbc(connection):
         prefix = f'${ALGO_AES}$'
     else:
         prefix = None
-    return reencrypt_ecb_to_cbc_mode(connection.last_token_aes, prefix)
+    try:
+        return reencrypt_ecb_to_cbc_mode(connection.last_token_aes, prefix)
+    except AesEcbDecryptionError:
+        return ''
 
 
 class Migration(migrations.Migration):
