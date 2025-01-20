@@ -1,20 +1,36 @@
 /* Behavior for app_view.html, regardless of document type (i.e., applies to both normal and remote apps) */
-hqDefine("app_manager/js/app_view", function () {
+hqDefine("app_manager/js/app_view", [
+    "jquery",
+    "knockout",
+    "hqwebapp/js/initial_page_data",
+    "app_manager/js/settings/commcare_settings",
+    "app_manager/js/supported_languages",
+    "analytix/js/google",
+    "hqwebapp/js/bootstrap3/widgets",
+    "hqwebapp/js/bootstrap3/main",
+    "app_manager/js/section_changer",
+], function (
+    $,
+    ko,
+    initialPageData,
+    commcareSettings,
+    supportedLanguages,
+    google,
+    widgets,
+    main,
+    sectionChanger,
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
         // Settings
         var $settingsContainer = $('#commcare-settings');
         if ($settingsContainer.length) {
-            var CommcareSettings = hqImport('app_manager/js/settings/commcare_settings').CommcareSettings;
-            $settingsContainer.koApplyBindings(new CommcareSettings(initialPageData.get("app_view_options")));
+            $settingsContainer.koApplyBindings(new commcareSettings.CommcareSettings(initialPageData.get("app_view_options")));
         }
 
         // Languages
         var $languagesContainer = $("#supported-languages");
         if ($languagesContainer.length) {
-            var SupportedLanguages = hqImport('app_manager/js/supported_languages').SupportedLanguages;
-            $("#supported-languages").koApplyBindings(new SupportedLanguages({
+            $("#supported-languages").koApplyBindings(new supportedLanguages.SupportedLanguages({
                 langs: initialPageData.get("langs"),
                 saveURL: initialPageData.reverse("edit_app_langs"),
                 validate: !initialPageData.get("is_remote_app"),
@@ -54,10 +70,10 @@ hqDefine("app_manager/js/app_view", function () {
 
         // Multimedia analytics
         $(document).on("click", '#download_zip', function () {
-            hqImport('analytix/js/google').track.event('App Builder', 'Download Multimedia');
+            google.track.event('App Builder', 'Download Multimedia');
         });
         $(document).on("click", '#open_checker', function () {
-            hqImport('analytix/js/google').track.event('App Builder', 'Manage Multimedia');
+            google.track.event('App Builder', 'Manage Multimedia');
         });
 
         // Multimedia content
@@ -73,7 +89,7 @@ hqDefine("app_manager/js/app_view", function () {
                         success: function (content) {
                             self.load_state('loaded');
                             self.multimedia_page_html(content);
-                            hqImport("hqwebapp/js/bootstrap3/widgets").init();
+                            widgets.init();
                         },
                         error: function (data) {
                             if (data.hasOwnProperty('responseJSON')) {
@@ -110,7 +126,7 @@ hqDefine("app_manager/js/app_view", function () {
         (function () {
             var $form = $("#custom-assertions-form");
             var $saveContainer = $form.find("#custom-assertions-save-btn");
-            var saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+            var saveButton = main.initSaveButton({
                 save: function () {
                     saveButton.ajax({
                         url: $form.attr('action'),
@@ -125,7 +141,7 @@ hqDefine("app_manager/js/app_view", function () {
                 saveButton.fire('change');
             });
             saveButton.ui.appendTo($saveContainer);
-            hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
+            sectionChanger.attachToForm($saveContainer);
         })();
 
     });
