@@ -388,7 +388,7 @@ def make_app_build(app, comment, user_id):
         user_id=user_id,
     )
     copy.save(increment_version=False)
-    analyse_new_app_build.delay(app.domain, app._id)
+    analyse_new_app_build.delay(app.domain, copy._id)
     return copy
 
 

@@ -96,8 +96,7 @@ def load_appcues_template_app(domain, username, app_slug):
 
 
 @task(queue='background_queue', ignore_result=True)
-def analyse_new_app_build(domain, app_id):
-    new_build_id = get_latest_build_id(domain, app_id)
+def analyse_new_app_build(domain, new_build_id):
     new_build = get_app(domain, new_build_id)
 
     check_for_custom_callouts(new_build)
