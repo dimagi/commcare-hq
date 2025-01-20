@@ -16,6 +16,7 @@ import yaml
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
 
+from memoized import memoized
 from dimagi.utils.couch import CriticalSection
 
 from corehq import toggles
@@ -540,7 +541,13 @@ def _app_callout_templates():
         yield data
 
 
+@memoized
+def _app_callout_templates_ids():
+    return {t['id'] for t in next(_app_callout_templates())}
+
+
 app_callout_templates = _app_callout_templates()
+app_callout_templates_ids = _app_callout_templates_ids()
 
 
 def purge_report_from_mobile_ucr(report_config):
