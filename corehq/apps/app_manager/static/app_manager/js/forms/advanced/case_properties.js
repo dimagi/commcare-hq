@@ -1,7 +1,12 @@
-"use strict";
-hqDefine('app_manager/js/forms/advanced/case_properties', function () {
-    var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
-
+hqDefine("app_manager/js/forms/advanced/case_properties", [
+    "knockout",
+    "underscore",
+    "app_manager/js/case_config_utils",
+], function (
+    ko,
+    _,
+    caseConfigUtils,
+) {
     var casePropertyBase = {
         mapping: {
             include: ['key', 'path', 'required'],
