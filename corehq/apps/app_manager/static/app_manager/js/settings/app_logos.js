@@ -1,12 +1,19 @@
-hqDefine("app_manager/js/settings/app_logos", function () {
+hqDefine("app_manager/js/settings/app_logos", [
+    "jquery",
+    "hqwebapp/js/initial_page_data",
+    "hqmedia/js/media_reference_models",
+], function (
+    $,
+    initialPageData,
+    mediaReferenceModels,
+) {
     let self = {};
-    const initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        refs = initialPageData.get('media_refs'),
+    const refs = initialPageData.get('media_refs'),
         mediaInfo = initialPageData.get('media_info');
 
     var imageRefs = {};
     for (var slug in refs) {
-        imageRefs[slug] = hqImport('hqmedia/js/media_reference_models').ImageReference(refs[slug], slug);
+        imageRefs[slug] = mediaReferenceModels.ImageReference(refs[slug], slug);
         imageRefs[slug].setObjReference(mediaInfo[slug]);
     }
 
