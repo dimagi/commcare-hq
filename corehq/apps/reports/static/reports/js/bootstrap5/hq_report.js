@@ -149,7 +149,7 @@ hqDefine("reports/js/bootstrap5/hq_report", [
         };
 
         var checkFilterAccordionToggleState = function () {
-            $(self.filterAccordion).addClass('in');
+            $(self.filterAccordion).addClass('show');
             $(self.toggleFiltersButton).changeButtonState('close');
 
             var hiddenFilterButtonStatus = function (data) {
