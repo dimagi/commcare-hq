@@ -3,11 +3,13 @@ hqDefine("app_manager/js/forms/copy_form_to_app", [
     "knockout",
     "underscore",
     "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/toggles",
 ], function (
     $,
     ko,
     _,
     initialPageData,
+    toggles,
 ) {
     var module = function (moduleId, moduleName, isCurrentModule) {
         var self = {};
@@ -54,6 +56,14 @@ hqDefine("app_manager/js/forms/copy_form_to_app", [
     };
 
     $(function () {
+        if (!toggles.toggleEnabled('COPY_FORM_TO_APP')) {
+            return;
+        }
+
+        if (!initialPageData.get("allow_form_copy")) {
+            return;
+        }
+
         var $appModuleSelection = $("#app-module-selection");
         var viewModel = appsModulesModel(
             initialPageData.get("apps_modules"),
