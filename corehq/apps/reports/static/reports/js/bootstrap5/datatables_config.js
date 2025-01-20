@@ -300,12 +300,11 @@ function convertDate(k) {
     return new Date(m[1]);
 }
 
+// todo on reports where this is used, see if this is still relevant
+// see https://datatables.net/new/1.10#Improved-built-in-sorting-and-type-detection
 $.fn.dataTableExt.oSort['title-numeric-asc'] = function (a, b) { return sortSpecial(a, b, true, convertNum); };
-
 $.fn.dataTableExt.oSort['title-numeric-desc'] = function (a, b) { return sortSpecial(a, b, false, convertNum); };
-
 $.fn.dataTableExt.oSort['title-date-asc']  = function (a,b) { return sortSpecial(a, b, true, convertDate); };
-
 $.fn.dataTableExt.oSort['title-date-desc']  = function (a,b) { return sortSpecial(a, b, false, convertDate); };
 
 export default {
