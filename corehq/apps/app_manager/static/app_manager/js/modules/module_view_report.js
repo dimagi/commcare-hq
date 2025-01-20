@@ -6,7 +6,7 @@ hqDefine("app_manager/js/modules/module_view_report", [
     "app_manager/js/modules/report_module",
     "reports_core/js/choice_list_utils",
     "select2/dist/js/select2.full.min",
-    "app_manager/js/apps_base",
+    "app_manager/js/app_manager",
 ], function (
     $,
     _,
