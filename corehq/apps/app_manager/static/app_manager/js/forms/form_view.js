@@ -1,6 +1,24 @@
-hqDefine("app_manager/js/forms/form_view", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        appManagerUtils = hqImport('app_manager/js/app_manager');
+hqDefine("app_manager/js/forms/form_view", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "app_manager/js/app_manager",
+    "analytix/js/kissmetrix",
+    "app_manager/js/forms/form_workflow",
+    "hqwebapp/js/toggles",
+    "app_manager/js/forms/custom_instances",
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    appManagerUtils,
+    kissmetrix,
+    formWorkflow,
+    toggles,
+    customInstancesModule,
+) {
     appManagerUtils.setPrependedPageTitle("\u2699 ", true);
     appManagerUtils.setAppendedPageTitle(gettext("Form Settings"));
     appManagerUtils.updatePageTitle(initialPageData.get("form_name"));
@@ -78,12 +96,12 @@ hqDefine("app_manager/js/forms/form_view", function () {
 
     $(function () {
         // Validation for build
-        var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
+        var setupValidation = appManager.setupValidation;
         setupValidation(initialPageData.reverse("validate_form_for_build"));
 
         // Analytics for renaming form
         $(".appmanager-edit-title").on('click', '.btn-primary', function () {
-            hqImport('analytix/js/kissmetrix').track.event("Renamed form from form settings page");
+            kissmetrix.track.event("Renamed form from form settings page");
         });
 
         // Settings > Logic
@@ -92,21 +110,20 @@ hqDefine("app_manager/js/forms/form_view", function () {
             $('#form-filter').koApplyBindings(formFilterModel());
         }
 
-        var FormWorkflow = hqImport('app_manager/js/forms/form_workflow').FormWorkflow,
-            labels = initialPageData.get('form_workflows');
+        const labels = initialPageData.get('form_workflows');
         var options = {
             labels: labels,
             workflow: initialPageData.get('post_form_workflow'),
             workflow_fallback: initialPageData.get('post_form_workflow_fallback'),
         };
 
-        if (_.has(labels, FormWorkflow.Values.FORM)) {
+        if (_.has(labels, formWorkflow.FormWorkflow.Values.FORM)) {
             options.forms = initialPageData.get('linkable_forms');
             options.formLinks = initialPageData.get('form_links');
             options.formDatumsUrl = initialPageData.reverse('get_form_datums');
         }
 
-        $('#form-workflow').koApplyBindings(new FormWorkflow(options));
+        $('#form-workflow').koApplyBindings(new formWorkflow.FormWorkflow(options));
 
         // Settings > Advanced
         $('#auto-gps-capture').koApplyBindings({
@@ -135,8 +152,8 @@ hqDefine("app_manager/js/forms/form_view", function () {
             });
         }
 
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CUSTOM_INSTANCES')) {
-            var customInstances = hqImport('app_manager/js/forms/custom_instances').wrap({
+        if (toggles.toggleEnabled('CUSTOM_INSTANCES')) {
+            var customInstances = customInstancesModule.wrap({
                 customInstances: initialPageData.get('custom_instances'),
             });
             $('#custom-instances').koApplyBindings(customInstances);
