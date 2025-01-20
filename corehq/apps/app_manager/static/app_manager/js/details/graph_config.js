@@ -1,20 +1,31 @@
-/* global Clipboard */
-hqDefine('app_manager/js/details/graph_config', function () {
-    /**
-     * Create a view model that is bound to an "Edit graph" button. The ui property
-     * of this view model allows us to integrate the knockout elements with the
-     * jquery based part of the ui.
-     *
-     * @param moduleOptions
-     * A mapping of configuration options from the module. The following keys are required:
-     *      lang
-     *      langs
-     *      childCaseTypes
-     *      fixtures
-     * @param serverRepresentationOfGraph
-     * Object corresponding to a graph configuration saved in couch.
-     * @constructor
-     */
+/**
+ * Create a view model that is bound to an "Edit graph" button. The ui property
+ * of this view model allows us to integrate the knockout elements with the
+ * jquery based part of the ui.
+ *
+ * @param moduleOptions
+ * A mapping of configuration options from the module. The following keys are required:
+ *      lang
+ *      langs
+ *      childCaseTypes
+ *      fixtures
+ * @param serverRepresentationOfGraph
+ * Object corresponding to a graph configuration saved in couch.
+ * @constructor
+ */
+hqDefine("app_manager/js/details/graph_config", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/bootstrap3/main",
+    "clipboard/dist/clipboard",
+], function (
+    $,
+    ko,
+    _,
+    main,
+    Clipboard,
+) {
     var graphConfigurationUiElement = function (moduleOptions, serverRepresentationOfGraph) {
         var self = {};
         moduleOptions = moduleOptions || {};
@@ -61,7 +72,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
         };
 
         self.ui.koApplyBindings(self);
-        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
+        main.eventize(self);
 
         /**
          * Return an object representing this graph configuration that is suitable
