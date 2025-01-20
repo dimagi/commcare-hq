@@ -7,13 +7,6 @@ reviews:
   collapse_walkthrough: true
   changed_files_summary: false
   abort_on_close: true
-  path_instructions:
-    - path: "**/*.js"
-      instructions: |
-        Also review the JavaScript code against the following guide: https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/code-review.rst
-    - path: "https://github.com/dimagi/open-source/blob/master/docs/Writing_PRs.md"
-      instructions: |
-        Please follow this guide when evaluating the pull request and make sure that the PR meets all the requirements.
   auto_review:
     enabled: false
     auto_incremental_review: false
