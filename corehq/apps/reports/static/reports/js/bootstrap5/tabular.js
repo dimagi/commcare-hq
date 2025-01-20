@@ -50,7 +50,7 @@ function renderPage(slug, tableOptions) {
             });
         }
         if (tableConfig.bad_request_error_text) {
-            options.badRequestErrorText = "<span class='label label-important'>" + gettext("Sorry!") + "</span>" + tableConfig.bad_request_error_text;
+            options.badRequestErrorText = "<span class='badge text-bg-danger'>" + gettext("Sorry!") + "</span>" + tableConfig.bad_request_error_text;
         }
         if (tableConfig.left_col.is_fixed) {
             _.extend(options, {
