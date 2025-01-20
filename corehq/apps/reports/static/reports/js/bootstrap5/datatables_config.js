@@ -1,10 +1,12 @@
 import $ from 'jquery';
+
+import 'datatables.net/js/jquery.dataTables';
+import 'datatables.net-fixedcolumns/js/dataTables.fixedColumns';
+import 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5';
+
 import _ from 'underscore';
 import googleAnalytics from 'analytix/js/google';
 import {Tooltip} from 'bootstrap5';
-
-import 'datatables.bootstrap';
-import 'datatables.fixedColumns';
 
 
 var HQReportDataTables = function (options) {
