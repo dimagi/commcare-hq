@@ -1,7 +1,14 @@
-"use strict";
-hqDefine("app_manager/js/forms/copy_form_to_app", function () {
-    "use strict";
-
+hqDefine("app_manager/js/forms/copy_form_to_app", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+) {
     var module = function (moduleId, moduleName, isCurrentModule) {
         var self = {};
         self.id = moduleId;
@@ -49,7 +56,7 @@ hqDefine("app_manager/js/forms/copy_form_to_app", function () {
     $(function () {
         var $appModuleSelection = $("#app-module-selection");
         var viewModel = appsModulesModel(
-            hqImport("hqwebapp/js/initial_page_data").get("apps_modules")
+            initialPageData.get("apps_modules")
         );
         if ($appModuleSelection.length) {
             $appModuleSelection.koApplyBindings(viewModel);
