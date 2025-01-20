@@ -1,4 +1,20 @@
-hqDefine('app_manager/js/modules/report_module', function () {
+hqDefine("app_manager/js/modules/report_module", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "app_manager/js/details/graph_config",
+    "hqwebapp/js/bootstrap3/main",
+    "hqwebapp/js/initial_page_data",
+    "app_manager/js/app_manager",
+], function (
+    $,
+    ko,
+    _,
+    graphConfig,
+    main,
+    initialPageData,
+    appManager,
+) {
     var graphConfigModel = function (reportId, reportName, availableReportIds, reportCharts, graphConfigs,
         columnXpathTemplate, dataPathPlaceholders, lang, langs, changeSaveButton) {
         var self = {},
@@ -7,7 +23,6 @@ hqDefine('app_manager/js/modules/report_module', function () {
         graphConfigs = graphConfigs || {};
 
         self.graphUiElements = {};
-        var graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
         for (var i = 0; i < availableReportIds.length; i++) {
             var currentReportId = availableReportIds[i];
             self.graphUiElements[currentReportId] = {};
@@ -33,7 +48,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     }
                 });
 
-                var graphEl = graphConfigurationUiElement({
+                var graphEl = graphConfig.graphConfigurationUiElement({
                     childCaseTypes: [],
                     fixtures: [],
                     lang: lang,
@@ -336,7 +351,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
             return multimedia;
         };
 
-        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+        self.saveButton = main.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your report list module"),
             save: function () {
 
@@ -419,7 +434,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         };
 
         // flag instance ids with uuids outside this module
-        var uuidsByInstanceId = hqImport('hqwebapp/js/initial_page_data').get('uuids_by_instance_id'),
+        var uuidsByInstanceId = initialPageData.get('uuids_by_instance_id'),
             uuidsInThisModule = _.pluck(self.reports(), 'uuid'),
             instanceIdsElsewhere = _.chain(uuidsByInstanceId)
                 .pairs()
@@ -441,8 +456,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
     };
 
     $(function () {
-        var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
-        setupValidation(hqImport('hqwebapp/js/initial_page_data').reverse('validate_module_for_build'));
+        appManager.setupValidation(initialPageData.reverse('validate_module_for_build'));
     });
 
     return {
