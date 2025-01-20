@@ -134,9 +134,6 @@ class CaseManagementMap(BaseCaseMapReport):
 
     @property
     def rows(self):
-        from time import time
-
-        start = time()
         cases = []
         for row in self.es_results['hits'].get('hits', []):
             display = CaseDisplayES(
@@ -150,8 +147,6 @@ class CaseManagementMap(BaseCaseMapReport):
                 display.case_link,
                 display.case_name,
             ])
-        end = time() - start
-        print("Total time:", end)
         return cases
 
 
