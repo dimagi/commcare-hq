@@ -1,4 +1,3 @@
-
 hqDefine('app_manager/js/app_manager', [
     'jquery',
     'knockout',
@@ -14,6 +13,7 @@ hqDefine('app_manager/js/app_manager', [
     'app_manager/js/menu',
     'app_manager/js/preview_app',
     'app_manager/js/section_changer',
+    "hqwebapp/js/components/inline_edit",   // app, menu, and form names and comments all use these
 ], function (
     $,
     ko,
@@ -25,12 +25,12 @@ hqDefine('app_manager/js/app_manager', [
     google,
     kissmetrix,
     alertUser,
-    hqMain,
-    appManagerMenu,
+    main,
+    menu,
     previewApp,
     sectionChanger,
 ) {
-    var module = hqMain.eventize({});
+    var module = main.eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
@@ -102,7 +102,7 @@ hqDefine('app_manager/js/app_manager', [
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        hqMain.updateDOM(update);
+        main.updateDOM(update);
     };
 
     module.setupValidation = function (validationUrl) {
@@ -429,7 +429,7 @@ hqDefine('app_manager/js/app_manager', [
                     alertUser.alert_user(xhr.responseJSON.error, "danger");
                 },
             });
-            appManagerMenu.setPublishStatus(true);
+            menu.setPublishStatus(true);
         }
 
     };
@@ -443,7 +443,7 @@ hqDefine('app_manager/js/app_manager', [
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = hqMain.initSaveButtonForm($form, {
+                button = main.initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;
