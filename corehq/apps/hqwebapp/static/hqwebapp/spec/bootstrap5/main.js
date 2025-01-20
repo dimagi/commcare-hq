@@ -1,16 +1,8 @@
-hqDefine("hqwebapp/spec/bootstrap5/main", [
-    "mocha/js/main",
-], function (
-    hqMocha
-) {
-    hqRequire([
-        "hqwebapp/spec/assert_properties_spec",
-        "hqwebapp/spec/bootstrap3/inactivity_spec",
-        "hqwebapp/spec/urllib_spec",
-        "hqwebapp/spec/bootstrap5/widgets_spec",
-    ], function () {
-        hqMocha.run();
-    });
+import hqMocha from "mocha/js/main";
 
-    return 1;
-});
+import "hqwebapp/spec/assert_properties_spec";
+import "hqwebapp/spec/bootstrap5/inactivity_spec";
+import "hqwebapp/spec/urllib_spec";
+import "hqwebapp/spec/bootstrap5/widgets_spec";
+
+hqMocha.run();

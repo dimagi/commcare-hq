@@ -1,5 +1,9 @@
 'use strict';
-hqDefine('geospatial/js/utils', [], function () {
+hqDefine('geospatial/js/utils', [
+    'mapbox-gl',
+], function (
+    mapboxgl
+) {
 
     const DEFAULT_MARKER_OPACITY = 1.0;
     const MAX_URL_LENGTH = 4500;
@@ -26,7 +30,7 @@ hqDefine('geospatial/js/utils', [], function () {
 
     var createMapPopup = function (coordinates, popupDiv, openEventFunc, closeEventFunc) {
         popupDiv.setAttribute("data-bind", "template: 'select-case'");
-        const popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
+        const popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })
             .setLngLat(coordinates)
             .setDOMContent(popupDiv)
             .on('open', openEventFunc)

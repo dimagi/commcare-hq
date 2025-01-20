@@ -716,15 +716,15 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def _to_json(self, api_key, redacted=True):
         if redacted:
-            key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
-            full_key = api_key.key
+            key = f"{api_key.plaintext_key[0:4]}…{api_key.plaintext_key[-4:]}"
+            full_key = api_key.plaintext_key
         else:
             if self.allow_viewable_API_keys:
-                key = api_key.key
+                key = api_key.plaintext_key
             else:
                 copy_msg = _("Copy this in a secure place. It will not be shown again.")
-                key = f"{api_key.key} ({copy_msg})",
-            full_key = api_key.key
+                key = f"{api_key.plaintext_key} ({copy_msg})",
+            full_key = api_key.plaintext_key
 
         if api_key.expiration_date and api_key.expiration_date < datetime.now():
             status = "expired"
@@ -793,7 +793,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             'template': 'new-user-api-key-template',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         deleted_key = self.base_query.get(id=item_id)
         deleted_key.delete()
         return {

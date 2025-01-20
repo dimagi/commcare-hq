@@ -81,11 +81,17 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
     @freeze_time('2023-05-16T13:01:51Z')
     @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
-    @patch("corehq.apps.case_search.xpath_functions.comparison.get_timezone_for_domain",
-           return_value=pytz.timezone('America/Los_Angeles'))
-    def test_system_date_property_comparison(self, mock_get_timezone):
+    def test_system_datetime_property_comparison(self):
         parsed = parse_xpath("last_modified < datetime-add(now(), 'weeks', -2)")
         expected_filter = filters.date_range('modified_on', lt='2023-05-02T13:01:51+00:00')
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @freeze_time('2023-05-16T13:01:51Z')
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    def test_system_datetime_property_match(self):
+        parsed = parse_xpath("last_modified = now()")
+        expected_filter = filters.term('modified_on', '2023-05-16T13:01:51+00:00')
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 

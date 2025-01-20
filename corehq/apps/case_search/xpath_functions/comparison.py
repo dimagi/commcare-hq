@@ -126,6 +126,8 @@ def _create_system_datetime_query(domain, meta_property, op, value, node):
         raise CaseFilterError(str(e), serialize(node))
 
     if isinstance(date_or_datetime, datetime):
+        if op == EQ:
+            return filters.term(meta_property.es_field_name, value)
         range_kwargs = {RANGE_OP_MAPPING[op]: date_or_datetime}
     else:
         timezone = get_timezone_for_domain(domain)

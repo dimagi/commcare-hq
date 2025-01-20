@@ -137,6 +137,7 @@ POLYGON_COLLECTION_GEOJSON_SCHEMA = {
 # Case property to identify cases assigned through disbursement on the Case Management Page
 ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY = 'commcare_assigned_via_disbursement'
 ES_INDEX_TASK_HELPER_BASE_KEY = 'geo_cases_index_cases'
+ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY = 'geo_cases_reassignment_update_owners'
 
 DEFAULT_QUERY_LIMIT = 10_000
 DEFAULT_CHUNK_SIZE = 100

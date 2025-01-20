@@ -14,6 +14,7 @@ from soil import DownloadBase
 from soil.util import expose_blob_download
 
 from corehq.apps.celery import periodic_task, task
+from corehq.apps.data_analytics.tasks import datadog_report_user_stats
 from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES, FormES, filters
@@ -26,7 +27,6 @@ from corehq.const import ONE_DAY
 from corehq.form_processor.models import XFormInstance
 from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.files import TransientTempfile, safe_filename_header
-from corehq.util.metrics import metrics_gauge
 from corehq.util.view_utils import absolute_reverse
 
 from .analytics.esaccessors import (
@@ -78,45 +78,6 @@ def update_calculated_properties_for_domains(domains):
             )
 
     datadog_report_user_stats('commcare.active_mobile_workers.count', active_users_by_domain)
-
-
-@periodic_task(run_every=timedelta(minutes=1), queue='background_queue')
-def run_datadog_user_stats():
-    all_stats = all_domain_stats()
-
-    datadog_report_user_stats(
-        'commcare.mobile_workers.count',
-        commcare_users_by_domain=all_stats['commcare_users'],
-    )
-
-
-def datadog_report_user_stats(metric_name, commcare_users_by_domain):
-    commcare_users_by_domain = summarize_user_counts(commcare_users_by_domain, n=50)
-    for domain, user_count in commcare_users_by_domain.items():
-        metrics_gauge(metric_name, user_count, tags={
-            'domain': '_other' if domain == () else domain
-        }, multiprocess_mode='max')
-
-
-def summarize_user_counts(commcare_users_by_domain, n):
-    """
-    Reduce (domain => user_count) to n entries, with all other entries summed to a single one
-
-    This allows us to report individual domain data to datadog for the domains that matter
-    and report a single number that combines the users for all other domains.
-
-    :param commcare_users_by_domain: the source data
-    :param n: number of domains to reduce the map to
-    :return: (domain => user_count) of top domains
-             with a single entry under () for all other domains
-    """
-    user_counts = sorted((user_count, domain) for domain, user_count in commcare_users_by_domain.items())
-    if n:
-        top_domains, other_domains = user_counts[-n:], user_counts[:-n]
-    else:
-        top_domains, other_domains = [], user_counts[:]
-    other_entry = (sum(user_count for user_count, _ in other_domains), ())
-    return {domain: user_count for user_count, domain in top_domains + [other_entry]}
 
 
 def get_domains_to_update_es_filter():

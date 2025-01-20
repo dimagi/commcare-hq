@@ -60,7 +60,6 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 
 from corehq.const import USER_DATE_FORMAT
-from corehq import toggles
 
 
 @use_tempusdominus
@@ -85,14 +84,24 @@ def platform_overview(request, domain):
 
     context.update({
         'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
-        'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
-            EnterpriseReport.DOMAINS,
-            EnterpriseReport.WEB_USERS,
-            EnterpriseReport.MOBILE_USERS,
-            EnterpriseReport.FORM_SUBMISSIONS,
-            EnterpriseReport.ODATA_FEEDS,
-            EnterpriseReport.CASE_MANAGEMENT,
-        )],
+        'groups': [
+            {'name': _('Projects Overview'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.DOMAINS,
+                                     EnterpriseReport.FORM_SUBMISSIONS,
+                                     EnterpriseReport.SMS,)]},
+            {'name': _('User Management'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.WEB_USERS,
+                                     EnterpriseReport.MOBILE_USERS,
+                                     EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,)]},
+            {'name': _('Data Management & Export'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.ODATA_FEEDS,
+                                     EnterpriseReport.DATA_EXPORTS,
+                                     EnterpriseReport.CASE_MANAGEMENT,)]},
+        ],
+        'uses_date_range': [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS],
         'metric_type': 'Platform Overview',
     })
 
@@ -104,7 +113,6 @@ def platform_overview(request, domain):
 @always_allow_project_access
 @require_enterprise_admin
 @login_and_domain_required
-@toggles.ENTERPRISE_DASHBOARD_IMPROVEMENTS.required_decorator()
 def security_center(request, domain):
     if not has_privilege(request, privileges.PROJECT_ACCESS):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
@@ -121,8 +129,15 @@ def security_center(request, domain):
     )
 
     context.update({
-        'reports': [],
+        'groups': [
+            {'name': '',
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.API_USAGE,
+                                     EnterpriseReport.TWO_FACTOR_AUTH)]},
+        ],
         'metric_type': 'Security Center',
+        'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
+        'uses_date_range': [],
     })
 
     return render(request, "enterprise/project_dashboard.html", context)
@@ -132,8 +147,9 @@ def security_center(request, domain):
 @login_and_domain_required
 def enterprise_dashboard_total(request, domain, slug):
     kwargs = {}
-    if slug == EnterpriseReport.FORM_SUBMISSIONS:
-        kwargs = get_form_submission_report_kwargs(request)
+    date_range_slugs = [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS]
+    if slug in date_range_slugs:
+        kwargs = get_date_range_kwargs(request)
     try:
         report = EnterpriseReport.create(slug, request.account.id, request.couch_user, **kwargs)
     except TooMuchRequestedDataError as e:
@@ -180,8 +196,9 @@ def _get_export_filename(request, slug):
 @login_and_domain_required
 def enterprise_dashboard_email(request, domain, slug):
     kwargs = {}
-    if slug == EnterpriseReport.FORM_SUBMISSIONS:
-        kwargs = get_form_submission_report_kwargs(request)
+    date_range_slugs = [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS]
+    if slug in date_range_slugs:
+        kwargs = get_date_range_kwargs(request)
     try:
         report = EnterpriseReport.create(slug, request.account.id, request.couch_user, **kwargs)
     except TooMuchRequestedDataError as e:
@@ -197,7 +214,7 @@ def enterprise_dashboard_email(request, domain, slug):
     return JsonResponse({'message': message})
 
 
-def get_form_submission_report_kwargs(request):
+def get_date_range_kwargs(request):
     kwargs = {}
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')

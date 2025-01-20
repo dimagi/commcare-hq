@@ -2,8 +2,19 @@ hqDefine("reports/js/bootstrap5/tabular", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'reports/js/bootstrap5/config.dataTables.bootstrap',
+    'reports/js/bootstrap5/datatables_config',
     'reports/js/bootstrap5/standard_hq_report',
+    'reports/js/datepicker',
+
+    // Page-specific scripts
+    'data_interfaces/js/bootstrap5/case_management',
+    'data_interfaces/js/archive_forms',
+    'reports/js/inspect_data',
+    'reports/js/bootstrap5/project_health_dashboard',
+    'reports/js/bootstrap5/aggregate_user_status',
+    'reports/js/bootstrap5/application_status',
+    'reports/js/user_history',
+    'reports/js/case_activity',
 ], function (
     $,
     _,
@@ -68,6 +79,12 @@ hqDefine("reports/js/bootstrap5/tabular", [
 
     // Handle async reports
     $(document).on('ajaxSuccess', function (e, xhr, ajaxOptions, data) {
+        if (!data || !data.slug) {
+            // This file is imported by inddex/main, which then gets this event handler, which it doesn't need,
+            // and which errors sometimes (presumably because there are ajax requests happening that aren't the
+            // same as what this handler expects). Checking for data.slug is pretty innocuous and fixes the issue.
+            return;
+        }
         var jsOptions = initialPageData.get("js_options");
         if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
             return;
@@ -81,4 +98,8 @@ hqDefine("reports/js/bootstrap5/tabular", [
             renderPage(initialPageData.get("js_options").slug, initialPageData.get("report_table_js_options"));
         }
     });
+
+    return {
+        renderPage: renderPage,
+    };
 });

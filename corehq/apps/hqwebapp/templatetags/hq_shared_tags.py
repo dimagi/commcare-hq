@@ -246,19 +246,13 @@ def can_use_restore_as(request):
 
 @register.simple_tag
 def css_label_class():
-    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS, CSS_LABEL_CLASS_BOOTSTRAP5
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
-    if get_bootstrap_version() == BOOTSTRAP_5:
-        return CSS_LABEL_CLASS_BOOTSTRAP5
+    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS
     return CSS_LABEL_CLASS
 
 
 @register.simple_tag
 def css_field_class():
-    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_FIELD_CLASS_BOOTSTRAP5
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
-    if get_bootstrap_version() == BOOTSTRAP_5:
-        return CSS_FIELD_CLASS_BOOTSTRAP5
+    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS
     return CSS_FIELD_CLASS
 
 
@@ -759,9 +753,6 @@ class WebpackMainNode(RequireJSMainNode):
 
 @register.filter
 def webpack_bundles(entry_name):
-    if settings.UNIT_TESTING:
-        return []
-
     from corehq.apps.hqwebapp.utils.webpack import get_webpack_manifest, WebpackManifestNotFoundError
     from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5, BOOTSTRAP_3
     bootstrap_version = get_bootstrap_version()
@@ -774,6 +765,11 @@ def webpack_bundles(entry_name):
             manifest = get_webpack_manifest('manifest_b3.json')
             webpack_folder = 'webpack_b3'
     except WebpackManifestNotFoundError:
+        # If we're in tests, the manifest genuinely may not be available,
+        # as it's only generated for the test job that includes javascript.
+        if settings.UNIT_TESTING:
+            return []
+
         raise TemplateSyntaxError(
             f"No webpack manifest found!\n"
             f"'{entry_name}' will not load correctly.\n\n"

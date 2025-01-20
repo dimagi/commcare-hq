@@ -4,7 +4,8 @@ hqDefine("scheduling/js/broadcasts_list", [
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    "hqwebapp/js/components/pagination",
+    'hqwebapp/js/components/pagination',
+    'commcarehq',
 ], function (
     $,
     _,

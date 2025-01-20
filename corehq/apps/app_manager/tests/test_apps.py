@@ -414,3 +414,48 @@ class AppManagerTest(TestCase, TestXmlMixin):
             location_flag_enabled=True,
         )
         self.assertIsNone(build)
+
+    def test_dependencies_feature_added(self):
+        factory = AppFactory(build_version='2.40.0')
+        m0, f0 = factory.new_basic_module('register', 'case')
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        factory.app.profile = {'features': {'dependencies': ['coffee']}}
+        factory.app.save()
+        self.addCleanup(factory.app.delete)
+
+        with patch("corehq.apps.app_manager.models.metrics_counter") as metric_counter_mock:
+            factory.app.make_build()
+            metric_counter_mock.assert_called_with('commcare.app_build.dependencies_added')
+
+    def test_dependencies_feature_removed(self):
+        factory = AppFactory(build_version='2.40.0')
+        m0, f0 = factory.new_basic_module('register', 'case')
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        factory.app.profile = {'features': {'dependencies': ['coffee']}}
+        factory.app.save()
+        self.addCleanup(factory.app.delete)
+        build1 = factory.app.make_build()
+        build1.save()
+
+        factory.app.profile = {'features': {'dependencies': []}}
+        factory.app.save()
+
+        with patch("corehq.apps.app_manager.models.metrics_counter") as metric_counter_mock:
+            factory.app.make_build()
+            metric_counter_mock.assert_called_with('commcare.app_build.dependencies_removed')
+
+    def test_dependencies_feature_metrics_not_triggerd(self):
+        factory = AppFactory(build_version='2.40.0')
+        m0, f0 = factory.new_basic_module('register', 'case')
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        factory.app.profile = {'features': {'dependencies': []}}
+        factory.app.save()
+        self.addCleanup(factory.app.delete)
+        build1 = factory.app.make_build()
+        build1.save()
+
+        factory.app.save()
+
+        with patch("corehq.apps.app_manager.models.metrics_counter") as metric_counter_mock:
+            factory.app.make_build()
+            metric_counter_mock.assert_not_called()

@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-hqDefine("data_interfaces/js/bootstrap3/manage_case_groups", [
++hqDefine("data_interfaces/js/bootstrap5/manage_case_groups", [
+     'jquery',
+     'underscore',
+     'hqwebapp/js/initial_page_data',
+-    'hqwebapp/js/bootstrap3/crud_paginated_list_init',
++    'hqwebapp/js/bootstrap5/crud_paginated_list_init',
+     'commcarehq',
+ ], function (
+     $,

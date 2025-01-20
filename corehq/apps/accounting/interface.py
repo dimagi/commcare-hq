@@ -114,6 +114,7 @@ def invoice_cost_cell(invoice):
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/partials/add_new_item_button.html'
     exportable = True
+    is_admin_report = True
 
     item_name = None
     new_item_view = None

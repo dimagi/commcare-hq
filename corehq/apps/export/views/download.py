@@ -390,6 +390,13 @@ def poll_custom_export_download(request, domain):
     permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
     permissions.access_download_export_or_404()
     download_id = request.GET.get('download_id')
+
+    if not download_id:
+        return JsonResponse({
+            'error': _('Could not find download. Please refresh page and try again.'),
+            'retry': False,
+        })
+
     try:
         context = get_download_context(download_id)
     except TaskFailedError as e:
@@ -397,7 +404,8 @@ def poll_custom_export_download(request, domain):
             return JsonResponse({
                 'error': _(
                     'This file has more than 256 columns, which is not supported by xls. '
-                    'Please change the output type to csv or xlsx to export this file.')
+                    'Please change the output type to csv or xlsx to export this file.'),
+                'retry': False,
             })
         else:
             notify_exception(
