@@ -470,7 +470,6 @@ class EnterpriseCaseManagementReport(EnterpriseReport):
 
 class EnterpriseDataExportReport(EnterpriseReport):
     title = gettext_lazy('Data Exports')
-    total_description = gettext_lazy('# of Exports')
 
     @property
     def headers(self):
