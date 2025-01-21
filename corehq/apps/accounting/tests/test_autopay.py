@@ -4,7 +4,7 @@ from django.core import mail
 from unittest import mock
 from django_prbac.models import Role
 import stripe
-from stripe.stripe_object import StripeObject
+from stripe import StripeObject
 
 from dimagi.utils.dates import add_months_to_date
 
