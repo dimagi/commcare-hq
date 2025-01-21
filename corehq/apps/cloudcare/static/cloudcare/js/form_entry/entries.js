@@ -783,6 +783,8 @@ hqDefine("cloudcare/js/form_entry/entries", [
      */
     function DateTimeEntryBase(question, options) {
         var self = this;
+        self.templateType = 'datetime';
+        self.datetimeIconClass = "fcc fcc-fd-datetime";
 
         EntrySingleAnswer.call(self, question, options);
 
@@ -817,7 +819,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     DateTimeEntryBase.prototype.serverFormat = undefined;
 
     function DateEntry(question, options) {
-        this.templateType = 'date';
+        this.datetimeIconClass = "fa-solid fa-calendar-days";
         DateTimeEntryBase.call(this, question, options);
     }
     DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
@@ -830,7 +832,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     };
 
     function TimeEntry(question, options) {
-        this.templateType = 'time';
+        this.datetimeIconClass = "fa-regular fa-clock";
         if (question.style) {
             if (question.stylesContains(constants.TIME_12_HOUR)) {
                 this.clientFormat = 'h:mm A';

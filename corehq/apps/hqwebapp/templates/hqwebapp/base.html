@@ -159,7 +159,7 @@
     {% if request.use_tempusdominus and not use_js_bundler and use_bootstrap5 %}
       {% compress js %}
         <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
-        <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
+        <script src="{% static 'tempus-dominus/js/tempus-dominus.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
