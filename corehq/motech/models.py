@@ -165,8 +165,9 @@ class ConnectionSettings(models.Model):
     def last_token(self) -> Optional[dict]:
         if self.last_token_aes:
             if self.last_token_aes.startswith(f'${ALGO_AES_CBC}$'):
-                ciphertext = self.client_secret.split('$', 2)[2]
-                return b64_aes_cbc_decrypt(ciphertext)
+                ciphertext = self.last_token_aes.split('$', 2)[2]
+                plaintext = b64_aes_cbc_decrypt(ciphertext)
+                return json.loads(plaintext)
             else:
                 # This will be deleted after migration to cbc is done
                 plaintext = b64_aes_decrypt(self.last_token_aes)
@@ -180,7 +181,7 @@ class ConnectionSettings(models.Model):
         else:
             plaintext = json.dumps(token)
             ciphertext = b64_aes_cbc_encrypt(plaintext)
-            self.last_token_aes_cbc = f'${ALGO_AES_CBC}${ciphertext}'
+            self.last_token_aes = f'${ALGO_AES_CBC}${ciphertext}'
 
     @property
     def notify_addresses(self):
