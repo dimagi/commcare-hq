@@ -375,7 +375,7 @@ hqDefine('cloudcare/js/utils', [
         if (selectedDate) {
             options.viewDate = new hqTempusDominus.tempusDominus.DateTime(selectedDate);
         }
-        let picker = hqTempusDominus.createDatePicker($el.get(0), options);
+        let picker = hqTempusDominus.createDatePicker($el[0].parentNode, options);
 
         $el.attr("placeholder", dateFormat);
         $el.attr("pattern", "[0-9\\-\\/]+");
@@ -406,7 +406,7 @@ hqDefine('cloudcare/js/utils', [
         if (date.isValid()) {
             options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date);
         }
-        return hqTempusDominus.createTimePicker($el.get(0), options);
+        return hqTempusDominus.createTimePicker($el[0].parentNode, options);
     };
 
     var smallScreenIsEnabled = function () {
