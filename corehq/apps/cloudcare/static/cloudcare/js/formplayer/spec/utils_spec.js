@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/utils_spec", [
     "underscore",
@@ -20,7 +19,7 @@ hqDefine("cloudcare/js/formplayer/spec/utils_spec", [
     API,
     FakeFormplayer,
     UsersModels,
-    Utils
+    Utils,
 ) {
     describe('Utils', function () {
         describe('#displayOptions', function () {
