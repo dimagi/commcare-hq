@@ -47,10 +47,6 @@
 
     {% block stylesheets %}{% endblock stylesheets %}
 
-    {% block csrf_token_block %}
-      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
-    {% endblock %}
-
     {% compress css %}
       <link type="text/css"
             rel="stylesheet"
@@ -167,6 +163,11 @@
     {% endblock %}
   </head>
   <body>
+
+    {% block csrf_token_block %}
+      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    {% endblock %}
+
     {# for setting up page-wide backgrounds #}
     {% block background_content %}{% endblock %}
 

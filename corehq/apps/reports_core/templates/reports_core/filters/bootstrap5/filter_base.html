@@ -1,9 +1,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-<div class="form-group">  {# todo B5: css:form-group #}
+<div class="row mb-3">
   <fieldset id="{{ filter.css_id }}">
-    <label class="form-label dont-break-out col-md-3 col-lg-2 col-xl-2">{{ context_.label }}</label>
-    <div class="controls col-md-9 col-lg-8 col-xl-6">
+    <label class="field-label dont-break-out">{{ context_.label }}</label>
+    <div class="field-control">
       {% block filter-controls %}{% endblock %}
     </div>
   </fieldset>
