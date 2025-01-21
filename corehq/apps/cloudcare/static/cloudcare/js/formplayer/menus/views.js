@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
@@ -1365,15 +1364,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         tagName: "li",
         template: _.template($("#language-option-template").html() || ""),
         events: {
-            'click': 'onChangeLang',
             'keydown .lang': 'onKeyActionChangeLang',
         },
+        triggers: {
+            click: 'change:lang',
+        },
         initialize: function (options) {
+            this.isLangSelected = options.model.get('lang_code') === options.currentLang;
             this.languageOptionsEnabled = options.languageOptionsEnabled;
         },
         templateContext: function () {
             return {
                 languageOptionsEnabled: this.languageOptionsEnabled,
+                isLangSelected: this.isLangSelected,
             };
         },
         onKeyActionChangeLang: function (e) {
@@ -1381,9 +1384,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 this.onChangeLang(e);
             }
         },
-        onChangeLang: function (e) {
-            const lang = e.target.id;
-            $.publish('formplayer.change_lang', lang);
+        onChangeLang: function (view, e) {
+            if (!this.isLangSelected) {
+                const lang = e.target.id;
+                $.publish('formplayer.change_lang', lang);
+            }
         },
     });
 
@@ -1415,9 +1420,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         behaviors: {
             print: printBehavior,
         },
+        childViewEvents: {
+            'change:lang': 'render',
+        },
         childViewOptions: function () {
             return {
                 languageOptionsEnabled: Boolean(this.options.collection),
+                currentLang: UsersModels.getCurrentUser().displayOptions.language,
             };
         },
         templateContext: function () {
@@ -1818,5 +1827,4 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return new PersistentMenuView(options);
         },
     };
-})
-;
+});
