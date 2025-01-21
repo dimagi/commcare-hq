@@ -17,7 +17,7 @@ class DeviceRateLimiter:
     """
 
     def __init__(self):
-        # need to use raw redis connection to use srem and scard functions
+        # need to use raw redis connection to use sismember and scard functions
         self.client = get_redis_connection()
 
     def device_limit_per_user(self, domain):
@@ -78,7 +78,7 @@ class DeviceRateLimiter:
 
     def _device_has_been_used(self, redis_key, device_id):
         # check if device_id is member of the set for this key
-        return self.client.srem(redis_key, device_id)
+        return self.client.sismember(redis_key, device_id)
 
     def _device_count(self, redis_key):
         return self.client.scard(redis_key)
