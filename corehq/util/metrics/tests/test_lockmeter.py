@@ -142,6 +142,22 @@ class TestMeteredLock(TestCase):
             call.trace().__exit__(None, None, None),
         ])
 
+    def test_reacquire_untracked(self):
+        fake = FakeLock(timeout=-1)
+        lock = MeteredLock(fake, "test", track_unreleased=False)
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
+            lock.reacquire()
+        self.assertListEqual(tracer.mock_calls, [
+            call.trace("commcare.lock.reacquire", resource="key"),
+            call.trace().__enter__(),
+            call.trace().__enter__().set_tags({
+                "key": "key",
+                "name": "test",
+                "acquired": "true",
+            }),
+            call.trace().__exit__(None, None, None),
+        ])
+
     def test_release_untracked(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test", track_unreleased=False)
@@ -184,6 +200,9 @@ class FakeLock(object):
     def acquire(self, blocking=True):
         self.locked = True
         return blocking
+
+    def reacquire(self):
+        return True
 
     def release(self):
         self.locked = False
