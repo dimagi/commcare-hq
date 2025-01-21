@@ -94,37 +94,19 @@ def revert_api_settings(apps, schema_editor):
     )
 
     for connection in connect_settings_to_revert:
-        connection.password = _revert_reencrypted_password_with_ecb(connection)
-        connection.client_secret = _revert_reencrypted_client_secret_with_ecb(connection)
-        connection.last_token_aes = _revert_reencrypted_last_token_with_ecb(connection)
+        connection.password = _revert_reencrypted_value_to_ecb(connection.password)
+        connection.client_secret = _revert_reencrypted_value_to_ecb(connection.client_secret)
+        connection.last_token_aes = _revert_reencrypted_value_to_ecb(connection.last_token_aes)
         connection.save()
 
 
-def _revert_reencrypted_password_with_ecb(connection):
-    if connection.password == '':
+def _revert_reencrypted_value_to_ecb(value):
+    if value == '':
         return ''
-    elif connection.password.startswith(f'${ALGO_AES_CBC}$'):
-        return reencrypt_cbc_to_ecb_mode(connection.password, f'${ALGO_AES_CBC}$')
+    elif value.startswith(f'${ALGO_AES_CBC}$'):
+        return reencrypt_cbc_to_ecb_mode(value, f'${ALGO_AES_CBC}$')
     else:
-        return connection.password
-
-
-def _revert_reencrypted_client_secret_with_ecb(connection):
-    if connection.client_secret == '':
-        return ''
-    elif connection.client_secret.startswith(f'${ALGO_AES_CBC}$'):
-        return reencrypt_cbc_to_ecb_mode(connection.client_secret, f'${ALGO_AES_CBC}$')
-    else:
-        return connection.client_secret
-
-
-def _revert_reencrypted_last_token_with_ecb(connection):
-    if connection.last_token_aes == '':
-        return ''
-    elif connection.last_token_aes.startswith(f'${ALGO_AES_CBC}$'):
-        return reencrypt_cbc_to_ecb_mode(connection.last_token_aes, f'${ALGO_AES_CBC}$')
-    else:
-        return connection.last_token_aes
+        return value
 
 
 class Migration(migrations.Migration):
