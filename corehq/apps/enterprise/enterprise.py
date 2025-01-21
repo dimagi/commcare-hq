@@ -417,7 +417,7 @@ class EnterpriseODataReport(EnterpriseReport):
 
 class EnterpriseCaseManagementReport(EnterpriseReport):
     title = gettext_lazy('Case Management')
-    total_description = gettext_lazy('% using Case Management')
+    total_description = gettext_lazy('% of Domains using Case Management')
 
     @property
     def headers(self):
