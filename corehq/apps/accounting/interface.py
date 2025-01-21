@@ -487,6 +487,7 @@ class InvoiceInterfaceBase(GenericTabularReport):
     dispatcher = AccountingAdminInterfaceDispatcher
     exportable = True
     export_format_override = Format.CSV
+    is_admin_report = True
 
     def filter_by_subscription(self, subscription):
         self.subscription = subscription
@@ -1212,6 +1213,7 @@ class PaymentRecordInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_admin_report = True
 
     fields = [
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -1303,6 +1305,7 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_admin_report = True
 
     fields = [
         'corehq.apps.accounting.interface.DomainFilter',
@@ -1373,6 +1376,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_admin_report = True
 
     fields = [
         'corehq.apps.accounting.interface.NameFilter',
