@@ -26,56 +26,40 @@ def migrate_api_settings(apps, schema_editor):
     )
 
     for connection in connect_settings_to_update:
-        connection.password = _reencrypted_password_with_cbc(connection)
-        connection.client_secret = _reencrypted_client_secret_with_cbc(connection)
-        connection.last_token_aes = _reencrypted_last_token_with_cbc(connection)
+        connection.password = _reencrypt_or_encrypt_value_with_cbc(connection.password)
+        connection.client_secret = _reencrypt_or_encrypt_value_with_cbc(connection.password)
+        connection.last_token_aes = _reencrypt_value_with_cbc(connection.last_token_aes)
         connection.save()
 
 
-def _reencrypted_password_with_cbc(connection):
-    if connection.password == '':
+def _reencrypt_or_encrypt_value_with_cbc(value):
+    if value == '':
         return ''
-    if connection.password.startswith(f'${ALGO_AES_CBC}$'):
-        return connection.password
+    if value.startswith(f'${ALGO_AES_CBC}$'):
+        return value
 
-    if connection.password.startswith(f'${ALGO_AES}$'):
+    if value.startswith(f'${ALGO_AES}$'):
         try:
-            return reencrypt_ecb_to_cbc_mode(connection.password, f'${ALGO_AES}$')
+            return reencrypt_ecb_to_cbc_mode(value, f'${ALGO_AES}$')
         except AesEcbDecryptionError:
             return ''
     else:
-        ciphertext = b64_aes_cbc_encrypt(connection.password)
+        ciphertext = b64_aes_cbc_encrypt(value)
         return f'${ALGO_AES_CBC}${ciphertext}'
 
 
-def _reencrypted_client_secret_with_cbc(connection):
-    if connection.client_secret == '':
+def _reencrypt_value_with_cbc(value):
+    if value == '':
         return ''
-    if connection.client_secret.startswith(f'${ALGO_AES_CBC}$'):
-        return connection.client_secret
+    if value.startswith(f'${ALGO_AES_CBC}$'):
+        return value
 
-    if connection.client_secret.startswith(f'${ALGO_AES}$'):
-        try:
-            return reencrypt_ecb_to_cbc_mode(connection.client_secret, f'${ALGO_AES}$')
-        except AesEcbDecryptionError:
-            return ''
-    else:
-        ciphertext = b64_aes_cbc_encrypt(connection.client_secret)
-        return f'${ALGO_AES_CBC}${ciphertext}'
-
-
-def _reencrypted_last_token_with_cbc(connection):
-    if connection.last_token_aes == '':
-        return ''
-    if connection.last_token_aes.startswith(f'${ALGO_AES_CBC}$'):
-        return connection.last_token_aes
-
-    if connection.last_token_aes.startswith(f'${ALGO_AES}$'):
+    if value.startswith(f'${ALGO_AES}$'):
         prefix = f'${ALGO_AES}$'
     else:
         prefix = None
     try:
-        return reencrypt_ecb_to_cbc_mode(connection.last_token_aes, prefix)
+        return reencrypt_ecb_to_cbc_mode(value, prefix)
     except AesEcbDecryptionError:
         return ''
 
