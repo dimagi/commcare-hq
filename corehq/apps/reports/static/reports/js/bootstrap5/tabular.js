@@ -4,6 +4,17 @@ hqDefine("reports/js/bootstrap5/tabular", [
     'hqwebapp/js/initial_page_data',
     'reports/js/bootstrap5/datatables_config',
     'reports/js/bootstrap5/standard_hq_report',
+    'reports/js/datepicker',
+
+    // Page-specific scripts
+    'data_interfaces/js/bootstrap5/case_management',
+    'data_interfaces/js/archive_forms',
+    'reports/js/inspect_data',
+    'reports/js/bootstrap5/project_health_dashboard',
+    'reports/js/bootstrap5/aggregate_user_status',
+    'reports/js/bootstrap5/application_status',
+    'reports/js/user_history',
+    'reports/js/case_activity',
 ], function (
     $,
     _,

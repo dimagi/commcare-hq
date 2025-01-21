@@ -1,6 +1,7 @@
 "use strict";
 hqDefine("app_manager/js/add_ons", function () {
-    var sectionChanger = hqImport("app_manager/js/section_changer");
+    var sectionChanger = hqImport("app_manager/js/section_changer"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     function EditAddOns(addOns, layout, saveUrl) {
         var self = this;
@@ -36,9 +37,9 @@ hqDefine("app_manager/js/add_ons", function () {
         var $addOns = $("#add-ons");
         if ($addOns.length) {
             $addOns.koApplyBindings(new EditAddOns(
-                hqImport("hqwebapp/js/initial_page_data").get("add_ons"),
-                hqImport("hqwebapp/js/initial_page_data").get("add_ons_layout"),
-                hqImport("hqwebapp/js/initial_page_data").reverse("edit_add_ons")
+                initialPageData.get("add_ons"),
+                initialPageData.get("add_ons_layout"),
+                initialPageData.reverse("edit_add_ons")
             ));
             sectionChanger.attachToForm($addOns.find("form"));
         }

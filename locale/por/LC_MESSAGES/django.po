@@ -503,6 +503,7 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
@@ -1527,6 +1528,7 @@ msgstr "# de Extracto"
 #: corehq/apps/settings/views.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 #: corehq/apps/sms/views.py corehq/apps/sso/forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/ex-submodules/casexml/apps/case/views.py
@@ -3013,6 +3015,7 @@ msgstr ""
 #: corehq/apps/reports/views.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
+#: corehq/apps/users/templates/users/web_users.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
@@ -4049,6 +4052,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/linked_domain/const.py
 #: corehq/apps/reports/filters/forms.py corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/apps/translations/forms.py
 msgid "Application"
 msgstr "Aplicação"
@@ -14027,6 +14031,7 @@ msgstr "Nome do Caso"
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Owner"
 msgstr "Proprietário"
@@ -17146,6 +17151,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/pagination.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_pagination.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/pagination.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
 #: corehq/apps/registration/forms.py
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/drilldown_options.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/drilldown_options.html
@@ -19005,7 +19011,7 @@ msgstr ""
 msgid "# of Mobile Form Submissions"
 msgstr ""
 
-#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/enterprise/iterators.py
 msgid "Date ranges with more than {} days are not supported"
 msgstr ""
 
@@ -19033,11 +19039,11 @@ msgid ""
 "the date range to fetch a smaller amount of data"
 msgstr ""
 
-#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/enterprise/iterators.py
 msgid "Unnamed"
 msgstr ""
 
-#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/enterprise/iterators.py
 msgid "App not found"
 msgstr ""
 
@@ -19447,6 +19453,22 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 msgid "Enterprise Console"
 msgstr ""
+
+#: corehq/apps/enterprise/views.py
+#, fuzzy
+#| msgid "Project Reports"
+msgid "Projects Overview"
+msgstr "Relatórios do Projecto"
+
+#: corehq/apps/enterprise/views.py corehq/reports.py corehq/tabs/tabclasses.py
+msgid "User Management"
+msgstr "Manejo de Casos"
+
+#: corehq/apps/enterprise/views.py
+#, fuzzy
+#| msgid "Active Data Management"
+msgid "Data Management & Export"
+msgstr "Gestão de Dados Activos"
 
 #: corehq/apps/enterprise/views.py
 msgid "Security Center for {}"
@@ -22847,18 +22869,27 @@ msgid "Show All Groups"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
+msgid ""
+"\n"
+"        Case reassignment request in progress. Please be patient.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid "Mobile Worker Filters"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
-"                <strong>There was an issue retrieving mobile workers from "
-"the server.</strong>\n"
-"                If this problem continues, please\n"
-"                <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
-"an issue</a>.\n"
-"            "
+"          <strong\n"
+"            >There was an issue retrieving mobile workers from the\n"
+"            server.</strong\n"
+"          >\n"
+"          If this problem continues, please\n"
+"          <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an "
+"issue</a>.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
@@ -22868,9 +22899,8 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
-"                            Only users at this location will be shown on the "
-"map.\n"
-"                        "
+"                Only users at this location will be shown on the map.\n"
+"              "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
@@ -22892,22 +22922,24 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
-"    We couldn't match every case to a user with the current disbursement "
-"settings.\n"
-"    Please follow any of the below steps to rectify this.\n"
-"    <ul>\n"
-"      <li>Ensure that your settings are correct</li>\n"
-"      <li>Allocate more users to the area</li>\n"
-"      <li>Use filtered areas to reduce the number of cases such that the "
-"algorithm can ensure all cases are assigned.</li>\n"
-"    </ul>\n"
-"    "
+"        We couldn't match every case to a user with the current "
+"disbursement\n"
+"        settings. Please follow any of the below steps to rectify this.\n"
+"        <ul>\n"
+"          <li>Ensure that your settings are correct</li>\n"
+"          <li>Allocate more users to the area</li>\n"
+"          <li>\n"
+"            Use filtered areas to reduce the number of cases such that the\n"
+"            algorithm can ensure all cases are assigned.\n"
+"          </li>\n"
+"        </ul>\n"
+"      "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_management.html
 msgid ""
 "\n"
-"        Previous disbursement was cleared.\n"
+"      Previous disbursement was cleared.\n"
 "    "
 msgstr ""
 
@@ -23092,30 +23124,31 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/index_alert.html
 msgid ""
 "\n"
-"        Existing cases in the domain were not processed to be available in "
-"Microplanning reports\n"
-"        because there were too many to be processed. New or updated cases "
-"will still be available\n"
-"        for use for Microplanning. Please reach out to support if you need "
-"support with existing cases.\n"
-"      "
+"          Existing cases in the domain were not processed to be available "
+"in\n"
+"          Microplanning reports because there were too many to be processed. "
+"New\n"
+"          or updated cases will still be available for use for "
+"Microplanning.\n"
+"          Please reach out to support if you need support with existing "
+"cases.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/index_alert.html
 msgid ""
 "\n"
-"        Oops! Something went wrong while processing existing cases to be "
-"available in Microplanning\n"
-"        reports. Please reach out to support.\n"
-"      "
+"          Oops! Something went wrong while processing existing cases to be\n"
+"          available in Microplanning reports. Please reach out to support.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/index_alert.html
 msgid ""
 "\n"
-"      Existing cases in the domain are being processed to be available in\n"
-"      Microplanning reports. Please be patient.\n"
-"    "
+"        Existing cases in the domain are being processed to be available in\n"
+"        Microplanning reports. Please be patient.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
@@ -23735,10 +23768,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
 msgid "ADMINREPORT"
-msgstr ""
-
-#: corehq/apps/hqadmin/reports.py
-msgid "Global Device Logs Soft Asserts"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
@@ -25934,6 +25963,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/pagination.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_pagination.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/pagination.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
 msgid "Previous"
 msgstr "Anterior"
 
@@ -26145,6 +26175,30 @@ msgid ""
 "    "
 msgstr ""
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
+#, python-format
+msgid ""
+"\n"
+"                    Showing %(start)s to %(end)s of %(total)s entries\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
+#, python-format
+msgid ""
+"\n"
+"                      %(p)s per page\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
+#: corehq/apps/hqwebapp/views.py
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
+#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
+msgid "Loading..."
+msgstr ""
+
 #: corehq/apps/hqwebapp/templates/password_change.html
 msgid "Change User Password"
 msgstr ""
@@ -26234,12 +26288,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/views.py
 msgid "You have no items."
-msgstr ""
-
-#: corehq/apps/hqwebapp/views.py
-#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
-#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
-msgid "Loading..."
 msgstr ""
 
 #: corehq/apps/hqwebapp/views.py
@@ -28666,7 +28714,29 @@ msgid "Select a role"
 msgstr ""
 
 #: corehq/apps/registration/forms.py
+msgid "Send Invite"
+msgstr "Enviar Convite"
+
+#: corehq/apps/registration/forms.py
 msgid "Information for new Web User"
+msgstr "Informação para o novo Usuário da Web"
+
+#: corehq/apps/registration/forms.py
+#: corehq/apps/sso/templates/sso/partials/manage_sso_exempt_users.html
+#: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
+msgid "Add User"
+msgstr ""
+
+#: corehq/apps/registration/forms.py
+#, fuzzy
+#| msgid "Send Invite"
+msgid "Update Invite"
+msgstr "Enviar Convite"
+
+#: corehq/apps/registration/forms.py
+#, fuzzy
+#| msgid "Information for new Web User"
+msgid "Update invitation for new Web User"
 msgstr "Informação para o novo Usuário da Web"
 
 #: corehq/apps/registration/forms.py
@@ -28678,16 +28748,6 @@ msgstr ""
 #: corehq/apps/registration/forms.py corehq/apps/users/forms.py
 msgid "Tableau Configuration"
 msgstr ""
-
-#: corehq/apps/registration/forms.py
-#: corehq/apps/sso/templates/sso/partials/manage_sso_exempt_users.html
-#: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
-msgid "Add User"
-msgstr ""
-
-#: corehq/apps/registration/forms.py
-msgid "Send Invite"
-msgstr "Enviar Convite"
 
 #: corehq/apps/registration/forms.py
 msgid "Tableau Groups"
@@ -30443,18 +30503,6 @@ msgstr ""
 
 #: corehq/apps/reports/filters/devicelog.py
 msgid "Filter Logs by Tag"
-msgstr ""
-
-#: corehq/apps/reports/filters/devicelog.py
-msgid "Filter Logs by Domain"
-msgstr ""
-
-#: corehq/apps/reports/filters/devicelog.py
-msgid "Filter Logs by CommCareVersion"
-msgstr ""
-
-#: corehq/apps/reports/filters/devicelog.py
-msgid "Enter the CommCare Version you want e.g '2.28.1'"
 msgstr ""
 
 #: corehq/apps/reports/filters/devicelog.py
@@ -36806,6 +36854,7 @@ msgid "Column"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
 msgid "Color"
 msgstr ""
@@ -36816,6 +36865,19 @@ msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_hq_hx_action.py
 msgid "New Item"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+msgid "Big Cats"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+msgid "Date of Birth"
+msgstr ""
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Opened On"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
@@ -37073,6 +37135,22 @@ msgid ""
 "\n"
 "              Not Active\n"
 "            "
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+msgid "Simple Pagination: HTMX + Django Tables2"
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+msgid ""
+"\n"
+"        This button will trigger a refresh on the table once its HTMX "
+"request is complete:\n"
+"      "
+msgstr ""
+
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+msgid "Refresh Table After Request"
 msgstr ""
 
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
@@ -41499,7 +41577,10 @@ msgid "Undeliverable"
 msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html
-msgid "Resend Invitation"
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Resend"
 msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html
@@ -42102,10 +42183,6 @@ msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Open"
-msgstr ""
-
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Opened On"
 msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/views.py
@@ -45370,12 +45447,6 @@ msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Resend"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Cancel selected records"
 msgstr ""
 
@@ -45945,10 +46016,6 @@ msgstr ""
 msgid "Domain Stats"
 msgstr "Estatísticas do Web Domain"
 
-#: corehq/reports.py corehq/tabs/tabclasses.py
-msgid "User Management"
-msgstr "Manejo de Casos"
-
 #: corehq/reports.py
 msgid "Microplanning"
 msgstr ""
@@ -46071,6 +46138,12 @@ msgstr ""
 #: corehq/tabs/tabclasses.py
 msgid "Grant other CommCare HQ users access to your project."
 msgstr ""
+
+#: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Edit User Fields"
+msgid "Edit Web User Invite"
+msgstr "Editar Campos do Usuário"
 
 #: corehq/tabs/tabclasses.py
 msgid "View and manage user roles."

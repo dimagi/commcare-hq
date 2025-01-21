@@ -1,0 +1,13 @@
+language: en-US
+early_access: true
+reviews:
+  high_level_summary: false
+  review_status: false
+  poem: false
+  collapse_walkthrough: true
+  changed_files_summary: false
+  abort_on_close: true
+  auto_review:
+    enabled: false
+    auto_incremental_review: false
+    drafts: true

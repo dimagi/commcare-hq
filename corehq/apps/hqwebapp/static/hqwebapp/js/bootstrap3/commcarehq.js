@@ -5,7 +5,5 @@ ko.mapping = mapping;
 
 import 'bootstrap';
 
-import 'hqwebapp/js/django';
-
 import 'hqwebapp/js/bootstrap3/common';
 import 'hqwebapp/js/bootstrap3/base_main';

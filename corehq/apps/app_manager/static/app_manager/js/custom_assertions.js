@@ -1,6 +1,6 @@
 "use strict";
 hqDefine('app_manager/js/custom_assertions', function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var customAssertion = function (test, text) {
         var self = {};
@@ -57,7 +57,7 @@ hqDefine('app_manager/js/custom_assertions', function () {
     $(function () {
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('CUSTOM_ASSERTIONS')) {
             var assertions = customAssertions().wrap({
-                'customAssertions': initialPageData('custom_assertions'),
+                'customAssertions': initialPageData.get('custom_assertions'),
             });
             $('#custom-assertions').koApplyBindings(assertions);
         }
