@@ -2,9 +2,10 @@ from contextlib import contextmanager
 
 from django.test import TestCase
 
-from ..const import GPS_POINT_CASE_PROPERTY, ALGO_AES_CBC
+from ..const import GPS_POINT_CASE_PROPERTY
 from ..models import GeoConfig
 from ..utils import get_geo_case_property
+from corehq.motech.const import ALGO_AES_CBC
 
 
 class TestGeoConfig(TestCase):

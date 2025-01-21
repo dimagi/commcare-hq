@@ -5,13 +5,12 @@ from django.core.exceptions import ValidationError
 
 from corehq.apps.geospatial.const import (
     GPS_POINT_CASE_PROPERTY,
-    ALGO_AES,
-    ALGO_AES_CBC,
     TRAVEL_MODE_WALKING,
     TRAVEL_MODE_CYCLING,
     TRAVEL_MODE_DRIVING,
 )
 from corehq.apps.geospatial.routing_solvers import pulp
+from corehq.motech.const import ALGO_AES, ALGO_AES_CBC
 from corehq.motech.utils import (
     b64_aes_decrypt,
     b64_aes_cbc_decrypt,
