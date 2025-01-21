@@ -35,7 +35,10 @@ def migrate_api_settings(apps, schema_editor):
 def _reencrypted_password_with_cbc(connection):
     if connection.password == '':
         return ''
-    elif connection.password.startswith(f'${ALGO_AES}$'):
+    if connection.password.startswith(f'${ALGO_AES_CBC}$'):
+        return connection.password
+
+    if connection.password.startswith(f'${ALGO_AES}$'):
         try:
             return reencrypt_ecb_to_cbc_mode(connection.password, f'${ALGO_AES}$')
         except AesEcbDecryptionError:
@@ -48,7 +51,10 @@ def _reencrypted_password_with_cbc(connection):
 def _reencrypted_client_secret_with_cbc(connection):
     if connection.client_secret == '':
         return ''
-    elif connection.client_secret.startswith(f'${ALGO_AES}$'):
+    if connection.client_secret.startswith(f'${ALGO_AES_CBC}$'):
+        return connection.client_secret
+
+    if connection.client_secret.startswith(f'${ALGO_AES}$'):
         try:
             return reencrypt_ecb_to_cbc_mode(connection.client_secret, f'${ALGO_AES}$')
         except AesEcbDecryptionError:
@@ -61,7 +67,10 @@ def _reencrypted_client_secret_with_cbc(connection):
 def _reencrypted_last_token_with_cbc(connection):
     if connection.last_token_aes == '':
         return ''
-    elif connection.last_token_aes.startswith(f'${ALGO_AES}$'):
+    if connection.last_token_aes.startswith(f'${ALGO_AES_CBC}$'):
+        return connection.last_token_aes
+
+    if connection.last_token_aes.startswith(f'${ALGO_AES}$'):
         prefix = f'${ALGO_AES}$'
     else:
         prefix = None
