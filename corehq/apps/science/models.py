@@ -1,5 +1,9 @@
+import random
+
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
+from corehq.util.quickcache import quickcache
 
 
 class ExperimentEnabler(models.Model):
@@ -33,11 +37,10 @@ def is_enabled(campaign, path):
     :return: False if only the old code path should run, True if both
         old and new should run, and None if only new should run.
     """
-    value = (
-        ExperimentEnabler.objects
-        .filter(campaign=campaign, path=path)
-        .values("enabled_percent").first()
-    ).get("enabled_percent", -1)
+    enablers = _get_enablers(campaign)
+    value = enablers.get(path, -1)
+    if 0 < value < 100:
+        return random.randint(1, 100) <= value
     return None if value > 100 else (value > 0)
 
 
@@ -46,9 +49,23 @@ def should_record_metrics(campaign, path):
 
     :return: True if metrics should be recorded, otherwise False.
     """
-    value = (
-        ExperimentEnabler.objects
-        .filter(campaign=campaign, path=path)
-        .values("enabled_percent").first()
-    ).get("enabled_percent", -1)
+    enablers = _get_enablers(campaign)
+    value = enablers.get(path, -1)
     return -1 < value < 102
+
+
+HALF_HOUR = 30 * 60
+
+
+@quickcache(
+    vary_on=("campaign",),
+    timeout=0,  # cache in local memory only
+    memoize_timeout=HALF_HOUR,
+    session_function=lambda: '',  # share cache across all requests/tasks
+)
+def _get_enablers(campaign):
+    return dict(
+        ExperimentEnabler
+        .objects.filter(campaign=campaign)
+        .values_list("path", "enabled_percent")
+    )
