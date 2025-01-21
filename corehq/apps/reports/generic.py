@@ -65,14 +65,19 @@ def _sanitize_col(col):
     return col
 
 
+def get_filter_class(field, failhard=False):
+    if isinstance(field, str):
+        klass = to_function(field, failhard=failhard)
+    else:
+        klass = field
+    return klass
+
+
 def get_filter_classes(fields, request, domain, timezone, use_bootstrap5=False):
     filters = []
     fields = fields
     for field in fields or []:
-        if isinstance(field, str):
-            klass = to_function(field, failhard=True)
-        else:
-            klass = field
+        klass = get_filter_class(field, failhard=True)
         filters.append(
             klass(request, domain, timezone, use_bootstrap5=use_bootstrap5)
         )
