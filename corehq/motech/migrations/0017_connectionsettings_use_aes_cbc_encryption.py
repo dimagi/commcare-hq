@@ -80,7 +80,7 @@ def revert_api_settings(apps, schema_editor):
     for connection in connect_settings_to_revert:
         connection.password = _revert_reencrypted_value_to_ecb(connection.password)
         connection.client_secret = _revert_reencrypted_value_to_ecb(connection.client_secret)
-        connection.last_token_aes = _revert_reencrypted_value_to_ecb(connection.last_token_aes)
+        connection.last_token_aes = _revert_last_token_to_ecb(connection.last_token_aes)
         connection.save()
 
 
@@ -89,6 +89,17 @@ def _revert_reencrypted_value_to_ecb(value):
         return ''
     elif value.startswith(f'${ALGO_AES_CBC}$'):
         return reencrypt_cbc_to_ecb_mode(value, f'${ALGO_AES_CBC}$')
+    else:
+        return value
+
+
+def _revert_last_token_to_ecb(value):
+    if value == '':
+        return ''
+    elif value.startswith(f'${ALGO_AES_CBC}$'):
+        encrypted_val = reencrypt_cbc_to_ecb_mode(value, f'${ALGO_AES_CBC}$')
+        # last_token_aes is originally only stored without a prefix
+        return encrypted_val.split('$', 2)[2]
     else:
         return value
 
