@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/hq_events_spec", [
     "sinon/pkg/sinon",
@@ -7,7 +6,7 @@ hqDefine("cloudcare/js/formplayer/spec/hq_events_spec", [
 ], function (
     sinon,
     FormplayerFrontend,
-    hqEvents
+    hqEvents,
 ) {
     describe('HQ Events', function () {
         describe('Receiver', function () {
