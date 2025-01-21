@@ -8,7 +8,7 @@ import requests
 from unittest.mock import ANY, Mock, patch
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pp_json
-from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
+from corehq.motech.const import ALGO_AES_CBC, PASSWORD_PLACEHOLDER
 from corehq.motech.models import (
     ConnectionSettings,
     RequestLog,
@@ -166,12 +166,12 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
     def test_password_setter(self):
         cs = ConnectionSettings()
         cs.plaintext_password = 'secret'
-        self.assertTrue(cs.password.startswith(f'${ALGO_AES}$'))
+        self.assertTrue(cs.password.startswith(f'${ALGO_AES_CBC}$'))
 
     def test_client_secret_setter(self):
         cs = ConnectionSettings()
         cs.plaintext_client_secret = 'secret'
-        self.assertTrue(cs.client_secret.startswith(f'${ALGO_AES}$'))
+        self.assertTrue(cs.client_secret.startswith(f'${ALGO_AES_CBC}$'))
 
     def test_password_getter_decrypts(self):
         cs = ConnectionSettings()
