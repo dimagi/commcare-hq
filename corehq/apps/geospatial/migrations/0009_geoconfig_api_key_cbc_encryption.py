@@ -37,9 +37,8 @@ def reversion_api_keys(apps, schema_editor):
 
     for config in geo_configs_to_revert:
         if config.api_token.startswith(f'${ALGO_AES_CBC}$'):
-            original_token = reencrypt_cbc_to_ecb_mode(config.api_token,
+            config.api_token = reencrypt_cbc_to_ecb_mode(config.api_token,
                                                        f'${ALGO_AES_CBC}$')
-            config.api_token = f'${ALGO_AES}${original_token}'
         config.save()
 
 
