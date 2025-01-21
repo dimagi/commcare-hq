@@ -10,6 +10,7 @@ from corehq.apps.enterprise.iterators import (
     raise_after_max_elements,
     run_query_over_domains,
     run_query_over_domain,
+    EnterpriseFormReportConverter,
     MobileFormSubmissionsQueryFactory
 )
 
@@ -223,3 +224,27 @@ def map_received_on_to_inserted_at():
         return (id, result)
 
     return patch.object(ElasticForm, '_from_dict', new=from_dict)
+
+
+class TestEnterpriseFormReportConverter(SimpleTestCase):
+    def test_is_initial_query_is_true_when_no_progress_parameters(self):
+        result = EnterpriseFormReportConverter.is_initial_query({})
+        self.assertTrue(result)
+
+    def test_is_initial_query_is_false_if_domain_progress(self):
+        result = EnterpriseFormReportConverter.is_initial_query({
+            'domain': 'test-domain',
+        })
+        self.assertFalse(result)
+
+    def test_is_initial_query_is_false_if_inserted_at_progress(self):
+        result = EnterpriseFormReportConverter.is_initial_query({
+            'inserted_at': 'some-timestamp',
+        })
+        self.assertFalse(result)
+
+    def test_is_initial_query_is_false_if_id_progress(self):
+        result = EnterpriseFormReportConverter.is_initial_query({
+            'id': '1234',
+        })
+        self.assertFalse(result)
