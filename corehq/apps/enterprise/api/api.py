@@ -1,12 +1,14 @@
 from tastypie.api import Api
 
 from corehq.apps.enterprise.api.resources import (
+    CaseManagementResource,
     CommCareVersionComplianceResource,
     DomainResource,
     FormSubmissionResource,
     MobileUserResource,
     ODataFeedResource,
     WebUserResource,
+    DataExportReportResource,
     SMSResource,
     APIKeysResource,
     TwoFactorAuthResource,
@@ -18,6 +20,8 @@ v1_api.register(WebUserResource())
 v1_api.register(MobileUserResource())
 v1_api.register(FormSubmissionResource())
 v1_api.register(ODataFeedResource())
+v1_api.register(CaseManagementResource())
+v1_api.register(DataExportReportResource())
 v1_api.register(CommCareVersionComplianceResource())
 v1_api.register(SMSResource())
 v1_api.register(APIKeysResource())

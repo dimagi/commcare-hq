@@ -13,6 +13,12 @@ from memoized import memoized
 from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.export.dbaccessors import (
+    get_brief_exports,
+    is_standard,
+    is_daily_saved_export,
+    is_excel_integration
+)
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
@@ -26,6 +32,8 @@ from corehq.apps.enterprise.exceptions import (
 )
 from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.es import forms as form_es
+from corehq.apps.es import filters
+from corehq.apps.es.apps import AppES
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.reports.util import (
@@ -46,6 +54,8 @@ class EnterpriseReport(ABC):
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
+    CASE_MANAGEMENT = 'case_management'
+    DATA_EXPORTS = 'data_exports'
     COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
     SMS = 'sms'
     API_KEYS = 'api_keys'
@@ -92,6 +102,10 @@ class EnterpriseReport(ABC):
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
+        elif slug == cls.CASE_MANAGEMENT:
+            report = EnterpriseCaseManagementReport(account, couch_user, **kwargs)
+        elif slug == cls.DATA_EXPORTS:
+            report = EnterpriseDataExportReport(account, couch_user, **kwargs)
         elif slug == cls.COMMCARE_VERSION_COMPLIANCE:
             report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
         elif slug == cls.SMS:
@@ -146,11 +160,16 @@ class EnterpriseDomainReport(EnterpriseReport):
 
     title = gettext_lazy('Project Spaces')
 
+    def __init__(self, account, couch_user):
+        super().__init__(account, couch_user)
+        self.export_fetcher = ODataExportFetcher()
+
     @property
     def headers(self):
         headers = super().headers
         return [_('Created On [UTC]'), _('# of Apps'), _('# of Mobile Users'), _('# of Web Users'),
-                _('# of SMS (last 30 days)'), _('Last Form Submission [UTC]')] + headers
+                _('# of SMS (last 30 days)'), _('Last Form Submission [UTC]'),
+                _('OData Feeds Used'), _('OData Feeds Available')] + headers
 
     def rows_for_domain(self, domain_obj):
         return [[
@@ -160,6 +179,8 @@ class EnterpriseDomainReport(EnterpriseReport):
             get_web_user_count(domain_obj.name, include_inactive=False),
             sms_in_last(domain_obj.name, 30),
             self.format_date(get_last_form_submission_received(domain_obj.name)),
+            self.export_fetcher.get_export_count(domain_obj.name),
+            domain_obj.get_odata_feed_limit(),
         ] + self.domain_properties(domain_obj)]
 
     def total_for_domain(self, domain_obj):
@@ -363,58 +384,151 @@ class EnterpriseODataReport(EnterpriseReport):
 
     @property
     def headers(self):
-        headers = super().headers
-        return [_('Odata feeds used'), _('Odata feeds available'), _('Report Names'),
-            _('Number of rows')] + headers
+        return [_('Project Space'), _('Name'), _('Number of Rows')]
 
     def total_for_domain(self, domain_obj):
         return self.export_fetcher.get_export_count(domain_obj.name)
 
     def rows_for_domain(self, domain_obj):
         export_count = self.total_for_domain(domain_obj)
-        if export_count == 0 or export_count > self.MAXIMUM_EXPECTED_EXPORTS:
-            return [self._get_domain_summary_line(domain_obj, export_count)]
+        if export_count > self.MAXIMUM_EXPECTED_EXPORTS:
+            return [
+                [
+                    domain_obj.name,
+                    _('ERROR: Too many exports. Please contact customer service'),
+                    None,
+                ]
+            ]
 
         exports = self.export_fetcher.get_exports(domain_obj.name)
-
-        export_line_counts = self._get_export_line_counts(exports)
-
-        domain_summary_line = self._get_domain_summary_line(domain_obj, export_count, export_line_counts)
-        individual_export_rows = self._get_individual_export_rows(exports, export_line_counts)
-
-        rows = [domain_summary_line]
-        rows.extend(individual_export_rows)
-        return rows
-
-    def _get_export_line_counts(self, exports):
-        return {export._id: export.get_count() for export in exports}
-
-    def _get_domain_summary_line(self, domain_obj, export_count, export_line_counts={}):
-        if export_count > self.MAXIMUM_EXPECTED_EXPORTS:
-            total_line_count = _('ERROR: Too many exports. Please contact customer service')
-        else:
-            total_line_count = sum(export_line_counts.values())
-
-        return [
-            export_count,
-            domain_obj.get_odata_feed_limit(),
-            None,  # Report Name
-            total_line_count
-        ] + self.domain_properties(domain_obj)
-
-    def _get_individual_export_rows(self, exports, export_line_counts):
         rows = []
 
         for export in exports:
-            count = export_line_counts[export._id]
-            rows.append([
-                None,  # OData feeds used
-                None,  # OData feeds available
-                export.name,
-                count]
-            )
+            rows.append([domain_obj.name, export.name, export.get_count()])
 
         return rows
+
+
+class EnterpriseCaseManagementReport(EnterpriseReport):
+    title = gettext_lazy('Case Management')
+    total_description = gettext_lazy('% of Domains using Case Management')
+
+    @property
+    def headers(self):
+        return [_('Project Space'), _('# Applications'), _('# Surveys Only'), _('# Cases Only'), _('# Mixed')]
+
+    def rows_for_domain(self, domain_obj):
+        app_query = self.app_query(domain_obj.name)
+        app_count = app_query.count()
+
+        if app_count == 0:
+            survey_only_count = 0
+            case_only_count = 0
+            mixed_count = 0
+        else:
+            has_surveys = filters.nested('modules', filters.empty('modules.case_type.exact'))
+            has_cases = filters.nested('modules', filters.non_null('modules.case_type.exact'))
+
+            survey_only_count = app_query.filter(filters.AND(has_surveys, filters.NOT(has_cases))).count()
+            case_only_count = app_query.filter(filters.AND(has_cases, filters.NOT(has_surveys))).count()
+            mixed_count = app_query.filter(filters.AND(has_surveys, has_cases)).count()
+
+        return [[domain_obj.name, app_count, survey_only_count, case_only_count, mixed_count],]
+
+    @property
+    def total(self):
+        num_domains_with_apps = 0
+        num_domains_using_case_management = 0
+
+        for domain_obj in self.domains():
+            (app_count, uses_case_management) = self.total_for_domain(domain_obj)
+            if app_count > 0:
+                if uses_case_management:
+                    num_domains_using_case_management += 1
+                num_domains_with_apps += 1
+
+        return _format_percentage_for_enterprise_tile(num_domains_using_case_management, num_domains_with_apps)
+
+    def total_for_domain(self, domain_obj):
+        app_query = self.app_query(domain_obj.name)
+        app_count = app_query.count()
+        if app_count > 0:
+            has_cases = filters.nested('modules', filters.non_null('modules.case_type.exact'))
+            uses_case_management = app_query.filter(has_cases).count() > 0
+        else:
+            uses_case_management = False
+
+        return [app_count, uses_case_management]
+
+    def app_query(self, domain):
+        return (
+            AppES().domain(domain)
+            .filter(filters.term('doc_type', 'Application'))
+            .is_build(False)
+        )
+
+
+class EnterpriseDataExportReport(EnterpriseReport):
+    title = gettext_lazy('Data Exports')
+    total_description = gettext_lazy('# of Exports')
+
+    @property
+    def headers(self):
+        return [
+            _('Project Space'),
+            _('Name'),
+            _('Type'),
+            _('SubType'),
+            _('Created By'),
+        ]
+
+    def type_lookup(self, doc_type):
+        from corehq.apps.export.models.new import FormExportInstance, CaseExportInstance
+        if doc_type == FormExportInstance.__name__:
+            return _('Form')
+        elif doc_type == CaseExportInstance.__name__:
+            return _('Case')
+        else:
+            return _('Unknown')
+
+    SUBTYPE_MAP = {
+        is_standard: gettext_lazy('Standard'),
+        is_daily_saved_export: gettext_lazy('Daily Saved Export'),
+        is_excel_integration: gettext_lazy('Excel Integration'),
+    }
+
+    def subtype_lookup(self, export):
+        for (is_subtype_fn, subtype) in self.SUBTYPE_MAP.items():
+            if is_subtype_fn(export):
+                return subtype
+
+        return _('Unknown')
+
+    def user_lookup(self, owner_id):
+        if not owner_id:
+            return _('Unknown')
+
+        owner = WebUser.get_by_user_id(owner_id)
+        return owner.username
+
+    def get_exports(self, domain_obj):
+        valid_subtypes = self.SUBTYPE_MAP.values()
+        return [
+            export for export in get_brief_exports(domain_obj.name)
+            if self.subtype_lookup(export) in valid_subtypes
+        ]
+
+    def rows_for_domain(self, domain_obj):
+        return [[
+            domain_obj.name,
+            export['name'],
+            self.type_lookup(export['doc_type']),
+            self.subtype_lookup(export),
+            self.user_lookup(export['owner_id']),
+        ] for export in self.get_exports(domain_obj)]
+
+    def total_for_domain(self, domain_obj):
+        return len(self.get_exports(domain_obj))
 
 
 class EnterpriseCommCareVersionReport(EnterpriseReport):

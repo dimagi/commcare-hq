@@ -23,8 +23,10 @@ from memoized import memoized
 import codecs
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.analytics.tasks import record_event
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
+from corehq.apps.enterprise.metric_events import ENTERPRISE_REPORT_REQUEST
 from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.enterprise.tasks import clear_enterprise_permissions_cache_for_all_users
@@ -97,7 +99,9 @@ def platform_overview(request, domain):
                                      EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,)]},
             {'name': _('Data Management & Export'),
              'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
-                        for slug in (EnterpriseReport.ODATA_FEEDS,)]},
+                        for slug in (EnterpriseReport.ODATA_FEEDS,
+                                     EnterpriseReport.DATA_EXPORTS,
+                                     EnterpriseReport.CASE_MANAGEMENT,)]},
         ],
         'uses_date_range': [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS],
         'metric_type': 'Platform Overview',
@@ -209,6 +213,11 @@ def enterprise_dashboard_email(request, domain, slug):
         'title': report.title,
         'email': request.couch_user.username,
     })
+
+    record_event(ENTERPRISE_REPORT_REQUEST, request.couch_user, {
+        'report_type': slug
+    })
+
     return JsonResponse({'message': message})
 
 
