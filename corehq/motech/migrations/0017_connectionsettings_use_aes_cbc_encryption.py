@@ -5,6 +5,7 @@ from corehq.motech.const import ALGO_AES, ALGO_AES_CBC
 from corehq.util.django_migrations import skip_on_fresh_install
 from corehq.motech.utils import (
     reencrypt_ecb_to_cbc_mode,
+    reencrypt_cbc_to_ecb_mode,
     b64_aes_cbc_encrypt,
     AesEcbDecryptionError
 )
@@ -25,13 +26,13 @@ def migrate_api_settings(apps, schema_editor):
     )
 
     for connection in connect_settings_to_update:
-        connection.password = reencrypted_password_with_cbc(connection)
-        connection.client_secret = reencrypted_client_secret_with_cbc(connection)
-        connection.last_token_aes = reencrypted_last_token_with_cbc(connection)
+        connection.password = _reencrypted_password_with_cbc(connection)
+        connection.client_secret = _reencrypted_client_secret_with_cbc(connection)
+        connection.last_token_aes = _reencrypted_last_token_with_cbc(connection)
         connection.save()
 
 
-def reencrypted_password_with_cbc(connection):
+def _reencrypted_password_with_cbc(connection):
     if connection.password == '':
         return ''
     elif connection.password.startswith(f'${ALGO_AES}$'):
@@ -44,7 +45,7 @@ def reencrypted_password_with_cbc(connection):
         return f'${ALGO_AES_CBC}${ciphertext}'
 
 
-def reencrypted_client_secret_with_cbc(connection):
+def _reencrypted_client_secret_with_cbc(connection):
     if connection.client_secret == '':
         return ''
     elif connection.client_secret.startswith(f'${ALGO_AES}$'):
@@ -57,7 +58,7 @@ def reencrypted_client_secret_with_cbc(connection):
         return f'${ALGO_AES_CBC}${ciphertext}'
 
 
-def reencrypted_last_token_with_cbc(connection):
+def _reencrypted_last_token_with_cbc(connection):
     if connection.last_token_aes == '':
         return ''
     elif connection.last_token_aes.startswith(f'${ALGO_AES}$'):
@@ -70,6 +71,53 @@ def reencrypted_last_token_with_cbc(connection):
         return ''
 
 
+def revert_api_settings(apps, schema_editor):
+    ConnectionSettings = apps.get_model("motech", "ConnectionSettings")
+
+    connect_settings_to_revert = ConnectionSettings.objects.exclude(
+        password__startswith=f'${ALGO_AES}$',
+        client_secret__startswith=f'${ALGO_AES}$',
+        last_token_aes__startswith=f'${ALGO_AES}$',
+    ).exclude(
+        password='',
+        client_secret='',
+        last_token_aes=''
+    )
+
+    for connection in connect_settings_to_revert:
+        connection.password = _revert_reencrypted_password_with_ecb(connection)
+        connection.client_secret = _revert_reencrypted_client_secret_with_ecb(connection)
+        connection.last_token_aes = _revert_reencrypted_last_token_with_ecb(connection)
+        connection.save()
+
+
+def _revert_reencrypted_password_with_ecb(connection):
+    if connection.password == '':
+        return ''
+    elif connection.password.startswith(f'${ALGO_AES_CBC}$'):
+        return reencrypt_cbc_to_ecb_mode(connection.password, f'${ALGO_AES_CBC}$')
+    else:
+        return connection.password
+
+
+def _revert_reencrypted_client_secret_with_ecb(connection):
+    if connection.client_secret == '':
+        return ''
+    elif connection.client_secret.startswith(f'${ALGO_AES_CBC}$'):
+        return reencrypt_cbc_to_ecb_mode(connection.client_secret, f'${ALGO_AES_CBC}$')
+    else:
+        return connection.client_secret
+
+
+def _revert_reencrypted_last_token_with_ecb(connection):
+    if connection.last_token_aes == '':
+        return ''
+    elif connection.last_token_aes.startswith(f'${ALGO_AES_CBC}$'):
+        return reencrypt_cbc_to_ecb_mode(connection.last_token_aes, f'${ALGO_AES_CBC}$')
+    else:
+        return connection.last_token_aes
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -77,5 +125,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        RunPython(migrate_api_settings),
+        RunPython(migrate_api_settings, reverse_code=revert_api_settings),
     ]
