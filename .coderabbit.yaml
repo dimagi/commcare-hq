@@ -10,4 +10,4 @@ reviews:
   auto_review:
     enabled: false
     auto_incremental_review: false
-    drafts: true
+    drafts: false
