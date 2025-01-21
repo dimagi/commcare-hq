@@ -6,8 +6,8 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
     'repeaters/js/repeat_record_report_selects',
-    'reports/js/bootstrap3/base',
-    'reports/js/bootstrap3/tabular',
+    'reports/js/bootstrap5/base',
+    'reports/js/bootstrap5/tabular',
     'commcarehq',
 ], function (
     $,
