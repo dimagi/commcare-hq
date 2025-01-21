@@ -1,4 +1,6 @@
+import random
 import time
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -9,7 +11,7 @@ from corehq.util.metrics.tests.utils import capture_metrics
 from corehq.util.test_utils import capture_log_output
 
 from .. import Experiment
-from ..models import ExperimentEnabler
+from ..models import ExperimentEnabler, _get_enablers, is_enabled
 
 FUNC_PATH = f"{__name__}.make_func.<locals>.func"
 
@@ -22,6 +24,7 @@ def enabled(percent, path=FUNC_PATH, campaign='test'):
             path=path,
             enabled_percent=percent,
         )
+        _get_enablers.clear(campaign)
         yield
     return enable
 
@@ -169,6 +172,56 @@ class TestExperimentEnabled(TestCase):
         assert calls == [(1, 4)]
 
 
+@fixture
+def temporary_random_seed():
+    state = random.getstate()
+    random.seed(0)
+    yield
+    random.setstate(state)
+
+
+@temporary_random_seed
+class TestIsEnabled(TestCase):
+
+    @enabled(0)
+    def test_0_percent(self):
+        num = sum(is_enabled('test', FUNC_PATH) for x in range(300))
+        assert num == 0
+
+    @enabled(1)
+    def test_1_percent(self):
+        num = sum(is_enabled('test', FUNC_PATH) for x in range(300))
+        assert num == 2
+
+    @enabled(49)
+    def test_49_percent(self):
+        num = sum(is_enabled('test', FUNC_PATH) for x in range(300))
+        assert num == 145
+
+    @enabled(75)
+    def test_75_percent(self):
+        num = sum(is_enabled('test', FUNC_PATH) for x in range(300))
+        assert num == 219
+
+    @enabled(100)
+    def test_100_percent(self):
+        num = sum(is_enabled('test', FUNC_PATH) for x in range(300))
+        assert num == 300
+
+    @enabled(100)
+    def test_caching(self):
+        def fn(campaign):
+            nonlocal calls
+            calls += 1
+            return {}
+
+        calls = 0
+        with patch.object(_get_enablers.__closure__[0].cell_contents, "fn", fn):
+            for x in range(300):
+                is_enabled('test', FUNC_PATH)
+        assert calls == 1
+
+
 def make_func(error=None):
     @Experiment(
         campaign='test',
@@ -184,4 +237,5 @@ def make_func(error=None):
         return a + x
 
     calls = []
+    assert func.experiment.path == FUNC_PATH
     return func, calls
