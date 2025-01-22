@@ -952,7 +952,8 @@ class PrivacySecurityForm(forms.Form):
             excluded_fields.append('secure_sessions_timeout')
 
         for field in self.fields.values():
-            if isinstance(field, BooleanField):
+            has_custom_input = isinstance(field.widget, BootstrapCheckboxInput)
+            if isinstance(field, BooleanField) and not has_custom_input:
                 field.widget = BootstrapCheckboxInput()
 
         fields = [hqcrispy.CheckboxField(field_name)
