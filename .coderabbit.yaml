@@ -13,7 +13,7 @@ reviews:
     path_instructions:
         - path: "**/*.js"
           instructions: >-
-            - Review the JavaScript code against the Google JavaScript style guide and point out any mismatches
+            - Review the JavaScript code against the [Google JavaScript style guide](https://google.github.io/styleguide/jsguide.html) and point out any mismatches
             - Also follow [this guide](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/code-review.rst)
         - path: "**/*.py"
           instructions: >-
