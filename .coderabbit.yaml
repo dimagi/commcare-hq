@@ -18,7 +18,7 @@ reviews:
         - path: "**/*.py"
           instructions: >-
             - Review the code following best practises and standards
-    path_filters: ["**/*.js", "**/*.py", "**/*.md", "**/*.rst"]
+    path_filters: ["**/*.js", "**/*.py", "**/*.md", "**/*.rst", "**/*.html"]
     auto_review:
         enabled: false
         auto_incremental_review: false
