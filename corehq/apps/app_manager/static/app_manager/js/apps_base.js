@@ -3,6 +3,10 @@ hqDefine("app_manager/js/apps_base", [
     "hqwebapp/js/initial_page_data",
     "app_manager/js/preview_app",
     "hqwebapp/js/layout",
+    "jquery-ui/ui/widgets/sortable",     // TODO: test sortables, also only include for modules that use them?
+    "jquery-textchange/jquery.textchange",
+    "langcodes/js/langcodes",   // TODO: is this one necessary?
+    "commcarehq",
 ], function (
     $,
     initialPageData,
