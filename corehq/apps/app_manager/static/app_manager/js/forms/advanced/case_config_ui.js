@@ -22,6 +22,10 @@ hqDefine("app_manager/js/forms/advanced/case_config_ui", [
     visitSchedulerModel,
 ) {
     $(function () {
+        if (initialPageData.get('module_doc_type') !== "AdvancedModule") {
+            return;
+        };
+
         var DEFAULT_CONDITION = function (type) {
             return {
                 type: type,

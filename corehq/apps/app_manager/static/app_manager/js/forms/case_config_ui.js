@@ -24,6 +24,10 @@ hqDefine("app_manager/js/forms/case_config_ui", [
     google,
 ) {
     $(function () {
+        if (initialPageData.get('module_doc_type') === "AdvancedModule") {
+            return;
+        };
+
         const addOnsPrivileges = initialPageData.get('add_ons_privileges');
         var actionNames = ["open_case", "update_case", "close_case", "case_preload",
             // Usercase actions are managed in the User Properties tab.
