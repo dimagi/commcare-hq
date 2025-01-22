@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/entries", [
     'jquery',
     'knockout',
@@ -13,7 +12,8 @@ hqDefine("cloudcare/js/form_entry/entries", [
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/utils',
     'signature_pad/dist/signature_pad.umd.min',
-    'mapbox.js/dist/mapbox.uncompressed',
+    'leaflet',
+    'mapbox.js/dist/mapbox.standalone.uncompressed',    // provides L.mapbox
     'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
     'cloudcare/js/formplayer/utils/calendar-picker-translations',   // EthiopianDateEntry
     'select2/dist/js/select2.full.min',
@@ -31,7 +31,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     constants,
     formEntryUtils,
     SignaturePad,
-    L
+    L,
 ) {
     /**
      * The base Object for all entries. Each entry takes a question object
@@ -895,7 +895,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
                 var changedPicker = $(change.target)[0],
                     newDate = self._calendarInstance.parseDate(
                         self._calendarInstance.local.dateFormat,
-                        changedPicker.value
+                        changedPicker.value,
                     );
 
                 if (newDate && (self.answer() !== self._formatDateForAnswer(newDate.toJSDate()))) {
