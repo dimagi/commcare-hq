@@ -750,7 +750,7 @@ class Enterprise2FAReport(EnterpriseReport):
 
 class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     title = gettext_lazy('Application Version Compliance')
-    total_description = gettext_lazy('% of Applications Up to Date Across All Mobile Workers')
+    total_description = gettext_lazy('The statistic of this tile is not currently supported')
 
     def __init__(self, account, couch_user):
         super().__init__(account, couch_user)
