@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/router", [
     'underscore',
     'backbone',
@@ -29,7 +28,7 @@ hqDefine("cloudcare/js/formplayer/router", [
     sessionsController,
     usersController,
     usersModels,
-    AppRouter
+    AppRouter,
 ) {
     var params = {
         appRoutes: {
@@ -125,7 +124,7 @@ hqDefine("cloudcare/js/formplayer/router", [
             // entry if it is a form response.
             menuCollection = menusCollections(
                 response,
-                { parse: true }
+                { parse: true },
             );
             // Need to get URL fragment again since fetch might have updated it
             currentFragment = Backbone.history.getFragment();
@@ -225,7 +224,7 @@ hqDefine("cloudcare/js/formplayer/router", [
                 execute: true,
             },
             // force manual search in split screen case search for workflow compatibility
-            sidebarEnabled ? { forceManualSearch: true } : {}
+            sidebarEnabled ? { forceManualSearch: true } : {},
         );
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
