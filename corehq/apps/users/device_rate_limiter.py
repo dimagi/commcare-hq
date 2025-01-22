@@ -1,0 +1,93 @@
+from datetime import datetime, timezone
+
+from django.conf import settings
+from django_redis import get_redis_connection
+
+from corehq import toggles
+from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
+from corehq.util.metrics import metrics_counter, metrics_histogram
+
+DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try again in a minute."
+DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
+
+
+class DeviceRateLimiter:
+    """
+    Operates on a time window of 1 minute
+    """
+
+    def __init__(self):
+        # need to use raw redis connection to use sismember and scard functions
+        self.client = get_redis_connection()
+
+    def device_limit_per_user(self, domain):
+        if toggles.INCREASE_DEVICE_LIMIT_PER_USER.enabled(domain):
+            return settings.INCREASED_DEVICE_LIMIT_PER_USER
+        return settings.DEVICE_LIMIT_PER_USER
+
+    def rate_limit_device(self, domain, user_id, device_id):
+        """
+        Returns boolean representing if this user_id + device_id combo is rate limited or not
+        NOTE: calling this method will result in the device_id being added to the list of used device_ids
+        """
+        if not device_id or self._is_formplayer(device_id):
+            # do not track formplayer activity
+            return False
+
+        key = self._get_redis_key(user_id)
+
+        key_exists, device_exists, device_count = self._get_usage_for_device(key, device_id)
+
+        if not key_exists:
+            self._track_usage(key, device_id, is_key_new=True)
+            return False
+
+        if device_exists:
+            return False
+
+        if device_count < self.device_limit_per_user(domain):
+            self._track_usage(key, device_id)
+            # this intentionally doesn't capture users with 1 device, only those with multiple
+            metrics_histogram(
+                'commcare.devices_per_user.device_count',
+                device_count + 1,
+                bucket_tag='count',
+                buckets=[3, 5, 8, 10],
+                tags={'domain': domain, 'user_id': user_id},
+            )
+            return False
+
+        metrics_counter(
+            'commcare.devices_per_user.rate_limit_exceeded', tags={'domain': domain, 'user_id': user_id}
+        )
+        return settings.ENABLE_DEVICE_RATE_LIMITER
+
+    def _get_redis_key(self, user_id):
+        """
+        Create a redis key using the user_id and current time to the floored minute
+        This ensures a new key is used every minute
+        """
+        time = datetime.now(timezone.utc)
+        formatted_time = time.strftime('%Y-%m-%d_%H:%M')
+        key = f"device-limiter_{user_id}_{formatted_time}"
+        return key
+
+    def _track_usage(self, redis_key, device_id, is_key_new=False):
+        pipe = self.client.pipeline()
+        pipe.sadd(redis_key, device_id)
+        if is_key_new:
+            pipe.expire(redis_key, DEVICE_SET_CACHE_TIMEOUT)
+        pipe.execute()
+
+    def _get_usage_for_device(self, redis_key, device_id):
+        pipe = self.client.pipeline()
+        pipe.exists(redis_key)
+        pipe.sismember(redis_key, device_id)
+        pipe.scard(redis_key)
+        return pipe.execute()
+
+    def _is_formplayer(self, device_id):
+        return device_id.startswith("WebAppsLogin") or device_id == CLOUDCARE_DEVICE_ID
+
+
+device_rate_limiter = DeviceRateLimiter()
