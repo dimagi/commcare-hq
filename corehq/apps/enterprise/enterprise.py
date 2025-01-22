@@ -785,25 +785,29 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         app_name_by_id = {}
         app_ids = get_app_ids_in_domain(domain)
 
-        for row_data in self._get_user_builds(domain, app_ids):
-            version_in_use = str(row_data['build']['build_version'])
-            latest_version = str(row_data['latest_version'])
+        for build_and_latest_version in self.all_last_builds_with_latest_version(domain, app_ids):
+            version_in_use = str(build_and_latest_version['build']['build_version'])
+            latest_version = str(build_and_latest_version['latest_version'])
             if is_out_of_date(version_in_use, latest_version):
-                app_id = row_data['build']['app_id']
+                app_id = build_and_latest_version['build']['app_id']
                 if app_id not in app_name_by_id:
                     app_name_by_id[app_id] = Application.get_db().get(app_id).get('name')
                 rows.append([
-                    row_data['username'],
+                    build_and_latest_version['username'],
                     domain,
                     app_name_by_id[app_id],
                     latest_version,
                     version_in_use,
-                    self.format_date(DateTimeProperty.deserialize(row_data['build']['build_version_date'])),
+                    self.format_date(
+                        DateTimeProperty.deserialize(
+                            build_and_latest_version['build']['build_version_date']
+                        )
+                    ),
                 ])
 
         return rows
 
-    def _get_user_builds(self, domain, app_ids):
+    def all_last_builds_with_latest_version(self, domain, app_ids):
         user_query = (UserES()
             .domain(domain)
             .mobile_users()
