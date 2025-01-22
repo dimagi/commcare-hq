@@ -1761,7 +1761,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             });
             persistentMenuContainer.hover(
                 function () {
-                    if (!self.menuExpanded) {
+                    if (!self.menuExpanded && !arrowToggle.is(':hover')) {
                         self.showMenu();
                     }
                 },
