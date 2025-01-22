@@ -58,12 +58,11 @@ class WebUserResourceSpec:
 
     @property
     def profiles_by_name(self):
-        if self._profiles_by_name_cache:
-            return self._profiles_by_name_cache
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        self._profiles_by_name_cache = (
-            CustomDataFieldsDefinition.get_profiles_by_name(self.domain, UserFieldsView.field_type)
-        )
+        if not self._profiles_by_name_cache:
+            from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+            self._profiles_by_name_cache = (
+                CustomDataFieldsDefinition.get_profiles_by_name(self.domain, UserFieldsView.field_type)
+            )
         return self._profiles_by_name_cache
 
     @email.validator
