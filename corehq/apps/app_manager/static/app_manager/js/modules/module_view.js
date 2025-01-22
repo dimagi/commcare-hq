@@ -8,9 +8,13 @@ hqDefine("app_manager/js/modules/module_view", [
     "app_manager/js/details/screen_config",
     "app_manager/js/modules/shadow_module_settings",
     "hqwebapp/js/toggles",
-    "app_manager/js/visit_scheduler",
+    "app_manager/js/visit_scheduler",   // advanced modules only
     "app_manager/js/custom_assertions",
     "select2/dist/js/select2.full.min",
+    "app_manager/js/nav_menu_media",
+    "app_manager/js/modules/case_list_setting",
+    "hqwebapp/js/key-value-mapping",
+    //{% include "app_manager/partials/xpathValidator.html" %}  // TODO: xpathValidator
 ], function (
     $,
     ko,
