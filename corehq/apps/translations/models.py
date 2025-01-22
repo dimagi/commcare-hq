@@ -5,7 +5,7 @@ from django.db import models
 from django.urls import reverse
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
-from corehq.motech.utils import b64_aes_decrypt
+from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 from corehq.util.quickcache import quickcache
 
 
@@ -167,6 +167,10 @@ class TransifexOrganization(models.Model):
     @property
     def plaintext_api_token(self):
         return b64_aes_decrypt(self.api_token)
+
+    @plaintext_api_token.setter
+    def plaintext_api_token(self, plaintext):
+        self.api_token = b64_aes_encrypt(plaintext)
 
 
 class TransifexProject(models.Model):
