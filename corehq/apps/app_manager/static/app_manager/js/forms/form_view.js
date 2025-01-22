@@ -14,6 +14,7 @@ hqDefine("app_manager/js/forms/form_view", [
     "app_manager/js/forms/case_config_ui",          // non-advanced modules only
     "app_manager/js/forms/advanced/case_config_ui", // advanced modules only
     // {% include "app_manager/partials/xpathValidator.html" %}   // TODO: deal with xpathValidator
+    "app_manager/js/custom_assertions",
 ], function (
     $,
     ko,

@@ -15,6 +15,7 @@ hqDefine("app_manager/js/settings/commcare_settings", [
     "app_manager/js/add_ons",
     "app_manager/js/settings/translations", // TODO: keep models in here and move handlers into this entry point?  Don't love that this has side effects. Same goes for app_manager/js/add_ons and possibly others
     "app_manager/js/supported_languages",
+    "app_manager/js/custom_assertions",
     "commcarehq",
 ], function (
     $,
