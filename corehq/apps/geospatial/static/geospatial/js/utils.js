@@ -1,6 +1,11 @@
-/* globals mapboxgl */
 'use strict';
-hqDefine('geospatial/js/utils', [], function () {
+hqDefine('geospatial/js/utils', [
+    'mapbox-gl',
+    'underscore',
+], function (
+    mapboxgl,
+    _
+) {
 
     const DEFAULT_MARKER_OPACITY = 1.0;
     const MAX_URL_LENGTH = 4500;
@@ -29,9 +34,13 @@ hqDefine('geospatial/js/utils', [], function () {
         popupDiv.setAttribute("data-bind", "template: 'select-case'");
         const popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })
             .setLngLat(coordinates)
-            .setDOMContent(popupDiv)
-            .on('open', openEventFunc)
-            .on('close', closeEventFunc);
+            .setDOMContent(popupDiv);
+        if (openEventFunc) {
+            popup.on('open', openEventFunc);
+        }
+        if (closeEventFunc) {
+            popup.on('close', closeEventFunc);
+        }
         return popup;
     };
 

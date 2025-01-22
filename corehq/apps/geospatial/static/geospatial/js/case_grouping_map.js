@@ -1,4 +1,4 @@
-hqDefine("geospatial/js/case_grouping_map",[
+hqDefine("geospatial/js/case_grouping_map", [
     "jquery",
     "knockout",
     'underscore',
@@ -6,6 +6,10 @@ hqDefine("geospatial/js/case_grouping_map",[
     'hqwebapp/js/bootstrap3/alert_user',
     'geospatial/js/models',
     'geospatial/js/utils',
+    'mapbox-gl/dist/mapbox-gl',
+    'reports/js/bootstrap3/base',
+    'hqwebapp/js/select2_knockout_bindings.ko',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -13,7 +17,8 @@ hqDefine("geospatial/js/case_grouping_map",[
     initialPageData,
     alertUser,
     models,
-    utils
+    utils,
+    mapboxgl
 ) {
 
     const MAPBOX_LAYER_VISIBILITY = {
@@ -183,7 +188,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         };
 
         _.each(caseList, function (caseWithGPS) {
-            const coordinates = caseWithGPS.itemData.coordinates;
+            const coordinates = caseWithGPS.coordinates;
             if (coordinates && coordinates.lat && coordinates.lng) {
                 caseLocationsGeoJson["features"].push(
                     {
@@ -280,7 +285,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             const caseGroupID = caseItem.groupId;
             if (caseGroupsInstance.groupIDInVisibleGroupIds(caseGroupID)) {
                 const color = groupColorByID[caseGroupID];
-                const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
+                const marker = new mapboxgl.Marker({ color: color, draggable: false });
                 marker.setLngLat([coordinates.lng, coordinates.lat]);
 
                 // Add the marker to the map

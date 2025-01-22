@@ -781,6 +781,8 @@ AUDIT_ADMIN_VIEWS = False
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
+    'GOOGLE_ANALYTICS_SECRET': '',
+    'GOOGLE_ANALYTICS_MEASUREMENT_ID': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',

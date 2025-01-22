@@ -12,5 +12,5 @@
 -    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // modal binding
 +    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // modal binding
      'hqwebapp/js/components/pagination',
+     'commcarehq',
  ], function (
-     $,

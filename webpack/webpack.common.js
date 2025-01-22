@@ -7,6 +7,8 @@ const hqPlugins = require('./plugins');
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
+    "datatables.bootstrap": "datatables.net-bs5",
+    "datatables.fixedColumns": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
     "jquery": require.resolve('jquery'),
     "langcodes/js/langcodes": path.resolve("submodules/langcodes/static/langcodes/js/langcodes"),
 
@@ -34,6 +36,11 @@ module.exports = {
             {
                 test: /\.js$/,
                 loader: 'babel-loader',
+                exclude: /node_modules/,
+            },
+            {
+                test: /\.png/,
+                type: 'asset/resource',
             },
 
             // this rule ensures that hqDefine is renamed to define AMD module
@@ -41,6 +48,7 @@ module.exports = {
             {
                 test: /\.js$/,
                 loader: 'string-replace-loader',
+                exclude: /node_modules/,
                 options: {
                     search: /\bhqDefine\b/g,
                     replace: 'define',
@@ -69,6 +77,17 @@ module.exports = {
             },
 
             {
+                test: /mapbox\.js\/dist\/mapbox/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "L",
+                    },
+                },
+            },
+            {
                 test: /nvd3\/nv\.d3\.min/,
                 loader: "exports-loader",
                 options: {
@@ -80,7 +99,7 @@ module.exports = {
                 },
             },
             {
-                test: /sentry\.browser/,
+                test: /sentry\/js\/sentry/,
                 loader: "exports-loader",
                 options: {
                     type: "commonjs",
@@ -110,5 +129,11 @@ module.exports = {
 
     resolve: {
         alias: utils.getAllAliases(aliases),
+    },
+
+    snapshot: {
+        managedPaths: [
+            /^node_modules\//,
+        ],
     },
 };

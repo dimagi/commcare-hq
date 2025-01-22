@@ -132,7 +132,7 @@ def update_domain_metrics_for_domains(domains):
     all_stats = all_domain_stats()
     active_users_by_domain = {}
     for domain in domains:
-        metrics, __ = _update_or_create_domain_metrics(domain, all_stats)
+        metrics = _update_or_create_domain_metrics(domain, all_stats)
         if metrics:
             active_users_by_domain[domain] = metrics.active_mobile_workers
 
@@ -143,7 +143,7 @@ def _update_or_create_domain_metrics(domain, all_stats):
     try:
         domain_obj = Domain.get_by_name(domain)
         metrics_dict = domain_metrics(domain_obj, domain_obj['_id'], all_stats)
-        return DomainMetrics.objects.update_or_create(
+        metrics, __ = DomainMetrics.objects.update_or_create(
             defaults=metrics_dict,
             domain=domain_obj.name,
         )
@@ -151,6 +151,9 @@ def _update_or_create_domain_metrics(domain, all_stats):
         notify_exception(
             None, message='Failed to create or update domain metrics for {domain}: {}'.format(e, domain=domain)
         )
+        metrics = None
+
+    return metrics
 
 
 def get_domains_to_update():
