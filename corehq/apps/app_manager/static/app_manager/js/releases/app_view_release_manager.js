@@ -9,6 +9,11 @@ hqDefine("app_manager/js/releases/app_view_release_manager", [
     "app_manager/js/preview_app",
     "analytix/js/kissmetrix",
     "analytix/js/google",
+    "app_manager/js/apps_base",
+    "app_manager/js/releases/update_prompt",
+    "hqwebapp/js/bootstrap3/widgets",
+    "app_manager/js/managed_app",
+    "commcarehq",
 ], function (
     $,
     ko,
