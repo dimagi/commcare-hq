@@ -311,7 +311,9 @@ def process_repeaters():
             continue
         if rate_limit_repeater(domain, repeater_id):
             continue
-        lock_and_process_repeater_id(repeater_id)
+        lock = RepeaterLock(repeater_id)
+        if lock.acquire():
+            process_repeater(lock.repeater, lock.token)
 
 
 def iter_ready_repeater_ids():
@@ -339,36 +341,6 @@ def iter_ready_repeater_ids():
                 del repeater_ids_by_domain[domain]
                 continue
             yield domain, repeater_id
-
-
-def lock_and_process_repeater_id(repeater_id):
-    lock = get_repeater_lock(repeater_id)
-    # Generate a lock token using `uuid1()` the same way that
-    # `redis.lock.Lock` does. The `Lock` class uses the token to
-    # determine ownership, so that one process can acquire a
-    # lock and a different process can release it. This lock
-    # will be released by the `update_repeater()` task.
-    lock_token = uuid.uuid1().hex
-    if lock.acquire(blocking=False, token=lock_token):
-        repeater = Repeater.objects.get(id=repeater_id)
-        process_repeater(repeater, lock_token)
-
-
-def relock_and_process_repeater(repeater, lock_token):
-    lock = get_repeater_lock(repeater.repeater_id, lock_token)
-    # Reset the lock timeout
-    # https://github.com/redis/redis-py/blob/ff120df78ccd85d6e2e2938ee02d1eb831676724/redis/lock.py#L235
-    lock.reacquire()
-    process_repeater(repeater, lock_token)
-
-
-def get_repeater_lock(repeater_id, lock_token=None):
-    name = f'process_repeater_{repeater_id}'
-    half_an_hour = 30 * 60
-    lock = get_redis_lock(key=name, name=name, timeout=half_an_hour)
-    if lock_token:
-        lock.local.token = lock_token
-    return lock
 
 
 def get_repeater_ids_by_domain():
@@ -521,11 +493,63 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
             )
             repeater.set_backoff()
     finally:
+        lock = RepeaterLock(repeater, lock_token)
         if more:
-            relock_and_process_repeater(repeater, lock_token)
+            lock.reacquire()
+            process_repeater(repeater, lock_token)
         else:
-            lock = get_repeater_lock(repeater_id, lock_token)
             lock.release()
+
+
+class RepeaterLock:
+    """
+    A utility class for encapsulating lock-related logic for a repeater.
+    """
+
+    timeout = 30 * 60  # Half an hour
+
+    def __init__(self, repeater, lock_token=None):
+        if isinstance(repeater, Repeater):
+            self.repeater_id = repeater.repeater_id
+            self._repeater = repeater
+        else:
+            self.repeater_id = repeater
+            self._repeater = None
+        self.token = lock_token
+        self._lock = self._get_lock()
+
+    @property
+    def repeater(self):
+        if self._repeater is None:
+            self._repeater = Repeater.objects.get(id=self.repeater_id)
+        return self._repeater
+
+    def acquire(self):
+        assert self.token is None, 'You have already acquired this lock'
+        # Generate a lock token using `uuid1()` the same way that
+        # `redis.lock.Lock` does. The `Lock` class uses the token to
+        # determine ownership, so that one process can acquire a
+        # lock and a different process can release it. This lock
+        # will be released by the `update_repeater()` task.
+        self.token = uuid.uuid1().hex
+        return self._lock.acquire(blocking=False, token=self.token)
+
+    def reacquire(self):
+        assert self.token, 'Missing lock token'
+        # Reset the lock timeout
+        # https://github.com/redis/redis-py/blob/ff120df78ccd85d6e2e2938ee02d1eb831676724/redis/lock.py#L235
+        return self._lock.reacquire()
+
+    def release(self):
+        assert self.token, 'Missing lock token'
+        return self._lock.release()
+
+    def _get_lock(self):
+        name = f'process_repeater_{self.repeater_id}'
+        lock = get_redis_lock(key=name, name=name, timeout=self.timeout)
+        if self.token:
+            lock.local.token = self.token
+        return lock
 
 
 metrics_gauge_task(

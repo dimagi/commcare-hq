@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
+import pytest
 from freezegun import freeze_time
 
 from corehq.motech.models import ConnectionSettings, RequestLog
@@ -12,6 +13,7 @@ from corehq.util.test_utils import flag_enabled
 from ..const import State
 from ..models import FormRepeater, Repeater, RepeatRecord
 from ..tasks import (
+    RepeaterLock,
     _get_wait_duration_seconds,
     _process_repeat_record,
     delete_old_request_logs,
@@ -290,7 +292,7 @@ def test_get_repeater_ids_by_domain():
 @flag_enabled('PROCESS_REPEATERS')
 class TestUpdateRepeater(SimpleTestCase):
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_resets_backoff_on_success(self, mock_get_repeater, __):
         repeat_record_states = [State.Success, State.Fail, State.Empty, None]
@@ -301,7 +303,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_resets_backoff_on_invalid(self, mock_get_repeater, __):
         repeat_record_states = [State.InvalidPayload, State.Fail, State.Empty, None]
@@ -312,7 +314,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_sets_backoff_on_failure(self, mock_get_repeater, __):
         repeat_record_states = [State.Fail, State.Empty, None]
@@ -323,7 +325,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_called_once()
         mock_repeater.reset_backoff.assert_not_called()
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_does_nothing_on_empty(self, mock_get_repeater, __):
         repeat_record_states = [State.Empty]
@@ -334,7 +336,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_does_nothing_on_none(self, mock_get_repeater, __):
         repeat_record_states = [None]
@@ -346,7 +348,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.reset_backoff.assert_not_called()
 
     @patch('corehq.motech.repeaters.tasks.process_repeater')
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_calls_process_repeater_on_more(
         self,
@@ -363,7 +365,7 @@ class TestUpdateRepeater(SimpleTestCase):
 
         mock_process_repeater.assert_called_once_with(mock_repeater, 'token')
 
-    @patch('corehq.motech.repeaters.tasks.get_repeater_lock')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_releases_lock_on_no_more(
         self,
@@ -441,3 +443,46 @@ class TestGetWaitDurationSeconds(TestCase):
         )
         wait_duration = _get_wait_duration_seconds(repeat_record)
         self.assertEqual(wait_duration, 5)
+
+
+class TestRepeaterLock(TestCase):
+
+    def test_lock_repeater(self):
+        repeater = self._get_repeater()
+        lock = RepeaterLock(repeater.repeater_id)
+        assert lock.repeater == repeater
+
+    def test_lock_name(self):
+        lock = RepeaterLock('abc123')
+        self.assertEqual(lock._lock.name, 'process_repeater_abc123')
+
+    def test_acquire(self):
+        repeater = self._get_repeater()
+        lock = RepeaterLock(repeater)
+        assert lock.acquire()
+        assert lock.token
+
+    def test_acquire_assert(self):
+        lock = RepeaterLock('repeater_id', 'lock_token')
+        with pytest.raises(AssertionError, match=r'.* already acquired .*'):
+            lock.acquire()
+
+    def test_reacquire_assert(self):
+        lock = RepeaterLock('repeater_id')
+        with pytest.raises(AssertionError, match=r'Missing lock token'):
+            lock.reacquire()
+
+    def test_release_assert(self):
+        lock = RepeaterLock('repeater_id')
+        with pytest.raises(AssertionError, match=r'Missing lock token'):
+            lock.release()
+
+    @staticmethod
+    def _get_repeater():
+        return FormRepeater.objects.create(
+            domain=DOMAIN,
+            connection_settings=ConnectionSettings.objects.create(
+                domain=DOMAIN,
+                url='http://www.example.com/api/'
+            ),
+        )
