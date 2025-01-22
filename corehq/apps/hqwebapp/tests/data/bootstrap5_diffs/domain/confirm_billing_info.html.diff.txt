@@ -1,0 +1,36 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "domain/bootstrap3/base_change_plan.html" %}
++{% extends "domain/bootstrap5/base_change_plan.html" %}
+ {% load crispy_forms_tags %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% requirejs_main 'domain/js/confirm_billing_info' %}
++{% requirejs_main_b5 'domain/js/confirm_billing_info' %}
+ 
+ {% block form_content %}
+   {% initial_page_data "plan" plan %}
+@@ -18,15 +18,15 @@
+     {% endblocktrans %}
+   </p>
+ 
+-  <div class="panel panel-modern-gray panel-form-only" id="billing-info">
+-    <div class="panel-body">
+-      {% crispy billing_account_info_form %}
++  <div class="card card-modern-gray card-form-only" id="billing-info">  {# todo B5: css-panel #}
++    <div class="card-body">
++      {% crispy billing_account_info_form %}  {# todo B5: crispy #}
+     </div>
+   </div>
+ 
+-  <div class="panel panel-modern-gray panel-form-only" id="card-manager">
+-    <div class="panel-body">
+-      {% include 'domain/bootstrap3/stripe_cards.html' %}
++  <div class="card card-modern-gray card-form-only" id="card-manager">  {# todo B5: css-panel #}
++    <div class="card-body">
++      {% include 'domain/bootstrap5/stripe_cards.html' %}
+     </div>
+   </div>
+ {% endblock %}

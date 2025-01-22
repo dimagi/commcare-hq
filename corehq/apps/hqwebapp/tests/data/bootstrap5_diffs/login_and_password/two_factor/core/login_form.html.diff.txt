@@ -1,0 +1,40 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+ {% load i18n two_factor_tags %}
+ <form action="" method="post">{% csrf_token %}
+-  {% include "two_factor/bootstrap3/_wizard_forms.html" %}
++  {% include "two_factor/bootstrap5/_wizard_forms.html" %}
+ 
+   {# hidden submit button to enable [enter] key #}
+-  <div style="display: none"><input type="submit" value=""/></div>
++  <div style="display: none"><input type="submit" value=""/></div>  {# todo B5: inline-style #}
+ 
+   {% if device.name == "default" and other_devices %}
+     <p>{% trans "Or, alternatively, use one of your backup phones:" %}</p>
+@@ -11,7 +11,7 @@
+       <p>
+         <button name="challenge_device"
+                 value="{{ other.persistent_id }}"
+-                class="btn btn-default" type="submit">
++                class="btn btn-outline-primary" type="submit">
+           {{ other|as_action }}
+         </button>
+       </p>
+@@ -22,7 +22,7 @@
+     <p>
+       <button name="wizard_goto_step"
+               type="submit" value="backup"
+-              class="btn btn-default">
++              class="btn btn-outline-primary">
+         {% trans "Use Backup Token" %}
+       </button>
+     </p>
+@@ -30,6 +30,6 @@
+   {% endif %}
+ 
+   <div class="form-bubble-actions">
+-    {% include "two_factor/bootstrap3/_wizard_actions.html" %}
++    {% include "two_factor/bootstrap5/_wizard_actions.html" %}
+   </div>
+ </form>

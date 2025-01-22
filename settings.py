@@ -232,6 +232,7 @@ DEFAULT_APPS = (
     'django_otp',
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
+    'django_tables2',
     'two_factor',
     'two_factor.plugins.phonenumber',
     'ws4redis',
@@ -320,7 +321,6 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
-    'corehq.apps.oauth_integrations',
     'corehq.messaging.MessagingAppConfig',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
@@ -390,8 +390,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.ucla',
 
-    'custom.up_nrhm',
-
     'custom.common',
 
     'custom.hki',
@@ -454,7 +452,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
-LOGIN_TEMPLATE = "login_and_password/login.html"
+LOGIN_TEMPLATE = "login_and_password/bootstrap3/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
@@ -783,6 +781,8 @@ AUDIT_ADMIN_VIEWS = False
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
+    'GOOGLE_ANALYTICS_SECRET': '',
+    'GOOGLE_ANALYTICS_MEASUREMENT_ID': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
@@ -1153,12 +1153,6 @@ MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
 
-# GSheets related work that was dropped, but should be picked up in the near future
-GOOGLE_OATH_CONFIG = {}
-GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-GOOGLE_SHEETS_API_NAME = "sheets"
-GOOGLE_SHEETS_API_VERSION = "v4"
-DAYS_KEEP_GSHEET_STATUS = 14
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1917,8 +1911,6 @@ STATIC_UCR_REPORTS = [
 
 
 STATIC_DATA_SOURCES = [
-    os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
-    os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
@@ -1956,8 +1948,6 @@ CUSTOM_UCR_EXPRESSIONS = [
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
 
-    'up-nrhm': 'custom.up_nrhm',
-    'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
 
     'onse-iss': 'custom.onse',  # Required by self-hosted ONSE-ISS project
@@ -1978,6 +1968,7 @@ DOMAIN_MODULE_MAP = {
     'kenya-vca': 'custom.abt',
     'pmievolve-ethiopia-1': 'custom.abt',
     'pmievolve-ghana': 'custom.abt',
+    'pmievolve-kenya': 'custom.abt',
     'pmievolve-madagascar': 'custom.abt',
     'pmievolve-malawi': 'custom.abt',
     'pmievolve-mozambique': 'custom.abt',
@@ -2103,3 +2094,5 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 
 # NOTE: if you are adding a new setting that you intend to have other environments override,
 # make sure you add it before localsettings are imported (from localsettings import *)
+
+MAX_GEOSPATIAL_INDEX_DOC_LIMIT = 1000000

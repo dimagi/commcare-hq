@@ -1,14 +1,22 @@
 from datetime import datetime
 from looseversion import LooseVersion
-from zipfile import ZipFile
 
 from couchdbkit.exceptions import BadValueError, ResourceNotFound
 
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
+)
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
-from corehq.apps.domain import SHARED_DOMAIN
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.util.quickcache import quickcache
@@ -31,13 +39,6 @@ class SemanticVersionProperty(StringProperty):
 
 
 class CommCareBuild(BlobMixin, Document):
-    """
-    #python manage.py shell
-    #>>> from corehq.apps.builds.models import CommCareBuild
-    #>>> build = CommCareBuild.create_from_zip('/Users/droberts/Desktop/zip/7106.zip', '1.2.dev', 7106)
-
-    """
-
     build_number = IntegerProperty()
     version = SemanticVersionProperty()
     time = DateTimeProperty()
@@ -83,20 +84,26 @@ class CommCareBuild(BlobMixin, Document):
             startkey = [version, build_number]
 
         self = cls.view('builds/all',
-            startkey=startkey + [{}],
-            endkey=startkey,
-            descending=True,
-            limit=1,
-            include_docs=True,
-            reduce=False,
-        ).one()
+                        startkey=startkey + [{}],
+                        endkey=startkey,
+                        descending=True,
+                        limit=1,
+                        include_docs=True,
+                        reduce=False,
+                        ).one()
 
         if not self:
-            raise KeyError("Can't find build {label}. For instructions on how to add it, see https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/README.md".format(label=BuildSpec(
-                version=version,
-                build_number=build_number,
-                latest=latest
-            )))
+            raise KeyError(
+                "Can't find build {label}. For instructions on how to add it, see "
+                "https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/"
+                "README.rst#adding-commcare-builds-to-commcare-hq".format(
+                    label=BuildSpec(
+                        version=version,
+                        build_number=build_number,
+                        latest=latest
+                    )
+                )
+            )
         return self
 
     @classmethod

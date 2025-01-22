@@ -1,0 +1,28 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load i18n %}
+ 
+ {% block page_content %}
+@@ -12,16 +12,16 @@
+         <a href="{% url 'homepage'%}" class="btn btn-primary">{% trans "Begin Using CommCare Now" %}</a>
+       {% endif %}
+       <p><a href="{% url 'two_factor:profile' %}"
+-            class="btn btn-block btn-default">{% trans "Back to Profile" %}</a></p>
++            class="btn btn-block btn-outline-primary">{% trans "Back to Profile" %}</a></p>
+     {% else %}
+       <p>{% blocktrans %}To enable account recovery, generate backup tokens.{% endblocktrans %}</p>
+       {% if link_to_webapps %}
+         <a href="{% url 'homepage'%}" class="btn btn-primary">{% trans "Begin Using CommCare Now" %}</a>
+       {% endif %}
+       <p></p><a href="{% url 'two_factor:profile' %}"
+-         class="pull-right btn btn-link">{% trans "Back to Profile" %}</a></p>
++         class="float-end btn btn-link">{% trans "Back to Profile" %}</a></p>
+       <p><a href="{% url 'two_factor:backup_tokens' %}"
+-            class="btn btn-default">{% trans "Generate Backup Tokens" %}</a></p>
++            class="btn btn-outline-primary">{% trans "Generate Backup Tokens" %}</a></p>
+     {% endif %}
+ 
+ {% endblock %}

@@ -4,6 +4,7 @@ hqDefine('accounting/js/renew_plan_selection', [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
+    'commcarehq',
 ], function (
     $,
     ko,

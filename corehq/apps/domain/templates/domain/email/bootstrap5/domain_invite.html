@@ -1,0 +1,44 @@
+{% extends 'registration/email/confirm_account.html' %}
+{% load i18n %}
+
+{% block preview_text %}
+  {% blocktrans %}
+    {{ inviter }} has invited you to join the {{ domain }} project at CommCare HQ!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_headline %}
+  {% blocktrans %}
+    You're invited to join {{ domain }}!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_url %}{{ url }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Accept Invitation
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    {{ inviter }} has invited you to join the {{ domain }} project on CommCare HQ.
+    This invitation expires in {{ days }} day(s).
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+  {% blocktrans %}
+    CommCare HQ is a data management tool used by over 500 organizations
+    to help frontline workers around the world.
+    <a href="https://dimagi.com/commcare/" style="color: #bcdeff;">Learn more about CommCare</a>.  {# todo B5: inline-style #}
+  {% endblocktrans %}
+{% endblock %}
+
+{% block reason_for_email %}
+  {% blocktrans %}
+    You received this message because we received an invitation request from
+    {{ inviter }} from the project "{{ domain }}"
+  {% endblocktrans %}
+{% endblock %}

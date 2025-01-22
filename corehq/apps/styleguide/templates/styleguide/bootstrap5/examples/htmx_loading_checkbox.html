@@ -1,0 +1,11 @@
+<div class="form-check">
+  <input
+    class="form-check-input" type="checkbox" value="" id="flexCheckDefault"
+    hx-get="{% url 'styleguide_a_hanging_view' %}"
+    hx-disabled-elt="this"
+    hx-swap="none"  {# example view returns nothing to display #}
+  />
+  <label class="form-check-label" for="flexCheckDefault">
+    Try to check me
+  </label>
+</div>

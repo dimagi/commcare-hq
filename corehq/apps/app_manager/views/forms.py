@@ -1,6 +1,7 @@
 import hashlib
 import json
 import logging
+from xml.sax.saxutils import escape
 
 from django.conf import settings
 from django.contrib import messages
@@ -109,8 +110,8 @@ from corehq.apps.app_manager.xform import (
 )
 from corehq.apps.data_dictionary.util import (
     add_properties_to_data_dictionary,
-    get_case_property_description_dict,
     get_case_property_deprecated_dict,
+    get_case_property_description_dict,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -406,18 +407,13 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     if should_edit('custom_instances'):
         instances = json.loads(request.POST.get('custom_instances'))
-        try:  # validate that custom instances can be added into the XML
-            for instance in instances:
-                etree.fromstring(
-                    "<instance id='{}' src='{}' />".format(
-                        instance.get('instanceId'),
-                        instance.get('instancePath')
+        for instance in instances:
+            for key in ['instanceId', 'instancePath']:
+                val = instance.get(key)
+                if val != escape(val):
+                    raise AppMisconfigurationError(
+                        _("'{val}' is an invalid custom instance {key}").format(val=val, key=key)
                     )
-                )
-        except etree.XMLSyntaxError as error:
-            raise AppMisconfigurationError(
-                _("There was an issue with your custom instances: {}").format(error)
-            )
 
         form.custom_instances = [
             CustomInstance(

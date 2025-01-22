@@ -1,0 +1,35 @@
+{% load i18n two_factor_tags %}
+<form action="" method="post">{% csrf_token %}
+  {% include "two_factor/bootstrap3/_wizard_forms.html" %}
+
+  {# hidden submit button to enable [enter] key #}
+  <div style="display: none"><input type="submit" value=""/></div>
+
+  {% if device.name == "default" and other_devices %}
+    <p>{% trans "Or, alternatively, use one of your backup phones:" %}</p>
+    {% for other in other_devices %}
+      <p>
+        <button name="challenge_device"
+                value="{{ other.persistent_id }}"
+                class="btn btn-default" type="submit">
+          {{ other|as_action }}
+        </button>
+      </p>
+    {% endfor %}
+  {% endif %}
+  {% if backup_tokens %}
+    <p>{% trans "Please contact your domain administrator if you need a backup token." %}</p>
+    <p>
+      <button name="wizard_goto_step"
+              type="submit" value="backup"
+              class="btn btn-default">
+        {% trans "Use Backup Token" %}
+      </button>
+    </p>
+
+  {% endif %}
+
+  <div class="form-bubble-actions">
+    {% include "two_factor/bootstrap3/_wizard_actions.html" %}
+  </div>
+</form>

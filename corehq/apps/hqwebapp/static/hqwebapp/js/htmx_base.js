@@ -26,6 +26,8 @@ import htmx from 'htmx.org';
 
 import 'hqwebapp/js/htmx_utils/hq_hx_action';
 import 'hqwebapp/js/htmx_utils/csrf_token';
+import 'hqwebapp/js/htmx_utils/hq_hx_loading';
+import 'hqwebapp/js/htmx_utils/hq_hx_refresh';
 import retryHtmxRequest from 'hqwebapp/js/htmx_utils/retry_request';
 import { showHtmxErrorModal } from 'hqwebapp/js/htmx_utils/errors';
 

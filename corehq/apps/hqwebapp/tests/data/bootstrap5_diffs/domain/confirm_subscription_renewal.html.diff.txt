@@ -1,0 +1,27 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "domain/bootstrap3/base_change_plan.html" %}
++{% extends "domain/bootstrap5/base_change_plan.html" %}
+ {% load crispy_forms_tags %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 'accounting/js/widgets' %}
++{% js_entry 'accounting/js/widgets' %}
+ 
+ {% block plan_breadcrumbs %}{% endblock %}
+ 
+@@ -28,9 +28,9 @@
+       {% endblocktrans %}
+     </div>
+   {% endif %}
+-  <div class="panel panel-modern-gray panel-form-only" id="billing-info">
+-    <div class="panel-body">
+-      {% crispy confirm_form %}
++  <div class="card card-modern-gray card-form-only" id="billing-info">  {# todo B5: css-panel #}
++    <div class="card-body">
++      {% crispy confirm_form %}  {# todo B5: crispy #}
+     </div>
+   </div>
+ {% endblock %}

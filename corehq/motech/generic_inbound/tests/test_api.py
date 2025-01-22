@@ -119,7 +119,7 @@ class GenericInboundAPIViewBaseTest(TestCase):
         data, content_type = self._get_post_data()
         response = self.client.post(
             url, data=data, content_type=content_type,
-            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.plaintext_key}",
             HTTP_USER_AGENT="user agent string",
         )
         return response
@@ -155,7 +155,7 @@ class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
         generic_api = self._make_api({})
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
         response = self.client.post(
-            url, data={}, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}"
+            url, data={}, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.plaintext_key}"
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {"error": "Payload must be valid JSON"})
@@ -180,7 +180,7 @@ class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
         generic_api = self._make_api({})
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
         response = self.client.post(
-            url, data=data_51_mb, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            url, data=data_51_mb, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.plaintext_key}",
             content_type="text"
         )
         self.assertEqual(response.status_code, 400)
@@ -360,7 +360,7 @@ class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
             reverse('generic_inbound_api', args=[self.domain_name, api.url_key]),
             data='This is not JSON!',
             content_type="application/json",
-            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.plaintext_key}",
             HTTP_USER_AGENT="user agent string",
         )
         self.assertEqual(response.status_code, 400, response.content)

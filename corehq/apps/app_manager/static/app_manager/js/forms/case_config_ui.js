@@ -2,8 +2,8 @@
 hqDefine('app_manager/js/forms/case_config_ui', function () {
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
-            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            addOnsPrivileges = initial_page_data('add_ons_privileges'),
+            initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+            addOnsPrivileges = initialPageData.get('add_ons_privileges'),
             privileges = hqImport('hqwebapp/js/privileges'),
             toggles = hqImport("hqwebapp/js/toggles");
         var action_names = ["open_case", "update_case", "close_case", "case_preload",
@@ -841,10 +841,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             },
         };
 
-        if (initial_page_data('has_form_source')) {
-            var caseConfigObj = caseConfig(_.extend({}, initial_page_data("case_config_options"), {
+        if (initialPageData.get('has_form_source')) {
+            var caseConfigObj = caseConfig(_.extend({}, initialPageData.get("case_config_options"), {
                 home: $('#case-config-ko'),
-                requires: ko.observable(initial_page_data("form_requires")),
+                requires: ko.observable(initialPageData.get("form_requires")),
             }));
             caseConfigObj.init();
         }

@@ -130,11 +130,11 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
     def post_xml(cls, xml, domain_name):
         return submit_form_locally(xml, domain_name)
 
-    @classmethod
-    def repeat_records(cls, domain_name):
+    def repeat_records(self, domain=None):
+        domain = domain or self.domain
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
-        return RepeatRecord.objects.filter(domain=domain_name, next_check__lt=later)
+        return RepeatRecord.objects.filter(domain=domain, next_check__lt=later)
 
 
 class RepeaterTest(BaseRepeaterTest):
@@ -173,9 +173,6 @@ class RepeaterTest(BaseRepeaterTest):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super(RepeaterTest, self).tearDown()
-
-    def repeat_records(self):
-        return super(RepeaterTest, self).repeat_records(self.domain)
 
     # whatever value specified will be doubled since both case and form repeater are active
     def _create_additional_repeat_records(self, count):
@@ -842,7 +839,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             format_label = 'XML'
 
             def get_payload(self, repeat_record, payload_doc):
-                return self.payload
+                return {}
 
         with self.assertRaises(DuplicateFormatException):
             RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
@@ -853,7 +850,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             format_label = 'XML'
 
             def get_payload(self, repeat_record, payload_doc):
-                return self.payload
+                return {}
 
         with self.assertRaises(DuplicateFormatException):
             RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator, is_default=True)
