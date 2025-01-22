@@ -510,6 +510,8 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
         lock = get_repeater_lock(repeater_id)
         lock.local.token = lock_token
         if more:
+            # Reset the lock timeout
+            # https://github.com/redis/redis-py/blob/ff120df78ccd85d6e2e2938ee02d1eb831676724/redis/lock.py#L235
             lock.reacquire()
             process_repeater(repeater, lock_token)
         else:
