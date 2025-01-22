@@ -25,11 +25,14 @@ def migrate_api_settings(apps, schema_editor):
         last_token_aes=''
     )
 
+    updated_connections = []
     for connection in connect_settings_to_update:
         connection.password = _reencrypt_or_encrypt_value_with_cbc(connection.password)
-        connection.client_secret = _reencrypt_or_encrypt_value_with_cbc(connection.password)
+        connection.client_secret = _reencrypt_or_encrypt_value_with_cbc(connection.client_secret)
         connection.last_token_aes = _reencrypt_value_with_cbc(connection.last_token_aes)
-        connection.save()
+        updated_connections.append(connection)
+
+    ConnectionSettings.objects.bulk_update(updated_connections, ['password', 'client_secret', 'last_token_aes'])
 
 
 def _reencrypt_or_encrypt_value_with_cbc(value):
@@ -77,11 +80,14 @@ def revert_api_settings(apps, schema_editor):
         last_token_aes=''
     )
 
+    updated_connections = []
     for connection in connect_settings_to_revert:
         connection.password = _revert_reencrypted_value_to_ecb(connection.password)
         connection.client_secret = _revert_reencrypted_value_to_ecb(connection.client_secret)
         connection.last_token_aes = _revert_last_token_to_ecb(connection.last_token_aes)
-        connection.save()
+        updated_connections.append(connection)
+
+    ConnectionSettings.objects.bulk_update(updated_connections, ['password', 'client_secret', 'last_token_aes'])
 
 
 def _revert_reencrypted_value_to_ecb(value):
