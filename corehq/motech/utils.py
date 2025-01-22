@@ -132,6 +132,10 @@ def b64_aes_cbc_decrypt(message):
     return plaintext_bytes.decode('utf8')
 
 
+class AesEcbDecryptionError(Exception):
+    pass
+
+
 # Only needed for migration from ECB to CBC mode.
 def reencrypt_ecb_to_cbc_mode(encrypted_text, existing_prefix=None):
     """

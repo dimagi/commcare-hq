@@ -3,7 +3,11 @@ from django.db.migrations import RunPython
 
 from corehq.util.django_migrations import skip_on_fresh_install
 from corehq.motech.const import ALGO_AES_CBC
-from corehq.motech.utils import reencrypt_ecb_to_cbc_mode, reencrypt_cbc_to_ecb_mode
+from corehq.motech.utils import (
+    reencrypt_ecb_to_cbc_mode,
+    reencrypt_cbc_to_ecb_mode,
+    AesEcbDecryptionError
+)
 
 
 @skip_on_fresh_install
@@ -15,8 +19,11 @@ def reencrypt_api_tokens(apps, schema_editor):
     ).exclude(api_token=None).exclude(api_token='')
 
     for org in transifex_orgs_to_update:
-        ciphertext = reencrypt_ecb_to_cbc_mode(org.api_token)
-        org.api_token = f'${ALGO_AES_CBC}${ciphertext}'
+        try:
+            ciphertext = reencrypt_ecb_to_cbc_mode(org.api_token)
+            org.api_token = f'${ALGO_AES_CBC}${ciphertext}'
+        except AesEcbDecryptionError:
+            org.api_token = ''
         org.save()
 
 
