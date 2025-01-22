@@ -14,6 +14,7 @@ from corehq.apps.accounting.utils.account import (
     get_account_or_404,
     request_has_permissions_for_enterprise_admin,
 )
+from corehq.apps.analytics.tasks import record_event
 from corehq.apps.api.odata.utils import FieldMetadata
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
@@ -21,6 +22,7 @@ from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.api.resources.meta import get_hq_throttle
 from corehq.apps.api.keyset_paginator import KeysetPaginator
 from corehq.apps.enterprise.enterprise import EnterpriseReport
+from corehq.apps.enterprise.metric_events import ENTERPRISE_API_ACCESS
 from corehq.apps.enterprise.iterators import IterableEnterpriseFormQuery, EnterpriseFormReportConverter
 
 from corehq.apps.enterprise.tasks import generate_enterprise_report, ReportTaskProgress
@@ -188,6 +190,9 @@ class ODataEnterpriseReportResource(ODataResource):
             return data
         elif status == ReportTaskProgress.STATUS_NEW:
             progress.start_task(self.get_report_task(request))
+            record_event(ENTERPRISE_API_ACCESS, request.couch_user, {
+                'api_type': self.REPORT_SLUG
+            })
 
         # PowerBI respects delays with only two response codes:
         # 429 (TooManyRequests) and 503 (ServiceUnavailable). Although 503 is likely more semantically
@@ -398,6 +403,11 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
         converter = EnterpriseFormReportConverter()
         query_kwargs = converter.get_kwargs_from_map(request.GET)
+        if converter.is_initial_query(request.GET):
+            record_event(ENTERPRISE_API_ACCESS, request.couch_user, {
+                'api_type': self.REPORT_SLUG
+            })
+
         return IterableEnterpriseFormQuery(account, converter, start_date, end_date, **query_kwargs)
 
     def dehydrate(self, bundle):
@@ -414,6 +424,28 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
         return ('form_id', 'submitted',)
 
 
+class CaseManagementResource(ODataEnterpriseReportResource):
+    domain = fields.CharField()
+    num_applications = fields.IntegerField()
+    num_surveys_only = fields.IntegerField()
+    num_cases_only = fields.IntegerField()
+    num_mixed = fields.IntegerField()
+
+    REPORT_SLUG = EnterpriseReport.CASE_MANAGEMENT
+
+    def dehydrate(self, bundle):
+        bundle.data['domain'] = bundle.obj[0]
+        bundle.data['num_applications'] = bundle.obj[1]
+        bundle.data['num_surveys_only'] = bundle.obj[2]
+        bundle.data['num_cases_only'] = bundle.obj[3]
+        bundle.data['num_mixed'] = bundle.obj[4]
+
+        return bundle
+
+    def get_primary_keys(self):
+        return ('domain',)
+
+
 class DataExportReportResource(ODataEnterpriseReportResource):
     domain = fields.CharField()
     name = fields.CharField()
@@ -422,14 +454,6 @@ class DataExportReportResource(ODataEnterpriseReportResource):
     owner = fields.CharField()
 
     REPORT_SLUG = EnterpriseReport.DATA_EXPORTS
-
-    def get_report_task(self, request):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        return generate_enterprise_report.s(
-            self.REPORT_SLUG,
-            account.id,
-            request.couch_user.username
-        )
 
     def dehydrate(self, bundle):
         bundle.data['domain'] = bundle.obj[0]

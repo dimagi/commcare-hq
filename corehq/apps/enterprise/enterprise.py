@@ -32,6 +32,8 @@ from corehq.apps.enterprise.exceptions import (
 )
 from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.es import forms as form_es
+from corehq.apps.es import filters
+from corehq.apps.es.apps import AppES
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.reports.util import (
@@ -52,6 +54,7 @@ class EnterpriseReport(ABC):
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
+    CASE_MANAGEMENT = 'case_management'
     DATA_EXPORTS = 'data_exports'
     COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
     SMS = 'sms'
@@ -100,6 +103,8 @@ class EnterpriseReport(ABC):
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
+        elif slug == cls.CASE_MANAGEMENT:
+            report = EnterpriseCaseManagementReport(account, couch_user, **kwargs)
         elif slug == cls.DATA_EXPORTS:
             report = EnterpriseDataExportReport(account, couch_user, **kwargs)
         elif slug == cls.COMMCARE_VERSION_COMPLIANCE:
@@ -408,6 +413,65 @@ class EnterpriseODataReport(EnterpriseReport):
             rows.append([domain_obj.name, export.name, export.get_count()])
 
         return rows
+
+
+class EnterpriseCaseManagementReport(EnterpriseReport):
+    title = gettext_lazy('Case Management')
+    total_description = gettext_lazy('% of Domains using Case Management')
+
+    @property
+    def headers(self):
+        return [_('Project Space'), _('# Applications'), _('# Surveys Only'), _('# Cases Only'), _('# Mixed')]
+
+    def rows_for_domain(self, domain_obj):
+        app_query = self.app_query(domain_obj.name)
+        app_count = app_query.count()
+
+        if app_count == 0:
+            survey_only_count = 0
+            case_only_count = 0
+            mixed_count = 0
+        else:
+            has_surveys = filters.nested('modules', filters.empty('modules.case_type.exact'))
+            has_cases = filters.nested('modules', filters.non_null('modules.case_type.exact'))
+
+            survey_only_count = app_query.filter(filters.AND(has_surveys, filters.NOT(has_cases))).count()
+            case_only_count = app_query.filter(filters.AND(has_cases, filters.NOT(has_surveys))).count()
+            mixed_count = app_query.filter(filters.AND(has_surveys, has_cases)).count()
+
+        return [[domain_obj.name, app_count, survey_only_count, case_only_count, mixed_count],]
+
+    @property
+    def total(self):
+        num_domains_with_apps = 0
+        num_domains_using_case_management = 0
+
+        for domain_obj in self.domains():
+            (app_count, uses_case_management) = self.total_for_domain(domain_obj)
+            if app_count > 0:
+                if uses_case_management:
+                    num_domains_using_case_management += 1
+                num_domains_with_apps += 1
+
+        return _format_percentage_for_enterprise_tile(num_domains_using_case_management, num_domains_with_apps)
+
+    def total_for_domain(self, domain_obj):
+        app_query = self.app_query(domain_obj.name)
+        app_count = app_query.count()
+        if app_count > 0:
+            has_cases = filters.nested('modules', filters.non_null('modules.case_type.exact'))
+            uses_case_management = app_query.filter(has_cases).count() > 0
+        else:
+            uses_case_management = False
+
+        return [app_count, uses_case_management]
+
+    def app_query(self, domain):
+        return (
+            AppES().domain(domain)
+            .filter(filters.term('doc_type', 'Application'))
+            .is_build(False)
+        )
 
 
 class EnterpriseDataExportReport(EnterpriseReport):
