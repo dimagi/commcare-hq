@@ -231,7 +231,6 @@ hqDefine('app_manager/js/releases/releases', function () {
     function releasesMainModel(o) {
         /* {fetchUrl, deleteUrl} */
         var asyncDownloader = hqImport('app_manager/js/download_async_modal').asyncDownloader;
-        var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
         var self = this;
         self.genericErrorMessage = gettext(
             'An error occurred. Reload the page and click Make New Version to try again.');
@@ -349,10 +348,6 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.trackClick = function (message) {
             hqImport('analytix/js/kissmetrix').track.event(message);
             return true;
-        };
-
-        self.onViewChanges = function (appIdOne, appIdTwo) {
-            appDiff.renderDiff(appIdOne, appIdTwo);
         };
 
         self.goToPage = function (page) {
