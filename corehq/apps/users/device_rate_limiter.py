@@ -36,14 +36,15 @@ class DeviceRateLimiter:
 
         key = self._get_redis_key(user_id)
 
-        if not self._exists(key):
+        key_exists, device_exists, device_count = self._get_usage_for_device(key, device_id)
+
+        if not key_exists:
             self._track_usage(key, device_id, is_key_new=True)
             return False
 
-        if self._device_has_been_used(key, device_id):
+        if device_exists:
             return False
 
-        device_count = self._device_count(key)
         if device_count < self.device_limit_per_user(domain):
             self._track_usage(key, device_id)
             # this intentionally doesn't capture users with 1 device, only those with multiple
@@ -72,19 +73,18 @@ class DeviceRateLimiter:
         return key
 
     def _track_usage(self, redis_key, device_id, is_key_new=False):
-        self.client.sadd(redis_key, device_id)
+        pipe = self.client.pipeline()
+        pipe.sadd(redis_key, device_id)
         if is_key_new:
-            self.client.expire(redis_key, DEVICE_SET_CACHE_TIMEOUT)
+            pipe.expire(redis_key, DEVICE_SET_CACHE_TIMEOUT)
+        pipe.execute()
 
-    def _device_has_been_used(self, redis_key, device_id):
-        # check if device_id is member of the set for this key
-        return self.client.sismember(redis_key, device_id)
-
-    def _device_count(self, redis_key):
-        return self.client.scard(redis_key)
-
-    def _exists(self, redis_key):
-        return self.client.exists(redis_key)
+    def _get_usage_for_device(self, redis_key, device_id):
+        pipe = self.client.pipeline()
+        pipe.exists(redis_key)
+        pipe.sismember(redis_key, device_id)
+        pipe.scard(redis_key)
+        return pipe.execute()
 
     def _is_formplayer(self, device_id):
         return device_id.startswith("WebAppsLogin") or device_id == CLOUDCARE_DEVICE_ID
