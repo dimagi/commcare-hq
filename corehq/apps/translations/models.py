@@ -166,7 +166,7 @@ class TransifexOrganization(models.Model):
         return self.name + ' (' + self.slug + ')'
 
     @cached_property
-    def get_api_token(self):
+    def plaintext_api_token(self):
         return b64_aes_decrypt(self.api_token)
 
 
