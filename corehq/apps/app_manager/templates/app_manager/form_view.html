@@ -4,41 +4,15 @@
 {% load compress %}
 {% load i18n %}
 
-{% block title %}{# controlled by app_manager/js/form_view.js #}{% endblock %}
+{% block title %}{# controlled by app_manager/js/forms/form_view.js #}{% endblock %}
+
+{% js_entry_b3 "app_manager/js/forms/form_view" %}
 
 {% block stylesheets %}{{ block.super }}
   <style>
     .nodeset {
       min-width: 400px;
     }
-  </style>
-{% endblock %}
-
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
-    <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
-  {% endcompress %}
-  {% if module.doc_type == 'AdvancedModule' %}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>
-      <script src="{% static 'app_manager/js/forms/advanced/actions.js' %}"></script>
-      <script src="{% static 'app_manager/js/forms/advanced/case_config_ui.js' %}"></script>
-      <script src="{% static 'app_manager/js/details/utils.js' %}"></script>
-      <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
-    {% endcompress %}
-  {% else %}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/case_config_ui.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
-  <style>
     #open-referral-action,
     #update-referral-action,
     #close-referral-action,
@@ -49,29 +23,6 @@
       margin-left: 15px;
     }
   </style>
-
-  {% compress js %}
-    <script src="{% static 'cloudcare/js/formplayer/utils/utils.js' %}"></script>
-  {% endcompress %}
-
-  {% include "app_manager/partials/xpathValidator.html" %}
-  {% compress js %}
-    <script src="{% static 'hqmedia/js/uploaders.js' %}"></script>
-    <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
-    <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-    <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
-  {% endcompress %}
-  {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
-  {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/copy_form_to_app.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
 {% endblock %}
 
 {% block pre_form_content %}
