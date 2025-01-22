@@ -146,6 +146,14 @@ class EnterpriseFormReportConverter(EnterpriseDataConverter):
             'last_id': last_id
         }
 
+    @classmethod
+    def is_initial_query(cls, map):
+        last_domain = map.get('domain', None)
+        last_time = map.get('inserted_at', None)
+        last_id = map.get('id', None)
+
+        return not (last_domain or last_time or last_id)
+
 
 class AppIdToNameResolver:
     def __init__(self):

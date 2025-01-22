@@ -32,6 +32,8 @@ from corehq.apps.enterprise.exceptions import (
 )
 from corehq.apps.enterprise.iterators import raise_after_max_elements
 from corehq.apps.es import forms as form_es
+from corehq.apps.es import filters
+from corehq.apps.es.apps import AppES
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.reports.util import (
@@ -54,10 +56,11 @@ class EnterpriseReport(ABC):
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
+    CASE_MANAGEMENT = 'case_management'
     DATA_EXPORTS = 'data_exports'
     COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
     SMS = 'sms'
-    API_USAGE = 'api_usage'
+    API_KEYS = 'api_keys'
     TWO_FACTOR_AUTH = '2fa'
     DATA_FORWARDING = 'data_forwarding'
 
@@ -69,12 +72,11 @@ class EnterpriseReport(ABC):
         pass
 
     @property
-    @abstractmethod
     def total_description(self):
         """
         To provide a description of the total number we displayed in tile
         """
-        pass
+        return ''
 
     def __init__(self, account, couch_user, **kwargs):
         self.account = account
@@ -103,13 +105,15 @@ class EnterpriseReport(ABC):
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
+        elif slug == cls.CASE_MANAGEMENT:
+            report = EnterpriseCaseManagementReport(account, couch_user, **kwargs)
         elif slug == cls.DATA_EXPORTS:
             report = EnterpriseDataExportReport(account, couch_user, **kwargs)
         elif slug == cls.COMMCARE_VERSION_COMPLIANCE:
             report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
         elif slug == cls.SMS:
             report = EnterpriseSMSReport(account, couch_user, **kwargs)
-        elif slug == cls.API_USAGE:
+        elif slug == cls.API_KEYS:
             report = EnterpriseAPIReport(account, couch_user, **kwargs)
         elif slug == cls.TWO_FACTOR_AUTH:
             report = Enterprise2FAReport(account, couch_user, **kwargs)
@@ -160,7 +164,6 @@ class EnterpriseReport(ABC):
 class EnterpriseDomainReport(EnterpriseReport):
 
     title = gettext_lazy('Project Spaces')
-    total_description = gettext_lazy('# of Project Spaces')
 
     def __init__(self, account, couch_user):
         super().__init__(account, couch_user)
@@ -192,7 +195,6 @@ class EnterpriseDomainReport(EnterpriseReport):
 class EnterpriseWebUserReport(EnterpriseReport):
 
     title = gettext_lazy('Web Users')
-    total_description = gettext_lazy('# of Web Users')
 
     @property
     def headers(self):
@@ -239,7 +241,6 @@ class EnterpriseWebUserReport(EnterpriseReport):
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
     title = gettext_lazy('Mobile Workers')
-    total_description = gettext_lazy('# of Mobile Workers')
 
     @property
     def headers(self):
@@ -271,7 +272,6 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 class EnterpriseFormReport(EnterpriseReport):
     title = gettext_lazy('Mobile Form Submissions')
-    total_description = gettext_lazy('# of Mobile Form Submissions')
 
     MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
     MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
@@ -380,7 +380,6 @@ class EnterpriseFormReport(EnterpriseReport):
 
 class EnterpriseODataReport(EnterpriseReport):
     title = gettext_lazy('OData Feeds')
-    total_description = gettext_lazy('# of OData Feeds')
 
     MAXIMUM_EXPECTED_EXPORTS = 150
 
@@ -415,9 +414,67 @@ class EnterpriseODataReport(EnterpriseReport):
         return rows
 
 
+class EnterpriseCaseManagementReport(EnterpriseReport):
+    title = gettext_lazy('Case Management')
+    total_description = gettext_lazy('% of Domains using Case Management')
+
+    @property
+    def headers(self):
+        return [_('Project Space'), _('# Applications'), _('# Surveys Only'), _('# Cases Only'), _('# Mixed')]
+
+    def rows_for_domain(self, domain_obj):
+        app_query = self.app_query(domain_obj.name)
+        app_count = app_query.count()
+
+        if app_count == 0:
+            survey_only_count = 0
+            case_only_count = 0
+            mixed_count = 0
+        else:
+            has_surveys = filters.nested('modules', filters.empty('modules.case_type.exact'))
+            has_cases = filters.nested('modules', filters.non_null('modules.case_type.exact'))
+
+            survey_only_count = app_query.filter(filters.AND(has_surveys, filters.NOT(has_cases))).count()
+            case_only_count = app_query.filter(filters.AND(has_cases, filters.NOT(has_surveys))).count()
+            mixed_count = app_query.filter(filters.AND(has_surveys, has_cases)).count()
+
+        return [[domain_obj.name, app_count, survey_only_count, case_only_count, mixed_count],]
+
+    @property
+    def total(self):
+        num_domains_with_apps = 0
+        num_domains_using_case_management = 0
+
+        for domain_obj in self.domains():
+            (app_count, uses_case_management) = self.total_for_domain(domain_obj)
+            if app_count > 0:
+                if uses_case_management:
+                    num_domains_using_case_management += 1
+                num_domains_with_apps += 1
+
+        return _format_percentage_for_enterprise_tile(num_domains_using_case_management, num_domains_with_apps)
+
+    def total_for_domain(self, domain_obj):
+        app_query = self.app_query(domain_obj.name)
+        app_count = app_query.count()
+        if app_count > 0:
+            has_cases = filters.nested('modules', filters.non_null('modules.case_type.exact'))
+            uses_case_management = app_query.filter(has_cases).count() > 0
+        else:
+            uses_case_management = False
+
+        return [app_count, uses_case_management]
+
+    def app_query(self, domain):
+        return (
+            AppES().domain(domain)
+            .filter(filters.term('doc_type', 'Application'))
+            .is_build(False)
+        )
+
+
 class EnterpriseDataExportReport(EnterpriseReport):
     title = gettext_lazy('Data Exports')
-    total_description = gettext_lazy('# of Exports')
 
     @property
     def headers(self):
@@ -626,8 +683,7 @@ class EnterpriseSMSReport(EnterpriseReport):
 
 
 class EnterpriseAPIReport(EnterpriseReport):
-    title = gettext_lazy('API Usage')
-    total_description = gettext_lazy('# of Active API Keys')
+    title = gettext_lazy('API Keys')
 
     @property
     def headers(self):

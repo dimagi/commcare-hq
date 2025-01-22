@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
     "underscore",
@@ -13,7 +12,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
     initialPageData,
     constants,
     formUI,
-    fixtures
+    fixtures,
 ) {
     describe('Fullform formUI', function () {
         var questionJSON,
@@ -29,7 +28,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                 {
                     WEB_APPS_UPLOAD_QUESTIONS: true,
                     WEB_APPS_ANCHORED_SUBMIT: false,
-                }
+                },
             );
         });
 
