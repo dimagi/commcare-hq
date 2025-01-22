@@ -92,7 +92,7 @@
             Looking for something that used to be here?
           {% endblocktrans %}
         </p>
-        <p class="mb-0">
+        <p>
           {% blocktrans %}
             The feature flags <strong>Control Mapping in Case List</strong>,
             <strong>Custom Calculations in Case List</strong>, <strong>Custom
@@ -128,7 +128,7 @@
                 {% endif %}
               </td>
               <td>
-                <input type="checkbox" name="{{ feature.slug }}" {% if enabled %}checked{% endif %}/>
+                <input type="checkbox" name="{{ feature.slug }}" {% if enabled %}checked{% endif %}/>  {# todo B5: css-checkbox #}
               </td>
             </tr>
           {% endfor %}

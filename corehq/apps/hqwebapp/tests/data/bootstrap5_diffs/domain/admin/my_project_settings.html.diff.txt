@@ -1,0 +1,21 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 'domain/js/my_project_settings' %}
++{% js_entry 'domain/js/my_project_settings' %}
+ 
+ {% block stylesheets %}
+   <style>
+@@ -17,5 +17,5 @@
+ {% block page_content %}
+   {% initial_page_data "override_global_tz" override_global_tz %}
+   {% initial_page_data "no_domain_membership" no_domain_membership %}
+-  {% crispy my_project_settings_form %}
++  {% crispy my_project_settings_form %}  {# todo B5: crispy #}
+ {% endblock %}

@@ -1,0 +1,53 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load crispy_forms_tags %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 "domain/js/manage_alerts" %}
++{% js_entry "domain/js/manage_alerts" %}
+ 
+ {% block page_content %}
+     {% initial_page_data 'alerts' alerts %}
+@@ -12,7 +12,7 @@
+     <form class="form form-horizontal" method="post">
+       <fieldset>
+         <legend>{% trans 'Add New Alert' %}</legend>
+-        {% crispy form %}
++        {% crispy form %}  {# todo B5: crispy #}
+       </fieldset>
+     </form>
+     <div id="ko-alert-container">
+@@ -54,7 +54,7 @@
+             <td data-bind="text: created_by_user">
+             </td>
+             <td>
+-              <form action="{% url 'update_domain_alert_status' domain %}" method="post" style="float: left; margin-right: 5px;">
++              <form action="{% url 'update_domain_alert_status' domain %}" method="post" style="float: left; margin-right: 5px;">  {# todo B5: inline-style #}
+                 {% csrf_token %}
+                 <input name="alert_id"
+                        type="hidden"
+@@ -74,17 +74,17 @@
+                   {% trans "De-activate Alert" %}
+                 </button>
+               </form>
+-              <a class="btn btn-default" data-bind="attr: {href: editUrl}" style="float: left; margin-right: 5px;">
++              <a class="btn btn-outline-primary" data-bind="attr: {href: editUrl}" style="float: left; margin-right: 5px;">  {# todo B5: inline-style #}
+                 <i class="fa fa-edit"></i>
+                 {% trans "Edit" %}
+               </a>
+-              <form action="{% url 'delete_domain_alert' domain %}" method="post" style="float: left">
++              <form action="{% url 'delete_domain_alert' domain %}" method="post" style="float: left">  {# todo B5: inline-style #}
+                 {% csrf_token %}
+                 <input name="alert_id"
+                        type="hidden"
+                        data-bind="value: id">
+                 <button type="submit"
+-                      class="btn btn-danger">
++                      class="btn btn-outline-danger">
+                   <i class="fa fa-trash"></i>
+                   {% trans "Delete" %}
+                 </button>

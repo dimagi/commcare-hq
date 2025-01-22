@@ -951,11 +951,9 @@ class PrivacySecurityForm(forms.Form):
         if not SECURE_SESSION_TIMEOUT.enabled(domain):
             excluded_fields.append('secure_sessions_timeout')
 
-        for field in self.fields.values():
-            if not isinstance(field.widget, BootstrapCheckboxInput):
-                field.widget = BootstrapCheckboxInput()
-
-        fields = [hqcrispy.CheckboxField(field_name)
+        # PrependedText ensures the label is to the left of the checkbox, and the help text beneath.
+        # Feels like there should be a better way to apply these styles, as we aren't pre-pending anything
+        fields = [twbscrispy.PrependedText(field_name, '')
             for field_name in self.fields.keys() if field_name not in excluded_fields]
 
         self.helper = hqcrispy.HQFormHelper(self)
