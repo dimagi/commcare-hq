@@ -154,6 +154,7 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/filter_configs.html
+#: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
@@ -172,7 +173,7 @@ msgstr ""
 msgid "Is Hidden"
 msgstr "छिपा है"
 
-#: corehq/apps/accounting/filters.py
+#: corehq/apps/accounting/filters.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/reports/standard/cases/basic.py
 msgid "Created By"
 msgstr ""
@@ -459,8 +460,10 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_interfaces/forms.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/events/forms.py
@@ -920,7 +923,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
@@ -973,10 +977,14 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
@@ -1077,13 +1085,15 @@ msgid "Remove User"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
 #: corehq/tabs/tabclasses.py
 msgid "New"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 msgid "Removed"
 msgstr ""
 
@@ -1466,8 +1476,10 @@ msgstr ""
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
@@ -2833,8 +2845,10 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/forms.py
@@ -3028,7 +3042,7 @@ msgid ""
 "that only need very basic CommCare features."
 msgstr ""
 
-#: corehq/apps/accounting/user_text.py
+#: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
 msgid "Standard"
 msgstr ""
 
@@ -3179,7 +3193,8 @@ msgstr ""
 
 #: corehq/apps/accounting/views.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_lookup.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
@@ -3539,8 +3554,10 @@ msgid "Success"
 msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/components/logs.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "Error:"
 msgstr ""
 
@@ -3567,7 +3584,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/data_interfaces/forms.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/geospatial/templates/geospatial/gps_capture.html
@@ -3620,7 +3638,8 @@ msgid "App Name"
 msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 msgid "Last Run"
 msgstr ""
 
@@ -3641,10 +3660,14 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
@@ -3911,6 +3934,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/add_ons.py
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/enterprise/enterprise.py
 msgid "Case Management"
 msgstr ""
 
@@ -3971,9 +3995,9 @@ msgstr ""
 msgid "Please log in to the app to check for an update."
 msgstr ""
 
-#: corehq/apps/app_manager/fields.py corehq/apps/export/views/list.py
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py
+#: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
+#: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/sms/models.py corehq/apps/sms/views.py
 msgid "Case"
 msgstr ""
 
@@ -3982,6 +4006,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 #: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
 #: corehq/apps/reports/filters/forms.py corehq/apps/reports/standard/inspect.py
@@ -4081,7 +4106,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/fields.py
 #: corehq/apps/app_manager/views/app_summary.py
-#: corehq/apps/export/models/new.py
+#: corehq/apps/enterprise/enterprise.py corehq/apps/export/models/new.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/linked_domain/views.py
 #: corehq/apps/reports/standard/deployments.py
@@ -4305,8 +4330,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "Case property"
 msgstr ""
 
@@ -5888,7 +5915,8 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/excel_fields.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
 msgid "Case Property"
 msgstr ""
@@ -6351,8 +6379,10 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
@@ -7484,9 +7514,12 @@ msgstr ""
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -7596,8 +7629,10 @@ msgid "Arbitrary Datum id"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
 msgid "Add Action"
 msgstr ""
 
@@ -7958,7 +7993,8 @@ msgid "Show this form "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 #: corehq/messaging/scheduling/forms.py
 msgid "days"
 msgstr ""
@@ -10197,7 +10233,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Learn more."
 msgstr ""
 
@@ -10292,7 +10329,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/models.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
 #: corehq/apps/integration/forms.py
@@ -12031,7 +12069,8 @@ msgid "Case Search QL Expression"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Add Expression"
 msgstr ""
 
@@ -12056,7 +12095,8 @@ msgid "Data"
 msgstr ""
 
 #: corehq/apps/case_search/views.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/domain/views/settings.py corehq/apps/registry/models.py
 #: corehq/tabs/tabclasses.py
 msgid "Case Search"
@@ -12961,7 +13001,8 @@ msgid "Lock Linked Fields For Me"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
@@ -13135,7 +13176,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/modal_edit.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/modal_edit.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/modal_edit.html
 #: corehq/apps/fixtures/templates/fixtures/partials/modal_edit.html
 #: corehq/apps/reminders/templates/reminders/partials/modal_edit.html
 #: corehq/apps/users/templates/users/partials/linked_roles_modal.html
@@ -13389,8 +13431,10 @@ msgid "Data Dictionary"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/export/templates/export/partials/table.html
 msgid "deprecated"
 msgstr ""
@@ -13506,7 +13550,8 @@ msgid "Deprecate"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 msgid "Add Case Property"
 msgstr ""
 
@@ -13878,7 +13923,8 @@ msgid "Initial values are set by the form"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/domain/forms.py corehq/apps/hqadmin/forms.py
 #: corehq/apps/reminders/forms.py corehq/apps/styleguide/example_forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
@@ -13909,7 +13955,8 @@ msgid "Case Filters"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert.html
 msgid "Rule Criteria"
 msgstr ""
@@ -14131,14 +14178,15 @@ msgstr ""
 msgid "No Forms are supplied"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/auto_update_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/auto_update_rules.html
 msgid ""
 "\n"
 "            Automatically update or close cases from CommCare HQ\n"
 "          "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/auto_update_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/auto_update_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/auto_update_rules.html
 #, python-format
 msgid ""
 "\n"
@@ -14150,20 +14198,23 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/auto_update_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/auto_update_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/auto_update_rules.html
 #: corehq/apps/linked_domain/const.py
 msgid "Automatic Update Rules"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/auto_update_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/auto_update_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/auto_update_rules.html
 msgid "Rule Run History"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
 msgid "NOTE: A system administrator is required to edit this rule."
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #, python-format
 msgid ""
 "\n"
@@ -14174,40 +14225,51 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Match Type"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 msgid "Include Closed Cases"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 msgid "Add Update Case Property"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
 msgid "Set case property"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
 msgid "to the exact value"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
 msgid "to the value from other case property"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/tabs/tabclasses.py
 msgid "Explore Case Data (Preview)"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid ""
 "\n"
 "      This feature allows you to quickly explore your case data for ad-hoc "
@@ -14217,23 +14279,27 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid ""
 "\n"
 "              Preparing your case data for exploration...\n"
 "            "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/tabs/tabclasses.py
 msgid "Export Data"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Save Filters"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/reports/templates/reports/async/bootstrap3/filters.html
 #: corehq/apps/reports/templates/reports/async/bootstrap5/filters.html
 #: corehq/apps/reports_core/templates/reports_core/partials/bootstrap3/filter_panel.html
@@ -14241,18 +14307,21 @@ msgstr ""
 msgid "Report Filters"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Add Column"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid ""
 "\n"
 "          Loading...\n"
 "        "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid ""
 "\n"
 "          Our system is experiencing an unusually large load on resources at "
@@ -14263,14 +14332,16 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid ""
 "\n"
 "          No cases found.\n"
 "        "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid ""
 "\n"
 "          There was an issue fetching cases with these filters.\n"
@@ -14278,20 +14349,23 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Edit Column"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/reports/views.py
 msgid "Title"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Filter Data in Column"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
 msgid ""
 "\n"
 "                      Treat this property as\n"
@@ -14321,7 +14395,8 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
@@ -14330,7 +14405,8 @@ msgstr ""
 msgid "Add"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid ""
 "\n"
 "              This task is currently not supported, but we are happy to\n"
@@ -14338,12 +14414,14 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
 msgid "Ok"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/find_by_id.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/find_by_id.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/find_by_id.html
 msgid ""
 "\n"
 "    <p>\n"
@@ -14355,7 +14433,238 @@ msgid ""
 "  "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/archive_forms.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+msgid ""
+"\n"
+"                  Delete case group <strong data-bind=\"text: name\"></"
+"strong>?\n"
+"                "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+msgid ""
+"\n"
+"                  Yes, delete the case group <strong data-bind=\"text: "
+"name\"></strong>.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+msgid "Deleting Group..."
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+msgid "Delete Group"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+msgid "Group Deleted"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+msgid "Manage Cases"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+msgid ""
+"\n"
+"          Create rules for finding duplicate cases.\n"
+"          Rules are run on each form submission.\n"
+"          When rules are created or edited the rule will be locked for "
+"further changes and a backfill process will be run.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+msgid "Add Deduplication Rule"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Active"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Inactive"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+msgid "Explore Duplicates"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Activate"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Deactivate"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+msgid "Delete this rule?"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+msgid ""
+"\n"
+"                  Are you sure you want to <strong>delete</strong> this "
+"rule?\n"
+"                "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+msgid "Delete Rule"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
+#, python-format
+msgid ""
+"\n"
+"      Cases in Group\n"
+"      <a href=\"#\" id=\"toggle-group-name\">%(group_name)s <small><i "
+"class=\"fa fa-edit\"></i> Edit</small></a>\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
+msgid "cases processed. Please do not refresh or close this page."
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
+msgid "Cases were successfully added:"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
+msgid "Issues encountered during bulk upload:"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
+msgid "Processing file..."
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
+msgid "Removing..."
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
+msgid "Case Removed"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
+msgid "Bulk upload cases to group"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/auto_update_rules.html
+msgid ""
+"\n"
+"            Automatically update or btn-close cases from CommCare HQ  \n"
+"          "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#, python-format
+msgid ""
+"\n"
+"          This deduplication rule is currently backfilling. You will be able "
+"to edit it once it has completed. <strong>%(progress)s%%</strong> "
+"(%(complete)s / %(total)s) cases processed.  \n"
+"          Reload the page to see the updated progress.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
+msgid ""
+"\n"
+"                      Treat this property as\n"
+"                      <select class=\"form-select filter-type\"\n"
+"                              data-bind=\"options: $root."
+"editColumnController.availableFilterNames,\n"
+"                                         optionsText: function (val) {\n"
+"                                           return $root.editColumnController."
+"filterTitleByName[val];\n"
+"                                         },\n"
+"                                         value: filterName,\n"
+"                                         event: { change: $root."
+"editColumnController.updateFilterName }\"></select>\n"
+"                      and match\n"
+"                      <select data-bind=\"value: $parent.clause,  \n"
+"                                         event: { change: $root."
+"editColumnController.updateFilter }\"\n"
+"                              class=\"form-control filter-clause\">\n"
+"                        <option value=\"all\">\n"
+"                          all of the\n"
+"                        </option>\n"
+"                        <option value=\"any\">\n"
+"                          any of the\n"
+"                        </option>\n"
+"                      </select>\n"
+"                      following conditions:\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
+msgid "cases processed. Please do not refresh or btn-close this page."
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/archive_forms.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/archive_forms.html
 msgid ""
 "\n"
 "        Something went wrong! There was an error. If you see this error "
@@ -14363,16 +14672,19 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/archive_forms.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/archive_forms.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/archive_forms.html
 #, python-format
 msgid "Select all %(total_xForms)s forms"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/archive_forms.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/archive_forms.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/archive_forms.html
 msgid "(<span class=\"selectedCount \">0</span> forms selected)"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 #, python-format
 msgid ""
 "\n"
@@ -14386,184 +14698,43 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 msgid "Select all"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 msgid "Select New Owner..."
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 msgid "Case Copy"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 msgid "Case Reassignment"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
-msgid ""
-"\n"
-"                  Delete case group <strong data-bind=\"text: name\"></"
-"strong>?\n"
-"                "
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
-msgid ""
-"\n"
-"                  Yes, delete the case group <strong data-bind=\"text: "
-"name\"></strong>.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
-msgid "Deleting Group..."
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
-msgid "Delete Group"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
-msgid "Group Deleted"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
-msgid "Manage Cases"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-msgid ""
-"\n"
-"          Create rules for finding duplicate cases.\n"
-"          Rules are run on each form submission.\n"
-"          When rules are created or edited the rule will be locked for "
-"further changes and a backfill process will be run.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-msgid "Add Deduplication Rule"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Active"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Inactive"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-msgid "Explore Duplicates"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Activate"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/mobile_workers.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Deactivate"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-msgid "Delete this rule?"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-msgid ""
-"\n"
-"                  Are you sure you want to <strong>delete</strong> this "
-"rule?\n"
-"                "
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-msgid "Delete Rule"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
-#, python-format
-msgid ""
-"\n"
-"      Cases in Group\n"
-"      <a href=\"#\" id=\"toggle-group-name\">%(group_name)s <small><i "
-"class=\"fa fa-edit\"></i> Edit</small></a>\n"
-"    "
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
-msgid "cases processed. Please do not refresh or close this page."
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
-msgid "Cases were successfully added:"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
-msgid "Issues encountered during bulk upload:"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
-msgid "Processing file..."
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
-msgid "Removing..."
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
-msgid "Case Removed"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
-msgid "Bulk upload cases to group"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 msgid "Add Automatic Case Update Rule"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 msgid "Unlock Linked Rules For Me"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 msgid "Lock Linked Rules For Me"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 msgid ""
 "\n"
 "            Linked configurations are controlled from a separate, linked "
@@ -14573,7 +14744,8 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 msgid ""
 "\n"
 "                          Are you sure you want to <strong>delete</strong> "
@@ -14581,26 +14753,234 @@ msgid ""
 "                        "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 msgid ""
 "All rules for a specific case type are run together and are referred to as "
 "rule runs. This table displays information associated with each rule run."
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 msgid "Started On"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 msgid "Finished On"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 msgid "# of Cases Updated"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 msgid "# of Cases Closed"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
+msgid "Close the case"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
+msgid "Update case property"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
+msgid "Custom action"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
+msgid "All cases matching the above criteria will be closed"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
+msgid "Custom action ID"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
+#: corehq/messaging/scheduling/forms.py
+msgid "Requires System Admin"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "Add Filter"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Select a filter"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Case not modified since"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Date case property"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Date case property (advanced)"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
+#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
+#: corehq/apps/events/forms.py corehq/apps/events/views.py
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/locations/templates/locations/manage/locations.html
+#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
+#: corehq/apps/reports/filters/fixtures.py
+#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
+#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
+#: corehq/apps/sms/models.py
+#: corehq/apps/styleguide/examples/bootstrap5/select2_manual_form.py
+#: corehq/apps/users/forms.py corehq/ex-submodules/casexml/apps/case/views.py
+#: corehq/motech/fhir/const.py corehq/motech/openmrs/forms.py
+msgid "Location"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Parent case is closed"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Custom filter"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "UCR Filter"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "AND"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "OR"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Case not modified in"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "equals"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "does not equal"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "has a value"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "does not have a value"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "matches the regular expression"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "When the current date is"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "greater than"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "greater than or equal"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "less than"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "less than or equal"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "the date in case property"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "plus"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "minus"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "The parent case is closed"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Custom filter ID"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Case belongs to location"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Include cases from child locations"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Filter Definition"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/find_by_id_form.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/find_by_id_form.html
+msgid "Find"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_complete_email.html
@@ -14694,172 +15074,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
 msgid "Case Reassignment Failed! Details:"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-msgid "Close the case"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-msgid "Update case property"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-msgid "Custom action"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-msgid "All cases matching the above criteria will be closed"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-msgid "Custom action ID"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-#: corehq/messaging/scheduling/forms.py
-msgid "Requires System Admin"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "Add Filter"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Select a filter"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Case not modified since"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Date case property"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Date case property (advanced)"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
-#: corehq/apps/events/forms.py corehq/apps/events/views.py
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/locations/templates/locations/manage/locations.html
-#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
-#: corehq/apps/reports/filters/fixtures.py
-#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
-#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
-#: corehq/apps/sms/models.py
-#: corehq/apps/styleguide/examples/bootstrap5/select2_manual_form.py
-#: corehq/apps/users/forms.py corehq/ex-submodules/casexml/apps/case/views.py
-#: corehq/motech/fhir/const.py corehq/motech/openmrs/forms.py
-msgid "Location"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Parent case is closed"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Custom filter"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "UCR Filter"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "AND"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "OR"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Case not modified in"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "equals"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "does not equal"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "has a value"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "does not have a value"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "matches the regular expression"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "When the current date is"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "greater than"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "greater than or equal"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "less than"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "less than or equal"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "the date in case property"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "plus"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "minus"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "The parent case is closed"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Custom filter ID"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Case belongs to location"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Include cases from child locations"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "Filter Definition"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/find_by_id_form.html
-msgid "Find"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
@@ -18886,6 +19100,14 @@ msgstr ""
 msgid "Last Form Submission [UTC]"
 msgstr ""
 
+#: corehq/apps/enterprise/enterprise.py
+msgid "OData Feeds Used"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "OData Feeds Available"
+msgstr ""
+
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/forms.py
 #: corehq/apps/registration/forms.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/users/forms.py corehq/apps/users/templates/users/web_users.html
@@ -18990,23 +19212,52 @@ msgid "# of OData Feeds"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-msgid "Odata feeds used"
-msgstr ""
-
-#: corehq/apps/enterprise/enterprise.py
-msgid "Odata feeds available"
-msgstr ""
-
-#: corehq/apps/enterprise/enterprise.py
-msgid "Report Names"
-msgstr ""
-
-#: corehq/apps/enterprise/enterprise.py
-msgid "Number of rows"
+msgid "Number of Rows"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "ERROR: Too many exports. Please contact customer service"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+#, python-format
+msgid "% of Domains using Case Management"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# Applications"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# Surveys Only"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# Cases Only"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# Mixed"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Data Exports"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "# of Exports"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "SubType"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Daily Saved Export"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Excel Integration"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
