@@ -3,7 +3,6 @@ from collections import defaultdict
 from django.contrib import admin
 from django.db import models
 from django.urls import reverse
-from django.utils.functional import cached_property
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.motech.utils import b64_aes_decrypt
@@ -165,7 +164,7 @@ class TransifexOrganization(models.Model):
     def __str__(self):
         return self.name + ' (' + self.slug + ')'
 
-    @cached_property
+    @property
     def plaintext_api_token(self):
         return b64_aes_decrypt(self.api_token)
 
