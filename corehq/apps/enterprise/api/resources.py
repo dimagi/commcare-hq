@@ -500,7 +500,7 @@ class CommCareVersionComplianceResource(ODataEnterpriseReportResource):
         return ('mobile_worker', 'domain',)
 
 
-class APIUsageResource(ODataEnterpriseReportResource):
+class APIKeysResource(ODataEnterpriseReportResource):
     web_user = fields.CharField()
     api_key_name = fields.CharField()
     scope = fields.CharField()
@@ -508,7 +508,7 @@ class APIUsageResource(ODataEnterpriseReportResource):
     created_date = fields.DateTimeField()
     last_used_date = fields.DateTimeField()
 
-    REPORT_SLUG = EnterpriseReport.API_USAGE
+    REPORT_SLUG = EnterpriseReport.API_KEYS
 
     def dehydrate(self, bundle):
         bundle.data['web_user'] = bundle.obj[0]

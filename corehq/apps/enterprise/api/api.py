@@ -10,7 +10,7 @@ from corehq.apps.enterprise.api.resources import (
     WebUserResource,
     DataExportReportResource,
     SMSResource,
-    APIUsageResource,
+    APIKeysResource,
     TwoFactorAuthResource,
 )
 
@@ -24,5 +24,5 @@ v1_api.register(CaseManagementResource())
 v1_api.register(DataExportReportResource())
 v1_api.register(CommCareVersionComplianceResource())
 v1_api.register(SMSResource())
-v1_api.register(APIUsageResource())
+v1_api.register(APIKeysResource())
 v1_api.register(TwoFactorAuthResource())
