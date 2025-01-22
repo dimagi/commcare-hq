@@ -263,14 +263,15 @@ class ConnectionSettings(models.Model):
         this instance. Used for informing users, and determining whether
         the instance can be deleted.
         """
+        # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
 
         kinds = set()
         if self.sqldatasetmap_set.exists():
             kinds.add(_('DHIS2 DataSet Maps'))
         if self.repeaters.exists():
             kinds.add(_('Data Forwarding'))
-
-        # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
+        if self.kycconfig_set.exists():
+            kinds.add(_('KYC Integration'))
 
         return kinds
 
