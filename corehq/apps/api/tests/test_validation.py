@@ -126,6 +126,7 @@ class TestWebUserResourceValidator(TestCase):
                          ['A profile must be assigned to users of the following type(s): Web Users'])
         self.definition.profile_required_for_user_type = []
         self.definition.save()
+        self.spec.new_or_existing_profile_name = None
 
     def test_validate_profile_with_conflicting_user_data(self):
         self.spec.new_or_existing_profile_name = 'character'
