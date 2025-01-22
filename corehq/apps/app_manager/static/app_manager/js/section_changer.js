@@ -46,7 +46,7 @@ hqDefine("app_manager/js/section_changer", function () {
     // Determine if section should be shown or not, based on localStorage and given default
     var shouldCollapse = function (page, section, defaultCollapse) {
         var key = getKey(page, section);
-        return localStorage.hasOwnProperty(key) ? localStorage.getItem(key) : defaultCollapse;
+        return _.has(localStorage, key) ? localStorage.getItem(key) : defaultCollapse;
     };
 
     // Attach section changer UI to a form's save bar
