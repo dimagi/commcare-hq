@@ -14,6 +14,14 @@ hqDefine("app_manager/js/app_view", [
     "translations/js/translations",
     "app_manager/js/app_manager",
     "app_manager/js/section_changer",
+    "hqwebapp/js/select2_knockout_bindings.ko",
+    "app_manager/js/widgets",   // app version widget when copying an app
+    "app_manager/js/download_async_modal",  // for the "Download ZIP" button on the multimedia tab
+    "hqwebapp/js/bootstrap3/widgets",
+    "app_manager/js/add_ons",
+    "app_manager/js/settings/translations",
+    "app_manager/js/custom_assertions",
+    "hqwebapp/js/bootstrap3/knockout_bindings.ko",
 ], function (
     $,
     ko,
