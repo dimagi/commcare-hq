@@ -47,6 +47,8 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.apps.users.models import CouchUser, HQApiKey, Invitation, WebUser
 
+from corehq.motech.repeaters.models import Repeater
+
 
 class EnterpriseReport(ABC):
     DOMAINS = 'domains'
@@ -60,6 +62,7 @@ class EnterpriseReport(ABC):
     SMS = 'sms'
     API_KEYS = 'api_keys'
     TWO_FACTOR_AUTH = '2fa'
+    DATA_FORWARDING = 'data_forwarding'
     APP_VERSION_COMPLIANCE = 'app_version_compliance'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
@@ -115,6 +118,8 @@ class EnterpriseReport(ABC):
             report = EnterpriseAPIReport(account, couch_user, **kwargs)
         elif slug == cls.TWO_FACTOR_AUTH:
             report = Enterprise2FAReport(account, couch_user, **kwargs)
+        elif slug == cls.DATA_FORWARDING:
+            report = EnterpriseDataForwardingReport(account, couch_user, **kwargs)
         elif slug == cls.APP_VERSION_COMPLIANCE:
             report = EnterpriseAppVersionComplianceReport(account, couch_user, **kwargs)
 
@@ -738,6 +743,33 @@ class Enterprise2FAReport(EnterpriseReport):
         if domain_obj.two_factor_auth:
             return []
         return [(domain_obj.name,)]
+
+
+class EnterpriseDataForwardingReport(EnterpriseReport):
+    title = gettext_lazy('Data Forwarding')
+    total_description = gettext_lazy('# of Data Forwarders')
+
+    @property
+    def headers(self):
+        return [_('Project Space'), _('Service Name'), _('Type'), _('Last Modified [UTC]')]
+
+    def total_for_domain(self, domain_obj):
+        return Repeater.objects.filter(domain=domain_obj.name).count()
+
+    def rows_for_domain(self, domain_obj):
+        repeaters = Repeater.objects.filter(domain=domain_obj.name)
+        rows = []
+        for repeater in repeaters:
+            rows.append(
+                [
+                    domain_obj.name,
+                    repeater.name,
+                    repeater.friendly_name,
+                    self.format_date(repeater.last_modified)
+                ]
+            )
+
+        return rows
 
 
 class EnterpriseAppVersionComplianceReport(EnterpriseReport):
