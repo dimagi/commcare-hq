@@ -11,7 +11,7 @@ from corehq.util.metrics.tests.utils import capture_metrics
 from corehq.util.test_utils import capture_log_output
 
 from .. import experiment
-from ..models import ExperimentEnabler, _get_enablers, is_enabled
+from ..models import ExperimentEnabler, _get_enablers, is_enabled, should_record_metrics
 
 
 def enabled(percent, path='module.path', campaign='test'):
@@ -24,6 +24,7 @@ def enabled(percent, path='module.path', campaign='test'):
         )
         _get_enablers.clear(campaign)
         yield
+        _get_enablers.clear(campaign)
     return enable
 
 
@@ -218,6 +219,63 @@ class TestIsEnabled(TestCase):
             for x in range(300):
                 is_enabled('test', 'module.path')
         assert calls == 1
+
+    @enabled(0, path='module')
+    def test_parent_package_is_disabled(self):
+        assert is_enabled('test', 'module.path') is False
+        assert should_record_metrics('test', 'module.path')
+        assert is_enabled('test', 'other.path') is False
+        assert should_record_metrics('test', 'other.path')
+
+    @enabled(100, path='module')
+    def test_parent_package_is_enabled(self):
+        assert is_enabled('test', 'module.path')
+        assert should_record_metrics('test', 'module.path')
+        assert is_enabled('test', 'other.path') is False
+        assert should_record_metrics('test', 'other.path')
+
+    @enabled(102, path='module')
+    def test_parent_package_new_only_enabled_should_not_record_metrics(self):
+        assert is_enabled('test', 'module.path') is None
+        assert not should_record_metrics('test', 'module.path')
+        assert is_enabled('test', 'other.path') is False
+        assert should_record_metrics('test', 'other.path')
+
+    @enabled(0, path='')
+    def test_all_packages_is_disabled(self):
+        assert is_enabled('test', 'module.path') is False
+        assert should_record_metrics('test', 'module.path')
+        assert is_enabled('test', 'other.path') is False
+        assert should_record_metrics('test', 'other.path')
+
+    @enabled(100, path='')
+    def test_all_packages_enabled(self):
+        assert is_enabled('test', 'module.path')
+        assert should_record_metrics('test', 'module.path')
+        assert is_enabled('test', 'other.path')
+        assert should_record_metrics('test', 'other.path')
+
+    @enabled(102, path='')
+    def test_all_packages_new_only_enabled_should_not_record_metrics(self):
+        assert is_enabled('test', 'module.path') is None
+        assert not should_record_metrics('test', 'module.path')
+        assert is_enabled('test', 'other.path') is None
+        assert not should_record_metrics('test', 'other.path')
+
+    @enabled(-1, path='')
+    @enabled(100, path='module')
+    def test_specific_path_wins(self):
+        assert is_enabled('test', 'module.path')
+        assert should_record_metrics('test', 'module.path')
+        assert is_enabled('test', 'other.path') is False
+        assert not should_record_metrics('test', 'other.path')
+
+    @enabled(100, campaign='other')
+    def test_other_campaign(self):
+        assert is_enabled('test', 'module.path') is False
+        assert should_record_metrics('test', 'module.path')
+        assert is_enabled('test', 'other.path') is False
+        assert should_record_metrics('test', 'other.path')
 
 
 def make_func(error=None):

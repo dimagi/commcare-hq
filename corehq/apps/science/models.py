@@ -37,8 +37,7 @@ def is_enabled(campaign, path):
     :return: False if only the old code path should run, True if both
         old and new should run, and None if only new should run.
     """
-    enablers = _get_enablers(campaign)
-    value = enablers.get(path, -1)
+    value = _get_enabled_percent_for_path(campaign, path)
     if 0 < value < 100:
         return random.randint(1, 100) <= value
     return None if value > 100 else (value > 0)
@@ -49,9 +48,14 @@ def should_record_metrics(campaign, path):
 
     :return: True if metrics should be recorded, otherwise False.
     """
+    return -1 < _get_enabled_percent_for_path(campaign, path) < 102
+
+
+def _get_enabled_percent_for_path(campaign, path):
     enablers = _get_enablers(campaign)
-    value = enablers.get(path, -1)
-    return -1 < value < 102
+    while path and path not in enablers:
+        path = path.rsplit(".", 1)[0] if "." in path else ""
+    return enablers.get(path, 0)
 
 
 HALF_HOUR = 30 * 60
