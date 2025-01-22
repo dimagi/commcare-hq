@@ -33,16 +33,14 @@ def migrate_tableau_connected_app_secret_value(apps, schema_editor):
 def revert_tableau_connected_app_secret_value(apps, schema_editor):
     TableauConnectedApp = apps.get_model('reports', 'TableauConnectedApp')
 
-    connected_apps_to_revert = TableauConnectedApp.objects.exclude(
-        encrypted_secret_value__startswith=f'${ALGO_AES}$'
-    ).exclude(encrypted_secret_value=None).exclude(encrypted_secret_value='')
+    connected_apps_to_revert = TableauConnectedApp.objects.filter(
+        encrypted_secret_value__startswith=f'${ALGO_AES_CBC}$'
+    )
 
     for connected_app in connected_apps_to_revert:
-        encrypted_secret_value = connected_app.encrypted_secret_value
-        if encrypted_secret_value.startswith(f'${ALGO_AES_CBC}$'):
-            connected_app.encrypted_secret_value = reencrypt_cbc_to_ecb_mode(
-                encrypted_secret_value, f'${ALGO_AES_CBC}$'
-            )
+        connected_app.encrypted_secret_value = reencrypt_cbc_to_ecb_mode(
+            connected_app.encrypted_secret_value, f'${ALGO_AES_CBC}$'
+        )
         connected_app.save()
 
 
