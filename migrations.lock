@@ -647,6 +647,7 @@ integration
  0003_hmaccalloutsettings
  0004_gaenotpserversettings
  0005_gaenotpserversettings_server_type
+ 0006_kycconfig
 ivr
  0001_initial
  0002_call_app_id

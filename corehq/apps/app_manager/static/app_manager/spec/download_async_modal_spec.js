@@ -1,7 +1,10 @@
-/* eslint-env mocha */
+import $ from "jquery";
+import sinon from "sinon/pkg/sinon";
+
+import asyncDownloader from "app_manager/js/download_async_modal";
+
 describe('Async Download Modal', function () {
     var url = 'test_url';
-    var asyncDownloader = hqImport('app_manager/js/download_async_modal').asyncDownloader;
 
     describe('#AsyncDownloader.isDone', function () {
         var downloader = null,
@@ -9,7 +12,7 @@ describe('Async Download Modal', function () {
             downloadPollId = '12345';
 
         beforeEach(function () {
-            downloader = asyncDownloader(modal);
+            downloader = asyncDownloader.asyncDownloader(modal);
             downloader.download_poll_id = downloadPollId;
         });
 
@@ -63,7 +66,7 @@ describe('Async Download Modal', function () {
 
         before(function () {
             clock = sinon.useFakeTimers();
-            downloader = asyncDownloader(modal);
+            downloader = asyncDownloader.asyncDownloader(modal);
         });
 
         after(function () {
