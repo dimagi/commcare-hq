@@ -4,15 +4,15 @@ hqDefine("app_manager/js/modules/module_view", function () {
         $('.overwrite-danger').on("click", function () {
             hqImport('analytix/js/kissmetrix').track.event("Overwrite Case Lists/Case Details");
         });
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            moduleBrief = initial_page_data('module_brief'),
+        var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
+            moduleBrief = initialPageData.get('module_brief'),
             moduleType = moduleBrief.module_type,
-            options = initial_page_data('js_options') || {};
+            options = initialPageData.get('js_options') || {};
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(gettext("Menu Settings"));
         // Set up details
         if (moduleBrief.case_type) {
-            var details = initial_page_data('details');
+            var details = initialPageData.get('details');
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
                 var detailScreenConfigOptions = {
@@ -28,16 +28,16 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     properties: detail.properties,
                     lang: moduleBrief.lang,
                     langs: moduleBrief.langs,
-                    saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_module_detail_screens'),
-                    parentModules: initial_page_data('parent_case_modules'),
-                    allCaseModules: initial_page_data('all_case_modules'),
+                    saveUrl: initialPageData.reverse('edit_module_detail_screens'),
+                    parentModules: initialPageData.get('parent_case_modules'),
+                    allCaseModules: initialPageData.get('all_case_modules'),
                     caseTileTemplateOptions: options.case_tile_template_options,
                     caseTileTemplateConfigs: options.case_tile_template_configs,
                     childCaseTypes: detail.subcase_types,
                     fixture_columns_by_type: options.fixture_columns_by_type || {},
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
-                    multimedia: initial_page_data('multimedia_object_map'),
+                    multimedia: initialPageData.get('multimedia_object_map'),
                 };
                 _.extend(detailScreenConfigOptions, options.search_config);
                 var detailScreenConfig = hqImport("app_manager/js/details/screen_config")(detailScreenConfigOptions);
@@ -52,14 +52,14 @@ hqDefine("app_manager/js/modules/module_view", function () {
             }
         }
 
-        var originalCaseType = initial_page_data('case_type');
+        var originalCaseType = initialPageData.get('case_type');
         var casesExist = false;
         var deprecatedCaseTypes = [];
         // If this async request is slow or fails, we will default to hiding the case type changed and
         // deprecated case type warnings.
         $.ajax({
             method: 'GET',
-            url: hqImport('hqwebapp/js/initial_page_data').reverse('existing_case_types'),
+            url: initialPageData.reverse('existing_case_types'),
             success: function (data) {
                 casesExist = data.existing_case_types.includes(originalCaseType);
                 deprecatedCaseTypes = data.deprecated_case_types;
@@ -155,7 +155,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
         // Module filter
         var $moduleFilter = $('#module-filter');
         if ($moduleFilter.length) {
-            $moduleFilter.koApplyBindings({xpath: initial_page_data("module_filter") || ''});
+            $moduleFilter.koApplyBindings({xpath: initialPageData.get("module_filter") || ''});
         }
 
         // UCR last updated tile
@@ -169,7 +169,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
         var lazyloadCaseListFields = $('#lazy-load-case-list-fields')
         if (lazyloadCaseListFields.length > 0) {
            lazyloadCaseListFields.koApplyBindings({
-                lazy_load_case_list_fields: ko.observable(initial_page_data('lazy_load_case_list_fields')),
+                lazy_load_case_list_fields: ko.observable(initialPageData.get('lazy_load_case_list_fields')),
             });
         }
 
@@ -181,7 +181,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
 
                 self.caseListForm = ko.observable(originalFormId);
                 self.caseListFormSettingsUrl = ko.computed(function () {
-                    return hqImport("hqwebapp/js/initial_page_data").reverse("view_form", self.caseListForm());
+                    return initialPageData.reverse("view_form", self.caseListForm());
                 });
                 self.postFormWorkflow = ko.observable(postFormWorkflow);
                 self.endOfRegistrationOptions = ko.computed(function () {
@@ -229,7 +229,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
 
                 return self;
             };
-            var case_list_form_options = initial_page_data('case_list_form_options');
+            var case_list_form_options = initialPageData.get('case_list_form_options');
             var caseListForm = caseListFormModel(
                 case_list_form_options ? case_list_form_options.form.form_id : null,
                 case_list_form_options ? case_list_form_options.options : [],
@@ -247,7 +247,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
         if (moduleType === 'shadow') {
             // Shadow module checkboxes for including/excluding forms
             var ShadowModule = hqImport('app_manager/js/modules/shadow_module_settings').ShadowModule,
-                shadowOptions = initial_page_data('shadow_module_options');
+                shadowOptions = initialPageData.get('shadow_module_options');
             $('#sourceModuleForms').koApplyBindings(new ShadowModule(
                 shadowOptions.modules,
                 shadowOptions.source_module_id,
@@ -260,10 +260,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
                 var visitScheduler = VisitScheduler.moduleScheduler({
                     home: $('#module-scheduler'),
-                    saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_schedule_phases'),
+                    saveUrl: initialPageData.reverse('edit_schedule_phases'),
                     hasSchedule: moduleBrief.has_schedule,
-                    schedulePhases: initial_page_data('schedule_phases'),
-                    caseProperties: initial_page_data('details')[0].properties,
+                    schedulePhases: initialPageData.get('schedule_phases'),
+                    caseProperties: initialPageData.get('details')[0].properties,
                 });
                 visitScheduler.init();
             }
@@ -274,7 +274,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
         }
 
         var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
-        setupValidation(hqImport('hqwebapp/js/initial_page_data').reverse('validate_module_for_build'));
+        setupValidation(initialPageData.reverse('validate_module_for_build'));
 
         // show display style options only when module configured to show module and then forms
         var $menu_mode = $('#put_in_root');
