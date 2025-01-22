@@ -52,7 +52,7 @@ class DeviceRateLimiter:
                 'commcare.devices_per_user.device_count',
                 device_count + 1,
                 bucket_tag='count',
-                buckets=[3, 5, 8, 10],
+                buckets=[3, 6, 11, 21, 51],
                 tags={'domain': domain, 'user_id': user_id},
             )
             return False
