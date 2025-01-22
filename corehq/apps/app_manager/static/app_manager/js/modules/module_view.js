@@ -15,6 +15,7 @@ hqDefine("app_manager/js/modules/module_view", [
     "hqwebapp/js/key-value-mapping",
     //{% include "app_manager/partials/xpathValidator.html" %}  // TODO: xpathValidator
     "app_manager/js/apps_base",
+    "app_manager/js/custom_assertions",
 ], function (
     $,
     ko,
