@@ -1,7 +1,6 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load statici18n %}
-{% requirejs_main %} {# todo, figure out webpack hooks for js tests #}
 {% js_entry %}
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -17,8 +16,6 @@
     </script>
 
     {% block stylesheets %}{% endblock %}
-
-    {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=False %}
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
