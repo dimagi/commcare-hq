@@ -750,6 +750,7 @@ class Enterprise2FAReport(EnterpriseReport):
 
 class EnterpriseDataForwardingReport(EnterpriseReport):
     title = gettext_lazy('Data Forwarding')
+    total_description = gettext_lazy('# of Data Forwarders')
 
     @property
     def headers(self):
