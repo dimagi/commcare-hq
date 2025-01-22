@@ -7,6 +7,15 @@ hqDefine("app_manager/js/settings/commcare_settings", [
     "hqwebapp/js/bootstrap3/main",
     "app_manager/js/settings/app_logos",
     "clipboard",
+    "app_manager/js/app_view",  // TODO: rename this and make it the main entry point? This file is mostly the CommcareSettings model
+    "app_manager/js/app_view_application",   // TODO: combine this with app_manager/js/app_view?
+    "app_manager/js/widgets",   // app version widget when copying an app
+    "app_manager/js/download_async_modal",  // TODO: test if this is needed, I think this it's for the download multimedia button
+    "hqwebapp/js/bootstrap3/widgets",
+    "app_manager/js/add_ons",
+    "app_manager/js/settings/translations", // TODO: keep models in here and move handlers into this entry point?  Don't love that this has side effects. Same goes for app_manager/js/add_ons and possibly others
+    "app_manager/js/supported_languages",
+    "commcarehq",
 ], function (
     $,
     ko,
