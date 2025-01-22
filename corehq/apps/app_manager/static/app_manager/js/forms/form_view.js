@@ -8,6 +8,15 @@ hqDefine("app_manager/js/forms/form_view", [
     "app_manager/js/forms/form_workflow",
     "hqwebapp/js/toggles",
     "app_manager/js/forms/custom_instances",
+    "app_manager/js/apps_base",
+    "app_manager/js/nav_menu_media",
+    "app_manager/js/forms/copy_form_to_app",
+    "app_manager/js/forms/case_knockout_bindings",  // casePropertyAutocomplete and questionsSelect
+    "app_manager/js/forms/case_config_ui",          // non-advanced modules only
+    "app_manager/js/forms/advanced/case_config_ui", // advanced modules only
+    // {% include "app_manager/partials/xpathValidator.html" %}   // TODO: deal with xpathValidator
+    "app_manager/js/custom_assertions",
+    "commcarehq",
 ], function (
     $,
     ko,
@@ -104,7 +113,7 @@ hqDefine("app_manager/js/forms/form_view", [
         });
 
         // Validation for build
-        var setupValidation = appManager.setupValidation;
+        var setupValidation = appManagerUtils.setupValidation;
         setupValidation(initialPageData.reverse("validate_form_for_build"));
 
         // Analytics for renaming form
