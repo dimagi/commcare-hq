@@ -3,11 +3,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'app_manager/js/import_app.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% js_entry_b3 'app_manager/js/import_app' %}
 
 {% block page_navigation %}
   <nav class="appmanager-content">
