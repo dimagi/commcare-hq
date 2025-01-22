@@ -3,6 +3,8 @@ hqDefine("app_manager/js/apps_base", [
     "hqwebapp/js/initial_page_data",
     "app_manager/js/preview_app",
     "hqwebapp/js/layout",
+    "jquery-textchange/jquery.textchange",
+    "commcarehq",
 ], function (
     $,
     initialPageData,
