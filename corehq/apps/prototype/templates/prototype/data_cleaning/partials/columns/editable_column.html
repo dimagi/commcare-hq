@@ -1,0 +1,131 @@
+{% load i18n %}
+{% load django_tables2 %}
+{% load hq_shared_tags %}
+{% load data_cleaning_tags %}
+
+<div
+  class="editable-column-container"
+  x-data="{
+    isEditing: false,
+    isSubmitting: false,
+    cellValue: '{% if edited_value is not None %}{{ edited_value|dc_escapejs }}{% else %}{{ value|dc_escapejs }}{% endif %}',
+  }"
+  {% if is_partial_update %}
+    x-init="$dispatch('updateApplyEditsButton', {{ table.column_manager.has_edits|BOOL }})"
+  {% endif %}
+>
+  <div
+    class="inline-edit-block"
+    x-show="!isEditing"
+    @dblclick="isEditing = !isSubmitting"
+  >
+    {% if edited_value is not None %}
+      <form
+        hx-post="{{ request.path_info }}{% querystring %}"
+        hq-hx-action="cancel_edit"
+        hx-vals='{
+          "column": "{{ column.accessor }}",
+          "recordId": "{{ record.id }}"
+        }'
+        hx-target="closest .editable-column-container"
+        hx-swap="outerHTML"
+        hx-disabled-elt="find button"
+      >
+        <div class="d-flex align-items-center">
+          <div class="dc-diff-view">
+            <div class="dc-diff-before">
+              <span x-show="!$store.whitespaces.show">
+                {% if value == None %}
+                  {% dc_null_value %}
+                {% else %}
+                  {{ value }}
+                {% endif %}
+              </span>
+              <span x-show="$store.whitespaces.show">
+                {{ value|whitespaces }}
+              </span>
+            </div>
+            <br />
+            <div class="dc-diff-after">
+              <span x-show="!$store.whitespaces.show">
+                {% if edited_value == Ellipsis %}
+                  {% dc_null_value %}
+                {% else %}
+                  {{ edited_value }}
+                {% endif %}
+              </span>
+              <span x-show="$store.whitespaces.show">
+                {{ edited_value|whitespaces }}
+              </span>
+            </div>
+          </div>
+          <div class="ms-2">
+            <button
+              class="btn btn-outline-danger btn-sm htmx-loading" type="submit"
+              @click="isSubmitting = true"
+            ><i class="fa fa-close"></i></button>
+          </div>
+        </div>
+      </form>
+    {% else %}
+
+      {% if value %}
+        <div x-show="!$store.whitespaces.show">
+          {{ value }}
+        </div>
+        <div
+          class="dc-value"
+          x-show="$store.whitespaces.show"
+        >
+          {{ value|whitespaces }}
+        </div>
+      {% else %}
+        {% if value == None %}
+          {% dc_null_value %}
+        {% else %}
+          &nbsp;
+        {% endif %}
+      {% endif %}
+
+    {% endif %}
+    <button
+      class="btn btn-link btn-sm inline-edit-action" type="button"
+      @click="isEditing = true"
+      :disabled="isSubmitting"
+    >
+      <i class="fa fa-pencil"></i> <span class="visually-hidden">{% trans "Edit Value" %}</span>
+    </button>
+  </div>
+
+  <div x-show="isEditing">
+    <form
+      hx-post="{{ request.path_info }}{% querystring %}"
+      hq-hx-action="edit_cell_value"
+      hx-vals='{
+        "recordId": {{ record.id }},
+        "column": "{{ column.accessor }}"
+      }'
+      hx-target="closest .editable-column-container"
+      hx-swap="outerHTML"
+      hx-disabled-elt="find button"
+    >
+      <div class="input-group">
+        <input
+          class="form-control" type="text"
+          name="newValue"
+          x-model="cellValue"
+        />
+        <button
+          class="btn btn-primary htmx-loading" type="submit"
+          @click="isSubmitting = true"
+        ><i class="fa fa-check"></i></button>
+        <button
+          class="btn btn-outline-danger" type="button"
+          :disabled="isSubmitting"
+          @click="isEditing = false"
+        ><i class="fa fa-close"></i></button>
+      </div>
+    </form>
+  </div>
+
+</div>
