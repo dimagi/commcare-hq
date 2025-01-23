@@ -73,6 +73,7 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from django.conf import settings
 from django.db import models, router
 from django.db.models.base import Deferred
 from django.dispatch import receiver
@@ -102,8 +103,8 @@ from corehq.form_processor.models import (
     XFormInstance,
 )
 from corehq.motech.const import (
-    MAX_REQUEST_LOG_LENGTH,
     ALL_REQUEST_METHODS,
+    MAX_REQUEST_LOG_LENGTH,
     REQUEST_POST,
 )
 from corehq.motech.models import ConnectionSettings
@@ -125,6 +126,7 @@ from .const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
+    MIN_REPEATER_RETRY_WAIT,
     MIN_RETRY_WAIT,
     State,
 )
@@ -233,22 +235,44 @@ class RepeaterSuperProxy(models.Model):
 
 class RepeaterManager(models.Manager):
 
-    def all_ready(self):
-        """
-        Return all Repeaters ready to be forwarded.
-        """
-        not_paused = models.Q(is_paused=False)
-        next_attempt_not_in_the_future = (
-            models.Q(next_attempt_at__isnull=True)
-            | models.Q(next_attempt_at__lte=timezone.now())
+    def get_all_ready_ids_by_domain(self):
+        next_attempt_null = (
+            self.get_all_ready_next_attempt_null()
+            .distinct()
+            .values_list('domain', 'id')
         )
-        repeat_records_ready_to_send = models.Q(
-            repeat_records__state__in=(State.Pending, State.Fail)
+        next_attempt_now = (
+            self.get_all_ready_next_attempt_now()
+            .distinct()
+            .values_list('domain', 'id')
         )
-        return (self.get_queryset()
-                .filter(not_paused)
-                .filter(next_attempt_not_in_the_future)
-                .filter(repeat_records_ready_to_send))
+        query = next_attempt_null.union(next_attempt_now, all=True)
+        results = defaultdict(list)
+        for (domain, id_uuid) in query.all():
+            results[domain].append(id_uuid.hex)
+        return results
+
+    def get_all_ready_next_attempt_null(self):
+        # See `get_all_ready_next_attempt_now()`. Splitting the queries
+        # speeds up total query time by using different indexes.
+        # NOTE: Returns one row per RepeatRecord, not per Repeater.
+        return (
+            self.get_queryset()
+            .filter(is_paused=False)
+            .filter(next_attempt_at__isnull=True)
+            .filter(repeat_records__state__in=(State.Pending, State.Fail))
+        )
+
+    def get_all_ready_next_attempt_now(self):
+        # See `get_all_ready_next_attempt_null()`. Splitting the queries
+        # speeds up total query time by using different indexes.
+        # NOTE: Returns one row per RepeatRecord, not per Repeater.
+        return (
+            self.get_queryset()
+            .filter(is_paused=False)
+            .filter(next_attempt_at__lte=timezone.now())
+            .filter(repeat_records__state__in=(State.Pending, State.Fail))
+        )
 
     def get_queryset(self):
         repeater_obj = self.model()
@@ -378,30 +402,69 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def repeat_records_ready(self):
-        return self.repeat_records.filter(state__in=(State.Pending, State.Fail))
+        """
+        A QuerySet of repeat records in the Pending or Fail state in the
+        order in which they were registered
+        """
+        return (
+            self.repeat_records
+            .filter(state__in=(State.Pending, State.Fail))
+            .order_by('registered_at')
+        )
 
-    def set_next_attempt(self):
-        now = datetime.utcnow()
-        interval = _get_retry_interval(self.last_attempt_at, now)
-        self.last_attempt_at = now
-        self.next_attempt_at = now + interval
+    @property
+    def num_workers(self):
+        # If num_workers is 1, repeat records are sent in the order in
+        # which they were registered.
+        num_workers = self.max_workers or settings.DEFAULT_REPEATER_WORKERS
+        return min(num_workers, settings.MAX_REPEATER_WORKERS)
+
+    def set_backoff(self):
+        self.next_attempt_at = self._get_next_attempt_at(self.last_attempt_at)
+        self.last_attempt_at = datetime.utcnow()
         # Save using QuerySet.update() to avoid a possible race condition
         # with self.pause(), etc. and to skip the unnecessary functionality
         # in RepeaterSuperProxy.save().
         Repeater.objects.filter(id=self.repeater_id).update(
-            last_attempt_at=now,
-            next_attempt_at=now + interval,
+            last_attempt_at=self.last_attempt_at,
+            next_attempt_at=self.next_attempt_at,
         )
 
-    def reset_next_attempt(self):
+    def reset_backoff(self):
         if self.last_attempt_at or self.next_attempt_at:
+            # `self._get_next_attempt_at()` uses `last_attempt_at` to
+            # determine the previous interval. Set it to `None` so that
+            # the next time we need to back off, we know it is the first
+            # interval.
             self.last_attempt_at = None
             self.next_attempt_at = None
             # Avoid a possible race condition with self.pause(), etc.
             Repeater.objects.filter(id=self.repeater_id).update(
-                last_attempt_at=None,
-                next_attempt_at=None,
+                last_attempt_at=self.last_attempt_at,
+                next_attempt_at=self.next_attempt_at,
             )
+
+    @staticmethod
+    def _get_next_attempt_at(last_attempt_at):
+        """
+        Calculates exponential backoff.
+        """
+        # Repeat records back off aggressively: The previous interval is
+        # multiplied by 3, and the minimum wait time is an hour.
+        # Repeaters are more cautious because backing off will hold up
+        # all their repeat records. If a remote endpoint is just
+        # rate-limiting, backing off for an hour is too much.
+        # MIN_REPEATER_RETRY_WAIT is only 5 minutes.
+
+        # TODO: With a less aggressive backoff, should MAX_ATTEMPTS be
+        #       increased?
+        if last_attempt_at:
+            interval = 2 * (datetime.utcnow() - last_attempt_at)
+        else:
+            interval = timedelta(0)
+        interval = max(MIN_REPEATER_RETRY_WAIT, interval)
+        interval = min(MAX_RETRY_WAIT, interval)
+        return datetime.utcnow() + interval
 
     @property
     def verify(self):
@@ -945,6 +1008,15 @@ class RepeatRecordManager(models.Manager):
             next_check__lt=datetime.utcnow() - threshold
         ).count()
 
+    @staticmethod
+    def count_all_ready():
+        # Uses *Repeater* queries that return one row per RepeatRecord.
+        # See `RepeaterManager.get_all_ready_ids_by_domain()`.
+        return (
+            Repeater.objects.get_all_ready_next_attempt_null().count()
+            + Repeater.objects.get_all_ready_next_attempt_now().count()
+        )
+
     def iterate(self, domain, repeater_id=None, state=None, chunk_size=1000):
         db = router.db_for_read(self.model)
         where = models.Q(domain=domain)
@@ -1004,11 +1076,16 @@ class RepeatRecordManager(models.Manager):
 class RepeatRecord(models.Model):
     domain = models.CharField(max_length=126)
     payload_id = models.CharField(max_length=255)
-    repeater = models.ForeignKey(Repeater,
-                                 on_delete=DB_CASCADE,
-                                 db_column="repeater_id_",
-                                 related_name='repeat_records')
-    state = models.PositiveSmallIntegerField(choices=State.choices, default=State.Pending)
+    repeater = models.ForeignKey(
+        Repeater,
+        on_delete=DB_CASCADE,
+        db_column="repeater_id_",
+        related_name='repeat_records',
+    )
+    state = models.PositiveSmallIntegerField(
+        choices=State.choices,
+        default=State.Pending,
+    )
     registered_at = models.DateTimeField()
     next_check = models.DateTimeField(null=True, default=None)
     max_possible_tries = models.IntegerField(default=MAX_BACKOFF_ATTEMPTS)
@@ -1199,15 +1276,45 @@ class RepeatRecord(models.Model):
                 raise
             except Exception as e:
                 self.handle_payload_error(str(e), traceback_str=traceback.format_exc())
-                raise
+                # Repeat records with State.Fail are retried, and repeat
+                # records with State.InvalidPayload are not.
+                #
+                # But a repeat record can have State.InvalidPayload
+                # because it was sent and rejected, so we know that the
+                # remote endpoint is healthy and responding, or because
+                # this exception occurred and it was not sent, so we
+                # don't know anything about the remote endpoint.
+                #
+                # Return None so that `tasks.update_repeater()` treats
+                # the repeat record as unsent, and does not apply or
+                # reset a backoff.
+                return None
+            return self.state
+        return None
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
-            process_repeat_record,
             process_datasource_repeat_record,
-            retry_process_repeat_record,
+            process_repeat_record,
             retry_process_datasource_repeat_record,
+            retry_process_repeat_record,
         )
+
+        def is_new_synchronous_case_repeater_record():
+            """
+            Repeat record is a new record for a synchronous case repeater
+            See corehq.motech.repeaters.signals.fire_synchronous_case_repeaters
+            """
+            # This will also return True if a user clicked "Resend" on a
+            # Pending repeat record in the Repeat Records Report. This
+            # is not intended, but it's also not harmful.
+            return fire_synchronously and self.state == State.Pending
+
+        if (
+            toggles.PROCESS_REPEATERS.enabled(self.domain, toggles.NAMESPACE_DOMAIN)
+            and not is_new_synchronous_case_repeater_record()
+        ):
+            return
 
         if self.next_check is None or self.next_check > datetime.utcnow():
             return
@@ -1364,7 +1471,26 @@ def is_response(duck):
 
 
 def domain_can_forward(domain):
+    """
+    Returns whether ``domain`` has data forwarding or Zapier integration
+    privileges.
+
+    Used for determining whether to register a repeat record.
+    """
     return domain and (
         domain_has_privilege(domain, ZAPIER_INTEGRATION)
         or domain_has_privilege(domain, DATA_FORWARDING)
+    )
+
+
+def domain_can_forward_now(domain):
+    """
+    Returns ``True`` if ``domain`` has the requisite privileges and data
+    forwarding is not paused.
+
+    Used for determining whether to send a repeat record now.
+    """
+    return (
+        domain_can_forward(domain)
+        and not toggles.PAUSE_DATA_FORWARDING.enabled(domain)
     )
