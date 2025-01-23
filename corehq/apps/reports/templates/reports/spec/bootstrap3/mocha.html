@@ -5,6 +5,10 @@
   <script src="{% static 'reports/js/bootstrap3/data_corrections.js' %}"></script>
 {% endblock %}
 
+{% block stylesheets %}
+  {% include 'hqwebapp/includes/bootstrap3/core_stylesheets.html' %}
+{% endblock %}
+
 {% block mocha_tests %}
   <script src="{% static 'reports/spec/bootstrap3/data_corrections_spec.js' %}"></script>
 {% endblock %}
