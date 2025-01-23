@@ -84,6 +84,9 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     };
 
     $.fn.changeButtonState = function (state) {
+        if (!$(this).data('reset-text')) {
+            $(this).data('reset-text', $(this).text());
+        }
         $(this).text($(this).data(state + '-text'));
         return this;
     };
