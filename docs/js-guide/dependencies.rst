@@ -114,7 +114,7 @@ Then in your HTML page:
 The exception to the above is if your page inherits from a legacy page that
 doesn't use a JavaScript bundler, like in app manager. This is rare,
 but one example would be adding a new page to app manager that inherits
-from ``apps_base.html.html``.
+from ``apps_base.html``.
 
 
 Why is old code formatted differently?

@@ -19,8 +19,8 @@
     <form action="{% url "import_app" domain %}" id="app-import-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
       {% if app %}
-        {% blocktrans %}
-          <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
+        {% blocktrans with app_name=app.name app_domain=app.domain %}
+          <p>Import application <strong>{{ app_name }}</strong> from domain <strong>{{ app_domain }}</strong>?</p>
         {% endblocktrans %}
       {% endif %}
       <div class="form-horizontal">

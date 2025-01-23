@@ -18,8 +18,14 @@
   </nav>
 {% endblock %}
 {% block page_content %}
-  {% blocktrans %}
-    <h1>This app is no longer supported</h1>
-    <p>If you believe this to be in error, please contact support.</p>
-  {% endblocktrans %}
+  <h1>
+    {% blocktrans %}
+      This app is no longer supported
+    {% endblocktrans %}
+  </h1>
+  <p>
+    {% blocktrans %}
+      If you believe this to be in error, please contact support.
+    {% endblocktrans %}
+  </p>
 {% endblock %}
