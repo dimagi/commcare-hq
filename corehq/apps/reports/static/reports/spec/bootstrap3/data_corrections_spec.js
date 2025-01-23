@@ -130,25 +130,32 @@ describe('Data Corrections', function () {
             });
         });
 
-        it('should display multiple pages when there are many properties', function () {
+        it('should display multiple pages when there are many properties', function (done) {
             var itemCount = 100,
                 names = thingList(itemCount),
                 model = initModel(_.object(names, names));
             openModal();
 
-            assert.equal(model.totalPages(), Math.ceil(itemCount / model.itemsPerPage()));
-            assertVisibleProperties(names.slice(0, model.itemsPerPage()));
+            _.defer(function () {
+                assert.equal($(".pagination li").length - 2, Math.ceil(itemCount / model.itemsPerPage()));
+                assertVisibleProperties(names.slice(0, model.itemsPerPage()));
 
-            model.currentPage(model.totalPages());
-            assertVisibleProperties(names.slice((model.totalPages() - 1) * model.itemsPerPage()));
+                model.currentPage(model.totalItems());
+                assertVisibleProperties(names.slice((model.totalItems() - 1) * model.itemsPerPage()));
+
+                done();
+            });
         });
 
-        it('should search across multiple pages', function () {
+        it('should search across multiple pages', function (done) {
             var names = thingList(100);
             initModel(_.object(names, names));
             openModal();
-            search("10");
-            assertVisibleProperties(["thing010", "thing100"]);
+            _.defer(function () {
+                search("10");
+                assertVisibleProperties(["thing010", "thing100"]);
+                done();
+            });
         });
 
         it('should display multiple attributes of each property', function () {
