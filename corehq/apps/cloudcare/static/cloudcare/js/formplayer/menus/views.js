@@ -1727,11 +1727,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const self = this;
             const smallScreenEnabledOnStartup = cloudcareUtils.smallScreenIsEnabled();
             const arrowToggle = $('#persistent-menu-arrow-toggle');
+            const persistentMenuContainer = $('#persistent-menu-container');
             self.makeCollapse(sessionStorage.showPersistentMenu);
             self.menuCollapseExpandTransitionListener();
             self.cloudcareNotificationListener();
             if ($("#cloudcare-notifications").children().length > 0) {
-                $('#persistent-menu-container').addClass('border-top');
+                persistentMenuContainer.addClass('border-top');
             }
 
             if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
@@ -1758,9 +1759,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     self.lockMenu();
                 }
             });
-            $('#persistent-menu-container').hover(
+            persistentMenuContainer.hover(
                 function () {
-                    if (!self.menuExpanded) {
+                    if (!self.menuExpanded && !arrowToggle.is(':hover')) {
                         self.showMenu();
                     }
                 },
