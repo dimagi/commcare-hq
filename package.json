@@ -52,7 +52,6 @@
         "jquery-ui-built-themes": "1.12.1",
         "jquery.cookie": "dimagi/jquery-cookie#1.4.1",
         "jquery.rmi": "dimagi/jquery.rmi#8c34f32817",
-        "jsdiff": "components/jsdiff#~3.2.0",
         "knockout": "3.5.1",
         "knockout-sortable": "1.2.2",
         "knockout-validation": "Knockout-Contrib/Knockout-Validation#2.0.4",

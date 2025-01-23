@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/preview_app/main", [
     'jquery',
     'underscore',
@@ -6,12 +5,13 @@ hqDefine("cloudcare/js/preview_app/main", [
     'cloudcare/js/sentry',
     'cloudcare/js/preview_app/preview_app',
     'cloudcare/js/preview_app/dragscroll',  // for .dragscroll elements
+    'commcarehq',
 ], function (
     $,
     _,
     initialPageData,
     sentry,
-    previewApp
+    previewApp,
 ) {
     $(function () {
         sentry.initSentry();

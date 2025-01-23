@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'jquery',
     'underscore',
@@ -39,7 +38,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     FormplayerFrontend,
     formplayerConstants,
     Collection,
-    formplayerUtils
+    formplayerUtils,
 ) {
     var separator = hqTempusDominus.getDateRangeSeparator(),
         serverSeparator = "__",
@@ -195,7 +194,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                         var val = option.val();
                         if (option.length === 1 && domElement.val().indexOf(val) === -1) {
                             domElement.val(
-                                domElement.val().concat(val)
+                                domElement.val().concat(val),
                             ).trigger("change");
                         }
                     } else {
@@ -226,7 +225,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 if (!initialPageData.get("has_geocoder_privs")) {
                     $("#" + inputId).addClass('unsupported alert alert-warning');
                     $("#" + inputId).text(gettext(
-                        "Sorry, this input is not supported because your project doesn't have a Geocoder privilege")
+                        "Sorry, this input is not supported because your project doesn't have a Geocoder privilege"),
                     );
                     return true;
                 }
@@ -575,7 +574,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                         groupKey: child.get('groupKey'),
                         required: child.get('required'),
                     },
-                    childViewOptions
+                    childViewOptions,
                 );
             } else {
                 options = _.extend({model: child}, childViewOptions);
@@ -662,7 +661,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                     } else {
                         return [item];
                     }
-                }
+                },
             ));
         },
 
@@ -758,7 +757,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 "menu:query",
                 self.getAnswers(),
                 self.options.sidebarEnabled,
-                initiatedBy
+                initiatedBy,
             );
 
             if (self.smallScreenEnabled && self.options.sidebarEnabled) {

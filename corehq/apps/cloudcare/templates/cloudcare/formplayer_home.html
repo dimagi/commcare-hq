@@ -40,7 +40,7 @@
   {% endcompress %}
 {% endblock %}
 
-{% requirejs_main_b5 "cloudcare/js/formplayer/main" %}
+{% js_entry "cloudcare/js/formplayer/main" %}
 
 {% block js %} {{ block.super }}
   {% include "cloudcare/partials/dependencies.html" %}
