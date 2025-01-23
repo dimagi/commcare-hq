@@ -158,38 +158,41 @@ describe('Data Corrections', function () {
             });
         });
 
-        it('should display multiple attributes of each property', function () {
-            var model = initModel({
-                red: {
-                    value: 'ff0000',
-                    spanish: 'rojo',
-                    french: 'rouge',
-                },
-                orange: {
-                    value: 'ff6600',
-                    spanish: 'anaranjado',
-                    french: 'orange',
-                },
-                yellow: {
-                    value: 'ffff00',
-                    spanish: 'amarillo',
-                    french: 'jaune',
-                },
+        const multilingualProperties = {
+            red: {
+                value: 'ff0000',
+                spanish: 'rojo',
+                french: 'rouge',
+            },
+            orange: {
+                value: 'ff6600',
+                spanish: 'anaranjado',
+                french: 'orange',
+            },
+            yellow: {
+                value: 'ffff00',
+                spanish: 'amarillo',
+                french: 'jaune',
+            },
+        };
+        const multilingualOptions = {
+            displayProperties: [{
+                property: 'name',
+                name: 'English',
             }, {
-                displayProperties: [{
-                    property: 'name',
-                    name: 'English',
-                }, {
-                    property: 'spanish',
-                    name: 'Spanish',
-                }, {
-                    property: 'french',
-                    name: 'French',
-                    search: 'spanish',
-                }],
-                propertyPrefix: "<div class='test-property'>",
-                propertySuffix: "</div>",
-            });
+                property: 'spanish',
+                name: 'Spanish',
+            }, {
+                property: 'french',
+                name: 'French',
+                search: 'spanish',
+            }],
+            propertyPrefix: "<div class='test-property'>",
+            propertySuffix: "</div>",
+        };
+
+        it('should display translated properties in default language', function (done) {
+            var model = initModel(multilingualProperties, multilingualOptions);
             openModal();
 
             var assertVisibleText = function (expected) {
@@ -198,17 +201,32 @@ describe('Data Corrections', function () {
 
             assert($(".data-corrections-modal .nav > :first-child").hasClass("active"), "Should display first property by default");
 
-            // Display and search english values
-            model.updateDisplayProperty("name");
-            assertVisibleText(["orange", "red", "yellow"]);
-            search("yellow");
-            assertVisibleProperties(["yellow"]);
+            _.defer(function () {
+                model.updateDisplayProperty("name");
+                assertVisibleText(["orange", "red", "yellow"]);
+                search("yellow");
+                assertVisibleProperties(["yellow"]);
+                done();
+            });
+        });
 
-            // Display and search spanish values
-            model.updateDisplayProperty("spanish");
-            assertVisibleText(["anaranjado", "rojo", "amarillo"]);
-            search("rojo");
-            assertVisibleProperties(["red"]);
+        it('should display translated properties in non-default language', function (done) {
+            var model = initModel(multilingualProperties, multilingualOptions);
+            openModal();
+
+            var assertVisibleText = function (expected) {
+                assert.sameMembers(expected, _.map($(".data-corrections-modal .test-property:visible"), function (p) { return p.innerText; }));
+            };
+
+            assert($(".data-corrections-modal .nav > :first-child").hasClass("active"), "Should display first property by default");
+
+            _.defer(function () {
+                model.updateDisplayProperty("spanish");
+                assertVisibleText(["anaranjado", "rojo", "amarillo"]);
+                search("rojo");
+                assertVisibleProperties(["red"]);
+                done();
+            });
         });
     });
 });
