@@ -41,13 +41,14 @@ hqDefine('cloudcare/js/gtx', [
     };
 
     const logCaseList = function (selections, gtxEventData) {
+        _.extend(gtxEventData, {
+            selections: selections,
+            resetDate: selections !== lastCaseListSelections,
+        });
         if (selections !== lastCaseListSelections) {
             lastCaseListSelections = selections;
             lastCaseListTimeMs = Date.now();
         }
-        _.extend(gtxEventData, {
-            selections: selections,
-        });
         gtx.sendEvent("web_apps_viewed_case_list", gtxEventData);
     };
 
@@ -59,6 +60,7 @@ hqDefine('cloudcare/js/gtx', [
         });
         lastCaseListSelections = "";
         gtx.sendEvent("web_apps_submit_form", gtxEventData);
+        gtx.sendEvent("web_apps_dummy", {key: "value"});
     };
 
     return {
