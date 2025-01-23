@@ -8,6 +8,7 @@ from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
 from corehq.util.metrics import metrics_counter, metrics_histogram
 
 DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try again in a minute."
+# intentionally set to > 1 minute to allow for a buffer at minute boundaries
 DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
 
 
