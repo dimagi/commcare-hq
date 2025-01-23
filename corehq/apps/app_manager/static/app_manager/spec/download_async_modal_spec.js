@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import $ from "jquery";
 import sinon from "sinon/pkg/sinon";
 
