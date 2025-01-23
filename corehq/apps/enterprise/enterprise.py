@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Count, Subquery, Q
+from dimagi.ext.jsonobject import DateTimeProperty
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -21,7 +22,8 @@ from corehq.apps.export.dbaccessors import (
 )
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_brief_apps_in_domain
+from corehq.apps.app_manager.models import Application
 from corehq.apps.builds.utils import get_latest_version_at_time, is_out_of_date
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.calculations import sms_in_last
@@ -31,7 +33,7 @@ from corehq.apps.enterprise.exceptions import (
     TooMuchRequestedDataError,
 )
 from corehq.apps.enterprise.iterators import raise_after_max_elements
-from corehq.apps.es import forms as form_es
+from corehq.apps.es import AppES, filters, forms as form_es
 from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.reports.util import (
@@ -45,6 +47,8 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.apps.users.models import CouchUser, HQApiKey, Invitation, WebUser
 
+from corehq.motech.repeaters.models import Repeater
+
 
 class EnterpriseReport(ABC):
     DOMAINS = 'domains'
@@ -52,11 +56,14 @@ class EnterpriseReport(ABC):
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
+    CASE_MANAGEMENT = 'case_management'
     DATA_EXPORTS = 'data_exports'
     COMMCARE_VERSION_COMPLIANCE = 'commcare_version_compliance'
     SMS = 'sms'
-    API_USAGE = 'api_usage'
+    API_KEYS = 'api_keys'
     TWO_FACTOR_AUTH = '2fa'
+    DATA_FORWARDING = 'data_forwarding'
+    APP_VERSION_COMPLIANCE = 'app_version_compliance'
 
     DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
 
@@ -66,12 +73,11 @@ class EnterpriseReport(ABC):
         pass
 
     @property
-    @abstractmethod
     def total_description(self):
         """
         To provide a description of the total number we displayed in tile
         """
-        pass
+        return ''
 
     def __init__(self, account, couch_user, **kwargs):
         self.account = account
@@ -100,16 +106,22 @@ class EnterpriseReport(ABC):
             report = EnterpriseFormReport(account, couch_user, **kwargs)
         elif slug == cls.ODATA_FEEDS:
             report = EnterpriseODataReport(account, couch_user, **kwargs)
+        elif slug == cls.CASE_MANAGEMENT:
+            report = EnterpriseCaseManagementReport(account, couch_user, **kwargs)
         elif slug == cls.DATA_EXPORTS:
             report = EnterpriseDataExportReport(account, couch_user, **kwargs)
         elif slug == cls.COMMCARE_VERSION_COMPLIANCE:
             report = EnterpriseCommCareVersionReport(account, couch_user, **kwargs)
         elif slug == cls.SMS:
             report = EnterpriseSMSReport(account, couch_user, **kwargs)
-        elif slug == cls.API_USAGE:
+        elif slug == cls.API_KEYS:
             report = EnterpriseAPIReport(account, couch_user, **kwargs)
         elif slug == cls.TWO_FACTOR_AUTH:
             report = Enterprise2FAReport(account, couch_user, **kwargs)
+        elif slug == cls.DATA_FORWARDING:
+            report = EnterpriseDataForwardingReport(account, couch_user, **kwargs)
+        elif slug == cls.APP_VERSION_COMPLIANCE:
+            report = EnterpriseAppVersionComplianceReport(account, couch_user, **kwargs)
 
         if report:
             report.slug = slug
@@ -155,7 +167,6 @@ class EnterpriseReport(ABC):
 class EnterpriseDomainReport(EnterpriseReport):
 
     title = gettext_lazy('Project Spaces')
-    total_description = gettext_lazy('# of Project Spaces')
 
     def __init__(self, account, couch_user):
         super().__init__(account, couch_user)
@@ -187,7 +198,6 @@ class EnterpriseDomainReport(EnterpriseReport):
 class EnterpriseWebUserReport(EnterpriseReport):
 
     title = gettext_lazy('Web Users')
-    total_description = gettext_lazy('# of Web Users')
 
     @property
     def headers(self):
@@ -234,7 +244,6 @@ class EnterpriseWebUserReport(EnterpriseReport):
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
     title = gettext_lazy('Mobile Workers')
-    total_description = gettext_lazy('# of Mobile Workers')
 
     @property
     def headers(self):
@@ -266,7 +275,6 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 class EnterpriseFormReport(EnterpriseReport):
     title = gettext_lazy('Mobile Form Submissions')
-    total_description = gettext_lazy('# of Mobile Form Submissions')
 
     MAXIMUM_USERS_PER_DOMAIN = getattr(settings, 'ENTERPRISE_REPORT_DOMAIN_USER_LIMIT', 20_000)
     MAXIMUM_ROWS_PER_REQUEST = getattr(settings, 'ENTERPRISE_REPORT_ROW_LIMIT', 1_000_000)
@@ -375,7 +383,6 @@ class EnterpriseFormReport(EnterpriseReport):
 
 class EnterpriseODataReport(EnterpriseReport):
     title = gettext_lazy('OData Feeds')
-    total_description = gettext_lazy('# of OData Feeds')
 
     MAXIMUM_EXPECTED_EXPORTS = 150
 
@@ -410,9 +417,67 @@ class EnterpriseODataReport(EnterpriseReport):
         return rows
 
 
+class EnterpriseCaseManagementReport(EnterpriseReport):
+    title = gettext_lazy('Case Management')
+    total_description = gettext_lazy('% of Domains using Case Management')
+
+    @property
+    def headers(self):
+        return [_('Project Space'), _('# Applications'), _('# Surveys Only'), _('# Cases Only'), _('# Mixed')]
+
+    def rows_for_domain(self, domain_obj):
+        app_query = self.app_query(domain_obj.name)
+        app_count = app_query.count()
+
+        if app_count == 0:
+            survey_only_count = 0
+            case_only_count = 0
+            mixed_count = 0
+        else:
+            has_surveys = filters.nested('modules', filters.empty('modules.case_type.exact'))
+            has_cases = filters.nested('modules', filters.non_null('modules.case_type.exact'))
+
+            survey_only_count = app_query.filter(filters.AND(has_surveys, filters.NOT(has_cases))).count()
+            case_only_count = app_query.filter(filters.AND(has_cases, filters.NOT(has_surveys))).count()
+            mixed_count = app_query.filter(filters.AND(has_surveys, has_cases)).count()
+
+        return [[domain_obj.name, app_count, survey_only_count, case_only_count, mixed_count],]
+
+    @property
+    def total(self):
+        num_domains_with_apps = 0
+        num_domains_using_case_management = 0
+
+        for domain_obj in self.domains():
+            (app_count, uses_case_management) = self.total_for_domain(domain_obj)
+            if app_count > 0:
+                if uses_case_management:
+                    num_domains_using_case_management += 1
+                num_domains_with_apps += 1
+
+        return _format_percentage_for_enterprise_tile(num_domains_using_case_management, num_domains_with_apps)
+
+    def total_for_domain(self, domain_obj):
+        app_query = self.app_query(domain_obj.name)
+        app_count = app_query.count()
+        if app_count > 0:
+            has_cases = filters.nested('modules', filters.non_null('modules.case_type.exact'))
+            uses_case_management = app_query.filter(has_cases).count() > 0
+        else:
+            uses_case_management = False
+
+        return [app_count, uses_case_management]
+
+    def app_query(self, domain):
+        return (
+            AppES().domain(domain)
+            .filter(filters.term('doc_type', 'Application'))
+            .is_build(False)
+        )
+
+
 class EnterpriseDataExportReport(EnterpriseReport):
     title = gettext_lazy('Data Exports')
-    total_description = gettext_lazy('# of Exports')
 
     @property
     def headers(self):
@@ -553,12 +618,6 @@ class EnterpriseCommCareVersionReport(EnterpriseReport):
         return rows
 
 
-def _format_percentage_for_enterprise_tile(dividend, divisor):
-    if not divisor:
-        return '--'
-    return f"{dividend / divisor * 100:.1f}%"
-
-
 class EnterpriseSMSReport(EnterpriseReport):
     title = gettext_lazy('SMS Usage')
     total_description = gettext_lazy('# of SMS Sent')
@@ -621,8 +680,7 @@ class EnterpriseSMSReport(EnterpriseReport):
 
 
 class EnterpriseAPIReport(EnterpriseReport):
-    title = gettext_lazy('API Usage')
-    total_description = gettext_lazy('# of Active API Keys')
+    title = gettext_lazy('API Keys')
 
     @property
     def headers(self):
@@ -685,3 +743,163 @@ class Enterprise2FAReport(EnterpriseReport):
         if domain_obj.two_factor_auth:
             return []
         return [(domain_obj.name,)]
+
+
+class EnterpriseDataForwardingReport(EnterpriseReport):
+    title = gettext_lazy('Data Forwarding')
+    total_description = gettext_lazy('# of Data Forwarders')
+
+    @property
+    def headers(self):
+        return [_('Project Space'), _('Service Name'), _('Type'), _('Last Modified [UTC]')]
+
+    def total_for_domain(self, domain_obj):
+        return Repeater.objects.filter(domain=domain_obj.name).count()
+
+    def rows_for_domain(self, domain_obj):
+        repeaters = Repeater.objects.filter(domain=domain_obj.name)
+        rows = []
+        for repeater in repeaters:
+            rows.append(
+                [
+                    domain_obj.name,
+                    repeater.name,
+                    repeater.friendly_name,
+                    self.format_date(repeater.last_modified)
+                ]
+            )
+
+        return rows
+
+
+class EnterpriseAppVersionComplianceReport(EnterpriseReport):
+    title = gettext_lazy('Application Version Compliance')
+    total_description = gettext_lazy('The statistic of this tile is not currently supported')
+
+    def __init__(self, account, couch_user):
+        super().__init__(account, couch_user)
+        self.builds_by_app_id = {}
+        self.build_info_cache = {}
+
+    @property
+    def headers(self):
+        return [
+            _('Mobile Worker'),
+            _('Project Space'),
+            _('Application'),
+            _('Latest Version Available When Last Used'),
+            _('Version in Use'),
+            _('Last Used [UTC]'),
+        ]
+
+    @property
+    def rows(self):
+        rows = []
+        for domain in self.account.get_domains():
+            rows.extend(self.rows_for_domain(domain))
+        return rows
+
+    @property
+    def total(self):
+        # Skip the stat for this report due to performance issue
+        return '--'
+
+    def rows_for_domain(self, domain):
+        rows = []
+        app_name_by_id = {}
+        app_ids = get_app_ids_in_domain(domain)
+
+        for build_and_latest_version in self.all_last_builds_with_latest_version(domain, app_ids):
+            version_in_use = str(build_and_latest_version['build']['build_version'])
+            latest_version = str(build_and_latest_version['latest_version'])
+            if is_out_of_date(version_in_use, latest_version):
+                app_id = build_and_latest_version['build']['app_id']
+                if app_id not in app_name_by_id:
+                    app_name_by_id[app_id] = Application.get_db().get(app_id).get('name')
+                rows.append([
+                    build_and_latest_version['username'],
+                    domain,
+                    app_name_by_id[app_id],
+                    latest_version,
+                    version_in_use,
+                    self.format_date(
+                        DateTimeProperty.deserialize(
+                            build_and_latest_version['build']['build_version_date']
+                        )
+                    ),
+                ])
+
+        return rows
+
+    def all_last_builds_with_latest_version(self, domain, app_ids):
+        user_query = (UserES()
+            .domain(domain)
+            .mobile_users()
+            .source([
+                'username',
+                'reporting_metadata.last_builds',
+            ]))
+        for user in user_query.run().hits:
+            last_builds = user.get('reporting_metadata', {}).get('last_builds', [])
+            for build in last_builds:
+                app_id = build.get('app_id')
+                build_version = build.get('build_version')
+                if app_id not in app_ids or not build_version:
+                    continue
+                build_version_date = DateTimeProperty.deserialize(build.get('build_version_date'))
+                latest_version = self.get_latest_build_version(domain, app_id, build_version_date)
+                yield {
+                    'username': user['username'],
+                    'build': build,
+                    'latest_version': latest_version,
+                }
+
+    def get_latest_build_version(self, domain, app_id, at_datetime):
+        builds = self.get_app_builds(domain, app_id)
+        latest_build = self._find_latest_build_version_from_builds(builds, at_datetime)
+
+        return latest_build
+
+    def get_app_builds(self, domain, app_id):
+        if app_id in self.builds_by_app_id:
+            return self.builds_by_app_id[app_id]
+
+        app_es = (
+            AppES()
+            .domain(domain)
+            .is_build()
+            .app_id(app_id)
+            .sort('version', desc=True)
+            .is_released()
+            .source(['_id', 'version', 'last_released', 'built_on'])
+        )
+        self.builds_by_app_id[app_id] = app_es.run().hits
+        return self.builds_by_app_id[app_id]
+
+    def _find_latest_build_version_from_builds(self, all_builds, at_datetime):
+        for build_doc in all_builds:
+            build_info = self._get_build_info(build_doc)
+            if build_info['last_released'] <= at_datetime:
+                return build_info['version']
+        return None
+
+    def _get_build_info(self, build_doc):
+        build_id = build_doc['_id']
+        build_info = self.build_info_cache.get(build_id)
+        if not build_info:
+            # last_released is added in 2019, build before 2019 don't have this field
+            # TODO: have a migration to populate last_released from built_on
+            # Then this code can be modified to use last_released only
+            released_date = build_doc.get('last_released') or build_doc['built_on']
+            build_info = {
+                'version': build_doc['version'],
+                'last_released': DateTimeProperty.deserialize(released_date)
+            }
+            self.build_info_cache[build_id] = build_info
+        return build_info
+
+
+def _format_percentage_for_enterprise_tile(dividend, divisor):
+    if not divisor:
+        return '--'
+    return f"{dividend / divisor * 100:.1f}%"

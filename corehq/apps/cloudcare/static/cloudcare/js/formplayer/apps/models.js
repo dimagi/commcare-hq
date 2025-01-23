@@ -1,8 +1,7 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/apps/models", [
     'backbone',
 ], function (
-    Backbone
+    Backbone,
 ) {
     return Backbone.Model.extend({
         urlRoot: "appSelects",
