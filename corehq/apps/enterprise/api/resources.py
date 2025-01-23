@@ -14,6 +14,7 @@ from corehq.apps.accounting.utils.account import (
     get_account_or_404,
     request_has_permissions_for_enterprise_admin,
 )
+from corehq.apps.analytics.tasks import record_event
 from corehq.apps.api.odata.utils import FieldMetadata
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
@@ -21,6 +22,7 @@ from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.api.resources.meta import get_hq_throttle
 from corehq.apps.api.keyset_paginator import KeysetPaginator
 from corehq.apps.enterprise.enterprise import EnterpriseReport
+from corehq.apps.enterprise.metric_events import ENTERPRISE_API_ACCESS
 from corehq.apps.enterprise.iterators import IterableEnterpriseFormQuery, EnterpriseFormReportConverter
 
 from corehq.apps.enterprise.tasks import generate_enterprise_report, ReportTaskProgress
@@ -188,6 +190,9 @@ class ODataEnterpriseReportResource(ODataResource):
             return data
         elif status == ReportTaskProgress.STATUS_NEW:
             progress.start_task(self.get_report_task(request))
+            record_event(ENTERPRISE_API_ACCESS, request.couch_user, {
+                'api_type': self.REPORT_SLUG
+            })
 
         # PowerBI respects delays with only two response codes:
         # 429 (TooManyRequests) and 503 (ServiceUnavailable). Although 503 is likely more semantically
@@ -398,6 +403,11 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
         converter = EnterpriseFormReportConverter()
         query_kwargs = converter.get_kwargs_from_map(request.GET)
+        if converter.is_initial_query(request.GET):
+            record_event(ENTERPRISE_API_ACCESS, request.couch_user, {
+                'api_type': self.REPORT_SLUG
+            })
+
         return IterableEnterpriseFormQuery(account, converter, start_date, end_date, **query_kwargs)
 
     def dehydrate(self, bundle):
@@ -490,7 +500,7 @@ class CommCareVersionComplianceResource(ODataEnterpriseReportResource):
         return ('mobile_worker', 'domain',)
 
 
-class APIUsageResource(ODataEnterpriseReportResource):
+class APIKeysResource(ODataEnterpriseReportResource):
     web_user = fields.CharField()
     api_key_name = fields.CharField()
     scope = fields.CharField()
@@ -498,7 +508,7 @@ class APIUsageResource(ODataEnterpriseReportResource):
     created_date = fields.DateTimeField()
     last_used_date = fields.DateTimeField()
 
-    REPORT_SLUG = EnterpriseReport.API_USAGE
+    REPORT_SLUG = EnterpriseReport.API_KEYS
 
     def dehydrate(self, bundle):
         bundle.data['web_user'] = bundle.obj[0]
@@ -511,3 +521,45 @@ class APIUsageResource(ODataEnterpriseReportResource):
 
     def get_primary_keys(self):
         return ('web_user', 'api_key_name',)
+
+
+class DataForwardingResource(ODataEnterpriseReportResource):
+    domain = fields.CharField()
+    service_name = fields.CharField()
+    service_type = fields.CharField()
+    last_modified = fields.DateTimeField()
+
+    REPORT_SLUG = EnterpriseReport.DATA_FORWARDING
+
+    def dehydrate(self, bundle):
+        bundle.data['domain'] = bundle.obj[0]
+        bundle.data['service_name'] = bundle.obj[1]
+        bundle.data['service_type'] = bundle.obj[2]
+        bundle.data['last_modified'] = self.convert_datetime(bundle.obj[3])
+        return bundle
+
+    def get_primary_keys(self):
+        return ('domain', 'service_name', 'service_type')
+
+
+class ApplicationVersionComplianceResource(ODataEnterpriseReportResource):
+    mobile_worker = fields.CharField()
+    domain = fields.CharField()
+    application = fields.CharField()
+    latest_version_available_when_last_used = fields.CharField()
+    version_in_use = fields.CharField()
+    last_used = fields.DateTimeField()
+
+    REPORT_SLUG = EnterpriseReport.APP_VERSION_COMPLIANCE
+
+    def dehydrate(self, bundle):
+        bundle.data['mobile_worker'] = bundle.obj[0]
+        bundle.data['domain'] = bundle.obj[1]
+        bundle.data['application'] = bundle.obj[2]
+        bundle.data['latest_version_available_when_last_used'] = bundle.obj[3]
+        bundle.data['version_in_use'] = bundle.obj[4]
+        bundle.data['last_used'] = self.convert_datetime(bundle.obj[5])
+        return bundle
+
+    def get_primary_keys(self):
+        return ('mobile_worker', 'application',)

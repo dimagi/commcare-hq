@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/spec/utils_spec", [
     "sinon/pkg/sinon",
@@ -7,7 +6,7 @@ hqDefine("cloudcare/js/spec/utils_spec", [
 ], function (
     sinon,
     constants,
-    utils
+    utils,
 ) {
     describe("Cloudcare Utils", function () {
         describe('Small Screen Listener', function () {

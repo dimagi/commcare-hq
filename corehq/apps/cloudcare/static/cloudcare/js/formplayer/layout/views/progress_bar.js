@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", [
     'jquery',
     'underscore',
@@ -8,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", [
     $,
     _,
     Marionette,
-    toggles
+    toggles,
 ) {
     var ProgressView = Marionette.View.extend({
         template: _.template($("#progress-view-template").html() || ""),
@@ -43,7 +42,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", [
             this.progressEl.find('.js-progress-bar').width(progress * 100 + '%');
             if (total > 0 && !(toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR'))) {
                 this.progressEl.find('.js-subtext small').text(
-                    gettext('Completed: ') + done + '/' + total
+                    gettext('Completed: ') + done + '/' + total,
                 );
             }
         },
