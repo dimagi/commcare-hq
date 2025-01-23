@@ -632,7 +632,7 @@ DEFAULT_REPEATER_WORKERS = 7
 # repeater can use to send repeat records at the same time. This is a
 # guardrail to prevent one repeater from hogging repeat_record_queue
 # workers and to ensure that repeaters are iterated fairly.
-MAX_REPEATER_WORKERS = 144
+MAX_REPEATER_WORKERS = 79
 
 # websockets config
 WEBSOCKET_URL = '/ws/'
