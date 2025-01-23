@@ -43,7 +43,7 @@ def reversion_api_tokens(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('translations', '0007_populate_smstranslations'),
+        ('translations', '0009_auto_20200924_1753'),
     ]
 
     operations = [
