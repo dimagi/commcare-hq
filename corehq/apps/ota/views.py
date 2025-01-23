@@ -20,7 +20,7 @@ from ddtrace import tracer
 from iso8601 import iso8601
 from looseversion import LooseVersion
 from memoized import memoized
-from tastypie.http import HttpTooManyRequests
+from tastypie.http import HttpNotAcceptable, HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -60,6 +60,7 @@ from corehq.apps.registry.exceptions import (
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.users.device_rate_limiter import device_rate_limiter, DEVICE_RATE_LIMIT_MESSAGE
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
@@ -294,6 +295,9 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         silently.
     :return: Tuple of (http response, timing context or None)
     """
+    should_limit = device_rate_limiter.rate_limit_device(domain, user_id, device_id)
+    if should_limit:
+        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
 
     if user_id and user_id != couch_user.user_id:
         # sync with a user that has been deleted but a new
@@ -381,6 +385,12 @@ def heartbeat(request, domain, app_build_id):
         mobile simply needs it to be resent back in the JSON, and doesn't
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
+    should_limit = device_rate_limiter.rate_limit_device(
+        domain, request.couch_user._id, request.GET.get('device_id')
+    )
+    if should_limit:
+        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
+
     app_id = request.GET.get('app_id', '')
     build_profile_id = request.GET.get('build_profile_id', '')
     master_app_id = app_id
