@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,127 +1,239 @@
+@@ -1,127 +1,247 @@
 -@import "@{b3-import-variables}";
 -
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
@@ -347,3 +347,11 @@
 +// Table loading indicator
 +$table-loading-spinner-size: 150px;
 +$table-loading-spinner-border-width: 20px;
++
++// Override bootstrap position values to include 25%
++$position-values: (
++  0: 0,
++  25: 25%,
++  50: 50%,
++  100: 100%,
++);

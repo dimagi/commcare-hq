@@ -225,11 +225,13 @@ hqDefine("enterprise/js/project_dashboard", [
 
     function updateDisplayTotal($element, kwargs) {
         const $display = $element.find(".js-total");
+        const $helpTotal = $element.find(".help-total");
         const slug = $element.data("slug");
         const requestParams = {
             url: initialPageData.reverse("enterprise_dashboard_total", slug),
             success: function (data) {
                 $display.html(localizeNumberlikeString(data.total));
+                $helpTotal.removeClass("d-none");
             },
             error: function (request) {
                 if (request.responseJSON) {
@@ -238,10 +240,12 @@ hqDefine("enterprise/js/project_dashboard", [
                     alertUser.alert_user(gettext("Error updating display total, please try again or report an issue if this persists."), "danger");
                 }
                 $display.html(gettext("??"));
+                $helpTotal.addClass("d-none");
             },
             data: kwargs,
         };
         $display.html('<i class="fa fa-spin fa-spinner"></i>');
+        $helpTotal.addClass("d-none");
         $.ajax(requestParams);
     }
 
