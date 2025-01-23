@@ -15,10 +15,12 @@
 {% block stylesheets %}
   {{ block.super }}
   {% compress css %}
-    <link type="text/scss"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'reports/scss/reports.scss' %}" />
+    <link
+      type="text/scss"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'reports/scss/reports.scss' %}"
+    />
   {% endcompress %}
   {% include 'reports/partials/filters_css.html' %}
 
@@ -83,15 +85,14 @@
   {% endblock %}
 
   {% if report.is_emailable and request.couch_user.can_download_reports %}
-    <div id="email-report-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div
+      id="email-report-modal"
+      class="modal fade"
+      tabindex="-1" role="dialog"
+    >
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">  {# todo B5: css:modal-header #}
-            <button type="button"
-                    class="btn-close"  {# todo B5: css:close #}
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                    data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
+          <div class="modal-header">
             <h4 class="modal-title">
               {% trans "Email report:" %}
               {{ datespan.startdate|date:"Y-m-d" }}
@@ -100,6 +101,12 @@
               {% endif %}
               {{ datespan.enddate|date:"Y-m-d" }}
             </h4>
+            <button
+              class="btn-close"
+              aria-label="{% trans "Close" %}" type="button"
+              data-bs-dismiss="modal"
+              data-bind="click: resetModal"
+            ></button>
           </div>
           {% crispy email_form %}  {# todo B5: check crispy #}
         </div>
