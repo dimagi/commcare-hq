@@ -80,3 +80,12 @@ class RateLimitedTwoFactorLog(models.Model):
     window = models.CharField(max_length=15, null=False)
     # largest input is 'number_rate_limited', 31 for headroom
     status = models.CharField(max_length=31, null=False)
+
+
+class FeatureLimit(models.Model):
+    key = models.CharField(max_length=255, unique=True)
+    limit = models.PositiveIntegerField()
+    last_modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.key}: {self.limit} ({self.last_modified})"
