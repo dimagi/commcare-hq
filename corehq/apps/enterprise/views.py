@@ -96,11 +96,13 @@ def platform_overview(request, domain):
              'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
                         for slug in (EnterpriseReport.WEB_USERS,
                                      EnterpriseReport.MOBILE_USERS,
-                                     EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,)]},
+                                     EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,
+                                     EnterpriseReport.APP_VERSION_COMPLIANCE,)]},
             {'name': _('Data Management & Export'),
              'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
                         for slug in (EnterpriseReport.ODATA_FEEDS,
                                      EnterpriseReport.DATA_EXPORTS,
+                                     EnterpriseReport.DATA_FORWARDING,
                                      EnterpriseReport.CASE_MANAGEMENT,)]},
         ],
         'uses_date_range': [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS],
@@ -134,7 +136,7 @@ def security_center(request, domain):
         'groups': [
             {'name': '',
              'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
-                        for slug in (EnterpriseReport.API_USAGE,
+                        for slug in (EnterpriseReport.API_KEYS,
                                      EnterpriseReport.TWO_FACTOR_AUTH)]},
         ],
         'metric_type': 'Security Center',

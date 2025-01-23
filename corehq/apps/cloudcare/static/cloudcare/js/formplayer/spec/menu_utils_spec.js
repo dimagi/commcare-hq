@@ -1,8 +1,7 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/spec/menu_utils_spec", [
     "cloudcare/js/formplayer/menus/views/query",
 ], function (
-    view
+    view,
 ) {
     describe('Menu Utils', function () {
 

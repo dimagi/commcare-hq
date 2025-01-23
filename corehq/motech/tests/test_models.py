@@ -8,13 +8,14 @@ import requests
 from unittest.mock import ANY, Mock, patch
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pp_json
-from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
+from corehq.motech.const import ALGO_AES_CBC, PASSWORD_PLACEHOLDER
 from corehq.motech.models import (
     ConnectionSettings,
     RequestLog,
     RequestLogEntry,
 )
 from corehq.motech.requests import get_basic_requests
+from corehq.motech.utils import b64_aes_encrypt
 from corehq.util import as_json_text, as_text
 
 TEST_API_URL = 'http://example.com:9080/api/'
@@ -163,15 +164,26 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs.plaintext_client_secret = PASSWORD_PLACEHOLDER
         self.assertEqual(cs.client_secret, '')
 
+    def test_last_token_setter_none(self):
+        cs = ConnectionSettings()
+        cs.last_token = None
+        self.assertEqual(cs.last_token_aes, '')
+
     def test_password_setter(self):
         cs = ConnectionSettings()
         cs.plaintext_password = 'secret'
-        self.assertTrue(cs.password.startswith(f'${ALGO_AES}$'))
+        self.assertTrue(cs.password.startswith(f'${ALGO_AES_CBC}$'))
 
     def test_client_secret_setter(self):
         cs = ConnectionSettings()
         cs.plaintext_client_secret = 'secret'
-        self.assertTrue(cs.client_secret.startswith(f'${ALGO_AES}$'))
+        self.assertTrue(cs.client_secret.startswith(f'${ALGO_AES_CBC}$'))
+
+    def test_last_token_setter(self):
+        cs = ConnectionSettings()
+        token = {'key': 'value'}
+        cs.last_token = token
+        self.assertTrue(cs.last_token_aes.startswith(f'${ALGO_AES_CBC}$'))
 
     def test_password_getter_decrypts(self):
         cs = ConnectionSettings()
@@ -183,6 +195,19 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs.plaintext_client_secret = 'secret'
         self.assertEqual(cs.plaintext_client_secret, 'secret')
 
+    def test_last_token_getter_decrypts_cbc(self):
+        cs = ConnectionSettings()
+        token = {'key': 'value'}
+        cs.last_token = token
+        self.assertEqual(cs.last_token, token)
+
+    def test_last_token_getter_decrypts_ecb(self):
+        cs = ConnectionSettings()
+        token = {'key': 'value'}
+        plaintext = json.dumps(token)
+        cs.last_token_aes = b64_aes_encrypt(plaintext)
+        self.assertEqual(cs.last_token, token)
+
     def test_password_getter_returns(self):
         cs = ConnectionSettings()
         cs.password = 'secret'
@@ -192,6 +217,11 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs = ConnectionSettings()
         cs.client_secret = 'secret'
         self.assertEqual(cs.plaintext_client_secret, 'secret')
+
+    def test_last_token_getter_returns(self):
+        cs = ConnectionSettings()
+        cs.last_token_aes = ''
+        self.assertIsNone(cs.last_token)
 
 
 class NotifyAddressesTests(SimpleTestCase):

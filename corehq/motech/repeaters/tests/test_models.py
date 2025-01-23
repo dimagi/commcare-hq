@@ -14,6 +14,7 @@ from dateutil.parser import isoparse
 from freezegun import freeze_time
 from nose.tools import assert_in
 
+from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.util.test_utils import _create_case
@@ -479,26 +480,31 @@ class TestConnectionSettingsUsedBy(TestCase):
     def setUp(self):
         super().setUp()
         url = 'https://www.example.com/api/'
-        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        self.repeater = FormRepeater(
+        self.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name=url,
+            url=url,
+        )
+
+    def test_connection_settings_used_by_data_forwarding(self):
+        FormRepeater.objects.create(
             domain=DOMAIN,
             connection_settings_id=self.conn.id
         )
-        self.repeater.save()
 
-    def test_connection_settings_used_by(self):
         self.assertEqual(self.conn.used_by, {'Data Forwarding'})
 
-    def test_conn_with_no_used_by(self):
-        new_conn = ConnectionSettings.objects.create(
-            url='http://blah-url.com',
-            domain='nice-domain'
+    def test_connection_settings_used_by_kyc(self):
+        KycConfig.objects.create(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            connection_settings_id=self.conn.id
         )
-        self.assertEqual(new_conn.used_by, set())
 
-    def tearDown(self):
-        self.repeater.delete()
-        super().tearDown()
+        self.assertEqual(self.conn.used_by, {'KYC Integration'})
+
+    def test_conn_with_no_used_by(self):
+        self.assertEqual(self.conn.used_by, set())
 
 
 class TestRepeaterConnectionSettings(RepeaterTestCase):

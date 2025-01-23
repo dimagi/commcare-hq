@@ -66,30 +66,30 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 CACHE_EXPIRY_7_DAYS_IN_SECS = 7 * 24 * 60 * 60
 
 
-# This mirrors the logic of require_mobile_access
-def _verify_access(domain, user_id, request):
+# This mirrors the logic of require_mobile_access, but with a whitelist exempted
+def _has_mobile_access(domain, user_id, request):
     """Unless going through formplayer or the API, users need access_mobile_endpoints"""
-    if not is_from_formplayer(request):
-        cache_key = f"form_submission_permissions_audit_v2:{user_id}"
-        if cache.get(cache_key):
-            # User is already logged once in last 7 days for incorrect access, so no need to log again
-            return
+    if (is_from_formplayer(request)
+            or request.couch_user.has_permission(domain, 'access_mobile_endpoints')):
+        return True
 
-        if not request.couch_user.has_permission(domain, 'access_mobile_endpoints'):
+    if toggles.OPEN_SUBMISSION_ENDPOINT.enabled(domain):
+        # log incorrect access at most once every 7 days to ease transition off flag
+        cache_key = f"form_submission_permissions_audit_v2:{user_id}"
+        if not cache.get(cache_key):
             cache.set(cache_key, True, CACHE_EXPIRY_7_DAYS_IN_SECS)
             message = f"NoMobileEndpointsAccess: invalid request by {user_id} on {domain}"
             notify_exception(request, message=message)
-            if not toggles.OPEN_SUBMISSION_ENDPOINT.enabled(domain):
-                # Once we're confident this has enabled the flag for all active
-                # usage, we can make domains without the toggle fail hard
-                toggles.OPEN_SUBMISSION_ENDPOINT.set(domain, enabled=True, namespace=toggles.NAMESPACE_DOMAIN)
+        return True
+
+    return False
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext, is_api=False):
-    if authenticated and not is_api:
-        _verify_access(domain, user_id, request)
+    if authenticated and not is_api and not _has_mobile_access(domain, user_id, request):
+        return HttpResponseForbidden()
 
     if rate_limit_submission(domain):
         return HttpTooManyRequests()
