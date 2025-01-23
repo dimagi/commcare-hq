@@ -29,40 +29,28 @@ def migrate_api_settings(apps, schema_editor):
     for connection in connect_settings_to_update:
         connection.password = _reencrypt_or_encrypt_value_with_cbc(connection.password)
         connection.client_secret = _reencrypt_or_encrypt_value_with_cbc(connection.client_secret)
-        connection.last_token_aes = _reencrypt_value_with_cbc(connection.last_token_aes)
+        connection.last_token_aes = _reencrypt_or_encrypt_value_with_cbc(connection.last_token_aes,
+                                                                         reencrypt_only=True)
         updated_connections.append(connection)
 
     ConnectionSettings.objects.bulk_update(updated_connections, ['password', 'client_secret', 'last_token_aes'])
 
 
-def _reencrypt_or_encrypt_value_with_cbc(value):
+def _reencrypt_or_encrypt_value_with_cbc(value, reencrypt_only=False):
     if value == '':
         return ''
     if value.startswith(f'${ALGO_AES_CBC}$'):
         return value
 
-    if value.startswith(f'${ALGO_AES}$'):
-        try:
-            return reencrypt_ecb_to_cbc_mode(value, f'${ALGO_AES}$')
-        except AesEcbDecryptionError:
-            return ''
-    else:
-        ciphertext = b64_aes_cbc_encrypt(value)
-        return f'${ALGO_AES_CBC}${ciphertext}'
-
-
-def _reencrypt_value_with_cbc(value):
-    if value == '':
-        return ''
-    if value.startswith(f'${ALGO_AES_CBC}$'):
-        return value
-
-    if value.startswith(f'${ALGO_AES}$'):
-        prefix = f'${ALGO_AES}$'
-    else:
-        prefix = None
     try:
-        return reencrypt_ecb_to_cbc_mode(value, prefix)
+        if value.startswith(f'${ALGO_AES}$'):
+            return reencrypt_ecb_to_cbc_mode(value, f'${ALGO_AES}$')
+        else:
+            if reencrypt_only:
+                return reencrypt_ecb_to_cbc_mode(value)
+            else:
+                ciphertext = b64_aes_cbc_encrypt(value)
+                return f'${ALGO_AES_CBC}${ciphertext}'
     except AesEcbDecryptionError:
         return ''
 
