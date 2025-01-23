@@ -85,7 +85,7 @@ describe('Data Corrections', function () {
     });
 
     describe('Inside modal', function () {
-        it('should search by property name', function () {
+        it('should search by property name', function (done) {
             initModel({
                 'black': 'darjeeling',
                 'green': 'genmaicha',
@@ -93,12 +93,41 @@ describe('Data Corrections', function () {
             });
             openModal();
 
-            search("green");
-            assertVisibleProperties(["green"]);
-            search("");
-            assertVisibleProperties(["black", "green", "white"]);
-            search("xyz");
-            assertVisibleProperties([]);
+            _.defer(function () {   // _.defer allows knockout search box component to initialize
+                search("green");
+                assertVisibleProperties(["green"]);
+                done();
+            });
+        });
+
+        it('should search for a non-existent property', function (done) {
+            initModel({
+                'black': 'darjeeling',
+                'green': 'genmaicha',
+                'white': 'silver needle',
+            });
+            openModal();
+
+            _.defer(function () {
+                search("xyz");
+                assertVisibleProperties([]);
+                done();
+            });
+        });
+
+        it('should search for a blank string', function (done) {
+            initModel({
+                'black': 'darjeeling',
+                'green': 'genmaicha',
+                'white': 'silver needle',
+            });
+            openModal();
+
+            _.defer(function () {
+                search("");
+                assertVisibleProperties(["black", "green", "white"]);
+                done();
+            });
         });
 
         it('should display multiple pages when there are many properties', function () {
