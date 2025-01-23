@@ -85,6 +85,7 @@ IGNORE_MODELS = {
     "pillowtop.DjangoPillowCheckpoint",
     "pillowtop.KafkaCheckpoint",
     "project_limits.DynamicRateDefinition",
+    "project_limits.FeatureLimit",
     "project_limits.RateLimitedTwoFactorLog",
     "project_limits.PillowLagGaugeDefinition",
     "registration.SelfSignupWorkflow",
