@@ -138,13 +138,14 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         _record_metrics(metric_tags, 'blacklisted', response)
         return response
 
+    instance_json = None
     try:
-        form_json = convert_xform_to_json(instance)
+        instance_json = convert_xform_to_json(instance)
     except couchforms.XMLSyntaxError:
         # let normal response handle invalid xml
         pass
     else:
-        device_id = form_json.get('meta', {}).get('deviceID')
+        device_id = instance_json.get('meta', {}).get('deviceID')
         should_limit = device_rate_limiter.rate_limit_device(domain, user_id, device_id)
         if should_limit:
             return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
@@ -153,6 +154,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         app_id, build_id = get_app_and_build_ids(domain, app_id)
         submission_post = SubmissionPost(
             instance=instance,
+            instance_json=instance_json,
             attachments=attachments,
             domain=domain,
             app_id=app_id,
