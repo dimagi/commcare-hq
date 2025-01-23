@@ -1,5 +1,12 @@
 /* eslint-env mocha */
 
+import $ from 'jquery';
+import _ from 'underscore';
+import 'hqwebapp/js/components/pagination';
+import 'hqwebapp/js/components/search_box';
+import dataCorrections from 'reports/js/bootstrap3/data_corrections';
+import 'commcarehq';
+
 describe('Data Corrections', function () {
     var $fixture = $("#data-corrections-fixture").remove(),
         thingList = function (count) {
@@ -39,7 +46,7 @@ describe('Data Corrections', function () {
         },
         initModel = function (properties, additionalOptions) {
             additionalOptions = additionalOptions || {};
-            return hqImport('reports/js/bootstrap3/data_corrections').init(
+            return dataCorrections.init(
                 $(".data-corrections-trigger"),
                 $(".data-corrections-modal"),
                 _.extend(generateOptions(properties), additionalOptions),
