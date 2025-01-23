@@ -870,7 +870,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
             .app_id(app_id)
             .sort('version', desc=True)
             .is_released()
-            .source(['_id', 'version', 'last_released', 'built_on'])
+            .source(['version', 'last_released', 'built_on'])
         )
         self.builds_by_app_id[app_id] = app_es.run().hits
         return self.builds_by_app_id[app_id]
