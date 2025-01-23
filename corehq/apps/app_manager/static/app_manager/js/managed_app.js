@@ -17,10 +17,11 @@ hqDefine("app_manager/js/managed_app", function () {
                 var that = this;
                 if ($langcodeInput) {
                     $langcodeInput.change(function () {
-                        if ($(this).val() == "")
+                        if ($(this).val() === "") {
                             $(that).show();
-                        else
+                        } else {
                             $(that).hide();
+                        }
                     });
                 }
             }
