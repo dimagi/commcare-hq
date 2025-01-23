@@ -1,5 +1,12 @@
 /* eslint-env mocha */
 
+import $ from 'jquery';
+import _ from 'underscore';
+import 'hqwebapp/js/components/pagination';
+import 'hqwebapp/js/components/search_box';
+import dataCorrections from 'reports/js/bootstrap5/data_corrections';
+import 'commcarehq';
+
 describe('Data Corrections', function () {
     var $fixture = $("#data-corrections-fixture").remove(),
         thingList = function (count) {
@@ -39,7 +46,7 @@ describe('Data Corrections', function () {
         },
         initModel = function (properties, additionalOptions) {
             additionalOptions = additionalOptions || {};
-            return hqImport('reports/js/bootstrap5/data_corrections').init(
+            return dataCorrections.init(
                 $(".data-corrections-trigger"),
                 $(".data-corrections-modal"),
                 _.extend(generateOptions(properties), additionalOptions),
@@ -85,7 +92,7 @@ describe('Data Corrections', function () {
     });
 
     describe('Inside modal', function () {
-        it('should search by property name', function () {
+        it('should search by property name', function (done) {
             initModel({
                 'black': 'darjeeling',
                 'green': 'genmaicha',
@@ -93,67 +100,106 @@ describe('Data Corrections', function () {
             });
             openModal();
 
-            search("green");
-            assertVisibleProperties(["green"]);
-            search("");
-            assertVisibleProperties(["black", "green", "white"]);
-            search("xyz");
-            assertVisibleProperties([]);
+            _.defer(function () {   // _.defer allows knockout search box component to initialize
+                search("green");
+                assertVisibleProperties(["green"]);
+                done();
+            });
         });
 
-        it('should display multiple pages when there are many properties', function () {
+        it('should search for a non-existent property', function (done) {
+            initModel({
+                'black': 'darjeeling',
+                'green': 'genmaicha',
+                'white': 'silver needle',
+            });
+            openModal();
+
+            _.defer(function () {
+                search("xyz");
+                assertVisibleProperties([]);
+                done();
+            });
+        });
+
+        it('should search for a blank string', function (done) {
+            initModel({
+                'black': 'darjeeling',
+                'green': 'genmaicha',
+                'white': 'silver needle',
+            });
+            openModal();
+
+            _.defer(function () {
+                search("");
+                assertVisibleProperties(["black", "green", "white"]);
+                done();
+            });
+        });
+
+        it('should display multiple pages when there are many properties', function (done) {
             var itemCount = 100,
                 names = thingList(itemCount),
                 model = initModel(_.object(names, names));
             openModal();
 
-            assert.equal(model.totalPages(), Math.ceil(itemCount / model.itemsPerPage()));
-            assertVisibleProperties(names.slice(0, model.itemsPerPage()));
+            _.defer(function () {
+                assert.equal($(".pagination li").length - 2, Math.ceil(itemCount / model.itemsPerPage()));
+                assertVisibleProperties(names.slice(0, model.itemsPerPage()));
 
-            model.currentPage(model.totalPages());
-            assertVisibleProperties(names.slice((model.totalPages() - 1) * model.itemsPerPage()));
+                model.currentPage(model.totalItems());
+                assertVisibleProperties(names.slice((model.totalItems() - 1) * model.itemsPerPage()));
+
+                done();
+            });
         });
 
-        it('should search across multiple pages', function () {
+        it('should search across multiple pages', function (done) {
             var names = thingList(100);
             initModel(_.object(names, names));
             openModal();
-            search("10");
-            assertVisibleProperties(["thing010", "thing100"]);
+            _.defer(function () {
+                search("10");
+                assertVisibleProperties(["thing010", "thing100"]);
+                done();
+            });
         });
 
-        it('should display multiple attributes of each property', function () {
-            var model = initModel({
-                red: {
-                    value: 'ff0000',
-                    spanish: 'rojo',
-                    french: 'rouge',
-                },
-                orange: {
-                    value: 'ff6600',
-                    spanish: 'anaranjado',
-                    french: 'orange',
-                },
-                yellow: {
-                    value: 'ffff00',
-                    spanish: 'amarillo',
-                    french: 'jaune',
-                },
+        const multilingualProperties = {
+            red: {
+                value: 'ff0000',
+                spanish: 'rojo',
+                french: 'rouge',
+            },
+            orange: {
+                value: 'ff6600',
+                spanish: 'anaranjado',
+                french: 'orange',
+            },
+            yellow: {
+                value: 'ffff00',
+                spanish: 'amarillo',
+                french: 'jaune',
+            },
+        };
+        const multilingualOptions = {
+            displayProperties: [{
+                property: 'name',
+                name: 'English',
             }, {
-                displayProperties: [{
-                    property: 'name',
-                    name: 'English',
-                }, {
-                    property: 'spanish',
-                    name: 'Spanish',
-                }, {
-                    property: 'french',
-                    name: 'French',
-                    search: 'spanish',
-                }],
-                propertyPrefix: "<div class='test-property'>",
-                propertySuffix: "</div>",
-            });
+                property: 'spanish',
+                name: 'Spanish',
+            }, {
+                property: 'french',
+                name: 'French',
+                search: 'spanish',
+            }],
+            propertyPrefix: "<div class='test-property'>",
+            propertySuffix: "</div>",
+        };
+
+        it('should display translated properties in default language', function (done) {
+            var model = initModel(multilingualProperties, multilingualOptions);
             openModal();
 
             var assertVisibleText = function (expected) {
@@ -162,17 +208,32 @@ describe('Data Corrections', function () {
 
             assert($(".data-corrections-modal .nav > :first-child").hasClass("active"), "Should display first property by default");
 
-            // Display and search english values
-            model.updateDisplayProperty("name");
-            assertVisibleText(["orange", "red", "yellow"]);
-            search("yellow");
-            assertVisibleProperties(["yellow"]);
+            _.defer(function () {
+                model.updateDisplayProperty("name");
+                assertVisibleText(["orange", "red", "yellow"]);
+                search("yellow");
+                assertVisibleProperties(["yellow"]);
+                done();
+            });
+        });
 
-            // Display and search spanish values
-            model.updateDisplayProperty("spanish");
-            assertVisibleText(["anaranjado", "rojo", "amarillo"]);
-            search("rojo");
-            assertVisibleProperties(["red"]);
+        it('should display translated properties in non-default language', function (done) {
+            var model = initModel(multilingualProperties, multilingualOptions);
+            openModal();
+
+            var assertVisibleText = function (expected) {
+                assert.sameMembers(expected, _.map($(".data-corrections-modal .test-property:visible"), function (p) { return p.innerText; }));
+            };
+
+            assert($(".data-corrections-modal .nav > :first-child").hasClass("active"), "Should display first property by default");
+
+            _.defer(function () {
+                model.updateDisplayProperty("spanish");
+                assertVisibleText(["anaranjado", "rojo", "amarillo"]);
+                search("rojo");
+                assertVisibleProperties(["red"]);
+                done();
+            });
         });
     });
 });

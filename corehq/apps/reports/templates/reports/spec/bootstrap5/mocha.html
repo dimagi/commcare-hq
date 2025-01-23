@@ -1,12 +1,10 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
-{% block dependencies %}
-  <script src="{% static 'reports/js/bootstrap5/data_corrections.js' %}"></script>
-{% endblock %}
+{% js_entry "reports/spec/bootstrap5/main" %}
 
-{% block mocha_tests %}
-  <script src="{% static 'reports/spec/bootstrap5/data_corrections_spec.js' %}"></script>
+{% block stylesheets %}
+  {% include 'hqwebapp/includes/bootstrap5/core_stylesheets.html' %}
 {% endblock %}
 
 {% block fixtures %}
@@ -16,4 +14,6 @@
     </button>
     {% include "reports/partials/bootstrap5/data_corrections_modal.html" %}
   </div>
+  {% include 'hqwebapp/partials/bootstrap5/ko_pagination.html' %}
+  {% include 'hqwebapp/partials/bootstrap5/ko_search_box.html' %}
 {% endblock %}
