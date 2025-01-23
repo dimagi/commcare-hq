@@ -523,6 +523,25 @@ class APIKeysResource(ODataEnterpriseReportResource):
         return ('web_user', 'api_key_name',)
 
 
+class DataForwardingResource(ODataEnterpriseReportResource):
+    domain = fields.CharField()
+    service_name = fields.CharField()
+    service_type = fields.CharField()
+    last_modified = fields.DateTimeField()
+
+    REPORT_SLUG = EnterpriseReport.DATA_FORWARDING
+
+    def dehydrate(self, bundle):
+        bundle.data['domain'] = bundle.obj[0]
+        bundle.data['service_name'] = bundle.obj[1]
+        bundle.data['service_type'] = bundle.obj[2]
+        bundle.data['last_modified'] = self.convert_datetime(bundle.obj[3])
+        return bundle
+
+    def get_primary_keys(self):
+        return ('domain', 'service_name', 'service_type')
+
+
 class ApplicationVersionComplianceResource(ODataEnterpriseReportResource):
     mobile_worker = fields.CharField()
     domain = fields.CharField()

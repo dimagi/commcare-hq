@@ -102,6 +102,7 @@ def platform_overview(request, domain):
              'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
                         for slug in (EnterpriseReport.ODATA_FEEDS,
                                      EnterpriseReport.DATA_EXPORTS,
+                                     EnterpriseReport.DATA_FORWARDING,
                                      EnterpriseReport.CASE_MANAGEMENT,)]},
         ],
         'uses_date_range': [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS],

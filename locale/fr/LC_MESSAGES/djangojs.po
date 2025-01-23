@@ -2984,53 +2984,70 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
-#: corehq/apps/data_interfaces/static/data_interfaces/js/deduplication_rules.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Issue communicating with server. Try again."
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
 msgid "OR"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
 msgid "AND"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
 msgid "True when ANY of the case properties match"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
 msgid "True when ALL of the case properties match"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Out of range of filter. Will not appear on page refresh."
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "updated"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Case copied"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Cases copied"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Case Reassignment (via HQ)"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Search for users"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Search for users or groups"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/manage_case_groups.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/manage_case_groups.js
+msgid "Sorry, it looks like the upload failed."
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
@@ -3077,10 +3094,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Form submission found!"
-msgstr ""
-
-#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js
-msgid "Sorry, it looks like the upload failed."
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/bootstrap3/billing_statements.js
