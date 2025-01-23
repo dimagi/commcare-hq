@@ -69,8 +69,9 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
     asyncReport = getAsync();
 
     $(function () {
-        $('[data-toggle="offcanvas"]').click(function () {
-            $('.row-offcanvas').toggleClass('active');
+
+        $('[data-hq-toggle]').click(function () {
+            $($(this).data('hqToggle')).toggleClass('active');
         });
 
         $('.report-description-popover').popover({  /* todo B5: plugin:popover */
