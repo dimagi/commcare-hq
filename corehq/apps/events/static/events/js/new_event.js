@@ -48,6 +48,8 @@ hqDefine("events/js/new_event", [
             var submitBtn = $('input[id="submit-id-submit_btn"]');
             var attendanceTakers = $('#id_attendance_takers');
 
+            eval(initialData.command);
+
             var initialAttendanceTakers = initialData.attendance_takers;
             submitBtn.prop('disabled', !initialAttendanceTakers || initialAttendanceTakers.length === 0);
             attendanceTakers.on('change', function () {
