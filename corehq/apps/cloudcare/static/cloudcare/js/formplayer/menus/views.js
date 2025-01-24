@@ -1646,7 +1646,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         getPersistantMenuRegionWidth: function () {
             let persistantMenuRegionWidth = sessionStorage.getItem('persistantMenuRegionWidth');
-            if (!persistantMenuRegionWidth) {
+            if (!persistantMenuRegionWidth || persistantMenuRegionWidth === '0') {
                 persistantMenuRegionWidth = this.calcPersistantMenuRegionWidth();
                 sessionStorage.setItem('persistantMenuRegionWidth', persistantMenuRegionWidth);
             }
