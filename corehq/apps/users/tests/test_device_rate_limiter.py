@@ -66,3 +66,8 @@ class TestDeviceRateLimiter(SimpleTestCase):
     def test_allowed_if_rate_limiter_is_disabled(self):
         device_rate_limiter.rate_limit_device(self.domain, 'user-id', 'existing-device-id')
         self.assertFalse(device_rate_limiter.rate_limit_device(self.domain, 'user-id', 'new-device-id'))
+
+    def test_allowed_if_user_id_or_device_id_is_none(self):
+        device_rate_limiter.rate_limit_device(self.domain, 'user-id', 'existing-device-id')
+        self.assertFalse(device_rate_limiter.rate_limit_device(self.domain, 'user-id', None))
+        self.assertFalse(device_rate_limiter.rate_limit_device(self.domain, None, 'new-device-id'))

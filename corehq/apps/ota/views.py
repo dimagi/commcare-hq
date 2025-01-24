@@ -295,10 +295,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         silently.
     :return: Tuple of (http response, timing context or None)
     """
-    should_limit = device_rate_limiter.rate_limit_device(domain, user_id, device_id)
-    if should_limit:
-        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
-
     if user_id and user_id != couch_user.user_id:
         # sync with a user that has been deleted but a new
         # user was created with the same username and password
@@ -320,6 +316,11 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     if uses_login_as and not as_user_obj:
         msg = _('Invalid restore as user {}').format(as_user)
         return HttpResponse(msg, status=401), None
+
+    should_limit = device_rate_limiter.rate_limit_device(domain, as_user_obj._id, device_id)
+    if should_limit:
+        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
+
     is_permitted, message = is_permitted_to_restore(
         domain,
         couch_user,

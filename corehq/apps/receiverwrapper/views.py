@@ -146,7 +146,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         pass
     else:
         device_id = instance_json.get('meta', {}).get('deviceID')
-        should_limit = device_rate_limiter.rate_limit_device(domain, user_id, device_id)
+        submitting_user_id = instance_json.get('meta', {}).get('userID')
+        should_limit = device_rate_limiter.rate_limit_device(domain, submitting_user_id, device_id)
         if should_limit:
             return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
 

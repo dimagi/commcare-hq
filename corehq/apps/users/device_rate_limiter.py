@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 
 from django.conf import settings
@@ -6,6 +7,9 @@ from django_redis import get_redis_connection
 from corehq import toggles
 from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
 from corehq.util.metrics import metrics_counter, metrics_histogram
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try again in a minute."
 # intentionally set to > 1 minute to allow for a buffer at minute boundaries
@@ -31,7 +35,13 @@ class DeviceRateLimiter:
         Returns boolean representing if this user_id + device_id combo is rate limited or not
         NOTE: calling this method will result in the device_id being added to the list of used device_ids
         """
-        if not device_id or self._is_formplayer(device_id):
+        if not device_id or not user_id:
+            logger.info(
+                f"Unable to rate limit device activity for domain {domain}, user {user_id}, and device {device_id}"
+            )
+            return False
+
+        if self._is_formplayer(device_id):
             # do not track formplayer activity
             return False
 
