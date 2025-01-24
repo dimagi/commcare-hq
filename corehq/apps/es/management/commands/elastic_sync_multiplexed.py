@@ -42,7 +42,10 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname, reindex_batch_size=1000, requests_per_second=None, purge_ids=False):
+    def start_reindex(
+        self, cname, reindex_batch_size=1000, requests_per_second=None,
+        purge_ids=False, skip_ids=[]
+    ):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -58,7 +61,8 @@ class ESSyncUtil:
         logger.info("Starting ReIndex process")
         task_id = es_manager.reindex(
             source_index, destination_index,
-            requests_per_second=requests_per_second, batch_size=reindex_batch_size, purge_ids=purge_ids
+            requests_per_second=requests_per_second, batch_size=reindex_batch_size, purge_ids=purge_ids,
+            doc_ids_to_skip=skip_ids
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_number = task_id.split(':')[1]
@@ -520,6 +524,14 @@ class Command(BaseCommand):
                     index operations by padding each batch with a wait time"""
         )
 
+        start_cmd.add_argument(
+            "--skip-ids",
+            default=[],
+            nargs='+',
+            type=str,
+            help="""List of doc IDs to skip during reindex (e.g. --skip-ids admin demo_user)"""
+        )
+
         # Get ReIndex Process Status
         status_cmd = subparsers.add_parser("status")
         status_cmd.set_defaults(func=self.es_helper.reindex_status)
@@ -612,7 +624,8 @@ class Command(BaseCommand):
                 options['index_cname'],
                 options['batch_size'],
                 options['requests_per_second'],
-                options['purge_ids']
+                options['purge_ids'],
+                options['skip_ids']
             )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
