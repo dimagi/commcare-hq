@@ -49,6 +49,8 @@ class TestLock:
     lock = attr.ib(repr=False)
     timeout = attr.ib()
 
+    # Allows setting local.token. (local.token is used for releasing a
+    # lock that was acquired in a different process.)
     local = Mock()
 
     def acquire(self, **kw):
