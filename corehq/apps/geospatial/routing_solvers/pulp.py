@@ -68,7 +68,10 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
     def solve(self, config, print_solution=False):
         parameters = self.get_parameters(config)
 
-        distance_costs, duration_costs = self.calculate_distance_matrix(config)
+        try:
+            distance_costs, duration_costs = self.calculate_distance_matrix(config)
+        except ValueError as e:
+            raise ValueError('Some user and/or case locations are invalid') from e
 
         if not distance_costs:
             return self.solution_results(
