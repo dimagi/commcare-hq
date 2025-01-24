@@ -191,7 +191,7 @@ class RoadNetworkSolver(RadialDistanceSolver):
             raise Exception("This is more than Mapbox matrix API limit (25)")
 
         coordinates = ';'.join([
-            f'{loc["lon"]},{loc["lat"]}'
+            f'{float(loc["lon"])},{float(loc["lat"])}'
             for loc in self.user_locations + self.case_locations]
         )
         sources_count = len(self.user_locations)
