@@ -103,9 +103,6 @@ hqDefine("events/js/new_event", [
                         multiselectUtils.rebuildMultiselect('id_expected_attendees', ATTENDEE_PROPS);
                         multiselectUtils.rebuildMultiselect('id_attendance_takers', ATTENDANCE_TAKER_PROPS);
                     },
-                    error: function () {
-                        $("#attendance-list-error").removeClass("hidden");
-                    },
                 });
             });
 
