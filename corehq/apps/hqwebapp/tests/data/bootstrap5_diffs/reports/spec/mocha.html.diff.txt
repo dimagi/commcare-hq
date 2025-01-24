@@ -1,24 +1,27 @@
 --- 
 +++ 
-@@ -2,11 +2,11 @@
+@@ -1,10 +1,10 @@
+ {% extends "mocha/base.html" %}
  {% load hq_shared_tags %}
  
- {% block dependencies %}
--  <script src="{% static 'reports/js/bootstrap3/data_corrections.js' %}"></script>
-+  <script src="{% static 'reports/js/bootstrap5/data_corrections.js' %}"></script>
- {% endblock %}
+-{% js_entry_b3 "reports/spec/bootstrap3/main" %}
++{% js_entry "reports/spec/bootstrap5/main" %}
  
- {% block mocha_tests %}
--  <script src="{% static 'reports/spec/bootstrap3/data_corrections_spec.js' %}"></script>
-+  <script src="{% static 'reports/spec/bootstrap5/data_corrections_spec.js' %}"></script>
+ {% block stylesheets %}
+-  {% include 'hqwebapp/includes/bootstrap3/core_stylesheets.html' %}
++  {% include 'hqwebapp/includes/bootstrap5/core_stylesheets.html' %}
  {% endblock %}
  
  {% block fixtures %}
-@@ -14,6 +14,6 @@
+@@ -12,8 +12,8 @@
      <button type="button" class="btn btn-primary data-corrections-trigger">
        Data Corrections
      </button>
 -    {% include "reports/partials/bootstrap3/data_corrections_modal.html" %}
 +    {% include "reports/partials/bootstrap5/data_corrections_modal.html" %}
    </div>
+-  {% include 'hqwebapp/partials/bootstrap3/ko_pagination.html' %}
+-  {% include 'hqwebapp/partials/bootstrap3/ko_search_box.html' %}
++  {% include 'hqwebapp/partials/bootstrap5/ko_pagination.html' %}
++  {% include 'hqwebapp/partials/bootstrap5/ko_search_box.html' %}
  {% endblock %}
