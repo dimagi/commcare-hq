@@ -30,7 +30,7 @@ describe('Data Corrections', function () {
             $(".data-corrections-trigger").click();
         },
         closeModal = function () {
-            $(".data-corrections-modal .close").click();
+            $(".data-corrections-modal .btn-close").click();
         },
         updateProperty = function (name, newValue) {
             $(".data-corrections-modal [data-name='" + name + "']").val(newValue).change();
@@ -55,7 +55,7 @@ describe('Data Corrections', function () {
 
     beforeEach(function () {
         var $clone = $fixture.clone();
-        $clone.find(".modal").data("backdrop", 0);
+        $clone.find(".modal").attr("data-bs-backdrop", false);
         $("#mocha-sandbox").append($clone);
     });
 
@@ -64,30 +64,40 @@ describe('Data Corrections', function () {
     });
 
     describe('Modal', function () {
-        it('should appear on trigger and disappear on close', function () {
+        it('should appear on trigger and disappear on close', function (done) {
             initModel({ 'name': 'value' });
             var $modal = $(".data-corrections-modal");
             assert(!$modal.is(":visible"));
+            $modal.on("shown.bs.modal", function () {
+                assert($modal.is(":visible"));
+                $modal.on("hidden.bs.modal", function () {
+                    assert(!$modal.is(":visible"));
+                    done();
+                });
+                closeModal();
+            });
             openModal();
-            assert($modal.is(":visible"));
-            closeModal();
-            assert(!$modal.is(":visible"));
         });
 
-        it('should reset properties on close and re-open', function () {
+        it('should reset properties on close and re-open', function (done) {
             initModel({
                 'black': 'darjeeling',
                 'green': 'genmaicha',
                 'white': 'silver needle',
             });
+            var $modal = $(".data-corrections-modal");
+            $modal.on("shown.bs.modal", function () {
+                assertProperty("green", "genmaicha");
+                updateProperty("green", "gunpowder");
+                assertProperty("green", "gunpowder");
+                $modal.on("hidden.bs.modal", function () {
+                    openModal();
+                    assertProperty("green", "genmaicha");
+                    done();
+                });
+                closeModal();
+            });
             openModal();
-            assertProperty("green", "genmaicha");
-            updateProperty("green", "gunpowder");
-            assertProperty("green", "gunpowder");
-            closeModal();
-            openModal();
-            assertProperty("green", "genmaicha");
-            closeModal();
         });
     });
 
