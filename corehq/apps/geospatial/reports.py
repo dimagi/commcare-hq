@@ -47,13 +47,6 @@ from .utils import (
 
 
 class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin):
-    fields = [
-        'corehq.apps.reports.standard.cases.filters.XPathCaseSearchFilter',
-        'corehq.apps.reports.filters.case_list.CaseListFilter',
-        'corehq.apps.reports.filters.select.CaseTypeFilter',
-        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
-    ]
-
     section_name = gettext_noop("Data")
 
     dispatcher = CaseManagementMapDispatcher
@@ -100,8 +93,18 @@ class CaseManagementMap(BaseCaseMapReport):
     name = gettext_noop("Microplanning Map")
     slug = "microplanning_map"
 
+    fields = [
+        'corehq.apps.reports.standard.cases.filters.XPathCaseSearchFilter',
+        'corehq.apps.reports.filters.case_list.CaseListFilter',
+        'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+    ]
+
     base_template = "geospatial/case_management_base.html"
     report_template_path = "geospatial/case_management.html"
+    max_rows = 5_000
+    default_rows = 5_000
+    force_page_size = True
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
@@ -150,6 +153,13 @@ class CaseManagementMap(BaseCaseMapReport):
 class CaseGroupingReport(BaseCaseMapReport):
     name = gettext_noop('Case Clustering Map')
     slug = 'case_clustering_map'
+
+    fields = [
+        'corehq.apps.reports.standard.cases.filters.XPathCaseSearchFilter',
+        'corehq.apps.reports.filters.case_list.CaseListFilter',
+        'corehq.apps.reports.filters.select.CaseTypeFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+    ]
 
     base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'geospatial/case_grouping_map.html'

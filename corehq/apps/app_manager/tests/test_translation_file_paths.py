@@ -20,7 +20,7 @@ def test_version_paths_with_two_versions():
 def test_version_paths_with_latest_commcare_version():
     eq(
         commcare_translations.get_translation_file_paths('en', version=1, commcare_version='latest'),
-        ['../historical-translations-by-version/2.53-messages_en-2.txt', '../messages_en-1.txt']
+        ['../historical-translations-by-version/2.55-messages_en-2.txt', '../messages_en-1.txt']
     )
 
 
@@ -28,7 +28,7 @@ def test_version_paths_with_latest_commcare_version_and_two_versions():
     eq(
         commcare_translations.get_translation_file_paths('en', version=2, commcare_version='latest'),
         [
-            '../historical-translations-by-version/2.53-messages_en-2.txt',
+            '../historical-translations-by-version/2.55-messages_en-2.txt',
             '../messages_en-2.txt',
             '../messages_en-1.txt',
         ]

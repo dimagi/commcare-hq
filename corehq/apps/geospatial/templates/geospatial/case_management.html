@@ -204,14 +204,14 @@
               </button>
               <h4 class="modal-title">{% trans "Selected Mobile Workers" %}</h4>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="overflow-y: auto; max-height: 50vh">
               <table class="table table-striped table-responsive">
                 <thead>
                   <th>{% trans "Username" %}</th>
                 </thead>
                 <tbody data-bind="foreach: selectedUsers">
                   <tr>
-                    <td data-bind="html: $data.itemData.link"></td>
+                    <td data-bind="html: $data.link"></td>
                   </tr>
                 </tbody>
               </table>
@@ -239,14 +239,14 @@
                 {% trans "All Mobile Workers on Map" %}
               </h4>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="overflow-y: auto; max-height: 50vh">
               <table class="table table-striped table-responsive">
                 <thead>
                   <th>{% trans "Username" %}</th>
                 </thead>
                 <tbody data-bind="foreach: userModels">
                   <tr>
-                    <td data-bind="html: $data.itemData.link"></td>
+                    <td data-bind="html: $data.link"></td>
                   </tr>
                 </tbody>
               </table>
@@ -275,14 +275,14 @@
               </button>
               <h4 class="modal-title">{% trans "Selected Cases" %}</h4>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="overflow-y: auto; max-height: 50vh">
               <table class="table table-striped table-responsive">
                 <thead>
                   <th>{% trans "Case Name" %}</th>
                 </thead>
                 <tbody data-bind="foreach: selectedCases">
                   <tr>
-                    <td data-bind="html: $data.itemData.link"></td>
+                    <td data-bind="html: $data.link"></td>
                   </tr>
                 </tbody>
               </table>
@@ -308,14 +308,14 @@
               </button>
               <h4 class="modal-title">{% trans "All Cases on Map" %}</h4>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="overflow-y: auto; max-height: 50vh">
               <table class="table table-striped table-responsive">
                 <thead>
                   <th>{% trans "Case Name" %}</th>
                 </thead>
                 <tbody data-bind="foreach: caseModels">
                   <tr>
-                    <td data-bind="html: $data.itemData.link"></td>
+                    <td data-bind="html: $data.link"></td>
                   </tr>
                 </tbody>
               </table>
@@ -336,7 +336,7 @@
       />
       <label
         class="form-check-label"
-        data-bind="html: $data.itemData.link, attr: {for: selectCssId}"
+        data-bind="html: $data.link, attr: {for: selectCssId}"
       ></label>
     </div>
   </script>
