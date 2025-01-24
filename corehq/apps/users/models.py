@@ -3123,20 +3123,10 @@ class HQApiKey(models.Model):
 
     @property
     def plaintext_key(self):
-        try:
-            decrypted_key = b64_aes_cbc_decrypt(self.encrypted_key) if self.encrypted_key else ''
-            if decrypted_key == self.key:
-                return decrypted_key
-            else:
-                logging.warning("Decrypted key does not match stored key for %s", self.name)
-                return self.key
-        except Exception as e:
-            logging.exception(f'Error getting decrypted key for {self.name}. {e}')
-            return self.key
+        return b64_aes_cbc_decrypt(self.encrypted_key) if self.encrypted_key else ''
 
     @plaintext_key.setter
     def plaintext_key(self, plaintext):
-        self.key = plaintext
         self.encrypted_key = b64_aes_cbc_encrypt(plaintext)
 
     @property
