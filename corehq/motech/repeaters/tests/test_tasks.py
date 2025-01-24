@@ -447,18 +447,13 @@ class TestGetWaitDurationSeconds(TestCase):
 
 class TestRepeaterLock(TestCase):
 
-    def test_lock_repeater(self):
-        repeater = self._get_repeater()
-        lock = RepeaterLock(repeater.repeater_id)
-        assert lock.repeater == repeater
-
     def test_lock_name(self):
         lock = RepeaterLock('abc123')
         self.assertEqual(lock._lock.name, 'process_repeater_abc123')
 
     def test_acquire(self):
-        repeater = self._get_repeater()
-        lock = RepeaterLock(repeater)
+        RepeaterLock.timeout = 1
+        lock = RepeaterLock('repeater_id')
         assert lock.acquire()
         assert lock.token
 

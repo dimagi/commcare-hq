@@ -313,7 +313,8 @@ def process_repeaters():
             continue
         lock = RepeaterLock(repeater_id)
         if lock.acquire():
-            process_repeater(lock.repeater, lock.token)
+            repeater = Repeater.objects.get(domain=domain, id=repeater_id)
+            process_repeater(repeater, lock.token)
 
 
 def iter_ready_repeater_ids():
@@ -493,7 +494,7 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
             )
             repeater.set_backoff()
     finally:
-        lock = RepeaterLock(repeater, lock_token)
+        lock = RepeaterLock(repeater_id, lock_token)
         if more:
             lock.reacquire()
             process_repeater(repeater, lock_token)
@@ -508,21 +509,9 @@ class RepeaterLock:
 
     timeout = 30 * 60  # Half an hour
 
-    def __init__(self, repeater, lock_token=None):
-        if isinstance(repeater, Repeater):
-            self.repeater_id = repeater.repeater_id
-            self._repeater = repeater
-        else:
-            self.repeater_id = repeater
-            self._repeater = None
+    def __init__(self, repeater_id, lock_token=None):
         self.token = lock_token
-        self._lock = self._get_lock()
-
-    @property
-    def repeater(self):
-        if self._repeater is None:
-            self._repeater = Repeater.objects.get(id=self.repeater_id)
-        return self._repeater
+        self._lock = self._get_lock(repeater_id)
 
     def acquire(self):
         assert self.token is None, 'You have already acquired this lock'
@@ -544,8 +533,8 @@ class RepeaterLock:
         assert self.token, 'Missing lock token'
         return self._lock.release()
 
-    def _get_lock(self):
-        name = f'process_repeater_{self.repeater_id}'
+    def _get_lock(self, repeater_id):
+        name = f'process_repeater_{repeater_id}'
         lock = get_redis_lock(key=name, name=name, timeout=self.timeout)
         if self.token:
             lock.local.token = self.token
