@@ -2,7 +2,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         appManagerUtils = hqImport('app_manager/js/app_manager');
     appManagerUtils.setPrependedPageTitle("\u2699 ", true);
-    appManagerUtils.setAppendedPageTitle(gettext("Form Settings"));
+    appManagerUtils.setAppendedPageTitle("Form Settings");
     appManagerUtils.updatePageTitle(initialPageData.get("form_name"));
 
     function formFilterMatches(filter, substringMatches) {
@@ -64,7 +64,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
                 },
                 error: function () {
                     self.enableUsercaseInProgress(false);
-                    self.enableUsercaseError(gettext("Could not enable user properties, please try again later."));
+                    self.enableUsercaseError("Could not enable user properties, please try again later.");
                 },
             });
         };
