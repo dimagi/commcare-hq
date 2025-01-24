@@ -491,6 +491,13 @@ def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
     return _group_json_to_tuples(filtered_group_json)
 
 
+def get_tableau_groups_by_names(interested_group_names: List, domain: str,
+                            session: TableauAPISession = None) -> List[TableauGroupTuple]:
+    group_json = get_tableau_group_json(domain, session)
+    filtered_group_json = [group for group in group_json if group['name'] in interested_group_names]
+    return _group_json_to_tuples(filtered_group_json)
+
+
 def get_tableau_group_ids_by_names(group_names: List, domain: str,
                               session: TableauAPISession = None) -> List[str]:
     '''
@@ -604,7 +611,6 @@ def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTu
     of TableauGroupTuples.
     '''
     try:
-        groups = groups or []
         session = session or TableauAPISession.create_session_for_domain(domain)
         user = TableauUser.objects.filter(
             server=session.tableau_connected_app.server
@@ -617,6 +623,8 @@ def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTu
         # Group management
         allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(domain)
         existing_groups = _group_json_to_tuples(session.get_groups_for_user_id(user.tableau_user_id))
+        if groups is None:
+            groups = existing_groups
         edited_groups_list = list(filter(lambda group: group.name in allowed_groups_for_domain, groups))
         other_groups = [group for group in existing_groups if group.name not in allowed_groups_for_domain]
         # The list of groups for the user should be a combination of those edited by the web admin and the existing
