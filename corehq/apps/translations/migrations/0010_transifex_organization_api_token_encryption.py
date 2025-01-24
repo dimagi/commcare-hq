@@ -20,8 +20,7 @@ def reencrypt_api_tokens(apps, schema_editor):
 
     for org in transifex_orgs_to_update:
         try:
-            ciphertext = reencrypt_ecb_to_cbc_mode(org.api_token)
-            org.api_token = f'${ALGO_AES_CBC}${ciphertext}'
+            org.api_token = reencrypt_ecb_to_cbc_mode(org.api_token)
         except AesEcbDecryptionError:
             org.api_token = ''
         org.save()
