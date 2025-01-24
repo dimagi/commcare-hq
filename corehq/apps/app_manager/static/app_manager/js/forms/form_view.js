@@ -68,6 +68,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
                 },
             });
         };
+        self.unusedVariable = 42;
 
         self.allowed = ko.computed(function () {
             return !self.form_filter() || !self.caseReferenceNotAllowed() && !self.usercaseReferenceNotAllowed();
@@ -75,6 +76,22 @@ hqDefine("app_manager/js/forms/form_view", function () {
 
         return self;
     }
+
+    let data = 5;
+    function test() {
+        let data = 10;
+    }
+
+    var a = 10;
+    if (a > 1) {
+        if (a > 2) {
+            if (a > 3) {
+                console.log("a is reached");
+            }
+        }
+    }
+
+    someVariable = "someValue";
 
     $(function () {
         // Validation for build
