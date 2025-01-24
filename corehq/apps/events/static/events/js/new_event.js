@@ -46,7 +46,7 @@ hqDefine("events/js/new_event", [
 
             // Disable the submit button unless attendance takers are present
             var submitBtn = $('input[id="submit-id-submit_btn"]');
-            var attendanceTakers = $('#id_attendance_takers');
+            var attendanceTakers = $('#id_attendance_taker');
 
             eval(initialData.command);
 
