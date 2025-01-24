@@ -1,11 +1,91 @@
 --- 
 +++ 
-@@ -39,7 +39,7 @@
+@@ -4,7 +4,7 @@
+ import _ from 'underscore';
+ import 'hqwebapp/js/components/pagination';
+ import 'hqwebapp/js/components/search_box';
+-import dataCorrections from 'reports/js/bootstrap3/data_corrections';
++import dataCorrections from 'reports/js/bootstrap5/data_corrections';
+ import 'commcarehq';
+ 
+ describe('Data Corrections', function () {
+@@ -30,7 +30,7 @@
+             $(".data-corrections-trigger").click();
          },
-         initModel = function (properties, additionalOptions) {
-             additionalOptions = additionalOptions || {};
--            return hqImport('reports/js/bootstrap3/data_corrections').init(
-+            return hqImport('reports/js/bootstrap5/data_corrections').init(
-                 $(".data-corrections-trigger"),
-                 $(".data-corrections-modal"),
-                 _.extend(generateOptions(properties), additionalOptions),
+         closeModal = function () {
+-            $(".data-corrections-modal .close").click();
++            $(".data-corrections-modal .btn-close").click();
+         },
+         updateProperty = function (name, newValue) {
+             $(".data-corrections-modal [data-name='" + name + "']").val(newValue).change();
+@@ -55,7 +55,7 @@
+ 
+     beforeEach(function () {
+         var $clone = $fixture.clone();
+-        $clone.find(".modal").data("backdrop", 0);
++        $clone.find(".modal").attr("data-bs-backdrop", false);
+         $("#mocha-sandbox").append($clone);
+     });
+ 
+@@ -64,30 +64,40 @@
+     });
+ 
+     describe('Modal', function () {
+-        it('should appear on trigger and disappear on close', function () {
++        it('should appear on trigger and disappear on close', function (done) {
+             initModel({ 'name': 'value' });
+             var $modal = $(".data-corrections-modal");
+             assert(!$modal.is(":visible"));
+-            openModal();
+-            assert($modal.is(":visible"));
+-            closeModal();
+-            assert(!$modal.is(":visible"));
+-        });
+-
+-        it('should reset properties on close and re-open', function () {
+-            initModel({
+-                'black': 'darjeeling',
+-                'green': 'genmaicha',
+-                'white': 'silver needle',
+-            });
+-            openModal();
+-            assertProperty("green", "genmaicha");
+-            updateProperty("green", "gunpowder");
+-            assertProperty("green", "gunpowder");
+-            closeModal();
+-            openModal();
+-            assertProperty("green", "genmaicha");
+-            closeModal();
++            $modal.on("shown.bs.modal", function () {
++                assert($modal.is(":visible"));
++                $modal.on("hidden.bs.modal", function () {
++                    assert(!$modal.is(":visible"));
++                    done();
++                });
++                closeModal();
++            });
++            openModal();
++        });
++
++        it('should reset properties on close and re-open', function (done) {
++            initModel({
++                'black': 'darjeeling',
++                'green': 'genmaicha',
++                'white': 'silver needle',
++            });
++            var $modal = $(".data-corrections-modal");
++            $modal.on("shown.bs.modal", function () {
++                assertProperty("green", "genmaicha");
++                updateProperty("green", "gunpowder");
++                assertProperty("green", "gunpowder");
++                $modal.on("hidden.bs.modal", function () {
++                    openModal();
++                    assertProperty("green", "genmaicha");
++                    done();
++                });
++                closeModal();
++            });
++            openModal();
+         });
+     });
+ 

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -28,7 +28,7 @@
+@@ -28,10 +28,11 @@
   *              Property is the data, plucked from the properties array. Name is displayed in the menu that lets
   *              user toggle between display properties.
   */
@@ -9,12 +9,32 @@
      "jquery",
      "knockout",
      "underscore",
-@@ -345,7 +345,7 @@
++    "bootstrap5",
+     "hqwebapp/js/assert_properties",
+     "analytix/js/kissmetrix",
+     'hqwebapp/js/components/pagination',
+@@ -41,6 +42,7 @@
+     $,
+     ko,
+     _,
++    bootstrap,
+     assertProperties,
+     kissAnalytics
+ ) {
+@@ -111,6 +113,7 @@
+         ]);
+         var self = {};
+         self.$modal = options.$modal;
++        self.modal = new bootstrap.Modal(self.$modal);
+ 
+         // Core data, and the order in which it should be displayed
+         self.properties = {};                       // map of name => PropertyModel, populated in init
+@@ -345,7 +348,7 @@
              model = DataCorrectionsModel(options);
              $modal.koApplyBindings(model);
              $trigger.click(function () {
 -                $modal.modal();
-+                $modal.modal();  /* todo B5: plugin:modal */
++                model.modal.show();
                  setupSelect2($modal);
  
              });
