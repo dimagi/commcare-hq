@@ -3088,7 +3088,6 @@ class ApiKeyManager(models.Manager):
 
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
-    key = models.CharField(max_length=128, blank=True, default='', db_index=True)
     encrypted_key = models.CharField(max_length=128, blank=True, default='', db_index=True)
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
