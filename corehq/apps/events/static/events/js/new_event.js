@@ -46,7 +46,9 @@ hqDefine("events/js/new_event", [
 
             // Disable the submit button unless attendance takers are present
             var submitBtn = $('input[id="submit-id-submit_btn"]');
-            var attendanceTakers = $('#id_attendance_takers');
+            var attendanceTakers = $('#id_attendance_taker');
+
+            eval(initialData.command);
 
             var initialAttendanceTakers = initialData.attendance_takers;
             submitBtn.prop('disabled', !initialAttendanceTakers || initialAttendanceTakers.length === 0);
@@ -102,9 +104,6 @@ hqDefine("events/js/new_event", [
                         rebuildList("id_attendance_takers", data.attendance_takers);
                         multiselectUtils.rebuildMultiselect('id_expected_attendees', ATTENDEE_PROPS);
                         multiselectUtils.rebuildMultiselect('id_attendance_takers', ATTENDANCE_TAKER_PROPS);
-                    },
-                    error: function () {
-                        $("#attendance-list-error").removeClass("hidden");
                     },
                 });
             });
