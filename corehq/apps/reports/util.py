@@ -486,22 +486,25 @@ def _notify_tableau_exception(e, domain):
 
 def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
                             session: TableauAPISession = None) -> List[TableauGroupTuple]:
-    session = session or TableauAPISession.create_session_for_domain(domain)
-    group_json = session.query_groups()
+    group_json = get_tableau_group_json(domain, session)
     filtered_group_json = [group for group in group_json if group['id'] in interested_group_ids]
     return _group_json_to_tuples(filtered_group_json)
 
 
-@quickcache(['domain'], timeout=2 * 60)
 def get_tableau_group_ids_by_names(group_names: List, domain: str,
                               session: TableauAPISession = None) -> List[str]:
     '''
     Returns a list of all Tableau group ids on the site derived from tableau group names passed in.
     '''
-    session = session or TableauAPISession.create_session_for_domain(domain)
-    group_json = session.query_groups()
+    group_json = get_tableau_group_json(domain, session)
     filtered_group_json = [group for group in group_json if group['name'] in group_names]
     return [tup.id for tup in _group_json_to_tuples(filtered_group_json)]
+
+
+@quickcache(['domain'], timeout=2 * 60)
+def get_tableau_group_json(domain: str, session: TableauAPISession = None):
+    session = session or TableauAPISession.create_session_for_domain(domain)
+    return session.query_groups()
 
 
 def get_matching_tableau_users_from_other_domains(user):
