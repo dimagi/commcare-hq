@@ -4,11 +4,13 @@
 hqDefine("reports/js/bootstrap5/standard_hq_report", [
     'jquery',
     'underscore',
+    'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'reports/js/bootstrap5/hq_report',
 ], function (
     $,
     _,
+    bootstrap,
     initialPageData,
     hqReportModule
 ) {
@@ -74,9 +76,13 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
             $($(this).data('hqToggle')).toggleClass('active');
         });
 
-        $('.report-description-popover').popover({  /* todo B5: plugin:popover */
-            placement: 'right',
-            trigger: 'hover',
+        $('.report-description-popover').each(function () {
+            new bootstrap.Popover($(this).get(0), {
+                title: $(this).data('title'),
+                content: $(this).data('content'),
+                placement: 'right',
+                trigger: 'hover',
+            });
         });
     });
 
