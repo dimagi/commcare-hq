@@ -400,7 +400,8 @@ class ElasticManageAdapter(BaseAdapter):
     def reindex(
             self, source, dest, wait_for_completion=False,
             refresh=False, batch_size=1000, requests_per_second=None,
-            copy_doc_ids=True, query=None, purge_ids=False
+            copy_doc_ids=True, query=None, purge_ids=False,
+            doc_ids_to_skip=[]
     ):
         """
         Starts the reindex process in elastic search cluster
@@ -463,6 +464,14 @@ class ElasticManageAdapter(BaseAdapter):
                     if (!ctx._source.containsKey('doc_id')) {
                         ctx._source['doc_id'] = ctx._id;
                     }
+                """)
+            # Skip documents with certain doc_ids
+            if doc_ids_to_skip:
+                script_parts.append(f"""
+                    if (ctx._source.containsKey('doc_id') && {str([str(x) for x in doc_ids_to_skip])}
+                        .contains(ctx._source.doc_id)) {{
+                        ctx.op = 'noop';
+                    }}
                 """)
 
             reindex_body["script"]["source"] = " ".join(script_parts)
