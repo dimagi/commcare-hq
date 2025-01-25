@@ -1517,11 +1517,23 @@ class PreviewDataSourceView(BaseUserConfigReportsView):
         config, is_static = get_datasource_config_or_404(self.config_id, self.domain)
         adapter = get_indicator_adapter(config)
         q = adapter.get_query_object()
+        if adapter.table_exists:
+            data = [list(row) for row in q[:20]]
+        else:
+            data = []
+            messages.error(
+                self.request,
+                _('Data source table not found!'
+                  '<br/>If you have recently added the data source, please wait for it to be created.'
+                  '<br/>If you see this repeatedly please report an issue.'),
+                extra_tags='html',
+            )
+
         return {
             'data_source': config,
             'columns': q.column_descriptions,
-            'data': [list(row) for row in q[:20]],
-            'total_rows': q.count(),
+            'data': data,
+            'total_rows': q.count() if data else 0,
         }
 
 
