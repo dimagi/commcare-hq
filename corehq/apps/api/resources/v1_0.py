@@ -25,7 +25,7 @@ from corehq.apps.reports.util import (
     get_tableau_group_ids_by_names,
     get_tableau_groups_by_ids,
 )
-from corehq.apps.api.validation import WebUserResourceValidator, WebUserSpec
+from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
 
 
 class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -73,7 +73,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
     primary_location_id = fields.CharField(attribute='primary_location_id', null=True)
     assigned_location_ids = fields.ListField(null=True)
     profile = fields.CharField(null=True)
-    custom_user_data = fields.DictField(attribute='custom_user_data')
+    user_data = fields.DictField(attribute='custom_user_data')
     tableau_role = fields.CharField(attribute='tableau_role', null=True)
     tableau_groups = fields.ListField(null=True)
 
@@ -99,24 +99,26 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_create(self, bundle, **kwargs):
         domain = kwargs['domain']
-        validator = WebUserResourceValidator(domain, bundle.request.couch_user)
-        spec = WebUserSpec(
-            email=bundle.data.pop('email'),
-            role=bundle.data.pop('role'),
-            primary_location_id=bundle.data.pop('primary_location_id', None),
-            assigned_location_ids=bundle.data.pop('assigned_location_ids', None),
-            profile=bundle.data.pop('profile', None),
-            custom_user_data=bundle.data.pop('custom_user_data', None),
-            tableau_role=bundle.data.pop('tableau_role', None),
-            tableau_groups=bundle.data.pop('tableau_groups', None),
-            unhandled_data=bundle.data,
-        )
-        errors = validator.is_valid(spec, True)
-        if errors:
-            raise ImmediateHttpResponse(JsonResponse({"errors": errors}, status=400))
+        try:
+            spec = WebUserResourceSpec(
+                domain=domain,
+                requesting_user=bundle.request.couch_user,
+                email=bundle.data.get('email'),
+                is_post=True,
+                role=bundle.data.get('role'),
+                primary_location_id=bundle.data.get('primary_location_id'),
+                assigned_location_ids=bundle.data.get('assigned_location_ids'),
+                new_or_existing_profile_name=bundle.data.get('profile'),
+                new_or_existing_user_data=bundle.data.get('user_data', {}),
+                tableau_role=bundle.data.get('tableau_role'),
+                tableau_groups=bundle.data.get('tableau_groups'),
+                parameters=bundle.data.keys(),
+            )
+        except WebUserValidationException as e:
+            raise ImmediateHttpResponse(JsonResponse({"errors": e.message}, status=400))
 
-        profile = validator.profiles_by_name.get(spec.profile)
-        role_id = validator.roles_by_name.get(spec.role)
+        profile = spec.profiles_by_name.get(spec.new_or_existing_profile_name)
+        role_id = spec.roles_by_name.get(spec.role)
         tableau_group_ids = get_tableau_group_ids_by_names(spec.tableau_groups or [], domain)
 
         primary_loc_id = None
@@ -137,7 +139,7 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
             role=role_id,
             primary_location_id=primary_loc_id,
             profile=profile,
-            custom_user_data=spec.custom_user_data or {},
+            custom_user_data=spec.new_or_existing_user_data or {},
             tableau_role=spec.tableau_role,
             tableau_group_ids=tableau_group_ids,
             invited_by=bundle.request.couch_user.user_id,

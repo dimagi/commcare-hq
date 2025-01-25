@@ -21,6 +21,14 @@ def test_redislocks_pytest_plugin():
         lock1.release()
 
 
+def test_test_lock_token():
+    metered_lock = get_redis_lock(__name__, timeout=0.2, name="test")
+    test_lock = metered_lock.lock
+    assert isinstance(test_lock, TestLock)
+    # Does not raise AttributeError:
+    test_lock.local.token = 'token'
+
+
 @reentrant_redis_locks()
 def test_nested_reentrant_redis_locks_is_not_allowed():
     with assert_raises(RuntimeError):
