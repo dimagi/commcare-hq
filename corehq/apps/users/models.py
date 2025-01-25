@@ -3120,6 +3120,17 @@ class HQApiKey(models.Model):
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
 
+    # Remove this after key fields are deleted and verified no errors occur
+    @property
+    def key(self):
+        logging.warning("Attempted to access api key directly for %s", self.name)
+        return self.plaintext_key
+
+    @key.setter
+    def key(self, value):
+        logging.warning("Attempted to set api key directly for %s", self.name)
+        self.plaintext_key = value
+
     @property
     def plaintext_key(self):
         return b64_aes_cbc_decrypt(self.encrypted_key) if self.encrypted_key else ''
