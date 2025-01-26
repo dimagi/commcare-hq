@@ -178,6 +178,8 @@ class DataSourceBuildInformation(DocumentSchema):
     app_version = IntegerProperty()
     # The registry_slug associated with the registry of the report.
     registry_slug = StringProperty()
+    # True if the data source has been requested for or is to be built/rebuilt by HQ and is waiting to be picked
+    awaiting = BooleanProperty(default=False)
     # True if the data source has been built, that is, if the corresponding SQL table has been populated.
     finished = BooleanProperty(default=False)
     # Start time of the most recent build SQL table celery task.
@@ -743,6 +745,14 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         # and so we don't know. Treating `None` as falsy allows calling
         # code to give `rebuild_has_died` the benefit of the doubt.
         return self.meta.build.rebuild_failed(self._id)
+
+    @cached_property
+    def awaiting_build_to_finish(self):
+        return (
+            not self.meta.build.awaiting
+            and not self.meta.build.is_rebuild_in_progress
+            and not self.rebuild_failed
+        )
 
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):
