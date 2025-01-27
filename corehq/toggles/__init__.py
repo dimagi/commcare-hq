@@ -2008,6 +2008,18 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+PROCESS_REPEATERS = FeatureRelease(
+    'process_repeaters',
+    'Process repeaters instead of processing repeat records independently',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    owner='Norman Hooper',
+    description="""
+    Manages repeat records through their repeater in order to make
+    smarter decisions about remote endpoints.
+    """
+)
+
 DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     'do_not_rate_limit_submissions',
     'Do not rate limit submissions for this project, on a temporary basis.',
@@ -2567,14 +2579,6 @@ WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
     'USH: Enable additional fields in web user invite form for enhanced user details',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-CALCULATED_PROPERTIES_FROM_DOMAIN_METRICS = FeatureRelease(
-    'calced_props_from_domain_metrics',
-    'Read domain calculated properties from DomainMetrics model instead of ElasticSearch doc.',
-    TAG_SAAS_CONDITIONAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='emapson@dimagi.com'
 )
 
 

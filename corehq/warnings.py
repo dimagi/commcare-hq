@@ -65,6 +65,9 @@ WHITELIST = [
     # warnings that should not be ignored
     # note: override_action "default" causes warning to be printed on stderr
     ("django.db.backends.postgresql.base", "unable to create a connection", RuntimeWarning, "default"),
+    # This is an internal stripe-python warning that is not actionable as of now
+    # It might get resolved in the future, but for now, it is not actionable
+    ("stripe", "For internal stripe-python use only. The public interface will be removed in a future version"),
 ]
 
 

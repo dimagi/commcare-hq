@@ -500,7 +500,7 @@ class CommCareVersionComplianceResource(ODataEnterpriseReportResource):
         return ('mobile_worker', 'domain',)
 
 
-class APIUsageResource(ODataEnterpriseReportResource):
+class APIKeysResource(ODataEnterpriseReportResource):
     web_user = fields.CharField()
     api_key_name = fields.CharField()
     scope = fields.CharField()
@@ -508,7 +508,7 @@ class APIUsageResource(ODataEnterpriseReportResource):
     created_date = fields.DateTimeField()
     last_used_date = fields.DateTimeField()
 
-    REPORT_SLUG = EnterpriseReport.API_USAGE
+    REPORT_SLUG = EnterpriseReport.API_KEYS
 
     def dehydrate(self, bundle):
         bundle.data['web_user'] = bundle.obj[0]
@@ -521,3 +521,45 @@ class APIUsageResource(ODataEnterpriseReportResource):
 
     def get_primary_keys(self):
         return ('web_user', 'api_key_name',)
+
+
+class DataForwardingResource(ODataEnterpriseReportResource):
+    domain = fields.CharField()
+    service_name = fields.CharField()
+    service_type = fields.CharField()
+    last_modified = fields.DateTimeField()
+
+    REPORT_SLUG = EnterpriseReport.DATA_FORWARDING
+
+    def dehydrate(self, bundle):
+        bundle.data['domain'] = bundle.obj[0]
+        bundle.data['service_name'] = bundle.obj[1]
+        bundle.data['service_type'] = bundle.obj[2]
+        bundle.data['last_modified'] = self.convert_datetime(bundle.obj[3])
+        return bundle
+
+    def get_primary_keys(self):
+        return ('domain', 'service_name', 'service_type')
+
+
+class ApplicationVersionComplianceResource(ODataEnterpriseReportResource):
+    mobile_worker = fields.CharField()
+    domain = fields.CharField()
+    application = fields.CharField()
+    latest_version_available_when_last_used = fields.CharField()
+    version_in_use = fields.CharField()
+    last_used = fields.DateTimeField()
+
+    REPORT_SLUG = EnterpriseReport.APP_VERSION_COMPLIANCE
+
+    def dehydrate(self, bundle):
+        bundle.data['mobile_worker'] = bundle.obj[0]
+        bundle.data['domain'] = bundle.obj[1]
+        bundle.data['application'] = bundle.obj[2]
+        bundle.data['latest_version_available_when_last_used'] = bundle.obj[3]
+        bundle.data['version_in_use'] = bundle.obj[4]
+        bundle.data['last_used'] = self.convert_datetime(bundle.obj[5])
+        return bundle
+
+    def get_primary_keys(self):
+        return ('mobile_worker', 'application',)

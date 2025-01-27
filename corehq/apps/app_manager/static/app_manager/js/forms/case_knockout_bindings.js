@@ -30,8 +30,8 @@ hqDefine("app_manager/js/forms/case_knockout_bindings", [
         },
         _truncateLabel: function (label, suffix, MAXLEN) {
             suffix = suffix || "";
-            var MAXLEN = MAXLEN || 40,
-                maxlen = MAXLEN - suffix.length;
+            MAXLEN = MAXLEN || 40;
+            const maxlen = MAXLEN - suffix.length;
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
         },
         _truncateValue: function (value, MAXLEN) {
@@ -95,8 +95,7 @@ hqDefine("app_manager/js/forms/case_knockout_bindings", [
                     var paperclip = '<i class="fa fa-paperclip"></i> ';
                     if (m.includes(paperclip)) {
                         m = m.replace(paperclip, '');
-                    }
-                    else {
+                    } else {
                         paperclip = '';
                     }
                     return paperclip + DOMPurify.sanitize(m).replace(/</g, '&lt;').replace(/>/g, '&gt;');

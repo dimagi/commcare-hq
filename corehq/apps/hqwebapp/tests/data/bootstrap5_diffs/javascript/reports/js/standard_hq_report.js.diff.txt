@@ -23,8 +23,15 @@
                  var asyncHQReport = asyncHQReportModule({
                      standardReport: getStandard(),
                  });
-@@ -73,7 +73,7 @@
-             $('.row-offcanvas').toggleClass('active');
+@@ -69,11 +69,12 @@
+     asyncReport = getAsync();
+ 
+     $(function () {
+-        $('[data-toggle="offcanvas"]').click(function () {
+-            $('.row-offcanvas').toggleClass('active');
++
++        $('[data-hq-toggle]').click(function () {
++            $($(this).data('hqToggle')).toggleClass('active');
          });
  
 -        $('.report-description-popover').popover({

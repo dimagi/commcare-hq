@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", [
     "sinon/pkg/sinon",
@@ -25,7 +24,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", [
     CaseTileListFixture,
     MenuListFixture,
     Utils,
-    UsersModels
+    UsersModels,
 ) {
     describe('Render a case list', function () {
         before(function () {
@@ -35,7 +34,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", [
                     SPLIT_SCREEN_CASE_SEARCH: false,
                     DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
                     USE_PROMINENT_PROGRESS_BAR: false,
-                }
+                },
             );
             sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
         });
@@ -155,7 +154,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", [
                         "status": "retry",
                         "url": "http://dummy/sync-db",
                         "type": null,
-                    })
+                    }),
                 );
 
                 // We should show loading bar
@@ -173,13 +172,13 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", [
                         username: user.username,
                         preserveCache: true,
                         restoreAs: '',
-                    }
+                    },
                 );
                 assert.equal(requests[1].url, user.formplayer_url + '/sync-db');
                 requests[1].respond(
                     200,
                     { "Content-Type": "application/json" },
-                    JSON.stringify(MenuListFixture)
+                    JSON.stringify(MenuListFixture),
                 );
 
                 clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
@@ -202,7 +201,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", [
                 requests[0].respond(
                     202,
                     { "Content-Type": "application/json" },
-                    '{"exception":"Asynchronous restore under way for asdf","done":9,"total":30,"retryAfter":30,"status":"retry","url":"http://dummy/navigate_menu","type":null}'
+                    '{"exception":"Asynchronous restore under way for asdf","done":9,"total":30,"retryAfter":30,"status":"retry","url":"http://dummy/navigate_menu","type":null}',
                 );
 
                 // We should show loading bar
@@ -217,7 +216,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", [
                 requests[1].respond(
                     200,
                     { "Content-Type": "application/json" },
-                    JSON.stringify(MenuListFixture)
+                    JSON.stringify(MenuListFixture),
                 );
 
                 clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
