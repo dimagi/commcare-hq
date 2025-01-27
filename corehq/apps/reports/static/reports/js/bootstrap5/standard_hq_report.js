@@ -76,10 +76,11 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
             $($(this).data('hqToggle')).toggleClass('active');
         });
 
-        $('.report-description-popover').each(function () {
-            new bootstrap.Popover($(this).get(0), {
-                title: $(this).data('title'),
-                content: $(this).data('content'),
+        const reportsWithDescriptions = document.getElementsByClassName('report-description-popover');
+        Array.from(reportsWithDescriptions).forEach((elem) => {
+            new bootstrap.Popover(elem, {
+                title: elem.dataset.title,
+                content: elem.dataset.content,
                 placement: 'right',
                 trigger: 'hover',
             });

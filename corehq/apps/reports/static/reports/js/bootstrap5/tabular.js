@@ -68,10 +68,11 @@ function renderPage(slug, tableOptions) {
         reportTables.render();
     }
 
-    $('.header-popover').each(function () {
-        new Popover($(this).get(0), {
-            title: $(this).data('title'),
-            content: $(this).data('content'),
+    const tableHeadersWithInfo = document.getElementsByClassName('header-popover');
+    Array.from(tableHeadersWithInfo).forEach((elem) => {
+        new Popover(elem, {
+            title: elem.dataset.title,
+            content: elem.dataset.content,
             trigger: 'hover',
             placement: 'bottom',
             container: 'body',
