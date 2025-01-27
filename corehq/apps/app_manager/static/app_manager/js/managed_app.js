@@ -1,13 +1,13 @@
 hqDefine("app_manager/js/managed_app", function () {
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
+        var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
             init = hqImport('app_manager/js/app_manager').init,
-            app = initial_page_data('app_subset');
+            app = initialPageData.get('app_subset');
 
         init({
             appVersion: app.version || -1,
             commcareVersion: String(app.commcare_minor_release),
-            latestCommcareVersion: initial_page_data('latest_commcare_version') || null,
+            latestCommcareVersion: initialPageData.get('latest_commcare_version') || null,
         });
 
         $('.btn-langcode-preprocessed').each(function () {
@@ -17,10 +17,11 @@ hqDefine("app_manager/js/managed_app", function () {
                 var that = this;
                 if ($langcodeInput) {
                     $langcodeInput.change(function () {
-                        if ($(this).val() == "")
+                        if ($(this).val() === "") {
                             $(that).show();
-                        else
+                        } else {
                             $(that).hide();
+                        }
                     });
                 }
             }

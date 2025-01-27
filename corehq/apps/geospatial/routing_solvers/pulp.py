@@ -73,7 +73,10 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
     def solve(self, config, print_solution=False):
         parameters = self.get_parameters(config)
 
-        distance_costs, duration_costs = self.calculate_distance_matrix(config)
+        try:
+            distance_costs, duration_costs = self.calculate_distance_matrix(config)
+        except ValueError as e:
+            raise ValueError('Some user and/or case locations are invalid') from e
 
         if not distance_costs:
             return self.solution_results(
@@ -198,12 +201,15 @@ class RoadNetworkSolver(RadialDistanceSolver):
         cases_chunk_size = MAPBOX_DIRECTIONS_MATRIX_API_COORDINATES_LIMIT - len(self.user_locations)
         result = {}
         count = 1
-        for case_locations_chunk in chunked(self.case_locations, cases_chunk_size):
+        for case_locations_chunk in chunked(
+            self.case_locations,
+            cases_chunk_size,
+            collection=list,
+        ):
             print(f"Fetching Distance Matrix for chunk: {count}...")
             start_time = time.time()
-            case_locations_chunk = list(case_locations_chunk)
             coordinates = ';'.join([
-                f'{loc["lon"]},{loc["lat"]}'
+                f'{float(loc["lon"])},{float(loc["lat"])}'
                 for loc in self.user_locations + case_locations_chunk]
             )
             sources_count = len(self.user_locations)

@@ -1211,8 +1211,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                     config.display_name
                 ))
                 messages.success(request, _(
-                    'This data source will be built/rebuilt automatically the '
-                    'next time a row is added.'
+                    'This data source will be picked for build / rebuild automatically by CommCare HQ.'
                 ))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(

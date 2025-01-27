@@ -3,6 +3,7 @@ hqDefine("reports/js/bootstrap3/datatables_config", [
     'underscore',
     'analytix/js/google',
     'datatables.bootstrap',
+    'datatables.fixedColumns',
 ], function (
     $,
     _,

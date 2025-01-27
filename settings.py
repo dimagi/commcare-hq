@@ -232,6 +232,7 @@ DEFAULT_APPS = (
     'django_otp',
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
+    'django_tables2',
     'two_factor',
     'two_factor.plugins.phonenumber',
     'ws4redis',
@@ -625,6 +626,15 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "ucr_queue": None,
 }
 
+# The default number of repeat_record_queue workers that one repeater
+# can use to send repeat records at the same time.
+DEFAULT_REPEATER_WORKERS = 7
+# The hard limit for the number of repeat_record_queue workers that one
+# repeater can use to send repeat records at the same time. This is a
+# guardrail to prevent one repeater from hogging repeat_record_queue
+# workers and to ensure that repeaters are iterated fairly.
+MAX_REPEATER_WORKERS = 79
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
@@ -780,6 +790,8 @@ AUDIT_ADMIN_VIEWS = False
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
+    'GOOGLE_ANALYTICS_SECRET': '',
+    'GOOGLE_ANALYTICS_MEASUREMENT_ID': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',

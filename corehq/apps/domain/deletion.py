@@ -398,6 +398,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('integration', 'GaenOtpServerSettings', 'domain'),
     ModelDeletion('integration', 'HmacCalloutSettings', 'domain'),
     ModelDeletion('integration', 'SimprintsIntegration', 'domain'),
+    ModelDeletion('integration', 'KycConfig', 'domain'),
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',

@@ -18,7 +18,6 @@ IGNORED_PATHS_BY_APP = {
     "hqwebapp": [
         "hqwebapp/js/resource_versions.js",
         "hqwebapp/base.html",
-        "hqwebapp/base_mobile.html",
         "hqwebapp/includes/inactivity_modal_data.html",
         "hqwebapp/includes/core_libraries.html",
         "hqwebapp/includes/ui_element_js.html",
@@ -55,6 +54,10 @@ def is_ignored_path(app_name, path):
 
 def is_bootstrap5_path(path):
     return '/bootstrap5/' in str(path)
+
+
+def is_mocha_path(path):
+    return str(path).endswith('mocha.html')
 
 
 def get_app_name_and_slug(app_name):

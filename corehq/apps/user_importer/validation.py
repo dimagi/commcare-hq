@@ -49,7 +49,8 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain),
         ProfileValidator(domain, upload_user, is_web_user_import, all_user_profiles_by_name),
-        LocationValidator(domain, upload_user, location_cache, is_web_user_import)
+        LocationValidator(domain, upload_user, location_cache, is_web_user_import),
+        UserAccessValidator(domain, upload_user, is_web_user_import)
     ]
     if is_web_user_import:
         return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
@@ -501,15 +502,13 @@ class ConfirmationSmsValidator(ImportValidator):
                     return self.error_existing_user.format(self.confirmation_sms_header, errors_formatted)
 
 
-class LocationValidator(ImportValidator):
+class UserAccessValidator(ImportValidator):
     error_message_user_access = _("Based on your locations you do not have permission to edit this user or user "
                                   "invitation")
-    error_message_location_access = _("You do not have permission to assign or remove these locations: {}")
 
-    def __init__(self, domain, upload_user, location_cache, is_web_user_import):
+    def __init__(self, domain, upload_user, is_web_user_import):
         super().__init__(domain)
         self.upload_user = upload_user
-        self.location_cache = location_cache
         self.is_web_user_import = is_web_user_import
 
     def validate_spec(self, spec):
@@ -517,31 +516,6 @@ class LocationValidator(ImportValidator):
         user_access_error = self._validate_uploading_user_access_to_editable_user_or_invitation(user_result)
         if user_access_error:
             return user_access_error
-
-        if 'location_code' in spec:
-            locs_being_assigned = self._get_locs_ids_being_assigned(spec)
-            current_locs = self._get_current_locs(user_result)
-
-            user_location_access_error = self._validate_user_location_permission(current_locs, locs_being_assigned)
-            location_cannot_have_users_error = None
-            if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
-                location_cannot_have_users_error = self._validate_locations_allow_users(locs_being_assigned)
-            return user_location_access_error or location_cannot_have_users_error
-
-    def _get_locs_ids_being_assigned(self, spec):
-        from corehq.apps.user_importer.importer import find_location_id
-        location_codes = (spec['location_code'] if isinstance(spec['location_code'], list)
-                          else [spec['location_code']])
-        locs_ids_being_assigned = find_location_id(location_codes, self.location_cache)
-        return locs_ids_being_assigned
-
-    def _get_current_locs(self, user_result):
-        current_locs = []
-        if user_result.invitation:
-            current_locs = user_result.invitation.assigned_locations.all()
-        elif user_result.editable_user:
-            current_locs = user_result.editable_user.get_location_ids(self.domain)
-        return current_locs
 
     def _validate_uploading_user_access_to_editable_user_or_invitation(self, user_result):
         # Get current locations for editable user or user invitation and ensure uploading user
@@ -553,11 +527,52 @@ class LocationValidator(ImportValidator):
             if not user_can_access_other_user(self.domain, self.upload_user, user_result.editable_user):
                 return self.error_message_user_access.format(user_result.editable_user.username)
 
-    def _validate_user_location_permission(self, current_locs, locs_ids_being_assigned):
+
+class LocationValidator(ImportValidator):
+    error_message_location_access = _("You do not have permission to assign or remove these locations: {}")
+
+    def __init__(self, domain, upload_user, location_cache, is_web_user_import):
+        super().__init__(domain)
+        self.upload_user = upload_user
+        self.location_cache = location_cache
+        self.is_web_user_import = is_web_user_import
+
+    def validate_spec(self, spec):
+        if 'location_code' in spec:
+            user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
+            locs_being_assigned = self._get_locs_ids_being_assigned(spec)
+            return self.validate_location_ids(user_result, locs_being_assigned)
+
+    def validate_location_ids(self, user_result, location_ids_being_assigned):
+        current_loc_ids = self._get_current_loc_ids(user_result)
+
+        user_location_access_error = self._validate_user_location_permission(current_loc_ids,
+                                                                             location_ids_being_assigned)
+        location_cannot_have_users_error = None
+        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
+            location_cannot_have_users_error = self._validate_locations_allow_users(location_ids_being_assigned)
+        return user_location_access_error or location_cannot_have_users_error
+
+    def _get_locs_ids_being_assigned(self, spec):
+        from corehq.apps.user_importer.importer import find_location_id
+        location_codes = (spec['location_code'] if isinstance(spec['location_code'], list)
+                          else [spec['location_code']])
+        locs_ids_being_assigned = find_location_id(location_codes, self.location_cache)
+        return locs_ids_being_assigned
+
+    def _get_current_loc_ids(self, user_result):
+        current_loc_ids = []
+        if user_result.invitation:
+            current_loc_ids = [loc.location_id for loc in user_result.invitation.assigned_locations.all()]
+        elif user_result.editable_user:
+            current_loc_ids = user_result.editable_user.get_location_ids(self.domain)
+        return current_loc_ids
+
+    def _validate_user_location_permission(self, current_loc_ids, locs_ids_being_assigned):
         # Ensure the uploading user is only adding the user to/removing from *new locations* that
         # the uploading user has permission to access.
         problem_location_ids = user_can_change_locations(self.domain, self.upload_user,
-                                                        current_locs, locs_ids_being_assigned)
+                                                        current_loc_ids, locs_ids_being_assigned)
         if problem_location_ids:
             return self.error_message_location_access.format(
                 ', '.join(SQLLocation.objects.filter(
