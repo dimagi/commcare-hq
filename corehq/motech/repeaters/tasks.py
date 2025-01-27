@@ -83,7 +83,7 @@ from celery import chord
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
-from dimagi.utils.couch import get_redis_lock
+from dimagi.utils.couch import get_redis_client, get_redis_lock
 
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
@@ -316,8 +316,26 @@ def process_repeaters():
 
     metrics_counter('commcare.repeaters.process_repeaters.start')
     try:
-        for repeater_id, lock_token in iter_repeater_id_tokens():
-            process_repeater(repeater_id, lock_token)
+        group = 0
+        client = get_redis_client()
+        client.set(f'repeater_group_{group}', 0)
+        repeater_num = 0
+        while True:
+            try:
+                repeater_id, lock_token, group_len = next(iter_repeater_id_tokens())
+                process_repeater(repeater_id, lock_token, group)
+                repeater_num += 1
+                if repeater_num == group_len:
+                    # We've spawned tasks to process all the repeaters
+                    # in the group.
+                    while client.get(f'repeater_group_{group}') == 0:
+                        # Wait until (at least) the first task finishes
+                        # so that the next query for repeaters returns a
+                        # new resultset.
+                        time.sleep(0.1)
+                    group += 1
+            except StopIteration:
+                return
     finally:
         process_repeaters_lock.release()
         metrics_counter('commcare.repeaters.process_repeaters.complete')
@@ -329,22 +347,16 @@ def iter_repeater_id_tokens():
     are processed.
     """
     while True:
-        metrics_counter('commcare.repeaters.process_repeaters.iter_once')
-        acquired_list = []
-        for repeater_id in iter_filtered_repeater_ids():
-            lock = RepeaterLock(repeater_id)
-            if acquired := lock.acquire():
-                yield repeater_id, lock.token
-            else:
-                metrics_counter('commcare.repeaters.process_repeaters.repeater_locked')
-            acquired_list.append(acquired)
-        if not acquired_list:
+        repeater_ids = list(iter_filtered_repeater_ids())
+        group_len = len(repeater_ids)
+        if not group_len:
             # No repeaters are ready, enabled, or not rate-limited
             return
-        if not any(acquired_list):
-            # All repeaters are still processing. Sleep to allow at
-            # least one repeater to finish.
-            time.sleep(0.2)
+        metrics_counter('commcare.repeaters.process_repeaters.iter_once')
+        for repeater_id in repeater_ids:
+            lock = RepeaterLock(repeater_id)
+            if lock.acquire():
+                yield repeater_id, lock.token, group_len
 
 
 def iter_filtered_repeater_ids():
@@ -401,7 +413,7 @@ def get_repeater_ids_by_domain():
     }
 
 
-def process_repeater(repeater_id, lock_token):
+def process_repeater(repeater_id, lock_token, group):
     """
     Initiates a Celery chord to process a repeater.
     """
@@ -416,7 +428,7 @@ def process_repeater(repeater_id, lock_token):
     repeater = Repeater.objects.get(id=repeater_id)
     repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
     header_tasks = [get_task_signature(rr) for rr in repeat_records]
-    callback = update_repeater.s(repeater_id, lock_token)
+    callback = update_repeater.s(repeater_id, lock_token, group)
     chord(header_tasks, callback)()
 
 
@@ -506,10 +518,14 @@ def _get_wait_duration_seconds(repeat_record):
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def update_repeater(repeat_record_states, repeater_id, lock_token):
+def update_repeater(repeat_record_states, repeater_id, lock_token, group):
     """
     Determines whether the repeater should back off, based on the
     results of ``process_ready_repeat_record()``.
+
+    ``group`` is the group number of the repeater. It is used to
+    determine when the first repeater in the group is processed, so that
+    the next query for repeaters returns a new resultset.
     """
     repeater = Repeater.objects.get(id=repeater_id)
     try:
@@ -530,6 +546,8 @@ def update_repeater(repeat_record_states, repeater_id, lock_token):
     finally:
         lock = RepeaterLock(repeater_id, lock_token)
         lock.release()
+        client = get_redis_client()
+        client.incr(f'repeater_group_{group}')
 
 
 class RepeaterLock:
