@@ -35,8 +35,9 @@ $(function () {
         reportConfigsView.setConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
     }
 
-    if ($('#email-enabled').length) {
-        new Tooltip($('#email-enabled').get(0), {
+    const emailEnabledLabel = document.getElementById('email-enabled');
+    if (emailEnabledLabel) {
+        new Tooltip(emailEnabledLabel, {
             placement: 'right',
             html: true,
             title: gettext("You can email a saved version<br />of this report."),
