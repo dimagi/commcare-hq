@@ -64,30 +64,44 @@ describe('Data Corrections', function () {
     });
 
     describe('Modal', function () {
-        it('should appear on trigger and disappear on close', function () {
+        it('should appear on trigger and disappear on close', function (done) {
             initModel({ 'name': 'value' });
             var $modal = $(".data-corrections-modal");
-            assert(!$modal.is(":visible"));
+            assert(!$modal.is(":visible"), "Modal is invisible before being opened");
+            $modal.one("shown.bs.modal", function () {
+                assert($modal.is(":visible"), "Modal is visible after being opened");
+                $modal.one("hidden.bs.modal", function () {
+                    assert(!$modal.is(":visible"), "Modal is invisible after being closed");
+                    done();
+                });
+                closeModal();
+            });
             openModal();
-            assert($modal.is(":visible"));
-            closeModal();
-            assert(!$modal.is(":visible"));
         });
 
-        it('should reset properties on close and re-open', function () {
+        it('should reset properties on close and re-open', function (done) {
             initModel({
                 'black': 'darjeeling',
                 'green': 'genmaicha',
                 'white': 'silver needle',
             });
+            var $modal = $(".data-corrections-modal");
+            $modal.one("shown.bs.modal", function () {
+                assertProperty("green", "genmaicha");
+                updateProperty("green", "gunpowder");
+                assertProperty("green", "gunpowder");
+                $modal.one("hidden.bs.modal", function () {
+                    $modal.one("shown.bs.modal", function () {
+                        assertProperty("green", "genmaicha");
+                        done();
+                    });
+                    openModal();
+                });
+                closeModal();
+            });
             openModal();
-            assertProperty("green", "genmaicha");
-            updateProperty("green", "gunpowder");
-            assertProperty("green", "gunpowder");
-            closeModal();
-            openModal();
-            assertProperty("green", "genmaicha");
-            closeModal();
+
+
         });
     });
 
@@ -98,13 +112,14 @@ describe('Data Corrections', function () {
                 'green': 'genmaicha',
                 'white': 'silver needle',
             });
-            openModal();
 
-            _.defer(function () {   // _.defer allows knockout search box component to initialize
+            var $modal = $(".data-corrections-modal");
+            $modal.one("shown.bs.modal", function () {
                 search("green");
                 assertVisibleProperties(["green"]);
                 done();
             });
+            openModal();
         });
 
         it('should search for a non-existent property', function (done) {
@@ -113,13 +128,14 @@ describe('Data Corrections', function () {
                 'green': 'genmaicha',
                 'white': 'silver needle',
             });
-            openModal();
 
-            _.defer(function () {
+            var $modal = $(".data-corrections-modal");
+            $modal.one("shown.bs.modal", function () {
                 search("xyz");
                 assertVisibleProperties([]);
                 done();
             });
+            openModal();
         });
 
         it('should search for a blank string', function (done) {
@@ -128,22 +144,23 @@ describe('Data Corrections', function () {
                 'green': 'genmaicha',
                 'white': 'silver needle',
             });
-            openModal();
 
-            _.defer(function () {
+            var $modal = $(".data-corrections-modal");
+            $modal.one("shown.bs.modal", function () {
                 search("");
                 assertVisibleProperties(["black", "green", "white"]);
                 done();
             });
+            openModal();
         });
 
         it('should display multiple pages when there are many properties', function (done) {
             var itemCount = 100,
                 names = thingList(itemCount),
                 model = initModel(_.object(names, names));
-            openModal();
 
-            _.defer(function () {
+            var $modal = $(".data-corrections-modal");
+            $modal.one("shown.bs.modal", function () {
                 assert.equal($(".pagination li").length - 2, Math.ceil(itemCount / model.itemsPerPage()));
                 assertVisibleProperties(names.slice(0, model.itemsPerPage()));
 
@@ -152,17 +169,19 @@ describe('Data Corrections', function () {
 
                 done();
             });
+            openModal();
         });
 
         it('should search across multiple pages', function (done) {
             var names = thingList(100);
             initModel(_.object(names, names));
-            openModal();
-            _.defer(function () {
+            var $modal = $(".data-corrections-modal");
+            $modal.one("shown.bs.modal", function () {
                 search("10");
                 assertVisibleProperties(["thing010", "thing100"]);
                 done();
             });
+            openModal();
         });
 
         const multilingualProperties = {
@@ -200,40 +219,39 @@ describe('Data Corrections', function () {
 
         it('should display translated properties in default language', function (done) {
             var model = initModel(multilingualProperties, multilingualOptions);
-            openModal();
 
             var assertVisibleText = function (expected) {
                 assert.sameMembers(expected, _.map($(".data-corrections-modal .test-property:visible"), function (p) { return p.innerText; }));
             };
-
-            assert($(".data-corrections-modal .nav > :first-child").hasClass("active"), "Should display first property by default");
-
-            _.defer(function () {
+            var $modal = $(".data-corrections-modal");
+            $modal.one("shown.bs.modal", function () {
+                assert($(".data-corrections-modal .nav > :first-child").hasClass("active"), "Should display first property by default");
                 model.updateDisplayProperty("name");
                 assertVisibleText(["orange", "red", "yellow"]);
                 search("yellow");
                 assertVisibleProperties(["yellow"]);
                 done();
             });
+            openModal();
         });
 
         it('should display translated properties in non-default language', function (done) {
             var model = initModel(multilingualProperties, multilingualOptions);
-            openModal();
 
             var assertVisibleText = function (expected) {
                 assert.sameMembers(expected, _.map($(".data-corrections-modal .test-property:visible"), function (p) { return p.innerText; }));
             };
 
-            assert($(".data-corrections-modal .nav > :first-child").hasClass("active"), "Should display first property by default");
-
-            _.defer(function () {
+            var $modal = $(".data-corrections-modal");
+            $modal.one("shown.bs.modal", function () {
+                assert($(".data-corrections-modal .nav > :first-child").hasClass("active"), "Should display first property by default");
                 model.updateDisplayProperty("spanish");
                 assertVisibleText(["anaranjado", "rojo", "amarillo"]);
                 search("rojo");
                 assertVisibleProperties(["red"]);
                 done();
             });
+            openModal();
         });
     });
 });

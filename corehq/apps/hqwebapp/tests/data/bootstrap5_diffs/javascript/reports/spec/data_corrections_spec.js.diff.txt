@@ -27,65 +27,100 @@
          $("#mocha-sandbox").append($clone);
      });
  
-@@ -64,30 +64,40 @@
-     });
- 
-     describe('Modal', function () {
--        it('should appear on trigger and disappear on close', function () {
-+        it('should appear on trigger and disappear on close', function (done) {
+@@ -67,11 +67,11 @@
+         it('should appear on trigger and disappear on close', function (done) {
              initModel({ 'name': 'value' });
              var $modal = $(".data-corrections-modal");
-             assert(!$modal.is(":visible"));
--            openModal();
--            assert($modal.is(":visible"));
--            closeModal();
--            assert(!$modal.is(":visible"));
--        });
--
--        it('should reset properties on close and re-open', function () {
--            initModel({
--                'black': 'darjeeling',
--                'green': 'genmaicha',
--                'white': 'silver needle',
--            });
--            openModal();
--            assertProperty("green", "genmaicha");
--            updateProperty("green", "gunpowder");
--            assertProperty("green", "gunpowder");
--            closeModal();
--            openModal();
--            assertProperty("green", "genmaicha");
--            closeModal();
-+            $modal.on("shown.bs.modal", function () {
+-            assert(!$modal.is(":visible"), "Modal is invisible before being opened");
+-            $modal.one("shown.bs.modal", function () {
+-                assert($modal.is(":visible"), "Modal is visible after being opened");
++            assert(!$modal.is(":visible"));
++            $modal.one("shown.bs.modal", function () {
 +                assert($modal.is(":visible"));
-+                $modal.on("hidden.bs.modal", function () {
+                 $modal.one("hidden.bs.modal", function () {
+-                    assert(!$modal.is(":visible"), "Modal is invisible after being closed");
 +                    assert(!$modal.is(":visible"));
-+                    done();
-+                });
-+                closeModal();
-+            });
-+            openModal();
-+        });
-+
-+        it('should reset properties on close and re-open', function (done) {
-+            initModel({
-+                'black': 'darjeeling',
-+                'green': 'genmaicha',
-+                'white': 'silver needle',
-+            });
-+            var $modal = $(".data-corrections-modal");
-+            $modal.on("shown.bs.modal", function () {
-+                assertProperty("green", "genmaicha");
-+                updateProperty("green", "gunpowder");
-+                assertProperty("green", "gunpowder");
-+                $modal.on("hidden.bs.modal", function () {
-+                    openModal();
+                     done();
+                 });
+                 closeModal();
+@@ -91,17 +91,13 @@
+                 updateProperty("green", "gunpowder");
+                 assertProperty("green", "gunpowder");
+                 $modal.one("hidden.bs.modal", function () {
+-                    $modal.one("shown.bs.modal", function () {
+-                        assertProperty("green", "genmaicha");
+-                        done();
+-                    });
+                     openModal();
 +                    assertProperty("green", "genmaicha");
 +                    done();
-+                });
-+                closeModal();
-+            });
-+            openModal();
+                 });
+                 closeModal();
+             });
+             openModal();
+-
+-
          });
      });
  
+@@ -112,7 +108,6 @@
+                 'green': 'genmaicha',
+                 'white': 'silver needle',
+             });
+-
+             var $modal = $(".data-corrections-modal");
+             $modal.one("shown.bs.modal", function () {
+                 search("green");
+@@ -128,7 +123,6 @@
+                 'green': 'genmaicha',
+                 'white': 'silver needle',
+             });
+-
+             var $modal = $(".data-corrections-modal");
+             $modal.one("shown.bs.modal", function () {
+                 search("xyz");
+@@ -144,21 +138,19 @@
+                 'green': 'genmaicha',
+                 'white': 'silver needle',
+             });
+-
+-            var $modal = $(".data-corrections-modal");
+-            $modal.one("shown.bs.modal", function () {
++            openModal();
++
++            _.defer(function () {
+                 search("");
+                 assertVisibleProperties(["black", "green", "white"]);
+                 done();
+             });
+-            openModal();
+         });
+ 
+         it('should display multiple pages when there are many properties', function (done) {
+             var itemCount = 100,
+                 names = thingList(itemCount),
+                 model = initModel(_.object(names, names));
+-
+             var $modal = $(".data-corrections-modal");
+             $modal.one("shown.bs.modal", function () {
+                 assert.equal($(".pagination li").length - 2, Math.ceil(itemCount / model.itemsPerPage()));
+@@ -219,10 +211,10 @@
+ 
+         it('should display translated properties in default language', function (done) {
+             var model = initModel(multilingualProperties, multilingualOptions);
+-
+             var assertVisibleText = function (expected) {
+                 assert.sameMembers(expected, _.map($(".data-corrections-modal .test-property:visible"), function (p) { return p.innerText; }));
+             };
++
+             var $modal = $(".data-corrections-modal");
+             $modal.one("shown.bs.modal", function () {
+                 assert($(".data-corrections-modal .nav > :first-child").hasClass("active"), "Should display first property by default");
+@@ -237,7 +229,6 @@
+ 
+         it('should display translated properties in non-default language', function (done) {
+             var model = initModel(multilingualProperties, multilingualOptions);
+-
+             var assertVisibleText = function (expected) {
+                 assert.sameMembers(expected, _.map($(".data-corrections-modal .test-property:visible"), function (p) { return p.innerText; }));
+             };
