@@ -28,7 +28,7 @@
                  var asyncHQReport = asyncHQReportModule({
                      standardReport: getStandard(),
                  });
-@@ -69,13 +71,18 @@
+@@ -69,13 +71,19 @@
      asyncReport = getAsync();
  
      $(function () {
@@ -42,10 +42,11 @@
 -        $('.report-description-popover').popover({
 -            placement: 'right',
 -            trigger: 'hover',
-+        $('.report-description-popover').each(function () {
-+            new bootstrap.Popover($(this).get(0), {
-+                title: $(this).data('title'),
-+                content: $(this).data('content'),
++        const reportsWithDescriptions = document.getElementsByClassName('report-description-popover');
++        Array.from(reportsWithDescriptions).forEach((elem) => {
++            new bootstrap.Popover(elem, {
++                title: elem.dataset.title,
++                content: elem.dataset.content,
 +                placement: 'right',
 +                trigger: 'hover',
 +            });

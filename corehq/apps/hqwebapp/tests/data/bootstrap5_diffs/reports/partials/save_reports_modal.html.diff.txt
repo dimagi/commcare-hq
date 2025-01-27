@@ -78,7 +78,7 @@
 +            <div class="mb-3">
 +              <label class="form-label" for="save_report_modal_ucr_datespan">{% trans "Date Filter" %}</label>
 +              <select
-+                class="form-control"
++                class="form-select"
 +                id="save_report_modal_ucr_datespan"
 +                name="ucr_datespan"
 +                data-bind="
@@ -110,7 +110,7 @@
 +              <label class="form-label" for="save_report_modal_date_range">{% trans "Default Date Range" %}</label>
 +              <select
 +                id="save_report_modal_date_range"
-+                class="form-control"
++                class="form-select"
 +                name="date_range"
 +                data-bind="value: date_range"
 +              >
