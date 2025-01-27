@@ -4,7 +4,7 @@ from corehq.apps.sms import messages
 from corehq.apps.sms.api import (
     MessageMetadata,
     send_sms,
-    send_sms_to_verified_number,
+    send_message_to_verified_number,
 )
 from corehq.apps.sms.mixin import PhoneNumberInUseException, apply_leniency
 from corehq.apps.sms.models import (
@@ -116,8 +116,8 @@ def process_verification(verified_number, msg, verification_keywords=None, creat
     msg.save()
 
     if (
-        not domain_has_privilege(msg.domain, privileges.INBOUND_SMS) or
-        not verification_response_ok(msg.text, verification_keywords)
+        not domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+        or not verification_response_ok(msg.text, verification_keywords)
     ):
         return False
 
@@ -135,7 +135,7 @@ def process_verification(verified_number, msg, verification_keywords=None, creat
         messages.MSG_VERIFICATION_SUCCESSFUL,
         verified_number=verified_number
     )
-    send_sms_to_verified_number(verified_number, message,
+    send_message_to_verified_number(verified_number, message,
                                 metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
     subevent.completed()
     return True
