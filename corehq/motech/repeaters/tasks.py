@@ -335,8 +335,6 @@ def iter_repeater_id_tokens():
             lock = RepeaterLock(repeater_id)
             if acquired := lock.acquire():
                 yield repeater_id, lock.token
-            else:
-                metrics_counter('commcare.repeaters.process_repeaters.repeater_locked')
             acquired_list.append(acquired)
         if not acquired_list:
             # No repeaters are ready, enabled, or not rate-limited
@@ -344,6 +342,7 @@ def iter_repeater_id_tokens():
         if not any(acquired_list):
             # All repeaters are still processing. Sleep to allow at
             # least one repeater to finish.
+            metrics_counter('commcare.repeaters.process_repeaters.all_locked')
             time.sleep(0.2)
 
 
