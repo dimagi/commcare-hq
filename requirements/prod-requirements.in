@@ -2,6 +2,7 @@
 
 pip
 
+django-celery-beat
 flower
 setproctitle
 uWSGI
