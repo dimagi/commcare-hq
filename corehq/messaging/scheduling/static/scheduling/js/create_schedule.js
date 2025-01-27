@@ -3,6 +3,16 @@ import ko from "knockout";
 
 import "jquery-ui/ui/widgets/datepicker";
 import "bootstrap-timepicker/js/bootstrap-timepicker";
+
+import "quill/dist/quill.snow.css";
+import Quill from 'quill';
+import Toolbar from "quill/modules/toolbar";
+import Snow from "quill/themes/snow";
+
+import Bold from "quill/formats/bold";
+import Italic from "quill/formats/italic";
+import Header from "quill/formats/header";
+
 import "hqwebapp/js/components/select_toggle";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import select2Handler from "hqwebapp/js/select2_handler";
@@ -16,6 +26,48 @@ ko.bindingHandlers.useTimePicker = {
         });
     },
     update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {},
+};
+
+Quill.register({
+    "modules/toolbar": Toolbar,
+    "themes/snow": Snow,
+    "formats/bold": Bold,
+    "formats/italic": Italic,
+    "formats/header": Header,
+});
+
+ko.bindingHandlers.richEditor = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        const editor = new Quill(element, {
+            theme: 'snow',
+        });
+
+        const value = ko.utils.unwrapObservable(valueAccessor());
+        editor.clipboard.dangerouslyPasteHTML(value);
+
+        let isSubscriberChange = false;
+        let isEditorChange = false;
+
+        editor.on('text-change', function(delta, source) {
+            if (!isSubscriberChange) {
+                isEditorChange = true;
+                valueAccessor()(editor.root.innerHTML);
+                isEditorChange = false;
+            }
+        });
+
+        valueAccessor().subscribe(function (value) {
+            if (!isEditorChange) {
+                isSubscriberChange = true;
+                editor.clipboard.dangerouslyPasteHTML(value);
+                isSubscriberChange = false;
+            }
+        });
+
+        if (initialPageData.get('read_only_mode')) {
+            editor.enable(false);
+        }
+    },
 };
 
 var MessageViewModel = function (language_code, message) {
