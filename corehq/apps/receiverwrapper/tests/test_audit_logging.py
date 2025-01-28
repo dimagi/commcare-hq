@@ -24,6 +24,7 @@ def return_submission_run_resp(*args, **kwargs):
 
 @patch('corehq.apps.receiverwrapper.views.couchforms.get_instance_and_attachment',
        new=Mock(return_value=(Mock(), Mock())))
+@patch('corehq.apps.receiverwrapper.views.convert_xform_to_json', new=Mock())
 @patch('corehq.apps.receiverwrapper.views._record_metrics', new=Mock())
 @patch('corehq.apps.receiverwrapper.views.SubmissionPost.run', new=return_submission_run_resp)
 class TestAuditLoggingForFormSubmission(TestCase):

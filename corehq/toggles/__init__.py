@@ -2973,3 +2973,12 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+INCREASE_DEVICE_LIMIT_PER_USER = StaticToggle(
+    slug='increase_device_per_user_limit',
+    label='In the event that the DEVICE_LIMIT_PER_USER in settings becomes too restrictive, this flag can be used '
+          'to increase the limit without completely removing it. See INCREASED_DEVICE_LIMIT_PER_USER in settings '
+          'to see the exact value.',
+    tag=TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
