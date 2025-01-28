@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.debug import sensitive_variables
 
 from no_exceptions.exceptions import Http400
@@ -405,3 +405,20 @@ def user_can_access_domain_specific_pages(request):
         return False
 
     return couch_user.is_member_of(project) or (couch_user.is_superuser and not project.restrict_superusers)
+
+
+def connectid_token_auth(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        auth_header = request.META.get("HTTP_AUTHORIZATION")
+        if not auth_header:
+            return HttpResponseForbidden()
+        _, token = auth_header.split(" ")
+        if not token:
+            return HttpResponseBadRequest("ConnectID Token Required")
+        username = get_connectid_userinfo(token)
+        if username is None:
+            return HttpResponseForbidden()
+        request.connectid_username = username
+        return view_func(request, *args, **kwargs)
+    return _inner
