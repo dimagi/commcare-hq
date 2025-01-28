@@ -1,3 +1,5 @@
+import base64
+
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
@@ -53,9 +55,9 @@ class AuthenticationTestBase(TestCase):
         cls.user = WebUser.create(cls.domain, USERNAME, 'password', None, None)
         cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user()).plaintext_key
 
-    def call_api(self, request, allow_creds_in_data):
+    def call_api(self, request, allow_creds_in_data=False, allow_api_key_as_password=False):
 
-        @api_auth(allow_creds_in_data=allow_creds_in_data)
+        @api_auth(allow_creds_in_data=allow_creds_in_data, allow_api_key_as_password=allow_api_key_as_password)
         def api_view(request, domain):
             return HttpResponse()
 
@@ -83,7 +85,11 @@ class AuthenticationTestBase(TestCase):
 
     def test_credentials_with_basic_auth(self):
         request = self.factory.get('/myapi/')
-        request.META['HTTP_AUTHORIZATION'] = f"basic {USERNAME}:{self.api_key}"
+        encoded_creds = base64.b64encode(f"{USERNAME}:{self.api_key}".encode('utf-8')).decode('utf-8')
+        request.META['HTTP_AUTHORIZATION'] = f"basic {encoded_creds}"
 
-        res = self.call_api(request)
+        res = self.call_api(request, allow_api_key_as_password=False)
         self.assertEqual(res.status_code, 401)
+
+        res = self.call_api(request, allow_api_key_as_password=True)
+        self.assertEqual(res.status_code, 200)
