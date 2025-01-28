@@ -11,7 +11,8 @@
       aria-expanded="true"
       aria-controls="persistent-menu-container"
       class="btn btn-outline-primary me-1 rounded-circle position-absolute top-50 end-0">
-      <i class="fa fs-3 fa-chevron-right"></i>
+      <!-- persistent-menu-arrow-toggle-icon and persistent-menu-arrow-toggle are used by google analytics. -->
+      <i id="persistent-menu-arrow-toggle-icon" class="fa fs-3 fa-chevron-right"></i>
       <span></span>
     </button>
     <div id="persistent-menu-container-content" class="d-none text-break">
@@ -40,7 +41,8 @@
       <i class="fa <%- iconClass %> persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"></i>
     <% } %>
     <div class="mx-3 flex-grow-1">
-      <a class="d-block d-lg-none stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#"
+      <!-- persistent-menu-link is used by google analytics. -->
+      <a class="persistent-menu-link d-block d-lg-none stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#"
          data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
         <%- displayText %>
       </a>
@@ -48,7 +50,7 @@
       Duplicate of the <a> tag above with the toggle attributes removed. They are only needed on small screens
       and interfere with other modals on large screens.
       -->
-      <a class="d-none d-lg-block stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#">
+      <a class="persistent-menu-link d-none d-lg-block stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#">
         <%- displayText %>
       </a>
     </div>
