@@ -888,6 +888,7 @@ def record_event(event_name, couch_user, event_properties=None):
 
     event_body = {
         'client_id': couch_user.userID,
+        'user_id': couch_user.userID,
         'timestamp_micros': timestamp,
         'events': [{
             'name': event_name,
