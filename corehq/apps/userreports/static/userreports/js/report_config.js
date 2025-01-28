@@ -411,6 +411,9 @@ hqDefine('userreports/js/report_config', [
                                 self._suspendPreviewRefresh = false;
                                 if (self._pendingUpdate) {
                                     self.refreshPreview();
+                                } else if ("responseJSON" in response && response.responseJSON.status === "filter_error") {
+                                    self.previewError(true);
+                                    self.previewErrorMessage(response.responseJSON.message);
                                 } else {
                                     if (response.status === 400) {
                                         var errorMessage = response.responseJSON;

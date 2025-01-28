@@ -12,5 +12,9 @@ def get_pre_filter_format(pre_filter_dict):
         return const.PRE_FILTER_VALUE_EXISTS
     elif pre_filter_dict['pre_operator'] == 'distinct from':
         return const.PRE_FILTER_VALUE_NOT_EQUAL
+    elif pre_filter_dict['pre_operator'] == '<' and pre_filter_dict['pre_value'] == '':
+        return const.PRE_FILTER_VALUE_LESS_THAN
+    elif pre_filter_dict['pre_operator'] == '>' and pre_filter_dict['pre_value'] == '':
+        return const.PRE_FILTER_VALUE_GREATER_THAN
     else:
         return const.FORMAT_VALUE if pre_filter_dict['pre_value'] else const.FORMAT_DATE
