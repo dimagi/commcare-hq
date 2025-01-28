@@ -152,7 +152,10 @@ class Command(BaseCommand):
             return line
         if self.in_imports and 'function' in line:
             self.in_imports = False
-            self.in_arguments = True
+            if re.search(r'function\s*\(\s*\)', line):
+                self.in_hqdefine_block = False
+            else:
+                self.in_arguments = True
             return line
         if self.in_arguments and ')' in line:
             self.in_arguments = False
