@@ -367,7 +367,7 @@ class GenericReportView(object):
         else:
             template_path = self.report_template_path
             override_template = self.override_template
-        original_template = template_path or "reports/async/basic.html"
+        original_template = template_path or "reports/async/bootstrap3/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
             return override_template
