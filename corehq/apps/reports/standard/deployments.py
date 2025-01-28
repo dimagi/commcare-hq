@@ -75,6 +75,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
     primary_sort_prop = None
+    use_bootstrap5 = True
 
     @property
     def _columns(self):
@@ -201,7 +202,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @property
     @memoized
     def selected_app_id(self):
-        return self.request_params.get(SelectApplicationFilter.slug, None)
+        return self.get_request_param(SelectApplicationFilter.slug, None, from_json=True)
 
     @quickcache(['app_id'], timeout=60 * 60)
     def _get_app_details(self, app_id):
@@ -229,8 +230,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker')
-            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param('location_restricted_mobile_worker', as_list=True)
+            + self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         )
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -468,8 +469,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def get_user_ids(self):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker')
-            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param('location_restricted_mobile_worker', as_list=True)
+            + self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         )
         user_ids = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -651,7 +652,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     def shared_pagination_GET_params(self):
         shared_params = super(ApplicationErrorReport, self).shared_pagination_GET_params
         shared_params.extend([
-            {'name': param, 'value': self.request.GET.get(param, None)}
+            {'name': param, 'value': self.get_request_param(param, None)}
             for model_field, param in self.model_fields_to_url_params
         ])
         return shared_params
@@ -673,7 +674,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     def _queryset(self):
         qs = UserErrorEntry.objects.filter(domain=self.domain)
         for model_field, url_param in self.model_fields_to_url_params:
-            value = self.request.GET.get(url_param, None)
+            value = self.get_request_param(url_param, None)
             if value:
                 qs = qs.filter(**{model_field: value})
         return qs
@@ -755,13 +756,13 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     @property
     @memoized
     def selected_app_id(self):
-        return self.request_params.get(SelectApplicationFilter.slug, None)
+        return self.get_request_param(SelectApplicationFilter.slug, None, from_json=True)
 
     @memoized
     def user_query(self):
         # partially inspired by ApplicationStatusReport.user_query
         mobile_user_and_group_slugs = set(
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         ) or set(['t__0'])  # default to all mobile workers on initial load
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -806,7 +807,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     @cached_property
     def report_from_date(self):
-        from_date = self.request_params.get(self.FromDateFilter.slug)
+        from_date = self.get_request_param(self.FromDateFilter.slug, from_json=True)
         if from_date:
             try:
                 from_date = iso_string_to_date(from_date)

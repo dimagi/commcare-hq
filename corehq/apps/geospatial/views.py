@@ -365,7 +365,7 @@ class GetPaginatedCases(CaseListMixin):
         # override super class corehq.apps.reports.generic.GenericReportView init method to
         # avoid failures for missing expected properties for a report and keep only necessary properties
         self.request = request
-        self.request_params = json_request(self.request.GET)
+        self._request_params = json_request(self.request.GET)
         self.domain = domain
 
     def _base_query(self):
