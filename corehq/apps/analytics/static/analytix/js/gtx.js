@@ -52,6 +52,7 @@ hqDefine('analytix/js/gtx', [
             userId: _get('userId', 'none'),
             isDimagi: _get('userIsDimagi', 'no', 'yes'),
             isCommCare: _get('userIsCommCareUser', 'no', 'yes'),
+            userCreationDate: _get('userCreationDate', 'none'),
             domain: _get('domain', 'none'),
             hqEnvironment: _get('hqInstance', 'none'),
             isTestDomain: _get('isTestDomain', 'none'),
