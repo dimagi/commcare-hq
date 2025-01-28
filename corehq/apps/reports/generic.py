@@ -1295,9 +1295,10 @@ class PaginatedReportMixin(object):
         block = []
         for col in self.datatables_params.order:
             col_ind = col['column']
-            prop_name = self.datatables_params.columns[col_ind]['name']
-            if prop_name:
-                sort_dir = col['dir']
+            sort_dir = col['dir']
+            dt_column_obj = self.headers.header[col_ind]
+            if dt_column_obj.prop_name:
+                prop_name = dt_column_obj.prop_name
                 sort_dict = {prop_name: sort_dir}
                 block.append(sort_dict)
         if len(block) == 0 and self.default_sort is not None:
