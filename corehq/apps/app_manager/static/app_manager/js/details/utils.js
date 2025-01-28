@@ -135,9 +135,7 @@ hqDefine("app_manager/js/details/utils", [
 
     module.isValidPropertyName = function (name) {
         var word = '[a-zA-Z][\\w_-]*';
-        var regex = new RegExp(
-            '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'
-        );
+        var regex = new RegExp('^(' + word + ':)*(' + word + '\\/)*#?' + word + '$');
         return regex.test(name);
     };
 

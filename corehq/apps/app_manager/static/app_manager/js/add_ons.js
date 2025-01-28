@@ -1,4 +1,3 @@
-"use strict";
 hqDefine("app_manager/js/add_ons", [
     'jquery',
     'underscore',
@@ -10,7 +9,7 @@ hqDefine("app_manager/js/add_ons", [
     _,
     initialPageData,
     hqMain,
-    sectionChanger
+    sectionChanger,
 ) {
     function EditAddOns(addOns, layout, saveUrl) {
         var self = this;
@@ -48,7 +47,7 @@ hqDefine("app_manager/js/add_ons", [
             $addOns.koApplyBindings(new EditAddOns(
                 initialPageData.get("add_ons"),
                 initialPageData.get("add_ons_layout"),
-                initialPageData.reverse("edit_add_ons")
+                initialPageData.reverse("edit_add_ons"),
             ));
             sectionChanger.attachToForm($addOns.find("form"));
         }

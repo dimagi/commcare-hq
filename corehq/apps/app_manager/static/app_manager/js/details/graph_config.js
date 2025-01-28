@@ -36,7 +36,7 @@ hqDefine("app_manager/js/details/graph_config", [
             '<i class="fa fa-pencil"></i> ' +
             gettext('Edit Graph') +
             '</button>' +
-            '</div>'
+            '</div>',
         );
 
         self.ui = $editButtonDiv;
@@ -270,8 +270,7 @@ hqDefine("app_manager/js/details/graph_config", [
         self.values = original.values || {};
         // Make the value for the current language observable
         self.values[self.lang] = ko.observable(
-            self.values[self.lang] === undefined ? null :
-                ko.unwrap(self.values[self.lang])
+            self.values[self.lang] === undefined ? null : ko.unwrap(self.values[self.lang]),
         );
 
         /**
@@ -342,7 +341,7 @@ hqDefine("app_manager/js/details/graph_config", [
                     'lang': self.lang,
                     'langs': self.langs,
                 });
-            }
+            },
         ));
 
         self.configPropertyOptions = [
@@ -540,7 +539,7 @@ hqDefine("app_manager/js/details/graph_config", [
             })).concat([{
                 'text': 'custom',
                 'value': 'custom',
-            }])
+            }]),
         ));
 
         self.selectedSource = ko.observable(origOrDefault('selectedSource', self.sourceOptions()[0]));
@@ -579,7 +578,7 @@ hqDefine("app_manager/js/details/graph_config", [
 
         var seriesValidationWarning = gettext(
             "It is recommended that you leave this value blank. Future changes to your report's " +
-            "chart configuration will not be reflected here."
+            "chart configuration will not be reflected here.",
         );
         self.dataPathWarning = ko.computed(function () {
             if (!self.dataPathPlaceholder() || !self.dataPath()) {
@@ -632,7 +631,7 @@ hqDefine("app_manager/js/details/graph_config", [
                     'lang': self.lang,
                     'langs': self.langs,
                 });
-            }
+            },
         ));
         if (original.localeSpecificConfigurations && original.localeSpecificConfigurations.length !== 0) {
             self.localeSpecificConfigurations(_.map(original.localeSpecificConfigurations, function (o) {

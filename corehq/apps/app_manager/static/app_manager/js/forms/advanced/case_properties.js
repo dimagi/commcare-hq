@@ -65,7 +65,7 @@ hqDefine("app_manager/js/forms/advanced/case_properties", [
                 suggestedSaveProperties: ko.computed(function () {
                     return caseConfigUtils.filteredSuggestedProperties(
                         self.action.suggestedProperties(),
-                        self.action.case_properties()
+                        self.action.case_properties(),
                     );
                 }),
             };
@@ -114,7 +114,7 @@ hqDefine("app_manager/js/forms/advanced/case_properties", [
                 suggestedPreloadProperties: ko.computed(function () {
                     return caseConfigUtils.filteredSuggestedProperties(
                         self.action.suggestedProperties(),
-                        self.action.preload()
+                        self.action.preload(),
                     );
                 }),
             };
