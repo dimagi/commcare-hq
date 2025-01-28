@@ -7,7 +7,7 @@ from django.core.management import BaseCommand, CommandError
 
 logger = logging.getLogger('hqdefine_to_esm')
 
-IMPORT_PATTERN = r'\s*["\']([^,]*)["\'],$'
+IMPORT_PATTERN = r'\s*["\']([^,]*)["\'],?$'
 ARGUMENT_PATTERN = r'\s*([^,]*),?$'
 
 
