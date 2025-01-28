@@ -55,20 +55,30 @@ class Command(BaseCommand):
         # Rewrite file
         with open(filename, 'w') as fout:
             # Move commcarehq to the top
-            if "commcarehq" in imports:
+            if "commcarehq" in [i[0] for i in imports]:
                 fout.write('import "commcarehq";\n')
 
             # Add imports, ESM-style
-            for index, dependency in enumerate(imports):
+            for index, dependency_pair in enumerate(imports):
+                (dependency, comment) = dependency_pair
                 if dependency is None or dependency == "commcarehq":
                     continue
 
                 if index < len(arguments):
-                    out = f'import {arguments[index]} from "{dependency}";\n'
+                    (argument, argument_comment) = arguments[index]
+                    if argument_comment:
+                        if comment:
+                            comment = f"{comment}; {argument_comment}"
+                        else:
+                            comment = argument_comment
+                    out = f'import {argument} from "{dependency}";'
                 else:
-                    out = f'import "{dependency}";\n'
+                    out = f'import "{dependency}";'
 
-                fout.write(out)
+                if comment:
+                    out += '  // ' + comment
+
+                fout.write(out + '\n')
             fout.write("\n")
 
             # Write remaining file
@@ -96,13 +106,20 @@ class Command(BaseCommand):
         return self.parse_item(ARGUMENT_PATTERN, line, "argument")
 
     def parse_item(self, pattern, line, description=""):
+        match = re.search(r'^(.*\S)\s*\/\/\s*(.*)$', line)
+        if match:
+            line = match.group(1)
+            comment = match.group(2)
+        else:
+            comment = ''
+
         match = re.search(pattern, line)
         if match:
             item = match.group(1)
             logger.info(f"Found {description}: {item}")
             if item.endswith("\n"):
                 item = item[:-1]
-            return item
+            return (item, comment)
         logger.warning(f"Could not parse {description} from line: {line}")
 
     def parse_one_line_arguments(self, line):
