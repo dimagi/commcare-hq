@@ -34,8 +34,10 @@
  */
 hqDefine("app_manager/js/section_changer", [
     'jquery',
+    'underscore',
 ], function (
-    $
+    $,
+    _,
 ) {
     // Determine key for localStorage
     // page is something like "module-view"
