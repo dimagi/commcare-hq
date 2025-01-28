@@ -21,8 +21,9 @@ const aliases = {
     "sentry_browser": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
         'sentry/js/sentry.browser.7.28.0.min'),
     "sentry_captureconsole": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
-        'sentry/js/sentry.captureconsole.7.28.0.min'),
-    "tempusDominus": "@eonasdan/tempus-dominus",
+                                          'sentry/js/sentry.captureconsole.7.28.0.min'),
+    "tempusDominus": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
+                                  "tempus-dominus/js/tempus-dominus.js"),
     "ko.mapping": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
         'knockout_mapping.ko.min'),
 };

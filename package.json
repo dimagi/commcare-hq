@@ -7,7 +7,7 @@
     "dependencies": {
         "@babel/core": "7.25.2",
         "@babel/standalone": "^7.21.4",
-        "@eonasdan/tempus-dominus": "npm:@eonasdan/tempus-dominus#6.9.4",
+        "@eonasdan/tempus-dominus": "npm:@eonasdan/tempus-dominus#91b40283c064af691469482bfc304a14dd0473e4",
         "@fortawesome/fontawesome-free": "npm:@fortawesome/fontawesome-free#6.5.1",
         "@mapbox/mapbox-gl-draw": "1.4.3",
         "@mapbox/mapbox-gl-geocoder": "5.0.2",
