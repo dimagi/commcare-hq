@@ -22,11 +22,11 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
             _.each($(this).children(), function (div) {
                 var $div = $(div),
                     data = $div.data();
-                if (existing[data.name] !== undefined) {
-                    throw new Error("Duplicate key in initial page data: " + data.name);
-                }
+                // if (existing[data.name] !== undefined) {
+                //     throw new Error("Duplicate key in initial page data: " + data.name);
+                // }
                 existing[data.name] = data.value;
-                $div.remove();
+                // $div.remove();
             });
         });
         return existing;
