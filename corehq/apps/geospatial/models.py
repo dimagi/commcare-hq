@@ -5,13 +5,17 @@ from django.core.exceptions import ValidationError
 
 from corehq.apps.geospatial.const import (
     GPS_POINT_CASE_PROPERTY,
-    ALGO_AES,
     TRAVEL_MODE_WALKING,
     TRAVEL_MODE_CYCLING,
     TRAVEL_MODE_DRIVING,
 )
 from corehq.apps.geospatial.routing_solvers import pulp
-from corehq.motech.utils import b64_aes_encrypt, b64_aes_decrypt
+from corehq.motech.const import ALGO_AES, ALGO_AES_CBC
+from corehq.motech.utils import (
+    b64_aes_decrypt,
+    b64_aes_cbc_decrypt,
+    b64_aes_cbc_encrypt,
+)
 
 
 class GeoPolygon(models.Model):
@@ -112,9 +116,13 @@ class GeoConfig(models.Model):
 
     @property
     def plaintext_api_token(self):
-        if self.api_token and self.api_token.startswith(f'${ALGO_AES}$'):
-            ciphertext = self.api_token.split('$', 2)[2]
-            return b64_aes_decrypt(ciphertext)
+        if self.api_token:
+            if self.api_token.startswith(f'${ALGO_AES}$'):  # This will be deleted after migration to cbc is done
+                ciphertext = self.api_token.split('$', 2)[2]
+                return b64_aes_decrypt(ciphertext)
+            elif self.api_token.startswith(f'${ALGO_AES_CBC}$'):
+                ciphertext = self.api_token.split('$', 2)[2]
+                return b64_aes_cbc_decrypt(ciphertext)
         return self.api_token
 
     @plaintext_api_token.setter
@@ -124,9 +132,9 @@ class GeoConfig(models.Model):
         else:
             assert isinstance(value, str), "Only string values allowed for api token"
 
-            if value and not value.startswith(f'${ALGO_AES}$'):
-                ciphertext = b64_aes_encrypt(value)
-                self.api_token = f'${ALGO_AES}${ciphertext}'
+            if value and not value.startswith(f'${ALGO_AES_CBC}$'):
+                ciphertext = b64_aes_cbc_encrypt(value)
+                self.api_token = f'${ALGO_AES_CBC}${ciphertext}'
             else:
                 raise Exception("Unexpected value set for plaintext api token")
 

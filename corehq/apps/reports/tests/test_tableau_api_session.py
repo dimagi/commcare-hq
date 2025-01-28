@@ -251,7 +251,7 @@ class TestTableauAPISession(TestCase):
 
         self.assertNotEqual(self.connected_app.encrypted_secret_value, 'qwer1234')
         self.assertEqual(self.connected_app.plaintext_secret_value, 'qwer1234')
-        self.assertEqual(len(self.connected_app.encrypted_secret_value), 24)
+        self.assertEqual(len(self.connected_app.encrypted_secret_value), 53)
 
     def _assert_subset(self, d1, d2):
         self.assertTrue(set(d1.items()).issubset(set(d2.items())))

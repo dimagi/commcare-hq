@@ -71,9 +71,11 @@ from corehq.apps.api.util import (
     parse_str_to_date,
     cursor_based_query_for_datasource
 )
+from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
@@ -83,10 +85,12 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
+from corehq.apps.reports.models import TableauUser, TableauConnectedApp
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
+from corehq.apps.reports.util import get_tableau_groups_for_user
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -134,7 +138,7 @@ from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
 
 from ..exceptions import UpdateUserException
-from ..user_updates import update
+from ..user_updates import CommcareUserUpdates, WebUserUpdates
 from . import (
     ApiVersioningMixin,
     CorsResourceMixin,
@@ -341,10 +345,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                            'locations': bundle.data.pop('locations', None)}
 
         items_to_update = list(bundle.data.items()) + [('location', location_object)]
-
+        updater = CommcareUserUpdates(bundle.obj, bundle.obj.domain, user_change_logger)
         for key, value in items_to_update:
             try:
-                update(bundle.obj, key, value, user_change_logger)
+                updater.update(key, value)
             except UpdateUserException as e:
                 errors.append(e.message)
 
@@ -389,6 +393,50 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
 
 class WebUserResource(v0_1.WebUserResource):
+    primary_location_id = fields.CharField()
+    assigned_location_ids = fields.ListField(null=True)
+    profile = fields.CharField(null=True)
+    user_data = fields.DictField()
+    tableau_role = fields.CharField(null=True)
+    tableau_groups = fields.ListField(null=True)
+
+    class Meta(v0_1.WebUserResource.Meta):
+        detail_allowed_methods = ['get', 'patch']
+        always_return_data = True
+
+    def dehydrate_primary_location_id(self, bundle):
+        return bundle.obj.get_location_id(bundle.request.domain) or ''
+
+    def dehydrate_assigned_location_ids(self, bundle):
+        return bundle.obj.get_location_ids(bundle.request.domain)
+
+    def dehydrate_tableau_groups(self, bundle):
+        try:
+            return [t.name for t in get_tableau_groups_for_user(bundle.request.domain,
+                                                                bundle.obj.username)]
+        except TableauConnectedApp.DoesNotExist:
+            return []
+
+    def dehydrate_tableau_role(self, bundle):
+        try:
+            t_user = TableauUser.objects.get(username=bundle.obj.username,
+                                             server__domain=bundle.request.domain)
+            return t_user.role
+        except TableauUser.DoesNotExist:
+            return None
+
+    def dehydrate_user_data(self, bundle):
+        user_data = bundle.obj.get_user_data(bundle.request.domain).to_dict()
+        if self.determine_format(bundle.request) == 'application/xml':
+            # attribute names can't start with digits in xml
+            user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}
+        return user_data
+
+    def dehydrate_profile(self, bundle):
+        profile_id = bundle.obj.get_user_data(bundle.request.domain).profile_id
+        if profile_id:
+            return CustomDataFieldsProfile.objects.get(id=profile_id).name
+        return ''
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if bundle_or_obj is None:
@@ -399,6 +447,72 @@ class WebUserResource(v0_1.WebUserResource):
             'api_name': self.api_name,
             'pk': bundle_or_obj.obj._id,
         })
+
+    def obj_update(self, bundle, **kwargs):
+        if bundle.obj and bundle.obj._id is None:
+            bundle.obj = WebUser.get(kwargs['pk'])
+        bundle.data = json.loads(bundle.request.body)
+        user_data = bundle.obj.get_user_data(bundle.request.domain)
+        new_or_existing_user_data = {
+            **bundle.data.get('user_data', {}),
+            **{k: v for k, v in user_data.raw.items() if k not in bundle.data.get('user_data', {})}
+        }
+        new_or_existing_profile_name = (
+            bundle.data.get('profile') if bundle.data.get('profile') is not None
+            else CustomDataFieldsProfile.objects.get(id=user_data.profile_id).name if user_data.profile_id
+            else ''
+        )
+        try:
+            self.spec = WebUserResourceSpec(
+                domain=bundle.request.domain,
+                requesting_user=bundle.request.couch_user,
+                email=bundle.obj.email,
+                is_post=False,
+                role=bundle.data.get('role'),
+                primary_location_id=bundle.data.get('primary_location_id'),
+                assigned_location_ids=bundle.data.get('assigned_location_ids'),
+                new_or_existing_profile_name=new_or_existing_profile_name,
+                new_or_existing_user_data=new_or_existing_user_data,
+                tableau_role=bundle.data.get('tableau_role'),
+                tableau_groups=bundle.data.get('tableau_groups'),
+                parameters=bundle.data.keys(),
+            )
+        except WebUserValidationException as e:
+            raise ImmediateHttpResponse(JsonResponse({"errors": e.message}, status=400))
+
+        user_change_logger = self._get_user_change_logger(bundle)
+        errors = self._update(bundle, user_change_logger)
+        if errors:
+            formatted_errors = ', '.join(errors)
+            raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
+        bundle.obj.save()
+        user_change_logger.save()
+        return bundle
+
+    def _update(self, bundle, user_change_logger=None):
+        errors = []
+
+        location_object = {'primary_location': bundle.data.pop('primary_location_id', None),
+                           'locations': bundle.data.pop('assigned_location_ids', None)}
+
+        bundle.data.pop('profile', None)
+        user_data = self.spec.new_or_existing_user_data
+        profile = self.spec.profiles_by_name.get(self.spec.new_or_existing_profile_name)
+        user_data[PROFILE_SLUG] = profile.id if profile else None
+        bundle.data['user_data'] = user_data
+
+        items_to_update = {**bundle.data, 'location': location_object}
+        updater = WebUserUpdates(bundle.obj, bundle.request.domain,
+                                 keys_to_update=items_to_update.keys(),
+                                 user_change_logger=user_change_logger)
+
+        for key, value in items_to_update.items():
+            try:
+                updater.update(key, value)
+            except UpdateUserException as e:
+                errors.append(e.message)
+
+        return errors
 
 
 class AdminWebUserResource(v0_1.UserResource):
