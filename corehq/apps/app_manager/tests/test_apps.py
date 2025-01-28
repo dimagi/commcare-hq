@@ -39,6 +39,7 @@ from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.userreports.tests.utils import get_sample_report_config
+from corehq.apps.app_manager.views.releases import make_app_build
 
 
 MockRequest = namedtuple('MockRequest', ['status', 'data'])
@@ -423,8 +424,8 @@ class AppManagerTest(TestCase, TestXmlMixin):
         factory.app.save()
         self.addCleanup(factory.app.delete)
 
-        with patch("corehq.apps.app_manager.models.metrics_counter") as metric_counter_mock:
-            factory.app.make_build()
+        with patch("corehq.apps.app_manager.tasks.metrics_counter") as metric_counter_mock:
+            make_app_build(factory.app, "comment", user_id="user_id")
             metric_counter_mock.assert_called_with('commcare.app_build.dependencies_added')
 
     def test_dependencies_feature_removed(self):
@@ -440,8 +441,8 @@ class AppManagerTest(TestCase, TestXmlMixin):
         factory.app.profile = {'features': {'dependencies': []}}
         factory.app.save()
 
-        with patch("corehq.apps.app_manager.models.metrics_counter") as metric_counter_mock:
-            factory.app.make_build()
+        with patch("corehq.apps.app_manager.tasks.metrics_counter") as metric_counter_mock:
+            make_app_build(factory.app, "comment", user_id="user_id")
             metric_counter_mock.assert_called_with('commcare.app_build.dependencies_removed')
 
     def test_dependencies_feature_metrics_not_triggerd(self):
@@ -456,6 +457,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
 
         factory.app.save()
 
-        with patch("corehq.apps.app_manager.models.metrics_counter") as metric_counter_mock:
-            factory.app.make_build()
+        with patch("corehq.apps.app_manager.tasks.metrics_counter") as metric_counter_mock:
+            make_app_build(factory.app, "comment", user_id="user_id")
             metric_counter_mock.assert_not_called()

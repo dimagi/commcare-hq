@@ -67,6 +67,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tasks import (
     create_build_files_for_all_app_profiles,
+    analyse_new_app_build,
 )
 from corehq.apps.app_manager.util import (
     get_and_assert_practice_user_in_domain,
@@ -387,6 +388,7 @@ def make_app_build(app, comment, user_id):
         user_id=user_id,
     )
     copy.save(increment_version=False)
+    analyse_new_app_build.delay(app.domain, copy._id)
     return copy
 
 
