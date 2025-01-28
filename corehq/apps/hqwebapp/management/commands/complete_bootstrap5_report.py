@@ -95,6 +95,27 @@ class Command(BaseCommand):
                 filter_class = get_filter_class(field)
                 if not self.is_filter_migrated_prompts(field, filter_class, migrated_filter_templates):
                     return
+
+        confirm_columns = get_confirmation(
+            f"Did you pass the value for use_bootstrap5 from the {report_class.__name__} to all "
+            f"`DataTablesColumn` instances related to that report?"
+        )
+        if not confirm_columns:
+            self.stdout.write(self.style.ERROR(
+                f"Cannot mark {report_class.__name__} as complete until `DataTablesColumn` "
+                f"instances are updated."
+            ))
+            return
+
+        confirm_sorting = get_confirmation(
+            f"Did you check to see if {report_class.__name__} sorting works as expected?"
+        )
+        if not confirm_sorting:
+            self.stdout.write(self.style.ERROR(
+                f"Cannot mark {report_class.__name__} as complete until sorting is verified."
+            ))
+            return
+
         self.stdout.write(
             self.style.SUCCESS(f"All done! {report_class.__name__} has been migrated to Bootstrap5!")
         )
