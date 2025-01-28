@@ -282,6 +282,11 @@ class GenericReportView(object):
         Retrieves the value of a given parameter from the request GET/POST QueryDicts
         or from a json_request wrapped version of that data stored in self._request_params.
 
+        TODO there is some uncertainty why some reports use self.request_params and others use
+        self.request.GET. This can be a point of investigation later and cleaned up if needed.
+        The intent to consolidate both retrievals here is to make sure the original behavior is kept,
+        so as not to burden these initial B5 migration changes with unrelated investigatory work.
+
         :param param: (string) slug of parameter in request data
         :param default_value: default value if parameter is not found in request data
         :param as_list: (boolean) True if you want to retrieve the data using `getlist`
