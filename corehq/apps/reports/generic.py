@@ -359,10 +359,12 @@ class GenericReportView(object):
         if self.use_bootstrap5:
             template_path = get_bootstrap5_path(self.report_template_path)
             override_template = get_bootstrap5_path(self.override_template)
+            default_path = "reports/async/bootstrap5/basic.html"
         else:
             template_path = self.report_template_path
             override_template = self.override_template
-        original_template = template_path or "reports/async/bootstrap3/basic.html"
+            default_path = "reports/async/bootstrap3/basic.html"
+        original_template = template_path or default_path
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
             return override_template
