@@ -80,3 +80,10 @@ class AuthenticationTestBase(TestCase):
 
         res = self.call_api(request, allow_creds_in_data=False)
         self.assertEqual(res.status_code, 401)
+
+    def test_credentials_with_basic_auth(self):
+        request = self.factory.get('/myapi/')
+        request.META['HTTP_AUTHORIZATION'] = f"basic {USERNAME}:{self.api_key}"
+
+        res = self.call_api(request)
+        self.assertEqual(res.status_code, 401)
