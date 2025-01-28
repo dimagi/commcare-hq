@@ -1,4 +1,4 @@
-'use strict';
+
 /* eslint-env mocha */
 hqDefine("cloudcare/js/spec/markdown_spec", [
     "sinon/pkg/sinon",
@@ -9,7 +9,7 @@ hqDefine("cloudcare/js/spec/markdown_spec", [
     sinon,
     initialPageData,
     hmacCallout,
-    markdown
+    markdown,
 ) {
     describe('Markdown', function () {
         let render = markdown.render;
@@ -34,21 +34,21 @@ hqDefine("cloudcare/js/spec/markdown_spec", [
             it('should render links with _blank target and underlined text', function () {
                 assert.equal(
                     render("[link](http://example.com)"),
-                    "<p><a href=\"http://example.com\" target=\"_blank\"><u>link</u></a></p>\n"
+                    "<p><a href=\"http://example.com\" target=\"_blank\"><u>link</u></a></p>\n",
                 );
             });
 
             it('should render newlines as breaks', function () {
                 assert.equal(
                     render("line 1\nline 2"),
-                    "<p>line 1<br>\nline 2</p>\n"
+                    "<p>line 1<br>\nline 2</p>\n",
                 );
             });
 
             it('should render encoded newlines as breaks', function () {
                 assert.equal(
                     render("line 1&#10;line 2"),
-                    "<p>line 1<br>\nline 2</p>\n"
+                    "<p>line 1<br>\nline 2</p>\n",
                 );
             });
         });
@@ -70,7 +70,7 @@ hqDefine("cloudcare/js/spec/markdown_spec", [
                 initialPageData.registerUrl('dialer_view', '/dialer');
                 assert.equal(
                     render("[link](tel://1234567890)"),
-                    "<p><a href=\"/dialer?callout_number=1234567890\" target=\"dialer\"><u>link</u></a></p>\n"
+                    "<p><a href=\"/dialer?callout_number=1234567890\" target=\"dialer\"><u>link</u></a></p>\n",
                 );
             });
 
@@ -79,7 +79,7 @@ hqDefine("cloudcare/js/spec/markdown_spec", [
                 initialPageData.registerUrl('gaen_otp_view', '/gaen/');
                 assert.equal(
                     render("[link](cchq://passthrough/gaen_otp/?otp=otp)"),
-                    "<p><a href=\"/gaen/?otp=otp\" target=\"gaen_otp\"><u>link</u></a></p>\n"
+                    "<p><a href=\"/gaen/?otp=otp\" target=\"gaen_otp\"><u>link</u></a></p>\n",
                 );
             });
 
@@ -104,7 +104,7 @@ hqDefine("cloudcare/js/spec/markdown_spec", [
                 initialPageData.register('hmac_root_url', '/hmac/');
                 assert.equal(
                     render("[link](/hmac/to/somewhere/?with=params)"),
-                    "<p><a href=\"/hmac/to/somewhere/?with=params\" target=\"hmac_callout\"><u>link</u></a></p>\n"
+                    "<p><a href=\"/hmac/to/somewhere/?with=params\" target=\"hmac_callout\"><u>link</u></a></p>\n",
                 );
             });
 

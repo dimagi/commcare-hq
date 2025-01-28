@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/query_spec", [
     "backbone",
@@ -11,7 +10,7 @@ hqDefine("cloudcare/js/formplayer/spec/query_spec", [
     sinon,
     initialPageData,
     Utils,
-    QueryListView
+    QueryListView,
 ) {
     describe('Query', function () {
         describe('itemset', function () {

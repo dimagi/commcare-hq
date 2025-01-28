@@ -1,6 +1,7 @@
-'use strict';
 hqDefine('cloudcare/js/formplayer/utils/calendar-picker-translations', [
     'jquery',
+    'calendars/dist/js/jquery.plugin',
+    'calendars/dist/js/jquery.calendars',
     'calendars/dist/js/jquery.calendars.picker',
     'calendars/dist/js/jquery.calendars.ethiopian',
     'calendars/dist/js/jquery.calendars.plus',
@@ -8,7 +9,7 @@ hqDefine('cloudcare/js/formplayer/utils/calendar-picker-translations', [
     'calendars/dist/js/jquery.calendars.picker-am',
     'calendars/dist/js/jquery.calendars.ethiopian-am',
 ], function (
-    $
+    $,
 ) {
     // English
     $.calendarsPicker.regionalOptions[''] = { // Default regional settings - English/US

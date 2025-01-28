@@ -43,7 +43,10 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
 
     @staticmethod
     def _get_user_change_logger(bundle):
-        for_domain = bundle.obj.domain if bundle.obj.is_commcare_user() else None
+        if bundle.obj.is_commcare_user():
+            for_domain = bundle.obj.domain
+        else:
+            for_domain = bundle.request.domain
         return UserChangeLogger(
             upload_domain=bundle.request.domain,
             user_domain=for_domain,
