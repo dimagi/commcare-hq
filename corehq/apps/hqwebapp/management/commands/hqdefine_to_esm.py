@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
         Also attempts to remove "use strict" directive, because modules automatically use strict.
     '''
-    dedent = 4
+    dedent_size = 4
 
     def add_arguments(self, parser):
         parser.add_argument('filename', help='File to migrate')
@@ -32,25 +32,25 @@ class Command(BaseCommand):
             lines = fin.readlines()
 
         # Parse imports
-        self._init_parser()
+        self.init_parser()
         imports = []
         arguments = []
         line_index = 0
         while self.in_hqdefine_block:
             if line_index >= len(lines):
-                self._fail_parsing()
+                self.fail_parsing()
 
             line = lines[line_index]
             line_index += 1
 
-            if self._update_parser_location(line):
+            if self.update_parser_location(line):
                 if self.in_arguments:
-                    arguments.extend(self._parse_one_line_arguments(line))
+                    arguments.extend(self.parse_one_line_arguments(line))
                 continue
             if self.in_imports:
-                imports.append(self._parse_import(line))
+                imports.append(self.parse_import(line))
             elif self.in_arguments:
-                arguments.append(self._parse_argument(line))
+                arguments.append(self.parse_argument(line))
 
         # Rewrite file
         with open(filename, 'w') as fout:
@@ -73,29 +73,29 @@ class Command(BaseCommand):
 
             # Write remaining file
             for line in lines[line_index:]:
-                if self._is_use_strict(line) or self._is_hqdefine_close(line):
+                if self.is_use_strict(line) or self.is_hqdefine_close(line):
                     continue
 
-                fout.write(self._dedent(line))
+                fout.write(self.dedent(line))
 
         logger.info(f"Rewrote {filename}")
 
-    def _is_use_strict(self, line):
+    def is_use_strict(self, line):
         return 'use strict' in line
 
-    def _is_hqdefine_open(self, line):
+    def is_hqdefine_open(self, line):
         return 'hqDefine' in line
 
-    def _is_hqdefine_close(self, line):
+    def is_hqdefine_close(self, line):
         return line.startswith("});")
 
-    def _parse_import(self, line):
-        return self._parse_item(IMPORT_PATTERN, line, "import")
+    def parse_import(self, line):
+        return self.parse_item(IMPORT_PATTERN, line, "import")
 
-    def _parse_argument(self, line):
-        return self._parse_item(ARGUMENT_PATTERN, line, "argument")
+    def parse_argument(self, line):
+        return self.parse_item(ARGUMENT_PATTERN, line, "argument")
 
-    def _parse_item(self, pattern, line, description=""):
+    def parse_item(self, pattern, line, description=""):
         match = re.search(pattern, line)
         if match:
             item = match.group(1)
@@ -105,20 +105,20 @@ class Command(BaseCommand):
             return item
         logger.warning(f"Could not parse {description} from line: {line}")
 
-    def _parse_one_line_arguments(self, line):
+    def parse_one_line_arguments(self, line):
         match = re.search(r'function\s*\((.*)\)', line)
         if match:
-            self._update_parser_location(line)
+            self.update_parser_location(line)
             arguments = match.group(1)
             return [arg.strip() for arg in arguments.split(',')]
         return []
 
-    def _init_parser(self):
+    def init_parser(self):
         self.in_hqdefine_block = True
         self.in_imports = False
         self.in_arguments = False
 
-    def _fail_parsing(self):
+    def fail_parsing(self):
         if self.in_arguments:
             status = "in arguments block"
         elif self.in_imports:
@@ -127,10 +127,10 @@ class Command(BaseCommand):
             status = "before imports block"
         raise CommandError(f"Could not parse file. Ran out of code {status}.")
 
-    def _update_parser_location(self, line):
-        if self._is_use_strict(line):
+    def update_parser_location(self, line):
+        if self.is_use_strict(line):
             return line
-        if self._is_hqdefine_open(line):
+        if self.is_hqdefine_open(line):
             self.in_imports = True
             return line
         if self.in_imports and 'function' in line:
@@ -143,7 +143,7 @@ class Command(BaseCommand):
             return line
         return False
 
-    def _dedent(self, line):
-        if line.startswith(" " * self.dedent):
-            line = line[self.dedent:]
+    def dedent(self, line):
+        if line.startswith(" " * self.dedent_size):
+            line = line[self.dedent_size:]
         return line
