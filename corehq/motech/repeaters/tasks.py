@@ -542,6 +542,7 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, group):
                 'commcare.repeaters.process_repeaters.repeater_backoff',
                 tags={'domain': repeater.domain},
             )
+            more = False
             repeater.set_backoff()
     finally:
         lock = RepeaterLock(repeater_id, lock_token)

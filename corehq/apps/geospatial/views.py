@@ -59,6 +59,7 @@ from .utils import (
     create_case_with_gps_property,
     get_flag_assigned_cases_config,
     get_geo_case_property,
+    get_geo_config,
     get_geo_user_property,
     get_lat_lon_from_dict,
     set_case_gps_property,
@@ -86,7 +87,7 @@ class CaseDisbursementAlgorithm(BaseDomainView):
     urlname = "case_disbursement"
 
     def post(self, request, domain, *args, **kwargs):
-        config = GeoConfig.objects.get(domain=domain)
+        config = get_geo_config(domain)
         request_json = json.loads(request.body.decode('utf-8'))
 
         solver_class = config.disbursement_solver
