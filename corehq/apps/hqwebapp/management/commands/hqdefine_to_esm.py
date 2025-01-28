@@ -44,6 +44,8 @@ class Command(BaseCommand):
             line_index += 1
 
             if self._update_parser_location(line):
+                if self.in_arguments:
+                    arguments.extend(self._parse_one_line_arguments(line))
                 continue
             if self.in_imports:
                 imports.append(self._parse_import(line))
@@ -103,6 +105,14 @@ class Command(BaseCommand):
             return item
         logger.warning(f"Could not parse {description} from line: {line}")
 
+    def _parse_one_line_arguments(self, line):
+        match = re.search(r'function\s*\((.*)\)', line)
+        if match:
+            self._update_parser_location(line)
+            arguments = match.group(1)
+            return [arg.strip() for arg in arguments.split(',')]
+        return []
+
     def _init_parser(self):
         self.in_hqdefine_block = True
         self.in_imports = False
@@ -119,18 +129,18 @@ class Command(BaseCommand):
 
     def _update_parser_location(self, line):
         if self._is_use_strict(line):
-            return True
+            return line
         if self._is_hqdefine_open(line):
             self.in_imports = True
-            return True
+            return line
         if self.in_imports and 'function' in line:
             self.in_imports = False
             self.in_arguments = True
-            return True
+            return line
         if self.in_arguments and ')' in line:
             self.in_arguments = False
             self.in_hqdefine_block = False
-            return True
+            return line
         return False
 
     def _dedent(self, line):
