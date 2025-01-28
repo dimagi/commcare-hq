@@ -22,31 +22,37 @@
   {% endif %}
   {% if data_source.get_id %}
     <div class="btn-toolbar pull-right">
-      <div class="btn-group">
-        {% if use_updated_ucr_naming %}
+      {% if use_updated_ucr_naming %}
+        <div class="btn-group">
           <a
             href="{% url 'preview_configurable_data_source' domain data_source.get_id %}"
             class="btn btn-default"
             >{% trans 'Preview Custom Web Report Data' %}</a
           >
+        </div>
+        <div class="btn-group">
           <a
             href="{% url 'summary_configurable_data_source' domain data_source.get_id %}"
             class="btn btn-default"
             >{% trans 'Custom Web Report Source Summary' %}</a
           >
-        {% else %}
+        </div>
+      {% else %}
+        <div class="btn-group">
           <a
             href="{% url 'preview_configurable_data_source' domain data_source.get_id %}"
             class="btn btn-default"
             >{% trans 'Preview Data' %}</a
           >
+        </div>
+        <div class="btn-group">
           <a
             href="{% url 'summary_configurable_data_source' domain data_source.get_id %}"
             class="btn btn-default"
             >{% trans 'Data Source Summary' %}</a
           >
-        {% endif %}
-      </div>
+        </div>
+      {% endif %}
       <div class="btn-group">
         {% if data_source.disable_destructive_rebuild %}
           <div style="margin-right: 15px;">
