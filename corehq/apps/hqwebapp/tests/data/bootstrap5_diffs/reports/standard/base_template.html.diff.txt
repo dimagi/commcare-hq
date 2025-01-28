@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,24 +1,24 @@
+@@ -1,24 +1,26 @@
 -{% extends "hqwebapp/bootstrap3/two_column.html" %}
 +{% extends "hqwebapp/bootstrap5/two_column.html" %}
  {% load compress %}
@@ -24,15 +24,19 @@
    {{ block.super }}
    {% compress css %}
 -    <link type="text/less"
-+    <link type="text/scss"
-           rel="stylesheet"
-           media="all"
+-          rel="stylesheet"
+-          media="all"
 -          href="{% static 'reports/less/reports.less' %}" />
-+          href="{% static 'reports/scss/reports.scss' %}" />
++    <link
++      type="text/scss"
++      rel="stylesheet"
++      media="all"
++      href="{% static 'reports/scss/reports.scss' %}"
++    />
    {% endcompress %}
    {% include 'reports/partials/filters_css.html' %}
  
-@@ -28,22 +28,33 @@
+@@ -28,22 +30,33 @@
  {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
  
  {% block page_breadcrumbs %}
@@ -82,7 +86,7 @@
  {% endblock %}
  
  {% block page_content %}
-@@ -68,17 +79,17 @@
+@@ -68,19 +81,18 @@
    {% initial_page_data 'slug' report.slug %}
  
    {% block filter_panel %}
@@ -91,22 +95,33 @@
    {% endblock %}
  
    {% if report.is_emailable and request.couch_user.can_download_reports %}
-     <div id="email-report-modal" class="modal fade" tabindex="-1" role="dialog">
+-    <div id="email-report-modal" class="modal fade" tabindex="-1" role="dialog">
++    <div
++      id="email-report-modal"
++      class="modal fade"
++      tabindex="-1" role="dialog"
++    >
        <div class="modal-dialog">
          <div class="modal-content">
--          <div class="modal-header">
-+          <div class="modal-header">  {# todo B5: css:modal-header #}
-             <button type="button"
+           <div class="modal-header">
+-            <button type="button"
 -                    class="close"
 -                    data-dismiss="modal"
-+                    class="btn-close"  {# todo B5: css:close #}
-+                    data-bs-dismiss="modal"
-                     aria-label="Close"
-                     data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
+-                    aria-label="Close"
+-                    data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
              <h4 class="modal-title">
-@@ -90,14 +101,14 @@
+               {% trans "Email report:" %}
+               {{ datespan.startdate|date:"Y-m-d" }}
+@@ -89,15 +101,21 @@
+               {% endif %}
                {{ datespan.enddate|date:"Y-m-d" }}
              </h4>
++            <button
++              class="btn-close"
++              aria-label="{% trans "Close" %}" type="button"
++              data-bs-dismiss="modal"
++              data-bind="click: resetModal"
++            ></button>
            </div>
 -          {% crispy email_form %}
 +          {% crispy email_form %}  {# todo B5: check crispy #}
@@ -121,7 +136,7 @@
        <h4>{% trans 'Notice' %}</h4>
        <p>{{ report.special_notice }}</p>
      </div>
-@@ -107,7 +118,7 @@
+@@ -107,7 +125,7 @@
        {% block reportcontent %}
        {% endblock %}
      {% else %}
