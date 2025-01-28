@@ -2957,10 +2957,11 @@ USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
 
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',
-    label='Restrict data source rebuilt from UI',
+    label='Force asynchronous processing for large data sources on UI',
     tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
+    description='Force data sources to be marked for asynchronous processing from UI if it crosses a threshold '
+                'for the number of records to be populated during building or rebuilding'
 )
 
 APP_TESTING = StaticToggle(
