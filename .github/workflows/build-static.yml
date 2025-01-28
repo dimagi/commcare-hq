@@ -1,12 +1,9 @@
 name: Build Static Files
 on:
-  pull_request:
-    branches:
-      - master
   push:
     branches:
-      - master
-
+      # - master
+      - autostaging
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -68,24 +65,14 @@ jobs:
           ./manage.py purge_compressed_files
           echo "Finished purge_compressed_files."
 
-      - name: Upload Static Files (PR)
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: staticfiles-pr-${{ github.event.pull_request.number }}
-          path: staticfiles/
-          retention-days: 7
-
-      - name: Upload Static Files (Merge)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      - name: Upload Static Files On Push
         uses: actions/upload-artifact@v4
         with:
           name: staticfiles-${{ github.sha }}
           path: staticfiles/
-          retention-days: 90  # Keep merged artifacts longer
+          retention-days: 90
 
       - name: Generate Static URL
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           echo "Static files URL pattern:"
           echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/staticfiles-${{ github.sha }}"
