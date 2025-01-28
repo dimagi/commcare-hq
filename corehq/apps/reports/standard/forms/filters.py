@@ -2,6 +2,7 @@ from django.utils.translation import gettext_lazy
 
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.models import HQToggle
+from corehq.apps.reports.util import DatatablesServerSideParams
 
 
 class SubmitToggle(HQToggle):
@@ -34,7 +35,7 @@ class SubmissionTypeFilter(BaseReportFilter):
 
     @classmethod
     def get_filter_toggle(cls, request):
-        filter_ = request.GET.getlist(cls.slug, None)
+        filter_ = DatatablesServerSideParams.get_value_from_request(request, cls.slug, as_list=True)
         return cls.use_filter(filter_)
 
     @classmethod
