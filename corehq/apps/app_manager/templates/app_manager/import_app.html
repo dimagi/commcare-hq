@@ -1,31 +1,27 @@
-{% extends "app_manager/apps_base.html" %}
+{% extends "hqwebapp/bootstrap3/two_column.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% comment %}
-  Despite inheriting from apps_base.html, this template does not necessarily have an app.
-{% endcomment %}
+{% js_entry_b3 'app_manager/js/import_app' %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'app_manager/js/import_app.js' %}"></script>
-  {% endcompress %}
+{% block page_navigation %}
+  <nav class="appmanager-content">
+    <ul class="nav nav-hq-sidebar"></ul>
+  </nav>
 {% endblock %}
 
-{% block breadcrumbs %}
-  <li>{% trans 'Import Application' %}</li>
-{% endblock %}
-
-{% block content %}
+{% block page_content %}
   {% registerurl 'import_app' domain %}
   <div class="appmanager-content-single-page">
-    <h1>Import Application</h1>
+    <h1>{% trans "Import Application" %}</h1>
     {% initial_page_data 'export_json' app.export_json %}
     <form action="{% url "import_app" domain %}" id="app-import-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
       {% if app %}
-        <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
+        {% blocktrans with app_name=app.name app_domain=app.domain %}
+          <p>Import application <strong>{{ app_name }}</strong> from domain <strong>{{ app_domain }}</strong>?</p>
+        {% endblocktrans %}
       {% endif %}
       <div class="form-horizontal">
         <div class="form-group">
@@ -42,7 +38,7 @@
         </div>
         <div class="form-actions">
           <div class="{% css_action_class %}">
-            <a href="#" class="btn btn-default historyBack">No, take me back.</a>
+            <a href="#" class="btn btn-default historyBack">{% trans "No, take me back." %}</a>
             <button class="btn btn-primary" type="submit">{% trans 'Yes, import application' %}</button>
           </div>
         </div>
