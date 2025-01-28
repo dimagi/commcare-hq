@@ -344,11 +344,13 @@ class GenericReportView(object):
     @memoized
     def template_async_base(self):
         if self.use_bootstrap5:
+            base_template_async = get_bootstrap5_path(self.base_template_async)
             default_path = "reports/async/bootstrap5/default.html"
         else:
+            base_template_async = self.base_template_async
             default_path = "reports/async/bootstrap3/default.html"
         if self.asynchronous:
-            return self.base_template_async or default_path
+            return base_template_async or default_path
         return self.template_base
 
     @property
@@ -356,12 +358,14 @@ class GenericReportView(object):
     def template_report(self):
         if self.use_bootstrap5:
             template_path = get_bootstrap5_path(self.report_template_path)
+            override_template = get_bootstrap5_path(self.override_template)
         else:
             template_path = self.report_template_path
+            override_template = self.override_template
         original_template = template_path or "reports/async/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
-            return self.override_template
+            return override_template
         return original_template
 
     @property
@@ -375,10 +379,12 @@ class GenericReportView(object):
     @memoized
     def template_filters(self):
         if self.use_bootstrap5:
+            base_template_filters = get_bootstrap5_path(self.base_template_filters)
             default_path = "reports/async/bootstrap5/filters.html"
         else:
+            base_template_filters = self.base_template_filters
             default_path = "reports/async/bootstrap3/filters.html"
-        return self.base_template_filters or default_path
+        return base_template_filters or default_path
 
     @property
     @memoized
