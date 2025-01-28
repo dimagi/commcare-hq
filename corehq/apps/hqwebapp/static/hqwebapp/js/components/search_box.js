@@ -41,7 +41,7 @@ hqDefine('hqwebapp/js/components/search_box', [
                 return true;
             };
             if (self.immediate) {
-                self.value.subscribe(_.debounce(function () {
+                self.value.subscribe(_.throttle(function () {
                     self.action();
                 }, 200));
             }
