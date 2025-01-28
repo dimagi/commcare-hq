@@ -22,47 +22,47 @@
   {% endif %}
   {% if data_source.get_id %}
     <div class="btn-toolbar pull-right">
-        <div class="btn-group">
-          {% if use_updated_ucr_naming %}
-            <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview Custom Web Report Data' %}</a>
-            <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Custom Web Report Source Summary' %}</a>
-          {% else %}
-            <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview Data' %}</a>
-            <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
-          {% endif %}
-        </div>
-        <div class="btn-group">
-          {% if data_source.disable_destructive_rebuild %}
-            <div style="margin-right: 15px;">
-              <button id="gtm-rebuild-ds-disabled"
-                      class="btn btn-default"
-                      disabled>
-                {% if use_updated_ucr_naming %}
-                  {% trans 'Rebuild Custom Web Report Source'%}
-                {% else %}
-                  {% trans 'Rebuild Data Source'%}
-                {% endif %}
-              </button>
-              {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for. Todo: After bootstrap 4 upgrade there is a fix https://getbootstrap.com/docs/4.4/components/tooltips/#disabled-elements #}
-              <span class="hq-help-template"
-                data-title="{% trans_html_attr "Rebuild Unavailable" %}"
-                data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
-                data-placement="left"></span>
-            </div>
-          {% else %}
-            <div>
-              <a id="gtm-rebuild-ds-btn"
-                 class="btn btn-default"
-                 href="#confirm_rebuild"
-                 data-toggle="modal">
-                {% if use_updated_ucr_naming %}
-                  {% trans 'Rebuild Custom Web Report Source'%}
-                {% else %}
-                  {% trans 'Rebuild Data Source'%}
-                {% endif %}
-              </a>
-            </div>
-          {% endif %}
+      <div class="btn-group">
+        {% if use_updated_ucr_naming %}
+          <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview Custom Web Report Data' %}</a>
+          <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Custom Web Report Source Summary' %}</a>
+        {% else %}
+          <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview Data' %}</a>
+          <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
+        {% endif %}
+      </div>
+      <div class="btn-group">
+        {% if data_source.disable_destructive_rebuild %}
+          <div style="margin-right: 15px;">
+            <button id="gtm-rebuild-ds-disabled"
+                    class="btn btn-default"
+                    disabled>
+              {% if use_updated_ucr_naming %}
+                {% trans 'Rebuild Custom Web Report Source'%}
+              {% else %}
+                {% trans 'Rebuild Data Source'%}
+              {% endif %}
+            </button>
+            {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for. Todo: After bootstrap 4 upgrade there is a fix https://getbootstrap.com/docs/4.4/components/tooltips/#disabled-elements #}
+            <span class="hq-help-template"
+              data-title="{% trans_html_attr "Rebuild Unavailable" %}"
+              data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
+              data-placement="left"></span>
+          </div>
+        {% else %}
+          <div>
+            <a id="gtm-rebuild-ds-btn"
+               class="btn btn-default"
+               href="#confirm_rebuild"
+               data-toggle="modal">
+              {% if use_updated_ucr_naming %}
+                {% trans 'Rebuild Custom Web Report Source'%}
+              {% else %}
+                {% trans 'Rebuild Data Source'%}
+              {% endif %}
+            </a>
+          </div>
+        {% endif %}
       </div>
       <div class="btn-group">
         <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
