@@ -29,7 +29,6 @@ function renderPage(slug, tableOptions) {
                 defaultRows: tableConfig.default_rows,
                 startAtRowNum: tableConfig.start_at_row,
                 showAllRowsOption: tableConfig.show_all_rows,
-                loadingTemplateSelector: '#js-template-loading-report',
                 autoWidth: tableConfig.headers.auto_width,
             };
         if (!tableConfig.sortable) {
