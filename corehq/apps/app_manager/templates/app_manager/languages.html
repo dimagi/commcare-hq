@@ -1,7 +1,6 @@
 {% load i18n %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-
 {% initial_page_data 'lang' lang %}
 {% initial_page_data 'translations' translations %}
 {% initial_page_data 'smart_lang_display_enabled' smart_lang_display_enabled %}
@@ -14,10 +13,12 @@
     <div class="panel panel-appmanager">
       <div class="panel-heading">
         <h4 class="panel-title">
-          <a data-toggle="collapse"
-             data-parent="#language-settings-options"
-             href="#supported-languages"
-             class="collapse in">
+          <a
+            data-toggle="collapse"
+            data-parent="#language-settings-options"
+            href="#supported-languages"
+            class="collapse in"
+          >
             <i class="fa fa-angle-double-down"></i>
             {% trans "Language List" %}
           </a>
@@ -35,10 +36,12 @@
     <div class="panel panel-appmanager">
       <div class="panel-heading">
         <h4 class="panel-title">
-          <a data-toggle="collapse"
-             data-parent="#language-settings-options"
-             href="#commcare-translations"
-             class="collapsed">
+          <a
+            data-toggle="collapse"
+            data-parent="#language-settings-options"
+            href="#commcare-translations"
+            class="collapsed"
+          >
             <i class="fa fa-angle-double-down"></i>
             {% trans "CommCare Translations" %}
           </a>
@@ -46,8 +49,7 @@
       </div>
       <div class="panel-collapse collapse" id="commcare-translations">
         <div class="panel-body">
-          <section id="translations_ui">
-          </section>
+          <section id="translations_ui"></section>
         </div>
       </div>
     </div>
@@ -57,10 +59,12 @@
     <div class="panel panel-appmanager">
       <div class="panel-heading">
         <h4 class="panel-title">
-          <a data-toggle="collapse"
-             data-parent="#language-settings-options"
-             href="#bulk-commcare-translations"
-             class="collapsed">
+          <a
+            data-toggle="collapse"
+            data-parent="#language-settings-options"
+            href="#bulk-commcare-translations"
+            class="collapsed"
+          >
             <i class="fa fa-angle-double-down"></i>
             {% trans "Bulk CommCare Translations" %}
           </a>
@@ -78,10 +82,12 @@
     <div class="panel panel-appmanager">
       <div class="panel-heading">
         <h4 class="panel-title">
-          <a data-toggle="collapse"
-             data-parent="#language-settings-options"
-             href="#bulk-application-translations"
-             class="collapsed">
+          <a
+            data-toggle="collapse"
+            data-parent="#language-settings-options"
+            href="#bulk-application-translations"
+            class="collapsed"
+          >
             <i class="fa fa-angle-double-down"></i>
             {% trans "Bulk Application Translations" %}
           </a>
@@ -93,7 +99,5 @@
         </div>
       </div>
     </div>
-
   {% endif %}
-
 </div>

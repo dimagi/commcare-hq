@@ -5,16 +5,18 @@
 {% load reports_core_tags %}
 {% load xforms_extras %}
 
-{% block js %}{{ block.super }}
+{% block js %}
+  {{ block.super }}
   {% compress js %}
-    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
+    <script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
     <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/report_module.js' %}"></script>
     <script src="{% static 'reports_core/js/choice_list_utils.js' %}"></script>
   {% endcompress %}
   {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
-{% block js-inline %}{{ block.super }}
+{% block js-inline %}
+  {{ block.super }}
   {% compress js %}
     <script src="{% static 'hqmedia/js/uploaders.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
@@ -35,12 +37,12 @@
   {% registerurl 'choice_list_api' domain 'report_id' 'filter_id' %}
   {% registerurl "edit_report_module" domain app.id module.unique_id %}
   {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
-
   {% include 'app_manager/partials/modules/module_view_heading.html' %}
   {% include 'app_manager/partials/modules/mobile_report_configs.html' %}
 {% endblock %}
 
-{% block modals %}{{ block.super }}
+{% block modals %}
+  {{ block.super }}
   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
   {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}

@@ -3,14 +3,20 @@
 {% load compress %}
 {% load i18n %}
 {% js_entry_b3 'app_manager/js/source_files' %}
-{% block stylesheets %}{{ block.super }}
+{% block stylesheets %}
+  {{ block.super }}
   {% compress css %}
-    <link type="text/css" rel="stylesheet" href="{% static 'app_manager/css/diff.css' %}"/>
+    <link
+      type="text/css"
+      rel="stylesheet"
+      href="{% static 'app_manager/css/diff.css' %}"
+    />
   {% endcompress %}
 {% endblock stylesheets %}
 
 {% block page_title %}
-  {{ app.name }}: Build #{{ app.version }} vs #{{ other_app.version }}
+  {{ app.name }}:
+  Build #{{ app.version }} vs #{{ other_app.version }}
 {% endblock page_title %}
 
 {% block mm_block %}
@@ -30,9 +36,10 @@
     </div>
     <div id="multimedia-sizes-diff">
       <h3>
-      {% blocktrans with from_version=other_app.version to_version=app.version %}
-        Multimedia download needed to update from {{ from_version }} to {{ to_version }}
-      {% endblocktrans %}
+        {% blocktrans with from_version=other_app.version to_version=app.version %}
+          Multimedia download needed to update from {{ from_version }} to
+          {{ to_version }}
+        {% endblocktrans %}
       </h3>
       {% include 'app_manager/partials/multimedia_sizes.html' %}
     </div>
