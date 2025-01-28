@@ -98,7 +98,7 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None,
     interface = FormProcessorInterface(domain)
 
     assert attachments is not None
-    if not instance_json:
+    if instance_json is not None:
         instance_json = convert_xform_to_json(instance_xml)
     if not instance_json.get('@xmlns'):
         raise MissingXMLNSError("Form is missing a required field: XMLNS")

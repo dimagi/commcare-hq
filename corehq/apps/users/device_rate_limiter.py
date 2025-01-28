@@ -9,7 +9,6 @@ from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
 from corehq.util.metrics import metrics_counter
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try again in a minute."
 # intentionally set to > 1 minute to allow for a buffer at minute boundaries
