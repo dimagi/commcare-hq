@@ -198,10 +198,10 @@
   resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-0.5.7.tgz#1d572bfbbe14b7704e0ba0f39b74815b84870d70"
   integrity sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==
 
-"@eonasdan/tempus-dominus@npm:@eonasdan/tempus-dominus#6.9.4":
-  version "6.9.4"
-  resolved "https://registry.yarnpkg.com/@eonasdan/tempus-dominus/-/tempus-dominus-6.9.4.tgz#cf3c9d223e38df2eaf18368927634bdd140c554f"
-  integrity sha512-zbGHdHCxjIuUN+31iTbsHhmrZuAalCdmuN3yf56P764Ko/tpOdWJUxr5yiBD5mvXoVcBxkGBtKCyDPL+bROABg==
+"@eonasdan/tempus-dominus@npm:@eonasdan/tempus-dominus#91b40283c064af691469482bfc304a14dd0473e4":
+  version "6.9.11"
+  resolved "https://registry.yarnpkg.com/@eonasdan/tempus-dominus/-/tempus-dominus-6.9.11.tgz#a52b1a7cfd1be6a989826e42b408a55a084f3ca1"
+  integrity sha512-KFOyMoCy6OCIl0dzWq4it2zu/jV4YWrSxxLmXR2XClVV9D9f/DaLjEhADJCYSjWBlTYanE18ACjVoyrfsHikgA==
 
 "@eslint/eslintrc@^1.2.3":
   version "1.2.3"
