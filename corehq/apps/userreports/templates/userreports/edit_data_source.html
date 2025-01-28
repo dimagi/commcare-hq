@@ -26,9 +26,18 @@
         <div class="btn-group">
           <a
             href="{% url 'preview_configurable_data_source' domain data_source.get_id %}"
-            class="btn btn-default"
+            class="btn btn-default {% if not data_source_table_exists %}disabled{% endif %}"
             >{% trans 'Preview Custom Web Report Data' %}</a
           >
+          {% if not data_source_table_exists %}
+            <span
+              class="hq-help-template"
+              data-title="{% trans_html_attr 'Preview Unavailable' %}"
+              data-content="{% trans_html_attr 'Preview unavailable till the data source table has been created.' %}"
+              data-placement="left"
+            >
+            </span>
+          {% endif %}
         </div>
         <div class="btn-group">
           <a
@@ -41,9 +50,18 @@
         <div class="btn-group">
           <a
             href="{% url 'preview_configurable_data_source' domain data_source.get_id %}"
-            class="btn btn-default"
+            class="btn btn-default {% if not data_source_table_exists %}disabled{% endif %}"
             >{% trans 'Preview Data' %}</a
           >
+          {% if not data_source_table_exists %}
+            <span
+              class="hq-help-template"
+              data-title="{% trans_html_attr 'Preview Unavailable' %}"
+              data-content="{% trans_html_attr 'Preview unavailable till the data source table has been created.' %}"
+              data-placement="left"
+            >
+            </span>
+          {% endif %}
         </div>
         <div class="btn-group">
           <a

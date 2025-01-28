@@ -1265,6 +1265,13 @@ class EditDataSourceView(BaseEditDataSourceView):
     def page_name(self):
         return "Edit {}".format(self.config.display_name)
 
+    @property
+    def page_context(self):
+        page_context = super().page_context
+        adapter = get_indicator_adapter(self.config)
+        page_context['data_source_table_exists'] = adapter.table_exists
+        return page_context
+
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
