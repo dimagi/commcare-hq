@@ -1370,7 +1370,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
-    report_template_path = "reports/async/basic.html"
+    report_template_path = "reports/async/bootstrap3/basic.html"
 
 
 def _worker_activity_is_location_safe(view, request, *args, **kwargs):
