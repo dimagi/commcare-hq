@@ -318,15 +318,13 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.reset_backoff.assert_called_once()
 
     @patch('corehq.motech.repeaters.tasks.get_redis_client')
-    @patch('corehq.motech.repeaters.tasks.process_repeater')
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_backs_off_on_failure(
         self,
         mock_get_repeater,
         mock_get_repeater_lock,
-        mock_process_repeater,
-        mock_get_redis_client,
+        __,
     ):
         repeat_record_states = [State.Fail, State.Empty, None]
         mock_repeater = MagicMock()
@@ -337,7 +335,6 @@ class TestUpdateRepeater(SimpleTestCase):
 
         mock_repeater.set_backoff.assert_called_once()
         mock_repeater.reset_backoff.assert_not_called()
-        mock_process_repeater.assert_not_called()
         mock_lock.release.assert_called_once()
 
     @patch('corehq.motech.repeaters.tasks.get_redis_client')
