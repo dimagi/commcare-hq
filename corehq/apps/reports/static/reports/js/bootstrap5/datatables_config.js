@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import _ from 'underscore';
 import googleAnalytics from 'analytix/js/google';
+import {Tooltip} from 'bootstrap5';
 
 import 'datatables.bootstrap';
 import 'datatables.fixedColumns';
@@ -29,10 +30,10 @@ var HQReportDataTables = function (options) {
     }
     self.emptyText = options.emptyText || gettext("No data available to display. " +
                                                   "Please try changing your filters.");
-    self.errorText = options.errorText || "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
+    self.errorText = options.errorText || "<span class='badge text-bg-danger'>" + gettext("Sorry!") + "</span> " +
                      gettext("There was an error with your query, it has been logged, please try another query.");
     self.badRequestErrorText = options.badRequestErrorText || options.errorText ||
-                               "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
+                               "<span class='badge text-bg-danger'>" + gettext("Sorry!") + "</span> " +
                                gettext("Your search query is invalid, please adjust the formatting and try again.");
     self.fixColumns = !!(options.fixColumns);
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
@@ -84,7 +85,7 @@ var HQReportDataTables = function (options) {
         });
         function applyBootstrapMagic() {
             $('[data-datatable-tooltip]').each(function () {
-                $(this).tooltip({  /* todo B5: plugin:tooltip */
+                new Tooltip($(this).get(0), {
                     placement: $(this).attr('data-datatable-tooltip'),
                     title: $(this).attr('data-datatable-tooltip-text'),
                 });
@@ -261,7 +262,7 @@ var HQReportDataTables = function (options) {
                 $selectLabel.remove();
                 $selectField.children().append(" per page");
                 if (self.showAllRowsOption) {
-                    $selectField.append($('<option value="-1" />').text("All Rows"));
+                    $selectField.append($('<option value="-1" />').text(gettext("All Rows")));
                 }
                 $selectField.addClass('form-control');
                 $selectField.on("change", function () {
