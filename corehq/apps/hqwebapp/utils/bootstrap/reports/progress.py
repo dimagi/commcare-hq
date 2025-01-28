@@ -23,15 +23,15 @@ def update_progress_data(data):
 
 
 def _mark_as_complete(item, category):
-    progres_data = get_progress_data()
-    if item not in progres_data[category]:
-        progres_data[category].append(item)
-    update_progress_data(progres_data)
+    progress_data = get_progress_data()
+    if item not in progress_data[category]:
+        progress_data[category].append(item)
+    update_progress_data(progress_data)
 
 
 def _get_category_list(category):
-    progres_data = get_progress_data()
-    return progres_data[category]
+    progress_data = get_progress_data()
+    return progress_data[category]
 
 
 def mark_report_as_complete(report_name):
