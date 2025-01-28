@@ -62,6 +62,7 @@ class DeviceRateLimiter:
             metrics_counter(
                 'commcare.devices_per_user.additional_device', tags={'domain': domain, 'user_id': user_id}
             )
+            return False
 
         metrics_counter(
             'commcare.devices_per_user.rate_limit_exceeded', tags={'domain': domain, 'user_id': user_id}
