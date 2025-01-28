@@ -10,6 +10,7 @@ REPORT_TEMPLATE_PROPERTIES = [
     ('template_report', 'report_template_path'),
     ('template_report_partial', 'report_partial_path'),
     ('template_filters', 'base_template_filters'),
+    (None, 'override_template'),  # override_template is another alternate for template_report
 ]
 COMMON_REPORT_TEMPLATES = [
     "reports/async/bootstrap3/default.html",
@@ -51,6 +52,8 @@ def reports_bootstrap5_template_debugger(report_instance):
 
 
 def show_report_property_issues(report_instance, report_property):
+    if report_property is None:
+        return False
     report_property_value = getattr(report_instance, report_property)
     if is_bootstrap3_path(report_property_value):
         print(f"\n{Color.WARNING}{Color.BOLD}def {report_property}"
