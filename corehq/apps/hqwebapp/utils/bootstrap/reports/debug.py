@@ -3,6 +3,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.reports.progress import (
     get_migrated_filters,
     get_migrated_filter_templates,
 )
+from corehq.apps.reports.datatables import DataTablesColumnGroup
 
 REPORT_TEMPLATE_PROPERTIES = [
     ('template_base', 'base_template'),
@@ -47,7 +48,8 @@ def reports_bootstrap5_template_debugger(report_instance):
         print(f"\n{Color.GREEN}{Color.BOLD}Did not find any issues!{Color.ENDC}\n")
 
     show_report_filters_templates(report_instance)
-    print("When migration is complete, remember to run:\n")
+    show_report_column_issues(report_instance)
+    print("\n\nWhen migration is complete, remember to run:\n")
     print(f"{Color.BOLD}manage.py complete_bootstrap5_report {_name(report_instance)}{Color.ENDC}\n\n\n\n")
 
 
@@ -94,3 +96,19 @@ def show_report_filters_templates(report_instance):
     if not has_pending_migrations:
         print(f"{Color.GREEN}{Color.BOLD}No migrations needed!{Color.ENDC}\n")
     print("\n\n")
+
+
+def show_report_column_issues(report_instance):
+    for column in report_instance.headers:
+        if isinstance(column, DataTablesColumnGroup):
+            for sub_column in column:
+                _print_column_warnings(sub_column)
+        else:
+            _print_column_warnings(column)
+
+
+def _print_column_warnings(column):
+    if not column.use_bootstrap5:
+        print(f"{Color.WARNING}{Color.BOLD}The DataTablesColumn for '{column.html}' does "
+              f"not have bootstrap5 enabled. Pass `use_bootstrap5=self.use_bootstrap5` "
+              f"when creating.{Color.ENDC}")
