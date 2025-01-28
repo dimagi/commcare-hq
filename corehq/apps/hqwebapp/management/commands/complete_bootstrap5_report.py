@@ -93,7 +93,7 @@ class Command(BaseCommand):
         for field in report_class.fields:
             if field not in migrated_filters:
                 filter_class = get_filter_class(field)
-                if not self.is_filter_migrated(field, filter_class, migrated_filter_templates):
+                if not self.is_filter_migrated_prompts(field, filter_class, migrated_filter_templates):
                     return
         self.stdout.write(
             self.style.SUCCESS(f"All done! {report_class.__name__} has been migrated to Bootstrap5!")
@@ -101,7 +101,7 @@ class Command(BaseCommand):
         mark_report_as_complete(report_class.__name__)
         self.suggest_commit_message(f"Completed report: {report_class.__name__}.")
 
-    def is_filter_migrated(self, field, filter_class, migrated_filter_templates):
+    def is_filter_migrated_prompts(self, field, filter_class, migrated_filter_templates):
         if filter_class is None:
             self.stdout.write(self.style.ERROR(
                 f"The filter {field} could not be found. Check report for errors.\n\n"
