@@ -2008,6 +2008,18 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+PROCESS_REPEATERS = FeatureRelease(
+    'process_repeaters',
+    'Process repeaters instead of processing repeat records independently',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    owner='Norman Hooper',
+    description="""
+    Manages repeat records through their repeater in order to make
+    smarter decisions about remote endpoints.
+    """
+)
+
 DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     'do_not_rate_limit_submissions',
     'Do not rate limit submissions for this project, on a temporary basis.',
@@ -2945,10 +2957,11 @@ USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
 
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',
-    label='Restrict data source rebuilt from UI',
+    label='Force asynchronous processing for large data sources on UI',
     tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
+    description='Force data sources to be marked for asynchronous processing from UI if it crosses a threshold '
+                'for the number of records to be populated during building or rebuilding'
 )
 
 APP_TESTING = StaticToggle(
