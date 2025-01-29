@@ -1,7 +1,18 @@
+hqDefine("app_manager/js/details/case_claim", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/assert_properties",
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    assertProperties,
+) {
 "use strict";
-hqDefine("app_manager/js/details/case_claim", function () {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-        generateSemiRandomId = function () {
+    var generateSemiRandomId = function () {
             // https://stackoverflow.com/a/2117523
             return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function (c) {
                 return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
@@ -207,7 +218,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         'search_on_clear',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
-        hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
+        assertProperties.assertRequired(options, searchConfigKeys);
 
         options.search_label = options.search_label[lang] || "";
         options.search_again_label = options.search_again_label[lang] || "";
