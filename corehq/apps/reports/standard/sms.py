@@ -886,7 +886,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     @property
     @memoized
     def messaging_event(self):
-        messaging_event_id = self.request.GET.get('id', None)
+        messaging_event_id = self.get_request_param('id', None)
 
         try:
             messaging_event_id = int(messaging_event_id)
@@ -1036,7 +1036,7 @@ class SurveyDetailReport(BaseMessagingEventReport):
     @property
     @memoized
     def xforms_session(self):
-        xforms_session_id = self.request.GET.get('id', None)
+        xforms_session_id = self.get_request_param('id', None)
 
         try:
             xforms_session_id = int(xforms_session_id)
