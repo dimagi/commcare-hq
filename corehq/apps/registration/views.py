@@ -49,10 +49,10 @@ from corehq.apps.registration.models import (
     RegistrationRequest,
     SelfSignupWorkflow,
 )
+from corehq.apps.registration.rate_limiter import rate_limit_check_username_availability
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
     project_logo_emails_context,
-    rate_limit_check_username_availability,
     request_new_domain,
     send_domain_registration_email,
     send_mobile_experience_reminder,
