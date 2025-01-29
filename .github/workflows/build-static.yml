@@ -1,8 +1,11 @@
 name: Build Static Files
 on:
+  pull_request:
+    branches:
+      - master
   push:
     branches:
-      # - master
+      - master
       - autostaging
 jobs:
   build:
