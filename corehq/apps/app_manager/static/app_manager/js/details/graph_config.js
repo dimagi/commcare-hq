@@ -1,20 +1,31 @@
-/* global Clipboard */
-hqDefine('app_manager/js/details/graph_config', function () {
-    /**
-     * Create a view model that is bound to an "Edit graph" button. The ui property
-     * of this view model allows us to integrate the knockout elements with the
-     * jquery based part of the ui.
-     *
-     * @param moduleOptions
-     * A mapping of configuration options from the module. The following keys are required:
-     *      lang
-     *      langs
-     *      childCaseTypes
-     *      fixtures
-     * @param serverRepresentationOfGraph
-     * Object corresponding to a graph configuration saved in couch.
-     * @constructor
-     */
+/**
+ * Create a view model that is bound to an "Edit graph" button. The ui property
+ * of this view model allows us to integrate the knockout elements with the
+ * jquery based part of the ui.
+ *
+ * @param moduleOptions
+ * A mapping of configuration options from the module. The following keys are required:
+ *      lang
+ *      langs
+ *      childCaseTypes
+ *      fixtures
+ * @param serverRepresentationOfGraph
+ * Object corresponding to a graph configuration saved in couch.
+ * @constructor
+ */
+hqDefine("app_manager/js/details/graph_config", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/bootstrap3/main",
+    "clipboard/dist/clipboard",
+], function (
+    $,
+    ko,
+    _,
+    main,
+    Clipboard,
+) {
     var graphConfigurationUiElement = function (moduleOptions, serverRepresentationOfGraph) {
         var self = {};
         moduleOptions = moduleOptions || {};
@@ -25,7 +36,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
             '<i class="fa fa-pencil"></i> ' +
             gettext('Edit Graph') +
             '</button>' +
-            '</div>'
+            '</div>',
         );
 
         self.ui = $editButtonDiv;
@@ -61,7 +72,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
         };
 
         self.ui.koApplyBindings(self);
-        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
+        main.eventize(self);
 
         /**
          * Return an object representing this graph configuration that is suitable
@@ -259,8 +270,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
         self.values = original.values || {};
         // Make the value for the current language observable
         self.values[self.lang] = ko.observable(
-            self.values[self.lang] === undefined ? null :
-                ko.unwrap(self.values[self.lang])
+            self.values[self.lang] === undefined ? null : ko.unwrap(self.values[self.lang]),
         );
 
         /**
@@ -331,7 +341,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
                     'lang': self.lang,
                     'langs': self.langs,
                 });
-            }
+            },
         ));
 
         self.configPropertyOptions = [
@@ -529,7 +539,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
             })).concat([{
                 'text': 'custom',
                 'value': 'custom',
-            }])
+            }]),
         ));
 
         self.selectedSource = ko.observable(origOrDefault('selectedSource', self.sourceOptions()[0]));
@@ -568,7 +578,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
 
         var seriesValidationWarning = gettext(
             "It is recommended that you leave this value blank. Future changes to your report's " +
-            "chart configuration will not be reflected here."
+            "chart configuration will not be reflected here.",
         );
         self.dataPathWarning = ko.computed(function () {
             if (!self.dataPathPlaceholder() || !self.dataPath()) {
@@ -621,7 +631,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
                     'lang': self.lang,
                     'langs': self.langs,
                 });
-            }
+            },
         ));
         if (original.localeSpecificConfigurations && original.localeSpecificConfigurations.length !== 0) {
             self.localeSpecificConfigurations(_.map(original.localeSpecificConfigurations, function (o) {
