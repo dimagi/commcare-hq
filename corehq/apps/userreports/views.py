@@ -65,7 +65,6 @@ from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
     use_jquery_ui,
     use_multiselect,
-    use_nvd3,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -523,7 +522,6 @@ class ConfigureReport(ReportBuilderView):
 
     @use_jquery_ui
     @use_datatables
-    @use_nvd3
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:
