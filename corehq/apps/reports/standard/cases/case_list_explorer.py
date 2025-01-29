@@ -59,6 +59,7 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
     search_class = CaseSearchES
     description = _("Use Case List Explorer to run deep searches on your cases by case properties.  ")
     documentation_link = DOCS_LINK_CASE_LIST_EXPLORER
+    use_bootstrap5 = False
 
     exportable = True
     exportable_all = True
