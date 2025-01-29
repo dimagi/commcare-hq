@@ -33,7 +33,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
-from corehq.apps.domain.decorators import api_auth, login_and_domain_required
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required, excel_feed_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
     CASE_EXPORT,
@@ -809,6 +809,18 @@ def can_download_daily_saved_export(export, domain, couch_user):
 @api_auth(allow_api_key_as_password=True)
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
+    return _daily_saved_download(req, domain, export_instance_id)
+
+
+@location_safe
+@csrf_exempt
+@excel_feed_auth()
+@require_GET
+def excel_download_daily_saved_export(req, domain, export_instance_id):
+    return _daily_saved_download(req, domain, export_instance_id)
+
+
+def _daily_saved_download(req, domain, export_instance_id):
     with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
         try:
             export_instance = get_properly_wrapped_export_instance(export_instance_id)
