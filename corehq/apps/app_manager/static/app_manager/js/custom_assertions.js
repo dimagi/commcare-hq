@@ -1,7 +1,14 @@
-"use strict";
-hqDefine('app_manager/js/custom_assertions', function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
+hqDefine('app_manager/js/custom_assertions', [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+], function (
+    $,
+    ko,
+    initialPageData,
+    toggles,
+) {
     var customAssertion = function (test, text) {
         var self = {};
         self.test = ko.observable(test || '');
@@ -39,7 +46,7 @@ hqDefine('app_manager/js/custom_assertions', function () {
         self.addAssertion = function (assertion) {
             assertion = assertion || {test: null, text: null};
             self.customAssertions.push(
-                customAssertion(assertion.test, assertion.text)
+                customAssertion(assertion.test, assertion.text),
             );
         };
 
@@ -55,7 +62,7 @@ hqDefine('app_manager/js/custom_assertions', function () {
     };
 
     $(function () {
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CUSTOM_ASSERTIONS')) {
+        if (toggles.toggleEnabled('CUSTOM_ASSERTIONS')) {
             var assertions = customAssertions().wrap({
                 'customAssertions': initialPageData.get('custom_assertions'),
             });
