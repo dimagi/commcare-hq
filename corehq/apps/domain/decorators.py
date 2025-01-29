@@ -419,10 +419,23 @@ def two_factor_exempt(view_func):
     return wraps(view_func)(wrapped_view)
 
 
-def api_auth(*, allow_creds_in_data=True, oauth_scopes=None, allow_api_key_as_password=False):
+def api_auth(*, allow_creds_in_data=True, oauth_scopes=None):
     """Allow any auth type basic, digest, session, apikey, or oauth"""
     return get_multi_auth_decorator(
         default=DIGEST,
+        oauth_scopes=oauth_scopes,
+        allow_creds_in_data=allow_creds_in_data,
+        allow_api_key_as_password=False,  # if supporting digest auth, you cannot use an api key as a password
+    )
+
+
+def api_auth_no_digest(*, allow_creds_in_data=True, oauth_scopes=None, allow_api_key_as_password=False):
+    """
+    Intentionally does not support digest auth to allow using api key as password if desired.
+    See determine_authtype_from_header for more details on how defaulting to BASIC drops DIGEST support
+    """
+    return get_multi_auth_decorator(
+        default=BASIC,
         oauth_scopes=oauth_scopes,
         allow_creds_in_data=allow_creds_in_data,
         allow_api_key_as_password=allow_api_key_as_password,
