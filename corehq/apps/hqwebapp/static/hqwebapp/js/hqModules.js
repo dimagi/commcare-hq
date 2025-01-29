@@ -73,7 +73,6 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'DOMPurify/dist/purify.min': 'DOMPurify',
                 'mocha/mocha': 'mocha',
                 'moment/moment': 'moment',
-                'nvd3/nv.d3.min': 'nv',
                 'crypto-js/crypto-js': 'CryptoJS',
                 'hqwebapp/js/lib/modernizr': 'Modernizr',
                 'sinon/pkg/sinon': 'sinon',

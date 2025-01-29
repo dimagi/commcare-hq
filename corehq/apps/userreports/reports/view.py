@@ -34,7 +34,6 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
     use_jquery_ui,
-    use_nvd3,
 )
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -164,7 +163,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @use_daterangepicker
     @use_jquery_ui
     @use_datatables
-    @use_nvd3
     @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):

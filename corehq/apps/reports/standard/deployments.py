@@ -28,7 +28,6 @@ from corehq.apps.es.aggregations import (
     FilterAggregation,
     NestedAggregation,
 )
-from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -759,10 +758,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     ]
     exportable = False
     emailable = False
-
-    @use_nvd3
-    def decorator_dispatcher(self, request, *args, **kwargs):
-        super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     @memoized

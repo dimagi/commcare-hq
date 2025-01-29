@@ -16,7 +16,6 @@ from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.groups import GroupES
 from corehq.apps.es.users import UserES
-from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReport
@@ -285,10 +284,6 @@ class ProjectHealthDashboard(ProjectReport):
         if self.is_rendered_as_email:
             self.report_template_path = "reports/project_health/bootstrap3/project_health_email.html"
         return super(ProjectHealthDashboard, self).template_report
-
-    @use_nvd3
-    def decorator_dispatcher(self, request, *args, **kwargs):
-        super(ProjectHealthDashboard, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def selected_app_id(self):
