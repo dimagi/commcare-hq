@@ -854,9 +854,18 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
         export_instance.last_accessed = datetime.utcnow()
         export_instance.save()
+        notify_exception(req, '[DEBUG] Export instance is saved', {
+            'export_instance_id': export_instance_id,
+            'domain': domain,
+        })
 
     payload = export_instance.get_payload(stream=True)
     format = Format.from_format(export_instance.export_format)
+    if export_instance.export_format == "html":
+        notify_exception(req, '[DEBUG] Downloaded Excel Dashboard', {
+            'export_instance_id': export_instance_id,
+            'domain': domain,
+        })
     return get_download_response(payload, export_instance.file_size, format.mimetype,
                                  format.download, export_instance.filename, req)
 
