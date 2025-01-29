@@ -317,46 +317,32 @@ def process_repeaters():
     metrics_counter('commcare.repeaters.process_repeaters.start')
     try:
         group = 0
-        client = get_redis_client()
-        client.set(f'repeater_group_{group}', 0)
-        repeater_num = 0
+        redis = get_redis_client()
+        timeout_ms = 30 * 60 * 1000  # half an hour
+        redis.set(f'repeater_group_{group}', 0, px=timeout_ms)
         while True:
-            try:
-                repeater_id, lock_token, group_len = next(iter_repeater_id_tokens())
-                process_repeater(repeater_id, lock_token, group)
-                repeater_num += 1
-                if repeater_num == group_len:
-                    # We've spawned tasks to process all the repeaters
-                    # in the group.
-                    while client.get(f'repeater_group_{group}') == 0:
-                        # Wait until (at least) the first task finishes
-                        # so that the next query for repeaters returns a
-                        # new resultset.
-                        time.sleep(0.1)
-                    group += 1
-            except StopIteration:
+            metrics_counter('commcare.repeaters.process_repeaters.iter_once')
+            # A filtered list of the repeater IDs originally returned by
+            # `Repeater.objects.get_all_ready_ids_by_domain()`:
+            repeater_ids = list(iter_filtered_repeater_ids())
+            if not repeater_ids:
                 return
+            for repeater_id in repeater_ids:
+                lock = RepeaterLock(repeater_id)
+                if lock.acquire():  # non-blocking
+                    process_repeater(repeater_id, lock.token, group)
+
+            while redis.get(f'repeater_group_{group}') == 0:
+                # Wait for (at least) one `process_repeater` task to finish
+                # so that `Repeater.objects.get_all_ready_ids_by_domain()`
+                # will return an updated set of repeaters. (This `while`
+                # loop mimics redis-py's `Lock.acquire(blocking=True)`.)
+                # https://github.com/redis/redis-py/blob/e0906519/redis/lock.py#L209-L218
+                time.sleep(0.1)
+            group += 1
     finally:
         process_repeaters_lock.release()
         metrics_counter('commcare.repeaters.process_repeaters.complete')
-
-
-def iter_repeater_id_tokens():
-    """
-    Iterate repeater_id-lock_token pairs until all ready repeat records
-    are processed.
-    """
-    while True:
-        repeater_ids = list(iter_filtered_repeater_ids())
-        group_len = len(repeater_ids)
-        if not group_len:
-            # No repeaters are ready, enabled, or not rate-limited
-            return
-        metrics_counter('commcare.repeaters.process_repeaters.iter_once')
-        for repeater_id in repeater_ids:
-            lock = RepeaterLock(repeater_id)
-            if lock.acquire():
-                yield repeater_id, lock.token, group_len
 
 
 def iter_filtered_repeater_ids():
@@ -524,8 +510,8 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, group):
     results of ``process_ready_repeat_record()``.
 
     ``group`` is the group number of the repeater. It is used to
-    determine when the first repeater in the group is processed, so that
-    the next query for repeaters returns a new resultset.
+    determine when (at least) one repeater in the group has been
+    processed.
     """
     repeater = Repeater.objects.get(id=repeater_id)
     try:
@@ -546,8 +532,8 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, group):
     finally:
         lock = RepeaterLock(repeater_id, lock_token)
         lock.release()
-        client = get_redis_client()
-        client.incr(f'repeater_group_{group}')
+        redis = get_redis_client()
+        redis.incr(f'repeater_group_{group}')
 
 
 class RepeaterLock:

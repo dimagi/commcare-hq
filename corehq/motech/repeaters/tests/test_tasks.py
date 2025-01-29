@@ -1,6 +1,6 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -18,8 +18,9 @@ from ..tasks import (
     _process_repeat_record,
     delete_old_request_logs,
     get_repeater_ids_by_domain,
+    iter_filtered_repeater_ids,
     iter_ready_domain_repeater_ids,
-    iter_repeater_id_tokens,
+    process_repeaters,
     update_repeater,
 )
 
@@ -232,6 +233,88 @@ class TestProcessRepeatRecord(TestCase):
         self.mock_domain_can_forward = patch_domain_can_forward.start()
         self.mock_domain_can_forward.return_value = True
         self.addCleanup(patch_domain_can_forward.stop)
+
+
+class TestProcessRepeaters(TestCase):
+
+    @patch('corehq.motech.repeaters.tasks.get_redis_lock')
+    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.iter_filtered_repeater_ids')
+    @patch('corehq.motech.repeaters.tasks.process_repeater')
+    def test_one_group(
+        self,
+        mock_process_repeater,
+        mock_iter_filtered_repeater_ids,
+        mock_get_redis_client,
+        __,
+    ):
+        client = MagicMock()
+        client.get.return_value = 1
+        mock_get_redis_client.return_value = client
+        mock_iter_filtered_repeater_ids.side_effect = [
+            ['repeater_id1'],
+            [],
+        ]
+
+        process_repeaters()
+        mock_process_repeater.assert_called_once()
+
+    @patch('corehq.motech.repeaters.tasks.get_redis_lock')
+    @patch('corehq.motech.repeaters.tasks.uuid.uuid1')
+    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.iter_filtered_repeater_ids')
+    @patch('corehq.motech.repeaters.tasks.process_repeater')
+    def test_two_groups(
+        self,
+        mock_process_repeater,
+        mock_iter_filtered_repeater_ids,
+        mock_get_redis_client,
+        mock_uuid1,
+        __,
+    ):
+        client = MagicMock()
+        client.get.return_value = 1
+        mock_get_redis_client.return_value = client
+        mock_iter_filtered_repeater_ids.side_effect = [
+            ['repeater_id1', 'repeater_id2'],
+            ['repeater_id3'],
+            [],
+        ]
+        mock_uuid1.return_value.hex = 'token'
+
+        process_repeaters()
+        mock_process_repeater.assert_has_calls([
+            call('repeater_id1', 'token', 0),
+            call('repeater_id2', 'token', 0),
+            call('repeater_id3', 'token', 1),
+        ])
+
+    @patch('corehq.motech.repeaters.tasks.get_redis_lock')
+    @patch('corehq.motech.repeaters.tasks.process_repeater')
+    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.iter_filtered_repeater_ids')
+    @patch('corehq.motech.repeaters.tasks.time')
+    def test_sleep(
+            self,
+            mock_time,
+            mock_iter_filtered_repeater_ids,
+            mock_get_redis_client,
+            __,
+            _,
+    ):
+        client = MagicMock()
+        client.get.side_effect = [0, 0, 1]
+        mock_get_redis_client.return_value = client
+        mock_iter_filtered_repeater_ids.side_effect = [
+            ['repeater_id1'],
+            [],
+        ]
+
+        process_repeaters()
+        mock_time.sleep.assert_has_calls([
+            call.sleep(0.1),
+            call.sleep(0.1),
+        ])
 
 
 def test_iter_ready_repeater_ids():
@@ -484,7 +567,7 @@ class TestRepeaterLock(TestCase):
         )
 
 
-class TestIterRepeaterIDTokens(SimpleTestCase):
+class TestIterFilteredRepeaterIDs(SimpleTestCase):
 
     @staticmethod
     def all_ready_ids_by_domain():
@@ -511,7 +594,7 @@ class TestIterRepeaterIDTokens(SimpleTestCase):
             patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
                   return_value=['domain1', 'domain2', 'domain3']),
         ):
-            self.assertFalse(next(iter_repeater_id_tokens(), False))
+            self.assertFalse(next(iter_filtered_repeater_ids(), False))
 
     def test_domain_cant_forward_now(self):
         with (
@@ -522,7 +605,7 @@ class TestIterRepeaterIDTokens(SimpleTestCase):
             patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.get_enabled_domains',
                   return_value=['domain1', 'domain2', 'domain3']),
         ):
-            self.assertFalse(next(iter_repeater_id_tokens(), False))
+            self.assertFalse(next(iter_filtered_repeater_ids(), False))
 
     def test_process_repeaters_not_enabled(self):
         with (
@@ -535,7 +618,7 @@ class TestIterRepeaterIDTokens(SimpleTestCase):
             patch('corehq.motech.repeaters.tasks.toggles.PROCESS_REPEATERS.enabled',
                   return_value=False),  # <--
         ):
-            self.assertFalse(next(iter_repeater_id_tokens(), False))
+            self.assertFalse(next(iter_filtered_repeater_ids(), False))
 
     def test_successive_loops(self):
         with (
@@ -547,21 +630,18 @@ class TestIterRepeaterIDTokens(SimpleTestCase):
                   return_value=['domain1', 'domain2', 'domain3']),
             patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
                   return_value=False),
-            patch('corehq.motech.repeaters.tasks.RepeaterLock'),
         ):
-            repeaters = list(iter_repeater_id_tokens())
-            self.assertEqual(len(repeaters), 9)
-            repeater_ids = [r[0] for r in repeaters]
+            repeater_ids = list(iter_filtered_repeater_ids())
             self.assertEqual(repeater_ids, [
-                # First loop
                 'repeater_id3',  # domain1
                 'repeater_id5',  # domain2
                 'repeater_id6',  # domain3
                 'repeater_id2',  # domain1
                 'repeater_id4',  # domain2
                 'repeater_id1',  # domain1
-
-                # Second loop
+            ])
+            repeater_ids = list(iter_filtered_repeater_ids())
+            self.assertEqual(repeater_ids, [
                 'repeater_id2',  # domain1
                 'repeater_id4',  # domain2
                 'repeater_id1',  # domain1
@@ -577,17 +657,17 @@ class TestIterRepeaterIDTokens(SimpleTestCase):
                   return_value=['domain1', 'domain2', 'domain3']),
             patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
                   side_effect=lambda dom, rep: dom == 'domain2' and rep == 'repeater_id4'),
-            patch('corehq.motech.repeaters.tasks.RepeaterLock'),
         ):
-            repeaters = list(iter_repeater_id_tokens())
-            self.assertEqual(len(repeaters), 7)
-            repeater_ids = [r[0] for r in repeaters]
+            repeater_ids = list(iter_filtered_repeater_ids())
             self.assertEqual(repeater_ids, [
                 'repeater_id3',  # domain1
                 'repeater_id5',  # domain2
                 'repeater_id6',  # domain3
                 'repeater_id2',  # domain1
                 'repeater_id1',  # domain1
+            ])
+            repeater_ids = list(iter_filtered_repeater_ids())
+            self.assertEqual(repeater_ids, [
                 'repeater_id2',  # domain1
                 'repeater_id1',  # domain1
             ])
@@ -604,14 +684,14 @@ class TestIterRepeaterIDTokens(SimpleTestCase):
                   side_effect=lambda dom, __: dom == 'domain3'),  # <--
             patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
                   return_value=False),
-            patch('corehq.motech.repeaters.tasks.RepeaterLock'),
         ):
-            repeaters = list(iter_repeater_id_tokens())
-            self.assertEqual(len(repeaters), 4)
-            repeater_ids = [r[0] for r in repeaters]
+            repeater_ids = list(iter_filtered_repeater_ids())
             self.assertEqual(repeater_ids, [
                 'repeater_id5',  # domain2
                 'repeater_id6',  # domain3
                 'repeater_id4',  # domain2
+            ])
+            repeater_ids = list(iter_filtered_repeater_ids())
+            self.assertEqual(repeater_ids, [
                 'repeater_id4',  # domain2
             ])
