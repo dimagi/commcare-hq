@@ -1,18 +1,22 @@
 {% load i18n %}
 
 <script type="text/template" id="persistent-menu-template">
-  <div id="persistent-menu-container" class="d-none d-lg-block bg-white h-100 position-absolute border-end border-dark-subtle border-1"
+  <div id="persistent-menu-container"
+    class="d-none d-lg-block bg-white h-100 position-absolute border-end border-dark-subtle border-1 overflow-visible"
     style="width: 30px;"
     aria-labelledby="persistent-menu-label">
     <button id="persistent-menu-arrow-toggle"
+      class="btn btn-md btn-outline-primary rounded-circle position-absolute top-50 d-flex justify-content-center align-items-center"
+      style="right: -18px;"
       role="button"
       aria-label="Expand Persistent Menu"
       tabindex="1"
       aria-expanded="true"
-      aria-controls="persistent-menu-container"
-      class="btn btn-outline-primary me-1 rounded-circle position-absolute top-50 end-0">
+      aria-controls="persistent-menu-container">
       <i class="fa fs-3 fa-chevron-right"></i>
-      <span></span>
+      <span id="gtm-persistent-menu-toggle" class="position-absolute"
+        style="width: 60px; height: 60px;">
+      </span>
     </button>
     <div id="persistent-menu-container-content" class="d-none text-break">
       <h2 class="title position-relative me-4" id="persistent-menu-label">
@@ -40,7 +44,7 @@
       <i class="fa <%- iconClass %> persistent-menu-image align-self-start flex-shrink-0" aria-hidden="true"></i>
     <% } %>
     <div class="mx-3 flex-grow-1">
-      <a class="d-block d-lg-none stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#"
+      <a class="gtm-persistent-menu-link d-block d-lg-none stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#"
          data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
         <%- displayText %>
       </a>
@@ -48,7 +52,7 @@
       Duplicate of the <a> tag above with the toggle attributes removed. They are only needed on small screens
       and interfere with other modals on large screens.
       -->
-      <a class="d-none d-lg-block stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#">
+      <a class="gtm-persistent-menu-link d-none d-lg-block stretched-link text-reset <%= isActive ? 'fw-bold' : '' %>" href="#">
         <%- displayText %>
       </a>
     </div>

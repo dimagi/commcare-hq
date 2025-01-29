@@ -117,7 +117,7 @@ class ProjectReportParametersMixin(object):
 
     @property
     def group_id(self):
-        return self.request.GET.get('group', '')
+        return self.get_request_param('group', '')
 
     @property
     @memoized
@@ -130,12 +130,12 @@ class ProjectReportParametersMixin(object):
             todo: remember this: if self.individual and self.users:
             self.name = "%s for %s" % (self.name, self.users[0].raw_username)
         """
-        return self.request_params.get('individual', '')
+        return self.get_request_param('individual', '', from_json=True)
 
     @property
     def mobile_worker_ids(self):
-        ids = self.request.GET.getlist('select_mw')
-        if '_all' in ids or self.request.GET.get('all_mws', 'off') == 'on':
+        ids = self.get_request_param('select_mw', as_list=True)
+        if '_all' in ids or self.get_request_param('all_mws', 'off') == 'on':
             cache_str = "mw_ids:%s" % self.domain
             ids = cache.get(cache_str)
             if not ids:
@@ -174,7 +174,7 @@ class ProjectReportParametersMixin(object):
 
     @property
     def history(self):
-        history = self.request_params.get('history', '')
+        history = self.get_request_param('history', '', from_json=True)
         if history:
             try:
                 return dateutil.parser.parse(history)
@@ -183,20 +183,20 @@ class ProjectReportParametersMixin(object):
 
     @property
     def case_type(self):
-        return self.default_case_type or self.request_params.get('case_type', '')
+        return self.default_case_type or self.get_request_param('case_type', '', from_json=True)
 
     @property
     def case_types(self):
-        return [_f for _f in self.request.GET.getlist('case_type') if _f]
+        return [_f for _f in self.get_request_param('case_type', as_list=True) if _f]
 
     @property
     def case_status(self):
         from corehq.apps.reports.filters.select import SelectOpenCloseFilter
-        return self.request_params.get(SelectOpenCloseFilter.slug, '')
+        return self.get_request_param(SelectOpenCloseFilter.slug, '', from_json=True)
 
     @property
     def case_group_ids(self):
-        return [_f for _f in self.request.GET.getlist('case_group') if _f]
+        return [_f for _f in self.get_request_param('case_group', as_list=True) if _f]
 
     @property
     @memoized
@@ -292,14 +292,16 @@ class MonthYearMixin(object):
 
     @property
     def month(self):
-        if 'month' in self.request_params:
-            return int(self.request_params['month'])
+        value = self.get_request_param('month', from_json=True)
+        if value is not None:
+            return int(value)
         else:
             return datetime.utcnow().month
 
     @property
     def year(self):
-        if 'year' in self.request_params:
-            return int(self.request_params['year'])
+        value = self.get_request_param('year', from_json=True)
+        if value is not None:
+            return int(value)
         else:
             return datetime.utcnow().year

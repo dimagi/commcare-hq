@@ -451,7 +451,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
-BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
+BASE_ASYNC_TEMPLATE = "reports/async/bootstrap3/basic.html"
 LOGIN_TEMPLATE = "login_and_password/bootstrap3/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
@@ -1158,6 +1158,10 @@ CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
+
+DEVICE_LIMIT_PER_USER = 10  # number of devices allowed per user per minute
+INCREASED_DEVICE_LIMIT_PER_USER = 100  # value when INCREASE_DEVICE_LIMIT_PER_USER ff is enabled
+ENABLE_DEVICE_RATE_LIMITER = False
 
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
