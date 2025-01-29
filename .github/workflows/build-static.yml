@@ -64,15 +64,15 @@ jobs:
           echo "Starting compress..."
           ./manage.py compress --force -v 0
           echo "Finished compress."
-          echo "Starting purge_compressed_files..."
-          ./manage.py purge_compressed_files
-          echo "Finished purge_compressed_files."
+          echo "Starting Copy Required static files..."
+          ./manage.py copy_required_static_files
+          echo "Finished copy_required_static_files."
 
       - name: Upload Static Files On Push
         uses: actions/upload-artifact@v4
         with:
           name: staticfiles-${{ github.sha }}
-          path: staticfiles/
+          path: REQUIRED_STATIC_FILES.zip
           retention-days: 90
 
       - name: Generate Static URL
