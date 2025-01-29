@@ -3,7 +3,7 @@ from django.test import TestCase
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
-from corehq.apps.integration.kyc.services import get_user_data_for_api, CustomUserDataNotFound
+from corehq.apps.integration.kyc.services import get_user_data_for_api, UserCaseNotFound
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import create_case
 from corehq.motech.models import ConnectionSettings
@@ -85,7 +85,7 @@ class TestKycGetUserDataAPI(TestCase):
         self.config.user_data_store = UserDataStore.USER_CASE
         self.config.save()
 
-        with self.assertRaises(CustomUserDataNotFound):
+        with self.assertRaises(UserCaseNotFound):
             get_user_data_for_api(self.user, self.config)
 
     def test_custom_case_data_store(self):

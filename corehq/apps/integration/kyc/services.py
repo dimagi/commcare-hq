@@ -1,7 +1,7 @@
 from corehq.apps.integration.kyc.models import UserDataStore
 
 
-class CustomUserDataNotFound(Exception):
+class UserCaseNotFound(Exception):
     pass
 
 
@@ -34,7 +34,7 @@ def _get_source_data(source, config):
     elif config.user_data_store == UserDataStore.USER_CASE:
         custom_user_case = source.get_usercase()
         if not custom_user_case:
-            raise CustomUserDataNotFound("Custom user data not found for the user.")
+            raise UserCaseNotFound("User case not found for the user.")
         source_data = custom_user_case.case_json
     else:
         source_data = source.case_json
