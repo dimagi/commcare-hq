@@ -14,7 +14,8 @@ RATE_LIMITER_DELAY_RANGE = (
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
-PROCESS_REPEATERS_INTERVAL = timedelta(minutes=5)
+PROCESS_REPEATERS_KEY = 'process-repeaters-key'
+PROCESS_REPEATERS_INTERVAL = timedelta(minutes=1)
 ENDPOINT_TIMER = 'endpoint_timer'
 # Number of attempts to an online endpoint before cancelling payload
 MAX_ATTEMPTS = 3
