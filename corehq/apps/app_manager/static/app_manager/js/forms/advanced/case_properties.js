@@ -1,7 +1,12 @@
-"use strict";
-hqDefine('app_manager/js/forms/advanced/case_properties', function () {
-    var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
-
+hqDefine("app_manager/js/forms/advanced/case_properties", [
+    "knockout",
+    "underscore",
+    "app_manager/js/case_config_utils",
+], function (
+    ko,
+    _,
+    caseConfigUtils,
+) {
     var casePropertyBase = {
         mapping: {
             include: ['key', 'path', 'required'],
@@ -60,7 +65,7 @@ hqDefine('app_manager/js/forms/advanced/case_properties', function () {
                 suggestedSaveProperties: ko.computed(function () {
                     return caseConfigUtils.filteredSuggestedProperties(
                         self.action.suggestedProperties(),
-                        self.action.case_properties()
+                        self.action.case_properties(),
                     );
                 }),
             };
@@ -109,7 +114,7 @@ hqDefine('app_manager/js/forms/advanced/case_properties', function () {
                 suggestedPreloadProperties: ko.computed(function () {
                     return caseConfigUtils.filteredSuggestedProperties(
                         self.action.suggestedProperties(),
-                        self.action.preload()
+                        self.action.preload(),
                     );
                 }),
             };
