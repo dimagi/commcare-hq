@@ -1343,8 +1343,15 @@ def rebuild_data_source(request, domain, config_id):
                 EditDataSourceView.urlname, args=[domain, config_id]
             ))
 
+    save_config = False
+    if not id_is_static(config_id):
+        config.meta.build.awaiting = True
+        save_config = True
     if config.is_deactivated:
         config.is_deactivated = False
+        save_config = True
+
+    if save_config:
         config.save()
 
     messages.success(
@@ -1468,8 +1475,15 @@ def resume_building_data_source(request, domain, config_id):
 @require_POST
 def build_data_source_in_place(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
+    save_config = False
+    if not id_is_static(config_id):
+        config.meta.build.awaiting = True
+        save_config = True
     if config.is_deactivated:
         config.is_deactivated = False
+        save_config = True
+
+    if save_config:
         config.save()
 
     messages.success(
