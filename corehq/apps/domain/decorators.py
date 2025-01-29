@@ -429,6 +429,15 @@ def api_auth(*, allow_creds_in_data=True, oauth_scopes=None, allow_api_key_as_pa
     )
 
 
+def excel_feed_auth(*, allow_creds_in_data=True, oauth_scopes=None):
+    return get_multi_auth_decorator(
+        default=BASIC,
+        oauth_scopes=oauth_scopes,
+        allow_creds_in_data=allow_creds_in_data,
+        allow_api_key_as_password=True,
+    )
+
+
 # Use these decorators on views to allow sesson-auth or an extra authorization method
 login_or_digest = login_or_digest_ex()
 login_or_basic = login_or_basic_ex()
