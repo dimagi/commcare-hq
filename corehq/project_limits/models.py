@@ -83,7 +83,7 @@ class RateLimitedTwoFactorLog(models.Model):
     status = models.CharField(max_length=31, null=False)
 
 
-class FeatureLimit(models.Model):
+class SystemLimit(models.Model):
     key = models.CharField(max_length=255, unique=True)
     limit = models.PositiveIntegerField()
     last_modified = models.DateTimeField(auto_now=True)

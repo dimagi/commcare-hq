@@ -2,9 +2,9 @@ from django.contrib import admin
 
 from corehq.project_limits.models import (
     DynamicRateDefinition,
-    FeatureLimit,
     PillowLagGaugeDefinition,
     RateLimitedTwoFactorLog,
+    SystemLimit,
 )
 
 
@@ -30,7 +30,7 @@ class PillowThrottleDefinitionAdmin(admin.ModelAdmin):
     ordering = ('key',)
 
 
-@admin.register(FeatureLimit)
-class FeatureLimitAdmin(admin.ModelAdmin):
+@admin.register(SystemLimit)
+class SystemLimitAdmin(admin.ModelAdmin):
     list_display = ('key', 'limit', 'last_modified')
     ordering = ('key',)
