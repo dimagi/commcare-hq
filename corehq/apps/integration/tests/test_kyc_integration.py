@@ -91,28 +91,28 @@ class TestKycGetUserDataAPI(TestCase):
     def test_custom_case_data_store(self):
         self.config.user_data_store = UserDataStore.OTHER_CASE_TYPE
         self.config.other_case_type = 'other-case'
+        self.config.api_field_to_user_data_map[0]['source'] = 'custom'
         self.config.save()
         case = create_case(
             self.domain,
             case_type='other-case',
-            external_id=self.user.user_id,
             save=True,
-            case_json={'nationality': 'Dutch'}
+            case_json={'first_name': 'abc', 'nationality': 'Dutch'}
         )
         self.addCleanup(case.delete)
 
-        result = get_user_data_for_api(self.user, self.config)
+        result = get_user_data_for_api(case, self.config)
         self.assertEqual(result, {'first_name': 'abc', 'nationality': 'Dutch'})
 
     def test_custom_case_data_store_with_no_data(self):
         self.config.user_data_store = UserDataStore.OTHER_CASE_TYPE
         self.config.other_case_type = 'other-case'
         self.config.save()
-        case = create_case(self.domain, case_type='other-case', external_id=self.user.user_id, save=True)
+        case = create_case(self.domain, case_type='other-case', save=True)
         self.addCleanup(case.delete)
 
-        result = get_user_data_for_api(self.user, self.config)
-        self.assertEqual(result, {'first_name': 'abc'})
+        result = get_user_data_for_api(case, self.config)
+        self.assertEqual(result, {})
 
     def test_incorrect_mapping_standard_field(self):
         api_field_to_user_data_map = self._sample_api_field_to_user_data_map()
