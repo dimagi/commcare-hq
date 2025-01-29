@@ -22,7 +22,7 @@ hqDefine("app_manager/js/details/parent_select", [
 ], function (
     ko,
     _,
-    toggles
+    toggles,
 ) {
     return function (init) {
         var self = {};
@@ -42,7 +42,7 @@ hqDefine("app_manager/js/details/parent_select", [
         ];
         if (self.enableOtherOption) {
             self.selectOptions.push(
-                {id: 'other', text: gettext('Other')}
+                {id: 'other', text: gettext('Other')},
             );
         }
         var selectMode = init.active ? (init.relationship === 'parent' ? 'parent' : 'other') : 'none';

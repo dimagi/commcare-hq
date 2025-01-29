@@ -1,4 +1,3 @@
-"use strict";
 hqDefine('app_manager/js/custom_assertions', [
     'jquery',
     'knockout',
@@ -8,7 +7,7 @@ hqDefine('app_manager/js/custom_assertions', [
     $,
     ko,
     initialPageData,
-    toggles
+    toggles,
 ) {
     var customAssertion = function (test, text) {
         var self = {};
@@ -47,7 +46,7 @@ hqDefine('app_manager/js/custom_assertions', [
         self.addAssertion = function (assertion) {
             assertion = assertion || {test: null, text: null};
             self.customAssertions.push(
-                customAssertion(assertion.test, assertion.text)
+                customAssertion(assertion.test, assertion.text),
             );
         };
 

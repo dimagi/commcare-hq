@@ -9,7 +9,6 @@ hqDefine("app_manager/js/case_config_utils", [
     toggles,
     initialPageData,
 ) {
-"use strict";
     return {
         getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
             // filter can be "all", or any of "select1", "select", or "input" separated by spaces
@@ -144,8 +143,8 @@ hqDefine("app_manager/js/case_config_utils", [
             return _.object(
                 _.map(
                     _.filter(preloadArray, function (i) { return (i.key || i.path); }),
-                    function (i) { return [i.path, i.key]; }
-                )
+                    function (i) { return [i.path, i.key]; },
+                ),
             );
         },
     };

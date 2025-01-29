@@ -25,7 +25,7 @@ hqDefine("app_manager/js/details/detail_tab_nodeset", [
         self.dropdownOptions = [{name: gettext("Data Tab: Custom Expression"), value: ""}].concat(
             _.map(options.caseTypes, function (t) {
                 return {name: gettext("Data Tab: Child Cases: ") + t, value: t};
-            })
+            }),
         );
 
         self.showXpath = ko.computed(function () {

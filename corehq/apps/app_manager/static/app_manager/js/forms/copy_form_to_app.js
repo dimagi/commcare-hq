@@ -25,7 +25,7 @@ hqDefine("app_manager/js/forms/copy_form_to_app", [
         self.modules = ko.observableArray(
             _.map(modules, function (mod) {
                 return module(mod["module_id"], mod["name"], mod["is_current"]);
-            })
+            }),
         );
         var currentModule = _.find(self.modules(), function (mod) {
             return mod.isCurrent;
@@ -39,7 +39,7 @@ hqDefine("app_manager/js/forms/copy_form_to_app", [
         self.apps = ko.observableArray(
             _.map(appsModules, function (app) {
                 return application(app["app_id"], app["name"], app["is_current"], app["modules"]);
-            })
+            }),
         );
         var currentApp = _.find(self.apps(), function (app) {
             return app.isCurrent;
@@ -56,7 +56,7 @@ hqDefine("app_manager/js/forms/copy_form_to_app", [
     $(function () {
         var $appModuleSelection = $("#app-module-selection");
         var viewModel = appsModulesModel(
-            initialPageData.get("apps_modules")
+            initialPageData.get("apps_modules"),
         );
         if ($appModuleSelection.length) {
             $appModuleSelection.koApplyBindings(viewModel);
