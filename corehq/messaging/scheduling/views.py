@@ -37,7 +37,6 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
-    use_nvd3,
     use_timepicker,
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -112,10 +111,6 @@ class MessagingDashboardView(BaseMessagingSectionView):
     urlname = 'messaging_dashboard'
     page_title = gettext_lazy("Dashboard")
     template_name = 'scheduling/dashboard.html'
-
-    @use_nvd3
-    def dispatch(self, *args, **kwargs):
-        return super(MessagingDashboardView, self).dispatch(*args, **kwargs)
 
     def get_messaging_history_errors_url(self, messaging_history_url):
         url_param_tuples = [

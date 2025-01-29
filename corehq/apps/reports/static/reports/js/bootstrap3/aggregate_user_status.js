@@ -3,6 +3,7 @@ hqDefine("reports/js/bootstrap3/aggregate_user_status", [
     "d3/d3.min",
     "nvd3/nv.d3.min",
     "hqwebapp/js/bootstrap3/main",
+    'nvd3/src/nv.d3.css',
 ], function (
     $,
     d3,
