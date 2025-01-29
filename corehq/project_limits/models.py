@@ -1,5 +1,6 @@
 import architect
 from django.db import models
+from field_audit import audit_fields
 
 AVG = 'AVG'
 MAX = 'MAX'
@@ -83,10 +84,10 @@ class RateLimitedTwoFactorLog(models.Model):
     status = models.CharField(max_length=31, null=False)
 
 
+@audit_fields("limit")
 class SystemLimit(models.Model):
     key = models.CharField(max_length=255, unique=True)
     limit = models.PositiveIntegerField()
-    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.key}: {self.limit} ({self.last_modified})"
+        return f"{self.key}: {self.limit}"
