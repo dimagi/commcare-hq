@@ -92,16 +92,16 @@ hqDefine("scheduling/js/create_schedule", [
 
         self.subject = new TranslationViewModel(
             initialPageData.get("language_list"),
-            initial_values.subject
+            initial_values.subject,
         );
 
         self.message = new TranslationViewModel(
             initialPageData.get("language_list"),
-            initial_values.message
+            initial_values.message,
         );
         self.html_message = new TranslationViewModel(
             initialPageData.get("language_list"),
-            initial_values.html_message
+            initial_values.html_message,
         );
 
         self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
@@ -311,7 +311,7 @@ hqDefine("scheduling/js/create_schedule", [
             return new Date(
                 start_date_milliseconds +
                 offset_to_last_weekday_in_schedule * milliseconds_in_a_day +
-                (occurrences - 1) * 7 * repeat_every * milliseconds_in_a_day
+                (occurrences - 1) * 7 * repeat_every * milliseconds_in_a_day,
             );
         };
 
@@ -424,7 +424,7 @@ hqDefine("scheduling/js/create_schedule", [
         self.addCustomEvent = function () {
             var id = self.getNextCustomEventIndex();
             $('#id_custom_event_templates').append(
-                $('#id_custom_event_empty_form_container').html().replace(/__prefix__/g, id)
+                $('#id_custom_event_empty_form_container').html().replace(/__prefix__/g, id),
             );
             $('#id_custom-event-TOTAL_FORMS').val(id + 1);
             self.custom_events.push(new CustomEventContainer(id));
@@ -574,7 +574,7 @@ hqDefine("scheduling/js/create_schedule", [
             initialPageData.get("current_select2_user_organization_recipients"),
             initialPageData.get("current_select2_location_types"),
             initialPageData.get("current_select2_case_group_recipients"),
-            initialPageData.get("current_visit_scheduler_form")
+            initialPageData.get("current_visit_scheduler_form"),
         );
         $('#create-schedule-form').koApplyBindings(scheduleViewModel);
         scheduleViewModel.init();
