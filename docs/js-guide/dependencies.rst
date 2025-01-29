@@ -402,8 +402,8 @@ un-migrated files. At the time of writing:
 
     $ ./scripts/codechecks/hqDefine.sh
 
-    97%	(1209/1254) of HTML files are free of inline scripts
-    94%	(553/594) of non-ESM JS files use hqDefine
-    75%	(443/594) of non-ESM JS files specify their dependencies
-    93%	(1162/1254) of HTML files are free of script tags
-    1%	(3/597) of JS files use ESM format
+    97%     (1264/1306) of HTML files are free of inline scripts
+    96%     (550/576) of non-ESM JS files use hqDefine
+    87%     (500/576) of non-ESM JS files specify their dependencies
+    98%     (1270/1306) of HTML files are free of script tags
+    5%      (30/606) of JS files use ESM format
