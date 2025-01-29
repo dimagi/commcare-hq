@@ -340,8 +340,8 @@ def iter_repeater_id_tokens():
             # No repeaters are ready, enabled, or not rate-limited
             return
         if not any(acquired_list):
-            # All repeaters are still processing. Sleep to allow at
-            # least one repeater to finish.
+            # All repeaters are still processing. Sleep and hope that at
+            # least one repeater finishes.
             metrics_counter('commcare.repeaters.process_repeaters.all_locked')
             time.sleep(0.2)
 
