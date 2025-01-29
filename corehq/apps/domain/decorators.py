@@ -321,8 +321,13 @@ def login_or_basic_ex(allow_cc_users=False, allow_sessions=True, require_domain=
     )
 
 
-def login_or_basic_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(basic_or_api_key(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+def login_or_basic_or_api_key_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
+    return _login_or_challenge(
+        basic_or_api_key(),
+        allow_cc_users=allow_cc_users,
+        allow_sessions=allow_sessions,
+        require_domain=require_domain,
+    )
 
 
 def login_or_digest_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
@@ -450,12 +455,11 @@ def get_auth_decorator_map(
         'allow_sessions': allow_sessions,
     }
 
-    if allow_api_key_as_password:
-        copied_kwargs = decorator_function_kwargs.copy()
-        copied_kwargs.pop('require_domain')
-        basic_auth_fn = login_or_basic_or_api_key_ex(**copied_kwargs)
-    else:
-        basic_auth_fn = login_or_basic_ex(**decorator_function_kwargs)
+    basic_auth_fn = (
+        login_or_basic_or_api_key_ex(**decorator_function_kwargs)
+        if allow_api_key_as_password
+        else login_or_basic_ex(**decorator_function_kwargs)
+    )
 
     return {
         DIGEST: login_or_digest_ex(**decorator_function_kwargs),
