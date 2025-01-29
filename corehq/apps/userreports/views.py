@@ -1211,8 +1211,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                     config.display_name
                 ))
                 messages.success(request, _(
-                    'This data source will be built/rebuilt automatically the '
-                    'next time a row is added.'
+                    'This data source will be picked for build / rebuild automatically by CommCare HQ.'
                 ))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(
@@ -1265,6 +1264,13 @@ class EditDataSourceView(BaseEditDataSourceView):
     @property
     def page_name(self):
         return "Edit {}".format(self.config.display_name)
+
+    @property
+    def page_context(self):
+        page_context = super().page_context
+        adapter = get_indicator_adapter(self.config)
+        page_context['data_source_table_exists'] = adapter.table_exists
+        return page_context
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -1518,11 +1524,23 @@ class PreviewDataSourceView(BaseUserConfigReportsView):
         config, is_static = get_datasource_config_or_404(self.config_id, self.domain)
         adapter = get_indicator_adapter(config)
         q = adapter.get_query_object()
+        if adapter.table_exists:
+            data = [list(row) for row in q[:20]]
+        else:
+            data = []
+            messages.error(
+                self.request,
+                _('Data source table not found!'
+                  '<br/>If you have recently added the data source, please wait for it to be created.'
+                  '<br/>If you see this repeatedly please report an issue.'),
+                extra_tags='html',
+            )
+
         return {
             'data_source': config,
             'columns': q.column_descriptions,
-            'data': [list(row) for row in q[:20]],
-            'total_rows': q.count(),
+            'data': data,
+            'total_rows': q.count() if data else 0,
         }
 
 

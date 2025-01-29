@@ -3,16 +3,12 @@ import datetime
 import json
 import logging
 
-from django.utils.decorators import classonlymethod, method_decorator
-from django.views.generic import View
-
 from no_exceptions.exceptions import Http400
 
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.util import object_does_not_exist
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES, case_adapter
 from corehq.apps.es.exceptions import ESError
@@ -32,77 +28,17 @@ class DateTimeError(ValueError):
     pass
 
 
-class ESView(View):
+class ESView:
+    """Wrapper for an ES adapter that may be used in a web context
+
+    Some errors are translated to HTTP errors.
     """
-    Generic CBV for interfacing with the Elasticsearch REST api.
-    This is necessary because tastypie's built in REST assumptions don't like
-    ES's POST for querying, which we can set explicitly here.
 
-    For security purposes, queries ought to be domain'ed by the requesting user, so a base_query
-    is encouraged to be added.
-
-    Access to the APIs can be done via url endpoints which are attached to the corehq.api.urls
-
-    or programmatically via the self.run_query() method.
-
-    This current iteration of the ESView must require a domain for its usage for security purposes.
-    """
-    #note - for security purposes, csrf protection is ENABLED
-    #search POST queries must take the following format:
-    #query={query_json}
-    #csrfmiddlewaretoken=token
-
-    #in curl, this is:
-    #curl -b "csrftoken=<csrftoken>;sessionid=<session_id>"
-    #     -H "Content-Type: application/json"
-    #     -XPOST http://server/a/domain/api/v0.1/xform_es/
-    #     -d"query=@myquery.json&csrfmiddlewaretoken=<csrftoken>"
-    #or, call this programmatically to avoid CSRF issues.
-
-    domain = ""
     doc_type = None
     model = None
 
-    http_method_names = ['get', 'post', 'head', ]
-
     def __init__(self, domain):
-        super(ESView, self).__init__()
         self.domain = domain.lower()
-
-    def head(self, *args, **kwargs):
-        raise NotImplementedError("Not implemented")
-
-    @method_decorator(login_and_domain_required)
-    #@method_decorator(csrf_protect)
-    # todo: csrf_protect temporarily removed and left to implementor's prerogative
-    # getting ajax'ed csrf token method needs revisit.
-    def dispatch(self, *args, **kwargs):
-        req = args[0]
-        self.pretty = req.GET.get('pretty', False)
-        if self.pretty:
-            self.indent = 4
-        else:
-            self.indent = None
-        ret = super(ESView, self).dispatch(*args, **kwargs)
-        return ret
-
-    @classonlymethod
-    def as_view(cls, **initkwargs):
-        """
-        Django as_view cannot be used since the constructor requires information only present in the request.
-        """
-        raise Exception('as_view not supported for domain-specific ESView')
-
-    @classonlymethod
-    def as_domain_specific_view(cls, **initkwargs):
-        """
-        Creates a simple domain-specific class-based view for passing through ES requests.
-        """
-        def view(request, domain, *args, **kwargs):
-            self = cls(domain)
-            return self.dispatch(request, domain, *args, **kwargs)
-
-        return view
 
     def get_document(self, doc_id):
         try:

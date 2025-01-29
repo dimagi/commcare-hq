@@ -1,8 +1,20 @@
-/* globals ace */
 'use strict';
-hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
-    const initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        selectAll = document.getElementById('select-all'),
+hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'ace-builds/src-min-noconflict/ace',
+    'ace-builds/src-min-noconflict/mode-json',
+    'ace-builds/src-min-noconflict/mode-xml',
+    'repeaters/js/repeat_record_report_selects',
+    'reports/js/bootstrap5/base',
+    'reports/js/bootstrap5/tabular',
+    'commcarehq',
+], function (
+    $,
+    initialPageData,
+    ace
+) {
+    const selectAll = document.getElementById('select-all'),
         selectPending = document.getElementById('select-pending'),
         selectCancelled = document.getElementById('select-cancelled'),
         $popUp = $('#are-you-sure'),

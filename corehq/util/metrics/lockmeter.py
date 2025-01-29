@@ -46,6 +46,26 @@ class MeteredLock(object):
                 self.lock_trace.set_tags({"key": self.key, "name": self.name})
         return acquired
 
+    def reacquire(self):
+        buckets = self.timing_buckets
+        with (
+            metrics_histogram_timer("commcare.lock.reacquire_time", buckets),
+            tracer.trace("commcare.lock.reacquire", resource=self.key) as span
+        ):
+            acquired = self.lock.reacquire()
+            span.set_tags({
+                "key": self.key,
+                "name": self.name,
+                "acquired": ("true" if acquired else "false"),
+            })
+        if acquired:
+            self.end_time = time.time() + self.lock.timeout
+            self.lock_timer.start()
+            if self.track_unreleased:
+                self.lock_trace = tracer.trace("commcare.lock.locked", resource=self.key)
+                self.lock_trace.set_tags({"key": self.key, "name": self.name})
+        return acquired
+
     def release(self):
         self.lock.release()
         if self.lock_timer.is_started():
@@ -55,6 +75,12 @@ class MeteredLock(object):
         if self.lock_trace is not None:
             self.lock_trace.finish()
             self.lock_trace = None
+
+    @property
+    def local(self):
+        # Used for setting lock token
+        # Raises AttributeError if lock does not have a `local` attribute
+        return self.lock.local
 
     def __enter__(self):
         self.acquire(blocking=True)

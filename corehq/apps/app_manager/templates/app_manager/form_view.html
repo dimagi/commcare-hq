@@ -1,4 +1,4 @@
-{% extends "app_manager/managed_app.html" %}
+{% extends "app_manager/apps_base.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load compress %}
@@ -16,7 +16,6 @@
 
 {% block js %}{{ block.super }}
   {% compress js %}
-    <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
   {% endcompress %}
 {% endblock %}
