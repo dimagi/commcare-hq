@@ -216,7 +216,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
     def check_username_availability(self, data):
         if rate_limit_check_username_availability():
             return {
-                'isValid': None,
+                'isValid': False,
                 'message': _("Please try again."),
             }
 

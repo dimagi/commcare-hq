@@ -17,7 +17,7 @@ STATUS_BAD_REQUEST = 'bad_request'
 STATUS_ACCEPTED = 'accepted'
 
 
-@run_only_when(not settings.ENTERPRISE_MODE and not settings.UNIT_TESTING)
+@run_only_when(not settings.UNIT_TESTING)
 @silence_and_report_error("Exception raised in the check username availability rate limiter",
                           'commcare.registration.check_username_rate_limiter_errors')
 def rate_limit_check_username_availability():
@@ -48,9 +48,12 @@ def rate_limit_check_username_availability():
 def _get_session_and_ip():
     request = get_request()
     if request and request.session:
-        return request.session.session_key, get_ip(request)
+        session_id = request.session.session_key
+        ip_address = get_ip(request)
     else:
-        return None
+        session_id, ip_address = None, None
+
+    return session_id, ip_address
 
 
 def _check_for_exceeded_rate_limits(session, ip):
