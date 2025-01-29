@@ -7,10 +7,9 @@ hqDefine("reminders/js/keyword", [
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
 ) {
     var keywordActionsViewModel = function (initialValues) {
-        'use strict';
         var self = {};
 
         // load initial values
