@@ -50,8 +50,8 @@ LOCAL_LOGGING_CONFIG = {
             'handlers': ['null'],
             'level': 'WARNING',
         },
-        # The following configuration will print out all queries that are run through sqlalchemy on the command line
-        # Useful for UCR debugging
+        # The following configuration will print out all queries that are run
+        # through sqlalchemy on the command line. Useful for UCR debugging
         # 'sqlalchemy.engine': {
         #     'handlers': ['console'],
         #     'level': 'INFO',
@@ -171,6 +171,6 @@ if settingshelper.is_testing():
         },
     }
 
-### LOG FILES ###
+# LOG FILES
 DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
 LOG_FILE = "/tmp/commcare-hq.log"
