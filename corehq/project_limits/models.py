@@ -86,8 +86,10 @@ class RateLimitedTwoFactorLog(models.Model):
 
 @audit_fields("limit")
 class SystemLimit(models.Model):
-    key = models.CharField(max_length=255, unique=True)
+    key = models.CharField(max_length=255)
     limit = models.PositiveIntegerField()
+    # the domain field is reserved for extreme cases since limits should apply globally in steady state
+    domain = models.CharField(max_length=128, blank=True, default="")
 
     def __str__(self):
         return f"{self.key}: {self.limit}"
