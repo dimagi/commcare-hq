@@ -4,6 +4,7 @@ hqDefine('reports_core/js/charts', [
     'underscore',
     'd3/d3.min',
     'nvd3/nv.d3.min',
+    'nvd3/src/nv.d3.css',
 ], function (
     $,
     _,

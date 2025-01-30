@@ -4,6 +4,7 @@ import ko from "knockout";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import d3 from "d3/d3.min";
 import nv from "nvd3/nv.d3.min";
+import 'nvd3/src/nv.d3.css';
 
 var dashboardUrl = initialPageData.reverse("messaging_dashboard");
 
