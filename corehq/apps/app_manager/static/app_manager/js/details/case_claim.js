@@ -1,7 +1,17 @@
-"use strict";
-hqDefine("app_manager/js/details/case_claim", function () {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-        generateSemiRandomId = function () {
+hqDefine("app_manager/js/details/case_claim", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/assert_properties",
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    assertProperties,
+) {
+    var generateSemiRandomId = function () {
             // https://stackoverflow.com/a/2117523
             return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function (c) {
                 return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
@@ -152,7 +162,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         "value": p.id,
                         "name": p.name,
                     };
-                }
+                },
             );
         });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
@@ -207,7 +217,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         'search_on_clear',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
-        hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
+        assertProperties.assertRequired(options, searchConfigKeys);
 
         options.search_label = options.search_label[lang] || "";
         options.search_again_label = options.search_again_label[lang] || "";
@@ -364,7 +374,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
 
         self.search_properties = ko.observableArray(
-            wrappedSearchProperties.length > 0 ? wrappedSearchProperties : [searchPropertyModel({}, saveButton)]
+            wrappedSearchProperties.length > 0 ? wrappedSearchProperties : [searchPropertyModel({}, saveButton)],
         );
 
         self.search_properties.subscribe(function (newProperties) {
@@ -396,7 +406,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return _.map(
                 _.filter(
                     self.search_properties(),
-                    function (p) { return p.name().length > 0;}  // Skip properties where name is blank
+                    function (p) { return p.name().length > 0;},  // Skip properties where name is blank
                 ),
                 function (p) {
                     var ifSupportsValidation = function (val) {
@@ -421,7 +431,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         is_group: p.isGroup,
                         group_key: p.groupKey,
                     };
-                }
+                },
             );
         };
 
@@ -435,9 +445,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return _.map(
                 _.filter(
                     self.default_properties(),
-                    function (p) { return p.property().length > 0; }  // Skip properties where property is blank
+                    function (p) { return p.property().length > 0; },  // Skip properties where property is blank
                 ),
-                function (prop) { return ko.mapping.toJS(prop); }
+                function (prop) { return ko.mapping.toJS(prop); },
             );
         };
 
@@ -452,9 +462,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 _.filter(
                     self.custom_sort_properties(),
                     // Skip properties where property is blank
-                    function (p) { return p.property_name().length > 0; }
+                    function (p) { return p.property_name().length > 0; },
                 ),
-                function (prop) { return ko.mapping.toJS(prop); }
+                function (prop) { return ko.mapping.toJS(prop); },
             );
         };
 
@@ -481,7 +491,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 commonProperties,
                 function (p) {
                     return p.name();
-                }
+                },
             );
         });
 

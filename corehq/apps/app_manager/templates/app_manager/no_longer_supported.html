@@ -1,7 +1,8 @@
-{% extends "app_manager/apps_base.html" %}
+{% extends "hqwebapp/bootstrap3/two_column.html" %}
+{% load i18n %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-{% block title %}App no longer supported{% endblock %}
+{% block title %}{% trans "App no longer supported" %}{% endblock %}
 {% block breadcrumbs %}
   {% if app %}
     <li>
@@ -16,7 +17,15 @@
     <ul class="nav nav-hq-sidebar"></ul>
   </nav>
 {% endblock %}
-{% block app-content %}
-  <h1>This app is no longer supported</h1>
-  <p>If you believe this to be in error, please contact support.</p>
+{% block page_content %}
+  <h1>
+    {% blocktrans %}
+      This app is no longer supported
+    {% endblocktrans %}
+  </h1>
+  <p>
+    {% blocktrans %}
+      If you believe this to be in error, please contact support.
+    {% endblocktrans %}
+  </p>
 {% endblock %}

@@ -7,8 +7,6 @@ const hqPlugins = require('./plugins');
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
-    "datatables.bootstrap": "datatables.net-bs5",
-    "datatables.fixedColumns": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
     "jquery": require.resolve('jquery'),
     "langcodes/js/langcodes": path.resolve("submodules/langcodes/static/langcodes/js/langcodes"),
 
@@ -33,6 +31,10 @@ module.exports = {
 
     module: {
         rules: [
+            {
+                test: /\.css$/i,
+                use: ["style-loader", "css-loader"],
+            },
             {
                 test: /\.js$/,
                 loader: 'babel-loader',
