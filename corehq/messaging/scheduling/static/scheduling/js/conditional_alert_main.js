@@ -15,7 +15,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
     ko,
     initialPageData,
     CaseRuleCriteria,
-    casePropertyInput,
+    casePropertyInput
 ) {
     function BasicInformationTab(name) {
         var self = {};
@@ -43,12 +43,12 @@ hqDefine("scheduling/js/conditional_alert_main", [
         casePropertyInput.register();
 
         $("#conditional-alert-basic-info-panel").koApplyBindings(BasicInformationTab(
-            initialPageData.get('rule_name'),
+            initialPageData.get('rule_name')
         ));
 
         $('#rule-criteria-panel').koApplyBindings(CaseRuleCriteria(
             initialPageData.get('criteria_initial'),
-            initialPageData.get('criteria_constants'),
+            initialPageData.get('criteria_constants')
         ));
     });
 });

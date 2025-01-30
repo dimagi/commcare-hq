@@ -11,7 +11,7 @@ hqDefine("scheduling/js/broadcasts_list", [
     _,
     ko,
     assertProperties,
-    initialPageData,
+    initialPageData
 ) {
     var broadcast = function (options) {
         var self = ko.mapping.fromJS(options);
