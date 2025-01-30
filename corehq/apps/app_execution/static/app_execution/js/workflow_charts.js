@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("app_execution/js/workflow_charts", [
     'jquery',
     'moment/moment',
@@ -6,7 +6,7 @@ hqDefine("app_execution/js/workflow_charts", [
     'nvd3/nv.d3.latest.min',  // version 1.1.10 has a bug that affects line charts with multiple series
     'commcarehq',
 ], function (
-    $, moment, d3, nv
+    $, moment, d3, nv,
 ) {
 
     function getSeries(data, includeSeries) {

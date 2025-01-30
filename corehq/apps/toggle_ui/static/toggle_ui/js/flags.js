@@ -11,7 +11,7 @@ hqDefine('toggle_ui/js/flags', [
     ko,
     _,
     alertUser,
-    datatablesConfig
+    datatablesConfig,
 ) {
     var dataTableElem = '.datatable';
     let buildViewModel = function () {
@@ -90,7 +90,7 @@ hqDefine('toggle_ui/js/flags', [
                 return true;
             }
             return tag === viewModel.tagFilter();
-        }
+        },
     );
     $('#feature_flags').koApplyBindings(viewModel);
     var table = datatablesConfig.HQReportDataTables({
