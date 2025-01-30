@@ -362,7 +362,7 @@ def process_repeater(repeater, lock_token):
     """
     Initiates a Celery task to process a repeater.
     """
-    if hasattr(repeater, 'merge_records'):
+    if repeater.can_merge_records:
         _merge_records_and_process_repeater.delay(repeater.repeater_id, lock_token)
     else:
         _process_repeater(repeater, lock_token)
