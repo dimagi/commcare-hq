@@ -775,35 +775,6 @@ msgstr ""
 msgid "This code is used in multiple places."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Crunching app diff..."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Error generating the application diff. Please report an issue."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Form Changes"
-msgstr "Modifications de formulaire"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Case Changes"
-msgstr "Modifications de dossier"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Save Questions"
-msgstr "Enregistrer les questions"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Load Questions"
-msgstr "Charger les questions"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
-msgid "[unknown]"
-msgstr "[inconnu]"
-
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
 msgid "Releases"
 msgstr ""
@@ -1019,6 +990,10 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "Latest saved"
 msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
+msgid "[unknown]"
+msgstr "[inconnu]"
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
 msgid "Warning: unrecognized language"
@@ -4375,6 +4350,10 @@ msgstr "Échoué "
 msgid "Failed to re-process"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "All Rows"
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
 #: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
 #: corehq/apps/reports/static/reports/js/filters/schedule_instance.js
@@ -5330,3 +5309,15 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
+
+#~ msgid "Form Changes"
+#~ msgstr "Modifications de formulaire"
+
+#~ msgid "Case Changes"
+#~ msgstr "Modifications de dossier"
+
+#~ msgid "Save Questions"
+#~ msgstr "Enregistrer les questions"
+
+#~ msgid "Load Questions"
+#~ msgstr "Charger les questions"

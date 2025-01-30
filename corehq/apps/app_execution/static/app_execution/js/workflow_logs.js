@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("app_execution/js/workflow_logs", [
     'jquery',
     'knockout',
