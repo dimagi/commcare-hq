@@ -17,9 +17,10 @@
   {% endif %}
 
   <form
-        hx-post="{{ request.path_info }}"
-        hx-target="#kyc-configure-form"
-        hx-swap="outerHTML">
+    hx-post="{{ request.path_info }}"
+    hx-target="#kyc-configure-form"
+    hx-swap="outerHTML"
+  >
     {% crispy kyc_config_form %}
   </form>
 </div>
