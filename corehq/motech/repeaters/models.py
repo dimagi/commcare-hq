@@ -89,6 +89,7 @@ from requests.exceptions import ConnectionError, RequestException, Timeout
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
+from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.parsing import json_format_datetime
 
@@ -938,6 +939,8 @@ class DataSourceRepeater(Repeater):
 
     payload_generator_classes = (DataSourcePayloadGenerator,)
 
+    SEP = ','  # payload_id separator for merged repeat records
+
     def allowed_to_forward(
         self,
         payload,  # type DataSourceUpdateLog
@@ -956,7 +959,15 @@ class DataSourceRepeater(Repeater):
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
+        # TODO: Test
+        if self.SEP in repeat_record.payload_id:
+            rows = [
+                row
+                for payload_id in repeat_record.payload_id.split(self.SEP)
+                for row in datasource_adapter.get_rows_by_doc_id(payload_id)
+            ]
+        else:
+            rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
         return DataSourceUpdateLog(
             domain=self.domain,
             data_source_id=self.data_source_id,
@@ -974,6 +985,43 @@ class DataSourceRepeater(Repeater):
         return DataSourceRepeater.objects.filter(
             domain=domain, options={"data_source_id": data_source_id}
         ).exists()
+
+    # TODO: Test
+    def merge_records(self):
+        """
+        Merges updates to the same data source.
+
+        * Selects payloads for merging
+        * Registers a new repeat record for each group of payloads. The
+          new repeat record stores a list of payload IDs in its
+          ``payload_id`` field.
+        * Cancels the merged repeat records
+
+        ``Repeater.payload_doc()`` returns the merged payloads based on
+        the IDs in new repeat record's ``payload_id`` field.
+        """
+
+        # payload_id is a `models.CharField(max_length=255)` field. The
+        # payload_ids of (unmerged) repeat records are form and case
+        # IDs, which are 32 (`uuid4().hex`) or 36 (`str(uuid4())`)
+        # characters long. Assuming 36 + 1 character for a separator
+        # means we can get 6 payload IDs in a 255-character field.
+        num_records_to_merge = 6 * self.num_workers
+
+        records_to_merge = self.repeat_records_ready[:num_records_to_merge]
+        for records in chunked(records_to_merge, 6):
+            merged_payload_id = self.SEP.join([r.payload_id for r in records])
+            new_record = RepeatRecord(
+                repeater_id=self.id,
+                domain=self.domain,
+                registered_at=records[0].registered_at,
+                next_check=records[0].next_check,
+                payload_id=merged_payload_id,
+            )
+            new_record.save()
+            for old_record in records:
+                old_record.cancel()
+                old_record.save()
 
 
 # on_delete=DB_CASCADE denotes ON DELETE CASCADE in the database. The
