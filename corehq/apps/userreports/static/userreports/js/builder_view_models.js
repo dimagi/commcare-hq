@@ -13,10 +13,8 @@ hqDefine('userreports/js/builder_view_models', [
     kissmetrics,
     constants,
     analytics,
-    utils
+    utils,
 ) {
-    'use strict';
-
     var getOrDefault = function (options, key, default_) {
         if (options[key] === undefined) {
             return default_;
@@ -247,7 +245,7 @@ hqDefine('userreports/js/builder_view_models', [
             return propertyListItem(
                 self.getDefaultDisplayText.bind(self),
                 self.getPropertyObject.bind(self),
-                self.hasDisplayCol
+                self.hasDisplayCol,
             );
         };
 
@@ -256,9 +254,9 @@ hqDefine('userreports/js/builder_view_models', [
             var columnsValid = !_.contains(
                 _.map(
                     self.columns(),
-                    function (c) {return c.validate();}
+                    function (c) {return c.validate();},
                 ),
-                false
+                false,
             );
             var columnLengthValid = !(self.requireColumns && !self.columns().length);
             if (self.noColumnsValidationCallback && !columnLengthValid) {
@@ -325,7 +323,7 @@ hqDefine('userreports/js/builder_view_models', [
             return JSON.stringify(
                 _.map(
                     _.filter(self.columns(), function (c) {return c.existsInCurrentVersion();}),
-                    function (c) {return c.toJS();})
+                    function (c) {return c.toJS();}),
             );
         });
         self.showWarnings = ko.observable(false);
@@ -343,7 +341,7 @@ hqDefine('userreports/js/builder_view_models', [
         reportColumnOptions,
         dateRangeOptions,
         isGroupByRequired,
-        groupByInitialValue
+        groupByInitialValue,
     ) {
         var self = {};
 
@@ -361,17 +359,17 @@ hqDefine('userreports/js/builder_view_models', [
         // questionsSelect knockout bindings.
         if (self.optionsContainQuestions) {
             self.selectableDataSourceIndicators = _.compact(_.map(
-                self.dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
+                self.dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat,
             ));
             self.selectableReportColumnOptions = _.compact(_.map(
-                self.reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
+                self.reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat,
             ));
         } else {
             self.selectableDataSourceIndicators = _.compact(_.map(
-                self.dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format
+                self.dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format,
             ));
             self.selectableReportColumnOptions = _.compact(_.map(
-                self.reportColumnOptions, utils.convertReportColumnOptionToSelect2Format
+                self.reportColumnOptions, utils.convertReportColumnOptionToSelect2Format,
             ));
         }
         self.dateRangeOptions = dateRangeOptions;
@@ -416,7 +414,7 @@ hqDefine('userreports/js/builder_view_models', [
             noColumnsValidationCallback: function () {
                 analytics.track.event(
                     'Click On Done (No Columns)',
-                    reportType
+                    reportType,
                 );
             },
             reportType: reportType,
@@ -439,7 +437,7 @@ hqDefine('userreports/js/builder_view_models', [
 
             if (!isValid) {
                 self.validationErrorText(
-                    gettext("Please check above for any errors in your configuration.")
+                    gettext("Please check above for any errors in your configuration."),
                 );
                 _.defer(function (el) {
                     $(el).find('.disable-on-submit').enableButton();
