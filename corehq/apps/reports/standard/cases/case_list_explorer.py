@@ -10,6 +10,7 @@ from corehq.apps.case_search.const import (
     DOCS_LINK_CASE_LIST_EXPLORER,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
+from corehq.apps.case_search.utils import get_case_id_sort_block
 from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -110,14 +111,7 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
                 if meta_property.key == '@case_id':
                     # This condition is added because ES 5 does not allow sorting on _id.
                     #  When we will have case_id in root of the document, this should be removed.
-                    sort_order = 'desc' if descending else 'asc'
-                    query.es_query['sort'] = [{
-                        'case_properties.value.exact': {
-                            'order': sort_order,
-                            'nested_path': 'case_properties',
-                            'nested_filter': {'term': {"case_properties.key.exact": "@case_id"}},
-                        }
-                    }]
+                    query.es_query['sort'] = get_case_id_sort_block(descending)
                     return query
                 query = query.sort(meta_property.es_field_name, desc=descending)
             except KeyError:
