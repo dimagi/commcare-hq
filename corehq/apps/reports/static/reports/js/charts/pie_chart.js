@@ -5,7 +5,7 @@ hqDefine("reports/js/charts/pie_chart", [
 ], function (
     $,
     d3,
-    nv
+    nv,
 ) {
     var init = function (data) {
         nv.addGraph(function () {

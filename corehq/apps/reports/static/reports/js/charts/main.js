@@ -5,7 +5,7 @@ hqDefine('reports/js/charts/main', [
 ], function (
     $,
     multibarCharts,
-    pieCharts
+    pieCharts,
 ) {
     var init = function () {
         $('.charts-pie-chart').each(function (i, el) {

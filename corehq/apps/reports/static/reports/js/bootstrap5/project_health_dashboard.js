@@ -9,7 +9,7 @@ hqDefine("reports/js/bootstrap5/project_health_dashboard", [
     _,
     d3,
     moment,
-    nv
+    nv,
 ) {
     // "Performing / Active User Trends" Chart
     function setupCharts(data) {
