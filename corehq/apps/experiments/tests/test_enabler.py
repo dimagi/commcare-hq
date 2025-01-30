@@ -63,6 +63,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.experiment.time.campaign:test': 1,
             f'commcare.experiment.time.path:{FUNC_PATH}': 1,
+            'commcare.experiment.time.enabled:old': 1,
             'commcare.experiment.time.duration:lt_0.01s': 1,
         }
         assert log.get_output() == ""
@@ -80,6 +81,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.experiment.time.campaign:test': 1,
             f'commcare.experiment.time.path:{FUNC_PATH}': 1,
+            'commcare.experiment.time.enabled:old': 1,
             'commcare.experiment.time.duration:lt_0.01s': 1,
         }
         assert log.get_output() == ""
@@ -93,6 +95,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.experiment.time.campaign:test': 1,
             f'commcare.experiment.time.path:{FUNC_PATH}': 1,
+            'commcare.experiment.time.enabled:both': 1,
             'commcare.experiment.time.duration:lt_0.01s': 1,
             'commcare.experiment.diff.campaign:test': 1,
             f'commcare.experiment.diff.path:{FUNC_PATH}': 1,
@@ -113,6 +116,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.experiment.time.campaign:test': 1,
             f'commcare.experiment.time.path:{FUNC_PATH}': 1,
+            'commcare.experiment.time.enabled:both': 1,
             'commcare.experiment.time.duration:lt_0.01s': 1,
             'commcare.experiment.diff.campaign:test': 1,
             f'commcare.experiment.diff.path:{FUNC_PATH}': 1,
@@ -129,6 +133,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.experiment.time.campaign:test': 1,
             f'commcare.experiment.time.path:{FUNC_PATH}': 1,
+            'commcare.experiment.time.enabled:new': 1,
             'commcare.experiment.time.duration:lt_0.01s': 1,
         }
         assert log.get_output() == ""
@@ -146,6 +151,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.experiment.time.campaign:test': 1,
             f'commcare.experiment.time.path:{FUNC_PATH}': 1,
+            'commcare.experiment.time.enabled:new': 1,
             'commcare.experiment.time.duration:lt_0.01s': 1,
         }
         assert log.get_output() == ""

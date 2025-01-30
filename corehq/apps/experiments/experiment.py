@@ -78,7 +78,7 @@ class Experiment:
                 end = time.time()
                 old_time = mid - start
                 metrics_histogram(
-                    "commcare.experiment.time", old_time, tags=self.tags,
+                    "commcare.experiment.time", old_time, tags=self.tags | ENABLED_TAG[enabled],
                     bucket_tag='duration', buckets=self.time_buckets, bucket_unit='s',
                 )
             if not enabled:
@@ -123,3 +123,10 @@ def describe(func, args, kwargs, vlen=20):
         return (rval[:vlen] + "...") if len(rval) > vlen else rval
     argv = [rep(a) for a in args] + [f"{k}={rep(v)}" for k, v in kwargs.items()]
     return f"{func.__name__}({', '.join(argv)})"
+
+
+ENABLED_TAG = {
+    True: {"enabled": "both"},
+    False: {"enabled": "old"},
+    None: {"enabled": "new"},
+}
