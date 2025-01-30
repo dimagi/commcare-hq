@@ -33,7 +33,6 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
     use_jquery_ui,
-    use_nvd3,
 )
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -836,7 +835,6 @@ class GenericReportView(object):
         """
         return []
 
-    @use_nvd3
     @use_jquery_ui
     @use_datatables
     @use_daterangepicker
@@ -851,7 +849,7 @@ class GenericReportView(object):
         class MyNewReport(GenericReport):
             ...
 
-            @use_nvd3
+            @use_jquery_ui
             def decorator_dispatcher(self, request, *args, **kwargs):
                 super(MyNewReport, self).decorator_dispatcher(request, *args, **kwargs)
 
