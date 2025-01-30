@@ -16,7 +16,7 @@ hqDefine("users/js/web_users_list", [
     $,
     ko,
     _,
-    assertProperties
+    assertProperties,
 ) {
     return function (options) {
         assertProperties.assert(options, ["url"], ["userModel"]);

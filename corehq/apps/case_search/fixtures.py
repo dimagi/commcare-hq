@@ -5,6 +5,7 @@ from casexml.apps.phone.fixtures import FixtureProvider
 from corehq import extensions
 from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.messaging.templating import (
     MessagingTemplateRenderer,
@@ -37,12 +38,12 @@ def custom_csql_fixture_context(domain, restore_user):
     '''Register custom template params to be available in CSQL templates'''
 
 
-def _run_query(domain, csql):
+def _run_query(domain, csql, index):
     try:
         filter_ = build_filter_from_xpath(csql, domain=domain)
     except CaseFilterError:
         return "ERROR"
-    return str(CaseSearchES()
+    return str(CaseSearchES(index=index or None)
                .domain(domain)
                .filter(filter_)
                .count())
@@ -51,14 +52,23 @@ def _run_query(domain, csql):
 def _get_indicator_nodes(restore_state, indicators):
     with restore_state.timing_context('_get_template_renderer'):
         renderer = _get_template_renderer(restore_state.restore_user)
+    index = _get_index(restore_state.domain)
     for name, csql_template in indicators:
         with restore_state.timing_context(name):
-            value = _run_query(restore_state.domain, renderer.render(csql_template))
+            value = _run_query(restore_state.domain, renderer.render(csql_template), index)
         yield E.value(value, name=name)
+
+
+def _get_index(domain):
+    return (CaseSearchConfig.objects
+            .filter(domain=domain)
+            .values_list('index_name', flat=True)
+            .first()) or None
 
 
 class CaseSearchFixtureProvider(FixtureProvider):
     id = 'case-search-fixture'
+    ignore_skip_fixtures_flag = True
 
     def __call__(self, restore_state):
         if not MODULE_BADGES.enabled(restore_state.domain):

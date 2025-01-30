@@ -7,12 +7,15 @@ const hqPlugins = require('./plugins');
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
-    "jquery": "jquery/dist/jquery.min",
+    "jquery": require.resolve('jquery'),
+    "langcodes/js/langcodes": path.resolve("submodules/langcodes/static/langcodes/js/langcodes"),
 
     // todo after completing requirejs migration,
     //  remove this file and the yarn modernizr post-install step
     "modernizr": "hqwebapp/js/lib/modernizr",
 
+    "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
+    "popper": "@popperjs/core/dist/cjs/popper.js",
     "sentry_browser": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
         'sentry/js/sentry.browser.7.28.0.min'),
     "sentry_captureconsole": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
@@ -29,8 +32,17 @@ module.exports = {
     module: {
         rules: [
             {
+                test: /\.css$/i,
+                use: ["style-loader", "css-loader"],
+            },
+            {
                 test: /\.js$/,
                 loader: 'babel-loader',
+                exclude: /node_modules/,
+            },
+            {
+                test: /\.png/,
+                type: 'asset/resource',
             },
 
             // this rule ensures that hqDefine is renamed to define AMD module
@@ -38,6 +50,7 @@ module.exports = {
             {
                 test: /\.js$/,
                 loader: 'string-replace-loader',
+                exclude: /node_modules/,
                 options: {
                     search: /\bhqDefine\b/g,
                     replace: 'define',
@@ -66,7 +79,29 @@ module.exports = {
             },
 
             {
-                test: /sentry\.browser/,
+                test: /mapbox\.js\/dist\/mapbox/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "L",
+                    },
+                },
+            },
+            {
+                test: /nvd3\/nv\.d3\.min/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "nv",
+                    },
+                },
+            },
+            {
+                test: /sentry\/js\/sentry/,
                 loader: "exports-loader",
                 options: {
                     type: "commonjs",
@@ -83,6 +118,7 @@ module.exports = {
         new webpack.ProvidePlugin({
             '$': 'jquery',
             'jQuery': 'jquery',  // needed for bootstrap to work
+            'window.jQuery': 'jquery',  // needed for some third-party libraries that depend on jQuery, such as multiselect
         }),
         new hqPlugins.EntryChunksPlugin(),
     ],
@@ -95,5 +131,11 @@ module.exports = {
 
     resolve: {
         alias: utils.getAllAliases(aliases),
+    },
+
+    snapshot: {
+        managedPaths: [
+            /^node_modules\//,
+        ],
     },
 };

@@ -22,7 +22,7 @@ from corehq.util import reverse
 class TombstoneManagement(BaseAdminSectionView):
     urlname = 'tombstone_management'
     page_title = _("Prevent the use of specific domain names")
-    template_name = 'domain/tombstone_management.html'
+    template_name = 'domain/bootstrap3/tombstone_management.html'
 
     form = None
     domain_results = None

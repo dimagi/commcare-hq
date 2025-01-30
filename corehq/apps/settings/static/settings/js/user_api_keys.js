@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine("settings/js/user_api_keys", [
     "jquery",
@@ -8,6 +8,7 @@ hqDefine("settings/js/user_api_keys", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/crud_paginated_list",
     "hqwebapp/js/tempus_dominus",
+    "commcarehq",
 ], function (
     $,
     ko,
@@ -15,7 +16,7 @@ hqDefine("settings/js/user_api_keys", [
     moment,
     initialPageData,
     CRUDPaginatedList,
-    hqTempusDominus
+    hqTempusDominus,
 ) {
 
     var ApiKeyListModel = function (showAPIKeys, maximumKeyExpirationWindow) {
@@ -41,7 +42,7 @@ hqDefine("settings/js/user_api_keys", [
                 allowItemCreation: initialPageData.get('allow_item_creation'),
                 createItemForm: initialPageData.get('create_item_form'),
                 createItemFormClass: initialPageData.get('create_item_form_class'),
-            }, KeyModel
+            }, KeyModel,
         );
 
         self.createItemForm.subscribe(function () {
@@ -55,7 +56,7 @@ hqDefine("settings/js/user_api_keys", [
                 restrictions: {
                     minDate: new Date(),
                     maxDate: maximumKeyExpirationWindow ? moment().add(maximumKeyExpirationWindow, 'days').toDate() : undefined,
-                }
+                },
             });
         };
 

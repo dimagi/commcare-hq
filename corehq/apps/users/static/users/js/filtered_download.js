@@ -7,11 +7,12 @@ hqDefine('users/js/filtered_download', [
     'locations/js/widgets',     // location search
     'hqwebapp/js/components/select_toggle',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // slideVisible binding
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
 ) {
     function FiltersModel(options) {
         var self = {};

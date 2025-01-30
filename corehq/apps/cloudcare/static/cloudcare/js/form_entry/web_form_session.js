@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/web_form_session", [
     'jquery',
     'knockout',
@@ -10,6 +9,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     'cloudcare/js/form_entry/utils',
     'cloudcare/js/form_entry/form_ui',
     'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/models',
 ], function (
     $,
     ko,
@@ -20,7 +20,8 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     taskQueue,
     formEntryUtils,
     formUI,
-    utils
+    utils,
+    UsersModels,
 ) {
     function WebFormSession(params) {
         var self = {};
@@ -149,7 +150,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 // use a blob here so that we can set the content type
                 let answerData = new Blob(
                     [JSON.stringify(_.omit(requestParams, "file"))],
-                    {type: 'application/json'}
+                    {type: 'application/json'},
                 );
                 newData.append("answer", answerData);
 
@@ -306,10 +307,8 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             $.subscribe('formplayer.' + constants.FORMATTED_QUESTIONS, function (e, callback) {
                 self.getFormattedQuestions(callback);
             });
-            $.subscribe('formplayer.' + constants.DIRTY, function (e) {
-                hqRequire([
-                    "cloudcare/js/formplayer/app",
-                ], function (FormplayerFrontend) {
+            $.subscribe('formplayer.' + constants.DIRTY, function () {
+                import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
                     FormplayerFrontend.trigger('setUnsavedFormInProgress');
                 });
             });
@@ -478,6 +477,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         };
 
         self.changeLang = function (lang) {
+            updateDisplayOptionLang(lang);
             self.serverRequest(
                 {
                     'action': constants.CHANGE_LOCALE,
@@ -564,7 +564,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                         function () {
                             form.isSubmitting(false);
                             return true;
-                        }
+                        },
                     );
                 }, 250);
         };
@@ -619,11 +619,18 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     }
 
     function changeLang(lang) {
-        hqRequire(["cloudcare/js/formplayer/menus/controller"], function (menusController) {
+        import("cloudcare/js/formplayer/menus/controller").then(function (menusController) {
             var urlObject = utils.currentUrlToObject();
             urlObject.changeLang = lang;
             menusController.selectMenu(urlObject);
+            updateDisplayOptionLang(lang);
         });
+    }
+
+    function updateDisplayOptionLang(lang) {
+        var displayOptions = UsersModels.getCurrentUser().displayOptions;
+        displayOptions.language = lang;
+        UsersModels.saveDisplayOptions(displayOptions);
     }
 
     return {

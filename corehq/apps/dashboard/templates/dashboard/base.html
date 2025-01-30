@@ -2,7 +2,8 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% requirejs_main_b5 'dashboard/js/dashboard' %}
+
+{% js_entry 'dashboard/js/dashboard' %}
 
 {% block stylesheets %}
   {% compress css %}

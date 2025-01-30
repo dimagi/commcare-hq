@@ -1,0 +1,60 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load crispy_forms_tags %}
+
+{% block page_content %}
+  <div class="row">
+    <div class="col-sm-12">
+      <h2>{{ current_page.title }}</h2>
+      <p class="help-block">
+          Please type comma-separated domain names of to check tombstones of.
+      </p>
+      {% crispy form %}  {# todo B5: crispy #}
+    </div>
+    <div class="col-sm-12">
+      <table class="table">
+        <tr><th>Name</th><th>Status</th><th></th></tr>
+        {% for name, projects in domains %}
+        <tr>
+          <td>{{ name }}</td><td>
+            {% if projects|length == 0 %}
+              Project does not exist
+            {% elif projects|length == 1 %}
+              {% with projects.0 as project %}
+                {% if project.doc_type == 'Domain-Deleted' %}
+                  Project Tombstone
+                {% else %}
+                  Normal Project
+                {% endif %}
+                (<a href="{% url "raw_doc" %}?id={{ project.get_id }}">raw doc</a>)
+              {% endwith %}
+            {% else %}
+              Multiple Projects with this name!
+              {% regroup projects by doc_type as doc_type_list %}
+              <ul>
+              {% for doc_type in doc_type_list %}
+                <li>
+                {% if doc_type.grouper == 'Domain-Deleted' %}
+                  Project Tombstones:
+                {% else %}
+                  Normal Projects:
+                {% endif %}
+                {{ doc_type.list|length }}
+                ({% for project in doc_type.list %}{% if not forloop.first %}, {% endif %}<a href="{% url "raw_doc" %}?id={{ project.get_id }}">raw doc</a>{% endfor %})
+                </li>
+              {% endfor %}
+              </ul>
+            {% endif %}
+          </td>
+          <td>
+            <form method="post" action="{% url "create_tombstone" %}">
+            {% csrf_token %}
+            <input type="hidden" name="domain" value="{{ name }}">
+            {% if not projects|length %}<button class="btn btn-outline-danger" type="submit">Create Tombstone</button>{% endif %}
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+{% endblock %}

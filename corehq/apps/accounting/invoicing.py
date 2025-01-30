@@ -28,7 +28,6 @@ from corehq.apps.accounting.models import (
     CreditLine,
     CustomerBillingRecord,
     CustomerInvoice,
-    DefaultProductPlan,
     DomainUserHistory,
     EntryPoint,
     FeatureType,
@@ -83,9 +82,10 @@ class DomainInvoiceFactory(object):
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
 
     def create_invoices(self):
-        subscriptions = self._get_subscriptions()
-        self._ensure_full_coverage(subscriptions)
-        for subscription in subscriptions:
+        all_subscriptions = self._get_subscriptions()
+        chargeable_subscriptions = [sub for sub in all_subscriptions
+                                    if sub.plan_version.plan.edition != SoftwarePlanEdition.PAUSED]
+        for subscription in chargeable_subscriptions:
             try:
                 if subscription.account.is_customer_billing_account:
                     log_accounting_info("Skipping invoice for subscription: %s, because it is part of a Customer "
@@ -106,51 +106,8 @@ class DomainInvoiceFactory(object):
             ),
             subscriber=self.subscriber,
             date_start__lte=self.date_end,
-        ).exclude(
-            plan_version__plan__edition=SoftwarePlanEdition.PAUSED,
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
-
-    @transaction.atomic
-    def _ensure_full_coverage(self, subscriptions):
-        plan_version = DefaultProductPlan.get_default_plan_version()
-        if not plan_version.feature_charges_exist_for_domain(self.domain):
-            return
-
-        community_ranges = self._get_community_ranges(subscriptions)
-        if not community_ranges:
-            return
-
-        # First check to make sure none of the existing subscriptions is set
-        # to do not invoice. Let's be on the safe side and not send a
-        # community invoice out, if that's the case.
-        do_not_invoice = any([s.do_not_invoice for s in subscriptions])
-
-        account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name,
-            created_by=self.__class__.__name__,
-            entry_point=EntryPoint.SELF_STARTED,
-        )[0]
-        if account.date_confirmed_extra_charges is None:
-            log_accounting_info(
-                "Did not generate invoice because date_confirmed_extra_charges "
-                "was null for domain %s" % self.domain.name
-            )
-            do_not_invoice = True
-
-        for start_date, end_date in community_ranges:
-            # create a new community subscription for each
-            # date range that the domain did not have a subscription
-            community_subscription = Subscription(
-                account=account,
-                plan_version=plan_version,
-                subscriber=self.subscriber,
-                date_start=start_date,
-                date_end=end_date,
-                do_not_invoice=do_not_invoice,
-            )
-            community_subscription.save()
-            subscriptions.append(community_subscription)
 
     def _create_invoice_for_subscription(self, subscription):
         def _get_invoice_start(sub, date_start):
@@ -193,34 +150,6 @@ class DomainInvoiceFactory(object):
             record.save()
 
         return invoice
-
-    def _get_community_ranges(self, subscriptions):
-        community_ranges = []
-        if len(subscriptions) == 0:
-            return [(self.date_start, self.date_end + datetime.timedelta(days=1))]
-        else:
-            prev_sub_end = self.date_end
-            for ind, sub in enumerate(subscriptions):
-                if ind == 0 and sub.date_start > self.date_start:
-                    # the first subscription started AFTER the beginning
-                    # of the invoicing period
-                    community_ranges.append((self.date_start, sub.date_start))
-
-                if prev_sub_end < self.date_end and sub.date_start > prev_sub_end:
-                    community_ranges.append((prev_sub_end, sub.date_start))
-                prev_sub_end = sub.date_end
-
-                if (
-                    ind == len(subscriptions) - 1
-                    and sub.date_end is not None
-                    and sub.date_end <= self.date_end
-                ):
-                    # the last subscription ended BEFORE the end of
-                    # the invoicing period
-                    community_ranges.append(
-                        (sub.date_end, self.date_end + datetime.timedelta(days=1))
-                    )
-            return community_ranges
 
     def _generate_invoice(self, subscription, invoice_start, invoice_end):
         # use create_or_get when is_hidden_to_ops is False to utilize unique index on Invoice

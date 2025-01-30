@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine('users/js/edit_commcare_user', [
     'jquery',
@@ -15,6 +15,7 @@ hqDefine('users/js/edit_commcare_user', [
     'registration/js/bootstrap3/password',
     'select2/dist/js/select2.full.min',
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -22,7 +23,7 @@ hqDefine('users/js/edit_commcare_user', [
     alertUser,
     googleAnalytics,
     multiselectUtils,
-    customDataFields
+    customDataFields,
 ) {
     var couchUserId = initialPageData.get('couch_user_id');
 

@@ -1,32 +1,34 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main 'smsbillables/js/smsbillables.rate_calc' %}
+{% js_entry 'smsbillables/js/rate_calc' %}
 
 {% block page_content %}
-  <div class="well">
-    <p class="lead">
-      {% blocktrans %}
-        Use this form to get a cost estimation per 160 character SMS,
-        given a <strong>connection</strong>, <strong>direction</strong>,
-        and <strong>country code</strong>.
-      {% endblocktrans %}
-    </p>
-    <p>
-      {% blocktrans %}
-        The fee will be applied to the most specific criteria available.
-        A fee for a specific country code (if available) will be used
-        over the default of 'Any Country'.
-      {% endblocktrans %}
-    </p>
-    <p>
-      {% blocktrans %}
-        Fees are subject to change based on updates to each carrier and are
-        computed at the time the SMS is sent.
-      {% endblocktrans %}
-    </p>
+  <div class="card text-bg-light">
+    <div class="card-body">
+      <p class="lead">
+        {% blocktrans %}
+          Use this form to get a cost estimation per 160 character SMS,
+          given a <strong>connection</strong>, <strong>direction</strong>,
+          and <strong>country code</strong>.
+        {% endblocktrans %}
+      </p>
+      <p>
+        {% blocktrans %}
+          The fee will be applied to the most specific criteria available.
+          A fee for a specific country code (if available) will be used
+          over the default of 'Any Country'.
+        {% endblocktrans %}
+      </p>
+      <p class="mb-0">
+        {% blocktrans %}
+          Fees are subject to change based on updates to each carrier and are
+          computed at the time the SMS is sent.
+        {% endblocktrans %}
+      </p>
+    </div>
   </div>
   <hr />
   <div class="ko-sms-rate-calculator">

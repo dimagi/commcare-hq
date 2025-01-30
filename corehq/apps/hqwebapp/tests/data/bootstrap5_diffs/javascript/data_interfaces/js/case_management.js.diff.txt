@@ -1,0 +1,36 @@
+--- 
++++ 
+@@ -1,12 +1,12 @@
+ 
+-hqDefine("data_interfaces/js/bootstrap3/case_management",[
++hqDefine("data_interfaces/js/bootstrap5/case_management",[
+     'jquery',
+     'underscore',
+     'knockout',
+     'case/js/casexml',
+     'hqwebapp/js/initial_page_data',
+-    'reports/js/bootstrap3/standard_hq_report',
+-    'hqwebapp/js/bootstrap3/alert_user',
++    'reports/js/bootstrap5/standard_hq_report',
++    'hqwebapp/js/bootstrap5/alert_user',
+ ], function ($, _, ko, casexmlModule, initialPageData, standardHqReport, alertUser) {
+     var caseManagement = function (o) {
+         var self = {};
+@@ -152,7 +152,7 @@
+             }
+             if (_.isEmpty(newOwner)) {
+                 $modal.find('.modal-body').text("Please select an owner");
+-                $modal.modal('show');
++                $modal.modal('show');  /* todo B5: js-modal */
+             } else {
+                 if (self.selectAllMatches()) {
+                     self.updateAllMatches(newOwner);
+@@ -196,7 +196,7 @@
+ 
+             if (_.isEmpty(newOwner)) {
+                 $modal.find('.modal-body').text("Please select an owner");
+-                $modal.modal('show');
++                $modal.modal('show');  /* todo B5: js-modal */
+             } else {
+                 if (self.selectAllMatches()) {
+                     self.updateAllMatches(newOwner);

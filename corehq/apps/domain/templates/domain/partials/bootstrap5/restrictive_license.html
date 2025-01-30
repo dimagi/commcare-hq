@@ -1,0 +1,37 @@
+{% load i18n %}
+{% blocktrans %}
+  This license doesn't cover all your multimedia.
+{% endblocktrans %}
+<a data-bs-toggle="modal" href="#restrictive-license-notice">{% trans 'More info...' %}</a>
+<div class="modal fade" id="restrictive-license-notice">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <a class="btn-close" href="#" data-bs-dismiss="modal">&times;</a>  {# todo B5: css-close #}
+        <h4 class="modal-title">{% trans 'Select a more restrictive license' %}</h4>
+      </div>
+      <div class="modal-body">
+        <p>
+          {% blocktrans %}
+            Since you've opted to publish your multimedia along with your app,
+            you must select a license that is more restrictive than the multimedia in the app.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans %}
+            To satisfy this condition, you can either decide not to publish the multimedia
+            or select one of the following licenses:
+          {% endblocktrans %}
+        </p>
+        <ul>
+          {% for license in licenses %}
+            <p class="text-info text-center">{{ license }}</p>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+      </div>
+    </div>
+  </div>
+</div>

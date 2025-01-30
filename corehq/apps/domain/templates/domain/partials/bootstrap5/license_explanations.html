@@ -1,0 +1,32 @@
+{% load i18n %}
+<a data-bs-toggle="modal" href="#license-explanations">More information about licenses...</a>
+<div class="modal fade" id="license-explanations">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
+        <h3 class="modal-title">About available licenses for shared media and projects</h3>
+      </div>
+      <div class="modal-body">
+        <h4>Creative Commons</h4>
+
+        <p>
+          Creative Commons offers several ways for copyright holders to offer their media to the public
+          free of charge.
+          Depending on the license you choose, you can restrict the use of your copyrighted materials to
+          require
+          attribution, restrict modification, and restrict commercial use.
+          <a target="_blank"
+             href="http://creativecommons.org/choose/">{% trans "Use the Creative Commons website" %}</a>
+          {% trans "to choose a Creative Commons license." %}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% if extra %}
+  <div style="margin-top: .5em">{{ extra }}</div>  {# todo B5: inline-style #}
+{% endif %}

@@ -13,6 +13,7 @@ hqDefine("registry/js/registry_edit", [
     'hqwebapp/js/bootstrap5/main', // makeHqHelp
     'hqwebapp/js/multiselect_utils',
     'hqwebapp/js/components/inline_edit',
+    'commcarehq',
 ], function (
     moment,
     ko,

@@ -1,0 +1,21 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "domain/bootstrap3/base_change_plan.html" %}
++{% extends "domain/bootstrap5/base_change_plan.html" %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
+ 
+@@ -7,9 +7,9 @@
+     {{ lead_text }}
+   </p>
+ 
+-  <div class="panel panel-modern-gray panel-form-only">
+-    <div class="panel-body">
+-      {% crispy contact_form %}
++  <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
++    <div class="card-body">
++      {% crispy contact_form %}  {# todo B5: crispy #}
+     </div>
+   </div>
+ {% endblock %}

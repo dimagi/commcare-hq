@@ -134,6 +134,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     page_title = gettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -226,6 +227,7 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
 
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
+    @use_bootstrap5
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
@@ -284,6 +286,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Privacy and Security")
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -324,6 +327,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class CaseSearchConfigView(BaseAdminProjectSettingsView):
     urlname = 'case_search_config'
     page_title = gettext_lazy('Case Search')
@@ -417,6 +421,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/feature_previews.html'
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -503,6 +508,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
 
 
 @method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
     urlname = 'recovery_measures_history'
     page_title = gettext_lazy("Recovery Measures History")
@@ -534,6 +540,7 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
 
 @method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),
                    require_can_manage_domain_alerts], name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class BaseDomainAlertsView(BaseProjectSettingsView):
     @staticmethod
     def _convert_user_time_to_server_time(timestamp, timezone):

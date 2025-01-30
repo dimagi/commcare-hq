@@ -36,7 +36,14 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    pip-sync --user requirements/test-requirements.txt
+    # uv check, pip-sync, and symlink can be removed after the commcarehq_base
+    # Docker image containing uv has been published for use by Github Actions.
+    if which uv &> /dev/null; then
+        uv pip sync requirements/test-requirements.txt
+    else
+        pip-sync --user requirements/test-requirements.txt
+        ln -s /usr/bin/google-chrome-unstable /usr/bin/google-chrome-stable
+    fi
     pip check  # make sure there are no incompatibilities in test-requirements.txt
     python_preheat  # preheat the python libs
 
@@ -132,15 +139,18 @@ function run_tests {
 
         send_timing_metric_to_datadog "setup" $delta
 
+        if [ "$TEST" == "python-sharded-and-javascript" ]; then
+            logmsg INFO "Building Webpack"
+            chown -R cchq:cchq ./webpack
+            su cchq -c "yarn test"
+        fi
+
         log_group_begin "Django test suite: $TEST"
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         log_group_end  # only log group end on success (notice: `set -e`)
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
-            logmsg INFO "Building Webpack"
-            chown -R cchq:cchq ./webpack
-            su cchq -c "yarn build"
             su cchq -c scripts/test-prod-entrypoints.sh
             scripts/test-make-requirements.sh
             scripts/test-serializer-pickle-files.sh

@@ -12,8 +12,6 @@ from django.utils.translation import gettext_lazy
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.apps.reports.filters.dates import SingleDateFilter
-from corehq.util.dates import iso_string_to_date
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -30,11 +28,11 @@ from corehq.apps.es.aggregations import (
     FilterAggregation,
     NestedAggregation,
 )
-from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.reports.filters.dates import SingleDateFilter
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.generic import (
@@ -46,10 +44,14 @@ from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
-from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.reports.util import (
+    format_datatables_data,
+    get_commcare_version_and_date_from_last_usage,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.dates import iso_string_to_date
 from corehq.util.quickcache import quickcache
 
 
@@ -198,7 +200,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @property
     @memoized
     def selected_app_id(self):
-        return self.request_params.get(SelectApplicationFilter.slug, None)
+        return self.get_request_param(SelectApplicationFilter.slug, None, from_json=True)
 
     @quickcache(['app_id'], timeout=60 * 60)
     def _get_app_details(self, app_id):
@@ -226,8 +228,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker')
-            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param('location_restricted_mobile_worker', as_list=True)
+            + self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         )
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -352,11 +354,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 if last_build.get('app_id') and device and device.get('app_meta'):
                     device_app_meta = self.get_data_for_app(device.get('app_meta'), last_build.get('app_id'))
 
-            if last_sub and last_sub.get('commcare_version'):
-                commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
-            else:
-                if device and device.get('commcare_version', None):
-                    commcare_version = _get_commcare_version(device['commcare_version'])
+            commcare_version, unused = get_commcare_version_and_date_from_last_usage(last_sub, device,
+                                                                                     formatted=True)
+
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
@@ -467,8 +467,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def get_user_ids(self):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker')
-            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param('location_restricted_mobile_worker', as_list=True)
+            + self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         )
         user_ids = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -547,7 +547,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return format_html(f'<div>{"".join(html_nodes)}</div>')
 
 
-def _get_commcare_version(app_version_info):
+def format_commcare_version(app_version_info):
     commcare_version = (
         'CommCare {}'.format(app_version_info)
         if app_version_info
@@ -650,7 +650,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     def shared_pagination_GET_params(self):
         shared_params = super(ApplicationErrorReport, self).shared_pagination_GET_params
         shared_params.extend([
-            {'name': param, 'value': self.request.GET.get(param, None)}
+            {'name': param, 'value': self.get_request_param(param, None)}
             for model_field, param in self.model_fields_to_url_params
         ])
         return shared_params
@@ -672,7 +672,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     def _queryset(self):
         qs = UserErrorEntry.objects.filter(domain=self.domain)
         for model_field, url_param in self.model_fields_to_url_params:
-            value = self.request.GET.get(url_param, None)
+            value = self.get_request_param(url_param, None)
             if value:
                 qs = qs.filter(**{model_field: value})
         return qs
@@ -747,20 +747,16 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     exportable = False
     emailable = False
 
-    @use_nvd3
-    def decorator_dispatcher(self, request, *args, **kwargs):
-        super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
-
     @property
     @memoized
     def selected_app_id(self):
-        return self.request_params.get(SelectApplicationFilter.slug, None)
+        return self.get_request_param(SelectApplicationFilter.slug, None, from_json=True)
 
     @memoized
     def user_query(self):
         # partially inspired by ApplicationStatusReport.user_query
         mobile_user_and_group_slugs = set(
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         ) or set(['t__0'])  # default to all mobile workers on initial load
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -805,7 +801,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     @cached_property
     def report_from_date(self):
-        from_date = self.request_params.get(self.FromDateFilter.slug)
+        from_date = self.get_request_param(self.FromDateFilter.slug, from_json=True)
         if from_date:
             try:
                 from_date = iso_string_to_date(from_date)

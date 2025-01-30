@@ -5,12 +5,13 @@ hqDefine('toggle_ui/js/edit-flag', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/main',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko',     // save button
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    hqMain
+    hqMain,
 ) {
     var PAD_CHAR = '&nbsp;';
     function toggleViewModel() {

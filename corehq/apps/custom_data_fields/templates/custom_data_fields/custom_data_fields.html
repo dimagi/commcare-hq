@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main_b5 'custom_data_fields/js/custom_data_fields' %}
+{% js_entry 'custom_data_fields/js/custom_data_fields' %}
 
 {% block stylesheets %}
   {{ block.super }}

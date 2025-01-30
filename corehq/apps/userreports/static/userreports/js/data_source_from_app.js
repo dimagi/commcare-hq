@@ -1,6 +1,12 @@
-hqDefine('userreports/js/data_source_from_app', function () {
+hqDefine('userreports/js/data_source_from_app', [
+    'jquery',
+    'userreports/js/data_source_select_model',
+    'commcarehq',
+], function (
+    $,
+    dataModel,
+) {
     $(function () {
-        let dataModel = hqImport("userreports/js/data_source_select_model");
         $("#data-source-config").koApplyBindings(dataModel);
     });
 });

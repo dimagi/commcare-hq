@@ -366,6 +366,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', [
         'CustomDataFieldsProfile', 'Field',
     ]),
+    ModelDeletion('data_analytics', 'DomainMetrics', 'domain'),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain', [
@@ -397,6 +398,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('integration', 'GaenOtpServerSettings', 'domain'),
     ModelDeletion('integration', 'HmacCalloutSettings', 'domain'),
     ModelDeletion('integration', 'SimprintsIntegration', 'domain'),
+    ModelDeletion('integration', 'KycConfig', 'domain'),
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',

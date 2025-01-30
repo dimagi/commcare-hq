@@ -208,10 +208,7 @@ def get_releases_context(request, domain, app_id):
         'can_view_cloudcare': has_privilege(request, privileges.CLOUDCARE),
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
         'latest_released_version': get_latest_released_app_version(domain, app_id),
-        'sms_contacts': (
-            get_sms_autocomplete_context(request, domain)['sms_contacts']
-            if can_send_sms else []
-        ),
+        'sms_contacts': get_sms_autocomplete_context(domain) if can_send_sms else [],
         'build_profile_access': build_profile_access,
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'latest_build_id': get_latest_build_id(domain, app_id),

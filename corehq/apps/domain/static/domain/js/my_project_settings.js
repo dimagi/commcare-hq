@@ -2,6 +2,7 @@ hqDefine("domain/js/my_project_settings", [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     ko,

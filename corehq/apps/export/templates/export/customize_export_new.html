@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main_b5 'export/js/customize_export_new' %}
+{% js_entry 'export/js/customize_export_new' %}
 
 {% block page_content %}
   {% initial_page_data 'number_of_apps_to_process' number_of_apps_to_process %}

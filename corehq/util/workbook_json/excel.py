@@ -6,25 +6,16 @@ from openpyxl.utils.exceptions import InvalidFileException
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext as _
 
+from corehq.util.workbook_json.const import MAX_WORKBOOK_ROWS
 
-class InvalidExcelFileException(Exception):
-    pass
-
-
-class JSONReaderError(Exception):
-    pass
-
-
-class HeaderValueError(Exception):
-    pass
-
-
-class StringTypeRequiredError(Exception):
-    pass
-
-
-class WorkbookJSONError(Exception):
-    pass
+from .exceptions import (
+    HeaderValueError,
+    InvalidExcelFileException,
+    JSONReaderError,
+    StringTypeRequiredError,
+    WorkbookJSONError,
+    WorkbookTooManyRows,
+)
 
 
 class IteratorJSONReader(object):
@@ -145,9 +136,9 @@ class IteratorJSONReader(object):
         obj[field] = value
 
 
-def get_workbook(file_or_filename):
+def get_workbook(file_or_filename, max_row_count=MAX_WORKBOOK_ROWS):
     try:
-        return WorkbookJSONReader(file_or_filename)
+        return WorkbookJSONReader(file_or_filename, max_row_count=max_row_count)
     except (HeaderValueError, InvalidExcelFileException) as e:
         raise WorkbookJSONError(_(
             "Upload failed! "
@@ -203,6 +194,8 @@ class WorksheetJSONReader(IteratorJSONReader):
                 break
             else:
                 width += 1
+
+        # ensure _max_row and _max_column properties are set
         self.worksheet.calculate_dimension(force=True)
 
         def iterator():
@@ -229,7 +222,7 @@ class WorksheetJSONReader(IteratorJSONReader):
 
 class WorkbookJSONReader(object):
 
-    def __init__(self, file_or_filename):
+    def __init__(self, file_or_filename, max_row_count=MAX_WORKBOOK_ROWS):
         check_types = (UploadedFile, io.RawIOBase, io.BufferedIOBase)
         if isinstance(file_or_filename, check_types):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
@@ -246,12 +239,16 @@ class WorkbookJSONReader(object):
         self.worksheets = []
 
         try:
+            total_row_count = 0
             for worksheet in self.wb.worksheets:
                 try:
                     ws = WorksheetJSONReader(worksheet, title=worksheet.title)
                 except IndexError:
                     raise JSONReaderError('This Excel file has unrecognised formatting. Please try downloading '
                                         'the lookup table first, and then add data to it.')
+                total_row_count += worksheet.max_row
+                if total_row_count > max_row_count:
+                    raise WorkbookTooManyRows(max_row_count, total_row_count)
                 self.worksheets_by_title[worksheet.title] = ws
                 self.worksheets.append(ws)
         finally:

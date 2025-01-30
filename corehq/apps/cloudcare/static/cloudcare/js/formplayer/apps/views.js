@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/apps/views", [
     'jquery',
     'underscore',
@@ -16,7 +15,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
     kissmetrics,
     constants,
     FormplayerFrontend,
-    AppsAPI
+    AppsAPI,
 ) {
     var GridItem = Marionette.View.extend({
         template: _.template($("#row-template").html() || ""),
@@ -121,6 +120,9 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
 
         initialize: function (options) {
             this.shouldShowIncompleteForms = options.shouldShowIncompleteForms;
+            sessionStorage.removeItem('handledDefaultClosed');
+            sessionStorage.removeItem('persistantMenuRegionWidth');
+            $('#persistent-menu-region').css('width', '');
         },
 
         templateContext: function () {

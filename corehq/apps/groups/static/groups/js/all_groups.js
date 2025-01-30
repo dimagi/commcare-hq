@@ -1,14 +1,15 @@
-"use strict";
+
 hqDefine("groups/js/all_groups", [
     'jquery',
     'analytix/js/google',
     'es6!hqwebapp/js/bootstrap5_loader',
     // Just importing main.py so the post-link function is accessible, function parameter not needed
     'hqwebapp/js/bootstrap5/main',
+    'commcarehq',
 ], function (
     $,
     googleAnalytics,
-    bootstrap
+    bootstrap,
 ) {
     $(function () {
         var $createGroupForm = $("#create_group_form");

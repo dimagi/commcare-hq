@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main_b5 "reminders/js/keywords_list" %}
+{% js_entry "reminders/js/keywords_list" %}
 
 {% block pagination_header %}
   <h2>{% trans 'Manage Keywords' %}</h2>

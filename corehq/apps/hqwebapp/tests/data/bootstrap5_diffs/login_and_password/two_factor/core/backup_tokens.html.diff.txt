@@ -1,0 +1,18 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load i18n %}
+ 
+ {% block page_content %}
+@@ -25,7 +25,7 @@
+       <a href="{% url 'homepage'%}" class="btn btn-primary">{% trans "Begin Using CommCare Now" %}</a>
+     {% endif %}
+     <a href="{% url 'two_factor:profile'%}"
+-       class="pull-right btn btn-link">{% trans "Back to Profile" %}</a>
+-    <button class="btn btn-default" type="submit">{% trans "Generate Tokens" %}</button>
++       class="float-end btn btn-link">{% trans "Back to Profile" %}</a>
++    <button class="btn btn-outline-primary" type="submit">{% trans "Generate Tokens" %}</button>
+   </form>
+ {% endblock %}
