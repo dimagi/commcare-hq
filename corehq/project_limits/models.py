@@ -91,5 +91,8 @@ class SystemLimit(models.Model):
     # the domain field is reserved for extreme cases since limits should apply globally in steady state
     domain = models.CharField(max_length=128, blank=True, default="")
 
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['key', 'domain'], name='unique_key_per_domain_constraint')]
+
     def __str__(self):
         return f"{self.key}: {self.limit}"
