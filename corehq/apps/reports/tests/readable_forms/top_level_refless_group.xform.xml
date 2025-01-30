@@ -527,6 +527,7 @@ Any other notes from the meeting?
                                         <orx:userID/>
                                         <orx:instanceID/>
                                         <cc:appVersion/>
+                                        <orx:formLoadTime/>
                                 </orx:meta>
 
                                 <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
@@ -636,13 +637,14 @@ Any other notes from the meeting?
                 <setvalue event="xforms-ready" ref="/progress_note/meta/username" value="instance('commcaresession')/session/context/username"/>
                 <setvalue event="xforms-ready" ref="/progress_note/meta/userID" value="instance('commcaresession')/session/context/userid"/>
                 <setvalue event="xforms-ready" ref="/progress_note/meta/appVersion" value="instance('commcaresession')/session/context/appversion"/>
+                <setvalue event="xforms-ready" ref="/progress_note/meta/formLoadTime" value="111"/>
                         <setvalue event="xforms-revalidate" ref="/progress_note/meta/timeEnd" value="now()"/>
 
                         <setvalue event="xforms-ready" ref="/progress_note/case/@case_id" value="instance('commcaresession')/session/data/case_id"/>
 
                         <bind nodeset="/progress_note/meta/timeStart" type="dateTime"/>
                 <bind nodeset="/progress_note/meta/timeEnd" type="dateTime"/>
-
+                <bind nodeset="/progress_note/meta/formLoadTime" type="xsd:int"/>
                         <bind nodeset="/progress_note/case/@date_modified" type="xsd:dateTime" calculate="/progress_note/meta/timeEnd"/>
                         <bind nodeset="/progress_note/case/@user_id" calculate="/progress_note/meta/userID"/>
 
