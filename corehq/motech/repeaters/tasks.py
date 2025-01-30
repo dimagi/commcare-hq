@@ -360,8 +360,24 @@ def get_repeater_ids_by_domain():
 
 def process_repeater(repeater, lock_token):
     """
-    Initiates a Celery chord to process a repeater.
+    Initiates a Celery task to process a repeater.
     """
+    if hasattr(repeater, 'merge_records'):
+        _merge_records_and_process_repeater.delay(repeater.repeater_id, lock_token)
+    else:
+        _process_repeater(repeater, lock_token)
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def _merge_records_and_process_repeater(repeater_id, lock_token):
+    # First merge repeat records, so that `_process_repeater()` gets the
+    # merged repeat records.
+    repeater = Repeater.objects.get(id=repeater_id)
+    repeater.merge_records()
+    _process_repeater(repeater, lock_token)
+
+
+def _process_repeater(repeater, lock_token):
 
     def get_task_signature(repeat_record):
         task_ = {
