@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine('users/js/edit_commcare_user', [
     'jquery',
@@ -23,7 +23,7 @@ hqDefine('users/js/edit_commcare_user', [
     alertUser,
     googleAnalytics,
     multiselectUtils,
-    customDataFields
+    customDataFields,
 ) {
     var couchUserId = initialPageData.get('couch_user_id');
 

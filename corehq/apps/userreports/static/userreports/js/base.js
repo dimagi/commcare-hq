@@ -13,7 +13,7 @@ hqDefine('userreports/js/base', [
     maps,
     dataTablesConfig,
     chartsMain,
-    filtersMain
+    filtersMain,
 ) {
     var baseUrl = initialPageData.get('url');
     function getReportUrl() {
@@ -47,7 +47,7 @@ hqDefine('userreports/js/base', [
                 if (data.aaData !== undefined && data.iTotalRecords !== undefined) {
                     if (data.aaData.length < data.iTotalRecords) {
                         $('#info-message').html(
-                            gettext('Showing the current page of data. Switch pages to see more data.')
+                            gettext('Showing the current page of data. Switch pages to see more data.'),
                         );
                         $('#report-info').removeClass('hide');
                     } else {
