@@ -1,7 +1,7 @@
 /**
  *  This file defines a model for editing custom data fields while creating or editing a mobile user.
  */
-'use strict';
+
 
 hqDefine("users/js/custom_data_fields", [
     'knockout',
@@ -12,7 +12,7 @@ hqDefine("users/js/custom_data_fields", [
 ], function (
     ko,
     _,
-    assertProperties
+    assertProperties,
 ) {
     var fieldModel = function (options) {
         return {

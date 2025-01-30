@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("app_execution/js/workflow_charts", [
     'jquery',
     'moment/moment',
@@ -7,7 +7,7 @@ hqDefine("app_execution/js/workflow_charts", [
     'nvd3-1.8.6/build/nv.d3.css',
     'commcarehq',
 ], function (
-    $, moment, d3, nv
+    $, moment, d3, nv,
 ) {
 
     function getSeries(data, includeSeries) {
