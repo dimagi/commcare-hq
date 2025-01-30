@@ -95,7 +95,7 @@ def experiment(
             end = time.time()
             old_time = mid - start
             metrics_histogram(
-                "commcare.science.time", old_time, tags=tags,
+                "commcare.science.time", old_time, tags=tags | {"enabled": str(enabled)},
                 bucket_tag='duration', buckets=time_buckets, bucket_unit='s',
             )
         if not enabled:

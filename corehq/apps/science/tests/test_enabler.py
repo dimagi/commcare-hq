@@ -60,6 +60,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.science.time.campaign:test': 1,
             'commcare.science.time.path:module.path.func': 1,
+            'commcare.science.time.enabled:False': 1,
             'commcare.science.time.duration:lt_0.01s': 1,
         }
         assert log.get_output() == ""
@@ -77,6 +78,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.science.time.campaign:test': 1,
             'commcare.science.time.path:module.path.func': 1,
+            'commcare.science.time.enabled:False': 1,
             'commcare.science.time.duration:lt_0.01s': 1,
         }
         assert log.get_output() == ""
@@ -90,6 +92,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.science.time.campaign:test': 1,
             'commcare.science.time.path:module.path.func': 1,
+            'commcare.science.time.enabled:True': 1,
             'commcare.science.time.duration:lt_0.01s': 1,
             'commcare.science.diff.campaign:test': 1,
             'commcare.science.diff.path:module.path.func': 1,
@@ -110,6 +113,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.science.time.campaign:test': 1,
             'commcare.science.time.path:module.path.func': 1,
+            'commcare.science.time.enabled:True': 1,
             'commcare.science.time.duration:lt_0.01s': 1,
             'commcare.science.diff.campaign:test': 1,
             'commcare.science.diff.path:module.path.func': 1,
@@ -126,6 +130,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.science.time.campaign:test': 1,
             'commcare.science.time.path:module.path.func': 1,
+            'commcare.science.time.enabled:None': 1,
             'commcare.science.time.duration:lt_0.01s': 1,
         }
         assert log.get_output() == ""
@@ -143,6 +148,7 @@ class TestExperimentEnabled(TestCase):
         assert metrics.to_flattened_dict() == {
             'commcare.science.time.campaign:test': 1,
             'commcare.science.time.path:module.path.func': 1,
+            'commcare.science.time.enabled:None': 1,
             'commcare.science.time.duration:lt_0.01s': 1,
         }
         assert log.get_output() == ""

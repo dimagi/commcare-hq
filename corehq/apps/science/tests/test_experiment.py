@@ -43,6 +43,7 @@ def test_experiment_timing_metrics():
     assert metrics.to_flattened_dict() == {
         'commcare.science.time.campaign:test': 1,
         'commcare.science.time.path:module.path.sleeper': 1,
+        'commcare.science.time.enabled:True': 1,
         'commcare.science.time.duration:lt_0.01s': 1,
         'commcare.science.diff.campaign:test': 1,
         'commcare.science.diff.path:module.path.sleeper': 1,
