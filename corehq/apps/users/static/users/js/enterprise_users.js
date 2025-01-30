@@ -18,7 +18,7 @@ hqDefine("users/js/enterprise_users", [
     ko,
     _,
     initialPageData,
-    webUsersList
+    webUsersList,
 ) {
     var UserModel = function (options) {
         var self = _.defaults(options, {

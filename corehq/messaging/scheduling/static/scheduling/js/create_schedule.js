@@ -5,6 +5,7 @@ import "jquery-ui/ui/widgets/datepicker";
 import "bootstrap-timepicker/js/bootstrap-timepicker";
 
 import "quill/dist/quill.snow.css";
+import "scheduling/js/quill.css"; // can be removed once I figure out why quill.scss is not being picked up.
 import Quill from 'quill';
 import Toolbar from "quill/modules/toolbar";
 import Snow from "quill/themes/snow";
@@ -38,7 +39,33 @@ Quill.register({
 
 ko.bindingHandlers.richEditor = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        const fontFamilyArr = ["Roboto Condensed", "Times New Roman", "Calibri", "Calibri Light", "Sans-Serif"];
+        let fonts = Quill.import("attributors/style/font");
+        fonts.whitelist = fontFamilyArr;
+        Quill.register(fonts, true);
+
+        const toolbarOptions = [
+            [{ 'header': [false, 1, 2, 3] }],
+            ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+            // ['blockquote', 'code-block'],
+            ['link', 'image'],
+
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
+            // [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
+            [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
+            // [{ 'direction': 'rtl' }],                         // text direction
+
+            [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
+            [{ 'font': fontFamilyArr }],
+            [{ 'align': [] }],
+
+            ['clean'],                                        // remove formatting button
+        ];
+
         const editor = new Quill(element, {
+            modules: {
+                toolbar: toolbarOptions,
+            },
             theme: 'snow',
         });
 
@@ -64,19 +91,9 @@ ko.bindingHandlers.richEditor = {
             }
         });
 
-        //
-        //         if (initialPageData.get('read_only_mode')) {
-        //             editorInstance.enableReadOnlyMode('');
-        //         }
-        //     });
-        //
-        //     // handle disposal (if KO removes by the template binding)
-        //     ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
-        //         CKEditor5.ClassicEditor.remove(editorInstance);
-        //     });
-
-
-
+        if (initialPageData.get('read_only_mode')) {
+            editor.enable(false);
+        }
     },
 };
 

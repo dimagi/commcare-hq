@@ -11,8 +11,7 @@
 */
 hqDefine("case/js/cheapxml",[
 
-],function ()
-{
+],function () {
     var Node = function (xmlTag) {
         var self = {};
         var tag = /^<(\w+)\/>$/.exec(xmlTag)[1],
