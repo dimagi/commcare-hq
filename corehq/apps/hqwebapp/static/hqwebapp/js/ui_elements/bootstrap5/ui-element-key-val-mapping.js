@@ -1,4 +1,4 @@
-'use strict';
+
 /**
     Key-value mapping UI element.
 
