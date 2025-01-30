@@ -5,6 +5,7 @@ import "jquery-ui/ui/widgets/datepicker";
 import "bootstrap-timepicker/js/bootstrap-timepicker";
 
 import "quill/dist/quill.snow.css";
+import "scheduling/js/quill.css"; // can be removed once I figure out why quill.scss is not being picked up.
 import Quill from 'quill';
 import Toolbar from "quill/modules/toolbar";
 import Snow from "quill/themes/snow";
@@ -38,8 +39,13 @@ Quill.register({
 
 ko.bindingHandlers.richEditor = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        const fontFamilyArr = ["Roboto Condensed", "Times New Roman", "Calibri", "Calibri Light", "Sans-Serif"];
+        let fonts = Quill.import("attributors/style/font");
+        fonts.whitelist = fontFamilyArr;
+        Quill.register(fonts, true);
+
         const toolbarOptions = [
-            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+            [{ 'header': [false, 1, 2, 3] }],
             ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
             // ['blockquote', 'code-block'],
             ['link', 'image'],
@@ -50,7 +56,7 @@ ko.bindingHandlers.richEditor = {
             // [{ 'direction': 'rtl' }],                         // text direction
 
             [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
-            [{ 'font': [] }],
+            [{ 'font': fontFamilyArr }],
             [{ 'align': [] }],
 
             ['clean'],                                        // remove formatting button
