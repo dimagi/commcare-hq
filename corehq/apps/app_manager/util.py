@@ -541,12 +541,11 @@ def _app_callout_templates():
 
 
 @quickcache([], timeout=60 * 60 * 24 * 7)  # 1 week
-def _app_callout_templates_ids():
+def app_callout_templates_ids():
     return {t['id'] for t in next(_app_callout_templates())}
 
 
 app_callout_templates = _app_callout_templates()
-app_callout_templates_ids = _app_callout_templates_ids()
 
 
 def purge_report_from_mobile_ucr(report_config):
