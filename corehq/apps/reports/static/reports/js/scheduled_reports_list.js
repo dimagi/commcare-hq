@@ -5,7 +5,6 @@
     ScheduledReportListModel - model representing the whole page (list of reports, actions)
 
 */
-
 hqDefine("reports/js/scheduled_reports_list", [
     'jquery',
     'knockout',
@@ -16,9 +15,8 @@ hqDefine("reports/js/scheduled_reports_list", [
     $,
     ko,
     _,
-    assertProperties
+    assertProperties,
 ) {
-    "use strict";
     var scheduledReportModel = function (report, isOwner, isAdmin) {
         assertProperties.assert(report, [
             'id',

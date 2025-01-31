@@ -42,7 +42,7 @@ describe('Data Corrections', function () {
             return hqImport('reports/js/bootstrap5/data_corrections').init(
                 $(".data-corrections-trigger"),
                 $(".data-corrections-modal"),
-                _.extend(generateOptions(properties), additionalOptions)
+                _.extend(generateOptions(properties), additionalOptions),
             );
         };
 
