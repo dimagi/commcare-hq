@@ -3,7 +3,7 @@
 {% block filter_content %}
   {% if not endpoint %}
     <select
-      class="{{ css_class }} form-control report-filter-multi-option"
+      class="{{ css_class }} form-select report-filter-multi-option"
       name="{{ slug }}"
       multiple="true"
       placeholder="{{ select.placeholder }}"
@@ -18,7 +18,7 @@
     ></select>
   {% else %}
     <select
-      class="{{ css_class }} form-control report-filter-multi-option"
+      class="{{ css_class }} form-select report-filter-multi-option"
       name="{{ slug }}"
       placeholder="{{ select.placeholder }}"
       data-endpoint="{% html_attr endpoint %}"
