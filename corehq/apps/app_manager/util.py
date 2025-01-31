@@ -16,6 +16,7 @@ import yaml
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
 
+from memoized import memoized
 from dimagi.utils.couch import CriticalSection
 
 from corehq import toggles
@@ -540,7 +541,7 @@ def _app_callout_templates():
         yield data
 
 
-@quickcache([], timeout=60 * 60 * 24 * 7)  # 1 week
+@memoized
 def _app_callout_templates_ids():
     return {t['id'] for t in next(_app_callout_templates())}
 
