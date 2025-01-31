@@ -70,6 +70,7 @@ hqDefine('analytix/js/gtx', [
      * @param {function|undefined} callbackFn - optional
      */
     var gtmSendEvent = function (eventName, eventData, callbackFn) {
+        console.log(`${eventName}: ${JSON.stringify(eventData, null, "  ")}`);
         _ready.done(function () {
             var data = {
                 event: eventName,
