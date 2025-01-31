@@ -76,6 +76,7 @@ def activate_new_user(
     username, password, created_by, created_via, first_name=None, last_name=None,
     is_domain_admin=False, domain=None, ip=None, atypical_user=False, commit=True
 ):
+    from corehq.apps.analytics.tasks import record_event
     now = datetime.utcnow()
 
     new_user = WebUser.create(
@@ -108,6 +109,8 @@ def activate_new_user(
     new_user.atypical_user = atypical_user
     if commit:
         new_user.save()
+
+    record_event('new_user', new_user, {'engagement_time_msec': 1000})
 
     return new_user
 
