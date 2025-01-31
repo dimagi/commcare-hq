@@ -887,7 +887,8 @@ def record_event(event_name, couch_user, event_properties=None):
     timestamp = unix_time_in_micros(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
 
     event_body = {
-        'client_id': couch_user._id,
+        'client_id': couch_user.userID,
+        'user_id': couch_user.userID,
         'timestamp_micros': timestamp,
         'events': [{
             'name': event_name,
