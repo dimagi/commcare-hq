@@ -105,10 +105,11 @@ def analyse_new_app_build(domain, new_build_id):
 
 def check_for_custom_callouts(new_build):
     from corehq.apps.app_manager.util import app_callout_templates_ids
+    template_ids = app_callout_templates_ids()
 
     def app_has_custom_intents():
         return any(
-            any(set(form.wrapped_xform().odk_intents) - app_callout_templates_ids)
+            any(set(form.wrapped_xform().odk_intents) - template_ids)
             for form in new_build.get_forms()
         )
 
