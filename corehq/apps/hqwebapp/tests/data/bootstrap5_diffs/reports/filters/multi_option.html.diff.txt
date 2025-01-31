@@ -14,12 +14,12 @@
 -            placeholder="{{ select.placeholder }}"
 -            name="{{ slug }}"></select>
 +    <select
-+      class="{{ css_class }} form-control report-filter-multi-option"
++      class="{{ css_class }} form-select report-filter-multi-option"
 +      name="{{ slug }}"
 +      multiple="true"
 +      placeholder="{{ select.placeholder }}"
 +      data-bind="
-+        ptions: select_params,
++        options: select_params,
 +        optionsText: 'text',
 +        optionsValue: 'val',
 +        selectedOptions: current_selection
@@ -35,7 +35,7 @@
 -            placeholder="{{ select.placeholder }}"
 -            name="{{ slug }}"></select>
 +    <select
-+      class="{{ css_class }} form-control report-filter-multi-option"
++      class="{{ css_class }} form-select report-filter-multi-option"
 +      name="{{ slug }}"
 +      placeholder="{{ select.placeholder }}"
 +      data-endpoint="{% html_attr endpoint %}"
