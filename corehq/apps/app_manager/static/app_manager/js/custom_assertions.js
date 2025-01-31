@@ -63,10 +63,13 @@ hqDefine('app_manager/js/custom_assertions', [
 
     $(function () {
         if (toggles.toggleEnabled('CUSTOM_ASSERTIONS')) {
-            var assertions = customAssertions().wrap({
-                'customAssertions': initialPageData.get('custom_assertions'),
-            });
-            $('#custom-assertions').koApplyBindings(assertions);
+            const $container = $('#custom-assertions');
+            if ($container.length) {
+                var assertions = customAssertions().wrap({
+                    'customAssertions': initialPageData.get('custom_assertions'),
+                });
+                $container.koApplyBindings(assertions);
+            }
         }
     });
 
