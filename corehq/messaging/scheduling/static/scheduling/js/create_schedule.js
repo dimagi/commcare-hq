@@ -3,6 +3,17 @@ import ko from "knockout";
 
 import "jquery-ui/ui/widgets/datepicker";
 import "bootstrap-timepicker/js/bootstrap-timepicker";
+
+import "quill/dist/quill.snow.css";
+import "scheduling/js/quill.css"; // can be removed once I figure out why quill.scss is not being picked up.
+import Quill from 'quill';
+import Toolbar from "quill/modules/toolbar";
+import Snow from "quill/themes/snow";
+
+import Bold from "quill/formats/bold";
+import Italic from "quill/formats/italic";
+import Header from "quill/formats/header";
+
 import "hqwebapp/js/components/select_toggle";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import select2Handler from "hqwebapp/js/select2_handler";
@@ -16,6 +27,74 @@ ko.bindingHandlers.useTimePicker = {
         });
     },
     update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {},
+};
+
+Quill.register({
+    "modules/toolbar": Toolbar,
+    "themes/snow": Snow,
+    "formats/bold": Bold,
+    "formats/italic": Italic,
+    "formats/header": Header,
+});
+
+ko.bindingHandlers.richEditor = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        const fontFamilyArr = ["Roboto Condensed", "Times New Roman", "Calibri", "Calibri Light", "Sans-Serif"];
+        let fonts = Quill.import("attributors/style/font");
+        fonts.whitelist = fontFamilyArr;
+        Quill.register(fonts, true);
+
+        const toolbarOptions = [
+            [{ 'header': [false, 1, 2, 3] }],
+            ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+            // ['blockquote', 'code-block'],
+            ['link', 'image'],
+
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
+            // [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
+            [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
+            // [{ 'direction': 'rtl' }],                         // text direction
+
+            [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
+            [{ 'font': fontFamilyArr }],
+            [{ 'align': [] }],
+
+            ['clean'],                                        // remove formatting button
+        ];
+
+        const editor = new Quill(element, {
+            modules: {
+                toolbar: toolbarOptions,
+            },
+            theme: 'snow',
+        });
+
+        const value = ko.utils.unwrapObservable(valueAccessor());
+        editor.clipboard.dangerouslyPasteHTML(value);
+
+        let isSubscriberChange = false;
+        let isEditorChange = false;
+
+        editor.on('text-change', function(delta, source) {
+            if (!isSubscriberChange) {
+                isEditorChange = true;
+                valueAccessor()(editor.root.innerHTML);
+                isEditorChange = false;
+            }
+        });
+
+        valueAccessor().subscribe(function (value) {
+            if (!isEditorChange) {
+                isSubscriberChange = true;
+                editor.clipboard.dangerouslyPasteHTML(value);
+                isSubscriberChange = false;
+            }
+        });
+
+        if (initialPageData.get('read_only_mode')) {
+            editor.enable(false);
+        }
+    },
 };
 
 var MessageViewModel = function (language_code, message) {
