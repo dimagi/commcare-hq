@@ -556,6 +556,13 @@ def view_pdb(element):
     return element
 
 
+@register.filter
+def is_new_user(user):
+    now = datetime.now()
+    one_week_ago = now - timedelta(days=7)
+    return True if user.created_on >= one_week_ago else False
+
+
 @register.tag
 def registerurl(parser, token):
     split_contents = token.split_contents()
