@@ -110,7 +110,7 @@ def activate_new_user(
     if commit:
         new_user.save()
 
-    record_event('new_user', new_user, {'debug_mode': '1', 'engagement_time_msec': 1000})
+    record_event('new_user', new_user, {'engagement_time_msec': 1000})
 
     return new_user
 
