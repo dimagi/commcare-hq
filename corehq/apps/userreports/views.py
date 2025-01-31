@@ -1341,9 +1341,7 @@ def rebuild_data_source(request, domain, config_id):
                 EditDataSourceView.urlname, args=[domain, config_id]
             ))
 
-    if config.is_deactivated:
-        config.is_deactivated = False
-        config.save()
+    _prep_data_source_for_rebuild(config, is_static)
 
     messages.success(
         request,
@@ -1357,6 +1355,19 @@ def rebuild_data_source(request, domain, config_id):
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
+
+
+def _prep_data_source_for_rebuild(data_source_config, is_static):
+    save_config = False
+    if not is_static:
+        data_source_config.meta.build.awaiting = True
+        save_config = True
+    if data_source_config.is_deactivated:
+        data_source_config.is_deactivated = False
+        save_config = True
+
+    if save_config:
+        data_source_config.save()
 
 
 def _report_ucr_rebuild_metrics(domain, config, action):
@@ -1449,6 +1460,9 @@ def resume_building_data_source(request, domain, config_id):
             )
         )
     else:
+        if not is_static:
+            config.meta.build.awaiting = True
+            config.save()
         messages.success(
             request,
             _('Resuming rebuilding table "{}".').format(config.display_name)
@@ -1463,9 +1477,7 @@ def resume_building_data_source(request, domain, config_id):
 @require_POST
 def build_data_source_in_place(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
-    if config.is_deactivated:
-        config.is_deactivated = False
-        config.save()
+    _prep_data_source_for_rebuild(config, is_static)
 
     messages.success(
         request,
