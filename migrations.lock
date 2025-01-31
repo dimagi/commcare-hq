@@ -606,6 +606,7 @@ geospatial
  0006_geoconfig_max_cases_per_user_and_more
  0007_geoconfig_max_case_distance_and_more
  0008_geoconfig_flag_assigned_cases
+ 0009_geoconfig_api_key_cbc_encryption
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -647,6 +648,7 @@ integration
  0003_hmaccalloutsettings
  0004_gaenotpserversettings
  0005_gaenotpserversettings_server_type
+ 0006_kycconfig
 ivr
  0001_initial
  0002_call_app_id
@@ -721,6 +723,7 @@ motech
  0014_alter_connectionsettings_password
  0015_requestlog_duration
  0016_connectionsettings_include_client_id_and_more
+ 0017_connectionsettings_use_aes_cbc_encryption
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058

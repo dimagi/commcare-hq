@@ -59,6 +59,7 @@ from .utils import (
     create_case_with_gps_property,
     get_flag_assigned_cases_config,
     get_geo_case_property,
+    get_geo_config,
     get_geo_user_property,
     get_lat_lon_from_dict,
     set_case_gps_property,
@@ -86,7 +87,7 @@ class CaseDisbursementAlgorithm(BaseDomainView):
     urlname = "case_disbursement"
 
     def post(self, request, domain, *args, **kwargs):
-        config = GeoConfig.objects.get(domain=domain)
+        config = get_geo_config(domain)
         request_json = json.loads(request.body.decode('utf-8'))
 
         solver_class = config.disbursement_solver
@@ -364,7 +365,7 @@ class GetPaginatedCases(CaseListMixin):
         # override super class corehq.apps.reports.generic.GenericReportView init method to
         # avoid failures for missing expected properties for a report and keep only necessary properties
         self.request = request
-        self.request_params = json_request(self.request.GET)
+        self._request_params = json_request(self.request.GET)
         self.domain = domain
 
     def _base_query(self):
@@ -480,10 +481,10 @@ def get_users_with_gps(request, domain):
 @method_decorator(toggles.MICROPLANNING.required_decorator(), name="dispatch")
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
-    REQUEST_CASES_LIMIT = 100
+    REQUEST_CASES_LIMIT = CaseManagementMap.default_rows
     # Below values denotes the number of cases to be reassigned including the related cases
     ASYNC_CASES_UPDATE_THRESHOLD = 500  # threshold for asynchronous operation
-    TOTAL_CASES_LIMIT = 5000    # maximum number of cases that can be reassigned
+    TOTAL_CASES_LIMIT = 10_000  # maximum number of cases that can be reassigned
 
     def post(self, request, domain, *args, **kwargs):
         try:

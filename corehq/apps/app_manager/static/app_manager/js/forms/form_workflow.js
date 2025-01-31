@@ -1,7 +1,18 @@
-hqDefine('app_manager/js/forms/form_workflow', function () {
-    'use strict';
-    const uiElementKeyValueList = hqImport("hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list");
-
+hqDefine("app_manager/js/forms/form_workflow", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/toggles",
+], function (
+    $,
+    ko,
+    _,
+    uiElementKeyValueList,
+    initialPageData,
+    toggles,
+) {
     var FormWorkflow = function (options) {
         var self = this;
 
@@ -17,7 +28,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.hasError = ko.observable(self.workflow() === FormWorkflow.Values.ERROR);
         self.hasWarning = ko.computed(function () {
             return !self.hasError()
-                && hqImport("hqwebapp/js/initial_page_data").get("is_case_list_form")
+                && initialPageData.get("is_case_list_form")
                 && self.workflow() !== FormWorkflow.Values.DEFAULT;
         });
 
@@ -144,7 +155,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.formId = ko.observable(formId);
         self.autoLink = ko.observable();
         self.allowManualLinking = ko.observable();
-        self.advancedMode = hqImport("hqwebapp/js/toggles").toggleEnabled('FORM_LINK_ADVANCED_MODE');
+        self.advancedMode = toggles.toggleEnabled('FORM_LINK_ADVANCED_MODE');
         self.forms = workflow.forms || [];
         self.datums = ko.observableArray();
         self.manualDatums = ko.observable(false);

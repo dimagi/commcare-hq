@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
@@ -16,6 +15,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
+    'mapbox-gl/dist/mapbox-gl',
+    'leaflet',
     'leaflet-fullscreen/dist/Leaflet.fullscreen.min',   // adds L.control.fullscreen to L
 ], function (
     $,
@@ -34,7 +35,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     formplayerUtils,
     markdown,
     cloudcareUtils,
-    L
+    mapboxgl,
+    L,
 ) {
     const MenuView = Marionette.View.extend({
         isGrid: function () {
@@ -132,6 +134,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
+                badgeText: this.options.model.attributes.badgeText,
                 menuIndex: this.menuIndex,
             };
         },
@@ -873,7 +876,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                     "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                hqRequire(["hqwebapp/js/bootstrap5/alert_user"], function (alertUser) {
+                import("hqwebapp/js/bootstrap5/alert_user").then(function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
             }
@@ -937,7 +940,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
                 const popupIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS_POPUP; });
-                L.mapbox.accessToken = token;
+                mapboxgl.accessToken = token;
 
                 const allCoordinates = [];
                 const markers = [];
@@ -1061,7 +1064,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const paginateItems = formplayerUtils.paginateOptions(
                 this.options.currentPage,
                 this.options.pageCount,
-                this.options.collection.length
+                this.options.collection.length,
             );
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
             let description = this.options.description;
@@ -1365,15 +1368,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         tagName: "li",
         template: _.template($("#language-option-template").html() || ""),
         events: {
-            'click': 'onChangeLang',
             'keydown .lang': 'onKeyActionChangeLang',
         },
+        triggers: {
+            click: 'change:lang',
+        },
         initialize: function (options) {
+            this.isLangSelected = options.model.get('lang_code') === options.currentLang;
             this.languageOptionsEnabled = options.languageOptionsEnabled;
         },
         templateContext: function () {
             return {
                 languageOptionsEnabled: this.languageOptionsEnabled,
+                isLangSelected: this.isLangSelected,
             };
         },
         onKeyActionChangeLang: function (e) {
@@ -1381,9 +1388,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 this.onChangeLang(e);
             }
         },
-        onChangeLang: function (e) {
-            const lang = e.target.id;
-            $.publish('formplayer.change_lang', lang);
+        onChangeLang: function (view, e) {
+            if (!this.isLangSelected) {
+                const lang = e.target.id;
+                $.publish('formplayer.change_lang', lang);
+            }
         },
     });
 
@@ -1415,9 +1424,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         behaviors: {
             print: printBehavior,
         },
+        childViewEvents: {
+            'change:lang': 'render',
+        },
         childViewOptions: function () {
             return {
                 languageOptionsEnabled: Boolean(this.options.collection),
+                currentLang: UsersModels.getCurrentUser().displayOptions.language,
             };
         },
         templateContext: function () {
@@ -1633,7 +1646,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         getPersistantMenuRegionWidth: function () {
             let persistantMenuRegionWidth = sessionStorage.getItem('persistantMenuRegionWidth');
-            if (!persistantMenuRegionWidth) {
+            if (!persistantMenuRegionWidth || persistantMenuRegionWidth === '0') {
                 persistantMenuRegionWidth = this.calcPersistantMenuRegionWidth();
                 sessionStorage.setItem('persistantMenuRegionWidth', persistantMenuRegionWidth);
             }
@@ -1662,10 +1675,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const persistentMenuContentContainer = $('#persistent-menu-container-content');
             const targetElement = $('#persistent-menu-container')[0];
             targetElement.addEventListener('transitionend', (event) => {
-                    if (this.menuExpanded && event.target === targetElement) {
-                        persistentMenuContentContainer.removeClass('d-none');
-                    }
-                });
+                if (this.menuExpanded && event.target === targetElement) {
+                    persistentMenuContentContainer.removeClass('d-none');
+                }
+            });
         },
         cloudcareNotificationListener: function () {
             const persistentMenuContainer = $('#persistent-menu-container');
@@ -1714,11 +1727,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const self = this;
             const smallScreenEnabledOnStartup = cloudcareUtils.smallScreenIsEnabled();
             const arrowToggle = $('#persistent-menu-arrow-toggle');
+            const persistentMenuContainer = $('#persistent-menu-container');
             self.makeCollapse(sessionStorage.showPersistentMenu);
             self.menuCollapseExpandTransitionListener();
             self.cloudcareNotificationListener();
             if ($("#cloudcare-notifications").children().length > 0) {
-                $('#persistent-menu-container').addClass('border-top');
+                persistentMenuContainer.addClass('border-top');
             }
 
             if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
@@ -1745,9 +1759,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     self.lockMenu();
                 }
             });
-            $('#persistent-menu-container').hover(
+            persistentMenuContainer.hover(
                 function () {
-                    if (!self.menuExpanded) {
+                    if (!self.menuExpanded && !arrowToggle.is(':hover')) {
                         self.showMenu();
                     }
                 },
@@ -1755,7 +1769,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     if (sessionStorage.showPersistentMenu !== 'true') {
                         self.hideMenu();
                     }
-                }
+                },
             );
         },
         templateContext: function () {
@@ -1818,5 +1832,4 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return new PersistentMenuView(options);
         },
     };
-})
-;
+});
