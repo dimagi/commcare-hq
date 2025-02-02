@@ -12,7 +12,7 @@ hqDefine('sso/js/edit_identity_provider', [
     _,
     emailUtils,
     initialPageData,
-    models
+    models,
 ) {
     $(function () {
         let emailDomainManager = models.linkedObjectListModel({

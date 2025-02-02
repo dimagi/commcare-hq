@@ -7,6 +7,7 @@ hqDefine('locations/js/location_tree', [
     'hqwebapp/js/bootstrap5/alert_user',
     'analytix/js/google',
     'locations/js/search',
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
 ], function (
     $,
     ko,

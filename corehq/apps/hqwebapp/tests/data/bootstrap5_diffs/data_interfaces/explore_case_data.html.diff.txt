@@ -1,0 +1,223 @@
+--- 
++++ 
+@@ -1,15 +1,15 @@
+-{% extends "hqwebapp/bootstrap3/two_column.html" %}
++{% extends "hqwebapp/bootstrap5/two_column.html" %}
+ {% load compress %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 'reports/v2/js/views/bootstrap3/explore_case_data' %}
+-
+-{% block page_sidebar_classes %}sidebar-offcanvas col-xs-12 col-sm-3 col-lg-2{% endblock %}
+-
+-{% block page_row_classes %}row-offcanvas row-offcanvas-left{% endblock %}
+-
+-{% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
++{% js_entry 'reports/v2/js/views/bootstrap5/explore_case_data' %}
++
++{% block page_sidebar_classes %}report-sidebar col-sm-12 col-md-3 col-xl-2{% endblock %}
++
++{% block page_row_classes %}report-sidebar-row{% endblock %}
++
++{% block page_content_classes %}col-sm-12 col-md-9 col-xl-10{% endblock %}
+ 
+ {% block stylesheets %}{{ block.super }}
+   <link type="text/css"
+@@ -26,7 +26,7 @@
+ 
+ {% block js %}{{ block.super }}
+   <script type="text/html" id="ko-select2-multi-async">
+-    <select type="text"
++    <select type="text"  {# todo B5: css-select-form-control #}
+             class="form-control"
+             data-bind="selectedOptions: value,
+                        select2: {
+@@ -39,7 +39,7 @@
+                        attr: { id: 'filter_' + name() }"></select>
+   </script>
+   <script type="text/html" id="ko-select2-single">
+-    <select type="text"
++    <select type="text"  {# todo B5: css-select-form-control #}
+             class="form-control"
+             data-bind="value: value,
+                        select2: {
+@@ -106,24 +106,24 @@
+                 params="featureName: '{% trans_html_attr 'Explore Case Data' %}'"></feedback>
+       <button type="button"
+               data-bind="click: exportData"
+-              class="btn btn-default">
++              class="btn btn-outline-primary">
+         <i class="fa fa-download"></i>
+         {% trans "Export Data" %}
+       </button>
+       <button type="button"
+               data-bind="click: saveFilters"
+-              class="btn btn-default">
++              class="btn btn-outline-primary">
+         <i class="fa fa-save"></i>
+         {% trans "Save Filters" %}
+       </button>
+     </div>
+ 
+-    <div class="panel panel-default">
+-      <div class="panel-heading"
++    <div class="card ">  {# todo B5: css-panel #}
++      <div class="card-header"
+            role="tab"
+            id="datagridFilterHeading">
+-        <h3 class="panel-title">
+-          <a data-toggle="collapse"
++        <h3 class="card-title">
++          <a data-bs-toggle="collapse"
+              href="#reportFilters"
+              aria-expanded="true"
+              aria-controls="reportFilters">
+@@ -135,12 +135,12 @@
+            class="panel-collapse collapse in"
+            role="tabpanel"
+            aria-labelledby="datagridFilterHeading">
+-        <div class="panel-body">
++        <div class="card-body">
+           <div class="form form-horizontal"
+                data-bind="foreach: reportFilters">
+ 
+-            <div class="form-group">
+-              <label class="{% css_label_class %} control-label"
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label class="{% css_label_class %} form-label"
+                      data-bind="text: title, attr: { for: 'filter_' + name()}"></label>
+               <div class="{% css_field_class %}">
+                 <div data-bind="template: {
+@@ -254,7 +254,7 @@
+            class="modal-dialog">
+         <div class="modal-content">
+           <div class="modal-header">
+-            <button type="button" class="close" data-dismiss="modal">
++            <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
+               <span aria-hidden="true">&times;</span>
+               <span class="sr-only">{% trans "Close" %}</span>
+             </button>
+@@ -267,14 +267,14 @@
+           </div>
+           <div class="modal-body">
+             <div class="form form-horizontal">
+-              <div class="form-group"
++              <div class="form-group"  {# todo B5: css-form-group #}
+                    data-bind="visible: $root.editColumnController.showDelete">
+ 
+-                <label class="col-xs-3 control-label">
++                <label class="col-sm-3 form-label">
+                   {% trans "Case Property" %}:
+                 </label>
+-                <div class="col-xs-9">
+-                  <select type="text"
++                <div class="col-sm-9">
++                  <select type="text"  {# todo B5: css-select-form-control #}
+                           class="form-control"
+                           data-bind="value: name,
+                                      select2: {
+@@ -289,11 +289,11 @@
+                                      }" ></select>
+                 </div>
+               </div>
+-              <div class="form-group">
+-                <label class="col-xs-3 control-label">
++              <div class="form-group">  {# todo B5: css-form-group #}
++                <label class="col-sm-3 form-label">
+                   {% trans "Title" %}:
+                 </label>
+-                <div class="col-xs-9">
++                <div class="col-sm-9">
+                   <input type="text"
+                          class="form-control"
+                          placeholder="{% trans_html_attr "Title" %}"
+@@ -307,7 +307,7 @@
+               <hr data-bind="visible: $root.editColumnController.showColumnFilters()
+                              || $root.editColumnController.showColumnFilterPlaceholder()" />
+               <button type="button"
+-                      class="btn btn-default disabled"
++                      class="btn btn-outline-primary disabled"
+                       disabled="disabled"
+                       data-bind="visible: $root.editColumnController.showColumnFilterPlaceholder">
+                 {% trans "Filter Data in Column" %}
+@@ -320,7 +320,7 @@
+                   <div class="datagrid-filter-settings">
+                     {% blocktrans %}
+                       Treat this property as
+-                      <select class="form-control filter-type"
++                      <select class="form-select filter-type"
+                               data-bind="options: $root.editColumnController.availableFilterNames,
+                                          optionsText: function (val) {
+                                            return $root.editColumnController.filterTitleByName[val];
+@@ -328,7 +328,7 @@
+                                          value: filterName,
+                                          event: { change: $root.editColumnController.updateFilterName }"></select>
+                       and match
+-                      <select data-bind="value: $parent.clause,
++                      <select data-bind="value: $parent.clause,  {# todo B5: css-select-form-control #}
+                                          event: { change: $root.editColumnController.updateFilter }"
+                               class="form-control filter-clause">
+                         <option value="all">
+@@ -344,7 +344,7 @@
+                   <!-- /ko -->
+ 
+                   <div class="datagrid-filter">
+-                  <select class="form-control datagrid-filter-choice"
++                  <select class="form-select datagrid-filter-choice"
+                           data-bind="options: $root.editColumnController.availableChoiceNames,
+                                      optionsText: function (val) {
+                                        return $root.editColumnController.choiceTitleByName()[val];
+@@ -378,13 +378,13 @@
+                 <!-- /ko -->
+ 
+                 <button type="button"
+-                        class="btn btn-default"
++                        class="btn btn-outline-primary"
+                         data-bind="click: $root.editColumnController.addFilter,
+                                    visible: showAddFilter" >
+                   {% trans "Filter Data in Column" %}
+                 </button>
+                 <button type="button"
+-                        class="btn btn-default datagrid-add-expression"
++                        class="btn btn-outline-primary datagrid-add-expression"
+                         data-bind="click: $root.editColumnController.addFilter,
+                                    visible: showAddExpression">
+                   <i class="fa fa-plus-circle"></i>
+@@ -398,13 +398,13 @@
+             <button type="button"
+                     data-bind="visible: !$root.editColumnController.isNew() && $root.editColumnController.showDelete(),
+                                click: $root.deleteColumn"
+-                    class="btn btn-danger pull-left">
++                    class="btn btn-outline-danger float-start">
+               <i class="fa-regular fa-trash-can"></i>
+               {% trans "Delete" %}
+             </button>
+             <button type="button"
+-                    class="btn btn-default"
+-                    data-dismiss="modal">{% trans "Cancel" %}</button>
++                    class="btn btn-outline-primary"
++                    data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+             <button class="btn btn-primary"
+                     data-bind="click: $root.updateColumn,
+                                disable: $root.editColumnController.isSaveDisabled">
+@@ -427,7 +427,7 @@
+       <div class="modal-dialog">
+         <div class="modal-content">
+           <div class="modal-header">
+-            <button type="button" class="close" data-dismiss="modal">
++            <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
+               <span aria-hidden="true">&times;</span>
+               <span class="sr-only">{% trans "Close" %}</span>
+             </button>
+@@ -443,8 +443,8 @@
+           </div>
+           <div class="modal-footer">
+             <button type="button"
+-                    class="btn btn-default"
+-                    data-dismiss="modal">{% trans "Ok" %}</button>
++                    class="btn btn-outline-primary"
++                    data-bs-dismiss="modal">{% trans "Ok" %}</button>
+           </div>
+         </div>
+       </div>

@@ -21,12 +21,12 @@
      'reports_core/js/choice_list_utils',
      'reports/js/filters/case_list_explorer',
      'select2/dist/js/select2.full.min',
-@@ -40,7 +40,7 @@
+@@ -41,7 +41,7 @@
                  var reportLabels = $filterRange.data('reportLabels');
                  var standardHQReport = standardHQReportModule.getStandardHQReport();
  
 -                $filterRange.createDateRangePicker(
-+                $filterRange.createDateRangePicker(  /* todo B5: plugin:createDateRangePicker */
++                $filterRange.createDateRangePicker(/* todo B5: plugin:createDateRangePicker */
                      reportLabels, separator,
                      $filterRange.data('startDate'),
-                     $filterRange.data('endDate')
+                     $filterRange.data('endDate'),

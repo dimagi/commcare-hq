@@ -13,10 +13,8 @@ hqDefine('reports/v2/js/context', [
     ko,
     _,
     assertProperties,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
-
     var endpoint = function (data) {
         assertProperties.assert(data, ['slug', 'urlname']);
 

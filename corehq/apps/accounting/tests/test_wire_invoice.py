@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.core import mail
 
-from corehq.apps.accounting import tasks, utils
+from corehq.apps.accounting import utils
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import Invoice
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
@@ -13,12 +13,10 @@ class TestWireInvoice(BaseInvoiceTestCase):
     def setUp(self):
         super(TestWireInvoice, self).setUp()
         invoice_date = utils.months_from_date(self.subscription.date_start, 2)
-        tasks.calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
 
         invoice_date = utils.months_from_date(self.subscription.date_start, 3)
-        tasks.calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
 
         self.invoices = Invoice.objects.all()
 
@@ -45,12 +43,10 @@ class TestCustomerAccountWireInvoice(BaseInvoiceTestCase):
         self.account.save()
 
         invoice_date = utils.months_from_date(self.subscription.date_start, 2)
-        tasks.calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
 
         invoice_date = utils.months_from_date(self.subscription.date_start, 3)
-        tasks.calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(invoice_date)
 
     def test_factory(self):
         factory = DomainWireInvoiceFactory(

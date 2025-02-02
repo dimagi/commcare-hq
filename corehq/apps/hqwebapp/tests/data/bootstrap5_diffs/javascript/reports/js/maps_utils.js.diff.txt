@@ -1,17 +1,13 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
--hqDefine("reports/js/bootstrap3/maps_utils", function () {
-+hqDefine("reports/js/bootstrap5/maps_utils", function () {
-     var module = {};
-     module.displayDimensions = ['size', 'color', 'icon'];
-     module.tableToggle = false;
-@@ -1674,7 +1674,7 @@
-             }
-         );
-         var table;
--        table = hqImport("reports/js/bootstrap3/config.dataTables.bootstrap").HQReportDataTables({
-+        table = hqImport("reports/js/bootstrap5/config.dataTables.bootstrap").HQReportDataTables({
-             aoColumns: colSorting,
-         });
- 
+@@ -1,8 +1,8 @@
+-hqDefine("reports/js/bootstrap3/maps_utils", [
++hqDefine("reports/js/bootstrap5/maps_utils", [
+     'jquery',
+     'knockout',
+     'underscore',
+-    'reports/js/bootstrap3/datatables_config',
++    'reports/js/bootstrap5/datatables_config',
+     'leaflet',
+ ], function (
+     $,

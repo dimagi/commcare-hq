@@ -1,0 +1,136 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="ko-tabs-update-rules" class="ko-template">
+  <div class="spacer"></div>
+  <a href="{% url "add_case_rule" domain %}">
+    <button type="button" class="btn btn-primary" id="add-new">
+      <i class="fa fa-plus"></i> {% trans "Add Automatic Case Update Rule" %}
+    </button>
+  </a>
+
+  <p class="float-end" id="lock-container" data-bind="if: hasLinkedModels">
+    <!-- ko if: allowEdit -->
+      <!-- ko ifnot: unlockLinkedData -->
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#edit-warning-modal">
+          <i class="fa fa-link"></i>
+          {% trans 'Unlock Linked Rules For Me' %}
+        </button>
+      <!-- /ko -->
+      <!-- ko if: unlockLinkedData -->
+        <button class="btn btn-outline-primary" data-bind="click: toggleLinkedLock">
+          <i class="fa fa-link"></i>
+          {% trans "Lock Linked Rules For Me" %}
+        </button>
+      <!-- /ko -->
+    <!-- /ko -->
+    <!-- ko ifnot: allowEdit -->
+      <i class="fa fa-link"></i>
+      Contains Linked Roles
+    <!-- /ko -->
+    <span class="hq-help-template"
+        data-placement="left"
+        data-title="{% trans 'Linked Configurations' %}"
+        data-content="
+          {% blocktrans %}
+            Linked configurations are controlled from a separate, linked project space.
+              <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.
+          {% endblocktrans %}">
+    </span>
+  </p>
+
+  <div class="spacer"></div>
+
+  <div class="card ">  {# todo B5: css-panel #}
+    <div class="card-body">
+      <table class="table table-striped table-hover" id="rules-table">
+        <thead>
+        <tr>
+          <th>{% trans "Name" %}</th>
+          <th>{% trans "Case Type" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Last Run" %}</th>
+          <th>{% trans "Action" %}</th>
+          <!-- ko if: $root.has_linked_data -->
+            <th></th> <!-- Empty linked header -->
+          <!-- /ko -->
+        </tr>
+        </thead>
+        <tbody data-bind="foreach: paginatedRules">
+          <tr>
+            <td>
+              <a data-bind="attr: {href: url}"><strong data-bind="text: name"></strong></a>
+            </td>
+            <td>
+              <span data-bind="text: case_type" style="display: inline-block;"></span>  {# todo B5: inline-style #}
+              <span data-bind="visible: is_case_type_deprecated" class="badge text-bg-warning" style="display: inline-block;">{% trans "deprecated" %}</span>  {# todo B5: inline-style #}
+            </td>
+            <td>
+              <span class="badge text-bg-success" data-bind="visible: active()">{% trans "Active" %}</span>
+              <span class="badge text-bg-danger" data-bind="visible: !active()">{% trans "Inactive" %}</span>
+            </td>
+            <td data-bind="text: last_run"></td>
+            <td>
+              <button type="button" class="btn btn-outline-primary"
+                data-bind="click: $root.updateRule.bind($data, 'activate'), visible: !active(), enable: !upstream_id() || $root.unlockLinkedData">
+                {% trans "Activate" %}
+              </button>
+              <button type="button" class="btn btn-outline-primary"
+                data-bind="click: $root.updateRule.bind($data, 'deactivate'), visible: active(), enable: !upstream_id() || $root.unlockLinkedData">
+                {% trans "Deactivate" %}
+              </button>
+              <button type="button" data-bs-toggle="modal" class="btn btn-outline-danger"
+                      data-bind="attr: { 'data-bs-target': '#delete-rule-' + id() }, enable: !upstream_id() || $root.unlockLinkedData">
+                <i class="fa fa-remove"></i>
+                {% trans "Delete" %}
+              </button>
+              <div class="modal fade" data-bind="attr: { id: 'delete-rule-' + id() }">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>  {# todo B5: css-close #}
+                      <h3>{% trans "Delete this rule?" %}</h3>
+                    </div>
+                    <div class="modal-body">
+                      <p class="lead">
+                        {% blocktrans %}
+                          Are you sure you want to <strong>delete</strong> this rule?
+                        {% endblocktrans %}
+                      </p>
+                      <p class="lead"><strong data-bind="text: name"></strong></p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+                        {% trans "Cancel" %}
+                      </button>
+                      <button type="button" class="btn btn-outline-danger" data-bind="click: $root.deleteRule.bind($data)"
+                              data-loading-text="Deleting Rule..." data-bs-dismiss="modal">  {# todo B5: stateful button #}
+                        <i class="fa fa-remove"></i>
+                        {% trans "Delete Rule" %}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="help-block" data-bind="visible: action_error">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span data-bind="text: action_error"></span>
+              </p>
+            </td>
+            <!-- ko if: $root.has_linked_data -->
+              <td data-bind="if: upstream_id">
+                <i class="fa fa-link"></i>
+              </td>
+            <!-- /ko -->
+          </tr>
+        </tbody>
+      </table>
+      <pagination data-apply-bindings="false"
+        params="goToPage: goToPage,
+                perPage: itemsPerPage,
+                totalItems: totalItems,
+                onLoad: onPaginationLoad,
+                slug: 'update-rule-list'"></pagination>
+    </div>
+  </div>
+</div>

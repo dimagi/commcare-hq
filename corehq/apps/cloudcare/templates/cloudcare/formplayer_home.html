@@ -40,7 +40,7 @@
   {% endcompress %}
 {% endblock %}
 
-{% requirejs_main_b5 "cloudcare/js/formplayer/main" %}
+{% js_entry "cloudcare/js/formplayer/main" %}
 
 {% block js %} {{ block.super }}
   {% include "cloudcare/partials/dependencies.html" %}
@@ -105,7 +105,7 @@
       <div id="breadcrumb-region" class="print-container"></div>
       <section id="cloudcare-notifications" class="container notifications-container"></section>
       <div id="content-plus-persistent-menu-container" class="flex-grow-1 d-lg-flex">
-        <div id="persistent-menu-region" class="d-print-none"></div>
+        <div id="persistent-menu-region" class="d-print-none d-none position-relative"></div>
         <div id="content-plus-version-info-container" class="h-100 flex-grow-1 overflow-scroll d-lg-flex-column">
           <div id="sidebar-and-content" class="d-lg-flex justify-content-center m-3">
             <div id="sidebar-region" class="noprint-sub-container me-3"></div>

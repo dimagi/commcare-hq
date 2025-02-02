@@ -1,4 +1,3 @@
-'use strict';
 hqDefine('cloudcare/js/utils', [
     'jquery',
     'underscore',
@@ -24,7 +23,7 @@ hqDefine('cloudcare/js/utils', [
     ProgressBar,
     NProgress,
     Sentry,
-    UsersModels
+    UsersModels,
 ) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -148,14 +147,11 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var showProminentLoading = function () {
-        hqRequire([
-            "cloudcare/js/formplayer/app",
-            "cloudcare/js/formplayer/layout/views/progress_bar",
-        ], function (FormplayerFrontend, ProgressBar) {
+        import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
             setTimeout(function () {
                 const formplayerQueryInProgress = sessionStorage.formplayerQueryInProgress && JSON.parse(sessionStorage.formplayerQueryInProgress);
                 if (formplayerQueryInProgress) {
-                    const progressView = ProgressBar({
+                    const progressView = new ProgressBar({
                         progressMessage: gettext("Loading..."),
                     });
                     if (!FormplayerFrontend.regions) {
@@ -226,7 +222,7 @@ hqDefine('cloudcare/js/utils', [
         if (isError) {
             showError(
                 gettext('Could not clear user data. Please report an issue if this persists.'),
-                $('#cloudcare-notifications')
+                $('#cloudcare-notifications'),
             );
         } else {
             showSuccess(gettext('User data successfully cleared.'), $('#cloudcare-notifications'), 5000);
@@ -238,7 +234,7 @@ hqDefine('cloudcare/js/utils', [
         if (isError) {
             showError(
                 gettext('Error breaking locks. Please report an issue if this persists.'),
-                $('#cloudcare-notifications')
+                $('#cloudcare-notifications'),
             );
         } else {
             showSuccess(message, $('#cloudcare-notifications'), 5000);
@@ -249,7 +245,7 @@ hqDefine('cloudcare/js/utils', [
         if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
             $('#breadcrumb-region').css('z-index', '');
             clearInterval(sessionStorage.progressIncrementInterval);
-            hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
                 const progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);
@@ -307,7 +303,7 @@ hqDefine('cloudcare/js/utils', [
             window.console.error(
                 "reportFormplayerErrorToHQ failed hard and there is nowhere " +
                 "else to report this error: " + JSON.stringify(data),
-                e
+                e,
             );
         }
     };

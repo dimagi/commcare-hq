@@ -13,7 +13,7 @@
  */
 hqDefine("app_manager/js/details/column", function () {
     const uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
-    const initialPageData = hqImport('hqwebapp/js/initial_page_data').get;
+    const initialPageData = hqImport('hqwebapp/js/initial_page_data');
     const microCaseImageName = 'cc_case_image';
 
     return function (col, screen) {
@@ -289,7 +289,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.endpointActionLabel = $('<span>Form to submit on click:</span>');
         const formEndpointOptions = [{value: "-1", label: 'Select a form endpoint'}];
         let moduleName = "";
-        const formEndpoints = Object.entries(initialPageData('form_endpoint_options'));
+        const formEndpoints = Object.entries(initialPageData.get('form_endpoint_options'));
         formEndpoints.forEach(([, endpoint]) => {
             if (endpoint.module_name !== moduleName) {
                 moduleName = endpoint.module_name;

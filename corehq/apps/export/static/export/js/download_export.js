@@ -17,9 +17,10 @@ hqDefine('export/js/download_export', [
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'reports/js/filters/bootstrap5/main',
-    'reports/js/reports.util',
+    'reports/js/util',
     'export/js/utils',
     'jquery.cookie/jquery.cookie',      // for resuming export downloads on refresh
+    'commcarehq',
 ], function (
     $,
     ko,

@@ -1,4 +1,4 @@
-'use strict';
+
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/integration_spec", [
     "underscore",
@@ -11,7 +11,7 @@ hqDefine("cloudcare/js/form_entry/spec/integration_spec", [
     initialPageData,
     sinon,
     constants,
-    formUI
+    formUI,
 ) {
     describe('Integration', function () {
         var formJSON,

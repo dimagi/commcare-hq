@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/entries_spec", [
     "underscore",
@@ -17,7 +16,7 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", [
     constants,
     entries,
     formUI,
-    utils
+    utils,
 ) {
     describe('Entries', function () {
         var questionJSON,
@@ -26,14 +25,14 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", [
         before(function () {
             initialPageData.register(
                 "has_geocoder_privs",
-                true
+                true,
             );
             initialPageData.register(
                 "toggles_dict",
                 {
                     WEB_APPS_UPLOAD_QUESTIONS: true,
                     WEB_APPS_ANCHORED_SUBMIT: false,
-                }
+                },
             );
         });
 
@@ -224,42 +223,42 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", [
 
             // Multiword filter
             assert.isTrue(
-                entries.ComboboxEntry.filter('one three', { text: 'one two three', id: 1 }, constants.COMBOBOX_MULTIWORD)
+                entries.ComboboxEntry.filter('one three', { text: 'one two three', id: 1 }, constants.COMBOBOX_MULTIWORD),
             );
             assert.isFalse(
-                entries.ComboboxEntry.filter('two three', { text: 'one two', id: 1 }, constants.COMBOBOX_MULTIWORD)
+                entries.ComboboxEntry.filter('two three', { text: 'one two', id: 1 }, constants.COMBOBOX_MULTIWORD),
             );
 
             // Fuzzy filter
             assert.isTrue(
-                entries.ComboboxEntry.filter('onet', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY)
+                entries.ComboboxEntry.filter('onet', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY),
             );
             assert.isTrue(
-                entries.ComboboxEntry.filter('onet', { text: 'onetwothree', id: 1 }, constants.COMBOBOX_FUZZY)
+                entries.ComboboxEntry.filter('onet', { text: 'onetwothree', id: 1 }, constants.COMBOBOX_FUZZY),
             );
             assert.isFalse(
-                entries.ComboboxEntry.filter('onwt', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY)
+                entries.ComboboxEntry.filter('onwt', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY),
             );
             assert.isTrue(
-                entries.ComboboxEntry.filter('OneT', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY)
+                entries.ComboboxEntry.filter('OneT', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY),
             );
             assert.isTrue(
-                entries.ComboboxEntry.filter('one tt', { text: 'one', id: 1 }, constants.COMBOBOX_FUZZY)
+                entries.ComboboxEntry.filter('one tt', { text: 'one', id: 1 }, constants.COMBOBOX_FUZZY),
             );
             assert.isTrue(
-                entries.ComboboxEntry.filter('o', { text: 'one', id: 1 }, constants.COMBOBOX_FUZZY)
+                entries.ComboboxEntry.filter('o', { text: 'one', id: 1 }, constants.COMBOBOX_FUZZY),
             );
             assert.isTrue(
-                entries.ComboboxEntry.filter('on', { text: 'on', id: 1 }, constants.COMBOBOX_FUZZY)
+                entries.ComboboxEntry.filter('on', { text: 'on', id: 1 }, constants.COMBOBOX_FUZZY),
             );
             assert.isTrue(
-                entries.ComboboxEntry.filter('three', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY)
+                entries.ComboboxEntry.filter('three', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY),
             );
             assert.isTrue(
-                entries.ComboboxEntry.filter('tree', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY)
+                entries.ComboboxEntry.filter('tree', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY),
             );
             assert.isFalse(
-                entries.ComboboxEntry.filter('thirty', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY)
+                entries.ComboboxEntry.filter('thirty', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY),
             );
         });
 
@@ -430,7 +429,7 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", [
                 assert.isTrue(moment.isMoment(res));
                 assert.equal(
                     res.toISOString(),
-                    moment(expected, "YYYY-MM-DD").toISOString()
+                    moment(expected, "YYYY-MM-DD").toISOString(),
                 );
             };
 

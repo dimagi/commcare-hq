@@ -1,3 +1,16 @@
+.field-label {
+  @extend .col-form-label, .col-12, .col-sm-4, .col-md-3, .col-lg-2;
+}
+
+.field-label + .field-control {
+  @extend .col-12, .col-sm-8, .col-md-9, .col-lg-10;
+}
+
+:not(.field-label) + .field-control,
+.row > .field-control:first-child {
+  @extend .offset-sm-4, .offset-md-3, .offset-lg-2;
+}
+
 .row > div > .form-check:first-child,
 .row > div > .input-group > .form-check:first-child {
   padding-top: add($input-padding-y, $input-border-width);
@@ -38,6 +51,10 @@ legend {
   border-bottom-right-radius: $border-radius;
   padding: $spacer 0;
   margin: 0 0 $spacer 0;
+
+  > * {
+    flex-shrink: initial;
+  }
 }
 
 .ms-header .btn {

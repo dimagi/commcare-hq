@@ -30,6 +30,8 @@ def test_get_commtrack_location_id():
     (WebUser(), 'web'),
     (CommCareUser(domain=DOMAIN), 'commcare'),
 ])
+@patch('corehq.apps.users.models._AuthorizableMixin.get_domain_membership',
+       Mock(return_value=DomainMembership(domain=DOMAIN)))
 @use("db")
 def test_user_types(user, expected_type):
     with patch_user_data_db_layer():

@@ -14,9 +14,10 @@ from dateutil.parser import isoparse
 from freezegun import freeze_time
 from nose.tools import assert_in
 
+from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeater_helpers import RepeaterResponse
-from corehq.util.test_utils import _create_case
+from corehq.util.test_utils import _create_case, flag_enabled
 
 from ..const import (
     MAX_ATTEMPTS,
@@ -150,51 +151,77 @@ class TestConnectionSettingsSoftDelete(TestCase):
 class RepeaterManagerTests(RepeaterTestCase):
 
     def test_all_ready_no_repeat_records(self):
-        repeaters = Repeater.objects.all_ready()
-        self.assertEqual(len(repeaters), 0)
+        repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+        self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_pending_repeat_record(self):
         with make_repeat_record(self.repeater, RECORD_PENDING_STATE):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 1)
-            self.assertEqual(repeaters[0].id, self.repeater.id)
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
 
     def test_all_ready_failed_repeat_record(self):
         with make_repeat_record(self.repeater, RECORD_FAILURE_STATE):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 1)
-            self.assertEqual(repeaters[0].id, self.repeater.id)
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
 
     def test_all_ready_succeeded_repeat_record(self):
         with make_repeat_record(self.repeater, RECORD_SUCCESS_STATE):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 0)
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_cancelled_repeat_record(self):
         with make_repeat_record(self.repeater, RECORD_CANCELLED_STATE):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 0)
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_paused(self):
         with make_repeat_record(self.repeater, RECORD_PENDING_STATE), \
                 pause(self.repeater):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 0)
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_next_future(self):
         in_five_mins = timezone.now() + timedelta(minutes=5)
         with make_repeat_record(self.repeater, RECORD_PENDING_STATE), \
                 set_next_attempt_at(self.repeater, in_five_mins):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 0)
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_next_past(self):
         five_mins_ago = timezone.now() - timedelta(minutes=5)
         with make_repeat_record(self.repeater, RECORD_PENDING_STATE), \
                 set_next_attempt_at(self.repeater, five_mins_ago):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 1)
-            self.assertEqual(repeaters[0].id, self.repeater.id)
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
+
+    def test_all_ready_ids(self):
+        with make_repeat_record(self.repeater, RECORD_PENDING_STATE):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
+
+    def test_distinct(self):
+        with (
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+        ):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
 
 
 @contextmanager
@@ -479,26 +506,31 @@ class TestConnectionSettingsUsedBy(TestCase):
     def setUp(self):
         super().setUp()
         url = 'https://www.example.com/api/'
-        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        self.repeater = FormRepeater(
+        self.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name=url,
+            url=url,
+        )
+
+    def test_connection_settings_used_by_data_forwarding(self):
+        FormRepeater.objects.create(
             domain=DOMAIN,
             connection_settings_id=self.conn.id
         )
-        self.repeater.save()
 
-    def test_connection_settings_used_by(self):
         self.assertEqual(self.conn.used_by, {'Data Forwarding'})
 
-    def test_conn_with_no_used_by(self):
-        new_conn = ConnectionSettings.objects.create(
-            url='http://blah-url.com',
-            domain='nice-domain'
+    def test_connection_settings_used_by_kyc(self):
+        KycConfig.objects.create(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            connection_settings_id=self.conn.id
         )
-        self.assertEqual(new_conn.used_by, set())
 
-    def tearDown(self):
-        self.repeater.delete()
-        super().tearDown()
+        self.assertEqual(self.conn.used_by, {'KYC Integration'})
+
+    def test_conn_with_no_used_by(self):
+        self.assertEqual(self.conn.used_by, set())
 
 
 class TestRepeaterConnectionSettings(RepeaterTestCase):
@@ -546,6 +578,25 @@ class TestAttemptForwardNow(RepeaterTestCase):
         self.assert_not_called(retry_process)
 
     def test_fire_synchronously(self, process, retry_process):
+        rec = self.new_record()
+        rec.attempt_forward_now(fire_synchronously=True)
+
+        process.assert_called_once()
+        self.assert_not_called(retry_process)
+
+    @flag_enabled('PROCESS_REPEATERS')
+    def test_process_repeaters_enabled(self, process, retry_process):
+        rec = self.new_record()
+        rec.attempt_forward_now()
+
+        self.assert_not_called(process, retry_process)
+
+    @flag_enabled('PROCESS_REPEATERS')
+    def test_fire_synchronously_process_repeaters_enabled(
+            self,
+            process,
+            retry_process,
+    ):
         rec = self.new_record()
         rec.attempt_forward_now(fire_synchronously=True)
 
@@ -764,6 +815,15 @@ class TestRepeatRecordManager(RepeaterTestCase):
             DOMAIN, repeater_id=non_default_repeater.id, state=State.Fail, payload_id="waldo"
         )
         self.assertCountEqual([actual.id], ids)
+
+    def test_count(self):
+        with (
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+            make_repeat_record(self.repeater, RECORD_PENDING_STATE),
+        ):
+            count = RepeatRecord.objects.count_all_ready()
+            self.assertEqual(count, 3)
 
     def new_record(self, next_check=before_now, state=State.Pending, domain=DOMAIN, payload_id="c0ffee"):
         return self.new_record_for_repeater(

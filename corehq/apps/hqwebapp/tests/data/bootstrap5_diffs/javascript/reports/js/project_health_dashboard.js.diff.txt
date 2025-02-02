@@ -1,13 +1,12 @@
 --- 
 +++ 
-@@ -1,5 +1,5 @@
- /* globals moment */
--hqDefine("reports/js/bootstrap3/project_health_dashboard", function () {
-+hqDefine("reports/js/bootstrap5/project_health_dashboard", function () {
-     // "Performing / Active User Trends" Chart
-     function setupCharts(data) {
-         var highPerformingSeries = {
-@@ -108,7 +108,7 @@
+@@ -1,4 +1,4 @@
+-hqDefine("reports/js/bootstrap3/project_health_dashboard", [
++hqDefine("reports/js/bootstrap5/project_health_dashboard", [
+     'jquery',
+     'underscore',
+     'd3/d3.min',
+@@ -120,7 +120,7 @@
      // User Information PopOver, when clicked on username
      function setupPopovers() {
          // ajax popover: http://stackoverflow.com/a/14560039/8207
