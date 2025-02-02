@@ -1,4 +1,5 @@
 import cProfile
+from unittest.mock import patch
 
 from django.core.management import BaseCommand
 
@@ -19,6 +20,10 @@ May I suggest interpreting the file with
 """
 
 
+class FakeRequest:
+    ...
+
+
 class Command(BaseCommand):
     """Runs a profiled restore for the provided user"""
 
@@ -34,11 +39,12 @@ class Command(BaseCommand):
 
         filename = f'restore-{get_timestamp_for_filename()}.prof'
         profile = cProfile.Profile()
-        profile.enable()
-        response, timing_context = get_restore_response(
-            domain, couch_user, app_id=app_id, version="2.0"
-        )
-        profile.disable()
+        with patch('corehq.util.quickcache.get_request', lambda: FakeRequest()):
+            profile.enable()
+            response, timing_context = get_restore_response(
+                domain, couch_user, app_id=app_id, version="2.0"
+            )
+            profile.disable()
         profile.dump_stats(filename)
 
         timing_context.print()

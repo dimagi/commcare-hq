@@ -3,7 +3,7 @@ from django.test.client import RequestFactory
 
 import stripe
 from unittest.mock import patch
-from stripe.stripe_object import StripeObject
+from stripe import StripeObject
 
 from corehq.apps.accounting.models import (
     BillingAccount,

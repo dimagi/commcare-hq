@@ -8,7 +8,7 @@ get_changed() {
 prettify() {
     FILES=$1
     echo "Formatting files changed on this branch:"
-    ./node_modules/.bin/prettier --write "$FILES"
+    echo "$FILES" | xargs ./node_modules/.bin/prettier --write
     echo
 }
 

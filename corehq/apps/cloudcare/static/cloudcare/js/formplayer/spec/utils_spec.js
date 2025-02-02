@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/utils_spec", [
     "underscore",
@@ -20,7 +19,7 @@ hqDefine("cloudcare/js/formplayer/spec/utils_spec", [
     API,
     FakeFormplayer,
     UsersModels,
-    Utils
+    Utils,
 ) {
     describe('Utils', function () {
         describe('#displayOptions', function () {
@@ -244,7 +243,7 @@ hqDefine("cloudcare/js/formplayer/spec/utils_spec", [
                 assert.equal(response.type, "query");
                 assert.deepEqual(_.pluck(response.displays, 'id'), ['dob']);
 
-                FormplayerFrontend.trigger("menu:query", {dob: "2010-01-19"});
+                FormplayerFrontend.getChannel().request("menu:query", {dob: "2010-01-19"});
                 let url = Utils.currentUrlToObject();
                 assert.deepEqual(url.selections, ['1', 'action 0']);
                 assert.deepEqual(_.keys(url.queryData), ["search_command.m1"]);

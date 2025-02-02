@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", [
     "sinon/pkg/sinon",
@@ -19,7 +18,7 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", [
     Fixtures,
     taskQueue,
     Utils,
-    webFormSession
+    webFormSession,
 ) {
     describe('WebForm', function () {
         before(function () {
@@ -94,7 +93,7 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", [
 
             initialPageData.registerUrl(
                 "report_formplayer_error",
-                "/a/domain/cloudcare/apps/report_formplayer_error"
+                "/a/domain/cloudcare/apps/report_formplayer_error",
             );
 
             beforeEach(function () {
@@ -121,7 +120,7 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", [
                         200,
                         { 'Content-Type': 'application/json' },
                         '{ "status": "success", "session_id": "my-session" }',
-                    ]
+                    ],
                 );
 
                 // Setup server constants
@@ -280,7 +279,7 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", [
 
             initialPageData.registerUrl(
                 "report_formplayer_error",
-                "/a/domain/cloudcare/apps/report_formplayer_error"
+                "/a/domain/cloudcare/apps/report_formplayer_error",
             );
 
             beforeEach(function () {

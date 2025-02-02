@@ -171,6 +171,20 @@ class TestTableauAPIUtil(TestTableauAPISession):
                              sorted(mock_update_user_remote.call_args.kwargs['groups']))
 
     @mock.patch('corehq.apps.reports.models.requests.request')
+    @mock.patch('corehq.apps.reports.util._update_user_remote')
+    def test_update_tableau_user_without_updating_groups(self, mock_update_user_remote, mock_request):
+        TableauServer.objects.filter(domain=self.domain).update(allowed_tableau_groups=['group1'])
+        mock_request.side_effect = (_mock_create_session_responses(self)
+        + [self.tableau_instance.get_groups_for_user_id_response()])
+
+        update_tableau_user(self.domain, 'pbeasley', 'Viewer')
+
+        mock_update_user_remote.assert_called_once()
+        self.assertListEqual(sorted([TableauGroupTuple(name='group1', id='1a2b3'),
+                                     TableauGroupTuple(name='group2', id='c4d5e')]),
+                             sorted(mock_update_user_remote.call_args.kwargs['groups']))
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
     def test_update_tableau_user_remote(self, mock_request):
         mock_request.side_effect = (_mock_create_session_responses(self)
         + [self.tableau_instance.get_groups_for_user_id_response(),

@@ -179,7 +179,7 @@
   <p>
     In CommCare HQ, we have created a wrapper class around our reporting use of datatables called
     <code>GenericTabularReport</code>, which takes care of generating the datatables configuration in
-    <code>config.dataTables.bootstrap.js</code>. This was done in an effort to reduce the amount of HTML and
+    <code>datatables_config.js</code>. This was done in an effort to reduce the amount of HTML and
     javascript required to create a report, as generating custom reports for projects was once very common in HQ.
     With the introduction of User Configurable Reports (UCRs), this need for quickly creating these hard-coded
     custom reports has since been eliminated.
@@ -194,7 +194,7 @@
   </p>
   <p>
     When our reporting tools were created, DataTables was still a fairly young library and had its own set of issues,
-    which you can see in <code>config.dataTables.bootstrap.js</code> if you examine the strangely named variables in
+    which you can see in <code>datatables_config.js</code> if you examine the strangely named variables in
     still in "hungarian notation" style. Thankfully, the developers of dataTables have kept later versions
     backwards-compatible with this older notation, but for reference here is a
     <a href="https://datatables.net/upgrade/1.10-convert" target="_blank">conversion guide</a> for the older configuration
@@ -204,7 +204,7 @@
     {# todo future developer: remove with use_bootstrap5 removal cleanup and revisit text above too #}
     <strong>Important:</strong> As of the time of this writing, the Bootstrap 3 to 5 migration is still ongoing
     and the Reporting section has not yet been migrated. Please ensure that during that migration, the notation in
-    <code>config.dataTables.bootstrap.js</code> is updated. Thank you.
+    <code>datatables_config.js</code> is updated. Thank you.
   </div>
   <h3 id="datatables-simple" class="pt-3">
     Simple Example

@@ -1,11 +1,25 @@
-hqDefine('userreports/js/base', function () {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+hqDefine('userreports/js/base', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'reports_core/js/charts',
+    'reports_core/js/bootstrap3/maps',
+    'reports/js/bootstrap3/datatables_config',
+    'reports/js/charts/main',
+    'reports/js/filters/bootstrap3/main',
+], function (
+    $,
+    initialPageData,
+    charts,
+    maps,
+    dataTablesConfig,
+    chartsMain,
+    filtersMain,
+) {
     var baseUrl = initialPageData.get('url');
     function getReportUrl() {
         return baseUrl;
     }
     $(function () {
-        var charts = hqImport('reports_core/js/charts');
         var chartSpecs = initialPageData.get('charts');
         var updateCharts = function (data) {
             if (chartSpecs !== null && chartSpecs.length > 0) {
@@ -24,8 +38,7 @@ hqDefine('userreports/js/base', function () {
         var updateMap = function (data) {
             if (mapSpec) {
                 mapSpec.mapboxAccessToken = initialPageData.get('MAPBOX_ACCESS_TOKEN');
-                var renderMap = hqImport('reports_core/js/bootstrap3/maps').render;
-                renderMap(mapSpec, data.aaData, $("#map-container"));
+                maps.render(mapSpec, data.aaData, $("#map-container"));
             }
         };
 
@@ -34,7 +47,7 @@ hqDefine('userreports/js/base', function () {
                 if (data.aaData !== undefined && data.iTotalRecords !== undefined) {
                     if (data.aaData.length < data.iTotalRecords) {
                         $('#info-message').html(
-                            gettext('Showing the current page of data. Switch pages to see more data.')
+                            gettext('Showing the current page of data. Switch pages to see more data.'),
                         );
                         $('#report-info').removeClass('hide');
                     } else {
@@ -65,7 +78,7 @@ hqDefine('userreports/js/base', function () {
             }
         };
 
-        var reportTables = hqImport("reports/js/bootstrap3/config.dataTables.bootstrap").HQReportDataTables({
+        var reportTables = dataTablesConfig.HQReportDataTables({
             dataTableElem: '#report_table_' + initialPageData.get('report_slug'),
             defaultRows: initialPageData.get('table_default_rows'),
             startAtRowNum: initialPageData.get('table_start_at_row'),
@@ -105,8 +118,8 @@ hqDefine('userreports/js/base', function () {
 
         // filter init
         $(function () {
-            hqImport("reports/js/filters/bootstrap3/main").init();
-            hqImport("reports/js/charts/main").init();
+            filtersMain.init();
+            chartsMain.init();
         });
     });
 });
