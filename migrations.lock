@@ -903,6 +903,8 @@ scheduling
  0026_add_model_fcm_notification_content
  0027_emailcontent_html_message
  0028_alertschedule_use_user_case_for_filter_and_more
+ 0029_connectmessagecontent_connectmessagesurveycontent_and_more
+ 0030_remove_connectmessagesurveycontent_message_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -977,6 +979,8 @@ sms
  0057_fcm_content_type_messaging_events
  0058_email_html_body
  0059_remove_unicel_backend
+ 0060_alter_messagingevent_content_type_and_more
+ 0061_connectmessage_message_id_connectmessage_received_on
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1276,6 +1280,7 @@ users
  0073_rm_location_from_user_data
  0074_alter_sqluserdata_profile
  0075_hqapikey_encrypted_key
+ 0076_connectiduserlink_messaging_consent_and_more
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
