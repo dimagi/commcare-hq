@@ -904,7 +904,6 @@ scheduling
  0027_emailcontent_html_message
  0028_alertschedule_use_user_case_for_filter_and_more
  0029_connectmessagecontent_connectmessagesurveycontent_and_more
- 0030_remove_connectmessagesurveycontent_message_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -980,7 +979,6 @@ sms
  0058_email_html_body
  0059_remove_unicel_backend
  0060_alter_messagingevent_content_type_and_more
- 0061_connectmessage_message_id_connectmessage_received_on
 smsbillables
  0001_initial
  0002_bootstrap
