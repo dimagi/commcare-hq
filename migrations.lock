@@ -650,6 +650,7 @@ integration
  0005_gaenotpserversettings_server_type
  0006_kycconfig
  0007_alter_kycconfig_api_field_to_user_data_map
+ 0008_kycconfig_provider_kycconfig_unique_domain_provider
 ivr
  0001_initial
  0002_call_app_id
