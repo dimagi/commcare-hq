@@ -13,6 +13,7 @@ from corehq.util.htmx_action import HqHtmxActionMixin
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
 class KycConfigurationView(BaseDomainView, HqHtmxActionMixin):
     section_name = _("Data")
     urlname = 'kyc_configuration'
@@ -21,10 +22,6 @@ class KycConfigurationView(BaseDomainView, HqHtmxActionMixin):
 
     form_class = KycConfigureForm
     form_template_partial_name = 'kyc/partials/kyc_config_form_partial.html'
-
-    @method_decorator(toggles.KYC_VERIFICATION.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(KycConfigurationView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
