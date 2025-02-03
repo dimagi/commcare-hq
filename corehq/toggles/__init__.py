@@ -3014,7 +3014,7 @@ INCREASE_DEVICE_LIMIT_PER_USER = StaticToggle(
 
 KYC_VERIFICATION = StaticToggle(
     slug='kyc_verification',
-    label='Enable KYC verification for mobile workers',
+    label='Enable KYC verification',
     tag=TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
 )
