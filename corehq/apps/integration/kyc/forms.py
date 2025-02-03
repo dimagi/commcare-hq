@@ -81,9 +81,10 @@ class KycConfigureForm(forms.ModelForm):
                     x_init='provider = $el.value',
                     x_show='showProvider',
                 ),
-                crispy.Field(
+                crispy.Div(
                     'api_field_to_user_data_map',
                     x_init='api_field_to_user_data_map = $el.value',
+                    css_id='api-mapping',
                 ),
                 crispy.Field(
                     'connection_settings',
