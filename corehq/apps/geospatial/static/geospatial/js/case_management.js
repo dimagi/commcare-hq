@@ -159,12 +159,6 @@ hqDefine("geospatial/js/case_management", [
                         self.setBusy(false);
                     }
                 },
-                error: function () {
-                    alertUser.alert_user(
-                        gettext("Oops! Something went wrong! Please check that your geospatial settings are configured correctly or contact admin if the problem persists."), 'danger'
-                    );
-                    self.setBusy(false);
-                },
             });
         };
 

@@ -22,14 +22,14 @@ hqDefine("app_manager/js/forms/form_view", function () {
         var self = {};
         var patterns = initialPageData.get('form_filter_patterns');
 
-        self.formFilter = ko.observable(initialPageData.get('form_filter'));
+        self.form_filter = ko.observable(initialPageData.get('form_filter'));
 
         self.caseReferenceNotAllowed = ko.computed(function () {
             var moduleUsesCase = initialPageData.get('all_other_forms_require_a_case') && initialPageData.get('form_requires') === 'case';
             if (!moduleUsesCase || (initialPageData.get('put_in_root') && !initialPageData.get('root_requires_same_case'))) {
                 // We want to determine here if the filter expression references
                 // any case but the user case.
-                var filter = self.formFilter();
+                var filter = self.form_filter();
                 if (typeof(filter) !== 'string') {
                     return true;
                 }
@@ -48,7 +48,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
         self.isUsercaseInUse = ko.observable(initialPageData.get('is_usercase_in_use'));
         self.usercaseReferenceNotAllowed = ko.computed(function () {
             return !self.isUsercaseInUse() && formFilterMatches(
-                self.formFilter(), patterns.usercase_substring
+                self.form_filter(), patterns.usercase_substring
             );
         });
 
