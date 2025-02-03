@@ -38,35 +38,65 @@ Quill.register({
 });
 
 ko.bindingHandlers.richEditor = {
-    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+    init: function (element, valueAccessor) {
         const fontFamilyArr = ["Roboto Condensed", "Times New Roman", "Calibri", "Calibri Light", "Sans-Serif"];
         let fonts = Quill.import("attributors/style/font");
         fonts.whitelist = fontFamilyArr;
         Quill.register(fonts, true);
 
-        const toolbarOptions = [
-            [{ 'header': [false, 1, 2, 3] }],
-            ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
-            // ['blockquote', 'code-block'],
-            ['link', 'image'],
-
-            [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
-            // [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
-            [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
-            // [{ 'direction': 'rtl' }],                         // text direction
-
-            [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
-            [{ 'font': fontFamilyArr }],
-            [{ 'align': [] }],
-
-            ['clean'],                                        // remove formatting button
-        ];
-
+        const toolbar = element.parentElement.querySelector("#ql-toolbar");
         const editor = new Quill(element, {
             modules: {
-                toolbar: toolbarOptions,
+                toolbar: toolbar,
             },
-            theme: 'snow',
+            theme: "snow",
+        });
+
+        let currentSelectionRange = { index: 0, length: 0};
+        const insertImageButton = toolbar.querySelector("#insert-image");
+        insertImageButton.addEventListener("click", function (clickEvent) {
+            clickEvent.stopPropagation();
+            const input = document.createElement("input");
+            input.onchange = function (onChangeEvent) {
+                const file = onChangeEvent.target.files[0];
+                const uploadUrl = initialPageData.reverse("upload_messaging_image");
+                let formData = new FormData();
+
+                formData.append("upload", file, file.name);
+                fetch(uploadUrl, {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-CSRFTOKEN": $("#csrfTokenContainer").val(),
+                    },
+                })
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        const Delta =  Quill.import("delta");
+                        editor.updateContents(
+                            new Delta()
+                                .retain(currentSelectionRange.index)
+                                .delete(currentSelectionRange.length)
+                                .insert({
+                                    image: data.url,
+                                }, {
+                                    // link: data.url,
+                                    alt: file.name,
+                                }),
+                        );
+                    });
+            };
+            input.accept = "image/png, image/jpeg";
+            input.type = "file";
+            input.click();
+        });
+
+        editor.on("selection-change", (range) => {
+            if (range) {
+                currentSelectionRange = range;
+            }
         });
 
         const value = ko.utils.unwrapObservable(valueAccessor());
@@ -75,7 +105,7 @@ ko.bindingHandlers.richEditor = {
         let isSubscriberChange = false;
         let isEditorChange = false;
 
-        editor.on('text-change', function(delta, source) {
+        editor.on("text-change", function () {
             if (!isSubscriberChange) {
                 isEditorChange = true;
                 valueAccessor()(editor.root.innerHTML);
@@ -91,7 +121,7 @@ ko.bindingHandlers.richEditor = {
             }
         });
 
-        if (initialPageData.get('read_only_mode')) {
+        if (initialPageData.get("read_only_mode")) {
             editor.enable(false);
         }
     },

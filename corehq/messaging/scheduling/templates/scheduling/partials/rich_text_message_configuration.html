@@ -14,7 +14,7 @@
 </div>
 
 <div class="controls translation-controls" data-bind="visible: !translate()">
-  <div data-bind="richEditor: nonTranslatedMessage"></div>
+  {% include "scheduling/partials/rich_text_editor.html" with editableText="nonTranslatedMessage" %}
 </div>
 
 <div data-bind="visible: translate(), foreach: translatedMessages">
@@ -23,6 +23,6 @@
       >{% trans "Translation" %} (<span data-bind="text: language_code"></span
       >):</label
     >
-    <div data-bind="richEditor: html_message"></div>
+    {% include "scheduling/partials/rich_text_editor.html" with editableText="html_message" %}
   </div>
 </div>
