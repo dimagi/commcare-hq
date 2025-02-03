@@ -8,7 +8,7 @@ hqDefine("domain/js/bootstrap5/info_basic", [
 ) {
     $(function () {
         $('#id_default_timezone').select2({
-            placeholder: gettext('Select a Timezone...'),
+            placeholder: 'Select a Timezone...',
         });
 
         $('#id_call_center_enabled').change(function () {
