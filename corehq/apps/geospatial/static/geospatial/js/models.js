@@ -1056,17 +1056,20 @@ hqDefine('geospatial/js/models', [
         };
 
         self.assignUserToCases = function () {
-            const selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()].item;
+            let selectedUser;
+            if (self.selectedUserId()) {
+                selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()].item;
+            }
             for (const caseItem of self.caseDataPage()) {
                 if (!caseItem.isSelected()) {
                     continue;
                 }
 
                 caseItem.assignedUsername(
-                    (selectedUser) ? selectedUser.name : emptyColStr
+                    (selectedUser) ? selectedUser.name : emptyColStr,
                 );
                 caseItem.assignedUserPrimaryLocName(
-                    (selectedUser) ? selectedUser.customData.primary_loc_name : emptyColStr
+                    (selectedUser) ? selectedUser.customData.primary_loc_name : emptyColStr,
                 );
                 caseItem.assignedUserId = self.selectedUserId();
                 caseItem.isSelected(false);

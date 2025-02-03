@@ -13,10 +13,9 @@ hqDefine("reports/js/bootstrap5/async", [
     alertUser,
     chartsMain,
     filtersMain,
-    reportsUtil
+    reportsUtil,
 ) {
     return function (o) {
-        'use strict';
         var self = {};
         self.reportContent = $('#report-content');
         self.filterForm = o.filterForm || $('#paramSelectorForm');

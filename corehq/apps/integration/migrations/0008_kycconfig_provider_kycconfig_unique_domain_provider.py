@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('integration', '0006_kycconfig'),
+        ('integration', '0007_alter_kycconfig_api_field_to_user_data_map'),
     ]
 
     operations = [

@@ -2,10 +2,11 @@ hqDefine("reports/js/charts/pie_chart", [
     'jquery',
     'd3/d3.min',
     'nvd3/nv.d3.min',
+    'nvd3/src/nv.d3.css',
 ], function (
     $,
     d3,
-    nv
+    nv,
 ) {
     var init = function (data) {
         nv.addGraph(function () {

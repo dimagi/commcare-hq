@@ -10,9 +10,8 @@ hqDefine('reports/v2/js/views/bootstrap5/explore_case_data', [
     ko,
     _,
     context,
-    datagrid
+    datagrid,
 ) {
-    'use strict';
     var view = {};
 
     view.config = context.getReportConfig();
