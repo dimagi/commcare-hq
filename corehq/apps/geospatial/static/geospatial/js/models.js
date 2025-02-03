@@ -1056,7 +1056,10 @@ hqDefine('geospatial/js/models', [
         };
 
         self.assignUserToCases = function () {
-            const selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()].item;
+            let selectedUser;
+            if (self.selectedUserId()) {
+                selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()].item;
+            }
             for (const caseItem of self.caseDataPage()) {
                 if (!caseItem.isSelected()) {
                     continue;

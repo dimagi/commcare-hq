@@ -6,7 +6,7 @@ hqDefine("reports/js/tableau", [
 ], function (
     $,
     _,
-    initialPageData
+    initialPageData,
 ) {
     var self = {};
 
@@ -50,7 +50,7 @@ hqDefine("reports/js/tableau", [
             new window.tableau.Viz(containerDiv, url, {
                 hideTabs: true,
             });
-        })
+        });
     };
 
     $(document).ready(function () {

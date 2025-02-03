@@ -10,7 +10,7 @@
 -], function (
 -    $,
 -    _,
--    googleAnalytics
+-    googleAnalytics,
 -) {
 -    var HQReportDataTables = function (options) {
 -        var self = {};
