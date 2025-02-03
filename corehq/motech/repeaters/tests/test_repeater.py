@@ -1309,23 +1309,34 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         repeat_record = self.repeater.repeat_records_ready.first()
         payload_str = repeat_record.get_payload()
         payload = json.loads(payload_str)
+        self._assert_payload_equal(payload, doc_id, [expected_indicators])
 
-        # assert payload == {
-        #     'data_source_id': self.data_source._id,
-        #     'doc_id': doc_id,
-        #     'data': [expected_indicators],
-        # }
-        # ^^^ kinda like this, but accommodates the value of "estimate":
-        assert set(payload.keys()) == {'data_source_id', 'doc_id', 'data'}
-        assert payload['data_source_id'] == self.data_source._id
-        assert payload['doc_id'] == doc_id
-        assert len(payload['data']) == 1
-        for key, value in payload['data'][0].items():
-            if key == 'estimate':
-                # '2.3000000000000000' == '2.2999999999...1893310546875'
-                assert float(value) == float(expected_indicators[key])
-            else:
-                assert value == expected_indicators[key]
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_merged_payload_doc(self):
+        doc_id_1, expected_indicators_1 = self._create_log_and_repeat_record()
+        doc_id_2, expected_indicators_2 = self._create_log_and_repeat_record()
+        self.repeater.merge_records()
+        repeat_record = self.repeater.repeat_records_ready.first()
+        json_payload = repeat_record.get_payload()
+        payload = json.loads(json_payload)
+
+        del expected_indicators_1['estimate']
+        del expected_indicators_2['estimate']
+        for p in payload['data']:
+            del p['estimate']
+
+        self._assert_payload_equal(
+            payload,
+            f"{doc_id_1},{doc_id_2}",
+            [expected_indicators_1, expected_indicators_2],
+        )
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_merged_record_count(self):
+        self._create_log_and_repeat_record()
+        self._create_log_and_repeat_record()
+        self.repeater.merge_records()
+        assert self.repeater.repeat_records_ready.count() == 1
 
     def _create_log_and_repeat_record(self):
         from corehq.apps.userreports.tests.test_pillow import _save_sql_case
@@ -1342,6 +1353,24 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         json_indicators = json.dumps(expected_indicators, cls=CommCareJSONEncoder)
         expected_indicators = json.loads(json_indicators)
         return sample_doc['_id'], expected_indicators
+
+    def _assert_payload_equal(self, payload, doc_id, expected_indicators):
+        # assert payload == {
+        #     'data_source_id': self.data_source._id,
+        #     'doc_id': doc_id,
+        #     'data': expected_indicators,
+        # }
+        # ^^^ kinda like this, but accommodates the value of "estimate":
+        assert set(payload.keys()) == {'data_source_id', 'doc_id', 'data'}
+        assert payload['data_source_id'] == self.data_source._id
+        assert payload['doc_id'] == doc_id
+        for i, data in enumerate(payload['data']):
+            for key, value in data.items():
+                if key == 'estimate':
+                    # '2.3000000000000000' == '2.2999999999...1893310546875'
+                    assert float(value) == float(expected_indicators[i][key])
+                else:
+                    assert value == expected_indicators[i][key]
 
 
 class TestSetBackoff(TestCase):
