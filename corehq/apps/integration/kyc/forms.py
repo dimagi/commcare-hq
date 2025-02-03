@@ -56,7 +56,6 @@ class KycConfigureForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance = kwargs.pop('instance')
-        self.domain = self.instance.domain
         self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(
             domain=self.instance.domain
         )
