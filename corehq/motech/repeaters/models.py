@@ -959,7 +959,6 @@ class DataSourceRepeater(Repeater):
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        # TODO: Test
         if self.SEP in repeat_record.payload_id:
             rows = [
                 row
@@ -986,7 +985,6 @@ class DataSourceRepeater(Repeater):
             domain=domain, options={"data_source_id": data_source_id}
         ).exists()
 
-    # TODO: Test
     def merge_records(self):
         """
         Merges updates to the same data source.
