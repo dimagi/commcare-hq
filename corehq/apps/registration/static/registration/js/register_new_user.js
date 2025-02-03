@@ -42,7 +42,8 @@ hqDefine('registration/js/register_new_user', [
             $email
                 .find('.form-control-feedback')
                 .removeClass('fa-check fa-remove')
-                .addClass('fa-spinner fa-spin');
+                .addClass('fa-spinner fa-spin')
+                .addClass('disable-on-submit');
         } else {
             var inputClass = 'has-error',
                 iconClass = 'fa-remove';

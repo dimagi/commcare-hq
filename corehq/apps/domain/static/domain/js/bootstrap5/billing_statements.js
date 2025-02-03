@@ -40,7 +40,7 @@ hqDefine("domain/js/bootstrap5/billing_statements", [
     var bulkPaymentHandler = paymentMethodHandler(
         "bulk-payment-form",
         {
-            submitBtnText: "Submit Payment",
+            submitBtnText: gettext("Submit Payment"),
             errorMessages: initialPageData.get("payment_error_messages"),
             submitURL: initialPageData.get("payment_urls").process_bulk_payment_url,
         }
