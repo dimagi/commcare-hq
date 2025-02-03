@@ -7,7 +7,7 @@ hqDefine("reports/js/inspect_data", [
     $,
     _,
     kissAnalytics,
-    initialPageData
+    initialPageData,
 ) {
     var generateFiltersForAnalytics = function (selector, userTypes, dataLookup) {
         var typePrefix = "t__",

@@ -25,7 +25,7 @@ hqDefine("reports/js/bootstrap5/case_details", [
     kissmetrics,
     casePropertyModal,
     dataCorrections,
-    singleForm
+    singleForm,
 ) {
     var xformDataModel = function (data) {
         var self = {};
