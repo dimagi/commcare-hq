@@ -9,7 +9,7 @@ hqDefine("hqwebapp/js/bootstrap5/prepaid_modal", [
 ], function (
     kissmetrics,
     initialPageData,
-    $
+    $,
 ) {
     function snooze(slug, domain) {
         $.cookie(cookieName(slug, domain), true, { expires: 30, path: '/', secure: initialPageData.get('secure_cookies') });

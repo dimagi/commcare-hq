@@ -12,7 +12,7 @@ hqDefine("data_interfaces/js/bootstrap3/deduplication_rules", [
     _,
     initialPageData,
     CRUDPaginatedList,
-    googleAnalytics
+    googleAnalytics,
 ) {
     var showActionError = function (rule, error) {
         var newItemData = _.extend({}, rule.itemData(), {

@@ -16,9 +16,8 @@ hqDefine("geospatial/js/gps_capture", [
     _,
     initialPageData,
     mapboxgl,
-    MapboxGeocoder
+    MapboxGeocoder,
 ) {
-    'use strict';
     const MAP_CONTAINER_ID = "geospatial-map";
     const USERS_PER_PAGE = 10;
 
@@ -316,8 +315,6 @@ hqDefine("geospatial/js/gps_capture", [
     }
 
     var initMap = function () {
-        'use strict';
-
         mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
 
         let centerCoordinates = [2.43333330, 9.750]; // should be domain specific
@@ -340,7 +337,7 @@ hqDefine("geospatial/js/gps_capture", [
                 marker: false,
             }).on('result', function (resultObject) {
                 updateGPSCoordinates(resultObject.result.center[0], resultObject.result.center[1]);
-            })
+            }),
         );
 
         map.on('click', (event) => {

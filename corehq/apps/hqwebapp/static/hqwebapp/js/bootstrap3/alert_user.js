@@ -20,13 +20,13 @@ hqDefine("hqwebapp/js/bootstrap3/alert_user", [
 ],
 function (
     $,
-    ko
+    ko,
 ) {
     var MessageAlert = function (message, tags, fadeOut) {
         var self = {
             "message": ko.observable(message),
             "alert_class": ko.observable(
-                "alert fade in message-alert"
+                "alert fade in message-alert",
             ),
         };
         if (tags) {
@@ -40,7 +40,7 @@ function (
                 clearTimeout(self.timer);
                 self.timer = setTimeout(removeAlertTimerFunc(self), 5000);
             }
-        }
+        };
         return self;
     };
 

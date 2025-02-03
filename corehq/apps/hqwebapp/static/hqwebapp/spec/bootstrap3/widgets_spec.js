@@ -2,7 +2,7 @@
 hqDefine("hqwebapp/spec/bootstrap3/widgets_spec", [
     'hqwebapp/js/bootstrap3/widgets',
 ], function (
-    widgets
+    widgets,
 ) {
     describe('widgets', function () {
         describe('parseEmail', function () {

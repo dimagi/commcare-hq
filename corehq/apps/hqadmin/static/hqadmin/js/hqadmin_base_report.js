@@ -5,7 +5,7 @@ hqDefine('hqadmin/js/hqadmin_base_report', [
 ], function (
     $,
     initialPageData,
-    datatablesConfig
+    datatablesConfig,
 ) {
     $(function () {
         var aoColumns = initialPageData.get('aoColumns');

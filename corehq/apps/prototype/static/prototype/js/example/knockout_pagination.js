@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine("prototype/js/example/knockout_pagination",[
     'jquery',

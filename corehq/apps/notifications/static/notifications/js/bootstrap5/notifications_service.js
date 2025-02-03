@@ -16,10 +16,8 @@ hqDefine('notifications/js/bootstrap5/notifications_service', [
     ko,
     _,
     RMI,
-    kissmetrics
+    kissmetrics,
 ) {
-    'use strict';
-
     // Workaround for non-RequireJS pages: when `define` doesn't exist, RMI is just a global variable.
     RMI = RMI || window.RMI;
 
@@ -59,7 +57,7 @@ hqDefine('notifications/js/bootstrap5/notifications_service', [
                     if (self.isFeature()) {
                         kissmetrics.track.event("Notifications tab - Clicked notifications tab - " +
                             "Clicked on Case Sharing text link",
-                            {email: data.email, domain: data.domain});
+                        {email: data.email, domain: data.domain});
                     }
                 });
             self.isRead(true);
@@ -81,9 +79,9 @@ hqDefine('notifications/js/bootstrap5/notifications_service', [
 
         self.hasUnreadFeatureNotification = ko.computed(function () {
             return _.some(self.notifications(), function (note) {
-                return !note.isRead() && (note.type() === 'feat_basic' || note.type() === 'feat_pro')
+                return !note.isRead() && (note.type() === 'feat_basic' || note.type() === 'feat_pro');
             });
-        })
+        });
 
         self.seen = ko.computed(function () {
             if (self.hasUnreadFeatureNotification()) {

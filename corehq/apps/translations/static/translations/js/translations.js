@@ -9,10 +9,9 @@ hqDefine("translations/js/translations", [
     _,
     hqMain,
     UIInput,
-    UISelect
+    UISelect,
 ) {
     var mk_translation_ui = function (spec) {
-        "use strict";
         var translation_ui = {
                 translations: {},
                 $home: spec.$home,
@@ -175,7 +174,8 @@ hqDefine("translations/js/translations", [
         };
 
         translation_ui.save = function () {
-            var key, data = {};
+            var key,
+                data = {};
             var error = false;
             for (key in translation_ui.translations) {
                 if (translation_ui.translations.hasOwnProperty(key)) {
