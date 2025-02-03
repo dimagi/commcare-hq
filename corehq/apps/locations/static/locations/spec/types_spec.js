@@ -6,7 +6,7 @@ hqDefine("locations/spec/types_spec", [
 ], function (
     _,
     locationsData,
-    locationsTypes
+    locationsTypes,
 ) {
     describe('Location Types', function () {
 
@@ -46,7 +46,7 @@ hqDefine("locations/spec/types_spec", [
                 it('Provides all levels down to the current one, including root', function () {
                     var returnedLocTypes = _.map(
                             this.block_model.expand_from_options(),
-                            extractName
+                            extractName,
                         ),
                         desiredLocTypesReturned = _.map([this.state_model, this.district_model], extractName);
                     desiredLocTypesReturned.push('root');
@@ -87,7 +87,7 @@ hqDefine("locations/spec/types_spec", [
                 it('Provides all levels', function () {
                     var returnedLocTypes = _.map(
                             this.block_model.include_without_expanding_options(),
-                            extractName
+                            extractName,
                         ),
                         desiredLocTypesReturned = _.map([this.state_model, this.district_model, this.block_model, this.supervisor_model], extractName);
                     assert.sameMembers(desiredLocTypesReturned, returnedLocTypes);
@@ -97,7 +97,7 @@ hqDefine("locations/spec/types_spec", [
                     this.block_model.expand_from(-1);
                     var returnedLocTypes = _.map(
                         this.block_model.include_without_expanding_options(),
-                        extractName
+                        extractName,
                     );
                     assert.equal(0, returnedLocTypes.length);
                 });
@@ -127,7 +127,7 @@ hqDefine("locations/spec/types_spec", [
 
                     assert.isFalse(this.view_model.has_cycles());
                     assert.sameMembers(desiredChildrenReturned, _.map(
-                        returnedLocTypes.children, extractName
+                        returnedLocTypes.children, extractName,
                     ));
                     assert.equal(desiredLeafReturned, returnedLocTypes.leaf.name());
                 });
@@ -144,7 +144,7 @@ hqDefine("locations/spec/types_spec", [
                         desiredChildrenReturned = ["state", "county | region"],
                         desiredLeafReturned = "city | town";
                     assert.sameMembers(desiredChildrenReturned, _.map(
-                        returnedLocTypes.children, extractName
+                        returnedLocTypes.children, extractName,
                     ));
                     assert.equal(desiredLeafReturned, returnedLocTypes.leaf.name());
                 });
@@ -155,7 +155,7 @@ hqDefine("locations/spec/types_spec", [
                         desiredChildrenReturned = ['state', 'county | region'],
                         desiredLeafReturned = "city | town";
                     assert.sameMembers(desiredChildrenReturned, _.map(
-                        returnedLocTypes.children, extractName
+                        returnedLocTypes.children, extractName,
                     ));
                     assert.equal(desiredLeafReturned, returnedLocTypes.leaf.name());
                 });
@@ -165,7 +165,7 @@ hqDefine("locations/spec/types_spec", [
                 it('Provides all levels', function () {
                     var returnedLocTypes = _.map(
                             this.region_model.include_without_expanding_options(),
-                            extractName
+                            extractName,
                         ),
                         desiredLocTypesReturned = ['state', 'county | region', 'city | town'];
                     assert.sameMembers(desiredLocTypesReturned, returnedLocTypes);
