@@ -289,6 +289,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     def save(self, commit=False):
         self.instance.meta.build.finished = False
         self.instance.meta.build.initiated = None
+        self.instance.meta.build.awaiting = True
         instance = super(ConfigurableDataSourceEditForm, self).save(commit)
         self._report_edit_datasource_metrics()
         return instance
