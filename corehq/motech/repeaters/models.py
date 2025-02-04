@@ -89,7 +89,6 @@ from requests.exceptions import ConnectionError, RequestException, Timeout
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
-from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.parsing import json_format_datetime
 
@@ -1001,28 +1000,38 @@ class DataSourceRepeater(Repeater):
         ``Repeater.payload_doc()`` returns the merged payloads based on
         the IDs in new repeat record's ``payload_id`` field.
         """
+        max_docs = 500  # Max number of data source updates to merge
 
-        # payload_id is a `models.CharField(max_length=255)` field. The
-        # payload_ids of (unmerged) repeat records are form and case
-        # IDs, which are 32 (`uuid4().hex`) or 36 (`str(uuid4())`)
-        # characters long. Assuming 36 + 1 character for a separator
-        # means we can get 6 payload IDs in a 255-character field.
-        num_records_to_merge = 6 * self.num_workers
+        doc_ids = set()
+        registered_at = None
+        next_check = None
+        for record in self.repeat_records_ready.all():
+            if registered_at is None:
+                registered_at = record.registered_at
+                next_check = record.next_check
+            update_log = DataSourceUpdateLog.objects.get(id=record.payload_id)
+            doc_ids.update(update_log.doc_ids)
+            record.cancel()
+            record.save()
+            update_log.delete()
+            if len(doc_ids) >= max_docs:
+                break
 
-        records_to_merge = self.repeat_records_ready[:num_records_to_merge]
-        for records in chunked(records_to_merge, 6):
-            merged_payload_id = self.SEP.join([r.payload_id for r in records])
+        if registered_at is not None:
+            new_update_log = DataSourceUpdateLog.objects.create(
+                domain=self.domain,
+                data_source_id=self.data_source_id,
+                doc_ids=list(doc_ids),
+                rows=None,
+            )
             new_record = RepeatRecord(
                 repeater_id=self.id,
                 domain=self.domain,
-                registered_at=records[0].registered_at,
-                next_check=records[0].next_check,
-                payload_id=merged_payload_id,
+                registered_at=registered_at,
+                next_check=next_check,
+                payload_id=new_update_log.get_id,
             )
             new_record.save()
-            for old_record in records:
-                old_record.cancel()
-                old_record.save()
 
 
 # on_delete=DB_CASCADE denotes ON DELETE CASCADE in the database. The

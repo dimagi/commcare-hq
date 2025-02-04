@@ -1309,7 +1309,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         repeat_record = self.repeater.repeat_records_ready.first()
         payload_str = repeat_record.get_payload()
         payload = json.loads(payload_str)
-        self._assert_payload_equal(payload, doc_id, [expected_indicators])
+        self._assert_payload_equal(payload, [doc_id], [expected_indicators])
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_merged_payload_doc(self):
@@ -1327,7 +1327,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
 
         self._assert_payload_equal(
             payload,
-            f"{doc_id_1},{doc_id_2}",
+            [doc_id_1, doc_id_2],
             [expected_indicators_1, expected_indicators_2],
         )
 
@@ -1354,7 +1354,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         expected_indicators = json.loads(json_indicators)
         return sample_doc['_id'], expected_indicators
 
-    def _assert_payload_equal(self, payload, doc_id, expected_indicators):
+    def _assert_payload_equal(self, payload, doc_ids, expected_indicators):
         # assert payload == {
         #     'data_source_id': self.data_source._id,
         #     'doc_ids': doc_ids,
@@ -1363,8 +1363,10 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         # ^^^ kinda like this, but accommodates the value of "estimate":
         assert set(payload.keys()) == {'data_source_id', 'doc_id', 'doc_ids', 'data'}
         assert payload['data_source_id'] == self.data_source._id
-        assert payload['doc_id'] == doc_id
-        for i, data in enumerate(payload['data']):
+        assert sorted(payload['doc_ids']) == sorted(doc_ids)
+        payload_data = sorted(payload['data'], key=lambda x: x['doc_id'])
+        expected_indicators = sorted(expected_indicators, key=lambda x: x['doc_id'])
+        for i, data in enumerate(payload_data):
             for key, value in data.items():
                 if key == 'estimate':
                     # '2.3000000000000000' == '2.2999999999...1893310546875'
