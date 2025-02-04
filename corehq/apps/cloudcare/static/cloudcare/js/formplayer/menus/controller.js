@@ -16,6 +16,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     'cloudcare/js/formplayer/menus/views/query',
     'cloudcare/js/formplayer/menus/views',
     'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
+    'cloudcare/js/gtx',
 ], function (
     $,
     _,
@@ -33,7 +34,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     menusUtils,
     queryView,
     views,
+    api,
+    gtx,
 ) {
+
     var selectMenu = function (options) {
 
         options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
@@ -51,6 +55,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                 promise.reject();
                 return;
             }
+
+            gtx.logNavigateMenu(gtx.extractSelections(menuResponse));
 
             //set title of tab to application name
             if (menuResponse.breadcrumbs) {
