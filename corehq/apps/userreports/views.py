@@ -1268,6 +1268,8 @@ class EditDataSourceView(BaseEditDataSourceView):
         page_context = super().page_context
         adapter = get_indicator_adapter(self.config)
         page_context['data_source_table_exists'] = adapter.table_exists
+        if not self.config.is_deactivated:
+            page_context['data_source_rebuild_resumable'] = DataSourceResumeHelper(self.config).has_resume_info()
         return page_context
 
 
