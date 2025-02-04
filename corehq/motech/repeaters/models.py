@@ -726,6 +726,7 @@ class CaseRepeater(Repeater):
         })
         return headers
 
+    # TODO: Test
     def merge_records(self):
         """
         ``CaseRepeater`` and ``UpdateCaseRepeater`` forward a case as it

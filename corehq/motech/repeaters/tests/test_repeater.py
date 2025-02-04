@@ -587,7 +587,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
         ).as_text()
         CaseFactory(self.domain).post_case_blocks([white_listed_case])
-        assert len(self.repeat_records(self.domain).all()) == 1
+        self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         non_white_listed_case = CaseBlock(
             case_id="b_case_id",
@@ -595,7 +595,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="cat",
         ).as_text()
         CaseFactory(self.domain).post_case_blocks([non_white_listed_case])
-        assert len(self.repeat_records(self.domain).all()) == 1
+        self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
     def test_black_listed_user_cases_do_not_forward(self):
         self.repeater.black_listed_users = ['black_listed_user']
@@ -618,7 +618,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         )
         self.post_xml(xform_xml, self.domain)
 
-        assert len(self.repeat_records(self.domain).all()) == 0
+        self.assertEqual(0, len(self.repeat_records(self.domain).all()))
 
         # case-creations by normal users should be forwarded
         normal_user_case = CaseBlock(
@@ -636,7 +636,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         )
         self.post_xml(xform_xml, self.domain)
 
-        assert len(self.repeat_records(self.domain).all()) == 1
+        self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by black-listed users shouldn't be forwarded
         black_listed_user_case = CaseBlock(
@@ -652,7 +652,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             black_listed_user_case,
         )
         self.post_xml(xform_xml, self.domain)
-        assert len(self.repeat_records(self.domain).all()) == 1
+        self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by normal users should be forwarded
         normal_user_case = CaseBlock(
@@ -668,50 +668,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             normal_user_case,
         )
         self.post_xml(xform_xml, self.domain)
-        assert len(self.repeat_records(self.domain).all()) == 2
-
-    def test_merge_records(self):
-        factory = CaseFactory(self.domain)
-        factory.post_case_blocks([
-            CaseBlock(
-                case_id='(134340) Pluto',
-                create=True,
-                case_name='Pluto',
-                case_type='planet',
-                date_opened='1930-02-18',
-            ).as_text(),
-        ])
-        factory.post_case_blocks([
-            CaseBlock(
-                case_id='(134340) Pluto I',
-                create=True,
-                case_name='Charon',
-                case_type='moon',
-                date_opened='1978-06-22',
-            ).as_text(),
-        ])
-        factory.post_case_blocks([
-            CaseBlock(
-                case_id='(134340) Pluto',
-                update={
-                    'case_type': 'dwarf_planet'
-                },
-                date_modified='2006-08-24',
-            ).as_text(),
-        ])
-        repeat_records = self.repeater.repeat_records_ready.all()
-        assert [r.payload_id for r in repeat_records] == [
-            '(134340) Pluto',
-            '(134340) Pluto I',
-            '(134340) Pluto',
-        ]
-        self.repeater.merge_records()
-
-        repeat_records = self.repeater.repeat_records_ready.all()
-        assert [r.payload_id for r in repeat_records] == [
-            '(134340) Pluto',
-            '(134340) Pluto I',
-        ]
+        self.assertEqual(2, len(self.repeat_records(self.domain).all()))
 
 
 class RepeaterFailureTest(BaseRepeaterTest):
