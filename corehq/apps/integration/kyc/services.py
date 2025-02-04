@@ -1,4 +1,6 @@
-from corehq.apps.integration.kyc.models import UserDataStore
+import json
+
+from corehq.apps.integration.kyc.models import UserDataStore, KycConfig
 
 
 class UserCaseNotFound(Exception):
@@ -39,3 +41,36 @@ def _get_source_data(source, config):
     else:
         source_data = source.case_json
     return source_data
+
+
+def verify_customer_api(user_data_for_api, config):
+    url = config.connection_settings.url
+    requests = config.connection_settings.get
+    headers = {'content-type': 'application/json'}
+    response = requests.request('POST', url, data=json.dumps(user_data_for_api), headers=headers)
+    response.raise_for_status()
+
+    return response.json()
+
+
+config = KycConfig.objects.get(pk=2)
+requests = config.connection_settings.get_requests()
+data = {
+    "id": "0399948893822",
+    "firstName": "Joe",
+    "lastName": "Doe",
+    "otherNames": "Den",
+    "email": "example@example.com",
+    "dateOfBirth": "1980-02-14",
+    "gender": "M",
+    "stateOfOrigin": "EK",
+    "lgaOfOrigin": "EK20",
+    "stateOfResidence": "LA",
+    "lgaOfResidence": "LA02",
+    "nationality": "Nigerian",
+    "alternativePhoneNumber": "9062058602",
+    "maritalStatus": "M",
+}
+response = requests.post(endpoint='customers/1?isConsentVerified=false', data=data)
+print(response.status_code)
+print(response.json())
