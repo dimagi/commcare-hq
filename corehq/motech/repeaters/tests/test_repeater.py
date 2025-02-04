@@ -670,6 +670,41 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.post_xml(xform_xml, self.domain)
         self.assertEqual(2, len(self.repeat_records(self.domain).all()))
 
+    def test_register_duplicate(self):
+        factory = CaseFactory(self.domain)
+        factory.post_case_blocks([
+            CaseBlock(
+                case_id='(134340) Pluto',
+                create=True,
+                case_name='Pluto',
+                case_type='planet',
+                date_opened='1930-02-18',
+            ).as_text(),
+        ])
+        factory.post_case_blocks([
+            CaseBlock(
+                case_id='(134340) Pluto I',
+                create=True,
+                case_name='Charon',
+                case_type='moon',
+                date_opened='1978-06-22',
+            ).as_text(),
+        ])
+        factory.post_case_blocks([
+            CaseBlock(
+                case_id='(134340) Pluto',
+                update={
+                    'case_type': 'dwarf_planet'
+                },
+                date_modified='2006-08-24',
+            ).as_text(),
+        ])
+        repeat_records = self.repeater.repeat_records_ready.all()
+        assert [r.payload_id for r in repeat_records] == [
+            '(134340) Pluto',
+            '(134340) Pluto I',
+        ]
+
 
 class RepeaterFailureTest(BaseRepeaterTest):
     domain = 'repeat-fail'
