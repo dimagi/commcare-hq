@@ -106,9 +106,9 @@ def fire_synchronous_case_repeaters(sender, case, **kwargs):
     _create_repeat_records(DataRegistryCaseUpdateRepeater, case, fire_synchronously=True)
 
 
-def create_data_source_updated_repeat_record(sender, **kwargs):
+def create_data_source_updated_repeat_record(sender, update_log, **kwargs):
     """Creates a transaction log for the datasource that changed"""
-    create_repeat_records(DataSourceRepeater, kwargs["update_log"])
+    create_repeat_records(DataSourceRepeater, update_log)
 
 
 successful_form_received.connect(create_form_repeat_records)

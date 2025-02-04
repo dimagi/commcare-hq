@@ -923,6 +923,18 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+class DataSourceUpdateLog(models.Model):
+    id = models.UUIDField(primary_key=True, db_column="id_", default=uuid.uuid4)
+    domain = CharIdField(max_length=126, db_index=True)
+    data_source_id = models.UUIDField()
+    doc_ids = JSONField(default=list)
+    rows = JSONField(default=list, blank=True, null=True)
+
+    @property
+    def get_id(self):
+        return self.id.hex
+
+
 class DataSourceRepeater(Repeater):
     """
     Forwards the UCR data source rows that are updated by a form
@@ -950,29 +962,20 @@ class DataSourceRepeater(Repeater):
     def payload_doc(self, repeat_record):
         from corehq.apps.userreports.models import get_datasource_config
         from corehq.apps.userreports.util import (
-            DataSourceUpdateLog,
             get_indicator_adapter,
         )
-
+        update_log = DataSourceUpdateLog.objects.get(id=repeat_record.payload_id)
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        if self.SEP in repeat_record.payload_id:
-            rows = [
-                row
-                for payload_id in repeat_record.payload_id.split(self.SEP)
-                for row in datasource_adapter.get_rows_by_doc_id(payload_id)
-            ]
-        else:
-            rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
-        return DataSourceUpdateLog(
-            domain=self.domain,
-            data_source_id=self.data_source_id,
-            doc_id=repeat_record.payload_id,
-            rows=rows,
-        )
+        update_log.rows = [
+            row
+            for doc_id in update_log.doc_ids
+            for row in datasource_adapter.get_rows_by_doc_id(doc_id)
+        ]
+        return update_log
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)

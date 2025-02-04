@@ -1357,11 +1357,11 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
     def _assert_payload_equal(self, payload, doc_id, expected_indicators):
         # assert payload == {
         #     'data_source_id': self.data_source._id,
-        #     'doc_id': doc_id,
+        #     'doc_ids': doc_ids,
         #     'data': expected_indicators,
         # }
         # ^^^ kinda like this, but accommodates the value of "estimate":
-        assert set(payload.keys()) == {'data_source_id', 'doc_id', 'data'}
+        assert set(payload.keys()) == {'data_source_id', 'doc_id', 'doc_ids', 'data'}
         assert payload['data_source_id'] == self.data_source._id
         assert payload['doc_id'] == doc_id
         for i, data in enumerate(payload['data']):

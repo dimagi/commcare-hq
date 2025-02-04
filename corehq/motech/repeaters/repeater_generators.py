@@ -757,7 +757,8 @@ class DataSourcePayloadGenerator(BasePayloadGenerator):
         """
         data = {
             "data": payload_doc.rows,
-            "data_source_id": payload_doc.data_source_id,
-            "doc_id": payload_doc.doc_id,
+            "data_source_id": payload_doc.data_source_id.hex,
+            "doc_id": payload_doc.get_id,
+            "doc_ids": payload_doc.doc_ids,
         }
         return json.dumps(data, cls=CommCareJSONEncoder)
