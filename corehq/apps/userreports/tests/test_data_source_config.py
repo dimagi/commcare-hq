@@ -151,12 +151,7 @@ class DataSourceConfigurationTest(SimpleTestCase):
         sample_doc, expected_indicators = get_sample_doc_and_indicators(fake_time_now)
         [results] = self.config.get_all_values(sample_doc)
         for result in results:
-            try:
-                self.assertEqual(expected_indicators[result.column.id], result.value)
-            except AssertionError:
-                # todo: this is a hack due to the fact that type conversion currently happens
-                # in the database layer. this should eventually be fixed.
-                self.assertEqual(str(expected_indicators[result.column.id]), result.value)
+            self.assertEqual(expected_indicators[result.column.id], result.value)
 
     def test_configured_filter_auto_date_convert(self):
         source = self.config.to_json()
