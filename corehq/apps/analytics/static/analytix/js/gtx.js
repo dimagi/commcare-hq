@@ -1,4 +1,4 @@
-"use strict";
+
 /**
  *  Handles communication with the google tag manager API.
  *  gtx is the filename because some ad blockers blocks 'gtm.js'*
@@ -14,7 +14,7 @@ hqDefine('analytix/js/gtx', [
     _,
     initialAnalytics,
     logging,
-    utils
+    utils,
 ) {
     var _get = initialAnalytics.getFn('gtm'),
         _logger = logging.getLoggerForApi('Google Tag Manager'),
@@ -52,6 +52,7 @@ hqDefine('analytix/js/gtx', [
             userId: _get('userId', 'none'),
             isDimagi: _get('userIsDimagi', 'no', 'yes'),
             isCommCare: _get('userIsCommCareUser', 'no', 'yes'),
+            isNewUser: _get('isNewUser', 'false'),
             domain: _get('domain', 'none'),
             hqEnvironment: _get('hqInstance', 'none'),
             isTestDomain: _get('isTestDomain', 'none'),

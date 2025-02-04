@@ -4,11 +4,12 @@ hqDefine('reports_core/js/charts', [
     'underscore',
     'd3/d3.min',
     'nvd3/nv.d3.min',
+    'nvd3/src/nv.d3.css',
 ], function (
     $,
     _,
     d3,
-    nv
+    nv,
 ) {
     var fn = {};
     var renderPie = function (config, data, svgSelector) {

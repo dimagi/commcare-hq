@@ -7,16 +7,15 @@ hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list", [
 ], function (
     $,
     ko,
-    _
+    _,
 ) {
     var CRUDPaginatedListModel = function (
         total,
         pageLimit,
         currentPage,
         options,
-        paginatedItem
+        paginatedItem,
     ) {
-        'use strict';
         options = options || {};
 
         var self = {};
@@ -114,7 +113,7 @@ hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list", [
                         data.paginatedList,
                         function (listItem) {
                             return self.PaginatedItem(listItem, self.initRow);
-                        }
+                        },
                     ));
                     self.deletedList([]);
                     self.newList([]);

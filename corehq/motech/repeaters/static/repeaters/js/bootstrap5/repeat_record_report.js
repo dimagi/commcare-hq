@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     'jquery',
     'hqwebapp/js/initial_page_data',
@@ -6,13 +6,13 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
     'repeaters/js/repeat_record_report_selects',
-    'reports/js/bootstrap3/base',
-    'reports/js/bootstrap3/tabular',
+    'reports/js/bootstrap5/base',
+    'reports/js/bootstrap5/tabular',
     'commcarehq',
 ], function (
     $,
     initialPageData,
-    ace
+    ace,
 ) {
     const selectAll = document.getElementById('select-all'),
         selectPending = document.getElementById('select-pending'),
@@ -56,7 +56,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
                     $row.after(
                         `<tr id="${recordId}" class="attempt-error"><td colspan="10">
                             <div class="alert alert-danger">${errorMessage || defaultText}</div>
-                        </td></tr>`
+                        </td></tr>`,
                     );
                 },
             });
@@ -84,7 +84,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
                                 fontSize: 14,
                                 wrap: true,
                                 useWorker: false,
-                            }
+                            },
                         );
                         editor.setReadOnly(true);
                     }
@@ -235,7 +235,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         function getRecordIds() {
             const recordEls = getCheckedRecords();
             const recordIds = recordEls.map(
-                record => record.getAttribute('data-id')
+                record => record.getAttribute('data-id'),
             ).join(' ');
             return {record_id: recordIds};
         }

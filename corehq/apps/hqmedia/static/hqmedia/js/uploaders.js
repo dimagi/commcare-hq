@@ -7,7 +7,7 @@ hqDefine("hqmedia/js/uploaders", [
     $,
     _,
     assertProperties,
-    initialPageData
+    initialPageData,
 ) {
     const uploader = function (slug, options) {
         assertProperties.assertRequired(options, [

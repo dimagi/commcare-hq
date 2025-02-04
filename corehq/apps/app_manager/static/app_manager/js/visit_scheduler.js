@@ -1,7 +1,5 @@
-/*globals $, _, ko, console, hqImport */
 hqDefine('app_manager/js/visit_scheduler', function () {
-    'use strict';
-    var app_manager = hqImport('app_manager/js/app_manager');
+    var appManager = hqImport('app_manager/js/app_manager');
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
     var moduleScheduler = function (params) {
         // Edits the schedule phases on the module setting page
@@ -40,7 +38,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        app_manager.updateDOM(data.update);
+                        appManager.updateDOM(data.update);
                     },
                 });
             },
@@ -49,7 +47,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         var phaseModel = function (id, anchor, forms) {
             var self = {};
             self.id = id;
-            self.anchor = hqImport('hqwebapp/js/bootstrap3/ui-element').select(params.caseProperties).val(anchor);
+            self.anchor = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-select').new(params.caseProperties).val(anchor);
             self.anchor.observableVal = ko.observable(self.anchor.val());
             self.anchor.on("change", function () {
                 self.anchor.observableVal(self.anchor.val());
@@ -71,7 +69,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
                 return phaseModel(phase.id, phase.anchor, phase.forms);
             })
         );
-        self.phases.subscribe(function (phase) {
+        self.phases.subscribe(function () {
             self.change();
         });
 
@@ -122,7 +120,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
                         },
                         dataType: 'json',
                         success: function (data) {
-                            app_manager.updateDOM(data.update);
+                            appManager.updateDOM(data.update);
                         },
                     });
                 }
@@ -142,15 +140,15 @@ hqDefine('app_manager/js/visit_scheduler', function () {
 
         self.validate = function () {
             var errors = 0;
-            var $add_visit_button = self.home.find("#add-visit");
+            var $addVisitButton = self.home.find("#add-visit");
 
             if (self.formSchedule.visits().length === 0) {
-                $add_visit_button.closest(".form-group").addClass("has-error");
-                $add_visit_button.siblings(".error-text").show();
+                $addVisitButton.closest(".form-group").addClass("has-error");
+                $addVisitButton.siblings(".error-text").show();
                 errors += 1;
             } else {
-                $add_visit_button.closest(".form-group").removeClass("has-error");
-                $add_visit_button.siblings(".error-text").hide();
+                $addVisitButton.closest(".form-group").removeClass("has-error");
+                $addVisitButton.siblings(".error-text").hide();
             }
 
             var required = self.home.find(":required").not(":disabled");
@@ -200,7 +198,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
     };
 
     var scheduleRelevancy = {
-        mapping: function (self) {
+        mapping: function () {
             return {
                 include: [
                     'starts',
@@ -224,7 +222,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
     };
 
     var scheduleVisit = {
-        mapping: function (self) {
+        mapping: function () {
             return {
                 include: [
                     'due',
@@ -255,14 +253,14 @@ hqDefine('app_manager/js/visit_scheduler', function () {
     };
 
     var schedulePhase = {
-        mapping: function (self) {
+        mapping: function () {
             return {
                 include: [
                     'anchor',
                 ],
             };
         },
-        wrap: function (data, config) {
+        wrap: function (data) {
             var self = {};
             ko.mapping.fromJS(data, schedulePhase.mapping(self), self);
             return self;

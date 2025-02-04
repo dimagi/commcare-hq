@@ -70,7 +70,7 @@ hqDefine('generic_inbound/js/api_edit', [
 
     $(function () {
         $("#edit-api").koApplyBindings(ViewModel(
-            initialPageData.get("validations")
+            initialPageData.get("validations"),
         ));
     });
 });

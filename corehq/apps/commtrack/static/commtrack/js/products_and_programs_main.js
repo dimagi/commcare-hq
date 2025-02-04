@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('commtrack/js/products_and_programs_main', [
     'jquery',
     'knockout',
@@ -15,7 +15,7 @@ hqDefine('commtrack/js/products_and_programs_main', [
     _,
     initialPageData,
     bootstrap,
-    models
+    models,
 ) {
     var commtrackProductsProgramsViewModel = function (o) {
         var self = models.BaseListViewModel(o);

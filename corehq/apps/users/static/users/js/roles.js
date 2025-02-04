@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine('users/js/roles',[
     'jquery',
@@ -568,7 +568,7 @@ hqDefine('users/js/roles',[
                         {
                             permissionText: gettext("Manage Registries"),
                             listHeading: gettext("Select which registries the role can manage:"),
-                        }
+                        },
                     ),
                     selectPermissionModel(
                         'view_registry_contents',
@@ -576,7 +576,7 @@ hqDefine('users/js/roles',[
                         {
                             permissionText: gettext("View Registry Data"),
                             listHeading: gettext("Select which registry data the role can view:"),
-                        }
+                        },
                     ),
                 ];
                 let webAppsPermissions = selectPermissionModel(
@@ -585,7 +585,7 @@ hqDefine('users/js/roles',[
                     {
                         permissionText: gettext("Use Web Apps for online data entry"),
                         listHeading: gettext("Select which web apps the role has access to:"),
-                    }
+                    },
                 );
                 webAppsPermissions.hasRestrictedApplicationAccess = root.hasRestrictedApplicationAccess;
                 self.webAppsPermissions = webAppsPermissions;
@@ -603,7 +603,7 @@ hqDefine('users/js/roles',[
                         if (perm.hasError()) {
                             throw interpolate(
                                 gettext('Select at least one item from the list for "%s"'),
-                                [perm.text]
+                                [perm.text],
                             );
                         }
                     });
@@ -722,7 +722,7 @@ hqDefine('users/js/roles',[
                 var title = gettext("Delete Role: ") + role.name();
                 var context = {role: role.name()};
                 var modalConfirmation = _.template(gettext(
-                    "Are you sure you want to delete the role <%- role %>?"
+                    "Are you sure you want to delete the role <%- role %>?",
                 ))(context);
                 var roleCopy = UserRole.wrap(UserRole.unwrap(role));
 

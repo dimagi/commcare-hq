@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
     'jquery',
     'underscore',
@@ -8,7 +8,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
     $,
     _,
     hqMain,
-    DOMPurify
+    DOMPurify,
 ) {
     var module = {};
 

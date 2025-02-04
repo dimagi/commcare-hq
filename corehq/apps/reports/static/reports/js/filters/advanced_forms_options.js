@@ -3,7 +3,7 @@ hqDefine('reports/js/filters/advanced_forms_options', [
     'knockout',
 ], function (
     $,
-    ko
+    ko,
 ) {
     var deletedFormsControl = function (options) {
         var self = {};

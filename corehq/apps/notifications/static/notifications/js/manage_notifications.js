@@ -4,7 +4,7 @@ hqDefine('notifications/js/manage_notifications', [
     'commcarehq',
 ], function (
     $,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         $('#ko-alert-container').koApplyBindings({

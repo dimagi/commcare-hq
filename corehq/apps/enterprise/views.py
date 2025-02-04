@@ -136,7 +136,7 @@ def security_center(request, domain):
         'groups': [
             {'name': '',
              'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
-                        for slug in (EnterpriseReport.API_USAGE,
+                        for slug in (EnterpriseReport.API_KEYS,
                                      EnterpriseReport.TWO_FACTOR_AUTH)]},
         ],
         'metric_type': 'Security Center',

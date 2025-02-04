@@ -5,7 +5,7 @@ hqDefine("notifications/spec/bootstrap5/NotificationsService.spec.mo", [
 ], function (
     $,
     sinon,
-    notifications
+    notifications,
 ) {
     describe('NotificationsService Unit Tests', function () {
         var fakeRMIUrl = '/fake/rmi',

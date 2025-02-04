@@ -2,6 +2,6 @@
 // Temporary until weback migration is complete, requirejs is gone, and all of HQ can use the latest ecmaVersion
 module.exports = {
     "parserOptions": {
-        "ecmaVersion": "latest",
+        "ecmaVersion": 6,
     },
 };

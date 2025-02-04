@@ -1,4 +1,4 @@
-"use strict";
+
 /*
     This is the knockout-based, javascript analog of messages in Django.
 
@@ -21,13 +21,13 @@ hqDefine("hqwebapp/js/bootstrap5/alert_user", [
 ],
 function (
     $,
-    ko
+    ko,
 ) {
     var MessageAlert = function (message, tags, fadeOut) {
         var self = {
             "message": ko.observable(message),
             "alert_class": ko.observable(
-                "alert alert-dismissible message-alert"
+                "alert alert-dismissible message-alert mt-3 mb-2",
             ),
         };
         if (tags) {

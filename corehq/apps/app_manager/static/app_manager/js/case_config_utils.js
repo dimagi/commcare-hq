@@ -1,5 +1,14 @@
-"use strict";
-hqDefine('app_manager/js/case_config_utils', function () {
+hqDefine("app_manager/js/case_config_utils", [
+    "jquery",
+    "underscore",
+    "hqwebapp/js/toggles",
+    "hqwebapp/js/initial_page_data",
+], function (
+    $,
+    _,
+    toggles,
+    initialPageData,
+) {
     return {
         getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
             // filter can be "all", or any of "select1", "select", or "input" separated by spaces
@@ -16,7 +25,7 @@ hqDefine('app_manager/js/case_config_utils', function () {
             if (!excludeTrigger) {
                 filter.push('trigger');
             }
-            var allowAttachments = hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES');
+            var allowAttachments = toggles.toggleEnabled('MM_CASE_PROPERTIES');
             for (i = 0; i < questions.length; i += 1) {
                 q = questions[i];
                 if (filter[0] === "all" || filter.indexOf(q.tag) !== -1) {
@@ -55,8 +64,7 @@ hqDefine('app_manager/js/case_config_utils', function () {
         },
         // This function depends on initial page data, so it should be called within a document ready handler
         initRefreshQuestions: function (questionsObservable) {
-            var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-                formUniqueId = initialPageData.get("form_unique_id");
+            const formUniqueId = initialPageData.get("form_unique_id");
             if (formUniqueId) {
                 var currentAppUrl = initialPageData.reverse("current_app_version"),
                     oldVersion = initialPageData.get("app_subset").version;
@@ -135,8 +143,8 @@ hqDefine('app_manager/js/case_config_utils', function () {
             return _.object(
                 _.map(
                     _.filter(preloadArray, function (i) { return (i.key || i.path); }),
-                    function (i) { return [i.path, i.key]; }
-                )
+                    function (i) { return [i.path, i.key]; },
+                ),
             );
         },
     };

@@ -18,7 +18,7 @@ hqDefine("enterprise/js/project_dashboard", [
     alertUser,
     kissmetrics,
     tempusDominus,
-    moment
+    moment,
 ) {
     const PRESET_LAST_30 = "last_30";
     const PRESET_PREV_MONTH = "prev_month";
@@ -214,7 +214,7 @@ hqDefine("enterprise/js/project_dashboard", [
             const number = input.slice(0, -1);
             return Number(number).toLocaleString(
                 undefined,
-                {minimumFractionDigits: 1,  maximumFractionDigits: 1}
+                {minimumFractionDigits: 1,  maximumFractionDigits: 1},
             ) + '%';
         } else if (input === "--") {
             return input;
@@ -254,7 +254,7 @@ hqDefine("enterprise/js/project_dashboard", [
         const datePicker = tempusDominus.createDefaultDateRangePicker(
             document.getElementById("id_date_range"),
             moment().subtract(30, "days"),
-            moment()
+            moment(),
         );
 
         const $dateRangeModal = $('#enterpriseFormsDaterange');
@@ -276,7 +276,7 @@ hqDefine("enterprise/js/project_dashboard", [
             $("#sms_dateRangeDisplay").koApplyBindings(smsDisplay);
         }
         $dateRangeModal.koApplyBindings(
-            dateRangeModal
+            dateRangeModal,
         );
 
         kissmetrics.track.event(`[${metricType}] Visited page`);

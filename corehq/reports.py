@@ -73,6 +73,7 @@ from corehq.apps.geospatial.reports import (
     CaseManagementMap,
     CaseGroupingReport,
 )
+from corehq.apps.integration.kyc.views import KycConfigurationView
 
 from . import toggles
 
@@ -351,5 +352,11 @@ GEOSPATIAL_MAP = (
     (_("Microplanning"), (
         CaseManagementMap,
         CaseGroupingReport,
+    )),
+)
+
+KYC_VERIFICATION = (
+    (_("KYC Verification"), (
+        KycConfigurationView,
     )),
 )

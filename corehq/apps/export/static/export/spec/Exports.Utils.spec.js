@@ -8,7 +8,7 @@ hqDefine("export/spec/Exports.Utils.spec", [
     _,
     constants,
     models,
-    utils
+    utils,
 ) {
     describe('Export Utility functions', function () {
         describe('#getTagCSSClass', function () {

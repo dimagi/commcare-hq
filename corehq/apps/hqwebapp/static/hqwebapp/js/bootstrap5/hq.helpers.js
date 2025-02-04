@@ -10,7 +10,7 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     ko,
     _,
     googleAnalytics,
-    bootstrap
+    bootstrap,
 ) {
     // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
     $(document).on('submit', 'form', function (ev) {
@@ -84,6 +84,9 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     };
 
     $.fn.changeButtonState = function (state) {
+        if (!$(this).data('reset-text')) {
+            $(this).data('reset-text', $(this).text());
+        }
         $(this).text($(this).data(state + '-text'));
         return this;
     };

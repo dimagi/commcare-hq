@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('geospatial/js/models', [
     'jquery',
     'knockout',
@@ -19,7 +19,7 @@ hqDefine('geospatial/js/models', [
     alertUser,
     mapboxgl,
     MapboxDraw,
-    turf
+    turf,
 ) {
     const FEATURE_QUERY_PARAM = 'features';
     const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
@@ -27,7 +27,7 @@ hqDefine('geospatial/js/models', [
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
     const unexpectedErrorMessage = gettext(
         "Oops! Something went wrong!" +
-        " Please report an issue if the problem persists."
+        " Please report an issue if the problem persists.",
     );
     const caseMarkerColors = {
         'default': "#808080", // Gray
@@ -210,7 +210,7 @@ hqDefine('geospatial/js/models', [
 
         self.removeItemTypeFromSource = function (itemType) {
             self.sourceData.features = self.sourceData.features.filter(
-                feature => feature.properties.type !== itemType
+                feature => feature.properties.type !== itemType,
             );
             self.refreshSource();
         };
@@ -253,7 +253,7 @@ hqDefine('geospatial/js/models', [
                     self.mapInstance.on('click', 'user-points', (e) => {
                         markerClickEvent(e, 'user');
                     });
-                }
+                },
             );
         }
 
@@ -721,7 +721,7 @@ hqDefine('geospatial/js/models', [
             const sourceName = String(polygonObj.id) + '-source';
             self.mapObj.mapInstance.addSource(
                 sourceName,
-                {'type': 'geojson', 'data': polygonObj.geoJson}
+                {'type': 'geojson', 'data': polygonObj.geoJson},
             );
             self.mapObj.mapInstance.addLayer({
                 'id': layerName,
@@ -775,7 +775,7 @@ hqDefine('geospatial/js/models', [
         function confirmForClearingDisbursement() {
             return confirm(
                 gettext("Warning! This action will clear the current disbursement. " +
-                        "Please confirm if you want to proceed.")
+                        "Please confirm if you want to proceed."),
             );
         }
 
@@ -829,7 +829,7 @@ hqDefine('geospatial/js/models', [
 
             const selectedId = parseInt(self.selectedSavedPolygonId());
             const polygonObj = self.savedPolygons().find(
-                function (o) { return o.id === selectedId; }
+                function (o) { return o.id === selectedId; },
             );
             if (!polygonObj) {
                 return;
@@ -902,7 +902,7 @@ hqDefine('geospatial/js/models', [
                                 name: name,
                                 id: ret.id,
                                 geo_json: data,
-                            })
+                            }),
                         );
                         // redraw using mapControlsModelInstance
                         self.selectedSavedPolygonId(ret.id);
@@ -1027,8 +1027,8 @@ hqDefine('geospatial/js/models', [
                 }
                 self.caseData.push(
                     new AssignmentRow(
-                        item.name, item.itemId, assignedUserId, assignedUsername, primaryLocName, item
-                    )
+                        item.name, item.itemId, assignedUserId, assignedUsername, primaryLocName, item,
+                    ),
                 );
             }
 
@@ -1056,17 +1056,20 @@ hqDefine('geospatial/js/models', [
         };
 
         self.assignUserToCases = function () {
-            const selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()].item;
+            let selectedUser;
+            if (self.selectedUserId()) {
+                selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()].item;
+            }
             for (const caseItem of self.caseDataPage()) {
                 if (!caseItem.isSelected()) {
                     continue;
                 }
 
                 caseItem.assignedUsername(
-                    (selectedUser) ? selectedUser.name : emptyColStr
+                    (selectedUser) ? selectedUser.name : emptyColStr,
                 );
                 caseItem.assignedUserPrimaryLocName(
-                    (selectedUser) ? selectedUser.customData.primary_loc_name : emptyColStr
+                    (selectedUser) ? selectedUser.customData.primary_loc_name : emptyColStr,
                 );
                 caseItem.assignedUserId = self.selectedUserId();
                 caseItem.isSelected(false);
