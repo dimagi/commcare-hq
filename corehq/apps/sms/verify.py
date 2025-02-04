@@ -116,8 +116,8 @@ def process_verification(verified_number, msg, verification_keywords=None, creat
     msg.save()
 
     if (
-        not domain_has_privilege(msg.domain, privileges.INBOUND_SMS) or
-        not verification_response_ok(msg.text, verification_keywords)
+        not domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+        or not verification_response_ok(msg.text, verification_keywords)
     ):
         return False
 

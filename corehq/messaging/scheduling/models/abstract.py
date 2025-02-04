@@ -1,11 +1,19 @@
 import jsonfield
 import uuid
+from contextlib import contextmanager
 from memoized import memoized
 from django.conf import settings
 from django.db import models, transaction
+from django.http import Http404
 
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_latest_released_app,
+)
+from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.data_interfaces.utils import property_references_parent
+from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
 from corehq.apps.sms.api import MessageMetadata, send_sms, send_message_to_verified_number
 from corehq.apps.sms.forms import (
@@ -20,6 +28,13 @@ from corehq.apps.sms.models import (
     WORKFLOW_KEYWORD,
     WORKFLOW_BROADCAST,
 )
+from corehq.apps.sms.util import (
+    get_formplayer_exception,
+    touchforms_error_is_config_error,
+)
+from corehq.apps.smsforms.app import start_session
+from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions, form_requires_input
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
@@ -34,6 +49,11 @@ from corehq.messaging.templating import (
     CaseMessagingTemplateParam,
 )
 from django.utils.functional import cached_property
+
+
+@contextmanager
+def no_op_context_manager():
+    yield
 
 
 class Schedule(models.Model):
@@ -163,14 +183,16 @@ class Schedule(models.Model):
     @property
     @memoized
     def memoized_language_set(self):
-        from corehq.messaging.scheduling.models import ConnectMessageContent, SMSContent, EmailContent, SMSCallbackContent
+        from corehq.messaging.scheduling.models import (
+            ConnectMessageContent, SMSContent, EmailContent, SMSCallbackContent
+        )
 
         result = set()
         for event in self.memoized_events:
             content = event.memoized_content
             if isinstance(content, (SMSContent, SMSCallbackContent, ConnectMessageContent)):
                 result |= set(content.message)
-            elif isinstance(content, (EmailContent)):
+            elif isinstance(content, EmailContent):
                 result |= set(content.subject)
                 result |= set(content.message)
 
@@ -249,7 +271,7 @@ class ContentForeignKeyMixin(models.Model):
     connect_message_content = models.ForeignKey('scheduling.ConnectMessageContent', null=True,
                                                 on_delete=models.CASCADE)
     connect_survey_content = models.ForeignKey('scheduling.ConnectMessageSurveyContent', null=True,
-                                                on_delete=models.CASCADE)
+                                               on_delete=models.CASCADE)
 
     class Meta(object):
         abstract = True
@@ -543,22 +565,15 @@ class SurveyContent(Content):
     reminder_intervals = models.JSONField(default=list)
     submit_partially_completed_forms = models.BooleanField(default=False)
     include_case_updates_in_partial_submissions = models.BooleanField(default=False)
-  
+
     class Meta:
         abstract = True
 
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return SMSSurveyContent(
-            app_id=None,
-            form_unique_id=None,
-            expire_after=self.expire_after,
-            reminder_intervals=deepcopy(self.reminder_intervals),
-            submit_partially_completed_forms=self.submit_partially_completed_forms,
-            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
-        )
+    def get_critical_section(self, recipient):
+        if self.critical_section_already_acquired:
+            return no_op_context_manager()
+
+        return critical_section_for_smsforms_sessions(recipient.get_id)
 
     @memoized
     def get_memoized_app_module_form(self, domain):

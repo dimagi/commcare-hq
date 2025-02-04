@@ -45,7 +45,6 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         cls.process_pillow_changes = process_pillow_changes('DefaultChangeFeedPillow')
         cls.process_pillow_changes.add_pillow(get_case_messaging_sync_pillow())
 
-
     @classmethod
     def tearDownClass(cls):
         cls.backend_mapping.delete()
