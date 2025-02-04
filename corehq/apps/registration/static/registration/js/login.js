@@ -9,7 +9,7 @@ hqDefine('registration/js/login', [
     $,
     kissmetrics,
     userLoginForm,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
 

@@ -1,10 +1,10 @@
-'use strict';
+
 hqDefine('hqwebapp/js/privileges', [
     'underscore',
     'hqwebapp/js/initial_page_data',
 ], function (
     _,
-    initialPageData
+    initialPageData,
 ) {
     var privilegePresent = function (allPrivileges, privilegeName) {
         return allPrivileges.includes(privilegeName);

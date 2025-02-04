@@ -17,10 +17,9 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     initialPageData,
     alertUser,
     googleAnalytics,
-    bootstrap
+    bootstrap,
 ) {
     var eventize = function (that) {
-        'use strict';
         var events = {};
         that.on = function (tag, callback) {
             if (events[tag] === undefined) {
@@ -42,12 +41,11 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     };
 
     var makeHqHelp = function (opts, wrap) {
-        'use strict';
         wrap = wrap === undefined ? true : wrap;
         var el = $(
             '<div class="hq-help">' +
                 '<a href="#" tabindex="-1" data-bs-toggle="popover">' +
-                    '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
+                    '<i class="fa fa-question-circle icon-question-sign"></i></a></div>',
         );
         _.each(['content', 'title', 'html', 'placement', 'container'], function (attr) {
             $('a', el).attr('data-bs-' + attr, opts[attr]);
@@ -59,7 +57,6 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     };
 
     var transformHelpTemplate = function ($template, wrap) {
-        'use strict';
         if ($template.data()) {
             var $help = makeHqHelp($template.data(), wrap);
             $help.insertAfter($template);
@@ -106,7 +103,6 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     ko.virtualElements.allowedBindings.allowDescendantBindings = true;
 
     var initBlock = function ($elem) {
-        'use strict';
 
         $('.submit').click(function (e) {
             var $form = $(this).closest('.form, form'),
@@ -126,7 +122,6 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     };
 
     var updateDOM = function (update) {
-        'use strict';
         var key;
         for (key in update) {
             if (update.hasOwnProperty(key)) {
@@ -136,7 +131,6 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     };
 
     var makeSaveButton = function (messageStrings, cssClass, barClass) {
-        'use strict';
         var BAR_STATE = {
             SAVE: 'savebtn-bar-save',
             SAVING: 'savebtn-bar-saving',
@@ -257,7 +251,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
                     if (lastParent) {
                         var stillAttached = lastParent.tagName.toLowerCase() == 'html';
                         if (button.state !== 'saved' && stillAttached) {
-                            if ($('.js-unhide-on-unsaved').length > 0) $('.js-unhide-on-unsaved').removeClass('hide');
+                            if ($('.js-unhide-on-unsaved').length > 0) {$('.js-unhide-on-unsaved').removeClass('hide');}
                             return options.unsavedMessage || "";
                         }
                     }
@@ -378,7 +372,6 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     };
 
     $(function () {
-        'use strict';
         $(window).on('beforeunload', beforeUnloadCallback);
         initBlock($("body"));
 
@@ -433,7 +426,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
                     } else {
                         setUpAlert(alert, closedAlerts, alertCookie);
                     }
-                }
+                },
             );
         }
 

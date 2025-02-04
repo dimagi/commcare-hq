@@ -17,9 +17,8 @@ hqDefine('registration/js/new_user.ko', [
     RMI,
     kissmetrics,
     appcues,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
     var module = {};
 
     module.rmiUrl = null;
@@ -135,7 +134,7 @@ hqDefine('registration/js/new_user.ko', [
                                             message: result.message,
                                         });
                                     },
-                                }
+                                },
                             );
                         } else if (self.email() !== undefined) {
                             module.resetEmailFeedback(false);
@@ -412,7 +411,7 @@ hqDefine('registration/js/new_user.ko', [
                         self.isSubmitting(false);
                         self.hasServerError(true);
                     },
-                }
+                },
             );
             self.nextStep();
         };

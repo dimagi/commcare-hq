@@ -15,7 +15,7 @@ const DEFAULT_MODAL_ID = 'htmxRequestErrorModal';
  */
 const showHtmxErrorModal = (errorCode, errorText, errorModalId = DEFAULT_MODAL_ID) => {
     const modalElem = document.getElementById(errorModalId);
-    if (!modalElem) return; // Exit if modal element is not found
+    if (!modalElem) {return;} // Exit if modal element is not found
 
     const errorModal = new Modal(modalElem);
     window.dispatchEvent(new CustomEvent('updateHtmxRequestErrorModal', {

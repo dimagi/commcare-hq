@@ -3,7 +3,7 @@ hqDefine("hqwebapp/js/components.ko", [
     'knockout',
 ], function (
     $,
-    ko
+    ko,
 ) {
     return {
         register: function (name, component) {

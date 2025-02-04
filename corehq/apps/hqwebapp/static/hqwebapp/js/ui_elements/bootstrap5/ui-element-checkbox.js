@@ -1,10 +1,10 @@
-'use strict';
+
 hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-checkbox', [
     'jquery',
     'hqwebapp/js/bootstrap5/main',
 ], function (
     $,
-    hqMain
+    hqMain,
 ) {
     var module = {};
 
@@ -36,9 +36,9 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-checkbox', [
                 this.value = value;
                 this.$edit_view.prop('checked', this.value);
                 this.$noedit_view.removeClass(
-                    this.value ? Checkbox.UNCHECKED : Checkbox.CHECKED
+                    this.value ? Checkbox.UNCHECKED : Checkbox.CHECKED,
                 ).addClass(
-                    this.value ? Checkbox.CHECKED : Checkbox.UNCHECKED
+                    this.value ? Checkbox.CHECKED : Checkbox.UNCHECKED,
                 );
                 return this;
             }
