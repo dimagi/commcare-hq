@@ -195,7 +195,7 @@ class ApiKeyFallbackTests(TestCase):
             request.META['HTTP_X_FORWARDED_FOR'] = ip
 
         if can_use_api_key:
-            request.check_for_password_as_api_key = True
+            request.check_for_api_key_as_password = True
 
         return request
 
