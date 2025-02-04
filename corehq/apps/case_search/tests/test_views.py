@@ -10,7 +10,7 @@ from django.urls import reverse
 from unittest.mock import patch
 
 
-@flag_enabled('MODULE_BADGES')
+@flag_enabled('CSQL_FIXTURE')
 class TestCSQLFixtureExpressionView(TestCase):
 
     DOMAIN = 'test-domain'

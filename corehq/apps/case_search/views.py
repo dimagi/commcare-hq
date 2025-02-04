@@ -143,7 +143,7 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
 
 @method_decorator([
     use_bootstrap5,
-    toggles.MODULE_BADGES.required_decorator(),
+    toggles.CSQL_FIXTURE.required_decorator(),
     require_can_edit_data,
 ], name='dispatch')
 class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
