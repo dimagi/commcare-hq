@@ -2,7 +2,7 @@ import json
 import re
 from io import BytesIO
 
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
@@ -10,18 +10,20 @@ from django.utils.translation import gettext_lazy
 from dimagi.utils.web import json_response
 
 from corehq import toggles
-from corehq.apps.case_search.forms import CSQLFixtureExpressionForm
-from corehq.apps.case_search.models import case_search_enabled_for_domain, CSQLFixtureExpression
-from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.case_search.forms import CSQLFixtureExpressionForm
+from corehq.apps.case_search.models import (
+    CSQLFixtureExpression,
+    case_search_enabled_for_domain,
+)
+from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqadmin.utils import get_download_url
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
-from django.http import HttpResponse
+from corehq.apps.settings.views import BaseProjectDataView
 from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from django.utils.translation import gettext as _
 from corehq.util.view_utils import BadRequest, json_error
 
 
@@ -144,14 +146,10 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
     toggles.MODULE_BADGES.required_decorator(),
     require_can_edit_data,
 ], name='dispatch')
-class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseDomainView):
+class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
     urlname = 'csql_fixture_configuration'
-    page_title = _('CSQL Fixture Configuration')
+    page_title = gettext_lazy('CSQL Fixture Configuration')
     template_name = 'case_search/csql_fixture_configuration.html'
-
-    @property
-    def section_url(self):
-        return reverse(self.urlname, args=[self.domain])
 
     @property
     def page_context(self):
