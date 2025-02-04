@@ -58,9 +58,11 @@ from .views.mobile.users import (
     UploadCommCareUsers,
     UserUploadStatusView,
     activate_commcare_user,
+    activate_connectid_link,
     count_commcare_users,
     count_web_users,
     deactivate_commcare_user,
+    deactivate_connectid_link,
     delete_commcare_user,
     demo_restore_job_poll,
     download_commcare_users,
@@ -74,6 +76,8 @@ from .views.mobile.users import (
     CommCareUserConfirmAccountView,
     send_confirmation_email,
     send_confirmation_sms,
+    send_connectid_invite,
+    confirm_connectid_user,
     CommcareUserUploadJobPollView,
     ClearCommCareUsers,
     link_connectid_user,
@@ -157,6 +161,10 @@ urlpatterns = [
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/groups/$', update_user_groups, name='update_user_groups'),
     url(r'^commcare/activate/(?P<user_id>[ \w-]+)/$', activate_commcare_user, name='activate_commcare_user'),
     url(r'^commcare/deactivate/(?P<user_id>[ \w-]+)/$', deactivate_commcare_user, name='deactivate_commcare_user'),
+    url(r'^commcare/activate_connectid_link/(?P<user_id>[ \w-]+)/$',
+        activate_connectid_link, name='activate_connectid_link'),
+    url(r'^commcare/deactivate_connectid_link/(?P<user_id>[ \w-]+)/$',
+        deactivate_connectid_link, name='deactivate_connectid_link'),
     url(
         r'^commcare/send_confirmation_email/(?P<user_id>[ \w-]+)/$',
         send_confirmation_email,
@@ -245,6 +253,16 @@ urlpatterns = [
         r'^commcare/confirm_account_sms/(?P<user_invite_hash>[\S-]+)/$',
         CommCareUserConfirmAccountBySMSView.as_view(),
         name=CommCareUserConfirmAccountBySMSView.urlname
+    ),
+    url(
+        r'^commcare/send_connectid_invite/(?P<user_id>[ \w-]+)/$',
+        send_connectid_invite,
+        name='send_connectid_invite'
+    ),
+    url(
+        r'^commcare/confirm_connectid_user/$',
+        confirm_connectid_user,
+        name="confirm_connectid_user"
     ),
     url(
         r'^commcare/link_connectid_user/$',
