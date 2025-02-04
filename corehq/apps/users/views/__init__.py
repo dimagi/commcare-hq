@@ -1252,11 +1252,12 @@ class InviteWebUserView(BaseManageWebUserView):
                 invitation, changed_values = self._get_and_set_changes(invitation, data, profile)
                 changes = self.format_changes(*changed_values)
                 user_data = data.get("custom_user_data", {})
+                changed_user_data = {}
                 for key, value in invitation.custom_user_data.items():
-                    if key in user_data and user_data[key] == value:
-                        user_data.pop(key)
-                changes.update(user_data)
-                invitation.custom_user_data = data.get("custom_user_data", {})
+                    if key in user_data and user_data[key] != value:
+                        changed_user_data[key] = user_data[key]
+                changes.update({"custom_user_data": changed_user_data})
+                invitation.custom_user_data = user_data
                 invitation.tableau_role = data.get("tableau_role", None)
                 invitation.tableau_group_ids = data.get("tableau_group_ids", None)
                 invitation.save()
