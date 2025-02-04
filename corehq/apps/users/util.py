@@ -412,7 +412,7 @@ def log_invitation_change(domain, changed_by, changed_via, action, invite=None, 
 
     :param domain: domain that the invitation is for
     :param changed_by: user_id of the invitee or the invitation editor
-    :param changed_via: INVITATION_CHANGED_VIA_* const (for now just web or api)
+    :param changed_via: INVITATION_CHANGE_VIA_* const (for now just web or api)
     :param action: CREATE, UPDATE or DELETE
     :param invite: the Invitation object itself. defaults to None for DELETE actions
     :param user_id: id of the user being invited. This defaults to None if the user hasn't made an account yet

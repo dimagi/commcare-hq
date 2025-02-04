@@ -1250,7 +1250,7 @@ class InviteWebUserView(BaseManageWebUserView):
             if invitation:
                 create_invitation = False
                 invitation, changed_values = self._get_and_set_changes(invitation, data, profile)
-                changes = self._format_changes(*changed_values)
+                changes = self.format_changes(*changed_values)
                 user_data = data.get("custom_user_data", {})
                 for key, value in invitation.custom_user_data.items():
                     if key in user_data and user_data[key] == value:
@@ -1304,8 +1304,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 invite.save()
                 invite.assigned_locations.set(assigned_locations)
                 invite.send_activation_email()
-                changes = self._format_changes(data.get("role"), profile, assigned_locations,
-                                               data["primary_location"], data.get("program", None))
+                changes = self.format_changes(self.domain, data.get("role"), profile, assigned_locations,
+                                              data["primary_location"], data.get("program", None))
                 for key in changes:
                     if key in data:
                         data.pop(key, None)
@@ -1366,16 +1366,17 @@ class InviteWebUserView(BaseManageWebUserView):
             change_values[4] = program
             invite.program = program
 
-        return invite, change_values
+        return invite, [self.domain] + change_values
 
-    def _format_changes(self, role_name, profile, assigned_locations, primary_location, program_id):
+    @staticmethod
+    def format_changes(domain, role_name, profile, assigned_locations, primary_location, program_id):
         changes = {}
         if role_name:
             if role_name == "admin":
-                role = StaticRole.domain_admin(self.domain)
+                role = StaticRole.domain_admin(domain)
             else:
                 try:
-                    role = UserRole.objects.get(couch_id=role_name.replace("user-role:", ''), domain=self.domain)
+                    role = UserRole.objects.get(couch_id=role_name.replace("user-role:", ''), domain=domain)
                 except UserRole.DoesNotExist:
                     role = None
             if role:
