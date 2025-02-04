@@ -1209,7 +1209,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                     config.display_name
                 ))
                 messages.success(request, _(
-                    'This data source will be picked for build / rebuild automatically by CommCare HQ.'
+                    'This data source will be built / rebuilt automatically by CommCare HQ.'
                 ))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(
