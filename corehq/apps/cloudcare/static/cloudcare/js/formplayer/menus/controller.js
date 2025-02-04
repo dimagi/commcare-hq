@@ -56,7 +56,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                 return;
             }
 
-            // const selections = menuResponse.selections ? menuResponse.selections.join(">") : "";
             gtx.logNavigateMenu(gtx.extractSelections(menuResponse));
 
             //set title of tab to application name

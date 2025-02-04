@@ -224,7 +224,6 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
                 moduleName: menuResponse.title,
             });
             kissmetrics.track.event("Viewed Case List", kissmetricsEventData);
-            // gtx.sendEvent("web_apps_viewed_case_list", gtxEventData);
             gtx.logCaseList(gtx.extractSelections(menuResponse), gtxEventData);
 
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
