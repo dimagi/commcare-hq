@@ -971,7 +971,11 @@ class DataSourceRepeater(Repeater):
         from corehq.apps.userreports.util import (
             get_indicator_adapter,
         )
-        update_log = DataSourceUpdateLog.objects.get(id=repeat_record.payload_id)
+
+        try:
+            update_log = DataSourceUpdateLog.objects.get(id=repeat_record.payload_id)
+        except DataSourceUpdateLog.DoesNotExist:
+            return None
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
             domain=self.domain
@@ -983,6 +987,11 @@ class DataSourceRepeater(Repeater):
             for row in datasource_adapter.get_rows_by_doc_id(doc_id)
         ]
         return update_log
+
+    def send_request(self, repeat_record, payload):
+        if payload is None:
+            return RepeaterResponse(204, "No content")
+        return super().send_request(repeat_record, payload)
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)

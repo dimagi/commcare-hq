@@ -48,6 +48,7 @@ from corehq.motech.repeaters.const import (
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     DataSourceRepeater,
+    DataSourceUpdateLog,
     FormRepeater,
     LocationRepeater,
     Repeater,
@@ -1337,6 +1338,17 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         self._create_log_and_repeat_record()
         self.repeater.merge_records()
         assert self.repeater.repeat_records_ready.count() == 1
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_deleted_payload(self):
+        self._create_log_and_repeat_record()
+        repeat_record = self.repeater.repeat_records_ready.first()
+        DataSourceUpdateLog.objects.filter(id=repeat_record.payload_id).delete()
+
+        assert self.repeater.payload_doc(repeat_record) is None
+        assert repeat_record.get_payload() is None
+        state = repeat_record.fire()
+        assert state == State.Empty
 
     def _create_log_and_repeat_record(self):
         from corehq.apps.userreports.tests.test_pillow import _save_sql_case
