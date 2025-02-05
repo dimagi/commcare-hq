@@ -6,6 +6,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     'underscore',
     'sentry_browser',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
     'cloudcare/js/formplayer/menus/collections',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/form_entry/errors',
@@ -21,6 +22,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     _,
     Sentry,
     initialPageData,
+    toggles,
     Collections,
     constants,
     errors,
@@ -42,6 +44,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 tzFromBrowser = Intl.DateTimeFormat().resolvedOptions().timeZone,
                 windowWidth = String(window.innerWidth),
+                keepAPMTraces = toggles.toggleEnabled('ACTIVATE_DATADOG_APM_TRACES'),
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
@@ -219,6 +222,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     "isRefreshCaseSearch": params.isRefreshCaseSearch,
                     "requestInitiatedByTag": params.requestInitiatedByTag,
                     "windowWidth": windowWidth,
+                    "keepAPMTraces": keepAPMTraces,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
