@@ -6,13 +6,11 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
     'underscore',
     'bootstrap5',
     'hqwebapp/js/initial_page_data',
-    'reports/js/bootstrap5/hq_report',
 ], function (
     $,
     _,
     bootstrap,
     initialPageData,
-    hqReportModule,
 ) {
     var standardReport = undefined,
         asyncReport = undefined;
@@ -21,26 +19,10 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
         if (typeof standardReport !== 'undefined') {
             return standardReport;
         }
+        import("userreports/js/configurable_report").then(function (ucrModule) {
+            standardReport = ucrModule.getStandardHQReport();
+        });
 
-        if (typeof standardHQReport !== 'undefined') {
-            // Custom reports, notably ewsghana
-            standardReport = standardHQReport;
-        } else {
-            // Standard reports
-            var reportOptions = _.extend({}, initialPageData.get('js_options'), {
-                emailSuccessMessage: gettext('Report successfully emailed'),
-                emailErrorMessage: gettext('An error occurred emailing your report. Please try again.'),
-            });
-            if (initialPageData.get('startdate')) {
-                reportOptions.datespan = {
-                    startdate: initialPageData.get('startdate'),
-                    enddate: initialPageData.get('enddate'),
-                };
-            }
-            var standardHQReport = hqReportModule.hqReport(reportOptions);
-            standardHQReport.init();
-            standardReport = standardHQReport;
-        }
         return standardReport;
     };
 

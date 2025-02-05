@@ -48,6 +48,7 @@ hqDefine("userreports/js/configurable_report", [
 
         var urlSerialize = util.urlSerialize;
         var reportOptions = {
+            ...initialPageData.get('js_options'),
             domain: initialPageData.get('domain'),
             urlRoot: initialPageData.get('url_root'),
             slug: initialPageData.get('slug'),
