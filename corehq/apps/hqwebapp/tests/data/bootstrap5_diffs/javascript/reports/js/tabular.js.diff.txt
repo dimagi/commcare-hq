@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,105 +1,107 @@
+@@ -1,105 +1,106 @@
 -hqDefine("reports/js/bootstrap3/tabular", [
 -    'jquery',
 -    'underscore',
@@ -24,7 +24,7 @@
 -    _,
 -    initialPageData,
 -    datatablesConfig,
--    standardHQReportModule
+-    standardHQReportModule,
 -) {
 -    function renderPage(slug, tableOptions) {
 -        if (tableOptions && tableOptions.datatables) {
@@ -101,7 +101,6 @@
 +                defaultRows: tableConfig.default_rows,
 +                startAtRowNum: tableConfig.start_at_row,
 +                showAllRowsOption: tableConfig.show_all_rows,
-+                loadingTemplateSelector: '#js-template-loading-report',
 +                autoWidth: tableConfig.headers.auto_width,
 +            };
 +        if (!tableConfig.sortable) {

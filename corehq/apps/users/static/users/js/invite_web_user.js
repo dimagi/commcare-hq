@@ -10,10 +10,8 @@ hqDefine('users/js/invite_web_user',[
     $,
     ko,
     initialPageData,
-    customDataFields
+    customDataFields,
 ) {
-    'use strict';
-
     var inviteWebUserFormHandler = function () {
         var self = {},
             emailDefaultValue = $('#id_email').val();

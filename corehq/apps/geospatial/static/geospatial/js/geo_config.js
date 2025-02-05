@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine("geospatial/js/geo_config", [
     "jquery",
@@ -10,7 +10,7 @@ hqDefine("geospatial/js/geo_config", [
     $,
     ko,
     initialPageData,
-    alertUser
+    alertUser,
 ) {
     const ROAD_NETWORK_ALGORITHM = initialPageData.get('road_network_algorithm_slug');
 
@@ -80,7 +80,7 @@ hqDefine("geospatial/js/geo_config", [
             }).fail(function () {
                 alertUser.alert_user(
                     gettext("Invalid API token. Please verify that the token matches the one on your Mapbox account and has the correct scope configured."),
-                    "danger"
+                    "danger",
                 );
             });
         };

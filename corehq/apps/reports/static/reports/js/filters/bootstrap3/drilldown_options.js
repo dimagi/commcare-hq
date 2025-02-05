@@ -6,7 +6,7 @@ hqDefine('reports/js/filters/bootstrap3/drilldown_options', [
 ], function (
     $,
     ko,
-    _
+    _,
 ) {
     var drilldownOptionFilterControl = function (options) {
         var self = {};

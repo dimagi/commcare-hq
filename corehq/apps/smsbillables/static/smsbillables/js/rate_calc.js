@@ -9,11 +9,10 @@ hqDefine("smsbillables/js/rate_calc", [
     $,
     ko,
     _,
-    select2Handler
+    select2Handler,
 ) {
     $(function () {
         var smsRateCalculator = function (formData) {
-            'use strict';
             var self = {};
 
             self.gateway = ko.observable();
@@ -80,7 +79,6 @@ hqDefine("smsbillables/js/rate_calc", [
         };
 
         var publicSMSRateCalculator = function () {
-            'use strict';
             var self = {};
 
             var rates = [];
@@ -129,7 +127,6 @@ hqDefine("smsbillables/js/rate_calc", [
         };
 
         var select2SmsRateHandler = function (options) {
-            'use strict';
             var self = select2Handler.baseSelect2Handler(options);
 
             self.getHandlerSlug = function () {

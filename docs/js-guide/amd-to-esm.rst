@@ -115,6 +115,13 @@ Key Points
     a problem, check ``requirejs_config.js``, because there might have been an alias defined there that hasn't
     been added to ``webpack.common.js``.
 
+Automation
+~~~~~~~~~~
+
+As a first step, you can run the `hqdefine_to_esm <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/hqdefine_to_esm.py>`__
+management command, which will rewrite the file in place, replacing the ``hqDefine`` call with a series of
+``import`` statements.
+
 
 Example Structural Change
 ~~~~~~~~~~~~~~~~~~~~~~~~~

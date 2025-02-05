@@ -11,7 +11,7 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", [
     ko,
     _,
     atwho,
-    ace
+    ace,
 ) {
     ko.bindingHandlers.xPathAutocomplete = {
         init: function (element, valueAccessor, allBindings, viewModel) {
@@ -32,7 +32,7 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", [
                         wrap: true,
                         indentedSoftWrap: false,
                         useWorker: false, // enable the worker to show syntax errors
-                    }
+                    },
                 );
             editor.session.setMode('ace/mode/xquery'); // does reasonable syntax highlighting for XPath
 

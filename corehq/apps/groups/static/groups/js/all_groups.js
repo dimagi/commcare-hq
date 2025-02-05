@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("groups/js/all_groups", [
     'jquery',
     'analytix/js/google',
@@ -9,7 +9,7 @@ hqDefine("groups/js/all_groups", [
 ], function (
     $,
     googleAnalytics,
-    bootstrap
+    bootstrap,
 ) {
     $(function () {
         var $createGroupForm = $("#create_group_form");

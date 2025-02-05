@@ -11,13 +11,12 @@
  ], function (
      $,
      _,
--    ko
-+    ko,
-+    bootstrap
+     ko,
++    bootstrap,
  ) {
      // Need this due to https://github.com/knockout/knockout/pull/2324
      // so that ko.bindingHandlers.foreach.update works properly
-@@ -344,19 +346,15 @@
+@@ -341,19 +343,15 @@
  
      ko.bindingHandlers.modal = {
          init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -41,7 +40,7 @@
              }
          },
      };
-@@ -377,25 +375,32 @@
+@@ -374,25 +372,32 @@
           */
          init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
              let value = valueAccessor(),
@@ -83,7 +82,7 @@
                      };
                      return clickAction;
                  };
-@@ -405,11 +410,13 @@
+@@ -402,11 +407,13 @@
  
      ko.bindingHandlers.openRemoteModal = {
          init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -100,7 +99,7 @@
                      };
                      return clickAction;
                  };
-@@ -645,7 +652,7 @@
+@@ -642,7 +649,7 @@
                  options.sanitize = false;
              }
              if (options.title || options.content) { // don't show empty popovers
