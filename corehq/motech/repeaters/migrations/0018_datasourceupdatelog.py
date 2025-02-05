@@ -1,7 +1,15 @@
-import corehq.sql_db.fields
-from django.db import migrations, models
-import jsonfield.fields
 import uuid
+
+from django.db import migrations, models
+
+import jsonfield.fields
+from architect.commands import partition
+
+import corehq.sql_db.fields
+
+
+def add_partitions(apps, schema_editor):
+    partition.run({'module': 'corehq.motech.repeaters.models'})
 
 
 class Migration(migrations.Migration):
@@ -33,6 +41,11 @@ class Migration(migrations.Migration):
                     "rows",
                     jsonfield.fields.JSONField(blank=True, default=list, null=True),
                 ),
+                ("timestamp", models.DateTimeField(auto_now_add=True)),
             ],
+            options={
+                "db_table": "repeaters_datasourceupdatelog",
+            },
         ),
+        migrations.RunPython(add_partitions),
     ]

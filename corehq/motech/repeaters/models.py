@@ -73,6 +73,7 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+import architect
 from django.conf import settings
 from django.db import models, router
 from django.db.models.base import Deferred
@@ -922,12 +923,19 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+@architect.install('partition', type='range', subtype='date', constraint='month', column='timestamp')
 class DataSourceUpdateLog(models.Model):
     id = models.UUIDField(primary_key=True, db_column="id_", default=uuid.uuid4)
     domain = CharIdField(max_length=126, db_index=True)
     data_source_id = models.UUIDField()
     doc_ids = JSONField(default=list)
     rows = JSONField(default=list, blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'repeaters_datasourceupdatelog'
+
+    MAX_AGE = timedelta(days=93)
 
     @property
     def get_id(self):
