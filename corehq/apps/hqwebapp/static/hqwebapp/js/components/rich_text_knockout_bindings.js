@@ -1,7 +1,6 @@
 import ko from "knockout";
 
 import "quill/dist/quill.snow.css";
-import "hqwebapp/js/components/quill.css"; // can be removed once I figure out why quill.scss is not being picked up.
 import Quill from 'quill';
 import Toolbar from "quill/modules/toolbar";
 import Snow from "quill/themes/snow";
