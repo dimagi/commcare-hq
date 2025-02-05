@@ -1,0 +1,11 @@
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value]::before {
+  content: attr(data-value) !important;
+}
+.ql-editor {
+  height: 250px;
+}
+
+.ql-picker-label {
+  overflow: hidden;
+}
