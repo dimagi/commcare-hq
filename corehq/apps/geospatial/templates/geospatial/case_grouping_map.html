@@ -6,7 +6,7 @@
 {% block reportcontent %}
   {% include 'geospatial/partials/index_alert.html' %}
   <div class="row panel">
-    <div class="col col-md-2">
+    <div class="col col-md-3 col-lg-2">
       <span id="lock-groups-controls">
         <div class="controls">
           <button
@@ -15,14 +15,14 @@
             class="btn btn-default form-control"
           >
             <i class="fa fa-lock"></i>
-            {% trans "Lock Case Clustering Map for Me" %}
+            {% trans "Lock Map for Me" %}
           </button>
           <button
             data-bind="visible: groupsLocked(), click: toggleGroupLock"
             class="btn btn-primary form-control"
           >
             <i class="fa fa-unlock"></i>
-            {% trans "Unlock Case Clustering Map for Me" %}
+            {% trans "Unlock Map for Me" %}
           </button>
         </div>
       </span>
