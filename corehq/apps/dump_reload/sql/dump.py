@@ -205,6 +205,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     # RepeatRecord, but this does not seem like a good idea.
     FilteredModelIteratorBuilder('repeaters.RepeatRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('repeaters.RepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
+    FilteredModelIteratorBuilder('repeaters.DataSourceUpdateLog', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('saved_reports.ScheduledReportLog', SimpleFilter('domain')),
     UnfilteredModelIteratorBuilder('saved_reports.ScheduledReportsCheckpoint'),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),

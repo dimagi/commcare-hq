@@ -475,6 +475,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'FHIRImportResourceProperty',
     ]),
     ModelDeletion('repeaters', 'Repeater', 'domain', manager='all_objects'),
+    ModelDeletion('repeaters', 'DataSourceUpdateLog', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain', manager='all_objects'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),
