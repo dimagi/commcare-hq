@@ -404,7 +404,7 @@ def register_data_source_row_change(domain, data_source_id, doc_ids):
         update_log = DataSourceUpdateLog.objects.create(
             domain=domain,
             data_source_id=data_source_id,
-            doc_ids=doc_ids,
+            doc_ids=list(doc_ids),
             # We don't need to set `rows` here. We will determine
             # them at send time. See DataSourceRepeater.payload_doc()
             rows=None,
