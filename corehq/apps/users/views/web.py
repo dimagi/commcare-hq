@@ -38,9 +38,10 @@ from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.users.forms import DomainRequestForm
 from corehq.apps.users.models import CouchUser, DomainRequest, Invitation
-from corehq.apps.users.util import log_user_change
+from corehq.apps.users.model_log import InviteModelAction
+from corehq.apps.users.util import log_user_change, log_invitation_change
 from corehq.apps.users.views.utils import user_can_access_invite
-from corehq.const import USER_CHANGE_VIA_INVITATION
+from corehq.const import USER_CHANGE_VIA_INVITATION, INVITATION_CHANGE_VIA_WEB
 
 
 class UserInvitationView(object):
@@ -281,8 +282,16 @@ def reinvite_web_user(request, domain):
 def delete_invitation(request, domain):
     uuid = request.POST['uuid']
     invitation = Invitation.objects.get(uuid=uuid)
+    user = CouchUser.get_by_username(invitation.email)
     if not user_can_access_invite(domain, request.couch_user, invitation):
         return location_restricted_response(request)
+    log_invitation_change(
+        domain=domain,
+        user_id=user.user_id if user else None,
+        changed_by=request.couch_user.user_id,
+        changed_via=INVITATION_CHANGE_VIA_WEB,
+        action=InviteModelAction.DELETE,
+    )
     invitation.delete()
     return JsonResponse({'status': 'ok'})
 

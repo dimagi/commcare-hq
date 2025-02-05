@@ -38,4 +38,7 @@ USER_CHANGE_VIA_SSO_INVITE = "sso_invitation"
 USER_CHANGE_VIA_SYSTEM = "system"
 USER_CHANGE_VIA_AUTO_DEACTIVATE = "auto_deactivate"
 
+INVITATION_CHANGE_VIA_WEB = "invite_web"
+INVITATION_CHANGE_VIA_API = "invite_api"
+
 LOADTEST_HARD_LIMIT = 500_000  # max cases a loadtest user can sync

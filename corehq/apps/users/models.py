@@ -2874,6 +2874,34 @@ class Invitation(models.Model):
         self._send_confirmation_email()
 
 
+class InvitationHistory(models.Model):
+    """
+    Modeled off UserHistory
+    """
+    CREATE = 1
+    UPDATE = 2
+    DELETE = 3
+
+    ACTION_CHOICES = (
+        (CREATE, _('Create')),
+        (UPDATE, _('Update')),
+        (DELETE, _('Delete')),
+    )
+    domain = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=128, null=True)  # if user_id is None, the user doesn't exist yet
+    changed_by = models.CharField(max_length=128)
+    changed_at = models.DateTimeField(auto_now_add=True, editable=False)
+    changed_via = models.CharField(max_length=255, blank=True)
+    action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
+    invitation = models.ForeignKey(Invitation, on_delete=models.SET_NULL, null=True)
+    changes = models.JSONField(default=dict, encoder=DjangoJSONEncoder, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain']),
+        ]
+
+
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
     domain_membership = SchemaProperty(DomainMembership)
