@@ -20,7 +20,16 @@ Quill.register({
 
 ko.bindingHandlers.richEditor = {
     init: function (element, valueAccessor) {
-        const fontFamilyArr = ["Roboto Condensed", "Times New Roman", "Calibri", "Calibri Light", "Sans-Serif"];
+        const fontFamilyArr = [
+            "Arial",
+            "Courier New",
+            "Georgia",
+            "Lucida Sans Unicode",
+            "Tahoma",
+            "Times New Roman",
+            "Trebuchet MS",
+            "Verdana",
+        ];
         let fonts = Quill.import("attributors/style/font");
         fonts.whitelist = fontFamilyArr;
         Quill.register(fonts, true);
