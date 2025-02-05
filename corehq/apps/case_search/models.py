@@ -480,11 +480,12 @@ class CSQLFixtureExpressionLog(models.Model):
 
 @receiver(post_save, sender=CSQLFixtureExpression)
 def after_save(sender, instance, created, **kwargs):
-    updated_or_created = (CSQLFixtureExpressionLog.Action.CREATE if created
-                          else CSQLFixtureExpressionLog.Action.UPDATE)
-    CSQLFixtureExpressionLog.objects.create(
-        expression=instance,
-        action=updated_or_created,
-        name=instance.name,
-        csql=instance.csql
-    )
+    if not instance.deleted:
+        updated_or_created = (CSQLFixtureExpressionLog.Action.CREATE if created
+                            else CSQLFixtureExpressionLog.Action.UPDATE)
+        CSQLFixtureExpressionLog.objects.create(
+            expression=instance,
+            action=updated_or_created,
+            name=instance.name,
+            csql=instance.csql
+        )
