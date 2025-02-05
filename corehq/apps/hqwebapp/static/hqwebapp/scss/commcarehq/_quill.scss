@@ -6,6 +6,16 @@
   height: 250px;
 }
 
+.ql-toolbar {
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+.ql-container {
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
 .ql-picker-label {
   overflow: hidden;
 }
