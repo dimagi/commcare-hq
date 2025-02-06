@@ -43,12 +43,20 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     es_search_class = case_es.CaseES
     profiler_enabled = False
     profiler_class = ESQueryProfiler
-    profiler = None
+    profiler_name = 'Case List'
+    _profiler = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.profiler_enabled:
-            self.profiler = self.profiler_class(search_class=self.es_search_class)
+            self._profiler = self.profiler_class(
+                name=self.profiler_name,
+                search_class=self.es_search_class,
+            )
+
+    @property
+    def profiler(self):
+        return self._profiler
 
     @property
     def search_class(self):

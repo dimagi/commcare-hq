@@ -57,11 +57,13 @@ from corehq.apps.es.es_query import HQESQuery
 @dataclass
 class ESQueryProfiler:
     search_class: HQESQuery = field(default_factory=HQESQuery)
+    name: str = 'Query Profiler'
     debug_mode: bool = False
-    timing_context: TimingContext = field(
-        default_factory=lambda: TimingContext('Case Search'))
     queries: list = field(default_factory=list)
     _query_number: int = 0
+
+    def __post_init__(self):
+        self.timing_context = TimingContext(self.name)
 
     def get_search_class(self, slug=None):
         profiler = self
@@ -92,9 +94,10 @@ class ESQueryProfiler:
 
 @dataclass
 class CaseSearchProfiler(ESQueryProfiler):
+    search_class = CaseSearchES
+    name: str = 'Case Search'
     primary_count: int = 0
     related_count: int = 0
-    es_search_class = CaseSearchES
 
 
 def time_function():
