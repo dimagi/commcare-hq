@@ -359,7 +359,7 @@ def get_paginated_cases_or_users(request, domain):
 
 
 class GetPaginatedCases(CaseListMixin):
-    search_class = CaseSearchES
+    es_search_class = CaseSearchES
 
     def __init__(self, request, domain, **kwargs):
         # override super class corehq.apps.reports.generic.GenericReportView init method to

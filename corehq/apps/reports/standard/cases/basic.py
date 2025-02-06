@@ -26,6 +26,7 @@ from corehq.elastic import ESError
 from corehq.util.es.elasticsearch import TransportError
 
 from .data_sources import CaseDisplayES
+from corehq.apps.case_search.utils import ESQueryProfiler
 
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
@@ -39,7 +40,21 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     case_filter = {}
     ajax_pagination = True
     asynchronous = True
-    search_class = case_es.CaseES
+    es_search_class = case_es.CaseES
+    profiler_enabled = False
+    profiler_class = ESQueryProfiler
+    profiler = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.profiler_enabled:
+            self.profiler = self.profiler_class(search_class=self.es_search_class)
+
+    @property
+    def search_class(self):
+        if not self.profiler_enabled:
+            return self.es_search_class
+        return self.profiler.get_search_class(slug=self.__class__.__name__)
 
     def _base_query(self):
         return (
