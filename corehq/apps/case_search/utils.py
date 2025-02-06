@@ -63,7 +63,7 @@ class ESProfiler:
     queries: list = field(default_factory=list)
     _query_number: int = 0
 
-    def get_case_search_class(self, slug=None):
+    def get_search_class(self, slug=None):
         profiler = self
 
         class ProfiledSearchClass(self.search_class):
@@ -188,7 +188,7 @@ class QueryHelper:
 
     def get_base_queryset(self, slug=None):
         # slug is only informational, used for profiling
-        _CaseSearchES = self.profiler.get_case_search_class(slug)
+        _CaseSearchES = self.profiler.get_search_class(slug)
         # See case_search_bha.py docstring for context on index_name
         return _CaseSearchES(index=self.config.index_name or None).domain(self.domain)
 
@@ -217,7 +217,7 @@ class RegistryQueryHelper(QueryHelper):
         self._registry_helper = registry_helper
 
     def get_base_queryset(self, slug=None):
-        _CaseSearchES = self.profiler.get_case_search_class(slug)
+        _CaseSearchES = self.profiler.get_search_class(slug)
         return _CaseSearchES().domain(self._registry_helper.visible_domains)
 
     def wrap_case(self, es_hit, include_score=False):
