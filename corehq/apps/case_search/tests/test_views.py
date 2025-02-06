@@ -1,42 +1,16 @@
-from django.test import TestCase
 from django.urls import reverse
 
-from corehq.apps.case_search.models import (
-    CSQLFixtureExpression,
-    CSQLFixtureExpressionLog,
-)
-from corehq.apps.case_search.views import CSQLFixtureExpressionView
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
+from corehq.tests.util.htmx import HtmxViewTestCase
 from corehq.util.test_utils import flag_enabled
+
+from ..models import CSQLFixtureExpression, CSQLFixtureExpressionLog
+from ..views import CSQLFixtureExpressionView
 
 
 @flag_enabled('CSQL_FIXTURE')
-class TestCSQLFixtureExpressionView(TestCase):
-    domain = 'test-domain'
-    username = 'username@test.com'
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain_obj = create_domain(cls.domain)
-        cls.user = WebUser.create(
-            cls.domain, cls.username, 'password', None, None, is_admin=True
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain, deleted_by=None)
-        cls.domain_obj.delete()
-        super().tearDownClass()
-
-    def hx_action(self, action, data):
-        self.client.login(username=self.username, password='password')
-        return self.client.post(
-            reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
-            data,
-            headers={'HQ-HX-Action': action},
-        )
+class TestCSQLFixtureExpressionView(HtmxViewTestCase):
+    def get_url(self):
+        return reverse(CSQLFixtureExpressionView.urlname, args=[self.domain])
 
     def test_create_update_delete(self):
         # create
