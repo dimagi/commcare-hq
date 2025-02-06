@@ -1692,15 +1692,6 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             }
 
-    def _enterprise_users(self):
-        from corehq.apps.users.views import EnterpriseUsersView
-        if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
-            return {
-                'title': _(EnterpriseUsersView.page_title),
-                'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
-                'show_in_dropdown': True,
-            }
-
     def _roles_and_permissions(self):
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
@@ -1794,7 +1785,6 @@ class ProjectUsersTab(UITab):
         items = []
 
         users_menu = filter(None, [
-            self._enterprise_users(),
             self._mobile_workers(),
             self._web_users(),
             self._roles_and_permissions(),
