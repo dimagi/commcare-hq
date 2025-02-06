@@ -5,7 +5,6 @@ hqDefine('cloudcare/js/gtx', [
     _,
     gtx,
 ) {
-    let lastNavigationTimeMs = Date.now();
     let lastCaseListSelections = "";
     let lastCaseListTimeMs = Date.now();
     let lastSelections = "";
@@ -16,34 +15,29 @@ hqDefine('cloudcare/js/gtx', [
     };
 
     const logNavigateMenu = function (selections) {
-        const selectionsChanged = selections !== lastSelections;
-        const navigatedAwayFromCaselist =
-            lastCaseListSelections !== "" && !selections.startsWith(lastCaseListSelections);
-        const gtxEventData = {
-            timeSinceLastNavigationMs: Date.now() - lastNavigationTimeMs,
-            selections: selections,
-            previousSelections: lastSelections,
-            selectionsChanged: selectionsChanged,
-            navigatedAwayFromCaseList: navigatedAwayFromCaselist,
-            caseListSelection: lastCaseListSelections,
-            timeSinceLastSelectionChangeMs: Date.now() - lastSelectionsChangeTimeMs,
-            timeSinceLastCaseListOpenMs: Date.now() - lastCaseListTimeMs,
-        };
-        if (selectionsChanged) {
+        if (selections !== lastSelections) {
+            const navigatedAwayFromCaseList =
+                lastCaseListSelections !== "" && !selections.startsWith(lastCaseListSelections);
+            const gtxEventData = {
+                selections: selections,
+                previousSelections: lastSelections,
+                navigatedAwayFromCaseList: navigatedAwayFromCaseList,
+                caseListSelection: lastCaseListSelections,
+                timeSinceLastSelectionChangeMs: Date.now() - lastSelectionsChangeTimeMs,
+                timeSinceLastCaseListOpenMs: Date.now() - lastCaseListTimeMs,
+            };
             lastSelections = selections;
             lastSelectionsChangeTimeMs = Date.now();
+            if (navigatedAwayFromCaseList) {
+                lastCaseListSelections = "";
+            }
+            gtx.sendEvent("web_apps_selection_change", gtxEventData);
         }
-        if (navigatedAwayFromCaselist) {
-            lastCaseListSelections = "";
-        }
-        lastNavigationTimeMs = Date.now();
-        gtx.sendEvent("web_apps_navigate", gtxEventData);
     };
 
     const logCaseList = function (selections, gtxEventData) {
         _.extend(gtxEventData, {
             selections: selections,
-            resetDate: selections !== lastCaseListSelections,
         });
         if (selections !== lastCaseListSelections) {
             lastCaseListSelections = selections;
@@ -60,7 +54,6 @@ hqDefine('cloudcare/js/gtx', [
         });
         lastCaseListSelections = "";
         gtx.sendEvent("web_apps_submit_form", gtxEventData);
-        gtx.sendEvent("web_apps_dummy", {key: "value"});
     };
 
     return {
