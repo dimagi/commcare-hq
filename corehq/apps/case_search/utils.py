@@ -51,13 +51,13 @@ from corehq.apps.registry.exceptions import (
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
+from corehq.apps.es.es_query import ESQuery
 
 
 @dataclass
-class CaseSearchProfiler:
+class ESProfiler:
+    search_class: ESQuery = field(default_factory=ESQuery)
     debug_mode: bool = False
-    primary_count: int = 0
-    related_count: int = 0
     timing_context: TimingContext = field(
         default_factory=lambda: TimingContext('Case Search'))
     queries: list = field(default_factory=list)
@@ -66,7 +66,7 @@ class CaseSearchProfiler:
     def get_case_search_class(self, slug=None):
         profiler = self
 
-        class ProfiledCaseSearchES(CaseSearchES):
+        class ProfiledSearchClass(self.search_class):
             def run(self):
                 profiler._query_number += 1
                 if profiler.debug_mode:
@@ -87,7 +87,14 @@ class CaseSearchProfiler:
                     })
                 return results
 
-        return ProfiledCaseSearchES
+        return ProfiledSearchClass
+
+
+@dataclass
+class CaseSearchProfiler(ESProfiler):
+    primary_count: int = 0
+    related_count: int = 0
+    search_class = CaseSearchES
 
 
 def time_function():
