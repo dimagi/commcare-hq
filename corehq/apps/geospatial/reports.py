@@ -51,7 +51,7 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
 
     dispatcher = CaseManagementMapDispatcher
 
-    es_search_class = CaseSearchES
+    search_class = CaseSearchES
 
     @property
     def template_context(self):
