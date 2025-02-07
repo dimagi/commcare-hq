@@ -1,3 +1,5 @@
+import json
+
 from corehq.apps.integration.kyc.models import UserDataStore
 
 
@@ -39,3 +41,11 @@ def _get_source_data(source, config):
     else:
         source_data = source.case_json
     return source_data
+
+
+def invoke_verify_customer_api(user_data_for_api, config):
+    url = config.connection_settings.url
+    requests = config.connection_settings.get_requests()
+    response = requests.post(url, data=json.dumps(user_data_for_api))
+    response.raise_for_status()
+    return response.json()
