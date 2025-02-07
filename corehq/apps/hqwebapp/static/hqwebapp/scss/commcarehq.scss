@@ -1,9 +1,10 @@
+
 // Configuration
 @import "functions";
-@import "commcarehq/variables"; // This comes before Bootstrap 5 variables to override the defaults
+@import "commcarehq/variables";  // This comes before Bootstrap 5 variables to override the defaults
 @import "variables";
 @import "variables-dark";
-@import "commcarehq/variables_bootstrap3"; // Variables specific to B3-era Stylesheet
+@import "commcarehq/variables_bootstrap3";  // Variables specific to B3-era Stylesheet
 @import "maps";
 @import "mixins";
 @import "commcarehq/mixins";
@@ -87,7 +88,6 @@
 @import "commcarehq/pagination";
 @import "commcarehq/panels";
 @import "commcarehq/plan_notice";
-@import "commcarehq/quill";
 @import "commcarehq/radio_select";
 @import "commcarehq/readable_forms";
 @import "commcarehq/report";
