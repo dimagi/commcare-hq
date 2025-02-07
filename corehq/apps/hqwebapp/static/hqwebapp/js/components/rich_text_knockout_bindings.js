@@ -19,6 +19,45 @@ Quill.register({
     "formats/header": Header,
 });
 
+function imageHandler() {
+    const self = this;
+    const input = document.createElement("input");
+    input.accept = "image/png, image/jpeg";
+    input.type = "file";
+    input.onchange = function (onChangeEvent) {
+        const file = onChangeEvent.target.files[0];
+        const uploadUrl = initialPageData.reverse("upload_messaging_image");
+        let formData = new FormData();
+
+        formData.append("upload", file, file.name);
+        fetch(uploadUrl, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFTOKEN": $("#csrfTokenContainer").val(),
+            },
+        })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                const Delta =  Quill.import("delta");
+                const selectionRange = self.quill.getSelection(true);
+                self.quill.updateContents(
+                    new Delta()
+                        .retain(selectionRange.index)
+                        .delete(selectionRange.length)
+                        .insert({
+                            image: data.url,
+                        }, {
+                            alt: file.name,
+                        }),
+                );
+            });
+    };
+    input.click();
+}
+
 ko.bindingHandlers.richEditor = {
     init: function (element, valueAccessor) {
         const fontFamilyArr = [
@@ -38,57 +77,14 @@ ko.bindingHandlers.richEditor = {
         const toolbar = element.parentElement.querySelector("#ql-toolbar");
         const editor = new Quill(element, {
             modules: {
-                toolbar: toolbar,
+                toolbar: {
+                    container: toolbar,
+                    handlers: {
+                        image: imageHandler,
+                    },
+                },
             },
             theme: "snow",
-        });
-
-        let currentSelectionRange = { index: 0, length: 0};
-        const insertImageButton = toolbar.querySelector("#insert-image");
-        insertImageButton.addEventListener("click", function (clickEvent) {
-            clickEvent.stopPropagation();
-            const input = document.createElement("input");
-            input.accept = "image/png, image/jpeg";
-            input.type = "file";
-            input.onchange = function (onChangeEvent) {
-                const file = onChangeEvent.target.files[0];
-                const uploadUrl = initialPageData.reverse("upload_messaging_image");
-                let formData = new FormData();
-
-                formData.append("upload", file, file.name);
-                fetch(uploadUrl, {
-                    method: "POST",
-                    body: formData,
-                    headers: {
-                        "X-CSRFTOKEN": $("#csrfTokenContainer").val(),
-                    },
-                })
-                    .then(function (response) {
-                        return response.json();
-                    })
-                    .then(function (data) {
-                        const Delta =  Quill.import("delta");
-                        editor.updateContents(
-                            new Delta()
-                                .retain(currentSelectionRange.index)
-                                .delete(currentSelectionRange.length)
-                                .insert({
-                                    image: data.url,
-                                }, {
-                                    // link: data.url,
-                                    alt: file.name,
-                                }),
-                        );
-                    });
-            };
-
-            input.click();
-        });
-
-        editor.on("selection-change", (range) => {
-            if (range) {
-                currentSelectionRange = range;
-            }
         });
 
         const value = ko.utils.unwrapObservable(valueAccessor());
