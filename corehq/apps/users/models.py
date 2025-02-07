@@ -2771,10 +2771,13 @@ class Invitation(models.Model):
     def delete(self, **kwargs):
         from corehq.apps.users.model_log import InviteModelAction
         user = CouchUser.get_by_username(self.email)
+        deleted_by = kwargs.get('deleted_by')
+        if not deleted_by and not settings.UNIT_TESTING:
+            raise ValueError("Missing deleted_by")
         log_invitation_change(
             domain=self.domain,
             user_id=user.user_id if user else None,
-            changed_by=kwargs.get('changed_by'),
+            changed_by=deleted_by,
             changed_via=INVITATION_CHANGE_VIA_WEB,
             action=InviteModelAction.DELETE,
         )

@@ -1051,7 +1051,7 @@ def remove_invited_web_user(domain, username, upload_user):
     except Invitation.DoesNotExist:
         raise UserUploadError(_("You cannot remove a web user that is not a member or invited to this project. "
                                 "{username} is not a member or invited.").format(username=username))
-    invitation.delete(changed_by=upload_user)
+    invitation.delete(deleted_by=upload_user.user_id)
 
 
 def remove_web_user_from_domain(domain, user, username, upload_user, user_change_logger=None,
