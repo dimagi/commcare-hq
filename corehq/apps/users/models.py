@@ -79,12 +79,14 @@ from corehq.apps.users.tasks import (
 from corehq.apps.users.util import (
     filter_by_app,
     log_user_change,
+    log_invitation_change,
     user_display_string,
     user_location_data,
     username_to_user_id,
     bulk_auto_deactivate_commcare_users,
     is_dimagi_email,
 )
+from corehq.const import INVITATION_CHANGE_VIA_WEB
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
@@ -2765,6 +2767,18 @@ class Invitation(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def delete(self, **kwargs):
+        from corehq.apps.users.model_log import InviteModelAction
+        user = CouchUser.get_by_username(self.email)
+        log_invitation_change(
+            domain=self.domain,
+            user_id=user.user_id if user else None,
+            changed_by=kwargs.get('changed_by'),
+            changed_via=INVITATION_CHANGE_VIA_WEB,
+            action=InviteModelAction.DELETE,
+        )
+        super().delete()
 
     @classmethod
     def by_domain(cls, domain, is_accepted=False, **filters):
