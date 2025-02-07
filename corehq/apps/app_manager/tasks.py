@@ -141,6 +141,7 @@ def check_build_dependencies(new_build):
             descending=True,
             limit=1,
             skip=1,
+            reduce=False,
         ).first()
 
         if not previous_build_doc:
