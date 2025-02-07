@@ -79,12 +79,14 @@ from corehq.apps.users.tasks import (
 from corehq.apps.users.util import (
     filter_by_app,
     log_user_change,
+    log_invitation_change,
     user_display_string,
     user_location_data,
     username_to_user_id,
     bulk_auto_deactivate_commcare_users,
     is_dimagi_email,
 )
+from corehq.const import INVITATION_CHANGE_VIA_WEB
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
@@ -2766,6 +2768,18 @@ class Invitation(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def delete(self, **kwargs):
+        from corehq.apps.users.model_log import InviteModelAction
+        user = CouchUser.get_by_username(self.email)
+        log_invitation_change(
+            domain=self.domain,
+            user_id=user.user_id if user else None,
+            changed_by=kwargs.get('changed_by'),
+            changed_via=INVITATION_CHANGE_VIA_WEB,
+            action=InviteModelAction.DELETE,
+        )
+        super().delete()
+
     @classmethod
     def by_domain(cls, domain, is_accepted=False, **filters):
         return Invitation.objects.filter(domain=domain, is_accepted=is_accepted, **filters)
@@ -2872,6 +2886,34 @@ class Invitation(models.Model):
         self.is_accepted = True
         self.save()
         self._send_confirmation_email()
+
+
+class InvitationHistory(models.Model):
+    """
+    Modeled off UserHistory
+    """
+    CREATE = 1
+    UPDATE = 2
+    DELETE = 3
+
+    ACTION_CHOICES = (
+        (CREATE, _('Create')),
+        (UPDATE, _('Update')),
+        (DELETE, _('Delete')),
+    )
+    domain = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=128, null=True)  # if user_id is None, the user doesn't exist yet
+    changed_by = models.CharField(max_length=128)
+    changed_at = models.DateTimeField(auto_now_add=True, editable=False)
+    changed_via = models.CharField(max_length=255, blank=True)
+    action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
+    invitation = models.ForeignKey(Invitation, on_delete=models.SET_NULL, null=True)
+    changes = models.JSONField(default=dict, encoder=DjangoJSONEncoder, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain']),
+        ]
 
 
 class DomainRemovalRecord(DeleteRecord):

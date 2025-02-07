@@ -21,11 +21,16 @@ from corehq.apps.users.models import (
     HqPermissions,
     Invitation,
 )
+from corehq.apps.users.model_log import InviteModelAction
+from corehq.apps.users.util import log_invitation_change
+from corehq.apps.users.views import InviteWebUserView
 from corehq.apps.reports.util import (
     get_tableau_group_ids_by_names,
     get_tableau_groups_by_ids,
 )
 from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
+
+from corehq.const import INVITATION_CHANGE_VIA_API
 
 
 class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -132,19 +137,37 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
             if missing_ids := set(spec.assigned_location_ids) - set(real_ids):
                 raise ImmediateHttpResponse(JsonResponse(
                     {"error": f"Could not find location ids: {', '.join(missing_ids)}."}, status=400))
-
-        invite = Invitation.objects.create(
-            domain=domain,
-            email=spec.email.lower(),
-            role=role_id,
-            primary_location_id=primary_loc_id,
-            profile=profile,
-            custom_user_data=spec.new_or_existing_user_data or {},
-            tableau_role=spec.tableau_role,
-            tableau_group_ids=tableau_group_ids,
-            invited_by=bundle.request.couch_user.user_id,
-            invited_on=datetime.utcnow(),
-        )
+        initial_fields = {
+            'domain': domain,
+            'email': spec.email.lower(),
+            'custom_user_data': spec.new_or_existing_user_data or {},
+            'invited_by': bundle.request.couch_user.user_id,
+            'invited_on': datetime.utcnow(),
+        }
+        invite_params = {
+            'role': role_id,
+            'primary_location_id': primary_loc_id,
+            'profile': profile,
+            'tableau_role': spec.tableau_role,
+            'tableau_group_ids': tableau_group_ids,
+        }
+        invite_params.update(initial_fields)
+        invite = Invitation.objects.create(**invite_params)
         invite.assigned_locations.set(assigned_locs)
+
+        # Log invite creation
+        primary_loc = SQLLocation.active_objects.get(location_id=primary_loc_id)
+        user = CouchUser.get_by_username(spec.email.lower())
+        changes = InviteWebUserView.format_changes(domain, spec.role, profile, assigned_locs, primary_loc, None)
+        changes.update(initial_fields)
+        log_invitation_change(
+            domain=domain,
+            changed_by=bundle.request.couch_user.user_id,
+            changed_via=INVITATION_CHANGE_VIA_API,
+            action=InviteModelAction.CREATE,
+            invite=invite,
+            user_id=user.user_id if user else None,
+            changes=changes
+        )
         bundle.obj = invite
         return bundle

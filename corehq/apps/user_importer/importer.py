@@ -828,7 +828,7 @@ class WebUserRow(BaseUserRow):
         cv = self.column_values
 
         if cv['remove']:
-            remove_invited_web_user(self.domain, cv['username'])
+            remove_invited_web_user(self.domain, cv['username'], self.importer.upload_user)
             self.status_row['flag'] = 'updated'
         else:
             if cv['status'] == "Invited":
@@ -1059,20 +1059,20 @@ def check_changing_username(user, username):
         ) % {'username': user.username, 'new_username': username})
 
 
-def remove_invited_web_user(domain, username):
+def remove_invited_web_user(domain, username, upload_user):
     try:
         invitation = Invitation.objects.get(domain=domain, email=username)
     except Invitation.DoesNotExist:
         raise UserUploadError(_("You cannot remove a web user that is not a member or invited to this project. "
                                 "{username} is not a member or invited.").format(username=username))
-    invitation.delete()
+    invitation.delete(changed_by=upload_user)
 
 
 def remove_web_user_from_domain(domain, user, username, upload_user, user_change_logger=None,
                                 is_web_upload=False):
     if not user or not user.is_member_of(domain):
         if is_web_upload:
-            remove_invited_web_user(domain, username)
+            remove_invited_web_user(domain, username, upload_user)
             if user_change_logger:
                 user_change_logger.add_info(UserChangeMessage.invitation_revoked_for_domain(domain))
         else:
