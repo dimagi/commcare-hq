@@ -85,6 +85,7 @@ from corehq.apps.users.util import (
     username_to_user_id,
     bulk_auto_deactivate_commcare_users,
     is_dimagi_email,
+    SYSTEM_USER_ID,
 )
 from corehq.const import INVITATION_CHANGE_VIA_WEB
 from corehq.form_processor.exceptions import CaseNotFound
@@ -2774,6 +2775,8 @@ class Invitation(models.Model):
         deleted_by = kwargs.get('deleted_by')
         if not deleted_by and not settings.UNIT_TESTING:
             raise ValueError("Missing deleted_by")
+        elif not deleted_by and settings.UNIT_TESTING:
+            deleted_by = SYSTEM_USER_ID
         log_invitation_change(
             domain=self.domain,
             user_id=user.user_id if user else None,
