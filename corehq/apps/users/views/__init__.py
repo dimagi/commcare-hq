@@ -116,7 +116,7 @@ from corehq.apps.users.models import (
     UserRole,
 )
 from corehq.apps.users.model_log import InviteModelAction
-from corehq.apps.users.util import log_user_change, log_invitation_change
+from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import (
     filter_user_query_by_locations_accessible_to_user,
     get_editable_role_choices, BulkUploadResponseWrapper,
@@ -1250,7 +1250,7 @@ class InviteWebUserView(BaseManageWebUserView):
             if invitation:
                 create_invitation = False
                 invitation, changed_values = self._get_and_set_changes(invitation, data, profile)
-                changes = self.format_changes(*changed_values)
+                changes = self.format_changes(self.domain, changed_values)
                 user_data = data.get("custom_user_data", {})
                 changed_user_data = {}
                 for key, value in invitation.custom_user_data.items():
@@ -1258,19 +1258,10 @@ class InviteWebUserView(BaseManageWebUserView):
                         changed_user_data[key] = user_data[key]
                 changes.update({"custom_user_data": changed_user_data})
                 invitation.custom_user_data = user_data
-                invitation.tableau_role = data.get("tableau_role", None)
-                invitation.tableau_group_ids = data.get("tableau_group_ids", None)
-                invitation.save()
+                invitation.save(logging_values={"changed_by": request.couch_user.user_id,
+                                                "changed_via": INVITATION_CHANGE_VIA_WEB,
+                                                "action": InviteModelAction.UPDATE, "changes": changes})
                 messages.success(request, "Invite to %s was successfully updated." % data["email"])
-                log_invitation_change(
-                    domain=self.domain,
-                    changed_by=request.couch_user.user_id,
-                    changed_via=INVITATION_CHANGE_VIA_WEB,
-                    action=InviteModelAction.UPDATE,
-                    invite=invitation,
-                    user_id=user.user_id if user else None,
-                    changes=changes
-                )
             elif domain_request is not None:
                 domain_request.is_approved = True
                 domain_request.save()
@@ -1302,25 +1293,22 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["primary_location"], assigned_locations = self._get_sql_locations(
                     data.pop("primary_location", None), data.pop("assigned_locations", []))
                 invite = Invitation(**data)
-                invite.save()
-                invite.assigned_locations.set(assigned_locations)
-                invite.send_activation_email()
-                changes = self.format_changes(self.domain, data.get("role"), profile, assigned_locations,
-                                              data["primary_location"], data.get("program", None))
+                changes = self.format_changes(self.domain,
+                                              {'role_name': data.get("role"),
+                                               'profile': profile,
+                                               'assigned_locations': assigned_locations,
+                                               'primary_location': data["primary_location"],
+                                               'program_id': data.get("program", None)})
                 for key in changes:
                     if key in data:
                         data.pop(key, None)
                 data.pop("primary_location", None)
                 changes.update(data)
-                log_invitation_change(
-                    domain=self.domain,
-                    user_id=user.user_id if user else None,
-                    changed_by=request.couch_user.user_id,
-                    changed_via=INVITATION_CHANGE_VIA_WEB,
-                    action=InviteModelAction.CREATE,
-                    invite=invite,
-                    changes=changes
-                )
+                invite.save(logging_values={"changed_by": request.couch_user.user_id,
+                                            "changed_via": INVITATION_CHANGE_VIA_WEB,
+                                            "action": InviteModelAction.CREATE, "changes": changes})
+                invite.assigned_locations.set(assigned_locations)
+                invite.send_activation_email()
 
             # Ensure trust is established with Invited User's Identity Provider
             if not IdentityProvider.does_domain_trust_user(self.domain, data["email"]):
@@ -1344,34 +1332,42 @@ class InviteWebUserView(BaseManageWebUserView):
         return primary_location, assigned_locations
 
     def _get_and_set_changes(self, invite, form_data, profile):
-        change_values = [None] * 5
+        change_values = {}
         role = form_data.get("role")
         if invite.role != role:
-            change_values[0] = role
+            change_values['role_name'] = role
             invite.role = role
         if invite.profile != profile:
-            change_values[1] = profile
+            change_values['profile'] = profile
             invite.profile = profile
         primary_location, assigned_locations = self._get_sql_locations(
             form_data.pop("primary_location", None), form_data.pop("assigned_locations", []))
         previous_locations = [loc for loc in invite.assigned_locations.all()]
         if len(assigned_locations) != len(previous_locations) \
            or set(assigned_locations) != set(previous_locations):
-            change_values[2] = assigned_locations
+            change_values['assigned_locations'] = assigned_locations
             invite.assigned_locations.set(assigned_locations)
         if invite.primary_location != primary_location:
-            change_values[3] = primary_location
+            change_values['primary_location'] = primary_location
             invite.primary_location = primary_location
         if invite.program != form_data.get("program", None):
             program = form_data.get("program", None)
-            change_values[4] = program
+            change_values['program_id'] = program
             invite.program = program
+        if invite.tableau_role != form_data.get("tableau_role", None):
+            tableau_role = form_data.get("program", None)
+            change_values['tableau_role'] = tableau_role
+            invite.tableau_role = tableau_role
+        if invite.tableau_group_ids != form_data.get("tableau_group_ids", None):
+            tableau_group_ids = form_data.get("tableau_group_ids", None)
+            change_values['tableau_group_ids'] = tableau_group_ids
+            invite.program = tableau_group_ids
 
-        return invite, [self.domain] + change_values
+        return invite, change_values
 
     @staticmethod
-    def format_changes(domain, role_name, profile, assigned_locations, primary_location, program_id):
-        changes = {}
+    def format_changes(domain, changed_values):
+        role_name = changed_values.pop("role_name", None)
         if role_name:
             if role_name == "admin":
                 role = StaticRole.domain_admin(domain)
@@ -1381,17 +1377,21 @@ class InviteWebUserView(BaseManageWebUserView):
                 except UserRole.DoesNotExist:
                     role = None
             if role:
-                changes.update(UserChangeMessage.role_change(role))
+                changed_values.update(UserChangeMessage.role_change(role))
+        profile = changed_values.pop('profile', None)
         if profile:
-            changes.update(UserChangeMessage.profile_info(profile.id, profile.name))
+            changed_values.update(UserChangeMessage.profile_info(profile.id, profile.name))
+        program_id = changed_values.pop('program_id', None)
         if program_id:
-            changes.update(UserChangeMessage.program_change(Program.get(program_id)))
+            changed_values.update(UserChangeMessage.program_change(Program.get(program_id)))
+        assigned_locations = changed_values.pop('assigned_locations', None)
         if assigned_locations:
-            changes.update(UserChangeMessage.assigned_locations_info(assigned_locations))
+            changed_values.update(UserChangeMessage.assigned_locations_info(assigned_locations))
+        primary_location = changed_values.pop('primary_location', None)
         if primary_location:
-            changes.update(UserChangeMessage.primary_location_info(primary_location))
+            changed_values.update(UserChangeMessage.primary_location_info(primary_location))
 
-        return changes
+        return changed_values
 
 
 class BaseUploadUser(BaseUserSettingsView):

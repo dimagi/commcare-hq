@@ -22,7 +22,6 @@ from corehq.apps.users.models import (
     Invitation,
 )
 from corehq.apps.users.model_log import InviteModelAction
-from corehq.apps.users.util import log_invitation_change
 from corehq.apps.users.views import InviteWebUserView
 from corehq.apps.reports.util import (
     get_tableau_group_ids_by_names,
@@ -143,31 +142,30 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
             'custom_user_data': spec.new_or_existing_user_data or {},
             'invited_by': bundle.request.couch_user.user_id,
             'invited_on': datetime.utcnow(),
+            'tableau_role': spec.tableau_role,
+            'tableau_group_ids': tableau_group_ids,
         }
         invite_params = {
             'role': role_id,
             'primary_location_id': primary_loc_id,
             'profile': profile,
-            'tableau_role': spec.tableau_role,
-            'tableau_group_ids': tableau_group_ids,
         }
         invite_params.update(initial_fields)
         invite = Invitation.objects.create(**invite_params)
         invite.assigned_locations.set(assigned_locs)
 
         # Log invite creation
-        primary_loc = SQLLocation.active_objects.get(location_id=primary_loc_id)
-        user = CouchUser.get_by_username(spec.email.lower())
-        changes = InviteWebUserView.format_changes(domain, spec.role, profile, assigned_locs, primary_loc, None)
+        primary_loc = None
+        if primary_loc_id:
+            primary_loc = SQLLocation.objects.get(location_id=primary_loc_id)
+        changes = InviteWebUserView.format_changes(domain,
+                                                   {'role_name': spec.role,
+                                                    'profile': profile,
+                                                    'assigned_locations': assigned_locs,
+                                                    'primary_location': primary_loc})
         changes.update(initial_fields)
-        log_invitation_change(
-            domain=domain,
-            changed_by=bundle.request.couch_user.user_id,
-            changed_via=INVITATION_CHANGE_VIA_API,
-            action=InviteModelAction.CREATE,
-            invite=invite,
-            user_id=user.user_id if user else None,
-            changes=changes
-        )
+        invite.save(logging_values={"changed_by": bundle.request.couch_user.user_id,
+                                    "changed_via": INVITATION_CHANGE_VIA_API,
+                                    "action": InviteModelAction.CREATE, "changes": changes})
         bundle.obj = invite
         return bundle

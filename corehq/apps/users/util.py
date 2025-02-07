@@ -419,6 +419,15 @@ def log_invitation_change(domain, changed_by, changed_via, action, invite=None, 
     :param changes: dict of all changes. Combines the "changes" and "change_message" field present in UserHistory
     """
     from corehq.apps.users.models import InvitationHistory
+
+    if not changed_by and not settings.UNIT_TESTING:
+        raise ValueError("Missing changed_by")
+    elif not changed_by and settings.UNIT_TESTING:
+        changed_by = SYSTEM_USER_ID
+
+    if not changed_via and settings.UNIT_TESTING:
+        changed_via = "TEST"
+
     return InvitationHistory.objects.create(
         domain=domain,
         user_id=user_id,
