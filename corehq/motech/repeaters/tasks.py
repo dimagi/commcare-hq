@@ -239,15 +239,11 @@ def retry_process_datasource_repeat_record(repeat_record_id, domain):
 def _process_repeat_record(repeat_record):
 
     def endpoint_duration(timer_):
-        try:
-            return next(
-                sub.duration
-                for sub in timer_.to_list(exclude_root=True)
-                if sub.name == ENDPOINT_TIMER
-            )
-        except StopIteration:
-            # If there was a payload error, we won't have sent to an endpoint
-            return None
+        return next((
+            sub.duration
+            for sub in timer_.to_list(exclude_root=True)
+            if sub.name == ENDPOINT_TIMER
+        ), None)  # If there was a payload error, we won't have sent to an endpoint
 
     request_duration = action = None
     with TimingContext('process_repeat_record') as timer:
