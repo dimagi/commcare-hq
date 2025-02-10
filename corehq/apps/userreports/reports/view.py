@@ -369,7 +369,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def js_options(self):
         return {
             "domain": self.domain,
-            #"url_root": self.url_root,         # TODO: has this ever mattered?
             "slug": self.slug,
             "subReportSlug": self.sub_slug,
             "type": self.type,
