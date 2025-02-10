@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,14 +1,16 @@
+@@ -1,15 +1,17 @@
  /*
      This file also controls basic logic and event handling for report pages.
  */
@@ -10,6 +10,7 @@
      'underscore',
 +    'bootstrap5',
      'hqwebapp/js/initial_page_data',
+     'reports/js/util',
 -    'reports/js/bootstrap3/hq_report',
 +    'reports/js/bootstrap5/hq_report',
  ], function (
@@ -17,9 +18,9 @@
      _,
 +    bootstrap,
      initialPageData,
+     util,
      hqReportModule,
- ) {
-@@ -50,7 +52,7 @@
+@@ -56,7 +58,7 @@
          var reportOptions = initialPageData.get('js_options') || {};
          if (reportOptions.slug && reportOptions.async) {
              let promise = $.Deferred();
@@ -28,7 +29,7 @@
                  var asyncHQReport = asyncHQReportModule({
                      standardReport: getStandard(),
                  });
-@@ -69,13 +71,19 @@
+@@ -75,13 +77,19 @@
      asyncReport = getAsync();
  
      $(function () {
