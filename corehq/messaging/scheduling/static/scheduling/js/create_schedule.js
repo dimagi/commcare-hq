@@ -3,39 +3,41 @@ import ko from "knockout";
 
 import "jquery-ui/ui/widgets/datepicker";
 import "bootstrap-timepicker/js/bootstrap-timepicker";
+
+import "hqwebapp/js/components/rich_text_knockout_bindings";
 import "hqwebapp/js/components/select_toggle";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import select2Handler from "hqwebapp/js/select2_handler";
 
 ko.bindingHandlers.useTimePicker = {
-    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+    init: function (element) {
         $(element).timepicker({
             showMeridian: false,
             showSeconds: false,
             defaultTime: $(element).val() || '',
         });
     },
-    update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {},
+    update: function () {},
 };
 
-var MessageViewModel = function (language_code, message) {
+var MessageViewModel = function (languageCode, message) {
     var self = this;
 
-    self.language_code = ko.observable(language_code);
+    self.language_code = ko.observable(languageCode);
     self.message = ko.observable(message);
     self.html_message = ko.observable(message);
 };
 
-var TranslationViewModel = function (language_codes, translations) {
+var TranslationViewModel = function (languageCodes, translations) {
     var self = this;
 
     if (typeof translations === 'string') {
         translations = JSON.parse(translations);
     }
     translations = translations || {};
-    var initial_translate = !($.isEmptyObject(translations) || '*' in translations);
+    var initialTranslate = !($.isEmptyObject(translations) || '*' in translations);
 
-    self.translate = ko.observable(initial_translate);
+    self.translate = ko.observable(initialTranslate);
     self.nonTranslatedMessage = ko.observable(translations['*']);
     self.translatedMessages = ko.observableArray();
 
@@ -79,7 +81,7 @@ var TranslationViewModel = function (language_codes, translations) {
     });
 
     self.loadInitialTranslatedMessages = function () {
-        language_codes.forEach(function (language_code) {
+        languageCodes.forEach(function (language_code) {
             self.translatedMessages.push(new MessageViewModel(language_code, translations[language_code]));
         });
     };
