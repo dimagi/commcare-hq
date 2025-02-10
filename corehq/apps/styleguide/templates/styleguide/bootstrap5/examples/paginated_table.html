@@ -1,4 +1,4 @@
-<div id="paginated-table-example">
+<div id="js-paginated-table-example">
   <table class="table table-striped table-hover">
     <thead>
       <tr>
@@ -23,12 +23,16 @@
       <!-- /ko -->
     </tbody>
   </table>
-  <pagination data-apply-bindings="false"
-              params="goToPage: goToPage,
-                      slug: 'style-guide',
-                      perPage: itemsPerPage,
-                      onLoad: onPaginationLoad,
-                      totalItems: totalItems"></pagination>
+  <pagination
+    data-apply-bindings="false"
+    params="
+      goToPage: goToPage,
+      slug: 'style-guide',
+      perPage: itemsPerPage,
+      onLoad: onPaginationLoad,
+      totalItems: totalItems
+    "
+  ></pagination>
 </div>
 
 <script>
@@ -84,6 +88,6 @@
             return self;
         };
 
-        $("#paginated-table-example").koApplyBindings(paginationExample());
+        $("#js-paginated-table-example").koApplyBindings(paginationExample());
     });
 </script>
