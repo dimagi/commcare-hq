@@ -95,4 +95,5 @@ class SystemLimit(models.Model):
         constraints = [models.UniqueConstraint(fields=['key', 'domain'], name='unique_key_per_domain_constraint')]
 
     def __str__(self):
-        return f"{self.key}: {self.limit}"
+        domain = f"[{self.domain}] " or ""
+        return f"{domain}{self.key}: {self.limit}"

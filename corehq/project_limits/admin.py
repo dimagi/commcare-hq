@@ -32,5 +32,5 @@ class PillowThrottleDefinitionAdmin(admin.ModelAdmin):
 
 @admin.register(SystemLimit)
 class SystemLimitAdmin(admin.ModelAdmin):
-    list_display = ('key', 'limit')
+    list_display = ('key', 'limit', 'domain')
     ordering = ('key',)
