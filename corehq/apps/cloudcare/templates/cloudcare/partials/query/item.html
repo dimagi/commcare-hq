@@ -44,22 +44,24 @@
         <% } %>
     </select>
 
-    <% } else if (input === "date") { %>
-    <div class="input-group">
+    <% } else if (input === "date" | input === "daterange") { %>
+    <div class="input-group"
+         data-td-target-input="nearest"
+         data-td-target-toggle="nearest"
+    >
       <input id="<%- text ? text : "" %>"
              type="text"
-             class="date query-field form-control<% if (errorMessage) { %> is-invalid<% } %>"
+             class="<%- input %> query-field form-control<% if (errorMessage) { %> is-invalid<% } %>"
              value="<%- value %>"
-             <% if (required) { %> aria-required="true"<% } %>>
-      <span class="input-group-text"><i class="fa-solid fa-calendar-days"></i></span>
+             <% if (required) { %> aria-required="true"<% } %>
+      >
+      <button class="btn btn-outline-secondary"
+              type="button"
+              data-td-toggle="datetimepicker"
+      >
+        <i class="fa-solid fa-calendar-days"></i>
+      </button>
     </div>
-
-    <% } else if (input === "daterange") { %>
-    <input id="<%- text ? text : "" %>"
-           type="text"
-           class="daterange query-field form-control<% if (errorMessage) { %> is-invalid<% } %>"
-           value="<%- value %>"
-           <% if (required) { %> aria-required="true"<% } %>>
 
     <% } else if (input === "checkbox") { %>
     <fieldset multiple
