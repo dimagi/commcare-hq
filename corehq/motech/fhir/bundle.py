@@ -2,7 +2,7 @@
 Tools for FHIR Bundles
 
 For more information about Bundles, including examples, see the
-`FHIR reference <https://www.hl7.org/fhir/bundle.html>`_.
+`FHIR reference <https://hl7.org/fhir/R4/bundle.html>`_.
 
 """
 from typing import Generator, Optional
