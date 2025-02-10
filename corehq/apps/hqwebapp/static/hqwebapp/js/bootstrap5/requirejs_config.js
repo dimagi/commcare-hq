@@ -1,4 +1,4 @@
-"use strict";
+
 requirejs.config({
     baseUrl: '/static/',
     paths: {

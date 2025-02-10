@@ -13,7 +13,7 @@ hqDefine("data_interfaces/js/bootstrap5/case_dedupe_main", [
     _,
     initialPageData,
     casePropertyInput,
-    CaseRuleCriteria
+    CaseRuleCriteria,
 ) {
 
     /*
@@ -163,7 +163,7 @@ hqDefine("data_interfaces/js/bootstrap5/case_dedupe_main", [
         initialCaseProperties,
         initialIncludeClosed,
         initialPropertiesToUpdate,
-        allCaseProperties
+        allCaseProperties,
     ) {
         var self = {};
         self.name = ko.observable(initialName);
@@ -248,7 +248,7 @@ hqDefine("data_interfaces/js/bootstrap5/case_dedupe_main", [
             initialPageData.get('case_properties'),
             initialPageData.get('include_closed'),
             initialPageData.get('properties_to_update'),
-            initialPageData.get('all_case_properties')
+            initialPageData.get('all_case_properties'),
         );
         $("#case-dedupe-rule-definition").koApplyBindings(caseDedupe);
 
@@ -257,7 +257,7 @@ hqDefine("data_interfaces/js/bootstrap5/case_dedupe_main", [
         $('#rule-criteria-panel').koApplyBindings(CaseRuleCriteria(
             initialPageData.get('criteria_initial'),
             initialPageData.get('criteria_constants'),
-            caseDedupe.caseType
+            caseDedupe.caseType,
         ));
     });
 });

@@ -1,5 +1,4 @@
 $(function () {
-    'use strict';
     let initialPageData = hqImport("hqwebapp/js/initial_page_data");
     ace.config.set('basePath', initialPageData.get('ace_base_path'));
     _.each(["python", "html", "js", "django"], function (lang) {
@@ -23,11 +22,11 @@ $(function () {
     _.each(["h2", "h3", "h4"], function (header) {
         $(header).each(function () {
             let headerId = $(this).attr('id');
-            if (headerId === undefined) return;
+            if (headerId === undefined) {return;}
 
             let $copyLinkToSection = $('<a href="#' + headerId + '" class="d-inline-block" />').append($('<i class="fa fa-link"></i>'));
             $(this).addClass('d-inline-block pe-3').after(
-                $copyLinkToSection
+                $copyLinkToSection,
             );
             new bootstrap.Tooltip($copyLinkToSection.get(0), {
                 title: "Click to copy link to section.",

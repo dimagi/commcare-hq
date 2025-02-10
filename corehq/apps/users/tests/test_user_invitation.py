@@ -10,7 +10,11 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.models import InvitationHistory
+from corehq.apps.users.model_log import InviteModelAction
 from corehq.apps.users.models_role import UserRole
+
+from corehq.const import INVITATION_CHANGE_VIA_WEB
 
 
 class InvitationTestException(Exception):
@@ -168,3 +172,19 @@ class TestUserInvitation(TestCase):
             response = UserInvitationView()(request, invite_uuid, domain=self.domain)
             self.assertEqual(400, response.status_code)
         self.assertIsNone(WebUser.get_by_username('test5@dimagi.com'))
+
+    def test_invitation_save_logging(self):
+        _, invite_uuid = self._setup_invitation_and_request()
+        invitation = Invitation.objects.get(uuid=invite_uuid)
+        invitation.save(logging_values={"changed_by": "anonymous_id",
+                                        "changed_via": INVITATION_CHANGE_VIA_WEB,
+                                        "action": InviteModelAction.CREATE})
+        InvitationHistory.objects.get(invitation=invitation, action=1)
+
+    def test_invitation_delete(self):
+        _, invite_uuid = self._setup_invitation_and_request()
+        invitation = Invitation.objects.get(uuid=invite_uuid)
+        invitation.delete(deleted_by="deleted_id")
+        InvitationHistory.objects.get(invitation=invitation, action=3)
+        with self.assertRaises(Invitation.DoesNotExist):
+            Invitation.objects.get(uuid=invite_uuid)

@@ -7,7 +7,7 @@ hqDefine('hqcase/js/explode_cases', [
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         $('#explode').koApplyBindings({
