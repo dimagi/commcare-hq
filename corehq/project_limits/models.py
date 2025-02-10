@@ -1,6 +1,6 @@
-from django.db import models
-
 import architect
+from django.db import models
+from field_audit import audit_fields
 
 AVG = 'AVG'
 MAX = 'MAX'
@@ -29,6 +29,7 @@ class DynamicRateDefinition(models.Model):
 
     def _clear_caches(self):
         from corehq.project_limits.rate_limiter import get_dynamic_rate_definition
+
         get_dynamic_rate_definition.clear(self.key, {})
 
 
@@ -37,6 +38,7 @@ class GaugeDefinition(models.Model):
     An abstract model to be used to define configuration to limit gauge values.
     The model is used by GaugeLimiter class to decide weather to limit or not.
     """
+
     key = models.CharField(max_length=512, blank=False, null=False, unique=True, db_index=True)
     wait_for_seconds = models.IntegerField(null=False)
     acceptable_value = models.FloatField(default=None, blank=True, null=True)
@@ -59,12 +61,12 @@ class GaugeDefinition(models.Model):
 
 
 class PillowLagGaugeDefinition(GaugeDefinition):
-
     max_value = models.FloatField(default=None, blank=True, null=True)
     average_value = models.FloatField(default=None, blank=True, null=True)
 
     def _clear_caches(self):
         from corehq.project_limits.gauge import get_pillow_throttle_definition
+
         get_pillow_throttle_definition.clear(self.key)
 
 
@@ -80,3 +82,18 @@ class RateLimitedTwoFactorLog(models.Model):
     window = models.CharField(max_length=15, null=False)
     # largest input is 'number_rate_limited', 31 for headroom
     status = models.CharField(max_length=31, null=False)
+
+
+@audit_fields("limit")
+class SystemLimit(models.Model):
+    key = models.CharField(max_length=255)
+    limit = models.PositiveIntegerField()
+    # the domain field is reserved for extreme cases since limits should apply globally in steady state
+    domain = models.CharField(max_length=128, blank=True, default="")
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['key', 'domain'], name='unique_key_per_domain_constraint')]
+
+    def __str__(self):
+        domain = f"[{self.domain}] " if self.domain else ""
+        return f"{domain}{self.key}: {self.limit}"
