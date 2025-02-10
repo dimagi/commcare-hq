@@ -346,6 +346,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         context = {
             'report': self,
             'report_table': {'default_rows': 25},
+            'js_options': self.js_options,
             'filter_context': self.filter_context,
             'url': self.url,
             'method': 'POST',
@@ -363,6 +364,22 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         if self.request.couch_user.is_staff and hasattr(self.data_source, 'data_source'):
             context['queries'] = self.data_source.data_source.get_query_strings()
         return context
+
+    @property
+    def js_options(self):
+        return {
+            "domain": self.domain,
+            #"url_root": self.url_root,         # TODO: has this ever mattered?
+            "slug": self.slug,
+            "subReportSlug": self.sub_slug,
+            "type": self.type,
+            #"filterSet": self.filter_set,       # TODO: has this ever mattered?
+            #"needsFilters": self.needs_filters, # TODO: has this ever mattered?
+            "isExportable": self.is_exportable,
+            #"isExportAll": self.exportable_all, # TODO: is this being ignored by HTML?
+            #"isEmailable": self.emailable,      # TODO: is this being ignored by HTML?
+            "emailDefaultSubject": self.title,
+        }
 
     def pop_report_builder_context_data(self):
         """
