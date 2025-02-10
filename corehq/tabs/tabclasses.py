@@ -118,6 +118,7 @@ from corehq.apps.geospatial.views import (
     GeospatialConfigPage,
     GPSCaptureView,
 )
+from corehq.apps.integration.kyc.views import KycConfigurationView
 
 
 class ProjectReportsTab(UITab):
@@ -462,6 +463,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
         '/a/{domain}/microplanning/',
+        '/a/{domain}/kyc/'
     )
 
     @property
@@ -651,6 +653,11 @@ class ProjectDataTab(UITab):
             )
         if self._can_view_geospatial:
             items += self._get_geospatial_views()
+        if self._can_view_kyc_integration:
+            items.append([_('KYC Verification'), [{
+                'title': KycConfigurationView.page_title,
+                'url': reverse(KycConfigurationView.urlname, args=[self.domain]),
+            }]])
         return items
 
     @cached_property
@@ -1016,6 +1023,10 @@ class ProjectDataTab(UITab):
         for section in management_sections:
             geospatial_items[0][1].append(section)
         return geospatial_items
+
+    @cached_property
+    def _can_view_kyc_integration(self):
+        return toggles.KYC_VERIFICATION.enabled(self.domain)
 
     @property
     def dropdown_items(self):
@@ -1447,6 +1458,18 @@ class MessagingTab(UITab):
         return whatsapp_urls
 
     @property
+    def connect_urls(self):
+        from corehq.apps.sms.views import ConnectMessagingUserView
+
+        connect_urls = []
+        if toggles.COMMCARE_CONNECT.enabled(self.domain):
+            connect_urls.append({
+                'title': _('User Consent'),
+                'url': reverse(ConnectMessagingUserView.urlname, args=[self.domain]),
+            })
+        return connect_urls
+
+    @property
     def dropdown_items(self):
         result = []
 
@@ -1498,6 +1521,7 @@ class MessagingTab(UITab):
             (_("Contacts"), self.contacts_urls),
             (_("Settings"), self.settings_urls),
             (_("WhatsApp Settings"), self.whatsapp_urls),
+            (_("Connect Messsaging"), self.connect_urls),
         ):
             if urls:
                 items.append((title, urls))

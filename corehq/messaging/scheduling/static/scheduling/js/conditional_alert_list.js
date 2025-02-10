@@ -47,7 +47,7 @@ var rule = function (options) {
                     } else if (result.status === 'error') {
                         var text = gettext(
                             "Unable to restart rule. Rules can only be started every two hours and there are " +
-                            "%s minute(s) remaining before this rule can be started again."
+                            "%s minute(s) remaining before this rule can be started again.",
                         );
                         text = interpolate(text, [result.minutes_remaining]);
                         alert(text);
@@ -72,13 +72,13 @@ var rule = function (options) {
         if (initialPageData.get("limit_rule_restarts")) {
             prompt = gettext(
                 "A rule should only be restarted when you believe it is stuck and is not progressing. " +
-                "You will only be able to restart this rule once every two hours. Restart this rule?"
+                "You will only be able to restart this rule once every two hours. Restart this rule?",
             );
         } else {
             prompt = gettext(
                 "A rule should only be restarted when you believe it is stuck and is not progressing. " +
                 "Your user is able to restart as many times as you like, but restarting too many times without " +
-                "finishing can place a burden on the system. Restart this rule?"
+                "finishing can place a burden on the system. Restart this rule?",
             );
         }
         if (confirm(prompt)) {

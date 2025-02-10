@@ -1,4 +1,4 @@
-'use strict';
+
 /*
  * Component for displaying a search box. Almost certainly included within a a larger knockout template.
  *
@@ -20,7 +20,7 @@ hqDefine('hqwebapp/js/components/search_box', [
     $,
     ko,
     _,
-    koComponents
+    koComponents,
 ) {
     const component = {
         viewModel: function (params) {

@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("registry/js/registry_logs", [
     'moment',
     'knockout',
@@ -11,7 +11,7 @@ hqDefine("registry/js/registry_logs", [
     ko,
     initialPageData,
     actions,
-    hqTempusDominus
+    hqTempusDominus,
 ) {
     const allDatesText = gettext("Show All Dates"),
         allDomainsText = gettext("All Project Spaces"),

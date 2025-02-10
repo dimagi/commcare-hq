@@ -12,7 +12,7 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
     _,
     bootstrap,
     initialPageData,
-    hqReportModule
+    hqReportModule,
 ) {
     var standardReport = undefined,
         asyncReport = undefined;

@@ -4,8 +4,6 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
     "es6!hqwebapp/js/bootstrap5_loader",
     "hqwebapp/js/bootstrap5/hq.helpers",
 ], function ($, ko, bootstrap) {
-    'use strict';
-
     var EmailRequest = function (modalId, formId) {
         let self = {};
 
@@ -133,14 +131,14 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
         if (issueReportModal.length) {
             issueReportModal.koApplyBindings(new EmailRequest(
                 "modalReportIssue",
-                "hqwebapp-bugReportForm"
+                "hqwebapp-bugReportForm",
             ));
         }
         const featureRequestModal = $("#modalSolutionsFeatureRequest");
         if (featureRequestModal.length) {
             featureRequestModal.koApplyBindings(new EmailRequest(
                 "modalSolutionsFeatureRequest",
-                "hqwebapp-requestReportForm"
+                "hqwebapp-requestReportForm",
             ));
         }
     });

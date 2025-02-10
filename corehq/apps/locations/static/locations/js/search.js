@@ -4,7 +4,7 @@ hqDefine('locations/js/search', [
     'select2/dist/js/select2.full.min',
 ], function (
     $,
-    initialPageData
+    initialPageData,
 ) {
     let showInactive, locationSearchUrl, locs;
 
