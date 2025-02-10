@@ -147,7 +147,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
     prefix = slug
-    emailable = True
+    emailable = False
     is_exportable = True
     exportable_all = True
     show_filters = True
@@ -372,11 +372,9 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             "slug": self.slug,
             "subReportSlug": self.sub_slug,
             "type": self.type,
-            #"filterSet": self.filter_set,       # TODO: has this ever mattered?
-            #"needsFilters": self.needs_filters, # TODO: has this ever mattered?
             "isExportable": self.is_exportable,
-            #"isExportAll": self.exportable_all, # TODO: is this being ignored by HTML?
-            #"isEmailable": self.emailable,      # TODO: is this being ignored by HTML?
+            "isExportAll": self.exportable_all,
+            "isEmailable": self.emailable,
             "emailDefaultSubject": self.title,
         }
 
