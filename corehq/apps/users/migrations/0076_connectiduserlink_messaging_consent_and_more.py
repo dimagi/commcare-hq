@@ -12,6 +12,11 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
+            model_name='connectiduserlink',
+            name='is_active',
+            field=models.BooleanField(default=True),
+        ),
+        migrations.AddField(
             model_name="connectiduserlink",
             name="channel_id",
             field=models.CharField(blank=True, null=True),
