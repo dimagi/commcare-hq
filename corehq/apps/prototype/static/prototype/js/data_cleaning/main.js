@@ -32,7 +32,8 @@ htmx.onLoad((content) => {
 
             // Disable sorting on the `end` event
             onEnd: (evt) => {
-                this.option("disabled", true);
+                // todo fix or figure out if we still need this library
+                // evt.target.option("disabled", true);
             },
         });
 

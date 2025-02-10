@@ -6,7 +6,7 @@
   hx-get="{{ request.path_info }}"
   hx-swap="outerHTML"
   hx-trigger="refreshFilters"
-  hq-hx-refresh="{{ table_selector }}"
+  hq-hx-refresh-swap="{{ table_selector }}"
 >
   {% if column_filters %}
     <div class="mb-3">
