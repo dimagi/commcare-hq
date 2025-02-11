@@ -6,7 +6,7 @@ hqDefine("userreports/js/configurable_report", [
     'hqwebapp/js/initial_page_data',
     'reports/js/bootstrap3/hq_report',
     'reports/js/bootstrap3/report_config_models',
-    'reports/js/util',
+    'reports/js/bootstrap3/standard_hq_report',
     'userreports/js/report_analytix',
     'userreports/js/base',
     'commcarehq',
@@ -18,17 +18,14 @@ hqDefine("userreports/js/configurable_report", [
     initialPageData,
     hqReport,
     reportConfigModels,
-    util,
+    standardHQReportModule,
     analytics,
 ) {
-    var getStandardHQReport = function (isFirstLoad) {
-        if (!initialPageData.get("standardHQReport")) {
-            return undefined;
-        }
+    $(function () {
+        standardHQReportModule.getStandardHQReport();
 
-        var $editReportButton = $("#edit-report-link");
-
-        if (initialPageData.get("created_by_builder") && !isFirstLoad) {
+        // Set up analytics
+        if (initialPageData.get("created_by_builder")) {
             var $applyFiltersButton = $("#apply-filters"),
                 builderType = initialPageData.get("builder_report_type"),
                 reportType = initialPageData.get("type");
@@ -37,48 +34,15 @@ hqDefine("userreports/js/configurable_report", [
                 analytics.track.event("View Report Builder Report", label);
             });
             analytics.track.event("Loaded Report Builder Report");
-            $editReportButton.click(function () {
+            $("#edit-report-link").click(function () {
                 kissmetrics.track.event("RBv2 - Click Edit Report");
             });
         }
 
+        // More analytics
         _.each(initialPageData.get("report_builder_events"), function (e) {
             analytics.track.event.apply(this, e);
         });
-
-        var urlSerialize = util.urlSerialize;
-        var reportOptions = {
-            domain: initialPageData.get('domain'),
-            urlRoot: initialPageData.get('url_root'),
-            slug: initialPageData.get('slug'),
-            subReportSlug: initialPageData.get('sub_slug'),
-            type: initialPageData.get('type'),
-            filterSet: initialPageData.get('filter_set'),
-            needsFilters: initialPageData.get('needs_filters'),
-            isExportable: initialPageData.get('is_exportable'),
-            isExportAll: initialPageData.get('is_export_all'),
-            isEmailable: initialPageData.get('is_emailable'),
-            emailDefaultSubject: initialPageData.get('title'),
-            emailSuccessMessage: gettext('Report successfully emailed'),
-            emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
-            getReportRenderUrl: function (renderType) {
-                var params = urlSerialize($('#paramSelectorForm'), ['format']);
-                return window.location.pathname + "?format=" + renderType + "&" + params;
-            },
-        };
-        if (initialPageData.get('startdate')) {
-            reportOptions.datespan = {
-                startdate: initialPageData.get('startdate'),
-                enddate: initialPageData.get('enddate'),
-            };
-        }
-        var standardHQReport = hqReport.hqReport(reportOptions);
-        standardHQReport.init();
-        return standardHQReport;
-    };
-
-    $(function () {
-        getStandardHQReport(true);
 
         // Bind the ReportConfigsViewModel to the save button.
         var defaultConfig = initialPageData.get("default_config");
@@ -120,7 +84,5 @@ hqDefine("userreports/js/configurable_report", [
         }
     });
 
-    return {
-        getStandardHQReport: getStandardHQReport,
-    };
+    return 1;
 });
