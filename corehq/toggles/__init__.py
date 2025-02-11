@@ -1376,6 +1376,16 @@ CACHE_AND_INDEX = StaticToggle(
     help_link='https://confluence.dimagi.com/pages/viewpage.action?pageId=41484944',
 )
 
+
+CASE_LIST_OPTIMIZATIONS = StaticToggle(
+    'case_list_optimizations',
+    'Enable options to cache and lazy load case list columns',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    # ToDo: Add help link
+    # help_link=''
+)
+
 CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
