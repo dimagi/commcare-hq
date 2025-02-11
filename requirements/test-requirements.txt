@@ -291,7 +291,7 @@ googleapis-common-protos==1.59.0
     # via
     #   google-api-core
     #   grpcio-status
-greenlet==2.0.2
+greenlet==3.1.1
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
