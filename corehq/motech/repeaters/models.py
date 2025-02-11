@@ -73,6 +73,7 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+import architect
 from django.conf import settings
 from django.db import models, router
 from django.db.models.base import Deferred
@@ -922,6 +923,25 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+@architect.install('partition', type='range', subtype='date', constraint='month', column='timestamp')
+class DataSourceUpdateLog(models.Model):
+    id = models.UUIDField(primary_key=True, db_column="id_", default=uuid.uuid4)
+    domain = CharIdField(max_length=126, db_index=True)
+    data_source_id = models.UUIDField()
+    doc_ids = JSONField(default=list)
+    rows = JSONField(default=list, blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'repeaters_datasourceupdatelog'
+
+    MAX_AGE = timedelta(days=93)
+
+    @property
+    def get_id(self):
+        return self.id.hex
+
+
 class DataSourceRepeater(Repeater):
     """
     Forwards the UCR data source rows that are updated by a form
@@ -938,6 +958,8 @@ class DataSourceRepeater(Repeater):
 
     payload_generator_classes = (DataSourcePayloadGenerator,)
 
+    SEP = ','  # payload_id separator for merged repeat records
+
     def allowed_to_forward(
         self,
         payload,  # type DataSourceUpdateLog
@@ -947,22 +969,29 @@ class DataSourceRepeater(Repeater):
     def payload_doc(self, repeat_record):
         from corehq.apps.userreports.models import get_datasource_config
         from corehq.apps.userreports.util import (
-            DataSourceUpdateLog,
             get_indicator_adapter,
         )
 
+        try:
+            update_log = DataSourceUpdateLog.objects.get(id=repeat_record.payload_id)
+        except DataSourceUpdateLog.DoesNotExist:
+            return None
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
-        return DataSourceUpdateLog(
-            domain=self.domain,
-            data_source_id=self.data_source_id,
-            doc_id=repeat_record.payload_id,
-            rows=rows,
-        )
+        update_log.rows = [
+            row
+            for doc_id in update_log.doc_ids
+            for row in datasource_adapter.get_rows_by_doc_id(doc_id)
+        ]
+        return update_log
+
+    def send_request(self, repeat_record, payload):
+        if payload is None:
+            return RepeaterResponse(204, "No content")
+        return super().send_request(repeat_record, payload)
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
@@ -974,6 +1003,52 @@ class DataSourceRepeater(Repeater):
         return DataSourceRepeater.objects.filter(
             domain=domain, options={"data_source_id": data_source_id}
         ).exists()
+
+    def merge_records(self):
+        """
+        Merges updates to the same data source.
+
+        * Selects payloads for merging
+        * Registers a new repeat record for each group of payloads. The
+          new repeat record stores a list of payload IDs in its
+          ``payload_id`` field.
+        * Cancels the merged repeat records
+
+        ``Repeater.payload_doc()`` returns the merged payloads based on
+        the IDs in new repeat record's ``payload_id`` field.
+        """
+        max_docs = 500  # Max number of data source updates to merge
+
+        doc_ids = set()
+        registered_at = None
+        next_check = None
+        for record in self.repeat_records_ready.all():
+            if registered_at is None:
+                registered_at = record.registered_at
+                next_check = record.next_check
+            update_log = DataSourceUpdateLog.objects.get(id=record.payload_id)
+            doc_ids.update(update_log.doc_ids)
+            record.cancel()
+            record.save()
+            update_log.delete()
+            if len(doc_ids) >= max_docs:
+                break
+
+        if registered_at is not None:
+            new_update_log = DataSourceUpdateLog.objects.create(
+                domain=self.domain,
+                data_source_id=self.data_source_id,
+                doc_ids=list(doc_ids),
+                rows=None,
+            )
+            new_record = RepeatRecord(
+                repeater_id=self.id,
+                domain=self.domain,
+                registered_at=registered_at,
+                next_check=next_check,
+                payload_id=new_update_log.get_id,
+            )
+            new_record.save()
 
 
 # on_delete=DB_CASCADE denotes ON DELETE CASCADE in the database. The
