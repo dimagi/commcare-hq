@@ -691,7 +691,7 @@ class CaseRepeater(Repeater):
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
     def register(self, payload, fire_synchronously=False):
-        if self.repeat_records_ready.filter(payload_id=payload.get_id).count():
+        if self.repeat_records_ready.filter(payload_id=payload.get_id).exists():
             # There is already a repeat record for this payload waiting
             # to be sent.
             return
