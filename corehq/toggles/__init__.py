@@ -3012,3 +3012,10 @@ INCREASE_DEVICE_LIMIT_PER_USER = StaticToggle(
     tag=TAG_SAAS_CONDITIONAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+KYC_VERIFICATION = StaticToggle(
+    slug='kyc_verification',
+    label='Enable KYC verification',
+    tag=TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
