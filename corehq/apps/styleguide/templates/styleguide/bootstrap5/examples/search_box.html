@@ -1,11 +1,21 @@
-<div id="search-box-example">
-  <search-box data-apply-bindings="false"
-              params="value: query,
-                        action: search,
-                        immediate: true,
-                        placeholder: 'Search...'"></search-box>
-  <ul class="list-group pt-3" data-bind="foreach: items">
-    <li class="list-group-item" data-bind="text: $data"></li>
+<div id="js-search-box-example">
+  <search-box
+    data-apply-bindings="false"
+    params="
+      value: query,
+      action: search,
+      immediate: true,
+      placeholder: 'Search...'
+    "
+  ></search-box>
+  <ul
+    class="list-group pt-3"
+    data-bind="foreach: items"
+  >
+    <li
+      class="list-group-item"
+      data-bind="text: $data"
+    ></li>
   </ul>
 </div>
 
@@ -25,6 +35,6 @@
       return self;
     };
 
-    $("#search-box-example").koApplyBindings(searchBoxExample());
+    $("#js-search-box-example").koApplyBindings(searchBoxExample());
   });
 </script>

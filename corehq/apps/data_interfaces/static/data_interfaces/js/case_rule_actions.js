@@ -5,7 +5,7 @@ hqDefine("data_interfaces/js/case_rule_actions", [
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
 ) {
     var CaseRuleActions = function (initial, caseTypeObservable) {
         var self = {};

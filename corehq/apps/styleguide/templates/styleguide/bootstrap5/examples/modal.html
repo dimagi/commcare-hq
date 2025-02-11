@@ -1,17 +1,28 @@
 <!-- Button trigger modal -->
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+<button
+  class="btn btn-primary"
+  type="button"
+  data-bs-toggle="modal"
+  data-bs-target="#bs-example-modal"
+>
   Launch demo modal
 </button>
 
 <!-- Modal -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div
+  id="bs-example-modal" class="modal fade"
+  tabindex="-1" aria-labelledby="example-modal-label" aria-hidden="true"
+>
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title" id="exampleModalLabel">
+        <h4 id="example-modal-label" class="modal-title">
           Modal Title
         </h4>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button
+          class="btn-close" type="button" aria-label="Close"
+          data-bs-dismiss="modal"
+        ></button>
       </div>
       <div class="modal-body">
         <p>
@@ -22,8 +33,15 @@
         </p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save Options</button>
+        <button
+          class="btn btn-outline-primary" type="button"
+          data-bs-dismiss="modal"
+        >
+          Close
+        </button>
+        <button class="btn btn-primary" type="button">
+          Save Options
+        </button>
       </div>
     </div>
   </div>

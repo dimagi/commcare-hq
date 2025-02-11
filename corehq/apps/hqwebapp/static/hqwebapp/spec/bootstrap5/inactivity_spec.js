@@ -2,7 +2,7 @@
 hqDefine("hqwebapp/spec/bootstrap5/inactivity_spec", [
     'hqwebapp/js/bootstrap5/inactivity',
 ], function (
-    module
+    module,
 ) {
     describe('inactivity', function () {
         var tolerantAssert = function (expected, actual) {

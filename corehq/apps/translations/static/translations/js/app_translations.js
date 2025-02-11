@@ -9,7 +9,7 @@ hqDefine("translations/js/app_translations", [
     $,
     _,
     initialPageData,
-    appManagerWidgets
+    appManagerWidgets,
 ) {
     $(function () {
         // Application version select2: pagination, display comment
@@ -43,7 +43,7 @@ hqDefine("translations/js/app_translations", [
                         $appBuildProfileIdSelect.append(new Option(gettext('Select Profile'), '', true, true));
                         _.each(buildProfilesPerApp[selectedAppId], function (profileDetails, profileId) {
                             $appBuildProfileIdSelect.append(
-                                new Option(profileDetails.name, profileId, false, false)
+                                new Option(profileDetails.name, profileId, false, false),
                             );
                         });
                     }

@@ -1,4 +1,4 @@
-"use strict";
+
 /**
  * Instatiates the Hubspot analytics platform.
  */
@@ -17,9 +17,8 @@ hqDefine('analytix/js/hubspot', [
     logging,
     utils,
     kissmetrics,
-    ctaForms
+    ctaForms,
 ) {
-    'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
         _logger = logging.getLoggerForApi('Hubspot'),
         _ready = $.Deferred(),

@@ -1,15 +1,17 @@
 <div class="row mb-3">
-  <label for="id_first_name" class="field-label">
+  <label for="id-first-name" class="field-label">
     Full Name
   </label>
   <div class="field-control">
 
     <!-- this is how an invalid input is marked with the is-invalid class -->
-    <input class="form-control is-invalid"
-           type="text"
-           name="full_name"
-           id="id_first_name"
-           autocomplete="off" />
+    <input
+      id="id-first-name"
+      class="form-control is-invalid"
+      type="text"
+      name="full_name"
+      autocomplete="off"
+    />
 
     <!-- Note that span.invalid-feedback element comes before .form-text -->
     <span class="invalid-feedback">
@@ -22,13 +24,15 @@
   </div>
 </div>
 <div class="row mb-3">
-  <label for="id_favorite_color" class="field-label">
+  <label for="id-favorite-color" class="field-label">
     Favorite Color
   </label>
   <div class="field-control">
-    <select name="favorite_color"
-            class="form-select hqwebapp-select2 is-invalid"
-            id="id_favorite_color">
+    <select
+      id="id-favorite-color"
+      class="form-select hqwebapp-select2 is-invalid"
+      name="favorite_color"
+    >
       <option value="red">Red</option>
       <option value="green">Green</option>
       <option value="blue">Blue</option>
@@ -39,13 +43,15 @@
   </div>
 </div>
 <div class="row mb-3">
-  <label for="id_hopes" class="field-label">
+  <label for="id-hopes" class="field-label">
     Hopes and Dreams
   </label>
   <div class="field-control">
-    <textarea name="hopes"
-              class="form-control vertical-resize is-invalid"
-              id="id_hopes"></textarea>
+    <textarea
+      id="id-hopes"
+      class="form-control vertical-resize is-invalid"
+      name="hopes"
+    ></textarea>
     <span class="invalid-feedback">
       Please enter your response to "Hopes and Dreams".
     </span>

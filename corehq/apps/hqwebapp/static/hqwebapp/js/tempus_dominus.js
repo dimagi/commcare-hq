@@ -1,4 +1,4 @@
-"use strict";
+
 /**
   * This replaces hqwebapp/js/daterangepicker.config, which is tied to bootstrap3
   *
@@ -14,7 +14,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     _,
     Popper,
     tempusDominus,
-    initialPageData
+    initialPageData,
 ) {
     // https://github.com/Eonasdan/tempus-dominus/discussions/2698
     if (!window.USE_WEBPACK) {
@@ -76,7 +76,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 localization: _.extend(defaultTranslations, {
                     format: 'yyyy-MM-dd',
                 }),
-            }
+            },
         );
 
         if (start && end) {

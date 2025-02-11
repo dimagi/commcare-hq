@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("hqwebapp/js/daterangepicker.config", [
     'jquery',
     'underscore',
@@ -9,7 +9,7 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
     $,
     _,
     initialPageData,
-    moment
+    moment,
 ) {
 
     /* TODO B5: Remove me after bootstrap5 migration, replaced by hqwebapp/js/tempus_dominus */
@@ -17,7 +17,7 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
         return ' to ';
     };
     $.fn.createDateRangePicker = function (
-        rangeLabels, separator, startdate, enddate
+        rangeLabels, separator, startdate, enddate,
     ) {
         var ranges = {};
         ranges[rangeLabels.last_7_days] = [
@@ -82,7 +82,7 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
                 last_month: 'Last Month',
                 last_30_days: 'Last 30 Days',
             },
-            this.getDateRangeSeparator()
+            this.getDateRangeSeparator(),
         );
     };
 });

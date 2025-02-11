@@ -280,7 +280,7 @@ def get_git_commit(base_dir):
     try:
         out = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=base_dir)
         return out.strip().decode('ascii')
-    except OSError:
+    except (OSError, subprocess.CalledProcessError):
         pass
 
 

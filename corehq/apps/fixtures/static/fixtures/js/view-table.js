@@ -11,7 +11,7 @@ hqDefine("fixtures/js/view-table", [
     initialPageData,
     standardHQReportModule,
     datatablesConfig,
-    filters
+    filters,
 ) {
     if (initialPageData.get('renderReportTables')) {
         var reportTables = datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions')),

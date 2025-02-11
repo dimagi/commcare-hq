@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine("geospatial/js/case_management", [
     "jquery",
@@ -18,7 +18,7 @@ hqDefine("geospatial/js/case_management", [
     ko,
     models,
     utils,
-    alertUser
+    alertUser,
 ) {
     const MAP_CONTAINER_ID = 'geospatial-map';
     const SHOW_USERS_QUERY_PARAM = 'show_users';
@@ -120,7 +120,7 @@ hqDefine("geospatial/js/case_management", [
                 if (parameters.max_case_travel_time_seconds) {
                     const travelParamValue = `${parameters.max_case_travel_time_seconds / 60} ${gettext("minutes")}`;
                     parametersList.push(
-                        {name: gettext("Max travel time"), value: travelParamValue}
+                        {name: gettext("Max travel time"), value: travelParamValue},
                     );
                 }
 
@@ -161,7 +161,7 @@ hqDefine("geospatial/js/case_management", [
                 },
                 error: function () {
                     alertUser.alert_user(
-                        gettext("Oops! Something went wrong! Please check that your geospatial settings are configured correctly or contact admin if the problem persists."), 'danger'
+                        gettext("Oops! Something went wrong! Please check that your geospatial settings are configured correctly or contact admin if the problem persists."), 'danger',
                     );
                     self.setBusy(false);
                 },
@@ -191,7 +191,7 @@ hqDefine("geospatial/js/case_management", [
                             type: 'Feature',
                             properties: {},
                             geometry: { type: 'LineString', coordinates: lineCoordinates },
-                        }
+                        },
                     );
                 }
             }
@@ -523,7 +523,7 @@ hqDefine("geospatial/js/case_management", [
             } else {
                 alertUser.alert_user(
                     gettext('Oops! Something went wrong! Please report an issue if the problem persists.'),
-                    'danger'
+                    'danger',
                 );
             }
         } else if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {

@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("registry/js/registry_edit", [
     'moment',
     'knockout',
@@ -22,7 +22,7 @@ hqDefine("registry/js/registry_edit", [
     text,
     actions,
     auditLogs,
-    bootstrap
+    bootstrap,
 ) {
     let InvitationModel = function (data) {
         let self = data;
@@ -73,7 +73,7 @@ hqDefine("registry/js/registry_edit", [
             return grants.sort(grantSort);
         });
         self.currentDomainGrants = self.grants().filter(
-            (grant) => grant.to_domains.includes(self.current_domain)
+            (grant) => grant.to_domains.includes(self.current_domain),
         ).map((grant) => grant.from_domain).sort();
         self.invitationStatusText = ko.computed(() => text.getStatusText(self.domain_invitation.status()));
         self.invitationStatusClass = ko.computed(() => text.getStatusCssClass(self.domain_invitation.status()));
@@ -227,7 +227,7 @@ hqDefine("registry/js/registry_edit", [
             initialPageData.get("registry"),
             initialPageData.get("availableCaseTypes"),
             initialPageData.get("availableDomains"),
-            initialPageData.get("invitedDomains")
+            initialPageData.get("invitedDomains"),
         ));
     });
 });

@@ -12,7 +12,7 @@ hqDefine("hqwebapp/js/bootstrap5/rollout_modal", [
     alertUser,
     initialPageData,
     googleAnalytics,
-    kissmetricsAnalytics
+    kissmetricsAnalytics,
 ) {
     var _trackSoftRollout = googleAnalytics.trackCategory("Soft Rollout");
     function snooze(slug) {

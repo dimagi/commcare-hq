@@ -535,3 +535,14 @@ def _get_case_search_cases(helper, case_ids):
 # Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
 def _tag_is_related_case(case):
     case.case_json[IS_RELATED_CASE] = "true"
+
+
+def get_case_id_sort_block(is_descending=False):
+    sort_order = 'desc' if is_descending else 'asc'
+    return [{
+        'case_properties.value.exact': {
+            'order': sort_order,
+            'nested_path': 'case_properties',
+            'nested_filter': {'term': {"case_properties.key.exact": "@case_id"}},
+        }
+    }]

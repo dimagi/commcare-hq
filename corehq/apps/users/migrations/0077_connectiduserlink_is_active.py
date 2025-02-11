@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0075_hqapikey_encrypted_key'),
+        ('users', '0076_connectiduserlink_messaging_consent_and_more'),
     ]
 
     operations = [

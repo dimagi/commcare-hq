@@ -9,7 +9,7 @@ hqDefine('reports_core/js/charts', [
     $,
     _,
     d3,
-    nv
+    nv,
 ) {
     var fn = {};
     var renderPie = function (config, data, svgSelector) {
