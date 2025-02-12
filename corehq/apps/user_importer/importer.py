@@ -50,8 +50,13 @@ from corehq.apps.users.models import (
     UserRole,
     InvitationStatus
 )
-from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, TABLEAU_USER_SYNCING
+from corehq.apps.users.model_log import InviteModelAction
+from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER, INVITATION_CHANGE_VIA_BULK_IMPORTER
+from corehq.toggles import (
+    DOMAIN_PERMISSIONS_MIRROR,
+    TABLEAU_USER_SYNCING,
+    COMMCARE_CONNECT,
+)
 from corehq.apps.sms.util import validate_phone_number
 
 from dimagi.utils.logging import notify_error
@@ -103,7 +108,11 @@ def check_headers(user_specs, domain, upload_couch_user, is_web_upload=False):
             "User Syncing is enabled can upload files with 'Tableau Role' and/or 'Tableau Groups' fields."
         ))
 
+    if COMMCARE_CONNECT.enabled(domain):
+        allowed_headers.add('send_connectid_invite')
+
     illegal_headers = headers - allowed_headers - conditionally_allowed_headers
+
 
     if is_web_upload:
         missing_headers = web_required_headers - headers
@@ -328,29 +337,49 @@ def get_location_from_site_code(site_code, location_cache):
 def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, primary_location_id=None,
                                     assigned_location_ids=None, profile=None, tableau_role=None,
                                     tableau_group_ids=None, user_change_logger=None, send_email=True):
+    from corehq.apps.users.views import InviteWebUserView
+
     if assigned_location_ids is None:
         assigned_location_ids = []
+    primary_location = SQLLocation.by_location_id(primary_location_id)
+    invite_fields = {
+        'invited_by': upload_user.user_id,
+        'invited_on': datetime.utcnow(),
+        'tableau_role': tableau_role,
+        'tableau_group_ids': tableau_group_ids,
+        'primary_location': primary_location,
+        'role': role_qualified_id,
+        'profile': profile,
+    }
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
         is_accepted=False,
-        defaults={
-            'invited_by': upload_user.user_id,
-            'invited_on': datetime.utcnow(),
-            'tableau_role': tableau_role,
-            'tableau_group_ids': tableau_group_ids,
-            'primary_location': SQLLocation.by_location_id(primary_location_id),
-            'role': role_qualified_id,
-            'profile': profile,
-        },
+        defaults=invite_fields,
     )
     assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
-            for assigned_location_id in assigned_location_ids]
+                          for assigned_location_id in assigned_location_ids]
     invite.assigned_locations.set(assigned_locations)
-    if invite_created and send_email:
-        invite.send_activation_email()
-    if invite_created and user_change_logger:
-        user_change_logger.add_info(UserChangeMessage.invited_to_domain(domain))
+    changes = InviteWebUserView.format_changes(domain,
+                                               {'role_name': role_qualified_id,
+                                                'profile': profile,
+                                                'assigned_locations': assigned_locations,
+                                                'primary_location': primary_location})
+    if invite_created:
+        if send_email:
+            invite.send_activation_email()
+        if user_change_logger:
+            user_change_logger.add_info(UserChangeMessage.invited_to_domain(domain))
+        action = InviteModelAction.CREATE
+        invite_fields.update({'domain': domain, 'email': email})
+        invite_fields.pop('primary_location')
+        invite_fields.pop('role')
+        invite_fields.pop('profile')
+        changes.update(invite_fields)
+    else:
+        action = InviteModelAction.UPDATE
+    invite.save(logging_values={"changed_by": upload_user.user_id, "action": action,
+                                "changed_via": INVITATION_CHANGE_VIA_BULK_IMPORTER, "changes": changes})
 
 
 def find_location_id(location_codes, location_cache):
@@ -504,6 +533,9 @@ class CCUserRow(BaseUserRow):
 
     def _parse_password(self):
         from corehq.apps.user_importer.validation import is_password
+        if self.column_values["send_connectid_invite"]:
+            # password login is disabled for connectid
+            password = ''
         if self.row.get('password'):
             password = str(self.row.get('password'))
         elif self.column_values["send_confirmation_sms"]:
@@ -537,10 +569,10 @@ class CCUserRow(BaseUserRow):
         }
 
         for v in ['is_active', 'is_account_confirmed', 'send_confirmation_email',
-                  'remove_web_user', 'send_confirmation_sms']:
+                  'remove_web_user', 'send_confirmation_sms', 'send_connectid_invite']:
             values[v] = spec_value_to_boolean_or_none(self.row, v)
 
-        if values["send_confirmation_sms"] and not values["user_id"]:
+        if (values["send_confirmation_sms"] or values["send_connectid_invite"]) and not values["user_id"]:
             values["is_account_confirmed"] = False
         else:
             values["is_account_confirmed"] = values["is_account_confirmed"]
@@ -698,6 +730,9 @@ class CCUserRow(BaseUserRow):
                 send_account_confirmation_if_necessary(self.user)
             if cv["send_confirmation_sms"]:
                 send_account_confirmation_sms_if_necessary(self.user)
+            elif cv["send_connectid_invite"]:
+                from corehq.apps.users.views.mobile.users import deliver_connectid_invite
+                deliver_connectid_invite(self.user)
 
 
 class WebUserRow(BaseUserRow):
@@ -814,7 +849,7 @@ class WebUserRow(BaseUserRow):
         cv = self.column_values
 
         if cv['remove']:
-            remove_invited_web_user(self.domain, cv['username'])
+            remove_invited_web_user(self.domain, cv['username'], self.importer.upload_user)
             self.status_row['flag'] = 'updated'
         else:
             if cv['status'] == "Invited":
@@ -1045,20 +1080,20 @@ def check_changing_username(user, username):
         ) % {'username': user.username, 'new_username': username})
 
 
-def remove_invited_web_user(domain, username):
+def remove_invited_web_user(domain, username, upload_user):
     try:
         invitation = Invitation.objects.get(domain=domain, email=username)
     except Invitation.DoesNotExist:
         raise UserUploadError(_("You cannot remove a web user that is not a member or invited to this project. "
                                 "{username} is not a member or invited.").format(username=username))
-    invitation.delete()
+    invitation.delete(deleted_by=upload_user.user_id)
 
 
 def remove_web_user_from_domain(domain, user, username, upload_user, user_change_logger=None,
                                 is_web_upload=False):
     if not user or not user.is_member_of(domain):
         if is_web_upload:
-            remove_invited_web_user(domain, username)
+            remove_invited_web_user(domain, username, upload_user)
             if user_change_logger:
                 user_change_logger.add_info(UserChangeMessage.invitation_revoked_for_domain(domain))
         else:

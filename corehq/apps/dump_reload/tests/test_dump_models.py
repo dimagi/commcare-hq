@@ -167,6 +167,7 @@ UNKNOWN_MODELS = {
     "userreports.DataSourceActionLog",
     "userreports.InvalidUCRData",
     "users.HQApiKey",
+    "users.InvitationHistory",
     "users.UserHistory",
     "users.UserReportingMetadataStaging",
 }
