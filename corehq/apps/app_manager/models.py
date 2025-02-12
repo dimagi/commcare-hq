@@ -1860,6 +1860,7 @@ class DetailColumn(IndexedSchema):
     field = StringProperty()
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
+    optimization = StringProperty(exclude_if_none=True)
 
     # Only applies to custom case list tile. grid_x and grid_y are zero-based values
     # representing the starting row and column.
