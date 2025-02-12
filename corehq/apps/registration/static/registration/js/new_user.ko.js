@@ -6,9 +6,9 @@ hqDefine('registration/js/new_user.ko', [
     'analytix/js/kissmetrix',
     'analytix/js/appcues',
     'hqwebapp/js/initial_page_data',
+    'intl-tel-input/build/js/intlTelInput.min',
     'jquery-ui/ui/effect',
     'jquery-ui/ui/effects/effect-slide',
-    'intl-tel-input/build/js/intlTelInput.min',
     'hqwebapp/js/password_validators.ko',
 ], function (
     $,
@@ -18,6 +18,7 @@ hqDefine('registration/js/new_user.ko', [
     kissmetrics,
     appcues,
     initialPageData,
+    intlTelInput,
 ) {
     var module = {};
 
@@ -430,21 +431,22 @@ hqDefine('registration/js/new_user.ko', [
             module.submitAttemptFn = callback;
         },
         setPhoneNumberInput: function (inputSelector) {
-            var $number = $(inputSelector);
-            $number.intlTelInput({
-                separateDialCode: true,
-                utilsScript: initialPageData.get('number_utils_script'),
-                initialCountry: "auto",
-                geoIpLookup: function (success) {
-                    $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
-                        var countryCode = (resp && resp.country) ? resp.country : "";
-                        if (!countryCode) {
-                            countryCode = "us";
-                        }
-                        success(countryCode);
-                    });
-                },
-            });
+            var $number = $(inputSelector),
+                numberWidget = intlTelInput($number[0], {
+                    containerClass: "w-100",
+                    separateDialCode: true,
+                    loadUtils: () => import("intl-tel-input/utils"),
+                    initialCountry: "auto",
+                    geoIpLookup: function (success) {
+                        $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
+                            var countryCode = (resp && resp.country) ? resp.country : "";
+                            if (!countryCode) {
+                                countryCode = "us";
+                            }
+                            success(countryCode);
+                        });
+                    },
+                });
             $number.keydown(function (e) {
                 // prevents non-numeric numbers from being entered.
                 // from http://stackoverflow.com/questions/995183/how-to-allow-only-numeric-0-9-in-html-inputbox-using-jquery
@@ -465,7 +467,7 @@ hqDefine('registration/js/new_user.ko', [
                 }
             });
             module.getPhoneNumberFn = function () {
-                return $number.intlTelInput("getNumber");
+                return numberWidget.getNumber();
             };
         },
         initRMI: function (rmiUrl) {
