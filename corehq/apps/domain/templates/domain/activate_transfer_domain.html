@@ -11,21 +11,36 @@
       <div class="col-lg-8 col-sm-12">
         {% if transfer %}
           <p class="lead">
-            {% blocktrans with domain=transfer.domain%}
-              By clicking "accept" below you acknowledge that you accept full ownership of this project space ("{{ domain }}").
-              You agree to be bound by the terms of Dimagi's <a href="https://www.dimagi.com/terms-privacy/">Terms of Service and Business Agreement</a>.
-              By accepting this agreement, your are acknowledging you have permission and authority to accept these terms. A Dimagi representative will notify you when the transfer is complete.
+            {% blocktrans with domain=transfer.domain %}
+              By clicking "accept" below you acknowledge that you accept full
+              ownership of this project space ("{{ domain }}"). You agree to be
+              bound by the terms of Dimagi's
+              <a href="https://www.dimagi.com/terms-privacy/"
+                >Terms of Service and Business Agreement</a
+              >. By accepting this agreement, your are acknowledging you have
+              permission and authority to accept these terms. A Dimagi
+              representative will notify you when the transfer is complete.
             {% endblocktrans %}
           </p>
           <div class="row">
             <div class="col-lg-2">
-              <form action="{{ transfer.activate_url }}" method="POST">{% csrf_token %}
-                <input type="submit" value="{% trans "Accept" %}" class="btn btn-primary"/>
+              <form action="{{ transfer.activate_url }}" method="POST">
+                {% csrf_token %}
+                <input
+                  type="submit"
+                  value="{% trans "Accept" %}"
+                  class="btn btn-primary"
+                />
               </form>
             </div>
             <div class="col-lg-2">
-              <form action="{{ transfer.deactivate_url }}" method="POST">{% csrf_token %}
-                <input type="submit" value="{% trans "Decline" %}" class="btn btn-outline-danger"/>
+              <form action="{{ transfer.deactivate_url }}" method="POST">
+                {% csrf_token %}
+                <input
+                  type="submit"
+                  value="{% trans "Decline" %}"
+                  class="btn btn-outline-danger"
+                />
               </form>
             </div>
           </div>
