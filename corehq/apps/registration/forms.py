@@ -66,7 +66,7 @@ class RegisterWebUserForm(forms.Form):
             """I have read and agree to Dimagi's
             <a href="http://www.dimagi.com/terms-privacy/"
                target="_blank">Privacy Policy</a>,
-            <a href="http://www.dimagi.com/terms/latest/tos/"
+            <a href="http://www.dimagi.com/terms/terms-of-service/"
                target="_blank">Terms of Service</a>,
             <a href="http://www.dimagi.com/terms/latest/ba/"
                target="_blank">Business Agreement</a>, and
