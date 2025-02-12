@@ -29,7 +29,7 @@ hqDefine("notifications/spec/bootstrap5/NotificationsService.spec.mo", [
             };
 
         var fakePromise = new FakePromise({});
-        sinon.stub($, 'ajax', fakePromise.mock);
+        sinon.stub($, 'ajax').callsFake(fakePromise.mock);
 
         it('Initialization', function () {
             var csrfToken = $("#csrfTokenContainer").val();
