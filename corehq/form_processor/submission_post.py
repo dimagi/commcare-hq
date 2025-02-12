@@ -297,14 +297,16 @@ class SubmissionPost(object):
             with self.timing_context("process_device_log"):
                 return self.process_device_log(submitted_form)
 
-        # Begin Normal Form Processing
-        self._log_form_details(submitted_form)
+        self._handle_normal_form_processing(result)
+
+    def _handle_normal_form_processing(self, form_processing_result):
+        self._log_form_details(form_processing_result.submitted_form)
 
         cases = []
         ledgers = []
         submission_type = 'unknown'
         openrosa_kwargs = {}
-        with result.get_locked_forms() as xforms:
+        with form_processing_result.get_locked_forms() as xforms:
             if len(xforms) > 1:
                 self.track_load(len(xforms) - 1)
             if self.case_db:
