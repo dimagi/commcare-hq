@@ -22,7 +22,7 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
-class KycConfigurationView(BaseDomainView, HqHtmxActionMixin):
+class KycConfigurationView(HqHtmxActionMixin, BaseDomainView):
     section_name = _("Data")
     urlname = 'kyc_configuration'
     template_name = 'kyc/kyc_config_base.html'
