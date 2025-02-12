@@ -1,8 +1,8 @@
+import importlib
 from django.http import Http404
 
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.privileges import DAILY_SAVED_EXPORT, DEFAULT_EXPORT_SETTINGS, EXCEL_DASHBOARD
 from corehq.toggles import MESSAGE_LOG_METADATA
@@ -57,6 +57,7 @@ def get_default_export_settings_if_available(domain):
     """
     Only creates settings if the domain has the DEFAULT_EXPORT_SETTINGS privilege
     """
+    from corehq.apps.accounting.models import Subscription
     settings = None
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
     if current_subscription and domain_has_privilege(domain, DEFAULT_EXPORT_SETTINGS):
@@ -64,3 +65,13 @@ def get_default_export_settings_if_available(domain):
         settings = DefaultExportSettings.objects.get_or_create(account=current_subscription.account)[0]
 
     return settings
+
+
+def get_transform_function(func_name):
+    module = importlib.import_module('corehq.apps.export.transforms')
+    return getattr(module, func_name)
+
+
+def get_deid_transform_function(func_name):
+    module = importlib.import_module('couchexport.deid')
+    return getattr(module, func_name)
