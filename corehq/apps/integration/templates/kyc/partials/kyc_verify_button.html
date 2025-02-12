@@ -1,0 +1,11 @@
+{% load i18n %}
+
+<button class="btn btn-primary btn-sm"
+        hx-post="{% url 'kyc_verify_table' request.domain %}"
+        hx-swap="afterBegin"
+        hx-target="#verify-alert"
+        hq-hx-action="verify_rows"
+        hx-vals='{"selected_ids": ["{{ record.id }}"]}'
+        {% if record.has_invalid_data %}disabled{% endif %}>
+    {% trans "Verify" %}
+</button>

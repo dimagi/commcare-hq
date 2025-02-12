@@ -75,3 +75,7 @@ class KycVerifyTable(BaseHtmxTable):
     country = columns.Column(
         verbose_name=_("Country"),
     )
+    verify_btn = columns.TemplateColumn(
+        template_name='kyc/partials/kyc_verify_button.html',
+        verbose_name=_("Verify"),
+    )
