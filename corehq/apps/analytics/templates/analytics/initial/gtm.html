@@ -6,8 +6,10 @@
   {% initial_analytics_data 'gtm.userIsCommCareUser' request.couch_user.is_commcare_user %}
   {% initial_analytics_data 'gtm.isNewUser' request.couch_user|is_new_user %}
 {% endif %}
-{% if domain or request.domain %}
-  {% initial_analytics_data 'gtm.domain' domain|default:request.domain %}
+{% if request.domain %}
+  {% initial_analytics_data 'gtm.domain' request.domain %}
+{% elif domain %}
+  {% initial_analytics_data 'gtm.domain' domain %}
 {% endif %}
 {% if ANALYTICS_CONFIG.HQ_INSTANCE %}
   {% initial_analytics_data 'gtm.hqInstance' ANALYTICS_CONFIG.HQ_INSTANCE %}
