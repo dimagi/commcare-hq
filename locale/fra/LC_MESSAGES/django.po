@@ -1629,6 +1629,7 @@ msgstr "État Numero"
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
@@ -3100,6 +3101,7 @@ msgstr ""
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
+#: corehq/apps/integration/kyc/forms.py
 #: corehq/apps/locations/templates/locations/location_types.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reminders/forms.py corehq/apps/reports/forms.py
@@ -3736,20 +3738,16 @@ msgid "Cannot parse datetime '{val}'"
 msgstr ""
 
 #: corehq/apps/api/validation.py
-#, fuzzy
-#| msgid "A slug is required for this new role."
 msgid "'email' is required for each user"
-msgstr "Pour ce nouveau role, un slug est requis"
+msgstr ""
 
 #: corehq/apps/api/validation.py
 msgid "'role' required for each user"
 msgstr ""
 
 #: corehq/apps/api/validation.py
-#, fuzzy
-#| msgid "A slug is required for this new role."
 msgid "'role' is required for each user"
-msgstr "Pour ce nouveau role, un slug est requis"
+msgstr ""
 
 #: corehq/apps/api/validation.py
 msgid "'{}' is defined by the profile so cannot be set directly"
@@ -6571,10 +6569,8 @@ msgid "Application Source File"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/import_app.html
-#, fuzzy
-#| msgid "No, go back"
 msgid "No, take me back."
-msgstr "Non, revenir en arrière"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/import_app.html
 msgid "Yes, import application"
@@ -6615,10 +6611,8 @@ msgid "This data will not be shown for case search results."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/no_longer_supported.html
-#, fuzzy
-#| msgid "Sorry, referrals are no longer supported!"
 msgid "App no longer supported"
-msgstr "Desolé, les références ne sont pas plus soutenus!"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/no_longer_supported.html
 msgid ""
@@ -7919,7 +7913,8 @@ msgstr "Étiquette de dossier"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
+#: corehq/apps/data_cleaning/tables.py corehq/apps/data_dictionary/views.py
+#: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
@@ -8138,10 +8133,6 @@ msgid "Add Property"
 msgstr "Ajouter une propriété"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
-msgid "Save Questions to Case Properties"
-msgstr "Enregistrer les questions dans les propriétés de dossier."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "          There are one or more form questions that are being saved to "
@@ -8188,11 +8179,13 @@ msgid "No properties will be saved"
 msgstr "Aucune propriété ne sera enregistrée"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
+#, fuzzy
+#| msgid "You don't have permission to access this page."
 msgid ""
 "\n"
-"          You no longer have permission to save case properties.\n"
+"          You no longer have permission to save this section.\n"
 "        "
-msgstr ""
+msgstr "Vous n'avez pas la permission pour accéder à cette page."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_assertions.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
@@ -12658,7 +12651,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/fixtures/templates/fixtures/fixtures_base.html
 #: corehq/apps/geospatial/reports.py corehq/apps/geospatial/views.py
-#: corehq/apps/settings/views.py
+#: corehq/apps/integration/kyc/views.py corehq/apps/settings/views.py
 #: corehq/apps/userreports/reports/builder/forms.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
@@ -13920,6 +13913,35 @@ msgstr "Visiter la base de connaissance de CommCare"
 msgid "Subscribed to Community Edition."
 msgstr ""
 
+#: corehq/apps/data_cleaning/tables.py
+#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/data_interfaces/views.py corehq/apps/geospatial/reports.py
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/reports/v2/reports/explore_case_data.py
+msgid "Case Name"
+msgstr "Nom de dossier"
+
+#: corehq/apps/data_cleaning/tables.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Opened On"
+msgstr "Ouvert le"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/cases.html
+msgid "Case Data Cleaning Test View"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/cases.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
+#: corehq/apps/hqwebapp/views.py
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
+#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
+msgid "Loading..."
+msgstr "Téléchargement en cours..."
+
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
 "The multi-choice sheets (ending in \"-vl\") in the uploaded Excel file were "
@@ -14586,15 +14608,6 @@ msgstr "Transférer les dossiers"
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign"
 msgstr "Transférer"
-
-#: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/data_interfaces/views.py corehq/apps/geospatial/reports.py
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#: corehq/apps/reports/v2/reports/explore_case_data.py
-msgid "Case Name"
-msgstr "Nom de dossier"
 
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/geospatial/templates/geospatial/gps_capture.html
@@ -15826,10 +15839,13 @@ msgid "Manage Group '%s'"
 msgstr "Gérer le groupe \"%s\""
 
 #: corehq/apps/data_interfaces/views.py corehq/apps/export/forms.py
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 msgid "case"
 msgstr "dossier"
 
-#: corehq/apps/data_interfaces/views.py corehq/apps/userreports/ui/forms.py
+#: corehq/apps/data_interfaces/views.py
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
+#: corehq/apps/userreports/ui/forms.py
 msgid "cases"
 msgstr "dossiers"
 
@@ -20046,46 +20062,32 @@ msgid "Data Forwarding"
 msgstr "Transfert de données"
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Data Forwarding Records"
 msgid "# of Data Forwarders"
-msgstr "Dossier de transferts de données"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Service Type"
 msgid "Service Name"
-msgstr "Type de service"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Last Modified"
 msgid "Last Modified [UTC]"
-msgstr "Dernière mise à jour"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Application Version"
 msgid "Application Version Compliance"
-msgstr "Version de l'application"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Playing audio directly on this page is currently not supported."
 msgid "The statistic of this tile is not currently supported"
 msgstr ""
-"La lecture de l'audio directement à partir de cette page n'est pas prise en "
-"charge actuellement."
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Latest Version Available When Last Used"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Last Usage"
 msgid "Last Used [UTC]"
-msgstr "Dernière utilisation"
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
@@ -23770,11 +23772,11 @@ msgid "Link"
 msgstr "Lien"
 
 #: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
-msgid "Lock Case Clustering Map for Me"
+msgid "Lock Map"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
-msgid "Unlock Case Clustering Map for Me"
+msgid "Unlock Map"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
@@ -27199,14 +27201,6 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
-#: corehq/apps/hqwebapp/views.py
-#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
-#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
-#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
-msgid "Loading..."
-msgstr "Téléchargement en cours..."
-
 #: corehq/apps/hqwebapp/templates/password_change.html
 msgid "Change User Password"
 msgstr ""
@@ -27459,23 +27453,48 @@ msgstr "Identifiant de projet"
 msgid "Module ID"
 msgstr ""
 
-#: corehq/apps/integration/kyc/models.py
-#, fuzzy
-#| msgid "Custom filter ID"
-msgid "Custom User Data"
-msgstr "Identifiant du filtre personnalisé"
+#: corehq/apps/integration/kyc/forms.py
+msgid "User Data Store"
+msgstr ""
 
-#: corehq/apps/integration/kyc/models.py
-#, fuzzy
-#| msgid "User Name"
-msgid "User Case"
-msgstr "Nom d'utilisateur"
-
-#: corehq/apps/integration/kyc/models.py
-#, fuzzy
-#| msgid "Enter a Case Type"
+#: corehq/apps/integration/kyc/forms.py corehq/apps/integration/kyc/models.py
 msgid "Other Case Type"
-msgstr "Saisir Type de Dossier"
+msgstr ""
+
+#: corehq/apps/integration/kyc/forms.py
+msgid "Provider"
+msgstr ""
+
+#: corehq/apps/integration/kyc/forms.py
+msgid "API Field to User Data Map"
+msgstr ""
+
+#: corehq/apps/integration/kyc/forms.py corehq/motech/dhis2/forms.py
+#: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
+#: corehq/motech/templates/motech/connection_settings.html
+#: corehq/motech/views.py
+msgid "Connection Settings"
+msgstr ""
+
+#: corehq/apps/integration/kyc/forms.py
+msgid "Please specify a value"
+msgstr ""
+
+#: corehq/apps/integration/kyc/models.py
+msgid "Custom User Data"
+msgstr ""
+
+#: corehq/apps/integration/kyc/models.py
+msgid "User Case"
+msgstr ""
+
+#: corehq/apps/integration/kyc/models.py
+msgid "MTN KYC"
+msgstr ""
+
+#: corehq/apps/integration/kyc/views.py
+msgid "KYC Configuration"
+msgstr ""
 
 #: corehq/apps/integration/templates/integration/web_app_dialer.html
 msgid "Dialer"
@@ -27587,6 +27606,13 @@ msgstr ""
 
 #: corehq/apps/integration/templates/integration/web_app_gaen_otp.html
 msgid "Close OTP and Return"
+msgstr ""
+
+#: corehq/apps/integration/templates/kyc/partials/kyc_config_form_partial.html
+msgid ""
+"\n"
+"        Configuration saved successfully!\n"
+"      "
 msgstr ""
 
 #: corehq/apps/integration/views.py
@@ -32937,6 +32963,19 @@ msgid "Displays the detail for a given messaging event."
 msgstr "Affiche le détail d'un événement de messagerie donné."
 
 #: corehq/apps/reports/standard/sms.py
+#, fuzzy
+#| msgid "Connection"
+msgid "ConnectID"
+msgstr "Connexion"
+
+#: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
+#, fuzzy
+#| msgid "Important Message"
+msgid "Connect Message"
+msgstr "Message Important"
+
+#: corehq/apps/reports/standard/sms.py
 msgid "Survey Detail"
 msgstr "Détail de l'enquête"
 
@@ -33118,7 +33157,6 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/async/bootstrap3/default.html
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
 #: corehq/apps/reports/templates/reports/bootstrap3/tabular.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tabular.html
 msgid "Loading Report"
 msgstr "Chargement du rapport"
 
@@ -36103,6 +36141,10 @@ msgid "FCM Push Notification"
 msgstr ""
 
 #: corehq/apps/sms/models.py
+msgid "Connect Message Survey"
+msgstr ""
+
+#: corehq/apps/sms/models.py
 msgid "User Group"
 msgstr "Groupe d'utilisateurs"
 
@@ -36289,6 +36331,12 @@ msgstr "Recherche par nom ou numéro de téléphone"
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Contact Name"
 msgstr "Nom de contact"
+
+#: corehq/apps/sms/templates/sms/connect_messaging_user.html
+#, fuzzy
+#| msgid "Reprocess Messaging Case Updates"
+msgid "Request Messaging Consent"
+msgstr "Retraiter les mises à jour de messagerie de dossiers"
 
 #: corehq/apps/sms/templates/sms/email/new_sms_user.html
 #, python-format
@@ -36743,6 +36791,24 @@ msgid ""
 " failed to fetch templates. Please make sure the gateway is configured "
 "properly."
 msgstr ""
+
+#: corehq/apps/sms/views.py
+#, fuzzy
+#| msgid "Messaging History"
+msgid "Connect Messaging Users"
+msgstr "Historique des messages"
+
+#: corehq/apps/sms/views.py
+#, fuzzy
+#| msgid "Couldn't find the following user(s): "
+msgid "Channels created for the following users: \n"
+msgstr "Impossible de trouver le(s) utilisateur(s) suivant(s) : "
+
+#: corehq/apps/sms/views.py
+#, fuzzy
+#| msgid "# Cases Created"
+msgid "No channels created"
+msgstr "Nb. de dossiers créés"
 
 #: corehq/apps/smsbillables/async_handlers.py
 #, python-format
@@ -38160,11 +38226,6 @@ msgstr ""
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 msgid "Date of Birth"
 msgstr ""
-
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Opened On"
-msgstr "Ouvert le"
 
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
 msgid "Team"
@@ -39936,8 +39997,7 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
 msgid ""
-"If rebuilt again next rebuild will only start when the previous rebuild(s) "
-"finishes."
+"Please note that this datasource is yet be built / rebuilt by CommCare HQ."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
@@ -40038,12 +40098,11 @@ msgstr ""
 msgid ""
 "\n"
 "              <p>\n"
-"                Based on the amount of data to be processed, this can take a "
-"considerable amount of time.\n"
+"                Based on the amount of data to be processed, this can take "
+"a\n"
+"                considerable amount of time.\n"
 "              </p>\n"
-"              <p>\n"
-"                Please confirm if you want to proceed.\n"
-"              </p>\n"
+"              <p>Please confirm if you want to proceed.</p>\n"
 "            "
 msgstr ""
 
@@ -40799,12 +40858,12 @@ msgstr ""
 #: corehq/apps/userreports/views.py
 msgid ""
 "There was a problem processing your request. If you have recently modified "
-"your report data source please try again in a few minutes.<br><br>Technical "
-"details:<br>{}"
+"your report data source please try again in a few minutes."
 msgstr ""
-"Il y avait un problème lors du traitement de votre demande. Si vous avez "
-"récemment modifié votre source de données de rapport, réessayez dans "
-"quelques minutes. <br> <br> Détails techniques: <br> {}"
+
+#: corehq/apps/userreports/views.py
+msgid "Technical details:<br>{}"
+msgstr ""
 
 #: corehq/apps/userreports/views.py
 msgid "Reports Home"
@@ -40908,9 +40967,7 @@ msgid "Data source \"{}\" saved!"
 msgstr "Source de Données \"{}\" enregistrée!"
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"This data source will be picked for build / rebuild automatically by "
-"CommCare HQ."
+msgid "This data source will be built / rebuilt automatically by CommCare HQ."
 msgstr ""
 
 #: corehq/apps/userreports/views.py
@@ -40955,6 +41012,11 @@ msgstr ""
 "debutera bientot"
 
 #: corehq/apps/userreports/views.py
+msgid ""
+"Rebuilding is not available until CommCare HQ finishes building / rebuilding."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
 #, python-brace-format
 msgid ""
 "Rebuilt was not initiated due to high number of records this data source is "
@@ -40981,6 +41043,13 @@ msgstr "Reprise de la reconstruction de la table \"{}\"."
 #: corehq/apps/userreports/views.py
 msgid "Preview Data Source"
 msgstr "Aperçu de la source de données"
+
+#: corehq/apps/userreports/views.py
+msgid ""
+"Data source table not found!<br/>If you have recently added the data source, "
+"please wait for it to be created.<br/>If you see this repeatedly please "
+"report an issue."
+msgstr ""
 
 #: corehq/apps/userreports/views.py
 msgid "You can only use 'lastndays' on date columns"
@@ -44219,6 +44288,12 @@ msgstr ""
 msgid "Form not found in latest released app build"
 msgstr ""
 
+#: corehq/messaging/scheduling/forms.py
+#, fuzzy
+#| msgid "SMS Connectivity"
+msgid "Connect Survey"
+msgstr "Connectivité SMS"
+
 #: corehq/messaging/scheduling/forms.py corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/repeater_generators.py
 msgid "JSON"
@@ -45943,13 +46018,6 @@ msgid ""
 "valid column."
 msgstr ""
 
-#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
-#: corehq/motech/repeaters/forms.py
-#: corehq/motech/templates/motech/connection_settings.html
-#: corehq/motech/views.py
-msgid "Connection Settings"
-msgstr ""
-
 #: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
 #, python-brace-format
 msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
@@ -46426,10 +46494,8 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/models.py
-#, fuzzy
-#| msgid "Integration"
 msgid "KYC Integration"
-msgstr "Intégration "
+msgstr ""
 
 #: corehq/motech/openmrs/atom_feed.py
 msgid ""
@@ -47467,6 +47533,10 @@ msgstr "Statistiques de domaine"
 msgid "Microplanning"
 msgstr ""
 
+#: corehq/reports.py corehq/tabs/tabclasses.py
+msgid "KYC Verification"
+msgstr ""
+
 #: corehq/tabs/tabclasses.py corehq/tabs/utils.py
 msgid "View All"
 msgstr "Tout Afficher"
@@ -47548,6 +47618,12 @@ msgid "Template Management"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "User Credits"
+msgid "User Consent"
+msgstr "Crédits d'utilisateur "
+
+#: corehq/tabs/tabclasses.py
 msgid "Data Collection and Reminders"
 msgstr "Collecte de données et rappels"
 
@@ -47558,6 +47634,12 @@ msgstr "Contacts"
 #: corehq/tabs/tabclasses.py
 msgid "WhatsApp Settings"
 msgstr ""
+
+#: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Outgoing Messaging"
+msgid "Connect Messsaging"
+msgstr "Messagerie sortant"
 
 #: corehq/tabs/tabclasses.py
 msgid "Create and manage users for CommCare and CloudCare."
@@ -48418,11 +48500,5 @@ msgstr ""
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
-#~ msgid "Form and Case Changes"
-#~ msgstr "Modifications de formulaire et de dossier"
-
-#~ msgid "CommCare HQ Mobile is Copyright"
-#~ msgstr "CommCare HQ Mobile est sous droit d'auteur"
-
-#~ msgid "Logout"
-#~ msgstr "Déconnexion"
+#~ msgid "Save Questions to Case Properties"
+#~ msgstr "Enregistrer les questions dans les propriétés de dossier."
