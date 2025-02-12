@@ -1229,6 +1229,15 @@ SAAS_PROTOTYPE = StaticToggle(
     description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
+DATA_CLEANING_CASES = StaticToggle(
+    'saas_data_cleaning_cases',
+    'Access Data Cleaning for Cases',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    description='Use this to allow specific users to access the case '
+                'data cleaning tool (in development)',
+)
+
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
     'Explore Case Data for domains that have undergone migration',
@@ -2008,6 +2017,18 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+PROCESS_REPEATERS = FeatureRelease(
+    'process_repeaters',
+    'Process repeaters instead of processing repeat records independently',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    owner='Norman Hooper',
+    description="""
+    Manages repeat records through their repeater in order to make
+    smarter decisions about remote endpoints.
+    """
+)
+
 DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     'do_not_rate_limit_submissions',
     'Do not rate limit submissions for this project, on a temporary basis.',
@@ -2569,13 +2590,6 @@ WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ENTERPRISE_DASHBOARD_IMPROVEMENTS = StaticToggle(
-    'enterprise_dashboard_improvements',
-    'Shows an improved version of enterprise dashboard during development',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER]
-)
-
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege
@@ -2952,10 +2966,11 @@ USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
 
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',
-    label='Restrict data source rebuilt from UI',
+    label='Force asynchronous processing for large data sources on UI',
     tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
+    description='Force data sources to be marked for asynchronous processing from UI if it crosses a threshold '
+                'for the number of records to be populated during building or rebuilding'
 )
 
 APP_TESTING = StaticToggle(
@@ -2985,5 +3000,21 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
     label='USH: When sending conditional alerts that target locations expand them to users that are assigned to '
           'the location no matter if it is their primary location or not.',
     tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+INCREASE_DEVICE_LIMIT_PER_USER = StaticToggle(
+    slug='increase_device_per_user_limit',
+    label='In the event that the DEVICE_LIMIT_PER_USER in settings becomes too restrictive, this flag can be used '
+          'to increase the limit without completely removing it. See INCREASED_DEVICE_LIMIT_PER_USER in settings '
+          'to see the exact value.',
+    tag=TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+KYC_VERIFICATION = StaticToggle(
+    slug='kyc_verification',
+    label='Enable KYC verification',
+    tag=TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
 )

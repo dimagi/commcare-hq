@@ -6,12 +6,10 @@
      'jquery',
      'knockout',
      'knockout-validation/dist/knockout.validation.min', // needed for ko.validation
-@@ -6,6 +6,15 @@
+@@ -6,6 +6,13 @@
      $,
-     ko
+     ko,
  ) {
-+    'use strict';
-+
 +    ko.validation.init({
 +        errorMessageClass: 'invalid-feedback',
 +        errorElementClass: 'is-invalid',
@@ -21,8 +19,8 @@
 +
      ko.validation.rules['emailRFC2822'] = {
          validator: function (val) {
-             if (val === undefined || val.length === 0) return true;  // do separate validation for required
-@@ -19,52 +28,71 @@
+             if (val === undefined || val.length === 0) {return true;}  // do separate validation for required
+@@ -19,52 +26,71 @@
  
      /**
       * Use this handler to show bootstrap validation states on a form input when
@@ -96,7 +94,7 @@
 +            if (options.delayedValidator === undefined) {
 +                isValid = options.validator.isValid();
 +                isValidating = options.validator.isValidating !== undefined && options.validator.isValidating();
-+                if (isValid !== undefined && !isValid) $(element).addClass('is-invalid');
++                if (isValid !== undefined && !isValid) {$(element).addClass('is-invalid');}
 +            } else {
 +                isValidating = options.validator.isValid() && options.delayedValidator.isValidating();
 +

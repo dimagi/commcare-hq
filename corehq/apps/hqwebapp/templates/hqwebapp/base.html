@@ -47,25 +47,12 @@
 
     {% block stylesheets %}{% endblock stylesheets %}
 
-    {% block csrf_token_block %}
-      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
-    {% endblock %}
-
     {% compress css %}
       <link type="text/css"
             rel="stylesheet"
             media="all"
             href="{% static 'select2/dist/css/select2.min.css' %}" />
     {% endcompress %}
-
-    {% if request.use_nvd3 or request.use_nvd3_v3 %}
-      {% compress css %}
-        <link type="text/css"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'nvd3/src/nv.d3.css' %}" />
-      {% endcompress %}
-    {% endif %}
 
     {% if request.use_daterangepicker and not use_bootstrap5 %}
       {% compress css %}
@@ -167,6 +154,11 @@
     {% endblock %}
   </head>
   <body>
+
+    {% block csrf_token_block %}
+      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    {% endblock %}
+
     {# for setting up page-wide backgrounds #}
     {% block background_content %}{% endblock %}
 
@@ -378,23 +370,6 @@
     {% if not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_nvd3 and not use_js_bundler %}
-      {% compress js %}
-        <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
-        <script src="{% static 'nvd3/lib/fisheye.js' %}"></script>
-        <script src="{% static 'd3/d3.min.js' %}"></script>
-        <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_nvd3_v3 and not use_js_bundler %}
-      {% compress js %}
-        <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-        <script src="{% static 'd3/d3.min.js' %}"></script>
-        <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
       {% endcompress %}
     {% endif %}
 

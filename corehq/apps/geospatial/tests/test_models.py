@@ -2,9 +2,10 @@ from contextlib import contextmanager
 
 from django.test import TestCase
 
-from ..const import GPS_POINT_CASE_PROPERTY, ALGO_AES
+from ..const import GPS_POINT_CASE_PROPERTY
 from ..models import GeoConfig
 from ..utils import get_geo_case_property
+from corehq.motech.const import ALGO_AES_CBC
 
 
 class TestGeoConfig(TestCase):
@@ -25,7 +26,7 @@ class TestGeoConfig(TestCase):
         with self.get_geo_config() as config:
             config.plaintext_api_token = '1234'
             self.assertEqual(config.plaintext_api_token, '1234')
-            self.assertTrue(config.api_token.startswith(f"${ALGO_AES}$"))
+            self.assertTrue(config.api_token.startswith(f"${ALGO_AES_CBC}$"))
 
             config.plaintext_api_token = None
             self.assertEqual(config.plaintext_api_token, None)
@@ -48,7 +49,7 @@ class TestGeoConfig(TestCase):
     def test_geo_config_api_token_cannot_start_with_encryption_str(self):
         with self.assertRaises(Exception) as context:
             with self.get_geo_config() as config:
-                config.plaintext_api_token = f"${ALGO_AES}$1234"
+                config.plaintext_api_token = f"${ALGO_AES_CBC}$1234"
 
         self.assertEqual(str(context.exception), "Unexpected value set for plaintext api token")
 

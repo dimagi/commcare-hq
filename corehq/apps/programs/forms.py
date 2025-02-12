@@ -2,8 +2,8 @@ from django import forms
 from django.utils.translation import gettext as _
 
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
 
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.programs.models import Program
 
 
@@ -15,9 +15,8 @@ class ProgramForm(forms.Form):
 
         kwargs['initial'] = self.program._doc
         super(ProgramForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'form-label'
 
         # don't let users rename the uncategorized
         # program

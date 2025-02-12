@@ -1,13 +1,3 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
-
-{% block dependencies %}
-  <script src="{% static 'case_importer/js/excel_fields.js' %}"></script>
-{% endblock %}
-
-{% block mocha_tests %}
-  <script src="{% static 'case_importer/spec/excel_fields_spec.js' %}"></script>
-{% endblock %}
-
-{% block fixtures %}
-{% endblock %}
+{% js_entry_b3 "case_importer/spec/main" %}

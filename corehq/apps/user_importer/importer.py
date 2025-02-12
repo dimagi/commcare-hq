@@ -334,14 +334,14 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
         email=email,
         domain=domain,
         is_accepted=False,
-        tableau_role=tableau_role,
-        tableau_group_ids=tableau_group_ids,
         defaults={
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
+            'tableau_role': tableau_role,
+            'tableau_group_ids': tableau_group_ids,
             'primary_location': SQLLocation.by_location_id(primary_location_id),
             'role': role_qualified_id,
-            'profile': profile
+            'profile': profile,
         },
     )
     assigned_locations = [SQLLocation.by_location_id(assigned_location_id)

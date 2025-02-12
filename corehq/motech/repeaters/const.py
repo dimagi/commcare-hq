@@ -6,6 +6,7 @@ from django.db.models import IntegerChoices
 
 MAX_RETRY_WAIT = timedelta(days=7)
 MIN_RETRY_WAIT = timedelta(minutes=60)
+MIN_REPEATER_RETRY_WAIT = timedelta(minutes=5)  # Repeaters back off slower
 RATE_LIMITER_DELAY_RANGE = (
     timedelta(minutes=getattr(settings, 'MIN_REPEATER_RATE_LIMIT_DELAY', 0)),
     timedelta(minutes=getattr(settings, 'MAX_REPEATER_RATE_LIMIT_DELAY', 15)),
@@ -13,10 +14,14 @@ RATE_LIMITER_DELAY_RANGE = (
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
+PROCESS_REPEATERS_INTERVAL = timedelta(minutes=5)
 ENDPOINT_TIMER = 'endpoint_timer'
 # Number of attempts to an online endpoint before cancelling payload
 MAX_ATTEMPTS = 3
 # Number of exponential backoff attempts to an offline endpoint
+# TODO: Drop MAX_BACKOFF_ATTEMPTS. We don't need MAX_BACKOFF_ATTEMPTS
+#       because we are using MAX_RETRY_WAIT, and MAX_BACKOFF_ATTEMPTS is
+#       being conflated with MAX_ATTEMPTS.
 MAX_BACKOFF_ATTEMPTS = 6
 
 

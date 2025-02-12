@@ -34,12 +34,11 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
     use_jquery_ui,
-    use_nvd3,
 )
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
-from corehq.apps.reports.util import DatatablesParams
+from corehq.apps.reports.util import DatatablesPagination
 from corehq.apps.reports_core.exceptions import FilterException
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.saved_reports.models import ReportConfig
@@ -164,7 +163,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @use_daterangepicker
     @use_jquery_ui
     @use_datatables
-    @use_nvd3
     @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
@@ -433,7 +431,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         sort_column = params.get('iSortCol_0')
         sort_order = params.get('sSortDir_0', 'ASC')
         echo = int(params.get('sEcho', 1))
-        datatables_params = DatatablesParams.from_request_dict(params)
+        # todo update this for Bootstrap 5:
+        datatables_params = DatatablesPagination.from_request_dict(params)
 
         try:
             data_source = self.data_source

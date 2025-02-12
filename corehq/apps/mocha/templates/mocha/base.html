@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load statici18n %}
 {% requirejs_main %} {# todo, figure out webpack hooks for js tests #}
+{% js_entry %}
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
@@ -41,6 +42,14 @@
 
   </head>
   <body>
+
+    {% registerurl 'notifications_service' %}
+    <div class="commcarehq-urls hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
+
     <div class="initial-analytics-data hide"></div>
     <div class="analytics-ab-tests hide"></div>
     <!-- HTML Fixtures -->
@@ -56,5 +65,7 @@
         hqImport("mocha/js/main").run();
       </script>
     {% endif %}
+
+    {% include "hqwebapp/partials/webpack.html" %}
   </body>
 </html>

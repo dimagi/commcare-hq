@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("hqwebapp/js/maintenance_alerts",[
     'jquery',
     'knockout',

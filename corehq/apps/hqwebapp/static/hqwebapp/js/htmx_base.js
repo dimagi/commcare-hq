@@ -26,6 +26,8 @@ import htmx from 'htmx.org';
 
 import 'hqwebapp/js/htmx_utils/hq_hx_action';
 import 'hqwebapp/js/htmx_utils/csrf_token';
+import 'hqwebapp/js/htmx_utils/hq_hx_loading';
+import 'hqwebapp/js/htmx_utils/hq_hx_refresh';
 import retryHtmxRequest from 'hqwebapp/js/htmx_utils/retry_request';
 import { showHtmxErrorModal } from 'hqwebapp/js/htmx_utils/errors';
 
@@ -41,14 +43,14 @@ document.body.addEventListener('htmx:responseError', (evt) => {
         if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig)) {
             showHtmxErrorModal(
                 errorCode,
-                gettext('Gateway Timeout Error. Max retries exceeded.')
+                gettext('Gateway Timeout Error. Max retries exceeded.'),
             );
         }
         return;
     }
     showHtmxErrorModal(
         errorCode,
-        evt.detail.xhr.statusText
+        evt.detail.xhr.statusText,
     );
 });
 
@@ -63,7 +65,7 @@ document.body.addEventListener('htmx:timeout', (evt) => {
     if (!retryHtmxRequest(evt.detail.elt, evt.detail.pathInfo, evt.detail.requestConfig) && evt.detail.requestConfig.verb === 'get') {
         showHtmxErrorModal(
             HTTP_REQUEST_TIMEOUT,
-            gettext('Request timed out. Max retries exceeded.')
+            gettext('Request timed out. Max retries exceeded.'),
         );
     }
 });

@@ -13,7 +13,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     _,
     assertProperties,
     initialPageData,
-    uiElementKeyValueList
+    uiElementKeyValueList,
 ) {
     function Choice(choice) {
         var self = {};
@@ -40,7 +40,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         // Compare stringified arrays to match contents, not references.
         // Direct assignment of the observable to options.required_for won't match requiredForOptions
         const matchingOption = parent.requiredForOptions.find(option =>
-            JSON.stringify(option.value) === JSON.stringify(options.required_for || [])
+            JSON.stringify(option.value) === JSON.stringify(options.required_for || []),
         );
         const initialRequiredFor = matchingOption ? matchingOption.value :
             ((parent.requiredForOptions.find(option => option.isDefault) || {}).value || []);
@@ -147,7 +147,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
         self.fields = uiElementKeyValueList.new(
             String(Math.random()).slice(2),
-            gettext("Edit Profile")
+            gettext("Edit Profile"),
         );
         self.fields.setEdit(self.isEditable());
 
@@ -263,10 +263,10 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         if (options.current_profile_required_for_user_type) {
             const currentProfileRequiredForList = options.current_profile_required_for_user_type;
             let profileReqiredForMatch = self.profileRequiredForOptions.find(option =>
-                JSON.stringify(option.value) === JSON.stringify(currentProfileRequiredForList || [])
+                JSON.stringify(option.value) === JSON.stringify(currentProfileRequiredForList || []),
             );
             initialRequiredFor = _.has(profileReqiredForMatch, 'value') ? profileReqiredForMatch.value :
-            (self.profileRequiredForOptions.find(function (option) {return option && option.isDefault;}) || {}).value || [];
+                (self.profileRequiredForOptions.find(function (option) {return option && option.isDefault;}) || {}).value || [];
         } else {
             // If no user type already requires a profile selection set to default
             initialRequiredFor = (self.profileRequiredForOptions.find(function (option) {return option && option.isDefault;}) || {}).value || [];
@@ -340,7 +340,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             can_edit_linked_data: initialPageData.get('can_edit_linked_data'),
             required_for_options: initialPageData.get('required_for_options'),
             profile_required_for_options: initialPageData.get('profile_required_for_options'),
-            current_profile_required_for_user_type: initialPageData.get('profile_required_for_user_type')
+            current_profile_required_for_user_type: initialPageData.get('profile_required_for_user_type'),
         });
         customDataFieldsModel.data_fields.subscribe(function () {
             $("#save-custom-fields").prop("disabled", false);

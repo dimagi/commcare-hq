@@ -12,8 +12,6 @@ from django.utils.translation import gettext_lazy
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.apps.reports.filters.dates import SingleDateFilter
-from corehq.util.dates import iso_string_to_date
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -30,11 +28,11 @@ from corehq.apps.es.aggregations import (
     FilterAggregation,
     NestedAggregation,
 )
-from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.reports.filters.dates import SingleDateFilter
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.generic import (
@@ -46,10 +44,14 @@ from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
-from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.reports.util import (
+    format_datatables_data,
+    get_commcare_version_and_date_from_last_usage,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.dates import iso_string_to_date
 from corehq.util.quickcache import quickcache
 
 
@@ -72,6 +74,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
     primary_sort_prop = None
+    use_bootstrap5 = True
 
     @property
     def _columns(self):
@@ -81,37 +84,45 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return [
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
-                             sql_col='user_dim__username'),
+                             sql_col='user_dim__username',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Assigned Location(s)"),
                              help_text=_('Assigned locations for the user, with the primary '
                                          'location highlighted in bold.'),
-                             sortable=False),
+                             sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Last Submission"),
                              prop_name='reporting_metadata.last_submissions.submission_date',
                              alt_prop_name='reporting_metadata.last_submission_for_user.submission_date',
-                             sql_col='last_form_submission_date'),
+                             sql_col='last_form_submission_date',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Last Sync"),
                              prop_name='reporting_metadata.last_syncs.sync_date',
                              alt_prop_name='reporting_metadata.last_sync_for_user.sync_date',
-                             sql_col='last_sync_log_date'),
+                             sql_col='last_sync_log_date',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Application"),
                              help_text=_("The name of the application from the user's last request."),
-                             sortable=False),
+                             sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Application Version"),
                              help_text=_("The application version from the user's last request."),
                              prop_name='reporting_metadata.last_builds.build_version',
                              alt_prop_name='reporting_metadata.last_build_for_user.build_version',
-                             sql_col='last_form_app_build_version'),
+                             sql_col='last_form_app_build_version',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""The CommCare version from the user's last request"""),
                              prop_name='reporting_metadata.last_submissions.commcare_version',
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version',
-                             sql_col='last_form_app_commcare_version'),
+                             sql_col='last_form_app_commcare_version',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Number of unsent forms in user's phone"),
                              help_text=_("The number of unsent forms in users' phones for {app_info}".format(
                                  app_info=selected_app_info
                              )),
-                             sortable=False),
+                             sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
         ]
 
     @property
@@ -121,7 +132,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             columns.append(
                 DataTablesColumn(_("Build Profile"),
                                  help_text=_("The build profile from the user's last hearbeat request."),
-                                 sortable=False)
+                                 sortable=False,
+                                 use_bootstrap5=self.use_bootstrap5)
             )
         headers = DataTablesHeader(*columns)
         headers.custom_sort = [[2, 'desc']]
@@ -159,46 +171,48 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     def get_sorting_block(self):
         sort_prop_name = 'prop_name' if self.selected_app_id else 'alt_prop_name'
-        res = []
-        #the NUMBER of cols sorting
-        sort_cols = int(self.request.GET.get('iSortingCols', 0))
-        if sort_cols > 0:
-            for x in range(sort_cols):
-                col_key = 'iSortCol_%d' % x
-                sort_dir = self.request.GET['sSortDir_%d' % x]
-                col_id = int(self.request.GET[col_key])
-                col = self.headers.header[col_id]
-                sort_prop = getattr(col, sort_prop_name) or col.prop_name
-                if x == 0:
-                    self.primary_sort_prop = sort_prop
-                if self.selected_app_id:
-                    sort_dict = {
-                        sort_prop: {
-                            "order": sort_dir,
-                            "nested_filter": {
-                                "term": {
-                                    self.sort_filter: self.selected_app_id
-                                }
-                            }
-                        }
+        block = []
+        for col in self.datatables_params.order:
+            col_ind = col['column']
+            sort_dir = col['dir']
+            dt_column_obj = self.headers.header[col_ind]
+            sort_prop = getattr(dt_column_obj, sort_prop_name) or dt_column_obj.prop_name
+            if col_ind == 0:
+                # this feels like a bit of a hack, but kept it in from the original sorting block
+                # prior to bootstrap 5 migration. could use a second look in the future
+                self.primary_sort_prop = sort_prop
+            if self.selected_app_id:
+                sort_dict = self._get_selected_app_sort_dict(sort_prop, sort_dir)
+            else:
+                sort_dict = {sort_prop: sort_dir}
+            block.append(sort_dict)
+        if len(block) == 0 and self.default_sort is not None:
+            block.append(self.default_sort)
+        return block
+
+    def _get_selected_app_sort_dict(self, sort_prop, sort_dir):
+        sort_dict = {
+            sort_prop: {
+                "order": sort_dir,
+                "nested_filter": {
+                    "term": {
+                        self.sort_filter: self.selected_app_id
                     }
-                    sort_prop_path = sort_prop.split('.')
-                    if sort_prop_path[-1] == 'exact':
-                        sort_prop_path.pop()
-                    sort_prop_path.pop()
-                    if sort_prop_path:
-                        sort_dict[sort_prop]['nested_path'] = '.'.join(sort_prop_path)
-                else:
-                    sort_dict = {sort_prop: sort_dir}
-                res.append(sort_dict)
-        if len(res) == 0 and self.default_sort is not None:
-            res.append(self.default_sort)
-        return res
+                }
+            }
+        }
+        sort_prop_path = sort_prop.split('.')
+        if sort_prop_path[-1] == 'exact':
+            sort_prop_path.pop()
+        sort_prop_path.pop()
+        if sort_prop_path:
+            sort_dict[sort_prop]['nested_path'] = '.'.join(sort_prop_path)
+        return sort_dict
 
     @property
     @memoized
     def selected_app_id(self):
-        return self.request_params.get(SelectApplicationFilter.slug, None)
+        return self.get_request_param(SelectApplicationFilter.slug, None, from_json=True)
 
     @quickcache(['app_id'], timeout=60 * 60)
     def _get_app_details(self, app_id):
@@ -226,8 +240,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker')
-            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param('location_restricted_mobile_worker', as_list=True)
+            + self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         )
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -352,11 +366,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 if last_build.get('app_id') and device and device.get('app_meta'):
                     device_app_meta = self.get_data_for_app(device.get('app_meta'), last_build.get('app_id'))
 
-            if last_sub and last_sub.get('commcare_version'):
-                commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
-            else:
-                if device and device.get('commcare_version', None):
-                    commcare_version = _get_commcare_version(device['commcare_version'])
+            commcare_version, unused = get_commcare_version_and_date_from_last_usage(last_sub, device,
+                                                                                     formatted=True)
+
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
@@ -467,8 +479,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def get_user_ids(self):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker')
-            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param('location_restricted_mobile_worker', as_list=True)
+            + self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         )
         user_ids = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -547,7 +559,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return format_html(f'<div>{"".join(html_nodes)}</div>')
 
 
-def _get_commcare_version(app_version_info):
+def format_commcare_version(app_version_info):
     commcare_version = (
         'CommCare {}'.format(app_version_info)
         if app_version_info
@@ -578,7 +590,7 @@ def _fmt_date(date, include_sort_key=True):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        text = format_html('<span class="label label-default">{}</span>', _("Never"))
+        text = format_html('<span class="badge text-bg-secondary">{}</span>', _("Never"))
     else:
         text = format_html(
             '<span class="{cls}">{text}</span>',
@@ -601,11 +613,11 @@ def _bootstrap_class(obj, severe, warn):
     assumes bigger is worse and default is good.
     """
     if obj > severe:
-        return "label label-danger"
+        return "badge text-bg-danger"
     elif obj > warn:
-        return "label label-warning"
+        return "badge text-bg-warning"
     else:
-        return "label label-success"
+        return "badge text-bg-success"
 
 
 def _get_histogram_aggregation_for_app(field_name, date_field_name, app_id):
@@ -650,7 +662,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     def shared_pagination_GET_params(self):
         shared_params = super(ApplicationErrorReport, self).shared_pagination_GET_params
         shared_params.extend([
-            {'name': param, 'value': self.request.GET.get(param, None)}
+            {'name': param, 'value': self.get_request_param(param, None)}
             for model_field, param in self.model_fields_to_url_params
         ])
         return shared_params
@@ -672,7 +684,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     def _queryset(self):
         qs = UserErrorEntry.objects.filter(domain=self.domain)
         for model_field, url_param in self.model_fields_to_url_params:
-            value = self.request.GET.get(url_param, None)
+            value = self.get_request_param(url_param, None)
             if value:
                 qs = qs.filter(**{model_field: value})
         return qs
@@ -747,20 +759,16 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     exportable = False
     emailable = False
 
-    @use_nvd3
-    def decorator_dispatcher(self, request, *args, **kwargs):
-        super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
-
     @property
     @memoized
     def selected_app_id(self):
-        return self.request_params.get(SelectApplicationFilter.slug, None)
+        return self.get_request_param(SelectApplicationFilter.slug, None, from_json=True)
 
     @memoized
     def user_query(self):
         # partially inspired by ApplicationStatusReport.user_query
         mobile_user_and_group_slugs = set(
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         ) or set(['t__0'])  # default to all mobile workers on initial load
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -805,7 +813,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     @cached_property
     def report_from_date(self):
-        from_date = self.request_params.get(self.FromDateFilter.slug)
+        from_date = self.get_request_param(self.FromDateFilter.slug, from_json=True)
         if from_date:
             try:
                 from_date = iso_string_to_date(from_date)

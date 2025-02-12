@@ -35,7 +35,6 @@ from corehq.apps.fixtures.interface import (
 from corehq.apps.hqadmin.reports import (
     AdminPhoneNumberReport,
     DeployHistoryReport,
-    DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
     UCRDataLoadReport,
@@ -74,6 +73,7 @@ from corehq.apps.geospatial.reports import (
     CaseManagementMap,
     CaseGroupingReport,
 )
+from corehq.apps.integration.kyc.views import KycConfigurationView
 
 from . import toggles
 
@@ -326,7 +326,6 @@ ENTERPRISE_INTERFACES = (
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
         UserListReport,
-        DeviceLogSoftAssertReport,
         AdminPhoneNumberReport,
         UserAuditReport,
         DeployHistoryReport,
@@ -353,5 +352,11 @@ GEOSPATIAL_MAP = (
     (_("Microplanning"), (
         CaseManagementMap,
         CaseGroupingReport,
+    )),
+)
+
+KYC_VERIFICATION = (
+    (_("KYC Verification"), (
+        KycConfigurationView,
     )),
 )

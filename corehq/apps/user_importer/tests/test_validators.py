@@ -30,6 +30,7 @@ from corehq.apps.user_importer.validation import (
     CustomDataValidator,
     TableauRoleValidator,
     TableauGroupsValidator,
+    UserAccessValidator,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, HqPermissions, Invitation, WebUser
@@ -338,6 +339,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
         cls.editable_user = WebUser.create(cls.domain, 'editable-user', 'password', None, None)
         cls.validator = LocationValidator(cls.domain, cls.upload_user,
                                           SiteCodeToLocationCache(cls.domain), True)
+        cls.user_access_validator = UserAccessValidator(cls.domain, cls.upload_user, True)
 
     def test_success(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
@@ -352,27 +354,26 @@ class TestLocationValidator(LocationHierarchyTestCase):
         user_spec = {'username': self.editable_user.username,
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
-        validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_user_access
+        validation_result = self.user_access_validator.validate_spec(user_spec)
+        assert validation_result == self.user_access_validator.error_message_user_access
 
         user_spec = {'username': self.editable_user.username}
-        validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_user_access
+        validation_result = self.user_access_validator.validate_spec(user_spec)
+        assert validation_result == self.user_access_validator.error_message_user_access
 
     def test_cant_edit_commcare_user(self):
-        self.cc_user_validator = LocationValidator(self.domain, self.upload_user,
-                                                SiteCodeToLocationCache(self.domain), False)
+        self.cc_user_validator = UserAccessValidator(self.domain, self.upload_user, False)
         self.editable_cc_user = CommCareUser.create(self.domain, 'cc-username', 'password', None, None)
         self.editable_cc_user.reset_locations([self.locations['Suffolk'].location_id])
         user_spec = {'user_id': self.editable_cc_user._id,
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.cc_user_validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_user_access
+        assert validation_result == self.user_access_validator.error_message_user_access
 
         user_spec = {'user_id': self.editable_cc_user._id}
         validation_result = self.cc_user_validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_user_access
+        assert validation_result == self.user_access_validator.error_message_user_access
 
     def test_cant_edit_invitation(self):
         self.invitation = Invitation.objects.create(
@@ -385,12 +386,12 @@ class TestLocationValidator(LocationHierarchyTestCase):
         user_spec = {'username': self.invitation.email,
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
-        validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_user_access
+        validation_result = self.user_access_validator.validate_spec(user_spec)
+        assert validation_result == self.user_access_validator.error_message_user_access
 
         user_spec = {'username': self.invitation.email}
-        validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_user_access
+        validation_result = self.user_access_validator.validate_spec(user_spec)
+        assert validation_result == self.user_access_validator.error_message_user_access
 
     def test_cant_add_location(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])

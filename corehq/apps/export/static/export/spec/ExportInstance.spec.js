@@ -2,6 +2,7 @@
 hqDefine("export/spec/ExportInstance.spec", [
     'jquery',
     'underscore',
+    'sinon/pkg/sinon',
     'hqwebapp/js/initial_page_data',
     'export/js/const',
     'export/js/models',
@@ -9,15 +10,16 @@ hqDefine("export/spec/ExportInstance.spec", [
 ], function (
     $,
     _,
+    sinon,
     initialPageData,
     constants,
     viewModels,
-    SampleExportInstances
+    SampleExportInstances,
 ) {
     describe('ExportInstance model', function () {
         var basicFormExport, savedFormExport;
         initialPageData.registerUrl(
-            "build_schema", "/a/---/data/export/build_full_schema/"
+            "build_schema", "/a/---/data/export/build_full_schema/",
         );
         beforeEach(function () {
             basicFormExport = _.clone(SampleExportInstances.basic, { saveUrl: 'http://saveurl/' });
@@ -151,7 +153,7 @@ hqDefine("export/spec/ExportInstance.spec", [
                 requests[0].respond(
                     200,
                     { 'Content-Type': 'application/json' },
-                    JSON.stringify(response)
+                    JSON.stringify(response),
                 );
 
                 // Should not have queued up a new request yet
@@ -164,7 +166,7 @@ hqDefine("export/spec/ExportInstance.spec", [
                 requests[1].respond(
                     200,
                     { 'Content-Type': 'application/json' },
-                    JSON.stringify(successResponse)
+                    JSON.stringify(successResponse),
                 );
 
                 assert.isTrue(successSpy.called);
@@ -199,7 +201,7 @@ hqDefine("export/spec/ExportInstance.spec", [
                         200,
                         { "Content-Type": "application/json" },
                         '{ "redirect": "http://dummy/"}',
-                    ]
+                    ],
                 );
 
                 assert.equal(instance.saveState(), constants.SAVE_STATES.READY);
@@ -219,7 +221,7 @@ hqDefine("export/spec/ExportInstance.spec", [
                         500,
                         { "Content-Type": "application/json" },
                         '{ "status": "fail" }',
-                    ]
+                    ],
                 );
                 instance.save();
 

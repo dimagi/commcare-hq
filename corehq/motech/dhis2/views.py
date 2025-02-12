@@ -103,7 +103,7 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
             ),
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         dataset_map = SQLDataSetMap.objects.get(domain=self.domain, pk=item_id)
         dataset_map.delete()
         return {
@@ -312,7 +312,7 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
             "template": "datavalue-map-template",
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         datavalue_map = SQLDataValueMap.objects.get(pk=item_id,
                                                     dataset_map=self.object)
         datavalue_map.delete()

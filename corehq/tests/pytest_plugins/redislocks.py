@@ -1,6 +1,7 @@
 """A plugin that causes blocking redis locks to error on lock timeout"""
 import logging
 from datetime import datetime
+from unittest.mock import Mock
 
 import attr
 import pytest
@@ -47,6 +48,10 @@ class TestLock:
     name = attr.ib()
     lock = attr.ib(repr=False)
     timeout = attr.ib()
+
+    # Allows setting local.token. (local.token is used for releasing a
+    # lock that was acquired in a different process.)
+    local = Mock()
 
     def acquire(self, **kw):
         start = datetime.now()

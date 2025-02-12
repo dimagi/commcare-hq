@@ -205,12 +205,12 @@ class CaseOwnerUpdate:
         return [asdict(obj) for obj in case_owner_updates]
 
 
-def update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases=False):
+def update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases=False, celery_task_tracker=None):
     case_properties = {}
     if flag_assigned_cases:
         case_properties[ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY] = True
 
-    for case_owner_update in case_owner_updates_dict:
+    for i, case_owner_update in enumerate(case_owner_updates_dict):
         case_blocks = []
         cases_to_updates = [case_owner_update['case_id']] + case_owner_update['related_case_ids']
         for case_id in cases_to_updates:
@@ -227,6 +227,11 @@ def update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases=Fals
             domain=domain,
             device_id=__name__ + '.update_cases_owners'
         )
+        if celery_task_tracker:
+            celery_task_tracker.update_progress(
+                current=i + 1,
+                total=len(case_owner_updates_dict)
+            )
 
 
 class CeleryTaskTracker(object):

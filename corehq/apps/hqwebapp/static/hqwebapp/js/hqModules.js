@@ -67,6 +67,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'knockout': 'ko',
                 'underscore': '_',
                 'clipboard/dist/clipboard': 'Clipboard',
+                'd3/d3.min': 'd3',
                 'ace-builds/src-min-noconflict/ace': 'ace',
                 'chai/chai': 'chai',
                 'DOMPurify/dist/purify.min': 'DOMPurify',

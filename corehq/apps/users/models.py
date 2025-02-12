@@ -105,6 +105,8 @@ from .models_role import (  # noqa
 from .user_data import SQLUserData  # noqa
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.mobile_auth.utils import generate_aes_key
+
 
 WEB_USER = 'web'
 COMMCARE_USER = 'commcare'
@@ -1162,11 +1164,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             session_data[COMMCARE_USER_TYPE_KEY] = COMMCARE_USER_TYPE_DEMO
 
         session_data.update({
+            f'{SYSTEM_PREFIX}_project': domain,
             f'{SYSTEM_PREFIX}_first_name': self.first_name,
             f'{SYSTEM_PREFIX}_last_name': self.last_name,
             f'{SYSTEM_PREFIX}_phone_number': self.phone_number,
             f'{SYSTEM_PREFIX}_user_type': self._get_user_type(),
         })
+
+        if location_id := self.get_location_id(domain):
+            session_data['commcare_location_id'] = location_id
+            session_data['commcare_location_ids'] = user_location_data(self.get_location_ids(domain))
+            session_data['commcare_primary_case_sharing_id'] = location_id
+
         return session_data
 
     def get_owner_ids(self, domain):
@@ -1551,7 +1560,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
             if by_username and by_username['id'] != self._id:
-                raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
+                raise self.Inconsistent("User with username %s already exists" % self.username)
 
             if update_django_user and self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
@@ -2647,14 +2656,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_usercase_by_domain(self, domain):
         return CommCareCase.objects.get_case_by_external_id(domain, self._id, USERCASE_TYPE)
 
-    def get_user_session_data(self, domain):
-        # TODO can we do this for both types of users and remove the fields from user data?
-        session_data = super(WebUser, self).get_user_session_data(domain)
-        session_data['commcare_location_id'] = self.get_location_id(domain)
-        session_data['commcare_location_ids'] = user_location_data(self.get_location_ids(domain))
-        session_data['commcare_primary_case_sharing_id'] = self.get_location_id(domain)
-        return session_data
-
 
 class FakeUser(WebUser):
     """
@@ -3125,7 +3126,7 @@ class HQApiKey(models.Model):
     @property
     def plaintext_key(self):
         try:
-            decrypted_key = b64_aes_cbc_decrypt(self.encrypted_key)
+            decrypted_key = b64_aes_cbc_decrypt(self.encrypted_key) if self.encrypted_key else ''
             if decrypted_key == self.key:
                 return decrypted_key
             else:
@@ -3315,6 +3316,24 @@ class ConnectIDUserLink(models.Model):
     connectid_username = models.TextField()
     commcare_user = models.ForeignKey(User, related_name='connectid_user', on_delete=models.CASCADE)
     domain = models.TextField()
+    messaging_consent = models.BooleanField(default=False)
+    channel_id = models.CharField(null=True, blank=True)
 
     class Meta:
         unique_together = ('domain', 'commcare_user')
+
+    @property
+    def messaging_key(self):
+        key = generate_aes_key().decode("utf-8")
+        messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
+            connectid_user_link=self, domain=self.domain, active=True, defaults={"key": key}
+        )
+        return messaging_key
+
+
+class ConnectIDMessagingKey(models.Model):
+    domain = models.TextField()
+    connectid_user_link = models.ForeignKey(ConnectIDUserLink, on_delete=models.CASCADE)
+    key = models.CharField(max_length=44, null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)

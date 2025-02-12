@@ -32,8 +32,17 @@ module.exports = {
     module: {
         rules: [
             {
+                test: /\.css$/i,
+                use: ["style-loader", "css-loader"],
+            },
+            {
                 test: /\.js$/,
                 loader: 'babel-loader',
+                exclude: /node_modules/,
+            },
+            {
+                test: /\.png/,
+                type: 'asset/resource',
             },
 
             // this rule ensures that hqDefine is renamed to define AMD module
@@ -41,6 +50,7 @@ module.exports = {
             {
                 test: /\.js$/,
                 loader: 'string-replace-loader',
+                exclude: /node_modules/,
                 options: {
                     search: /\bhqDefine\b/g,
                     replace: 'define',
@@ -69,7 +79,29 @@ module.exports = {
             },
 
             {
-                test: /sentry\.browser/,
+                test: /mapbox\.js\/dist\/mapbox/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "L",
+                    },
+                },
+            },
+            {
+                test: /nvd3\/nv\.d3\.min/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "nv",
+                    },
+                },
+            },
+            {
+                test: /sentry\/js\/sentry/,
                 loader: "exports-loader",
                 options: {
                     type: "commonjs",
@@ -99,5 +131,11 @@ module.exports = {
 
     resolve: {
         alias: utils.getAllAliases(aliases),
+    },
+
+    snapshot: {
+        managedPaths: [
+            /^node_modules\//,
+        ],
     },
 };

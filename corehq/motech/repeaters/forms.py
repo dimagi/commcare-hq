@@ -72,17 +72,18 @@ class GenericRepeaterForm(forms.Form):
 
     def _initialize_crispy_layout(self):
         self.helper = hqcrispy.HQFormHelper(self)
-        self.helper.form_class = 'form-horizontal'
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Forwarding Settings',
                 *self.get_ordered_crispy_form_fields()
             ),
-            twbscrispy.StrictButton(
-                self.submit_btn_text,
-                type="submit",
-                css_class='btn-primary',
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    self.submit_btn_text,
+                    type="submit",
+                    css_class='btn-primary',
+                )
             )
         )
 

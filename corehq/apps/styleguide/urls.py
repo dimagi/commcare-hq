@@ -6,6 +6,8 @@ from corehq.apps.styleguide.examples.bootstrap5.htmx_alpine_form_views import (
     FilterDemoFormView,
 )
 from corehq.apps.styleguide.examples.bootstrap5.htmx_hq_hx_action import TodoListDemoView
+from corehq.apps.styleguide.examples.bootstrap5.htmx_pagination_host_view import HtmxPaginationView
+from corehq.apps.styleguide.examples.bootstrap5.htmx_pagination_table_view import ExamplePaginatedTableView
 from corehq.apps.styleguide.views import (
     AtomsStyleGuideView,
     MainStyleGuideView,
@@ -28,6 +30,10 @@ advanced_demo_urlpatterns = [
     url(r'^htmx_todo/$', TodoListDemoView.as_view(), name=TodoListDemoView.urlname),
     url(r'^htmx_alpine_form/$', HtmxAlpineFormDemoView.as_view(), name=HtmxAlpineFormDemoView.urlname),
     url(r'^htmx_alpine_form/form/$', FilterDemoFormView.as_view(), name=FilterDemoFormView.urlname),
+    url(r'^htmx_pagination/$', HtmxPaginationView.as_view(),
+        name=HtmxPaginationView.urlname),
+    url(r'^htmx_pagination/table/$', ExamplePaginatedTableView.as_view(),
+        name=ExamplePaginatedTableView.urlname),
 ]
 
 urlpatterns = [
@@ -66,6 +72,8 @@ urlpatterns = [
         name="styleguide_migration_guide_b5"),
     url(r'^b5/javascript/$', bootstrap5.styleguide_javascript_guide,
         name="styleguide_javascript_guide_b5"),
+    url(r'^b5/html/$', bootstrap5.styleguide_html_guide,
+        name="styleguide_html_guide_b5"),
     url(r'^b5/htmx_alpine/$', bootstrap5.styleguide_htmx_and_alpine,
         name="styleguide_htmx_and_alpine_b5"),
     url(r'^b5/atoms/accessibility/$', bootstrap5.styleguide_atoms_accessibility,

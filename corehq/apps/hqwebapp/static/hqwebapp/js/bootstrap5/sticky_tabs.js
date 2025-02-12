@@ -6,7 +6,7 @@ hqDefine("hqwebapp/js/bootstrap5/sticky_tabs", [
     "jquery",
     "es6!hqwebapp/js/bootstrap5_loader",    // needed for $.tab
 ], function (
-    $, bootstrap
+    $, bootstrap,
 ) {
     var getHash = function () {
         if (window.location.hash) {
@@ -25,7 +25,7 @@ hqDefine("hqwebapp/js/bootstrap5/sticky_tabs", [
             tabController;
 
         // make sure we don't treat all anchor tags as a sticky tab
-        if ($tabFromUrl && $tabFromUrl.parents('.sticky-tabs').length === 0) return;
+        if ($tabFromUrl && $tabFromUrl.parents('.sticky-tabs').length === 0) {return;}
 
         if ($tabFromUrl && $tabFromUrl.length) {
             tabController = new bootstrap.Tab($tabFromUrl);

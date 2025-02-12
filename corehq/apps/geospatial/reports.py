@@ -25,7 +25,10 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.util.quickcache import quickcache
 
 from .dispatchers import CaseManagementMapDispatcher
-from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
+from corehq.apps.geospatial.const import (
+    ES_INDEX_TASK_HELPER_BASE_KEY,
+    ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
+)
 from .es import (
     BUCKET_CASES_AGG,
     CASE_PROPERTIES_AGG,
@@ -44,13 +47,6 @@ from .utils import (
 
 
 class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin):
-    fields = [
-        'corehq.apps.reports.standard.cases.filters.XPathCaseSearchFilter',
-        'corehq.apps.reports.filters.case_list.CaseListFilter',
-        'corehq.apps.reports.filters.select.CaseTypeFilter',
-        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
-    ]
-
     section_name = gettext_noop("Data")
 
     dispatcher = CaseManagementMapDispatcher
@@ -68,7 +64,7 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
                 {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
                 for p in GeoPolygon.objects.filter(domain=self.domain).all()
             ],
-            'task_status': celery_task_tracker.get_status(),
+            'index_task_status': celery_task_tracker.get_status(),
         })
         return context
 
@@ -97,11 +93,29 @@ class CaseManagementMap(BaseCaseMapReport):
     name = gettext_noop("Microplanning Map")
     slug = "microplanning_map"
 
+    fields = [
+        'corehq.apps.reports.standard.cases.filters.XPathCaseSearchFilter',
+        'corehq.apps.reports.filters.case_list.CaseListFilter',
+        'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+    ]
+
     base_template = "geospatial/case_management_base.html"
     report_template_path = "geospatial/case_management.html"
+    max_rows = 5_000
+    default_rows = 5_000
+    force_page_size = True
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
+
+    @property
+    def template_context(self):
+        context = super(CaseManagementMap, self).template_context
+        celery_task_tracker = get_celery_task_tracker(self.domain, ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY)
+        if celery_task_tracker.is_active():
+            context['reassignment_task_status'] = celery_task_tracker.get_status()
+        return context
 
     @property
     def headers(self):
@@ -139,6 +153,13 @@ class CaseManagementMap(BaseCaseMapReport):
 class CaseGroupingReport(BaseCaseMapReport):
     name = gettext_noop('Case Clustering Map')
     slug = 'case_clustering_map'
+
+    fields = [
+        'corehq.apps.reports.standard.cases.filters.XPathCaseSearchFilter',
+        'corehq.apps.reports.filters.case_list.CaseListFilter',
+        'corehq.apps.reports.filters.select.CaseTypeFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+    ]
 
     base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'geospatial/case_grouping_map.html'

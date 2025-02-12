@@ -869,7 +869,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
 
     @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
-    @patch('corehq.apps.geospatial.views.CeleryTaskTracker.is_active', return_value=False)
+    @patch('corehq.apps.geospatial.utils.CeleryTaskTracker.is_active', return_value=False)
     def test_cases_reassignment_async(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -893,7 +893,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
     @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.tasks.get_flag_assigned_cases_config', return_value=True)
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
-    @patch('corehq.apps.geospatial.views.CeleryTaskTracker.is_active', return_value=False)
+    @patch('corehq.apps.geospatial.utils.CeleryTaskTracker.is_active', return_value=False)
     def test_cases_reassignment_async_with_assigned_cases_flag_enabled(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -916,7 +916,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
 
     @flag_enabled('MICROPLANNING')
     @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
-    @patch('corehq.apps.geospatial.views.CeleryTaskTracker.is_active', return_value=True)
+    @patch('corehq.apps.geospatial.utils.CeleryTaskTracker.is_active', return_value=True)
     def test_cases_reassignment_async_task_invoked_and_not_completed(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,

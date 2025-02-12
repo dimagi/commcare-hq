@@ -17,9 +17,8 @@ hqDefine('registration/js/new_user.ko', [
     RMI,
     kissmetrics,
     appcues,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
     var module = {};
 
     module.rmiUrl = null;
@@ -135,7 +134,7 @@ hqDefine('registration/js/new_user.ko', [
                                             message: result.message,
                                         });
                                     },
-                                }
+                                },
                             );
                         } else if (self.email() !== undefined) {
                             module.resetEmailFeedback(false);
@@ -225,8 +224,6 @@ hqDefine('registration/js/new_user.ko', [
                    && (!self.isPersonaChoiceOther() || self.isPersonaChoiceOtherPresent());
         });
 
-        // Self-signup for paid software plan
-        self.isSelfSignup = ko.observable(false);
 
         // ---------------------------------------------------------------------
         // Form Functionality
@@ -250,7 +247,6 @@ hqDefine('registration/js/new_user.ko', [
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: module.getPhoneNumberFn() || self.phoneNumber(),
                 atypical_user: defaults.atypical_user,
-                is_self_signup: self.isSelfSignup(),
             };
             if (self.hasPersonaFields) {
                 _.extend(data, {
@@ -415,7 +411,7 @@ hqDefine('registration/js/new_user.ko', [
                         self.isSubmitting(false);
                         self.hasServerError(true);
                     },
-                }
+                },
             );
             self.nextStep();
         };

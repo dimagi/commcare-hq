@@ -18,7 +18,7 @@ hqDefine("enterprise/js/project_dashboard", [
     alertUser,
     kissmetrics,
     tempusDominus,
-    moment
+    moment,
 ) {
     const PRESET_LAST_30 = "last_30";
     const PRESET_PREV_MONTH = "prev_month";
@@ -214,20 +214,24 @@ hqDefine("enterprise/js/project_dashboard", [
             const number = input.slice(0, -1);
             return Number(number).toLocaleString(
                 undefined,
-                {minimumFractionDigits: 1,  maximumFractionDigits: 1}
+                {minimumFractionDigits: 1,  maximumFractionDigits: 1},
             ) + '%';
+        } else if (input === "--") {
+            return input;
         } else {
             return Number(input).toLocaleString();
         }
     }
 
     function updateDisplayTotal($element, kwargs) {
-        const $display = $element.find(".total");
+        const $display = $element.find(".js-total");
+        const $helpTotal = $element.find(".help-total");
         const slug = $element.data("slug");
         const requestParams = {
             url: initialPageData.reverse("enterprise_dashboard_total", slug),
             success: function (data) {
                 $display.html(localizeNumberlikeString(data.total));
+                $helpTotal.removeClass("d-none");
             },
             error: function (request) {
                 if (request.responseJSON) {
@@ -236,10 +240,12 @@ hqDefine("enterprise/js/project_dashboard", [
                     alertUser.alert_user(gettext("Error updating display total, please try again or report an issue if this persists."), "danger");
                 }
                 $display.html(gettext("??"));
+                $helpTotal.addClass("d-none");
             },
             data: kwargs,
         };
         $display.html('<i class="fa fa-spin fa-spinner"></i>');
+        $helpTotal.addClass("d-none");
         $.ajax(requestParams);
     }
 
@@ -248,7 +254,7 @@ hqDefine("enterprise/js/project_dashboard", [
         const datePicker = tempusDominus.createDefaultDateRangePicker(
             document.getElementById("id_date_range"),
             moment().subtract(30, "days"),
-            moment()
+            moment(),
         );
 
         const $dateRangeModal = $('#enterpriseFormsDaterange');
@@ -258,25 +264,29 @@ hqDefine("enterprise/js/project_dashboard", [
         const maxDateRangeDays = initialPageData.get("max_date_range_days");
 
         const displayMap = {
-            "form_submission": formSubmissionsDisplay,
+            "form_submissions": formSubmissionsDisplay,
             "sms": smsDisplay,
         };
         const dateRangeModal = DateRangeModal($dateRangeModal, datePicker, dateRangePresetOptions, maxDateRangeDays, displayMap);
 
-        $("#form_submission_dateRangeDisplay").koApplyBindings(formSubmissionsDisplay);
-        $("#sms_dateRangeDisplay").koApplyBindings(smsDisplay);
+        if ($("#form_submissions_dateRangeDisplay").length) {
+            $("#form_submissions_dateRangeDisplay").koApplyBindings(formSubmissionsDisplay);
+        }
+        if ($("#sms_dateRangeDisplay").length) {
+            $("#sms_dateRangeDisplay").koApplyBindings(smsDisplay);
+        }
         $dateRangeModal.koApplyBindings(
-            dateRangeModal
+            dateRangeModal,
         );
 
         kissmetrics.track.event(`[${metricType}] Visited page`);
-        $(".report-panel").each(function () {
+        $(".js-report-panel").each(function () {
             var $element = $(this),
                 slug = $element.data("slug");
 
             updateDisplayTotal($element);
 
-            $element.find(".btn-primary").click(function () {
+            $element.find(".js-email-report").click(function () {
                 kissmetrics.track.event(`[${metricType}] Clicked Email Report for ` + slug);
                 var $button = $(this);
                 $button.disableButton();

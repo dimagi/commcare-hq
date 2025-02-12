@@ -51,14 +51,15 @@ from .const import (
     GPS_POINT_CASE_PROPERTY,
     POLYGON_COLLECTION_GEOJSON_SCHEMA,
     ES_INDEX_TASK_HELPER_BASE_KEY,
+    ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
 )
 from .models import GeoConfig, GeoPolygon
 from .utils import (
     CaseOwnerUpdate,
-    CeleryTaskTracker,
     create_case_with_gps_property,
     get_flag_assigned_cases_config,
     get_geo_case_property,
+    get_geo_config,
     get_geo_user_property,
     get_lat_lon_from_dict,
     set_case_gps_property,
@@ -78,7 +79,7 @@ class BaseGeospatialView(BaseDomainView):
     def main_context(self):
         context = super().main_context
         celery_task_tracker = get_celery_task_tracker(self.domain, task_slug=ES_INDEX_TASK_HELPER_BASE_KEY)
-        context['task_status'] = celery_task_tracker.get_status()
+        context['index_task_status'] = celery_task_tracker.get_status()
         return context
 
 
@@ -86,7 +87,7 @@ class CaseDisbursementAlgorithm(BaseDomainView):
     urlname = "case_disbursement"
 
     def post(self, request, domain, *args, **kwargs):
-        config = GeoConfig.objects.get(domain=domain)
+        config = get_geo_config(domain)
         request_json = json.loads(request.body.decode('utf-8'))
 
         solver_class = config.disbursement_solver
@@ -364,7 +365,7 @@ class GetPaginatedCases(CaseListMixin):
         # override super class corehq.apps.reports.generic.GenericReportView init method to
         # avoid failures for missing expected properties for a report and keep only necessary properties
         self.request = request
-        self.request_params = json_request(self.request.GET)
+        self._request_params = json_request(self.request.GET)
         self.domain = domain
 
     def _base_query(self):
@@ -480,10 +481,10 @@ def get_users_with_gps(request, domain):
 @method_decorator(toggles.MICROPLANNING.required_decorator(), name="dispatch")
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
-    REQUEST_CASES_LIMIT = 100
+    REQUEST_CASES_LIMIT = CaseManagementMap.default_rows
     # Below values denotes the number of cases to be reassigned including the related cases
     ASYNC_CASES_UPDATE_THRESHOLD = 500  # threshold for asynchronous operation
-    TOTAL_CASES_LIMIT = 5000    # maximum number of cases that can be reassigned
+    TOTAL_CASES_LIMIT = 10_000  # maximum number of cases that can be reassigned
 
     def post(self, request, domain, *args, **kwargs):
         try:
@@ -616,9 +617,7 @@ class CasesReassignmentView(BaseDomainView):
             case_owner_update.related_case_ids.append(related_case_id)
 
     def _process_as_async(self, case_owner_updates):
-        task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
-        celery_task_tracker = CeleryTaskTracker(task_key)
-
+        celery_task_tracker = get_celery_task_tracker(self.domain, ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY)
         if celery_task_tracker.is_active():
             return HttpResponse(
                 _('Case reassignment is currently in progress. Please try again later.'),
@@ -628,7 +627,6 @@ class CasesReassignmentView(BaseDomainView):
         geo_cases_reassignment_update_owners.delay(
             self.domain,
             CaseOwnerUpdate.to_dict(case_owner_updates),
-            task_key,
         )
         celery_task_tracker.mark_requested()
         return JsonResponse(

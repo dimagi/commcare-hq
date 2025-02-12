@@ -76,6 +76,17 @@ class NestableTimer(object):
         root = [] if exclude_root else [self]
         return root + list(itertools.chain(*[sub.to_list() for sub in self.subs]))
 
+    def print(self, prefix=""):
+        if self.is_root_node:
+            print(f"{'name':<50} | duration | pct of parent | pct of total")
+            print(f"{'-'*50} | -------- | ------------- | ------------")
+        print(f"{prefix + self.name:<50} | "
+              f"{self.duration:8.3f} | "
+              f"{self.percent_of_parent or 100:13.3f} | "
+              f"{self.percent_of_total or 0:12.3f}")
+        for sub in self.subs:
+            sub.print(prefix + "  ")
+
     @property
     def is_leaf_node(self):
         return not self.subs
@@ -190,6 +201,9 @@ class TimingContext(object):
         }
         """
         return self.root.to_dict()
+
+    def print(self):
+        return self.root.print()
 
     @property
     def duration(self):

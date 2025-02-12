@@ -1,30 +1,25 @@
-'use strict';
+
 
 hqDefine("geospatial/js/case_management", [
     "jquery",
+    "underscore",
     "hqwebapp/js/initial_page_data",
     "knockout",
     'geospatial/js/models',
     'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
-    'select2/dist/js/select2.full.min',
+    'reports/js/bootstrap3/base',
+    'hqwebapp/js/select2_knockout_bindings.ko',
+    'commcarehq',
 ], function (
     $,
+    _,
     initialPageData,
     ko,
     models,
     utils,
-    alertUser
+    alertUser,
 ) {
-    const caseMarkerColors = {
-        'default': "#808080", // Gray
-        'selected': "#00FF00", // Green
-    };
-    const userMarkerColors = {
-        'default': "#0e00ff", // Blue
-        'selected': "#0b940d", // Dark Green
-    };
-
     const MAP_CONTAINER_ID = 'geospatial-map';
     const SHOW_USERS_QUERY_PARAM = 'show_users';
     const USER_LOCATION_ID_QUERY_PARAM = 'user_location_id';
@@ -65,59 +60,51 @@ hqDefine("geospatial/js/case_management", [
 
         self.handleDisbursementResults = function (result) {
             // Clean stale disbursement results
-            mapModel.removeDisbursementLayers();
+            mapModel.removeDisbursementLayer();
 
             let groupId = 0;
-            Object.keys(result).forEach((userId) => {
-                const user = mapModel.userMapItems().find((userModel) => {return userModel.itemId === userId;});
-                mapModel.caseGroupsIndex[userId] = {groupId: groupId, item: user};
-
-                let cases = [];
+            mapModel.caseGroupsIndex = {};
+            for (const userItem of mapModel.userMapItems()) {
+                mapModel.caseGroupsIndex[userItem.itemId] = {groupId: groupId, item: userItem};
+                if (!result[userItem.itemId]) {
+                    groupId++;
+                    continue;
+                }
                 mapModel.caseMapItems().forEach((caseModel) => {
-                    if (result[userId].includes(caseModel.itemId)) {
-                        cases.push(caseModel);
+                    if (result[userItem.itemId].includes(caseModel.itemId)) {
                         mapModel.caseGroupsIndex[caseModel.itemId] = {
                             groupId: groupId,
                             item: caseModel,
-                            assignedUserId: userId,
+                            assignedUserId: userItem.itemId,
                         };
                     }
                 });
-                self.connectUserWithCasesOnMap(user, cases);
                 groupId += 1;
-            });
+            }
+            self.connectUserWithCasesOnMap();
             self.setBusy(false);
         };
 
-        self.clearConnectionLines = function (cases) {
-            let mapInstance = mapModel.mapInstance;
+        self.getCasesForDisbursement = function (cases) {
             let caseData = [];
             const hasSelectedCases = mapModel.hasSelectedCases();
             cases.forEach(function (c) {
-                const layerId = mapModel.getLineFeatureId(c.itemId);
-                if (mapInstance.getLayer(layerId)) {
-                    mapInstance.removeLayer(layerId);
-                }
-                if (mapInstance.getSource(layerId)) {
-                    mapInstance.removeSource(layerId);
-                }
-
                 // Either select all if none selected, or only pick selected cases
                 if (!hasSelectedCases || c.isSelected()) {
                     caseData.push({
                         id: c.itemId,
-                        lon: c.itemData.coordinates.lng,
-                        lat: c.itemData.coordinates.lat,
+                        lon: c.coordinates.lng,
+                        lat: c.coordinates.lat,
                     });
                 }
             });
-
             return caseData;
         };
 
         self.runCaseDisbursementAlgorithm = function (cases, users) {
             self.setBusy(true);
-            const caseData = self.clearConnectionLines(cases);
+            mapModel.removeDisbursementLayer();
+            const caseData = self.getCasesForDisbursement(cases);
 
             self.setDisbursementParameters = function (parameters) {
                 var parametersList = [
@@ -133,7 +120,7 @@ hqDefine("geospatial/js/case_management", [
                 if (parameters.max_case_travel_time_seconds) {
                     const travelParamValue = `${parameters.max_case_travel_time_seconds / 60} ${gettext("minutes")}`;
                     parametersList.push(
-                        {name: gettext("Max travel time"), value: travelParamValue}
+                        {name: gettext("Max travel time"), value: travelParamValue},
                     );
                 }
 
@@ -148,8 +135,8 @@ hqDefine("geospatial/js/case_management", [
                 if (!hasSelectedUsers || userMapItem.isSelected()) {
                     userData.push({
                         id: userMapItem.itemId,
-                        lon: userMapItem.itemData.coordinates.lng,
-                        lat: userMapItem.itemData.coordinates.lat,
+                        lon: userMapItem.coordinates.lng,
+                        lat: userMapItem.coordinates.lat,
                     });
                 }
             });
@@ -174,45 +161,42 @@ hqDefine("geospatial/js/case_management", [
                 },
                 error: function () {
                     alertUser.alert_user(
-                        gettext("Oops! Something went wrong! Please check that your geospatial settings are configured correctly or contact admin if the problem persists."), 'danger'
+                        gettext("Oops! Something went wrong! Please check that your geospatial settings are configured correctly or contact admin if the problem persists."), 'danger',
                     );
                     self.setBusy(false);
                 },
             });
         };
 
-        self.connectUserWithCasesOnMap = function (user, cases) {
-            cases.forEach((caseModel) => {
-                const lineCoordinates = [
-                    [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
-                    [caseModel.itemData.coordinates.lng, caseModel.itemData.coordinates.lat],
-                ];
-                let mapInstance = mapModel.mapInstance;
-                mapInstance.addLayer({
-                    id: mapModel.getLineFeatureId(caseModel.itemId),
-                    type: 'line',
-                    source: {
-                        type: 'geojson',
-                        data: {
+        self.connectUserWithCasesOnMap = function () {
+            let disbursementLinesSource = generateDisbursementLinesSource();
+            mapModel.addDisbursementLinesLayer(disbursementLinesSource);
+        };
+
+        function generateDisbursementLinesSource() {
+            let disbursementLinesSource = {
+                'type': 'FeatureCollection',
+                'features': [],
+            };
+            for (const itemId of Object.keys(mapModel.caseGroupsIndex)) {
+                let element = mapModel.caseGroupsIndex[itemId];
+                if ('assignedUserId' in element) {
+                    let user = mapModel.caseGroupsIndex[element.assignedUserId].item;
+                    const lineCoordinates = [
+                        [user.coordinates.lng, user.coordinates.lat],
+                        [element.item.coordinates.lng, element.item.coordinates.lat],
+                    ];
+                    disbursementLinesSource.features.push(
+                        {
                             type: 'Feature',
                             properties: {},
-                            geometry: {
-                                type: 'LineString',
-                                coordinates: lineCoordinates,
-                            },
+                            geometry: { type: 'LineString', coordinates: lineCoordinates },
                         },
-                    },
-                    layout: {
-                        'line-join': 'round',
-                        'line-cap': 'round',
-                    },
-                    paint: {
-                        'line-color': '#808080',
-                        'line-width': 1,
-                    },
-                });
-            });
-        };
+                    );
+                }
+            }
+            return disbursementLinesSource;
+        }
 
         return self;
     };
@@ -246,14 +230,17 @@ hqDefine("geospatial/js/case_management", [
         });
     }
 
-    function selectMapItemsInPolygons() {
+    function getMapPolygons() {
         let features = mapModel.drawControls.getAll().features;
         if (polygonFilterModel.activeSavedPolygon()) {
             features = features.concat(polygonFilterModel.activeSavedPolygon().geoJson.features);
         }
-        if (features.length) {
-            mapModel.selectAllMapItems(features);
-        }
+        return features;
+    }
+
+    function selectMapItemsInPolygons() {
+        const polygons = getMapPolygons();
+        mapModel.selectAllMapItems(polygons);
     }
 
     function initPolygonFilters() {
@@ -266,8 +253,7 @@ hqDefine("geospatial/js/case_management", [
             $mapControlDiv.koApplyBindings(polygonFilterModel);
         }
 
-        var $runDisbursement = $("#btnRunDisbursement");
-        $runDisbursement.click(function () {
+        $("#btnRunDisbursement").click(function () {
             $('#disbursement-clear-message').hide();
             if (mapModel && mapModel.mapInstance && !polygonFilterModel.btnRunDisbursementDisabled()) {
                 let selectedCases = mapModel.caseMapItems();
@@ -326,7 +312,7 @@ hqDefine("geospatial/js/case_management", [
         };
 
         self.loadUsers = function () {
-            mapModel.removeMarkersFromMap(mapModel.userMapItems());
+            mapModel.removeItemTypeFromSource('user');
             mapModel.userMapItems([]);
             self.hasErrors(false);
             if (!self.shouldShowUsers()) {
@@ -340,30 +326,39 @@ hqDefine("geospatial/js/case_management", [
                 url: initialPageData.reverse('get_users_with_gps'),
                 success: function (data) {
                     self.hasFiltersChanged(false);
-                    const userData = _.object(_.map(data.user_data, function (userData) {
+                    let features = [];
+                    let userMapItems = [];
+                    const polygonFeatures = getMapPolygons();
+                    for (const userData of data.user_data) {
                         const gpsData = (userData.gps_point) ? userData.gps_point.split(' ') : [];
-                        const lat = parseFloat(gpsData[0]);
-                        const lng = parseFloat(gpsData[1]);
-
+                        if (!gpsData.length) {
+                            continue;
+                        }
+                        const coordinates = {
+                            'lat': gpsData[0],
+                            'lng': gpsData[1],
+                        };
                         const editUrl = initialPageData.reverse('edit_commcare_user', userData.id);
                         const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${userData.username}</a>`;
-
-                        const userInfo = {
-                            'coordinates': {
-                                'lat': lat,
-                                'lng': lng,
+                        const isInPolygon = mapModel.isMapItemInPolygons(polygonFeatures, coordinates);
+                        const parsedData = {
+                            id: userData.id,
+                            coordinates: coordinates,
+                            link: link,
+                            name: userData.username,
+                            itemType: 'user',
+                            isSelected: isInPolygon,
+                            customData: {
+                                primary_loc_name: userData.primary_loc_name,
                             },
-                            'link': link,
-                            'type': 'user',
-                            'name': userData.username,
-                            'primary_loc_name': userData.primary_loc_name,
                         };
-                        return [userData.id, userInfo];
-                    }));
 
-                    const userMapItems = mapModel.addMarkersToMap(userData, userMarkerColors);
+                        const userMapItem = new models.MapItem(parsedData, mapModel);
+                        userMapItems.push(userMapItem);
+                        features.push(userMapItem.getGeoJson());
+                    }
+                    mapModel.addDataToSource(features);
                     mapModel.userMapItems(userMapItems);
-                    selectMapItemsInPolygons();
                 },
                 error: function () {
                     self.hasErrors(true);
@@ -449,20 +444,36 @@ hqDefine("geospatial/js/case_management", [
         }
     }
 
+    function beforeLoadCases(caseData) {
+        loadCases(caseData);
+        if (mapModel.hasDisbursementLayer()) {
+            mapModel.removeDisbursementLayer();
+        }
+    }
+
     function loadCases(caseData) {
-        mapModel.removeMarkersFromMap(mapModel.caseMapItems());
+        mapModel.removeItemTypeFromSource('case');
         mapModel.caseMapItems([]);
-        var casesWithGPS = caseData.filter(function (item) {
-            return item[1] !== null;
-        });
-        // Index by case_id
-        var casesById = _.object(_.map(casesWithGPS, function (item) {
-            if (item[1]) {
-                return [item[0], {'coordinates': item[1], 'link': item[2], 'type': 'case', 'name': item[3]}];
-            }
-        }));
-        const caseMapItems = mapModel.addMarkersToMap(casesById, caseMarkerColors);
+        let features = [];
+        let caseMapItems = [];
+        const polygonFeatures = getMapPolygons();
+        for (const caseItem of caseData) {
+            const isInPolygon = mapModel.isMapItemInPolygons(polygonFeatures, caseItem[1]);
+            const parsedData = {
+                id: caseItem[0],
+                coordinates: caseItem[1],
+                link: caseItem[2],
+                name: caseItem[3],
+                itemType: 'case',
+                isSelected: isInPolygon,
+                customData: {},
+            };
+            const caseMapItem = new models.MapItem(parsedData, mapModel);
+            caseMapItems.push(caseMapItem);
+            features.push(caseMapItem.getGeoJson());
+        }
         mapModel.caseMapItems(caseMapItems);
+        mapModel.addDataToSource(features);
         mapModel.fitMapBounds(caseMapItems);
     }
 
@@ -512,16 +523,16 @@ hqDefine("geospatial/js/case_management", [
             } else {
                 alertUser.alert_user(
                     gettext('Oops! Something went wrong! Please report an issue if the problem persists.'),
-                    'danger'
+                    'danger',
                 );
             }
         } else if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
-            loadCases(xhr.responseJSON.aaData);
             if (polygonFilterModel) {
-                selectMapItemsInPolygons();
-            }
-            if (mapModel.hasDisbursementLayers()) {
-                mapModel.removeDisbursementLayers();
+                beforeLoadCases(xhr.responseJSON.aaData);
+            } else {
+                mapModel.mapInstance.on('load', () => {
+                    beforeLoadCases(xhr.responseJSON.aaData);
+                });
             }
         }
     });

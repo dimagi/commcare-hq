@@ -798,5 +798,45 @@
       "label": "javascript/domain/js",
       "compare_all_files": true
     }
+  ],
+  "apps/data_interfaces/templates/data_interfaces": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "data_interfaces",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "interfaces/bootstrap3",
+        "interfaces/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "data_interfaces/interfaces",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "data_interfaces/partials",
+      "compare_all_files": true
+    }
+  ],
+  "apps/data_interfaces/static/data_interfaces/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/data_interfaces/js",
+      "compare_all_files": true
+    }
   ]
 }

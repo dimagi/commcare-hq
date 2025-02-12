@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,121 +1,71 @@
+@@ -1,130 +1,74 @@
 -@import "@{b3-import-variables}";
 +/*
 +These are Boostrap 3 variables that were carried over in the
@@ -67,7 +67,7 @@
 -@call-to-action-mid: #5c6ac5;
 -@call-to-action-low: #212f78;
 -@call-to-action-extra-low: #000639;
-+$navbar-footer-height:            38px;
++$navbar-footer-height:            40px;
 +$navbar-footer-link-color:        mix(darken(#ffffff, 10), $brand-primary, 90%);
 +$navbar-footer-link-color-hover:  $gray-lighter;
 +$navbar-footer-button-color:      #474747;
@@ -97,6 +97,9 @@
 -@cc-brand-mid:  #004ebc;
 -@cc-brand-low:  #002c5f;
 -
+-// used in registration app only. will be merged into "brand" color Bootstrap 5 migration
+-@commcare-blue:  #5D70D2;
+-
 -// Accent colors used in few places (billing, web apps, one-offs). Minimize usage.
 -@cc-dark-cool-accent-hi:  #d6c5ea;
 -@cc-dark-cool-accent-mid: #9060c8;
@@ -125,7 +128,7 @@
 -@navbar-padding-vertical:        ((@navbar-height - @line-height-computed) / 2);
 -@navbar-default-bg:              @cc-bg;
 -
--@navbar-footer-height:            38px;
+-@navbar-footer-height:            40px;
 -@navbar-footer-link-color:        mix(darken(#ffffff, 10), @brand-primary, 90);
 -@navbar-footer-link-color-hover:  @gray-lighter;
 -@navbar-footer-button-color:      #474747;
@@ -151,25 +154,34 @@
 +$zindexAccountingPricingTableHeader:  800;
  
  // Other Zindecies
--@zindex-report-loading:               100;
+-@zindex-hq-navigation:               1060;
+-@zindex-select2-results:             1056;  // higher than $zindex-modal so select2s can be used in modals
+-@zindex-cloudcare-debugger:          1040;
+-@zindex-persistent-menu-nav:         1030;
+-@zindex-persistent-menu-nav-arrow:   @zindex-persistent-menu-nav + 1;
+-@zindex-navbar:                      1000;
 -@zindex-app-preview:                  998;
 -@zindex-navbar-cloudcare:             995;
 -@zindex-persistent-tile-cloudcare:    993;
 -@zindex-formplayer-progress:          990;
--@zindex-cloudcare-debugger:           1005;
+-@zindex-report-loading:               100;
 -@zindex-formplayer-scroll-to-bottom:    5;
+-@zindex-next-error:                     5;  // Above the sticky submit button
 -@zindex-formplayer-anchored-submit:     4;
++$zindex-hq-navigation:               1060;
++$zindex-select2-results:             1056;  // higher than $zindex-modal so select2s can be used in modals
++$zindex-cloudcare-debugger:          1040;
++$zindex-persistent-menu-nav:         1030;
++$zindex-persistent-menu-nav-arrow:   $zindex-persistent-menu-nav + 1;
 +$zindex-navbar:                      1000;
-+$zindex-report-loading:               100;
 +$zindex-app-preview:                  998;
 +$zindex-navbar-cloudcare:             995;
 +$zindex-persistent-tile-cloudcare:    993;
 +$zindex-formplayer-progress:          990;
-+$zindex-cloudcare-debugger:          1005;
++$zindex-report-loading:               100;
 +$zindex-formplayer-scroll-to-bottom:    5;
-+$zindex-formplayer-anchored-submit:     4;
-+$zindex-select2-results:             1056;  // higher than $zindex-modal so select2s can be used in modals
 +$zindex-next-error:                     5;  // Above the sticky submit button
++$zindex-formplayer-anchored-submit:     4;
  
 -
 -@input-border-radius-large:       5px;

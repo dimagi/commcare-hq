@@ -202,6 +202,27 @@ def delete_all_export_instances():
         safe_delete(db, doc_id)
 
 
+def is_standard(export):
+    return (not export['is_daily_saved_export']
+        and not export['is_odata_config'])
+
+
+def is_daily_saved_export(export):
+    return (export['is_daily_saved_export']
+            and not export['export_format'] == "html"
+            and not export['is_odata_config'])
+
+
+def is_excel_integration(export):
+    return (export['is_daily_saved_export']
+            and export['export_format'] == "html"
+            and not export['is_odata_config'])
+
+
+def is_odata_export(export):
+    return export['is_odata_config']
+
+
 class ODataExportFetcher:
     def get_export_count(self, domain):
         return len(self._get_odata_exports(domain))
@@ -220,4 +241,4 @@ class ODataExportFetcher:
 
     def _get_odata_exports(self, domain):
         all_domain_exports = get_brief_exports(domain)
-        return [export for export in all_domain_exports if export['is_odata_config']]
+        return [export for export in all_domain_exports if is_odata_export(export)]

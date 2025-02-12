@@ -1,0 +1,25 @@
+language: en-US
+early_access: true
+reviews:
+    high_level_summary: false
+    review_status: false
+    poem: false
+    changed_files_summary: false
+    abort_on_close: true
+    instructions: >-
+        - Consider the [code review](https://github.com/dimagi/open-source/blob/master/docs/code_review.md) and [contributing](https://github.com/dimagi/commcare-hq/blob/master/CONTRIBUTING.rst)
+        guides when doing a review.
+        - Also follow the [project standards and best practices](https://github.com/dimagi/commcare-hq/blob/master/STANDARDS.rst) guide.
+    path_instructions:
+        - path: "**/*.js"
+          instructions: >-
+            - Review the JavaScript code against the [Google JavaScript style guide](https://google.github.io/styleguide/jsguide.html) and point out any mismatches
+            - Also follow [this guide](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/code-review.rst)
+        - path: "**/*.py"
+          instructions: >-
+            - Review the code following best practises and standards
+    path_filters: ["**/*.js", "**/*.py", "**/*.md", "**/*.rst", "**/*.html"]
+    auto_review:
+        enabled: false
+        auto_incremental_review: false
+        drafts: false

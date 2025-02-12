@@ -181,7 +181,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     self.request,
                     reg_form.cleaned_data['project_name'],
                     is_new_user=True,
-                    is_self_signup=reg_form.cleaned_data['is_self_signup']
                 )
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
@@ -296,23 +295,6 @@ class UserRegistrationView(BasePageView):
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': has_custom_clean_password(),
-            'professional_features': [
-                _("Custom mobile app builder"),
-                _("Powerful case management"),
-                _("Field staff reports"),
-                _("125+ mobile users"),
-                _("Full suite of data tools"),
-                _("3rd party integrations"),
-                _("2-way SMS workflows"),
-                _("Guaranteed tech support"),
-                _("Access to Dimagi's Customer Success team"),
-            ],
-            'community_features': [
-                _("Custom mobile app builder"),
-                _("Basic case management"),
-                _("Field staff reports"),
-                _("5 mobile users"),
-            ],
         }
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(

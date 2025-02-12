@@ -4,16 +4,7 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-        <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-        <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
-        <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
-        <script src="{% static 'repeaters/js/bootstrap5/repeat_record_report.js' %}"></script>
-        <script src="{% static 'repeaters/js/repeat_record_report_selects.js' %}"></script>
-    {% endcompress %}
-{% endblock js %}
+{% js_entry "repeaters/js/bootstrap5/repeat_record_report" %}
 
 {% block filter_panel %} {{ block.super }}
   <div>

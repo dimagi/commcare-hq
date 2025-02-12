@@ -144,14 +144,6 @@ msgstr ""
 msgid "Submit Request"
 msgstr ""
 
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Next"
-msgstr ""
-
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Your trial request has been received!"
-msgstr ""
-
 #: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
 msgid "Seconds"
 msgstr ""
@@ -753,35 +745,6 @@ msgstr ""
 msgid "This code is used in multiple places."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Crunching app diff..."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Error generating the application diff. Please report an issue."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Form Changes"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Case Changes"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Save Questions"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Load Questions"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
-msgid "[unknown]"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
 msgid "Releases"
 msgstr ""
@@ -993,6 +956,10 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "Latest saved"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
+msgid "[unknown]"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
@@ -2808,10 +2775,6 @@ msgid "Hide Full Menu"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-msgid "The application could not be found"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
 msgid ""
 "You have selected a case in a different domain. App Preview does not support "
 "this feature."
@@ -2949,6 +2912,14 @@ msgstr ""
 msgid "Could not <%= action %> product. Please try again later."
 msgstr ""
 
+#: corehq/apps/commtrack/static/commtrack/js/sms.js
+msgid "SMS keyword is required."
+msgstr ""
+
+#: corehq/apps/commtrack/static/commtrack/js/sms.js
+msgid "Name is required."
+msgstr ""
+
 #: corehq/apps/custom_data_fields/static/custom_data_fields/js/custom_data_fields.js
 msgid "Edit Profile"
 msgstr ""
@@ -2988,53 +2959,70 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
-#: corehq/apps/data_interfaces/static/data_interfaces/js/deduplication_rules.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Issue communicating with server. Try again."
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
 msgid "OR"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
 msgid "AND"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
 msgid "True when ANY of the case properties match"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_dedupe_main.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_dedupe_main.js
 msgid "True when ALL of the case properties match"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Out of range of filter. Will not appear on page refresh."
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "updated"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Case copied"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Cases copied"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Case Reassignment (via HQ)"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Search for users"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
 msgid "Search for users or groups"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/manage_case_groups.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/manage_case_groups.js
+msgid "Sorry, it looks like the upload failed."
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
@@ -3081,10 +3069,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Form submission found!"
-msgstr ""
-
-#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js
-msgid "Sorry, it looks like the upload failed."
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/bootstrap3/billing_statements.js
@@ -4098,6 +4082,66 @@ msgstr ""
 msgid "label-info-light"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Please check your Internet connection!"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Report Not Found."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid ""
+"Request timed out when rendering this report. This might be an issue with "
+"our servers or with your Internet connection. We encourage you to report an "
+"issue to CommCare HQ Support so we can look into any possible issues."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid ""
+"Problem Rendering Report. Our error monitoring tools have noticed this and "
+"we are working quickly to resolve this issue as soon as possible. We "
+"encourage you to contact CommCare HQ Support if this issue persists for more "
+"than a few minutes. We appreciate any additional information you can give us "
+"about this problem so we can fix it immediately."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Bad Gateway. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid ""
+"CommCare HQ is experiencing server difficulties. We're working quickly to "
+"resolve it. Thank you for your patience. We are extremely sorry."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Gateway Timeout. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "Loading Stopped"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/async.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/async.js
+msgid "We were unsuccessful loading the report:"
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/bootstrap3/base.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/base.js
 #: corehq/apps/userreports/static/userreports/js/configurable_report.js
@@ -4114,39 +4158,39 @@ msgstr ""
 msgid "Sorry, there was an issue communicating with the server."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/data_corrections.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/data_corrections.js
+msgid "Select a value"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid "Loading"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid "No data available to display. Please try changing your filters."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
 #: corehq/apps/reports/static/reports/js/bootstrap3/tabular.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/tabular.js
 msgid "Sorry!"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid ""
 "There was an error with your query, it has been logged, please try another "
 "query."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/config.dataTables.bootstrap.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/config.dataTables.bootstrap.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/datatables_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/data_corrections.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/data_corrections.js
-msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
@@ -4212,66 +4256,6 @@ msgstr ""
 msgid "Start date cannot be after end date."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Please check your Internet connection!"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Report Not Found."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid ""
-"Request timed out when rendering this report. This might be an issue with "
-"our servers or with your Internet connection. We encourage you to report an "
-"issue to CommCare HQ Support so we can look into any possible issues."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid ""
-"Problem Rendering Report. Our error monitoring tools have noticed this and "
-"we are working quickly to resolve this issue as soon as possible. We "
-"encourage you to contact CommCare HQ Support if this issue persists for more "
-"than a few minutes. We appreciate any additional information you can give us "
-"about this problem so we can fix it immediately."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Bad Gateway. Please contact CommCare HQ Support."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid ""
-"CommCare HQ is experiencing server difficulties. We're working quickly to "
-"resolve it. Thank you for your patience. We are extremely sorry."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Gateway Timeout. Please contact CommCare HQ Support."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Your search term was too long. Please provide a shorter search filter"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "Loading Stopped"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/reports.async.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/reports.async.js
-msgid "We were unsuccessful loading the report:"
-msgstr ""
-
 #: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
 msgid "Labels"
@@ -4311,6 +4295,10 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "All Rows"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
@@ -4370,11 +4358,6 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js
 msgid "Select <%= title %>..."
-msgstr ""
-
-#: corehq/apps/reports_core/static/reports_core/js/bootstrap3/base_template_new.js
-#: corehq/apps/reports_core/static/reports_core/js/bootstrap5/base_template_new.js
-msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/bootstrap3/maps.js
@@ -4513,6 +4496,10 @@ msgstr ""
 msgid ""
 "Autofill is not available in English (en). Please change your language using "
 "the dropdown in the top left."
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/base.js
+msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
@@ -5104,43 +5091,43 @@ msgid ""
 "system. Restart this rule?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "hour(s)"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "minute(s)"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "last"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "last - 1"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "last - 2"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "every day"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "every week"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "every month"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "Send Broadcast"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.js
 msgid "Schedule Broadcast"
 msgstr ""
 

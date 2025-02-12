@@ -54,19 +54,21 @@ class NotificationCreationForm(forms.Form):
             crispy.Field('content'),
             crispy.Field('url'),
             crispy.Field('type'),
-            twbscrispy.PrependedText('domain_specific', ''),
+            hqcrispy.CheckboxField('domain_specific'),
             crispy.Field('domains'),
-            twbscrispy.StrictButton(
-                _("Submit Information"),
-                type="submit",
-                css_class="btn btn-primary",
-                name="submit",
-            ),
-            hqcrispy.LinkButton(
-                _("Cancel"),
-                reverse(ManageNotificationView.urlname),
-                css_class="btn btn-outline-primary",
-                name="cancel",
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Submit Information"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                    name="submit",
+                ),
+                hqcrispy.LinkButton(
+                    _("Cancel"),
+                    reverse(ManageNotificationView.urlname),
+                    css_class="btn btn-outline-primary",
+                    name="cancel",
+                ),
             ),
         )
 

@@ -1,39 +1,43 @@
-/* global chai, $, sinon */
+/* eslint-env mocha */
+
+import $ from "jquery";
+import sinon from "sinon/pkg/sinon";
+
+import asyncDownloader from "app_manager/js/download_async_modal";
 
 describe('Async Download Modal', function () {
     var url = 'test_url';
-    var asyncDownloader = hqImport('app_manager/js/download_async_modal').asyncDownloader;
 
     describe('#AsyncDownloader.isDone', function () {
         var downloader = null,
             modal = $('#modal'),
-            download_poll_id = '12345';
+            downloadPollId = '12345';
 
         beforeEach(function () {
-            downloader = asyncDownloader(modal);
-            downloader.download_poll_id = download_poll_id;
+            downloader = asyncDownloader.asyncDownloader(modal);
+            downloader.download_poll_id = downloadPollId;
         });
 
-        var test_done = [
+        var testDone = [
             {
-                input: 'progress ready_' + download_poll_id,
+                input: 'progress ready_' + downloadPollId,
                 expected: true,
             }, {
-                input: 'ready_' + download_poll_id,
+                input: 'ready_' + downloadPollId,
                 expected: true,
             }, {
-                input: 'progress error_' + download_poll_id,
+                input: 'progress error_' + downloadPollId,
                 expected: true,
             },
         ];
 
-        test_done.forEach(function (test) {
+        testDone.forEach(function (test) {
             it('should be done for input "' + test.input + '"', function () {
                 assert.ok(downloader.isDone(test.input));
             });
         });
 
-        var test_not_done = [
+        var testNotDone = [
             {
                 input: null,
                 expected: false,
@@ -49,7 +53,7 @@ describe('Async Download Modal', function () {
             },
         ];
 
-        test_not_done.forEach(function (test) {
+        testNotDone.forEach(function (test) {
             it('should not be done for input "' + test.input + '"', function () {
                 assert.notOk(downloader.isDone(test.input));
             });
@@ -59,12 +63,12 @@ describe('Async Download Modal', function () {
     describe('#AsyncDownloader', function () {
         var downloader = null,
             modal = $('#download-zip-modal-test'),
-            ajax_stub,
+            ajaxStub,
             clock;
 
         before(function () {
             clock = sinon.useFakeTimers();
-            downloader = asyncDownloader(modal);
+            downloader = asyncDownloader.asyncDownloader(modal);
         });
 
         after(function () {
@@ -72,12 +76,12 @@ describe('Async Download Modal', function () {
         });
 
         beforeEach(function () {
-            ajax_stub = sinon.stub($, 'ajax');
+            ajaxStub = sinon.stub($, 'ajax');
             downloader.init();
         });
 
         afterEach(function () {
-            ajax_stub.restore();
+            ajaxStub.restore();
         });
 
         it('should only make one download request', function (done) {
@@ -86,42 +90,42 @@ describe('Async Download Modal', function () {
             done();
         });
 
-        function verify_download(state) {
+        function verifyDownload(state) {
             var pollUrl = 'ajax/temp/123',
                 downloadId = '123';
-            ajax_stub.reset();
-            ajax_stub.onFirstCall(0).yieldsTo("success", {
+            ajaxStub.reset();
+            ajaxStub.onFirstCall(0).yieldsTo("success", {
                 download_id: downloadId,
                 download_url: pollUrl,
             });
-            ajax_stub.onSecondCall().yieldsTo("success", 'html progress content');
-            ajax_stub.onThirdCall().yieldsTo("success", 'html read content ' + state + downloadId);
+            ajaxStub.onSecondCall().yieldsTo("success", 'html progress content');
+            ajaxStub.onThirdCall().yieldsTo("success", 'html read content ' + state + downloadId);
             downloader.generateDownload(url);
 
             assert.equal($.ajax.callCount, 2);
-            assert.equal(ajax_stub.firstCall.args[0].url, url);
-            assert.equal(ajax_stub.secondCall.args[0].url, pollUrl);
+            assert.equal(ajaxStub.firstCall.args[0].url, url);
+            assert.equal(ajaxStub.secondCall.args[0].url, pollUrl);
 
             clock.tick(downloader.POLL_FREQUENCY);
             assert.equal($.ajax.callCount, 3);
-            assert.equal(ajax_stub.thirdCall.args[0].url, pollUrl);
+            assert.equal(ajaxStub.thirdCall.args[0].url, pollUrl);
         }
 
-        var tests_state = [{
+        var testsState = [{
             state: 'ready_',
         }, {
             state: 'error_',
         }];
 
-        tests_state.forEach(function (test) {
+        testsState.forEach(function (test) {
             it('should poll until ' + test.state, function () {
-                verify_download(test.state);
+                verifyDownload(test.state);
             });
         });
 
         it('should handle multiple downloads correctly', function () {
-            verify_download('ready_');
-            verify_download('ready_');
+            verifyDownload('ready_');
+            verifyDownload('ready_');
         });
     });
 });

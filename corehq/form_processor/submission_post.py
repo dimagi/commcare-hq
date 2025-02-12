@@ -71,7 +71,7 @@ class SubmissionPost(object):
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
                  partial_submission=False, case_db=None, force_logs=False,
-                 timing_context=None):
+                 timing_context=None, instance_json=None):
         assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -86,6 +86,7 @@ class SubmissionPost(object):
         self.last_sync_token = last_sync_token
         self.openrosa_headers = openrosa_headers or {}
         self.instance = instance
+        self.instance_json = instance_json
         self.attachments = attachments or {}
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
@@ -253,7 +254,13 @@ class SubmissionPost(object):
             if failure_response:
                 return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
-            result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
+            result = process_xform_xml(
+                self.domain,
+                self.instance,
+                self.attachments,
+                self.auth_context.to_json(),
+                instance_json=self.instance_json,
+            )
             submitted_form = result.submitted_form
 
             self._post_process_form(submitted_form)
