@@ -266,6 +266,7 @@ HQ_APPS = (
     'corehq.apps.accounting',
     'corehq.apps.appstore',
     'corehq.apps.data_analytics',
+    'corehq.apps.data_cleaning',
     'corehq.apps.data_pipeline_audit',
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
