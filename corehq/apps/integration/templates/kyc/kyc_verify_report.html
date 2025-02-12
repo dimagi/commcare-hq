@@ -2,44 +2,39 @@
 {% load hq_shared_tags %}
 {% load django_tables2 %}
 {% load i18n %}
-
 {% js_entry "integration/js/kyc/kyc_verify" %}
 
 {% block page_content %}
-    <div>
-        <h1 class="py-3 m-0">
-            {% trans "KYC Report" %}
-        </h1>
-        <div id="verify-alert">
-        </div>
-        <p>
-            <button id="verify-selected-btn" class="btn btn-primary" type="button"
-            hx-post="{% url 'kyc_verify_table' request.domain %}"
-            hx-swap="afterBegin"
-            hx-target="#verify-alert"
-            hq-hx-action="verify_rows"
-            hx-vals='{
+  <div>
+    <h1 class="py-3 m-0">{% trans "KYC Report" %}</h1>
+    <div id="verify-alert"></div>
+    <p>
+      <button
+        id="verify-selected-btn"
+        class="btn btn-primary"
+        type="button"
+        hx-post="{% url 'kyc_verify_table' request.domain %}"
+        hx-swap="afterBegin"
+        hx-target="#verify-alert"
+        hq-hx-action="verify_rows"
+        hx-vals='{
                 "selected_ids": [],
                 "verify_all": true
-            }'>
-                <span>
-                    {% trans "Verify All"  %}
-                </span>
-                <span class="d-none">
-                    {% trans "Verify Selected" %}
-                </span>
-            </button>
-        </p>
-        <div
-            hx-trigger="load"
-            hx-get="{% url 'kyc_verify_table' domain %}{% querystring %}"
-        >
-            <div class="htmx-indicator">
-                <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
-            </div>
-
-        </div>
+            }'
+      >
+        <span> {% trans "Verify All" %} </span>
+        <span class="d-none"> {% trans "Verify Selected" %} </span>
+      </button>
+    </p>
+    <div
+      hx-trigger="load"
+      hx-get="{% url 'kyc_verify_table' domain %}{% querystring %}"
+    >
+      <div class="htmx-indicator">
+        <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+      </div>
     </div>
+  </div>
 {% endblock %}
 
 {% block modals %}
