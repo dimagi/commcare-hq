@@ -279,7 +279,7 @@ class SubmissionPost(object):
             with self.timing_context("process_device_log"):
                 return self.process_device_log(submitted_form)
 
-        self._handle_normal_form_processing(result)
+        self._process_normal_form(result)
 
     def _handle_submission_error_log(self, submitted_form):
         logging.info('Processing form %s as a submission error', submitted_form.form_id)
@@ -302,7 +302,7 @@ class SubmissionPost(object):
             )
         return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
-    def _handle_normal_form_processing(self, form_processing_result):
+    def _process_normal_form(self, form_processing_result):
         self._log_form_details(form_processing_result.submitted_form)
 
         cases = []
