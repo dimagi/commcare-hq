@@ -106,6 +106,10 @@ hqDefine("app_manager/js/details/screen", function () {
             const caseTileTemplate = self.caseTileTemplate() && self.caseTileTemplate() !== "custom";
             return caseTileTemplate && featureFlag;
         });
+        self.showCaseListOptimizations = (
+            hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_OPTIMIZATIONS') &&
+            hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths
+        );
         self.persistCaseContext = ko.observable(detail.persist_case_context || false);
         self.persistentCaseContextXML = ko.observable(detail.persistent_case_context_xml || 'case_name');
 
