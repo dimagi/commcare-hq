@@ -1,4 +1,5 @@
 import time
+import warnings
 from functools import wraps
 from operator import eq
 
@@ -23,6 +24,8 @@ class Experiment:
         code path time as a percentage of the old code path time. For
         example, if the old code path takes 1 second and the new code
         path takes 2 seconds, the percentage is 2 / 1 or 200%.
+    :param ignore_duplicate: If true, suppress warning about duplicate
+        experiment. Default: false.
     """
     campaign = field()
     old_args = field(factory=dict)
@@ -30,6 +33,7 @@ class Experiment:
     is_equal = field(default=eq)
     time_buckets = field(default=(0.01, 0.1, 1, 10, 100))
     percent_buckets = field(default=(50, 95, 105, 200))
+    ignore_duplicate = field(default=False)
     path = field(default="")
 
     def __call__(self, func=None, /, **kw):
@@ -112,9 +116,17 @@ class Experiment:
                 )
             return old_result
 
+        self._warn_on_duplicate()
         over_the_top = self.percent_buckets[-1] + 1
         wrapper.experiment = self
         return wrapper
+
+    def _warn_on_duplicate(self):
+        key = self.campaign, self.path
+        if key in _all_experiments and not self.ignore_duplicate:
+            warnings.warn(f"Duplicate experiment {key} will result in "
+                        "conflated metrics from multiple experiments")
+        _all_experiments.add(key)
 
 
 def describe(func, args, kwargs, vlen=20):
@@ -130,3 +142,4 @@ ENABLED_TAG = {
     False: {"enabled": "old"},
     None: {"enabled": "new"},
 }
+_all_experiments = set()

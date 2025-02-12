@@ -292,6 +292,7 @@ def make_func(error=None):
         campaign='test',
         old_args={'x': 2},
         new_args={'x': 4},
+        ignore_duplicate=True,
     )
     def func(a, *, x):
         calls.append((a, x))

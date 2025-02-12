@@ -155,6 +155,17 @@ def test_experiment_with_long_arg():
     assert log.get_output() == f"func({haha}): 2 != 4\n"
 
 
+def test_warning_on_duplicate_experiment():
+    @experiment(ignore_duplicate=True)
+    def func(a, *, x):
+        return x
+
+    with pytest.raises(UserWarning, match="Duplicate experiment"):
+        @experiment
+        def func(a, *, x):
+            return x
+
+
 @fixture(scope="module", autouse=__file__)
 def enable_all_experiments():
     with (
