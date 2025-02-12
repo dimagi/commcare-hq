@@ -652,6 +652,16 @@ msgid "You have unchanged user properties settings"
 msgstr "Vous avez des paramètres d'utilisateur non sauvegardées"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to Case Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#, fuzzy
+#| msgid "User Properties"
+msgid "Save Questions to User Properties"
+msgstr "Propriétés de l'utilisateur"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La propriété utilise un préfixe non reconnu"
 
@@ -4351,6 +4361,10 @@ msgid "Failed to re-process"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "_MENU_ per page"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid "All Rows"
 msgstr ""
 
@@ -5309,15 +5323,3 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Form Changes"
-#~ msgstr "Modifications de formulaire"
-
-#~ msgid "Case Changes"
-#~ msgstr "Modifications de dossier"
-
-#~ msgid "Save Questions"
-#~ msgstr "Enregistrer les questions"
-
-#~ msgid "Load Questions"
-#~ msgstr "Charger les questions"
