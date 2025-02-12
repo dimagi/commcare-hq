@@ -2321,10 +2321,8 @@ msgid ""
 "  "
 msgstr ""
 "\n"
-"    Votre essai de 30 jours pour %(domain)s se termine bientôt ! Si vous ne\n"
-"    changez pas votre abonnement avant cela, votre abonnement sera suspendu le\n"
-"    %(ending_on)s et vous perdrez l'accès à toutes les fonctionnalités jusqu'à ce que vous\n"
-"    vous réabonniez à un nouveau plan payant.\n"
+"    Vos abonnements CommCare %(subscriptions_to_downgrade)s seront suspendus <b><i>après demain</i></b> car vos relevés de facturation CommCare ont un retard de paiement de plus de 60 jours.\n"
+"    Si vous n'effectuez pas de paiement avant demain, votre abonnement sera automatiquement suspendu et vous perdrez l'accès à votre espace projet et à vos données jusqu'à ce que vous souscriviez à nouveau à un forfait payant.\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
