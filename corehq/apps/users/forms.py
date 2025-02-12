@@ -338,7 +338,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             "Allow Dimagi to collect usage information to improve CommCare. "
             "You can learn more about the information we collect and the ways "
             "we use it in our "
-            '<a href="http://www.dimagi.com/terms/latest/privacy/">privacy policy</a>'
+            '<a href="http://www.dimagi.com/terms-privacy/">privacy policy</a>'
         ),
     )
 

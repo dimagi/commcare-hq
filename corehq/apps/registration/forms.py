@@ -64,7 +64,7 @@ class RegisterWebUserForm(forms.Form):
         required=False,
         label=mark_safe(_(
             """I have read and agree to Dimagi's
-            <a href="http://www.dimagi.com/terms/latest/privacy/"
+            <a href="http://www.dimagi.com/terms-privacy/"
                target="_blank">Privacy Policy</a>,
             <a href="http://www.dimagi.com/terms/latest/tos/"
                target="_blank">Terms of Service</a>,

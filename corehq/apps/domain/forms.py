@@ -874,7 +874,7 @@ class PrivacySecurityForm(forms.Form):
             "and CommCare system administrators will also have direct access "
             "to data infrastructure strictly for the purposes of system administration "
             "as outlined in our "
-            '<a href="https://www.dimagi.com/terms/latest/privacy/">Privacy Policy</a>.'
+            '<a href="https://www.dimagi.com/terms-privacy/">Privacy Policy</a>.'
         )
     )
     secure_submissions = BooleanField(
