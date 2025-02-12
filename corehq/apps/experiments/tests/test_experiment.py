@@ -162,7 +162,7 @@ def test_warning_on_duplicate_experiment():
 
     with pytest.raises(UserWarning, match="Duplicate experiment"):
         @experiment
-        def func(a, *, x):
+        def func(a, *, x):  # noqa: F811
             return x
 
 

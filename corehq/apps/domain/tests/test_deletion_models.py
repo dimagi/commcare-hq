@@ -56,6 +56,7 @@ IGNORE_MODELS = {
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
+    'experiments.ExperimentEnabler',
     'field_audit.AuditEvent',
     'fixtures.UserLookupTableStatus',
     'fixtures.LookupTableRow',          # handled by cascading delete
