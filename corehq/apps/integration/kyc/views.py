@@ -64,3 +64,20 @@ class KycConfigurationView(BaseDomainView, HqHtmxActionMixin):
             'show_success': show_success,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
+class KycVerificationReportView(BaseDomainView):
+    urlname = 'kyc_verify'
+    template_name = 'kyc/kyc_verify_report.html'
+    section_name = _("Data")
+    page_title = _('KYC Report')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=(self.domain,))
