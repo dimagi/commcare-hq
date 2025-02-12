@@ -1,0 +1,39 @@
+<div id="ql-toolbar">
+  <select class="ql-header">
+    <option selected="">Paragraph</option>
+    <option value="1"></option>
+    <option value="2"></option>
+    <option value="3"></option>
+  </select>
+  <select class="ql-font">
+    <option value="Arial"></option>
+    <option value="Courier New"></option>
+    <option value="Georgia"></option>
+    <option value="Lucida Sans Unicode"></option>
+    <option value="Tahoma"></option>
+    <option value="Times New Roman"></option>
+    <option value="Verdana"></option>
+  </select>
+  <select class="ql-size">
+    <option value="small">Small</option>
+    <option selected>Default</option>
+    <option value="large">Big</option>
+    <option value="huge">Huge</option>
+  </select>
+  <button class="ql-bold"></button>
+  <button class="ql-italic"></button>
+  <button class="ql-underline"></button>
+  <button class="ql-strike"></button>
+  <select class="ql-color"></select>
+  <select class="ql-background"></select>
+  <button class="ql-link"></button>
+  <button class="ql-image"></button>
+  <button class="ql-list" value="ordered"></button>
+  <button class="ql-list" value="bullet"></button>
+  <button class="ql-list" value="check"></button>
+  <button class="ql-indent" value="-1"></button>
+  <button class="ql-indent" value="+1"></button>
+  <button class="ql-align"></button>
+  <button class="ql-clean"></button>
+</div>
+<div data-bind="richEditor: {{ editableText }}"></div>
