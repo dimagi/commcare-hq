@@ -68,7 +68,7 @@ class RegisterWebUserForm(forms.Form):
                target="_blank">Privacy Policy</a>,
             <a href="http://www.dimagi.com/terms/terms-of-service/"
                target="_blank">Terms of Service</a>,
-            <a href="http://www.dimagi.com/terms/latest/ba/"
+            <a href="http://www.dimagi.com/terms-ba/"
                target="_blank">Business Agreement</a>, and
             <a href="http://www.dimagi.com/terms-aup/"
                target="_blank">Acceptable Use Policy</a>.
