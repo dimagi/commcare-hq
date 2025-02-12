@@ -267,25 +267,7 @@ class SubmissionPost(object):
             self._invalidate_caches(submitted_form)
 
             if submitted_form.is_submission_error_log:
-                logging.info('Processing form %s as a submission error', submitted_form.form_id)
-                XFormInstance.objects.save_new_form(submitted_form)
-
-                response = None
-                try:
-                    xml = self.instance.decode()
-                except UnicodeDecodeError:
-                    pass
-                else:
-                    if 'log_subreport' in xml:
-                        response = self.get_exception_response_and_log(
-                            'Badly formed device log', submitted_form, self.path
-                        )
-
-                if not response:
-                    response = self.get_exception_response_and_log(
-                        'Problem receiving submission', submitted_form, self.path
-                    )
-                return FormProcessingResult(response, None, [], [], 'submission_error_log')
+                return self._handle_submission_error_log(submitted_form)
 
         if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
             logging.info('Processing form %s as a system action', submitted_form.form_id)
@@ -298,6 +280,27 @@ class SubmissionPost(object):
                 return self.process_device_log(submitted_form)
 
         self._handle_normal_form_processing(result)
+
+    def _handle_submission_error_log(self, submitted_form):
+        logging.info('Processing form %s as a submission error', submitted_form.form_id)
+        XFormInstance.objects.save_new_form(submitted_form)
+
+        response = None
+        try:
+            xml = self.instance.decode()
+        except UnicodeDecodeError:
+            pass
+        else:
+            if 'log_subreport' in xml:
+                response = self.get_exception_response_and_log(
+                    'Badly formed device log', submitted_form, self.path
+                )
+
+        if not response:
+            response = self.get_exception_response_and_log(
+                'Problem receiving submission', submitted_form, self.path
+            )
+        return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
     def _handle_normal_form_processing(self, form_processing_result):
         self._log_form_details(form_processing_result.submitted_form)
