@@ -70,7 +70,7 @@ class RegisterWebUserForm(forms.Form):
                target="_blank">Terms of Service</a>,
             <a href="http://www.dimagi.com/terms/latest/ba/"
                target="_blank">Business Agreement</a>, and
-            <a href="http://www.dimagi.com/terms/latest/aup/"
+            <a href="http://www.dimagi.com/terms-aup/"
                target="_blank">Acceptable Use Policy</a>.
             """)))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
