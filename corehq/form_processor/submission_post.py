@@ -279,7 +279,7 @@ class SubmissionPost(object):
             with self.timing_context("process_device_log"):
                 return self.process_device_log(submitted_form)
 
-        self._process_normal_form(result)
+        return self._process_normal_form(result)
 
     def _handle_submission_error_log(self, submitted_form):
         logging.info('Processing form %s as a submission error', submitted_form.form_id)
@@ -309,6 +309,7 @@ class SubmissionPost(object):
         ledgers = []
         submission_type = 'unknown'
         openrosa_kwargs = {}
+
         with form_processing_result.get_locked_forms() as xforms:
             if len(xforms) > 1:
                 self.track_load(len(xforms) - 1)
@@ -325,56 +326,9 @@ class SubmissionPost(object):
                 instance = xforms[0]
 
                 if instance.is_duplicate:
-                    with self.timing_context("process_duplicate"), tracer.trace('submission.process_duplicate'):
-                        submission_type = 'duplicate'
-                        existing_form = xforms[1]
-                        stub = UnfinishedSubmissionStub.objects.filter(
-                            domain=instance.domain,
-                            xform_id=existing_form.form_id
-                        ).first()
-
-                        result = None
-                        if stub:
-                            from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
-                            result = reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
-                        elif existing_form.is_error:
-                            from corehq.form_processor.reprocess import reprocess_form
-                            result = reprocess_form(existing_form, lock_form=False)
-                        if result and result.error:
-                            submission_type = 'error'
-                            openrosa_kwargs['error_message'] = result.error
-                            if existing_form.is_error:
-                                openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
-                            else:
-                                openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
-                        else:
-                            self.interface.save_processed_models([instance])
+                    submission_type, openrosa_kwargs = self._handle_duplicate_form(xforms)
                 elif not instance.is_error:
-                    submission_type = 'normal'
-                    try:
-                        case_stock_result = self.process_xforms_for_cases(xforms, case_db, self.timing_context)
-                    except (IllegalCaseId, UsesReferrals, MissingProductId,
-                            PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
-                        self._handle_known_error(e, instance, xforms)
-                        submission_type = 'error'
-                        openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
-                    except Exception as e:
-                        # handle / log the error and reraise so the phone knows to resubmit
-                        # note that in the case of edit submissions this won't flag the previous
-                        # submission as having been edited. this is intentional, since we should treat
-                        # this use case as if the edit "failed"
-                        handle_unexpected_error(self.interface, instance, e)
-                        raise
-                    else:
-                        instance.initial_processing_complete = True
-                        report_case_usage(self.domain, len(case_stock_result.case_models))
-                        openrosa_kwargs['error_message'] = self.save_processed_models(case_db, xforms,
-                                                                                      case_stock_result)
-                        if openrosa_kwargs['error_message']:
-                            openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
-                        cases = case_stock_result.case_models
-                        ledgers = case_stock_result.stock_result.models_to_save
-                        openrosa_kwargs['success_message'] = self._get_success_message(instance, cases=cases)
+                    submission_type, openrosa_kwargs, ledgers, cases = self._handle_normal_form(xforms, case_db)
                 elif instance.is_error:
                     submission_type = 'error'
 
@@ -382,6 +336,68 @@ class SubmissionPost(object):
 
             response = self._get_open_rosa_response(instance, **openrosa_kwargs)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
+
+    def _handle_duplicate_form(self, xforms):
+        instance = xforms[0]
+        openrosa_kwargs = {}
+
+        with self.timing_context("process_duplicate"), tracer.trace('submission.process_duplicate'):
+            submission_type = 'duplicate'
+            existing_form = xforms[1]
+            stub = UnfinishedSubmissionStub.objects.filter(
+                domain=instance.domain,
+                xform_id=existing_form.form_id
+            ).first()
+
+            result = None
+            if stub:
+                from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
+                result = reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
+            elif existing_form.is_error:
+                from corehq.form_processor.reprocess import reprocess_form
+                result = reprocess_form(existing_form, lock_form=False)
+            if result and result.error:
+                submission_type = 'error'
+                openrosa_kwargs['error_message'] = result.error
+                if existing_form.is_error:
+                    openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
+                else:
+                    openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
+            else:
+                self.interface.save_processed_models([instance])
+        return submission_type, openrosa_kwargs
+
+    def _handle_normal_form(self, xforms, case_db):
+        instance = xforms[0]
+        submission_type = 'normal'
+        openrosa_kwargs = {}
+        ledgers = []
+        cases = []
+        try:
+            case_stock_result = self.process_xforms_for_cases(xforms, case_db, self.timing_context)
+        except (IllegalCaseId, UsesReferrals, MissingProductId,
+                PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
+            self._handle_known_error(e, instance, xforms)
+            submission_type = 'error'
+            openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
+        except Exception as e:
+            # handle / log the error and reraise so the phone knows to resubmit
+            # note that in the case of edit submissions this won't flag the previous
+            # submission as having been edited. this is intentional, since we should treat
+            # this use case as if the edit "failed"
+            handle_unexpected_error(self.interface, instance, e)
+            raise
+        else:
+            instance.initial_processing_complete = True
+            report_case_usage(self.domain, len(case_stock_result.case_models))
+            openrosa_kwargs['error_message'] = self.save_processed_models(case_db, xforms,
+                                                                          case_stock_result)
+            if openrosa_kwargs['error_message']:
+                openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
+            cases = case_stock_result.case_models
+            ledgers = case_stock_result.stock_result.models_to_save
+            openrosa_kwargs['success_message'] = self._get_success_message(instance, cases=cases)
+        return submission_type, openrosa_kwargs, cases, ledgers
 
     def _log_form_details(self, form):
         attachments = form.attachments if hasattr(form, 'attachments') else {}
