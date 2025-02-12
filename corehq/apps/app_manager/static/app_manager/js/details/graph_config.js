@@ -564,7 +564,7 @@ hqDefine("app_manager/js/details/graph_config", [
         self.copyPlaceholder = function (series, e) {
             var $button = $(e.currentTarget);
             var clipboard = new ClipboardJS($button[0], {
-                text: function (trigger) {
+                text: function () {
                     return $button.closest(".input-group").find("input").val();
                 },
             });
