@@ -328,7 +328,7 @@ class SubmissionPost(object):
                 if instance.is_duplicate:
                     submission_type, openrosa_kwargs = self._handle_duplicate_form(xforms)
                 elif not instance.is_error:
-                    submission_type, openrosa_kwargs, ledgers, cases = self._handle_normal_form(xforms, case_db)
+                    submission_type, openrosa_kwargs, cases, ledgers = self._handle_normal_form(xforms, case_db)
                 elif instance.is_error:
                     submission_type = 'error'
 
@@ -395,8 +395,10 @@ class SubmissionPost(object):
             if openrosa_kwargs['error_message']:
                 openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
             cases = case_stock_result.case_models
+
             ledgers = case_stock_result.stock_result.models_to_save
             openrosa_kwargs['success_message'] = self._get_success_message(instance, cases=cases)
+
         return submission_type, openrosa_kwargs, cases, ledgers
 
     def _log_form_details(self, form):
