@@ -8,6 +8,7 @@ import Snow from "quill/themes/snow";
 import Bold from "quill/formats/bold";
 import Italic from "quill/formats/italic";
 import Header from "quill/formats/header";
+import {QuillDeltaToHtmlConverter} from 'quill-delta-to-html';
 
 import initialPageData from "hqwebapp/js/initial_page_data";
 
@@ -96,7 +97,9 @@ ko.bindingHandlers.richEditor = {
         editor.on("text-change", function () {
             if (!isSubscriberChange) {
                 isEditorChange = true;
-                valueAccessor()(editor.root.innerHTML);
+                const converter = new QuillDeltaToHtmlConverter(editor.getContents().ops, {});
+                const html = converter.convert();
+                valueAccessor()(html);
                 isEditorChange = false;
             }
         });
