@@ -57,7 +57,7 @@ ALLOWED_HTML_ATTRIBUTES = {
     'img': ['style', 'src', 'width', 'height', 'class'],
     'figcaption': ['style', 'class'],
     'figure': ['style', 'class'],
-    'table': ['class', 'role','cellspacing', 'cellpadding', 'border', 'align', 'width'],
+    'table': ['class', 'role', 'cellspacing', 'cellpadding', 'border', 'align', 'width'],
     'td': ['valign'],
     'meta': ['charset', 'name', 'viewport', 'content', 'initial-scale']
 }
