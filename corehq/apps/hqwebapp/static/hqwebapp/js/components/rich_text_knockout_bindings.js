@@ -39,6 +39,15 @@ function imageHandler() {
             },
         })
             .then(function (response) {
+                if (!response.ok) {
+                    if (response.status === 400) {
+                        return response.json().then(function (errorJson) {
+                            throw Error(errorJson.error.message);
+                        });
+                    }
+
+                    throw Error("Error uploading image");
+                }
                 return response.json();
             })
             .then(function (data) {
@@ -54,6 +63,9 @@ function imageHandler() {
                             alt: file.name,
                         }),
                 );
+            })
+            .catch(function (error) {
+                alert(error);
             });
     };
     input.click();
