@@ -30,7 +30,7 @@ class DeIdMapping(models.Model):
     def _get_deid(cls, value, domain):
         hashed_value = cls._hash_value(value)
         deid_mapping, __ = cls.objects.get_or_create(domain=domain, hashed_value=hashed_value)
-        return deid_mapping.deid
+        return str(deid_mapping.deid)
 
     @staticmethod
     @quickcache(['value'], timeout=90 * ONE_DAY)
