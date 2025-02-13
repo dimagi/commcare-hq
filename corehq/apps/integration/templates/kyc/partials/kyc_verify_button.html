@@ -3,7 +3,7 @@
 <button
   class="btn btn-primary btn-sm"
   hx-post="{% url 'kyc_verify_table' request.domain %}"
-  hx-swap="afterBegin"
+  hx-swap="innerHTML"
   hx-target="#verify-alert"
   hq-hx-action="verify_rows"
   hx-vals='{"selected_ids": ["{{ record.id }}"]}'
