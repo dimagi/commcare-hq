@@ -1,6 +1,6 @@
 hqDefine("notifications/spec/bootstrap5/NotificationsService.spec.mo", [
     'jquery',
-    'sinon/pkg/sinon',
+    'sinon',
     'notifications/js/bootstrap5/notifications_service',
 ], function (
     $,

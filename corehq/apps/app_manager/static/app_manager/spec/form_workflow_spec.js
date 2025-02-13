@@ -1,5 +1,5 @@
 import _ from "underscore";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 
 import Toggles from "hqwebapp/js/toggles";
 import FormWorkflow from "app_manager/js/forms/form_workflow";

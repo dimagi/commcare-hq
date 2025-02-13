@@ -1,4 +1,4 @@
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import hmacCallout from "integration/js/hmac_callout";
 import markdown from "cloudcare/js/markdown";
