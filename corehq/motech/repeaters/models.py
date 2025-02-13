@@ -501,6 +501,7 @@ class Repeater(RepeaterSuperProxy):
         Repeater.objects.filter(id=self.repeater_id).update(is_paused=True)
 
     def resume(self):
+        self.reset_backoff()
         self.is_paused = False
         Repeater.objects.filter(id=self.repeater_id).update(is_paused=False)
 
