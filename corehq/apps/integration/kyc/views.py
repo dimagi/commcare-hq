@@ -154,7 +154,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
 class KycVerificationReportView(BaseDomainView):
     urlname = 'kyc_verify'
     template_name = 'kyc/kyc_verify_report.html'
-    section_name = _("Data")
+    section_name = _('Data')
     page_title = _('KYC Report')
 
     @property
