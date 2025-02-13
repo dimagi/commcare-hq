@@ -25,7 +25,7 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
-from corehq.apps.case_search.utils import ESQueryProfiler
+from corehq.apps.es.profiling import ESQueryProfiler
 
 
 class ProjectReport(GenericReportView):
