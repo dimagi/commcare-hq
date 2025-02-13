@@ -256,6 +256,7 @@ cleanup
  0015_deletedcouchdoc_unique_id_and_type
  0016_add_deletedsqldoc
  0017_delete_oauth_integrations_models
+ 0018_delete_ewsghana_models
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -814,6 +815,7 @@ project_limits
  0001_initial
  0002_ratelimitedtwofactorlog
  0003_pillowlaggaugedefinition
+ 0004_systemlimit
 registration
  0001_initial
  0002_alter_request_ip
@@ -1277,6 +1279,7 @@ users
  0074_alter_sqluserdata_profile
  0075_hqapikey_encrypted_key
  0076_connectiduserlink_messaging_consent_and_more
+ 0077_invitationhistory
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

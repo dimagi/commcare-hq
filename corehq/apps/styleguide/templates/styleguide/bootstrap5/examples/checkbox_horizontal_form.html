@@ -1,10 +1,10 @@
 <form>
   <div class="mb-3 row">
-    <label for="height-input" class="field-label">
+    <label for="id-height-input" class="field-label">
       Height (cm)
     </label>
     <div class="field-control">
-      <input type="text" id="height-input" name="height" class="form-control" />
+      <input id="id-height-input" class="form-control" type="text" name="height" />
     </div>
   </div>
   <div class="mb-3 row">
@@ -13,24 +13,28 @@
     </label>
     <div class="field-control">
       <div class="form-check">
-        <input class="form-check-input"
-               type="checkbox"
-               name="isSmoker"
-               id="isSmoker-input"
-               checked>
-        <label class="form-check-label"
-               for="isSmoker-input">
+        <input
+          id="id-is-smoker-input"
+          class="form-check-input"
+          type="checkbox"
+          name="is_smoker"
+          checked
+        />
+        <label
+          for="id-is-smoker-input"
+          class="form-check-label"
+        >
           Patient has smoked on a habitual basis in the past 5 years
         </label>
       </div>
     </div>
   </div>
   <div class="mb-3 row">
-    <label for="heartRate-input" class="field-label">
+    <label for="id-heart-rate-input" class="field-label">
       Heart Rate (bpm)
     </label>
     <div class="field-control">
-      <input type="text" id="heartRate-input" name="heartRate" class="form-control" />
+      <input id="id-heart-rate-input" class="form-control" type="text" name="heart_rate" />
     </div>
   </div>
 </form>

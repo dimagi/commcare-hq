@@ -1476,6 +1476,7 @@ msgstr ""
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
@@ -2856,6 +2857,7 @@ msgstr ""
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
+#: corehq/apps/integration/kyc/forms.py
 #: corehq/apps/locations/templates/locations/location_types.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reminders/forms.py corehq/apps/reports/forms.py
@@ -7577,7 +7579,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
+#: corehq/apps/data_cleaning/tables.py corehq/apps/data_dictionary/views.py
+#: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
@@ -7793,10 +7796,6 @@ msgid "Add Property"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
-msgid "Save Questions to Case Properties"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "          There are one or more form questions that are being saved to "
@@ -7845,7 +7844,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
-"          You no longer have permission to save case properties.\n"
+"          You no longer have permission to save this section.\n"
 "        "
 msgstr ""
 
@@ -12148,7 +12147,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/fixtures/templates/fixtures/fixtures_base.html
 #: corehq/apps/geospatial/reports.py corehq/apps/geospatial/views.py
-#: corehq/apps/settings/views.py
+#: corehq/apps/integration/kyc/views.py corehq/apps/settings/views.py
 #: corehq/apps/userreports/reports/builder/forms.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
@@ -13396,6 +13395,35 @@ msgstr ""
 msgid "Subscribed to Community Edition."
 msgstr ""
 
+#: corehq/apps/data_cleaning/tables.py
+#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/data_interfaces/views.py corehq/apps/geospatial/reports.py
+#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/reports/v2/reports/explore_case_data.py
+msgid "Case Name"
+msgstr ""
+
+#: corehq/apps/data_cleaning/tables.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Opened On"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/cases.html
+msgid "Case Data Cleaning Test View"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/cases.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
+#: corehq/apps/hqwebapp/views.py
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
+#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
+msgid "Loading..."
+msgstr ""
+
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
 "The multi-choice sheets (ending in \"-vl\") in the uploaded Excel file were "
@@ -14057,15 +14085,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign"
-msgstr ""
-
-#: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/data_interfaces/views.py corehq/apps/geospatial/reports.py
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#: corehq/apps/reports/v2/reports/explore_case_data.py
-msgid "Case Name"
 msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
@@ -15289,10 +15308,13 @@ msgid "Manage Group '%s'"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py corehq/apps/export/forms.py
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 msgid "case"
 msgstr ""
 
-#: corehq/apps/data_interfaces/views.py corehq/apps/userreports/ui/forms.py
+#: corehq/apps/data_interfaces/views.py
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
+#: corehq/apps/userreports/ui/forms.py
 msgid "cases"
 msgstr ""
 
@@ -23042,11 +23064,11 @@ msgid "Link"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
-msgid "Lock Case Clustering Map for Me"
+msgid "Lock Map"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
-msgid "Unlock Case Clustering Map for Me"
+msgid "Unlock Map"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
@@ -26381,14 +26403,6 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
-#: corehq/apps/hqwebapp/views.py
-#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
-#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
-#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
-msgid "Loading..."
-msgstr ""
-
 #: corehq/apps/hqwebapp/templates/password_change.html
 msgid "Change User Password"
 msgstr ""
@@ -26638,21 +26652,48 @@ msgstr ""
 msgid "Module ID"
 msgstr ""
 
+#: corehq/apps/integration/kyc/forms.py
+msgid "User Data Store"
+msgstr ""
+
+#: corehq/apps/integration/kyc/forms.py corehq/apps/integration/kyc/models.py
+msgid "Other Case Type"
+msgstr ""
+
+#: corehq/apps/integration/kyc/forms.py
+msgid "Provider"
+msgstr ""
+
+#: corehq/apps/integration/kyc/forms.py
+msgid "API Field to User Data Map"
+msgstr ""
+
+#: corehq/apps/integration/kyc/forms.py corehq/motech/dhis2/forms.py
+#: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
+#: corehq/motech/templates/motech/connection_settings.html
+#: corehq/motech/views.py
+msgid "Connection Settings"
+msgstr ""
+
+#: corehq/apps/integration/kyc/forms.py
+msgid "Please specify a value"
+msgstr ""
+
 #: corehq/apps/integration/kyc/models.py
 msgid "Custom User Data"
 msgstr ""
 
 #: corehq/apps/integration/kyc/models.py
-#, fuzzy
-#| msgid "Manage Case"
 msgid "User Case"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/integration/kyc/models.py
-#, fuzzy
-#| msgid "Case Type:"
-msgid "Other Case Type"
-msgstr "Manejo de Casos"
+msgid "MTN KYC"
+msgstr ""
+
+#: corehq/apps/integration/kyc/views.py
+msgid "KYC Configuration"
+msgstr ""
 
 #: corehq/apps/integration/templates/integration/web_app_dialer.html
 msgid "Dialer"
@@ -26764,6 +26805,13 @@ msgstr ""
 
 #: corehq/apps/integration/templates/integration/web_app_gaen_otp.html
 msgid "Close OTP and Return"
+msgstr ""
+
+#: corehq/apps/integration/templates/kyc/partials/kyc_config_form_partial.html
+msgid ""
+"\n"
+"        Configuration saved successfully!\n"
+"      "
 msgstr ""
 
 #: corehq/apps/integration/views.py
@@ -31927,6 +31975,15 @@ msgid "Displays the detail for a given messaging event."
 msgstr ""
 
 #: corehq/apps/reports/standard/sms.py
+msgid "ConnectID"
+msgstr ""
+
+#: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
+msgid "Connect Message"
+msgstr ""
+
+#: corehq/apps/reports/standard/sms.py
 msgid "Survey Detail"
 msgstr ""
 
@@ -32108,7 +32165,6 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/async/bootstrap3/default.html
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
 #: corehq/apps/reports/templates/reports/bootstrap3/tabular.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tabular.html
 msgid "Loading Report"
 msgstr ""
 
@@ -34960,6 +35016,10 @@ msgid "FCM Push Notification"
 msgstr ""
 
 #: corehq/apps/sms/models.py
+msgid "Connect Message Survey"
+msgstr ""
+
+#: corehq/apps/sms/models.py
 msgid "User Group"
 msgstr ""
 
@@ -35135,6 +35195,10 @@ msgstr ""
 
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Contact Name"
+msgstr ""
+
+#: corehq/apps/sms/templates/sms/connect_messaging_user.html
+msgid "Request Messaging Consent"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/email/new_sms_user.html
@@ -35586,6 +35650,18 @@ msgstr ""
 msgid ""
 " failed to fetch templates. Please make sure the gateway is configured "
 "properly."
+msgstr ""
+
+#: corehq/apps/sms/views.py
+msgid "Connect Messaging Users"
+msgstr ""
+
+#: corehq/apps/sms/views.py
+msgid "Channels created for the following users: \n"
+msgstr ""
+
+#: corehq/apps/sms/views.py
+msgid "No channels created"
 msgstr ""
 
 #: corehq/apps/smsbillables/async_handlers.py
@@ -37003,11 +37079,6 @@ msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 msgid "Date of Birth"
-msgstr ""
-
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Opened On"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
@@ -38734,8 +38805,7 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
 msgid ""
-"If rebuilt again next rebuild will only start when the previous rebuild(s) "
-"finishes."
+"Please note that this datasource is yet be built / rebuilt by CommCare HQ."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
@@ -38834,12 +38904,11 @@ msgstr ""
 msgid ""
 "\n"
 "              <p>\n"
-"                Based on the amount of data to be processed, this can take a "
-"considerable amount of time.\n"
+"                Based on the amount of data to be processed, this can take "
+"a\n"
+"                considerable amount of time.\n"
 "              </p>\n"
-"              <p>\n"
-"                Please confirm if you want to proceed.\n"
-"              </p>\n"
+"              <p>Please confirm if you want to proceed.</p>\n"
 "            "
 msgstr ""
 
@@ -39572,8 +39641,11 @@ msgstr ""
 #: corehq/apps/userreports/views.py
 msgid ""
 "There was a problem processing your request. If you have recently modified "
-"your report data source please try again in a few minutes.<br><br>Technical "
-"details:<br>{}"
+"your report data source please try again in a few minutes."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+msgid "Technical details:<br>{}"
 msgstr ""
 
 #: corehq/apps/userreports/views.py
@@ -39673,9 +39745,7 @@ msgid "Data source \"{}\" saved!"
 msgstr ""
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"This data source will be picked for build / rebuild automatically by "
-"CommCare HQ."
+msgid "This data source will be built / rebuilt automatically by CommCare HQ."
 msgstr ""
 
 #: corehq/apps/userreports/views.py
@@ -39714,6 +39784,11 @@ msgid "Table \"{}\" is now being rebuilt. Data should start showing up soon"
 msgstr ""
 
 #: corehq/apps/userreports/views.py
+msgid ""
+"Rebuilding is not available until CommCare HQ finishes building / rebuilding."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
 #, python-brace-format
 msgid ""
 "Rebuilt was not initiated due to high number of records this data source is "
@@ -39739,6 +39814,13 @@ msgstr ""
 
 #: corehq/apps/userreports/views.py
 msgid "Preview Data Source"
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+msgid ""
+"Data source table not found!<br/>If you have recently added the data source, "
+"please wait for it to be created.<br/>If you see this repeatedly please "
+"report an issue."
 msgstr ""
 
 #: corehq/apps/userreports/views.py
@@ -42890,6 +42972,10 @@ msgstr ""
 msgid "Form not found in latest released app build"
 msgstr ""
 
+#: corehq/messaging/scheduling/forms.py
+msgid "Connect Survey"
+msgstr ""
+
 #: corehq/messaging/scheduling/forms.py corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/repeater_generators.py
 msgid "JSON"
@@ -44610,13 +44696,6 @@ msgid ""
 "valid column."
 msgstr ""
 
-#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
-#: corehq/motech/repeaters/forms.py
-#: corehq/motech/templates/motech/connection_settings.html
-#: corehq/motech/views.py
-msgid "Connection Settings"
-msgstr ""
-
 #: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
 #, python-brace-format
 msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
@@ -46124,6 +46203,10 @@ msgstr ""
 msgid "Microplanning"
 msgstr ""
 
+#: corehq/reports.py corehq/tabs/tabclasses.py
+msgid "KYC Verification"
+msgstr ""
+
 #: corehq/tabs/tabclasses.py corehq/tabs/utils.py
 msgid "View All"
 msgstr ""
@@ -46205,6 +46288,12 @@ msgid "Template Management"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "User Management"
+msgid "User Consent"
+msgstr "Manejo de Casos"
+
+#: corehq/tabs/tabclasses.py
 msgid "Data Collection and Reminders"
 msgstr ""
 
@@ -46214,6 +46303,10 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "WhatsApp Settings"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Connect Messsaging"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py

@@ -21,7 +21,7 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
         }
 
         if (typeof standardHQReport !== 'undefined') {
-            // Custom reports, notably ewsghana
+            // Custom reports
             standardReport = standardHQReport;
         } else {
             // Standard reports

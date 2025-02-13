@@ -66,7 +66,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'jquery': '$',
                 'knockout': 'ko',
                 'underscore': '_',
-                'clipboard/dist/clipboard': 'Clipboard',
+                'clipboard/dist/clipboard': 'ClipboardJS',
                 'd3/d3.min': 'd3',
                 'ace-builds/src-min-noconflict/ace': 'ace',
                 'chai/chai': 'chai',
