@@ -147,7 +147,8 @@ class Experiment:
         key = self.campaign, self.path
         if key in _all_experiments and not self.ignore_duplicate:
             warnings.warn(f"Duplicate experiment {key} will result in "
-                        "conflated metrics from multiple experiments")
+                          "conflated metrics from multiple experiments",
+                          stacklevel=4)
         _all_experiments.add(key)
 
 
