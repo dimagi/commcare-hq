@@ -24,7 +24,7 @@ hqDefine("app_manager/js/details/graph_config", [
     ko,
     _,
     main,
-    Clipboard,
+    ClipboardJS,
 ) {
     var graphConfigurationUiElement = function (moduleOptions, serverRepresentationOfGraph) {
         var self = {};
@@ -563,7 +563,11 @@ hqDefine("app_manager/js/details/graph_config", [
         self.yPlaceholder = ko.observable(origOrDefault('yPlaceholder', ""));
         self.copyPlaceholder = function (series, e) {
             var $button = $(e.currentTarget);
-            var clipboard = new Clipboard($button[0]);
+            var clipboard = new ClipboardJS($button[0], {
+                text: function () {
+                    return $button.closest(".input-group").find("input").val();
+                },
+            });
             $button.tooltip({
                 title: gettext('Copied!'),
             });
