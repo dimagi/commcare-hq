@@ -1,0 +1,27 @@
+{% load i18n %}
+
+{% if verify_success %}
+  <div class="alert alert-success alert-dismissable fade show" role="alert">
+    {% blocktrans %}
+      Successfully verified {{ success_count }} rows!
+    {% endblocktrans %}
+    <button
+      type="button"
+      class="btn-close float-end"
+      data-bs-dismiss="alert"
+      aria-label="{% trans Close %}"
+    ></button>
+  </div>
+{% else %}
+  <div class="alert alert-danger alert-dismissable fade show" role="alert">
+    {% blocktrans %}
+      Failed to verify {{ fail_count }} rows!
+    {% endblocktrans %}
+    <button
+      type="button"
+      class="btn-close float-end"
+      data-bs-dismiss="alert"
+      aria-label="{% trans Close %}"
+    ></button>
+  </div>
+{% endif %}

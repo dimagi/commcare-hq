@@ -1,6 +1,7 @@
-import jsonfield
 from django.db import models
 from django.utils.translation import gettext as _
+
+import jsonfield
 
 from corehq.motech.models import ConnectionSettings
 
