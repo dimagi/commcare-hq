@@ -61,7 +61,7 @@ class ESQueryProfiler:
     to arbitrary parts of code which will be included in the final timing output.
     """
 
-    search_class: HQESQuery = field(default_factory=HQESQuery)
+    search_class: HQESQuery = HQESQuery
     name: str = 'Query Profiler'
     debug_mode: bool = False
     queries: list = field(default_factory=list)
