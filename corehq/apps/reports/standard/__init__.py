@@ -324,7 +324,7 @@ class ESQueryProfilerMixin(object):
                 name=self.profiler_name,
                 search_class=self._get_search_class(),
             )
-            setattr(self, 'search_class', self.profiler.get_search_class(slug=self.__class__.__name__))
+            self.search_class = self.profiler.get_search_class(slug=self.__class__.__name__)
 
     @property
     def profiler(self):
