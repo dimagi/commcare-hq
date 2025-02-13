@@ -11,9 +11,9 @@ from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
 from corehq.apps.integration.kyc.models import (
     KycConfig,
-    KycVerifyTable,
     UserDataStore,
 )
+from corehq.apps.integration.kyc.tables import KycVerifyTable
 from corehq.apps.integration.kyc.services import get_user_data_for_api
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
