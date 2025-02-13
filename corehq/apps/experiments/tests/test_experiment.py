@@ -151,8 +151,7 @@ def test_experiment_with_long_arg():
 
     with capture_log_output("notify") as log:
         assert func("ha" * 100) == 2
-    haha = repr("ha" * 40)[:20] + "..."
-    assert log.get_output() == f"func({haha}): 2 != 4\n"
+    assert log.get_output() == "func('hahahahahahahahahah...): 2 != 4\n"
 
 
 def test_warning_on_duplicate_experiment():
