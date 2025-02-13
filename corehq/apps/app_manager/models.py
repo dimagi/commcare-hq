@@ -2577,6 +2577,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
     lazy_load_case_list_fields = BooleanProperty(default=False)
+    show_case_list_optimization_options = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang):
