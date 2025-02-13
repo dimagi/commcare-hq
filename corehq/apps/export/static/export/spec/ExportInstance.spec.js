@@ -2,7 +2,7 @@
 hqDefine("export/spec/ExportInstance.spec", [
     'jquery',
     'underscore',
-    'sinon/pkg/sinon',
+    'sinon',
     'hqwebapp/js/initial_page_data',
     'export/js/const',
     'export/js/models',

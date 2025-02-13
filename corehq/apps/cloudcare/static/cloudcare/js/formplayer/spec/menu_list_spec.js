@@ -1,4 +1,4 @@
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import Backbone from "backbone";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
