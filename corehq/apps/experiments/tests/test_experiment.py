@@ -23,9 +23,10 @@ def test_experiment():
     def func(a, *, x):
         return a + x
 
-    with capture_log_output("notify") as log:
+    with capture_metrics() as metrics, capture_log_output("notify") as log:
         assert func(1) == 3
     assert log.get_output() == "func(1): 3 != 5\n"
+    assert metrics.to_flattened_dict().get('commcare.experiment.diff.notify:diff') == 1
 
     assert func.experiment.tags == {
         "campaign": "test",
@@ -68,6 +69,7 @@ def test_experiment_timing_metrics():
         'commcare.experiment.diff.campaign:test': 1,
         f'commcare.experiment.diff.path:{__name__}.{sleeper.__qualname__}': 1,
         'commcare.experiment.diff.duration:lt_200%': 1,
+        'commcare.experiment.diff.notify:none': 1,
     }
 
 
@@ -94,11 +96,13 @@ def test_experiment_with_old_error():
         return x
 
     with (
+        capture_metrics() as metrics,
         capture_log_output("notify") as log,
         pytest.raises(ValueError, match="bad value"),
     ):
         fail()
     assert log.get_output() == "fail(): raised ValueError('bad value') != 4\n"
+    assert metrics.to_flattened_dict().get('commcare.experiment.diff.notify:error') == 1
 
 
 def test_experiment_with_new_error():
@@ -113,6 +117,7 @@ def test_experiment_with_new_error():
     mets = metrics.to_flattened_dict()
     logs = log.get_output()
     assert mets.get(f'commcare.experiment.diff.path:{__name__}.{fail.__qualname__}') == 1
+    assert mets.get('commcare.experiment.diff.notify:error') == 1
     assert "new code path failed in experiment\n" in logs
     assert logs.endswith("ValueError: bad value\n")
 
@@ -136,12 +141,14 @@ def test_experiment_with_mismatched_errors():
         raise ValueError("bad" if x == 2 else "worse")
 
     with (
+        capture_metrics() as metrics,
         capture_log_output("notify") as log,
         pytest.raises(ValueError, match="bad"),
     ):
         fail()
     assert log.get_output() == \
         "fail(): raised ValueError('bad') != raised ValueError('worse')\n"
+    assert metrics.to_flattened_dict().get('commcare.experiment.diff.notify:error') == 1
 
 
 def test_experiment_with_long_arg():

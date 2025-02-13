@@ -2,9 +2,8 @@ import random
 import time
 from unittest.mock import patch
 
-from django.test import TestCase
-
 import pytest
+from django.test import TestCase
 from unmagic import fixture
 
 from corehq.util.metrics.tests.utils import capture_metrics
@@ -100,6 +99,7 @@ class TestExperimentEnabled(TestCase):
             'commcare.experiment.diff.campaign:test': 1,
             f'commcare.experiment.diff.path:{FUNC_PATH}': 1,
             'commcare.experiment.diff.duration:lt_200%': 1,
+            'commcare.experiment.diff.notify:diff': 1,
         }
         assert log.get_output() == "func(1): 3 != 5\n"
         assert calls == [(1, 2), (1, 4)]
@@ -121,6 +121,7 @@ class TestExperimentEnabled(TestCase):
             'commcare.experiment.diff.campaign:test': 1,
             f'commcare.experiment.diff.path:{FUNC_PATH}': 1,
             'commcare.experiment.diff.duration:lt_200%': 1,
+            'commcare.experiment.diff.notify:none': 1,
         }
         assert log.get_output() == ""
         assert calls == [(1, 2), (1, 4)]

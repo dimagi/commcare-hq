@@ -67,14 +67,21 @@ class Experiment:
                 if old_error is not None:
                     raise old_error
                 return old_result
+
             new_time = end - mid
             diff_pct = (new_time / old_time * 100) if old_time else over_the_top
-            metrics_histogram(
-                "commcare.experiment.diff", diff_pct, tags=self.tags,
-                bucket_tag='duration', buckets=self.percent_buckets, bucket_unit='%',
-            )
-
-            self._compare(old_result, new_result, old_error, new_error, func, args, kwargs)
+            tags = {"notify": "none"}
+            try:
+                self._compare(
+                    old_result, new_result,
+                    old_error, new_error,
+                    func, args, kwargs, tags,
+                )
+            finally:
+                metrics_histogram(
+                    "commcare.experiment.diff", diff_pct, tags=self.tags | tags,
+                    bucket_tag='duration', buckets=self.percent_buckets, bucket_unit='%',
+                )
             return old_result
 
         self._warn_on_duplicate()
@@ -94,9 +101,6 @@ class Experiment:
             try:
                 new_result = func(*args, **kwargs, **self.new_args)
             except Exception as err:
-                if old_error is None and enabled:
-                    notify_exception(None, "new code path failed in experiment",
-                                     details=self.tags)
                 new_error = err
             if enabled is None:
                 # run new code path and not old
@@ -107,7 +111,7 @@ class Experiment:
                     old_error = new_error
         return old_result, new_result, old_error, new_error, mid
 
-    def _compare(self, old_result, new_result, old_error, new_error, func, args, kwargs):
+    def _compare(self, old_result, new_result, old_error, new_error, func, args, kwargs, tags):
         if old_error is not None:
             if new_error is None:
                 new_repr = repr(new_result)
@@ -120,8 +124,14 @@ class Experiment:
                 f"{describe(func, args, kwargs)}: raised {old_repr} != {new_repr}",
                 details=self.tags,
             )
+            tags["notify"] = "error"
             raise old_error
-        if new_error is None and not self.is_equal(old_result, new_result):
+        if new_error is not None:
+            notify_exception(None, "new code path failed in experiment",
+                             details=self.tags, exec_info=new_error)
+            tags["notify"] = "error"
+        elif not self.is_equal(old_result, new_result):
+            tags["notify"] = "diff"
             notify_error(
                 f"{describe(func, args, kwargs)}: {old_result!r} != {new_result!r}",
                 details=self.tags,
