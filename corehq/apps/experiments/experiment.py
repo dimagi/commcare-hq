@@ -130,12 +130,18 @@ class Experiment:
             notify_exception(None, "new code path failed in experiment",
                              details=self.tags, exec_info=new_error)
             tags["notify"] = "error"
-        elif not self.is_equal(old_result, new_result):
-            tags["notify"] = "diff"
-            notify_error(
-                f"{describe(func, args, kwargs)}: {old_result!r} != {new_result!r}",
-                details=self.tags,
-            )
+        else:
+            try:
+                equal = self.is_equal(old_result, new_result)
+            except Exception as err:
+                notify_exception(err, "is_equal failed in experiment", details=self.tags)
+                equal = False
+            if not equal:
+                tags["notify"] = "diff"
+                notify_error(
+                    f"{describe(func, args, kwargs)}: {old_result!r} != {new_result!r}",
+                    details=self.tags,
+                )
 
     def _warn_on_duplicate(self):
         key = self.campaign, self.path

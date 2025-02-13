@@ -151,6 +151,22 @@ def test_experiment_with_mismatched_errors():
     assert metrics.to_flattened_dict().get('commcare.experiment.diff.notify:error') == 1
 
 
+def test_is_equal_failure():
+    def bad_eq(a, b):
+        raise TypeError("bad equality implementation")
+
+    @experiment(is_equal=bad_eq)
+    def func(a, *, x):
+        return a + x
+
+    with capture_metrics() as metrics, capture_log_output("notify") as log:
+        assert func(1) == 3
+    logs = log.get_output()
+    assert "func(1): 3 != 5\n" in logs
+    assert "TypeError: bad equality implementation" in logs
+    assert metrics.to_flattened_dict().get('commcare.experiment.diff.notify:diff') == 1
+
+
 def test_experiment_with_long_arg():
     @experiment
     def func(a, *, x):
