@@ -8,9 +8,8 @@ describe('Form Workflow', function () {
     var workflow;
 
     describe('#workflowOptions', function () {
-        const sandbox = sinon.sandbox.create();
 
-        sandbox.stub(Toggles, 'toggleEnabled').withArgs('FORM_LINK_ADVANCED_MODE').returns(true);
+        sinon.stub(Toggles, 'toggleEnabled').withArgs('FORM_LINK_ADVANCED_MODE').returns(true);
 
         beforeEach(function () {
             var labels = {},
