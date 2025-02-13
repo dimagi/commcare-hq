@@ -56,6 +56,11 @@ from corehq.apps.es.es_query import HQESQuery
 
 @dataclass
 class ESQueryProfiler:
+    """
+    Allows a user to profile ES queries. The timing_context also allows for adding timing blocks
+    to arbitrary parts of code which will be included in the final timing output.
+    """
+
     search_class: HQESQuery = field(default_factory=HQESQuery)
     name: str = 'Query Profiler'
     debug_mode: bool = False
