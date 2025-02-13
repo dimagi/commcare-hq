@@ -8,6 +8,7 @@ VISIT_WINDOW_DUE_DATE = 'WINDOW_DUE_DATE'
 
 
 ALLOWED_HTML_TAGS = {
+    "h1",
     "h2",
     "h3",
     "h4",
