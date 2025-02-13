@@ -1,18 +1,20 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from casexml.apps.case.mock import CaseFactory
+
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
 from corehq.apps.integration.kyc.views import (
     KycConfigurationView,
     KycVerificationReportView,
     KycVerificationTableView,
 )
-from corehq.apps.users.models import WebUser
-from corehq.util.test_utils import flag_enabled
-
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.motech.models import ConnectionSettings
-from corehq.apps.users.models import CommCareUser
+from corehq.util.test_utils import flag_enabled
 
 
 class BaseTestKycView(TestCase):
@@ -88,6 +90,7 @@ class TestKycVerificationReportView(BaseTestKycView):
         self.assertEqual(response.status_code, 200)
 
 
+@es_test(requires=[case_search_adapter], setup_class=True)
 class TestKycVerificationTableView(BaseTestKycView):
     urlname = KycVerificationTableView.urlname
 
@@ -102,26 +105,118 @@ class TestKycVerificationTableView(BaseTestKycView):
         )
         cls.addClassCleanup(conn_settings.delete)
 
+        cls.kyc_mapping = [
+            {
+                'fieldName': 'first_name',
+                'mapsTo': 'first_name',
+                'source': 'standard',
+            },
+            {
+                'fieldName': 'last_name',
+                'mapsTo': 'last_name',
+                'source': 'standard'
+            },
+            {
+                'fieldName': 'email',
+                'mapsTo': 'email',
+                'source': 'standard'
+            },
+            {
+                'fieldName': 'phone_number',
+                'mapsTo': 'phone_number',
+                'source': 'custom',
+            },
+            {
+                'fieldName': 'national_id_number',
+                'mapsTo': 'national_id_number',
+                'source': 'custom',
+            },
+            {
+                'fieldName': 'street_address',
+                'mapsTo': 'street_address',
+                'source': 'custom',
+            },
+            {
+                'fieldName': 'city',
+                'mapsTo': 'city',
+                'source': 'custom',
+            },
+            {
+                'fieldName': 'post_code',
+                'mapsTo': 'post_code',
+                'source': 'custom',
+            },
+            {
+                'fieldName': 'country',
+                'mapsTo': 'country',
+                'source': 'custom',
+            },
+        ]
         cls.kyc_config = KycConfig.objects.create(
             domain=cls.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
-            api_field_to_user_data_map=[],
+            api_field_to_user_data_map=cls.kyc_mapping,
             connection_settings=conn_settings,
         )
         cls.addClassCleanup(cls.kyc_config.delete)
-
         cls.user1 = CommCareUser.create(
             cls.domain,
             'user1',
             'password',
             created_by=None,
             created_via=None,
+            first_name='John',
+            last_name='Doe',
+            email='jdoe@example.org',
+            user_data={
+                'phone_number': '1234567890',
+                'national_id_number': '1234567890',
+                'street_address': '123 Main St',
+                'city': 'Anytown',
+                'post_code': '12345',
+                'country': 'Anyplace',
+            }
         )
-        cls.user1.save()
+        cls.user2 = CommCareUser.create(
+            cls.domain,
+            'user2',
+            'password',
+            created_by=None,
+            created_via=None,
+            first_name='Jane',
+            last_name='Doe',
+        )
+
+        factory = CaseFactory(cls.domain)
+        cls.case_list = [
+            _create_case(
+                factory,
+                name='foo',
+                data={
+                    'first_name': 'Bob',
+                    'last_name': 'Smith',
+                    'email': 'bsmith@example.org',
+                    'phone_number': '0987654321',
+                    'national_id_number': '0987654321',
+                    'street_address': '456 Main St',
+                    'city': 'Sometown',
+                    'post_code': '54321',
+                    'country': 'Someplace',
+                }),
+            _create_case(
+                factory,
+                name='bar',
+                data={
+                    'first_name': 'Foo',
+                    'last_name': 'Bar'
+                }),
+        ]
+        case_search_adapter.bulk_index(cls.case_list, refresh=True)
 
     @classmethod
     def tearDownClass(cls):
         cls.user1.delete(None, None)
+        cls.user2.delete(None, None)
         super().tearDownClass()
 
     def test_not_logged_in(self):
@@ -138,11 +233,87 @@ class TestKycVerificationTableView(BaseTestKycView):
         self.assertEqual(response.status_code, 200)
 
     @flag_enabled('KYC_VERIFICATION')
-    def test_invalid_data(self):
+    def test_response_data_users(self):
         response = self._make_request()
         queryset = response.context['table'].data
-        self.assertEqual(len(queryset), 1)
-        self.assertEqual(queryset[0], {
-            'id': self.user1.user_id,
-            'has_invalid_data': True
-        })
+        self.assertEqual(len(queryset), 2)
+        for row in queryset:
+            if row['has_invalid_data']:
+                self.assertEqual(row, {
+                    'id': self.user2.user_id,
+                    'has_invalid_data': True,
+                    'first_name': 'Jane',
+                    'last_name': 'Doe',
+                    'email': '',
+                })
+            else:
+                self.assertEqual(row, {
+                    'id': self.user1.user_id,
+                    'has_invalid_data': False,
+                    'first_name': 'John',
+                    'last_name': 'Doe',
+                    'email': 'jdoe@example.org',
+                    'phone_number': '1234567890',
+                    'national_id_number': '1234567890',
+                    'street_address': '123 Main St',
+                    'city': 'Anytown',
+                    'post_code': '12345',
+                    'country': 'Anyplace',
+                })
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_response_data_cases(self):
+        self.kyc_config.user_data_store = UserDataStore.OTHER_CASE_TYPE
+        self.kyc_config.other_case_type = 'other-case'
+        self.kyc_config.api_field_to_user_data_map[0:3] = [
+            {
+                'fieldName': 'first_name',
+                'mapsTo': 'first_name',
+                'source': 'custom'
+            },
+            {
+                'fieldName': 'last_name',
+                'mapsTo': 'last_name',
+                'source': 'custom'
+            },
+            {
+                'fieldName': 'email',
+                'mapsTo': 'email',
+                'source': 'custom'
+            }
+        ]
+        self.kyc_config.save()
+
+        response = self._make_request()
+        queryset = response.context['table'].data
+        self.assertEqual(len(queryset), 2)
+        for row in queryset:
+            if row['has_invalid_data']:
+                self.assertEqual(row, {
+                    'id': self.case_list[1].case_id,
+                    'has_invalid_data': True,
+                    'first_name': 'Foo',
+                    'last_name': 'Bar',
+                })
+            else:
+                self.assertEqual(row, {
+                    'id': self.case_list[0].case_id,
+                    'has_invalid_data': False,
+                    'first_name': 'Bob',
+                    'last_name': 'Smith',
+                    'email': 'bsmith@example.org',
+                    'phone_number': '0987654321',
+                    'national_id_number': '0987654321',
+                    'street_address': '456 Main St',
+                    'city': 'Sometown',
+                    'post_code': '54321',
+                    'country': 'Someplace',
+                })
+
+
+def _create_case(factory, name, data):
+    return factory.create_case(
+        case_name=name,
+        case_type='other-case',
+        update=data
+    )
