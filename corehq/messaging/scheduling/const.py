@@ -8,6 +8,7 @@ VISIT_WINDOW_DUE_DATE = 'WINDOW_DUE_DATE'
 
 
 ALLOWED_HTML_TAGS = {
+    "h1",
     "h2",
     "h3",
     "h4",
@@ -56,7 +57,7 @@ ALLOWED_HTML_ATTRIBUTES = {
     'img': ['style', 'src', 'width', 'height', 'class'],
     'figcaption': ['style', 'class'],
     'figure': ['style', 'class'],
-    'table': ['class', 'role','cellspacing', 'cellpadding', 'border', 'align', 'width'],
+    'table': ['class', 'role', 'cellspacing', 'cellpadding', 'border', 'align', 'width'],
     'td': ['valign'],
     'meta': ['charset', 'name', 'viewport', 'content', 'initial-scale']
 }
