@@ -200,7 +200,7 @@
         </div>
       </div>
       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
-      {% trans "Save Questions to Case Properties" %}
+      <!-- ko text: title --><!-- /ko -->
     </h4>
   </div>
   <div class="panel-body">
@@ -338,7 +338,7 @@
     <!-- ko if: !case_properties().length && !$parent.hasPrivilege -->
       <p>
         {% blocktrans %}
-          You no longer have permission to save case properties.
+          You no longer have permission to save this section.
         {% endblocktrans %}
       </p>
     <!-- /ko -->
