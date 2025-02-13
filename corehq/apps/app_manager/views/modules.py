@@ -685,6 +685,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "case_list_session_endpoint_id": None,
         'custom_assertions': None,
         'lazy_load_case_list_fields': None,
+        'show_case_list_optimization_options': None,
     }
 
     if attr not in attributes:
@@ -842,6 +843,11 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     if should_edit('lazy_load_case_list_fields'):
         module["lazy_load_case_list_fields"] = request.POST.get("lazy_load_case_list_fields") == 'true'
+
+    if should_edit('show_case_list_optimization_options') and app.supports_case_list_optimizations:
+        module["show_case_list_optimization_options"] = request.POST.get(
+            "show_case_list_optimization_options"
+        ) == 'true'
 
     if should_edit('custom_assertions'):
         module.custom_assertions = validate_custom_assertions(
