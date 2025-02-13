@@ -55,10 +55,15 @@ from corehq.apps.es.profiling import ESQueryProfiler
 
 @dataclass
 class CaseSearchProfiler(ESQueryProfiler):
-    search_class = CaseSearchES
     name: str = 'Case Search'
     primary_count: int = 0
     related_count: int = 0
+
+    def __post_init__(self):
+        super().__post_init__()
+        # For some reason defining the default value in the dataclass doesn't work
+        # so we do it here
+        self.search_class = CaseSearchES
 
 
 def time_function():
