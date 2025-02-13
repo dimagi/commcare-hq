@@ -675,6 +675,14 @@ msgid "You have unchanged user properties settings"
 msgstr "Vous avez des paramètres de propriétés utilisateur inchangés"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to Case Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to User Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La propriété utilise un préfixe non reconnu <strong>"
 
@@ -4659,6 +4667,10 @@ msgstr "Échec"
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
 msgid "Failed to re-process"
 msgstr "Échec de la re-traitement"
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "_MENU_ per page"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
 msgid "All Rows"

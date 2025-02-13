@@ -1645,6 +1645,7 @@ msgstr "Numéro de relevé."
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
@@ -3414,6 +3415,7 @@ msgstr ""
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
+#: corehq/apps/integration/kyc/forms.py
 #: corehq/apps/locations/templates/locations/location_types.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reminders/forms.py corehq/apps/reports/forms.py
@@ -8813,7 +8815,8 @@ msgstr "Étiquette du cas"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
+#: corehq/apps/data_cleaning/tables.py corehq/apps/data_dictionary/views.py
+#: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
@@ -9030,11 +9033,11 @@ msgstr "Aucune propriété ne sera chargée"
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/sensitive_columns.html
 msgid "Add Property"
-msgstr "Ajouter une propriété"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Save Questions to Case Properties"
-msgstr "Enregistrer les questions dans les propriétés de cas"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
@@ -9092,7 +9095,7 @@ msgstr "Aucune propriété ne sera enregistrée"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
-"          You no longer have permission to save case properties.\n"
+"          You no longer have permission to save this section.\n"
 "        "
 msgstr ""
 "\n"
@@ -14010,7 +14013,7 @@ msgstr "La recherche floue n'est pas prise en charge avec plusieurs valeurs"
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/fixtures/templates/fixtures/fixtures_base.html
 #: corehq/apps/geospatial/reports.py corehq/apps/geospatial/views.py
-#: corehq/apps/settings/views.py
+#: corehq/apps/integration/kyc/views.py corehq/apps/settings/views.py
 #: corehq/apps/userreports/reports/builder/forms.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
@@ -15427,7 +15430,7 @@ msgstr "Visitez la base de connaissances de CommCare"
 
 #: corehq/apps/dashboard/views.py
 msgid "Subscribed to Community Edition."
-msgstr "Abonné à l'édition communautaire."
+msgstr ""
 
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
@@ -16192,7 +16195,7 @@ msgstr "Réaffecter les cas"
 
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign"
-msgstr "Réaffecter"
+msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/views.py corehq/apps/geospatial/reports.py
@@ -16201,7 +16204,7 @@ msgstr "Réaffecter"
 #: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
 #: corehq/apps/reports/v2/reports/explore_case_data.py
 msgid "Case Name"
-msgstr "Nom du cas"
+msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/geospatial/templates/geospatial/gps_capture.html
@@ -17573,10 +17576,13 @@ msgid "Manage Group '%s'"
 msgstr "Gérer le groupe '%s'"
 
 #: corehq/apps/data_interfaces/views.py corehq/apps/export/forms.py
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 msgid "case"
 msgstr "cas"
 
-#: corehq/apps/data_interfaces/views.py corehq/apps/userreports/ui/forms.py
+#: corehq/apps/data_interfaces/views.py
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
+#: corehq/apps/userreports/ui/forms.py
 msgid "cases"
 msgstr "cas"
 
@@ -26531,11 +26537,11 @@ msgstr "Lien"
 
 #: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Lock Case Clustering Map for Me"
-msgstr "Verrouiller la carte de regroupement des cas pour moi"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Unlock Case Clustering Map for Me"
-msgstr "Déverrouiller la carte de regroupement des cas pour moi"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
 msgid "Export Groups"
@@ -30483,9 +30489,6 @@ msgid ""
 "                      %(p)s per page\n"
 "                    "
 msgstr ""
-"\n"
-"                      %(p)s par page\n"
-"                    "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
@@ -30493,7 +30496,7 @@ msgstr ""
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html
 msgid "Loading..."
-msgstr "Chargement..."
+msgstr ""
 
 #: corehq/apps/hqwebapp/templates/password_change.html
 msgid "Change User Password"
@@ -30752,7 +30755,7 @@ msgstr "ID de projet"
 
 #: corehq/apps/integration/forms.py
 msgid "Module ID"
-msgstr "ID de module"
+msgstr ""
 
 #: corehq/apps/integration/kyc/models.py
 msgid "Custom User Data"
@@ -30764,7 +30767,7 @@ msgstr "Cas utilisateur"
 
 #: corehq/apps/integration/kyc/models.py
 msgid "Other Case Type"
-msgstr "Autre type de cas"
+msgstr ""
 
 #: corehq/apps/integration/templates/integration/web_app_dialer.html
 msgid "Dialer"
@@ -30876,7 +30879,7 @@ msgstr "Code OTP pour"
 
 #: corehq/apps/integration/templates/integration/web_app_gaen_otp.html
 msgid "Close OTP and Return"
-msgstr "Fermer l'OTP et revenir"
+msgstr ""
 
 #: corehq/apps/integration/views.py
 msgid "Biometric Integration"
@@ -36754,7 +36757,7 @@ msgstr "Détail de l'Événement de Message"
 
 #: corehq/apps/reports/standard/sms.py
 msgid "Displays the detail for a given messaging event."
-msgstr "Affiche le détail d'un événement de messagerie donné."
+msgstr ""
 
 #: corehq/apps/reports/standard/sms.py
 msgid "Survey Detail"
@@ -36943,7 +36946,6 @@ msgstr "Utilisateurs ayant déjà synchronisé"
 #: corehq/apps/reports/templates/reports/async/bootstrap3/default.html
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
 #: corehq/apps/reports/templates/reports/bootstrap3/tabular.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tabular.html
 msgid "Loading Report"
 msgstr "Chargement du rapport"
 
@@ -40130,7 +40132,7 @@ msgstr "Message envoyé via chat"
 
 #: corehq/apps/sms/models.py
 msgid "FCM Push Notification"
-msgstr "Notification push FCM"
+msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "User Group"
@@ -40315,7 +40317,7 @@ msgstr "Rechercher par nom ou numéro de téléphone"
 
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Contact Name"
-msgstr "Nom du contact"
+msgstr ""
 
 #: corehq/apps/sms/templates/sms/email/new_sms_user.html
 #, python-format
@@ -40803,6 +40805,18 @@ msgstr ""
 msgid ""
 " failed to fetch templates. Please make sure the gateway is configured "
 "properly."
+msgstr ""
+
+#: corehq/apps/sms/views.py
+msgid "Connect Messaging Users"
+msgstr ""
+
+#: corehq/apps/sms/views.py
+msgid "Channels created for the following users: \n"
+msgstr ""
+
+#: corehq/apps/sms/views.py
+msgid "No channels created"
 msgstr ""
 "échec de la récupération des modèles. Veuillez vous assurer que la "
 "passerelle est configurée correctement."
@@ -42498,12 +42512,12 @@ msgstr "Grands félins"
 
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 msgid "Date of Birth"
-msgstr "Date de naissance"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Opened On"
-msgstr "Ouvert le"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
 msgid "Team"
@@ -44514,8 +44528,7 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
 msgid ""
-"If rebuilt again next rebuild will only start when the previous rebuild(s) "
-"finishes."
+"Please note that this datasource is yet be built / rebuilt by CommCare HQ."
 msgstr ""
 "Si elle est reconstruite à nouveau, la prochaine reconstruction ne "
 "commencera que lorsque la ou les reconstructions précédentes seront "
@@ -44631,11 +44644,10 @@ msgstr ""
 msgid ""
 "\n"
 "              <p>\n"
-"                Based on the amount of data to be processed, this can take a considerable amount of time.\n"
+"                Based on the amount of data to be processed, this can take a "
+"considerable amount of time.\n"
 "              </p>\n"
-"              <p>\n"
-"                Please confirm if you want to proceed.\n"
-"              </p>\n"
+"              <p>Please confirm if you want to proceed.</p>\n"
 "            "
 msgstr ""
 "\n"
@@ -45488,8 +45500,11 @@ msgstr ""
 #: corehq/apps/userreports/views.py
 msgid ""
 "There was a problem processing your request. If you have recently modified "
-"your report data source please try again in a few minutes.<br><br>Technical "
-"details:<br>{}"
+"your report data source please try again in a few minutes."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+msgid "Technical details:<br>{}"
 msgstr ""
 "Il y a eu un problème lors du traitement de votre demande. Si vous avez "
 "récemment modifié votre source de données de rapport, veuillez réessayer "
@@ -45598,9 +45613,7 @@ msgid "Data source \"{}\" saved!"
 msgstr "Source de données \"{}\" enregistrée !"
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"This data source will be picked for build / rebuild automatically by "
-"CommCare HQ."
+msgid "This data source will be built / rebuilt automatically by CommCare HQ."
 msgstr ""
 "Cette source de données sera choisie pour la construction / reconstruction "
 "automatiquement par CommCare HQ."
@@ -45645,6 +45658,11 @@ msgstr "Source de données \"{name}\" non supprimée."
 #: corehq/apps/userreports/views.py
 msgid "Table \"{}\" is now being rebuilt. Data should start showing up soon"
 msgstr ""
+
+#: corehq/apps/userreports/views.py
+msgid ""
+"Rebuilding is not available until CommCare HQ finishes building / rebuilding."
+msgstr ""
 "La table \"{}\" est en cours de reconstruction. Les données devraient "
 "commencer à apparaître bientôt"
 
@@ -45683,7 +45701,7 @@ msgstr "Reprise de la reconstruction de la table \"{}\"."
 
 #: corehq/apps/userreports/views.py
 msgid "Preview Data Source"
-msgstr "Aperçu de la source de données"
+msgstr ""
 
 #: corehq/apps/userreports/views.py
 msgid "You can only use 'lastndays' on date columns"
@@ -49368,6 +49386,10 @@ msgstr "Veuillez faire une version publiée de l'application"
 #: corehq/messaging/scheduling/forms.py
 msgid "Form not found in latest released app build"
 msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "Connect Survey"
+msgstr ""
 "Formulaire non trouvé dans la dernière version publiée de l'application"
 
 #: corehq/messaging/scheduling/forms.py
@@ -51346,16 +51368,13 @@ msgid ""
 "in the format yyyyQn (e.g. \"2004Q1\" for January-March 2004), or enter a "
 "valid column."
 msgstr ""
-"\"Fréquence\" est définie sur \"Trimestrielle\". Veuillez entrer une période"
-" trimestrielle valide au format yyyyQn (par exemple, \"2004Q1\" pour "
-"janvier-mars 2004), ou entrer une colonne valide."
 
 #: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
 #: corehq/motech/repeaters/forms.py
 #: corehq/motech/templates/motech/connection_settings.html
 #: corehq/motech/views.py
 msgid "Connection Settings"
-msgstr "Paramètres de connexion"
+msgstr ""
 
 #: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
 #, python-brace-format
@@ -52975,7 +52994,7 @@ msgstr "Statistiques de domaine"
 
 #: corehq/reports.py
 msgid "Microplanning"
-msgstr "Microplanification"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py corehq/tabs/utils.py
 msgid "View All"
@@ -53055,7 +53074,7 @@ msgstr "Connectivité par e-mail"
 
 #: corehq/tabs/tabclasses.py
 msgid "Template Management"
-msgstr "Gestion des modèles"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Data Collection and Reminders"
@@ -53067,7 +53086,7 @@ msgstr "Contacts"
 
 #: corehq/tabs/tabclasses.py
 msgid "WhatsApp Settings"
-msgstr "Paramètres WhatsApp"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Create and manage users for CommCare and CloudCare."
