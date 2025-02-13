@@ -6,7 +6,6 @@ from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 from .views import (
     DefaultProjectUserSettingsView,
     EditWebUserView,
-    EnterpriseUsersView,
     InviteWebUserView,
     UploadWebUsers,
     WebUserUploadStatusView,
@@ -135,7 +134,6 @@ urlpatterns = [
         WebUserUploadJobPollView.as_view(),
         name=WebUserUploadJobPollView.urlname
     ),
-    url(r'^enterprise/$', EnterpriseUsersView.as_view(), name=EnterpriseUsersView.urlname),
     url(r'^enterprise/json/$', paginate_enterprise_users, name='paginate_enterprise_users'),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
