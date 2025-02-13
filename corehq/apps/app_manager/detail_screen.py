@@ -294,11 +294,14 @@ class FormattedDetailColumn(object):
     @property
     def fields(self):
         print_id = None
+        case_list_optimizations_enabled = self.app.supports_case_list_optimizations
+
         if self.detail.print_template:
             print_id = self.column.field
 
+        # ToDo: check if we need to add for all these different possibilities
         if self.app.enable_multi_sort:
-            yield sx.Field(
+            field = sx.Field(
                 style=self.style,
                 header=self.header,
                 template=self.template,
@@ -307,27 +310,47 @@ class FormattedDetailColumn(object):
                 endpoint_action=self.action,
                 alt_text=self.alt_text,
             )
+            if case_list_optimizations_enabled:
+                self._set_case_list_optimizations(field, self.column.optimization)
+            yield field
         elif (self.sort_xpath_function and self.detail.display == 'short'
               and self.column.format != 'translatable-enum'):
-            yield sx.Field(
+            hidden_template_field = sx.Field(
                 style=self.style,
                 header=self.header,
                 template=self.hidden_template,
                 print_id=print_id,
             )
-            yield sx.Field(
+            if case_list_optimizations_enabled:
+                self._set_case_list_optimizations(hidden_template_field, self.column.optimization)
+            yield hidden_template_field
+
+            hidden_header_field = sx.Field(
                 style=self.style,
                 header=self.hidden_header,
                 template=self.template,
                 print_id=print_id,
             )
+            if case_list_optimizations_enabled:
+                self._set_case_list_optimizations(hidden_header_field, self.column.optimization)
+            yield hidden_header_field
         else:
-            yield sx.Field(
+            field = sx.Field(
                 style=self.style,
                 header=self.header,
                 template=self.template,
                 print_id=print_id,
             )
+            if case_list_optimizations_enabled:
+                self._set_case_list_optimizations(field, self.column.optimization)
+            yield field
+
+    @staticmethod
+    def _set_case_list_optimizations(field, optimization):
+        if optimization in ['lazy_load', 'cache_and_lazy_load']:
+            field.lazy_loading = True
+        if optimization in ['cache', 'cache_and_lazy_load']:
+            field.cache_enabled = True
 
 
 class HideShortHeaderColumn(FormattedDetailColumn):
