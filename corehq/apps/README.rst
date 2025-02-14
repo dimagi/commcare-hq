@@ -36,6 +36,8 @@ cloudcare
 domain
    Domains, called "project spaces" in user-facing content, are the core sandboxes of CommCare. Almost
    all features and UIs in CommCare are in the context of a domain.
+experiments
+    Framework for comparing old and new code paths.
 export
    Configurations for exporting project data, typically forms or cases, to an excel download.
 hqmedia
