@@ -11,12 +11,21 @@
       {% if total > 0 %}
         <div id="form_options" class="card form-inline">  {# todo B5: css:form-inline, css:well #}
           <div>
-            <button id="resend-button"
+            {% if is_superuser %}
+              <button id="resend-button"
+                      class="btn btn-outline-primary"
+                      data-bs-target="#are-you-sure"
+                      title="{% trans 'Resend selected records' %}">
+                <i class="fa fa-play"></i>
+                {% trans 'Resend' %}
+              </button>
+            {% endif %}
+            <button id="requeue-button"
                     class="btn btn-outline-primary"
                     data-bs-target="#are-you-sure"
-                    title="{% trans 'Resend selected records' %}">
-              <i class="fa fa-play"></i>
-              {% trans 'Resend' %}
+                    title="{% trans 'Requeue selected records' %}">
+              <i class="fa fa-recycle"></i>
+              {% trans 'Requeue' %}
             </button>
             <button id="cancel-button"
                     class="btn btn-outline-primary"
@@ -24,13 +33,6 @@
                     title="{% trans 'Cancel selected records' %}">
               <i class="fa fa-times"></i>
               {% trans 'Cancel' %}
-            </button>
-            <button id="requeue-button"
-                    class="btn btn-outline-primary"
-                    data-bs-target="#are-you-sure"
-                    title="{% trans 'Requeue selected records' %}">
-              <i class="fa fa-recycle"></i>
-              {% trans 'Requeue' %}
             </button>
             <label class="checkbox" >  {# todo B5: css:checkbox #}
               <input type="checkbox" id="select-all" value={{ state.name }}>  {# todo B5: css:checkbox #}
