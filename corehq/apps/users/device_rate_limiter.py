@@ -1,11 +1,11 @@
 import logging
 from datetime import datetime, timezone
 
-from django.conf import settings
 from django_redis import get_redis_connection
 
 from corehq import toggles
 from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
+from corehq.project_limits.models import SystemLimit
 from corehq.util.metrics import metrics_counter
 
 logger = logging.getLogger(__name__)
@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 DEVICE_RATE_LIMIT_MESSAGE = "Current usage for this user is too high. Please try again in a minute."
 # intentionally set to > 1 minute to allow for a buffer at minute boundaries
 DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
+
+DEVICE_LIMIT_PER_USER_KEY = "device_limit_per_user"
+DEVICE_LIMIT_PER_USER_DEFAULT = 50
 
 
 class DeviceRateLimiter:
@@ -25,9 +28,7 @@ class DeviceRateLimiter:
         self.client = get_redis_connection()
 
     def device_limit_per_user(self, domain):
-        if toggles.INCREASE_DEVICE_LIMIT_PER_USER.enabled(domain):
-            return settings.INCREASED_DEVICE_LIMIT_PER_USER
-        return settings.DEVICE_LIMIT_PER_USER
+        return SystemLimit.for_key(DEVICE_LIMIT_PER_USER_KEY, domain=domain) or DEVICE_LIMIT_PER_USER_DEFAULT
 
     def rate_limit_device(self, domain, user_id, device_id):
         """
@@ -63,10 +64,14 @@ class DeviceRateLimiter:
             )
             return False
 
-        metrics_counter(
-            'commcare.devices_per_user.rate_limit_exceeded', tags={'domain': domain, 'user_id': user_id}
-        )
-        return settings.ENABLE_DEVICE_RATE_LIMITER
+        if toggles.DEVICE_RATE_LIMITER.enabled(domain):
+            metrics_counter('commcare.devices_per_user.rate_limited', tags={'domain': domain, 'user_id': user_id})
+            return True
+        else:
+            metrics_counter(
+                'commcare.devices_per_user.rate_limited.test', tags={'domain': domain, 'user_id': user_id}
+            )
+            return False
 
     def _get_redis_key(self, domain, user_id):
         """
