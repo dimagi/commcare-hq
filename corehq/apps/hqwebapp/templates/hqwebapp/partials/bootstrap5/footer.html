@@ -1,15 +1,19 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <footer>
-  <nav id="hq-footer"
-       role="navigation"
-       class="navbar navbar-dark bg-dark navbar-expand navbar-hq-footer">
+  <nav
+    id="hq-footer"
+    role="navigation"
+    class="navbar navbar-dark bg-dark navbar-expand navbar-hq-footer"
+  >
     <div class="container-fluid">
       <p class="text-center align-middle mb-0 w-100">
         <a href="https://dimagi.com/commcare/" class="footer-link-img">
-          <img src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
-               alt="CommCare"
-               height="30"  />
+          <img
+            src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
+            alt="CommCare"
+            height="30"
+          />
         </a>
         <a href="https://dimagi.com/" class="dimagi-logo">
           {% include "hqwebapp/svg/dimagi_logo.html" %}
@@ -22,7 +26,9 @@
         <a href="https://dimagi.com/">Dimagi, Inc.</a>
 
         <span class="d-inline-md d-inline-lg">&nbsp;|&nbsp;</span>
-        <a href="https://dimagi.com/commcare/">{% trans 'Learn more about CommCare HQ' %}</a>
+        <a href="https://dimagi.com/commcare/"
+          >{% trans 'Learn more about CommCare HQ' %}</a
+        >
 
         <span class="d-inline-md d-inline-lg">&nbsp;|&nbsp;</span>
         <a href="https://dimagi.com/terms/latest/privacy/" target="_blank">
