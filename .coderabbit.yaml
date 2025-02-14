@@ -7,9 +7,15 @@ reviews:
     changed_files_summary: false
     abort_on_close: true
     instructions: >-
-        - Read and follow the code review guide when doing a review: https://github.com/dimagi/open-source/blob/master/docs/code_review.md
-        - Read and follow the contribution guide when reviewing: https://github.com/dimagi/commcare-hq/blob/master/CONTRIBUTING.rst
-        - Read and follow the project standards and best practices guide: https://github.com/dimagi/commcare-hq/blob/master/STANDARDS.rst.
+      - Follow OWASP recommendations for security best practices.
+      - Do not implement custom security or cryptographic protocols.
+      - Authentication and encryption must use publicly documented standards (e.g., OAuth, SAML, AES256).
+      - Use well-established libraries for security and authentication whenever possible.
+      - External system integrations should follow best practices for handling secrets.
+      - Documentation should be close to the relevant code and use reStructuredText with autodoc.
+      - Developers use tools like `flake8`, `pylint`, `isort`, and `django-extensions` for better development practices.
+      - Requirements updates should be managed through `requirements/*.in` files and built with `make requirements`.
+
     path_instructions:
         - path: "**/*.js"
           instructions: >-
