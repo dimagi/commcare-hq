@@ -76,7 +76,8 @@ const converterOptions = {
 };
 
 function deltaToHtml(delta) {
-    console.log(JSON.stringify(delta, null, 4));
+    // nice for adding more test data
+    // console.log(JSON.stringify(delta, null, 4));
     const converter = new QuillDeltaToHtmlConverter(delta.ops, converterOptions);
     const body = converter.convert();
     const html = `<html><body>${body}</body></html>`;
