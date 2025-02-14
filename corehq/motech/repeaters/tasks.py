@@ -329,16 +329,19 @@ def process_repeaters():
         timeout_ms = 30 * 60 * 1000  # half an hour
         while True:
             metrics_counter('commcare.repeaters.process_repeaters.iter_once')
-            redis.set(f'repeater_group_{group}', 0, px=timeout_ms)
-            # A filtered list of the repeater IDs originally returned by
-            # `Repeater.objects.get_all_ready_ids_by_domain()`:
             repeater_ids = list(iter_filtered_repeater_ids())
             if not repeater_ids:
                 return
+
+            redis.set(f'repeater_group_{group}', 0, px=timeout_ms)
+            acquired = False
             for repeater_id in repeater_ids:
                 lock = RepeaterLock(repeater_id)
                 if lock.acquire():  # non-blocking
+                    acquired = True
                     process_repeater(repeater_id, lock.token, group)
+            if not acquired:
+                return
 
             while int(redis.get(f'repeater_group_{group}')) == 0:
                 # Wait for (at least) one `process_repeater` task to finish
