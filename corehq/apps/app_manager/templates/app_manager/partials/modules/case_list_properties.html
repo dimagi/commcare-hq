@@ -4,127 +4,195 @@
 <div>
   <table class="table table-condensed">
     <thead data-bind="visible: columns().length > 0">
-    <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
-      <th class="col-sm-1"></th>
-      <th class="col-sm-2">{% trans "Property" %}</th>
-      <th class="col-sm-2">{% trans "Display Text" %}</th>
-      <!-- ko if: showCaseTileMappingColumn() -->
+      <tr
+        tabindex="999"
+        data-bind="paste: function (data) { pasteCallback(data, 0); }"
+      >
+        <th class="col-sm-1"></th>
+        <th class="col-sm-2">{% trans "Property" %}</th>
+        <th class="col-sm-2">{% trans "Display Text" %}</th>
+        <!-- ko if: showCaseTileMappingColumn() -->
         <th class="col-sm-3">{% trans "Format" %}</th>
         <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
-      <!--/ko-->
-      <!-- ko ifnot: showCaseTileMappingColumn() -->
+        <!--/ko-->
+        <!-- ko ifnot: showCaseTileMappingColumn() -->
         <th class="col-sm-2">{% trans "Format" %}</th>
-      <!-- /ko -->
-      <!-- ko if: showCaseTileConfigColumns() -->
+        <!-- /ko -->
+        <!-- ko if: showCaseListOptimizations -->
+        <th class="col-sm-2">{% trans "Optimize" %}</th>
+        <!-- /ko -->
+        <!-- ko if: showCaseTileConfigColumns() -->
         <th class="col-sm-1">{% trans "Row/Column" %}</th>
         <th class="col-sm-1">{% trans "Width/Height" %}</th>
         <th class="col-sm-1">{% trans "Style" %}</th>
-      <!-- /ko -->
-      <th class="col-sm-1"></th>
-    </tr>
+        <!-- /ko -->
+        <th class="col-sm-1"></th>
+      </tr>
     </thead>
-    <tbody data-bind="sortable: {
+    <tbody
+      data-bind="sortable: {
             data: columns,
             afterAdd: function (elem) { $(elem).hide().fadeIn() },
             beforeRemove: function (elem) { $(elem).fadeOut() }
         }"
       {# there must be no whitespace between <tbody> and <tr> #}
       {# the .hide().fadeIn() will fail badly on FireFox #}
-    ><tr data-bind="
+    >
+      <tr
+        data-bind="
                 css: {info: $data.isTab},
                 attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
                 copy: function () { return copyCallback(); },
                 paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
-            ">
-      <td class="text-center col-sm-1">
-        <span class="sort-disabled" data-bind="ifnot: grip"></span>
-        <i class="grip sortable-handle fa-solid fa-up-down" data-bind="
+            "
+      >
+        <td class="text-center col-sm-1">
+          <span class="sort-disabled" data-bind="ifnot: grip"></span>
+          <i
+            class="grip sortable-handle fa-solid fa-up-down"
+            data-bind="
                         if: grip,
                         event: {mousedown: function(){ $(':focus').blur(); }}
-                    "></i>
-      </td>
-      <!--ko if: !isTab -->
+                    "
+          ></i>
+        </td>
+        <!--ko if: !isTab -->
         <td class="col-sm-2" data-bind="css: {'has-error': showWarning}">
-          <div data-bind="html: hqImport('app_manager/js/details/utils').getFieldHtml(field.val()), visible: !field.edit"></div>
+          <div
+            data-bind="html: hqImport('app_manager/js/details/utils').getFieldHtml(field.val()), visible: !field.edit"
+          ></div>
           <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
           <!-- ko if: useXpathExpression -->
-            <div class="label label-default">{% trans "Calculated Property" %}&nbsp;(#<span data-bind="text: $index() + 1"></span>)</div>
+          <div class="label label-default">
+            {% trans "Calculated Property" %}&nbsp;(#<span
+              data-bind="text: $index() + 1"
+            ></span
+            >)
+          </div>
           <!-- /ko -->
           <div data-bind="visible: showWarning">
-            <span class="help-block" data-bind="
+            <span
+              class="help-block"
+              data-bind="
                 text: hqImport('app_manager/js/details/utils').fieldFormatWarningMessage
-            ">
+            "
+            >
             </span>
           </div>
         </td>
         <td data-bind="jqueryElement: header.ui"></td>
-        <td data-bind="jqueryElement: $format, css: {
+        <td
+          data-bind="jqueryElement: $format, css: {
                               'col-sm-3': $parent.showCaseTileMappingColumn(),
                               'col-sm-2': !$parent.showCaseTileMappingColumn(),
-                          }"></td>
+                          }"
+        ></td>
+        <!-- ko if: $parent.showCaseListOptimizations -->
+          <!-- ko if: supportsOptimizations -->
+          <td data-bind="jqueryElement: $optimizationSelectElement"></td>
+          <!-- /ko -->
+          <!-- ko ifnot: supportsOptimizations -->
+          <td>
+            <select class="form-control" disabled>
+              <option>{% trans "N/A" %}</option>
+            </select>
+          </td>
+          <!-- /ko -->
+        <!-- /ko -->
         <!-- ko if: $parent.showCaseTileConfigColumns() -->
-          <td class="col-sm-1">
-            <select class="form-control" data-bind="value: tileRowStart, options: tileRowOptions, visible: coordinatesVisible"></select>
-            <select class="form-control" data-bind="value: tileColumnStart, options: tileColumnOptions, visible: coordinatesVisible"></select>
-          </td>
-          <td class="col-sm-1">
-            <select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions, visible: coordinatesVisible"></select>
-            <select class="form-control" data-bind="value: tileHeight, options: tileHeightOptions, visible: coordinatesVisible"></select>
-          </td>
-          <td class="col-sm-1">
-            <button class="btn btn-default" data-bind="click: openStyleModal, visible: coordinatesVisible">{% trans "Edit" %}</button>
-          </td>
+        <td class="col-sm-1">
+          <select
+            class="form-control"
+            data-bind="value: tileRowStart, options: tileRowOptions, visible: coordinatesVisible"
+          ></select>
+          <select
+            class="form-control"
+            data-bind="value: tileColumnStart, options: tileColumnOptions, visible: coordinatesVisible"
+          ></select>
+        </td>
+        <td class="col-sm-1">
+          <select
+            class="form-control"
+            data-bind="value: tileWidth, options: tileWidthOptions, visible: coordinatesVisible"
+          ></select>
+          <select
+            class="form-control"
+            data-bind="value: tileHeight, options: tileHeightOptions, visible: coordinatesVisible"
+          ></select>
+        </td>
+        <td class="col-sm-1">
+          <button
+            class="btn btn-default"
+            data-bind="click: openStyleModal, visible: coordinatesVisible"
+          >
+            {% trans "Edit" %}
+          </button>
+        </td>
         <!--/ko-->
-      <!--/ko-->
-      <!--ko if: isTab -->
+        <!--/ko-->
+        <!--ko if: isTab -->
         <!--ko if: $data.hasNodeset -->
-          <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
-          <td class="col-sm-3 form-group">
-            <div data-bind="jqueryElement: relevant.ui"></div>
-          </td>
-          <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
+        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+        <td class="col-sm-3 form-group">
+          <div data-bind="jqueryElement: relevant.ui"></div>
+        </td>
+        <td
+          class="col-sm-3 form-group"
+          data-bind="css: {'has-error': showWarning}"
+        >
           <div data-bind="jqueryElement: nodeset_extra.ui"></div>
-          <span class="help-block"
-                data-bind="text: gettext('Please enter an expression.'), visible: showWarning"></span>
-          </td>
+          <span
+            class="help-block"
+            data-bind="text: gettext('Please enter an expression.'), visible: showWarning"
+          ></span>
+        </td>
         <!--/ko-->
         <!--ko ifnot: $data.hasNodeset -->
-          <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
-          <td class="col-sm-3 form-group">
-            <div data-bind="jqueryElement: relevant.ui"></div>
-          </td>
-          <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
+        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+        <td class="col-sm-3 form-group">
+          <div data-bind="jqueryElement: relevant.ui"></div>
+        </td>
+        <td
+          class="col-sm-3 form-group"
+          data-bind="css: {'has-error': showWarning}"
+        ></td>
         <!--/ko-->
         <!-- ko if: $parent.showCaseTileConfigColumns() -->
-          <td class="col-sm-1"></td>
-          <td class="col-sm-1"></td>
-          <td class="col-sm-1"></td>
+        <td class="col-sm-1"></td>
+        <td class="col-sm-1"></td>
+        <td class="col-sm-1"></td>
         <!--/ko-->
-      <!--/ko-->
-      <!-- ko if: $parent.showCaseTileMappingColumn() && $parent.caseTileFieldsForTemplate() -->
+        <!--/ko-->
+        <!-- ko if: $parent.showCaseTileMappingColumn() && $parent.caseTileFieldsForTemplate() -->
         <td class="col-sm-2">
-          <select class="form-control" data-bind="value: case_tile_field, options: $parent.caseTileFieldsForTemplate, visible: !$data.isTab"></select>
+          <select
+            class="form-control"
+            data-bind="value: case_tile_field, options: $parent.caseTileFieldsForTemplate, visible: !$data.isTab"
+          ></select>
         </td>
-      <!-- /ko -->
-      <td class="col-sm-1 text-center">
-        <i style="cursor: pointer;"
-           title="{% trans "Delete"|escapejs %}"
-           class="fa fa-remove"
-           data-bind="
+        <!-- /ko -->
+        <td class="col-sm-1 text-center">
+          <i
+            style="cursor: pointer;"
+            title="{% trans "Delete"|escapejs %}"
+            class="fa fa-remove"
+            data-bind="
                         visible: ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
                         click: function(){screen.columns.remove($data);},
-                    "></i>
-      </td>
-      {# there must be no whitespace between <tbody> and <tr> #}
-      {# the .hide().fadeIn() will fail badly on FireFox #}
-    </tr></tbody>
+                    "
+          ></i>
+        </td>
+        {# there must be no whitespace between <tbody> and <tr> #}
+        {# the .hide().fadeIn() will fail badly on FireFox #}
+      </tr>
+    </tbody>
     <tbody data-bind="visible: columns().length > 0">
-    <tr>
-      <td></td>
-      <td colspan="4">
-        {% include "app_manager/partials/modules/add_property_button.html" %}
-      </td>
-    </tr>
+      <tr>
+        <td></td>
+        <td colspan="4">
+          {% include "app_manager/partials/modules/add_property_button.html" %}
+        </td>
+      </tr>
     </tbody>
   </table>
   <div data-bind="visible: columns().length == 0">
