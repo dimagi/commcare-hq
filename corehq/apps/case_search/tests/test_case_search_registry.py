@@ -14,6 +14,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
+    CaseSearchRequestConfig,
     SearchCriteria,
     criteria_dict_to_criteria_list,
 )
@@ -153,8 +154,11 @@ class TestCaseSearchRegistry(TestCase):
         super().tearDownClass()
 
     def _run_query(self, domain, case_types, criteria_dict, registry_slug):
-        criteria = criteria_dict_to_criteria_list(criteria_dict)
-        results = get_case_search_results(domain, case_types, criteria, registry_slug=registry_slug)
+        results = get_case_search_results(domain, CaseSearchRequestConfig(
+            criteria=criteria_dict_to_criteria_list(criteria_dict),
+            case_types=case_types,
+            data_registry=registry_slug,
+        ))
         return [(case.name, case.domain) for case in results]
 
     def test_query_all_domains_in_registry(self):
@@ -273,12 +277,11 @@ class TestCaseSearchRegistry(TestCase):
         self.assertItemsEqual([], results)
 
     def test_includes_project_property(self):
-        results = get_case_search_results(
-            self.domain_1,
-            ["person"],
-            [SearchCriteria("name", "Jane")],
-            registry_slug=self.registry_slug
-        )
+        results = get_case_search_results(self.domain_1, CaseSearchRequestConfig(
+            criteria=[SearchCriteria("name", "Jane")],
+            case_types=["person"],
+            data_registry=self.registry_slug,
+        ))
         self.assertItemsEqual([
             ("Jane", self.domain_1, self.domain_1),
             ("Jane", self.domain_1, self.domain_1),
@@ -291,13 +294,11 @@ class TestCaseSearchRegistry(TestCase):
 
     def test_related_cases_included(self):
         with patch_get_app_cached:
-            results = get_case_search_results(
-                self.domain_1,
-                ["creative_work"],
-                [SearchCriteria("name", "Jane Eyre")],  # from domain 2
-                app_id="mock_app_id",
-                registry_slug=self.registry_slug
-            )
+            results = get_case_search_results(self.domain_1, CaseSearchRequestConfig(
+                criteria=[SearchCriteria("name", "Jane Eyre")],  # from domain 2
+                case_types=["creative_work"],
+                data_registry=self.registry_slug,
+            ), app_id="mock_app_id")
         self.assertItemsEqual([
             ("Charlotte Brontë", "creator", self.domain_2),
             ("Jane Eyre", "creative_work", self.domain_2),
@@ -310,7 +311,7 @@ class TestCaseSearchRegistry(TestCase):
         with patch_get_app_cached:
             registry_helper = _get_helper(None, self.domain_1, ["creative_work"], self.registry_slug)
             primary_cases = get_primary_case_search_results(
-                registry_helper, ["creative_work"], [SearchCriteria("name", "Jane Eyre")])
+                registry_helper, ["creative_work"], [SearchCriteria("name", "Jane Eyre")], None, None)
             related_cases = registry_helper.get_all_related_live_cases(primary_cases)
 
             self.assertItemsEqual([
