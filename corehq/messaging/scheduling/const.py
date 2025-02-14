@@ -39,11 +39,8 @@ ALLOWED_HTML_TAGS = {
     "tbody",
     "tr",
     "td",
-    "html",
-    "head",
     "meta",
     "title",
-    "body",
     "style",
 }
 

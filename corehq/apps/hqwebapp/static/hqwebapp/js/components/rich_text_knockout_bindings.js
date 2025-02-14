@@ -110,7 +110,27 @@ ko.bindingHandlers.richEditor = {
             if (!isSubscriberChange) {
                 isEditorChange = true;
                 const converter = new QuillDeltaToHtmlConverter(editor.getContents().ops, {});
-                const html = converter.convert();
+                const body = converter.convert();
+                const html = `
+                <html>
+                    <head>
+                        <style>
+                            .ql-size-small {{
+                              font-size: .75em;
+                            }}
+                            .ql-size-large {{
+                              font-size: 1.5em;
+                            }}
+                            .ql-size-huge {{
+                              font-size: 2.5em;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        ${body}
+                    </body>
+                </html>
+                `;
                 valueAccessor()(html);
                 isEditorChange = false;
             }
