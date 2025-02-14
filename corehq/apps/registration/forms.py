@@ -372,13 +372,13 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         label="",
         help_text=mark_safe(_(
             """I have read and agree to Dimagi's
-                <a href="https://dimagi.com/terms-privacy/"
+                <a href="https://dimagi.com/terms/latest/privacy/"
                     target="_blank">Privacy Policy</a>,
-                <a href="https://dimagi.com/terms-of-service/"
+                <a href="https://dimagi.com/terms/latest/tos/"
                     target="_blank">Terms of Service</a>,
-                <a href="https://dimagi.com/terms-ba/"
+                <a href="https://dimagi.com/terms/latest/ba/"
                     target="_blank">Business Agreement</a>, and
-                <a href="https://dimagi.com/terms-aup/"
+                <a href="https://dimagi.com/terms/latest/aup/"
                     target="_blank">Acceptable Use Policy</a>.
                """))
     )

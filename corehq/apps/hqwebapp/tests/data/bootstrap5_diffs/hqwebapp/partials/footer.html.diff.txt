@@ -1,18 +1,21 @@
 --- 
 +++ 
-@@ -3,46 +3,40 @@
- <footer>
-   <nav id="hq-footer"
-        role="navigation"
--       class="navbar navbar-inverse navbar-hq-footer">
-+       class="navbar navbar-dark bg-dark navbar-expand navbar-hq-footer">
+@@ -4,53 +4,45 @@
+   <nav
+     id="hq-footer"
+     role="navigation"
+-    class="navbar navbar-inverse navbar-hq-footer"
++    class="navbar navbar-dark bg-dark navbar-expand navbar-hq-footer"
+   >
      <div class="container-fluid">
 -      <div class="row">
 -        <div class="col-xs-12">
 -          <a href="https://dimagi.com/commcare/" class="footer-link-img">
--            <img src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
--                 alt="CommCare"
--                 height="30"  />
+-            <img
+-              src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
+-              alt="CommCare"
+-              height="30"
+-            />
 -          </a>
 -          <a href="https://dimagi.com/" class="dimagi-logo">
 -            {% include "hqwebapp/svg/dimagi_logo.html" %}
@@ -25,9 +28,11 @@
 -          <a href="https://dimagi.com/">Dimagi, Inc.</a>
 +      <p class="text-center align-middle mb-0 w-100">
 +        <a href="https://dimagi.com/commcare/" class="footer-link-img">
-+          <img src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
-+               alt="CommCare"
-+               height="30"  />
++          <img
++            src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
++            alt="CommCare"
++            height="30"
++          />
 +        </a>
 +        <a href="https://dimagi.com/" class="dimagi-logo">
 +          {% include "hqwebapp/svg/dimagi_logo.html" %}
@@ -39,39 +44,45 @@
 +        {% endblocktrans %}{% now "Y" %}
 +        <a href="https://dimagi.com/">Dimagi, Inc.</a>
  
--          <div class="visible-sm-inline visible-md-inline visible-lg-inline">&nbsp;|&nbsp;</div>
+-          <div class="visible-sm-inline visible-md-inline visible-lg-inline">
+-            &nbsp;|&nbsp;
+-          </div>
 -          <br class="hidden-sm hidden-md hidden-lg" />
 +        <span class="d-inline-md d-inline-lg">&nbsp;|&nbsp;</span>
-+        <a href="https://dimagi.com/commcare/">{% trans 'Learn more about CommCare HQ' %}</a>
++        <a href="https://dimagi.com/commcare/"
++          >{% trans 'Learn more about CommCare HQ' %}</a
++        >
  
--          <a href="https://dimagi.com/commcare/">{% trans 'Learn more about CommCare HQ' %}</a>
+-          <a href="https://dimagi.com/commcare/"
+-            >{% trans 'Learn more about CommCare HQ' %}</a
+-          >
 -
 -          <div class="visible-md-inline visible-lg-inline">&nbsp;|&nbsp;</div>
 -          <br class="hidden-md hidden-lg" />
 -
--          <a href="https://dimagi.com/terms-privacy/" target="_blank">
+-          <a href="https://dimagi.com/terms/latest/privacy/" target="_blank">
 -            {% trans "Privacy" %}
 -          </a>
 -          &nbsp;|&nbsp;
--          <a href="https://dimagi.com/terms-of-service/" target="_blank">
+-          <a href="https://dimagi.com/terms/latest/tos/" target="_blank">
 -            {% trans "Terms of Service" %}
 -          </a>
 -          &nbsp;|&nbsp;
--          <a href="https://dimagi.com/terms-ba/" target="_blank">
+-          <a href="https://dimagi.com/terms/latest/ba/" target="_blank">
 -            {% trans "Business Agreement" %}
 -          </a>
 -        </div>
 -      </div>
 +        <span class="d-inline-md d-inline-lg">&nbsp;|&nbsp;</span>
-+        <a href="https://dimagi.com/terms-privacy/" target="_blank">
++        <a href="https://dimagi.com/terms/latest/privacy/" target="_blank">
 +          {% trans "Privacy" %}
 +        </a>
 +        &nbsp;|&nbsp;
-+        <a href="https://dimagi.com/terms-of-service/" target="_blank">
++        <a href="https://dimagi.com/terms/latest/tos/" target="_blank">
 +          {% trans "Terms of Service" %}
 +        </a>
 +        &nbsp;|&nbsp;
-+        <a href="https://dimagi.com/terms-ba/" target="_blank">
++        <a href="https://dimagi.com/terms/latest/ba/" target="_blank">
 +          {% trans "Business Agreement" %}
 +        </a>
 +      </p>
