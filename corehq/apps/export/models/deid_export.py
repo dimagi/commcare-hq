@@ -18,11 +18,11 @@ class DeIdMapping(models.Model):
         ]
 
     @classmethod
-    def get_deid(cls, value, doc, domain=None):
-        if doc is not None:
-            # use domain from the couch doc if one was passed in
+    def get_deid(cls, value, doc):
+        if isinstance(doc, dict):
             domain = doc['domain']
-
+        else:
+            domain = doc.domain
         return cls._get_deid(value, domain)
 
     @classmethod
