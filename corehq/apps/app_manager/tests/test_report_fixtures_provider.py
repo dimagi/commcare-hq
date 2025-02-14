@@ -219,4 +219,4 @@ class TestReportDataCache(SimpleTestCase):
 
     def test_load_reports_none(self, _get_report_configs):
         self.cache.load_reports([])
-        _get_report_configs.assert_called_once_with([], self.domain)
+        _get_report_configs.assert_not_called()

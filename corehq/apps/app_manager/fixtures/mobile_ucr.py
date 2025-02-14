@@ -182,6 +182,8 @@ class ReportDataCache(object):
         Args:
             subset (list[ReportConfig]): Subset of reports to fetch. If None, fetch all reports.
         """
+        if subset == []:
+            return
         subset_ids = {config.report_id for config in subset} if subset is not None else None
         report_ids = [
             config.report_id for config in self.report_configs
