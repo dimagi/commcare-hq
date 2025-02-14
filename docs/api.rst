@@ -6,6 +6,9 @@ API
 
 For user-facing API documentation, see `API Wiki <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958022/API+Access>`_.
 
+Data APIs
+=========
+
 Application Structure API
 -------------------------
 
@@ -1153,3 +1156,324 @@ An array of the reports defined in the project. Each entry includes:
         "resource_uri": "/a/[PROJECT]/api/v0.5/simplereportconfiguration/9aab0eeb88555a7b4568676883e7379a/"
       }
     ]
+List Mobile Workers
+-------------------
+
+**Purpose:**
+    Get a list of users or a single user. The list of users may be presented to the end user as a simple list of user names, where each name includes a hyperlink to access a list of cases owned by the user.
+
+**Base URL:**
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/[domain]/api/[version]/user/
+
+**Single User URL:**
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/[domain]/api/[version]/user/[user_id]
+
+**Permissions Required:**
+    Edit Mobile Workers & Edit Access API's
+
+**Authentication and Usage:**
+    All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+**Input Parameters:**
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Example
+   * - ``format``
+     - Data format (json by default, xml supported)
+     - ``format=xml``
+   * - ``group``
+     - Group UUID (optional)
+     - ``group=ac9d34ff59cf6388e4f5804b12276d8a``
+   * - ``archived``
+     - List archived users instead of active ones
+     - ``archived=true``
+   * - ``extras``
+     - Adds extra data fields for recent user activity (may slow down API)
+     - ``extras=true``
+
+**Output Values:**
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Example
+   * - ``id``
+     - User UUID
+     - ``3c5a623af057e23a32ae4000cf291339``
+   * - ``username``
+     - User name of user, including domain
+     - ``jdoe@example.commcarehq.org``
+   * - ``first_name``
+     - First name of user
+     - ``John``
+   * - ``last_name``
+     - Last name of user
+     - ``Doe``
+   * - ``default_phone_number``
+     - Primary phone number of user
+     - ``+50253311399``
+   * - ``email``
+     - Email address of user
+     - ``john.doe@example.org``
+   * - ``phone_numbers``
+     - List of all phone numbers of the user
+     - ``[+50253311399, +50253314588]``
+   * - ``groups``
+     - List of all group IDs belonging to the user
+     - ``[9a0accdba29e01a61ea099394737c4fb, b4ccdba29e01a61ea099394737c4fbf7]``
+   * - ``primary_location``
+     - The location ID of the primary location of the user
+     - ``26fc44e2792b4f2fa8ef86178f0a958e``
+   * - ``locations``
+     - A list of location IDs that the user is assigned to
+     - ``[26fc44e2792b4f2fa8ef86178f0a958e, c1b029932ed442a6a846a4ea10e46a78]``
+   * - ``user_data``
+     - Any additional custom data associated with the user
+     - ``{"chw_id": "13/43/DFA"}``
+
+**Sample Usage:**
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/demo/api/v0.4/user/?format=xml&limit=5
+
+**Sample JSON Output:**
+
+.. code-block:: json
+
+    {
+        "meta": {
+            "limit": 2,
+            "next": null,
+            "offset": 0,
+            "previous": null,
+            "total_count": 29
+        },
+        "objects": [
+            {
+                "type": "user",
+                "id": "3c5a623af057e23a32ae4000cf291339",
+                "username": "jdoe@example.commcarehq.org",
+                "first_name": "John",
+                "last_name": "Doe",
+                "default_phone_number": "+50253311399",
+                "email": "jdoe@example.org",
+                "phone_numbers": [
+                    "+50253311399",
+                    "+50253314588"
+                ],
+                "groups": [
+                    "9a0accdba29e01a61ea099394737c4fb",
+                    "b4ccdba29e01a61ea099394737c4fbf7"
+                ],
+                "locations": ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"],
+                "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e",
+                "user_data": {
+                    "chw_id": "13/43/DFA"
+                }
+            }
+        ]
+    }
+
+**Sample XML Output:**
+
+.. code-block:: xml
+
+    <response>
+        <objects type="list">
+            <object id="3c5a623af057e23a32ae4000cf291339">
+                <username>jdoe@example.commcarehq.org</username>
+                <first_name>John</first_name>
+                <last_name>Doe</last_name>
+                <default_phone_number>+50253311399</default_phone_number>
+                <email>jdoe@example.org</email>
+                <phone_numbers type="list">
+                    <value>+50253311399</value>
+                    <value>+50253314588</value>
+                </phone_numbers>
+                <groups type="list">
+                    <value>9a0accdba29e01a61ea099394737c4fb</value>
+                    <value>b4ccdba29e01a61ea099394737c4fbf7</value>
+                </groups>
+                <user_data type="hash">
+                    <chw_id>13/43/DFA</chw_id>
+                </user_data>
+            </object>
+        </objects>
+        <meta type="hash">
+            <next type="null"/>
+            <total_count type="integer">29</total_count>
+            <previous type="null"/>
+            <limit type="integer">2</limit>
+            <offset type="integer">0</offset>
+        </meta>
+    </response>
+
+Download Report Data
+--------------------
+
+**Purpose:**
+    This endpoint will allow you to download the results of running a report on CommCare. To identify the reports available, see List Reports.
+
+**Authentication:**
+    For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_
+
+**Base URL:**
+
+.. code-block:: text
+
+    GET https://www.commcarehq.org/a/[PROJECT]/api/v0.5/configurablereportdata/REPORTID/
+
+**Input Parameters:**
+
+The report data can be filtered (based on the report's filter) and is also paged.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Example
+   * - ``offset``
+     - The record number to start at. Default is 0.
+     - ``offset=100``
+   * - ``limit``
+     - The maximum number of records to return. Maximum: 50
+     - ``limit=50``
+   * - ``filter_name``
+     - Each report can be filtered by filters defined on the List Reports API. Each filter is optional and can provide values for multiple filters.
+     - ``state=vermont%1Fnewyork&gender=male&form_date-start=2015-01-01&form_date-end=2015-02-01&age-operator=>&age-operand=10``
+
+**Sample Usage:**
+
+.. code-block:: text
+
+    GET https://www.commcarehq.org/a/[PROJECT]/api/v0.5/configurablereportdata/9aab0eeb88555a7b4568676883e7379a/?offset=20&limit=10&state=vermont&gender=male
+
+**Sample JSON Output:**
+
+.. code-block:: json
+
+    {
+      "columns": [
+        {
+          "header": "District",
+          "slug": "district"
+        },
+        {
+          "header": "Num Children Visited",
+          "slug": "number_of_children_visited"
+        },
+        {
+          "header": "Gender-male",
+          "expand_column_value": "male",
+          "slug": "gender-male"
+        },
+        {
+          "header": "Gender-female",
+          "expand_column_value": "female",
+          "slug": "gender-female"
+        }
+      ],
+      "data": [
+        {
+          "district": "Middlesex",
+          "number_of_children_visited": 46,
+          "gender-male": 10,
+          "gender-female": 35
+        },
+        {
+          "district": "Suffolk",
+          "number_of_children_visited": 85,
+          "gender-male": 81,
+          "gender-female": 4
+        }
+      ],
+      "next_page": "/a/[PROJECT]/api/v0.5/configurablereportdata/9aab0eeb88555a7b4568676883e7379a/?offset=3&limit=3&state=vermont",
+      "total_records": 30
+    }
+
+If the column type is **"expanded"**, there may be multiple results for a given column - these are named ``column_id-0``, ``column_id-1``, etc. Each result represents a unique value of that column. The **headers** section includes details on the value of each column.
+
+
+OTA API Restore
+---------------
+
+CommCare HQ offers a way to see the exact data that is being sent to the phones in the form of the "restore" XML. This can often be useful for troubleshooting issues or when doing advanced app building off of lookup tables and other data structures.
+
+Viewing the Data
+~~~~~~~~~~~~~~~~
+
+To view the OTA Restore data, open:
+
+``https://www.commcarehq.org/a/[domain]/phone/restore``
+
+Then enter:
+
+``[username]@[domain].commcarehq.org`` and the user's CommCare password.
+
+Understanding the Data Format
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The data will look exactly the same as a normal user registration response but with a list of case blocks following the registration data.
+
+See more details: `User Registration API <https://bitbucket.org/javarosa/javarosa/wiki/UserRegistrationAPI>`_
+
+**Example XML Output:**
+
+.. code-block:: xml
+
+    <?xml version='1.0' encoding='UTF-8'?>
+    <OpenRosaResponse xmlns="http://openrosa.org/http/response">
+        <message>Successfully restored account danny!</message>
+        <Sync xmlns="http://commcarehq.org/sync">
+            <restore_id>83226e1e05ebe146685b93a9a312efa3</restore_id>
+        </Sync>
+        <Registration xmlns="http://openrosa.org/user/registration">
+            <username>danny</username>
+            <password>sha1$13f7c$5b22f7ef1b05b0b81f6009146f5da173baf27761</password>
+            <uuid>da77a254-56dd-11e0-a55d-005056aa7fb5</uuid>
+            <date>2011-03-25</date>
+        </Registration>
+        <!-- this is where fixtures (lookup tables, locations, groups, etc.) go -->
+        <!-- this is where all the case blocks go -->
+    </OpenRosaResponse>
+
+For more information:
+- `CaseXML Spec <https://github.com/dimagi/commcare-core/wiki/casexml20>`_
+- `Fixtures Spec <https://github.com/dimagi/commcare-core/wiki/fixtures>`_
+
+When the phone receives the case blocks, for example, it applies them all in order to its internal database, thus reconstructing the case list.
+
+Making the Request Programmatically
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Assuming your domain is called ``DEMO_DOMAIN``, the request must be sent to:
+
+``https://www.commcarehq.org/a/DEMO_DOMAIN/phone/restore/``
+
+using HTTP basic authentication with the CHW's username and password.
+
+**Example cURL Request:**
+
+.. code-block:: bash
+
+    curl --basic -u jason@DEMO_DOMAIN.commcarehq.org:1988 \
+    https://www.commcarehq.org/a/DEMO_DOMAIN/phone/restore/?version=2.0
+
+In this example, we are on domain "DEMO_DOMAIN", our CHW's username is ``jason``, and his password is 1988. You'll note that the username, instead of being just ``jason`` is the much longer ``jason@demo.commcarehq.org``. This is to distinguish him from any other ``jason``s on any other domain. The format for the full-length username is:  ``{username}@{domain}.commcarehq.org``
+
+
+
