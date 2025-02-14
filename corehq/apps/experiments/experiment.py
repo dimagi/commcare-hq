@@ -120,9 +120,9 @@ class Experiment:
             else:
                 new_repr = f"raised {describe(type(new_error), new_error.args, {})}"
             old_repr = describe(type(old_error), old_error.args, {})
-            notify_error(
-                f"{describe(func, args, kwargs)}: raised {old_repr} != {new_repr}",
-                details=self.tags,
+            notify_exception(
+                None, f"{describe(func, args, kwargs)}: raised {old_repr} != {new_repr}",
+                details=self.tags,  exec_info=new_error or old_error,
             )
             tags["notify"] = "error"
             raise old_error
