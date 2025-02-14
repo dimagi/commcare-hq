@@ -71,6 +71,18 @@ function imageHandler() {
     input.click();
 }
 
+const converterOptions = {
+    inlineStyles: true,
+};
+
+function deltaToHtml(delta) {
+    console.log(JSON.stringify(delta, null, 4));
+    const converter = new QuillDeltaToHtmlConverter(delta.ops, converterOptions);
+    const body = converter.convert();
+    const html = `<html><body>${body}</body></html>`;
+    return html;
+}
+
 ko.bindingHandlers.richEditor = {
     init: function (element, valueAccessor) {
         const fontFamilyArr = [
@@ -109,28 +121,7 @@ ko.bindingHandlers.richEditor = {
         editor.on("text-change", function () {
             if (!isSubscriberChange) {
                 isEditorChange = true;
-                const converter = new QuillDeltaToHtmlConverter(editor.getContents().ops, {});
-                const body = converter.convert();
-                const html = `
-                <html>
-                    <head>
-                        <style>
-                            .ql-size-small {{
-                              font-size: .75em;
-                            }}
-                            .ql-size-large {{
-                              font-size: 1.5em;
-                            }}
-                            .ql-size-huge {{
-                              font-size: 2.5em;
-                            }}
-                        </style>
-                    </head>
-                    <body>
-                        ${body}
-                    </body>
-                </html>
-                `;
+                const html = deltaToHtml(editor.getContents());
                 valueAccessor()(html);
                 isEditorChange = false;
             }
@@ -148,4 +139,8 @@ ko.bindingHandlers.richEditor = {
             editor.enable(false);
         }
     },
+};
+
+export {
+    deltaToHtml,
 };
