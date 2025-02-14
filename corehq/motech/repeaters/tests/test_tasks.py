@@ -257,19 +257,19 @@ class TestProcessRepeatRecord(TestCase):
 class TestProcessRepeaters(TestCase):
 
     @patch('corehq.motech.repeaters.tasks.get_redis_lock')
-    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.get_redis_connection')
     @patch('corehq.motech.repeaters.tasks.iter_filtered_repeater_ids')
     @patch('corehq.motech.repeaters.tasks.process_repeater')
     def test_one_group(
         self,
         mock_process_repeater,
         mock_iter_filtered_repeater_ids,
-        mock_get_redis_client,
+        mock_get_redis_connection,
         __,
     ):
-        client = MagicMock()
-        client.get.return_value = 1
-        mock_get_redis_client.return_value = client
+        mock_redis = MagicMock()
+        mock_redis.get.return_value = 1
+        mock_get_redis_connection.return_value = mock_redis
         mock_iter_filtered_repeater_ids.side_effect = [
             ['repeater_id1'],
             [],
@@ -280,20 +280,20 @@ class TestProcessRepeaters(TestCase):
 
     @patch('corehq.motech.repeaters.tasks.get_redis_lock')
     @patch('corehq.motech.repeaters.tasks.uuid.uuid1')
-    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.get_redis_connection')
     @patch('corehq.motech.repeaters.tasks.iter_filtered_repeater_ids')
     @patch('corehq.motech.repeaters.tasks.process_repeater')
     def test_two_groups(
         self,
         mock_process_repeater,
         mock_iter_filtered_repeater_ids,
-        mock_get_redis_client,
+        mock_get_redis_connection,
         mock_uuid1,
         __,
     ):
-        client = MagicMock()
-        client.get.return_value = 1
-        mock_get_redis_client.return_value = client
+        mock_redis = MagicMock()
+        mock_redis.get.return_value = 1
+        mock_get_redis_connection.return_value = mock_redis
         mock_iter_filtered_repeater_ids.side_effect = [
             ['repeater_id1', 'repeater_id2'],
             ['repeater_id3'],
@@ -310,20 +310,20 @@ class TestProcessRepeaters(TestCase):
 
     @patch('corehq.motech.repeaters.tasks.get_redis_lock')
     @patch('corehq.motech.repeaters.tasks.process_repeater')
-    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.get_redis_connection')
     @patch('corehq.motech.repeaters.tasks.iter_filtered_repeater_ids')
     @patch('corehq.motech.repeaters.tasks.time')
     def test_sleep(
             self,
             mock_time,
             mock_iter_filtered_repeater_ids,
-            mock_get_redis_client,
+            mock_get_redis_connection,
             __,
             _,
     ):
-        client = MagicMock()
-        client.get.side_effect = [0, 0, 1]
-        mock_get_redis_client.return_value = client
+        mock_redis = MagicMock()
+        mock_redis.get.side_effect = [0, 0, 1]
+        mock_get_redis_connection.return_value = mock_redis
         mock_iter_filtered_repeater_ids.side_effect = [
             ['repeater_id1'],
             [],
@@ -395,7 +395,7 @@ def test_get_repeater_ids_by_domain():
 @flag_enabled('PROCESS_REPEATERS')
 class TestUpdateRepeater(SimpleTestCase):
 
-    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.get_redis_connection')
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_resets_backoff_on_success(self, mock_get_repeater, __, _):
@@ -407,7 +407,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
-    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.get_redis_connection')
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_resets_backoff_on_invalid(self, mock_get_repeater, __, _):
@@ -419,7 +419,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
-    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.get_redis_connection')
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_backs_off_on_failure(
@@ -439,7 +439,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.reset_backoff.assert_not_called()
         mock_lock.release.assert_called_once()
 
-    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.get_redis_connection')
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_does_nothing_on_empty(self, mock_get_repeater, __, _):
@@ -451,7 +451,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
 
-    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.get_redis_connection')
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_does_nothing_on_none(self, mock_get_repeater, __, _):
@@ -463,26 +463,26 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
 
-    @patch('corehq.motech.repeaters.tasks.get_redis_client')
+    @patch('corehq.motech.repeaters.tasks.get_redis_connection')
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_releases_lock(
         self,
         mock_get_repeater,
         mock_get_repeater_lock,
-        mock_get_redis_client,
+        mock_get_redis_connection,
     ):
         repeat_record_states = [None]
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
         mock_lock = MagicMock()
         mock_get_repeater_lock.return_value = mock_lock
-        mock_redis_client = MagicMock()
-        mock_get_redis_client.return_value = mock_redis_client
+        mock_redis = MagicMock()
+        mock_get_redis_connection.return_value = mock_redis
         update_repeater(repeat_record_states, 1, 'token', 0)
 
         mock_lock.release.assert_called_once()
-        mock_redis_client.incr.assert_called_once()
+        mock_redis.incr.assert_called_once()
 
 
 @freeze_time('2025-01-01')

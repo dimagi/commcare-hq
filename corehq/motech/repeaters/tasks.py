@@ -327,9 +327,9 @@ def process_repeaters():
         group = 0
         redis = get_redis_connection()
         timeout_ms = 30 * 60 * 1000  # half an hour
-        redis.set(f'repeater_group_{group}', 0, px=timeout_ms)
         while True:
             metrics_counter('commcare.repeaters.process_repeaters.iter_once')
+            redis.set(f'repeater_group_{group}', 0, px=timeout_ms)
             # A filtered list of the repeater IDs originally returned by
             # `Repeater.objects.get_all_ready_ids_by_domain()`:
             repeater_ids = list(iter_filtered_repeater_ids())
