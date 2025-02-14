@@ -88,7 +88,16 @@
                           }"
         ></td>
         <!-- ko if: $parent.showCaseListOptimizations -->
+        <!-- ko if: supportsOptimizations -->
         <td data-bind="jqueryElement: $optimizationSelectElement"></td>
+        <!-- /ko -->
+        <!-- ko ifnot: supportsOptimizations -->
+        <td>
+          <select class="form-control" disabled>
+            <option>{% trans "N/A" %}</option>
+          </select>
+        </td>
+        <!-- /ko -->
         <!-- /ko -->
         <!-- ko if: $parent.showCaseTileConfigColumns() -->
         <td class="col-sm-1">
