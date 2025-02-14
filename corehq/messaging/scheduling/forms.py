@@ -498,13 +498,15 @@ class ContentForm(Form):
 
             # bleach.clean throws out html, head and body tags not matter what to keep them we need to clean them
             # separately
-            bleached_head = bleach.clean(
-                soup.head.decode_contents(),
-                attributes=ALLOWED_HTML_ATTRIBUTES,
-                tags=ALLOWED_HTML_TAGS,
-                css_sanitizer=css_sanitizer,
-                strip=True,
-            )
+            bleached_head = ""
+            if soup.head:
+                bleached_head = bleach.clean(
+                    soup.head.decode_contents(),
+                    attributes=ALLOWED_HTML_ATTRIBUTES,
+                    tags=ALLOWED_HTML_TAGS,
+                    css_sanitizer=css_sanitizer,
+                    strip=True,
+                )
             bleached_body = bleach.clean(
                 soup.body.decode_contents(),
                 attributes=ALLOWED_HTML_ATTRIBUTES,
