@@ -182,12 +182,12 @@ class ReportDataCache(object):
         Args:
             subset (list[ReportConfig]): Subset of reports to fetch. If None, fetch all reports.
         """
-        subset_ids = {config.report_id for config in subset} if subset else None
-        report_ids = [
-            config.report_id for config in self.report_configs
-            if config.report_id not in self.reports and (subset is None or config.report_id in subset_ids)
-        ]
-        self.reports.update(_get_report_configs(report_ids, self.domain))
+        to_load = {config.report_id for config in self.report_configs} - set(self.reports)
+        if subset is not None:
+            to_load = to_load.intersection({config.report_id for config in subset})
+        if to_load:
+            reports = get_report_configs(to_load, self.domain)
+            self.reports.update({report._id: report for report in reports})
 
     def get_report_and_datasource(self, report_id):
         if not self.reports:
@@ -598,11 +598,6 @@ def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
             filter_elem.append(option_elem)
         filters_elem.append(filter_elem)
     return filters_elem
-
-
-def _get_report_configs(report_ids, domain):
-    reports = get_report_configs(report_ids, domain)
-    return {report._id: report for report in reports}
 
 
 class MockTotalRowCalculator(object):
