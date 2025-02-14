@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
 
 from corehq.apps.domain.auth import HQApiKeyAuthentication
-from corehq.apps.domain.decorators import api_auth, api_auth_no_digest
+from corehq.apps.domain.decorators import api_auth, api_auth_allow_key_as_password
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import HQApiKey, WebUser
 
@@ -96,9 +96,9 @@ class ApiAuthNoDigestTests(TestCase):
         cls.user = WebUser.create(cls.domain, USERNAME, 'password', None, None)
         cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user()).plaintext_key
 
-    def call_api(self, request, allow_creds_in_data=False, allow_api_key_as_password=False):
+    def call_api(self, request, allow_creds_in_data=False):
 
-        @api_auth_no_digest(allow_api_key_as_password=allow_api_key_as_password)
+        @api_auth_allow_key_as_password()
         def api_view(request, domain):
             return HttpResponse()
 
@@ -110,8 +110,5 @@ class ApiAuthNoDigestTests(TestCase):
         encoded_creds = base64.b64encode(f"{USERNAME}:{self.api_key}".encode('utf-8')).decode('utf-8')
         request.META['HTTP_AUTHORIZATION'] = f"basic {encoded_creds}"
 
-        res = self.call_api(request, allow_api_key_as_password=False)
-        self.assertEqual(res.status_code, 401)
-
-        res = self.call_api(request, allow_api_key_as_password=True)
+        res = self.call_api(request)
         self.assertEqual(res.status_code, 200)

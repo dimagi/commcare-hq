@@ -429,7 +429,7 @@ def api_auth(*, allow_creds_in_data=True, oauth_scopes=None):
     )
 
 
-def api_auth_no_digest(*, allow_creds_in_data=True, oauth_scopes=None, allow_api_key_as_password=False):
+def api_auth_allow_key_as_password(*, allow_creds_in_data=True, oauth_scopes=None):
     """
     Intentionally does not support digest auth to allow using api key as password if desired.
     See determine_authtype_from_header for more details on how defaulting to BASIC drops DIGEST support
@@ -438,7 +438,7 @@ def api_auth_no_digest(*, allow_creds_in_data=True, oauth_scopes=None, allow_api
         default=BASIC,
         oauth_scopes=oauth_scopes,
         allow_creds_in_data=allow_creds_in_data,
-        allow_api_key_as_password=allow_api_key_as_password,
+        allow_api_key_as_password=True,
     )
 
 
