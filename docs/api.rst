@@ -975,3 +975,181 @@ List Web Users
        ]
     }
 
+List Groups 
+-----------
+
+**Purpose:**
+    Retrieve a list of user groups. The list of groups may be presented to the user as a simple list of group names, where each group name includes a hyperlink to access a list of group members. Group names could, for example, mirror the geographic distribution of CHWs, with a separate group name used for each health district. Access control may be applied, with each web user having access to one or more groups associated with the CommCare domain. Only groups that the user is permitted to access are included in the output.
+
+**Base URL:**
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/[domain]/api/[version]/group/
+
+**Authentication:**
+    For more information, please review Authentication.
+
+**Input Parameters:**
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Example
+   * - ``format``
+     - Return data format (optional). Supported formats: ``json`` (default), ``xml``
+     - ``format=xml``
+
+**Output Values:**
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Example
+   * - ``group_id``
+     - Group UUID
+     - ``ac9d34ff59cf6388e4f5804b12276d8a``
+   * - ``group_name``
+     - Group name (e.g., health district)
+     - ``Senahú``
+
+**Sample Usage:**
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/demo/api/v0.4/group/
+
+**Sample JSON Output:**
+
+.. code-block:: json
+
+    {
+      "meta": {
+        "limit": 20,
+        "next": null,
+        "offset": 0,
+        "previous": null,
+        "total_count": 3
+      },
+      "objects": [
+        {
+          "case_sharing": false,
+          "domain": "cloudcaredemo",
+          "id": "1eb59d6938fc7e510254d8c2f63d944f",
+          "metadata": {},
+          "name": "Wozzle",
+          "path": [],
+          "reporting": true,
+          "users": ["91da6b1c78699adfb8679b741caf9f00", "8a642f722c9e617eeed29290e409fcd5"]
+        }
+      ]
+    }
+
+List Reports 
+------------
+
+
+**Purpose:**
+    This endpoint provides a list of reports built in CommCare. This information can be used in the Download Report Data API to run a specific report and get the results.
+
+**Base URL:**
+
+.. code-block:: text
+
+    GET https://www.commcarehq.org/a/[PROJECT]/api/v0.5/simplereportconfiguration/?format=json
+
+**Output Details:**
+
+An array of the reports defined in the project. Each entry includes:
+
+- **Columns:** A list of columns in the report. Each column has a type:
+  - "field": A single field column.
+  - "expanded": Expands into multiple result columns when downloading report data.
+
+- **Filters:** The filters that can be used for the report. 
+  - The filters can have a datatype that is "string", "integer", or "decimal".
+  - The type of the filter can be "date", "choice_list", or "dynamic_choice_list".
+  - Choice lists contain a set of predefined choices displayed to the user. These can be treated as strings when querying the reports.
+
+**Sample JSON Output:**
+
+.. code-block:: json
+
+    [
+      {
+        "columns": [
+          {
+            "column_id": "name",
+            "display": "Name",
+            "type": "field"
+          },
+          {
+            "column_id": "gender",
+            "display": "Gender",
+            "type": "expanded"
+          },
+          {
+            "column_id": "address",
+            "display": "Person Address",
+            "type": "field"
+          }
+        ],
+        "filters": [
+          {
+            "datatype": "string",
+            "slug": "closed"
+          },
+          {
+            "datatype": "string",
+            "slug": "owner_name"
+          }
+        ],
+        "title": "Test Report 1",
+        "id": "9aab0eeb88555a7b3bc8676883e7379a",
+        "resource_uri": "/a/[PROJECT]/api/v0.5/simplereportconfiguration/9aab0eeb88555a7b3bc8676883e7379a/"
+      },
+      {
+        "columns": [
+          {
+            "column_id": "district",
+            "display": "District",
+            "type": "field"
+          },
+          {
+            "column_id": "number_of_children_visited",
+            "display": "Num Children Visited",
+            "type": "field"
+          },
+          {
+            "column_id": "number_of_children_underweight",
+            "display": "Underweight",
+            "type": "field"
+          }
+        ],
+        "filters": [
+          {
+            "datatype": "string",
+            "slug": "closed"
+          },
+          {
+            "datatype": "string",
+            "slug": "owner_name"
+          },
+          {
+            "datatype": "integer",
+            "slug": "child_age"
+          },
+          {
+            "datatype": "date",
+            "slug": "form_date"
+          }
+        ],
+        "title": "Test Report 2",
+        "id": "9aab0eeb88555a7b4568676883e7379a",
+        "resource_uri": "/a/[PROJECT]/api/v0.5/simplereportconfiguration/9aab0eeb88555a7b4568676883e7379a/"
+      }
+    ]
