@@ -32,6 +32,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.const import (
     CASE_LIST_FILTER_LOCATIONS_FIXTURE,
+    FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS,
     MOBILE_UCR_VERSION_1,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
@@ -161,6 +162,7 @@ def get_module_view_context(request, app, module, lang=None):
             {'test': assertion.test, 'text': assertion.text.get(lang)}
             for assertion in module.custom_assertions
         ],
+        'formats_supporting_case_list_optimizations': FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS,
     }
     module_brief = {
         'id': module.id,
