@@ -101,7 +101,9 @@ def test_experiment_with_old_error():
         pytest.raises(ValueError, match="bad value"),
     ):
         fail()
-    assert log.get_output() == "fail(): raised ValueError('bad value') != 4\n"
+    logs = log.get_output()
+    assert "fail(): raised ValueError('bad value') != 4\n" in logs
+    assert "ValueError: bad value" in logs
     assert metrics.to_flattened_dict().get('commcare.experiment.diff.notify:error') == 1
 
 
@@ -146,8 +148,9 @@ def test_experiment_with_mismatched_errors():
         pytest.raises(ValueError, match="bad"),
     ):
         fail()
-    assert log.get_output() == \
-        "fail(): raised ValueError('bad') != raised ValueError('worse')\n"
+    logs = log.get_output()
+    assert "fail(): raised ValueError('bad') != raised ValueError('worse')" in logs
+    assert "ValueError: worse" in logs
     assert metrics.to_flattened_dict().get('commcare.experiment.diff.notify:error') == 1
 
 
