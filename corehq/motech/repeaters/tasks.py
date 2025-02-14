@@ -72,6 +72,7 @@ again, until there are no more repeat records ready to be sent.
 
 """
 import random
+import time
 import uuid
 from datetime import datetime, timedelta
 from inspect import cleandoc
@@ -81,6 +82,7 @@ from django.conf import settings
 from celery import chord
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
+from django_redis import get_redis_connection
 
 from dimagi.utils.couch import get_redis_lock
 
@@ -109,6 +111,7 @@ from .const import (
     ENDPOINT_TIMER,
     MAX_RETRY_WAIT,
     PROCESS_REPEATERS_INTERVAL,
+    PROCESS_REPEATERS_KEY,
     RATE_LIMITER_DELAY_RANGE,
     State,
 )
@@ -311,19 +314,59 @@ def process_repeaters():
     Processes repeaters, instead of processing repeat records
     independently the way that ``check_repeaters()`` does.
     """
+    process_repeaters_lock = get_redis_lock(
+        PROCESS_REPEATERS_KEY,
+        timeout=None,  # Iterating repeaters forever is fine
+        name=PROCESS_REPEATERS_KEY,
+    )
+    if not process_repeaters_lock.acquire(blocking=False):
+        return
+
     metrics_counter('commcare.repeaters.process_repeaters.start')
-    for domain, repeater_id in iter_ready_repeater_ids():
+    try:
+        group = 0
+        redis = get_redis_connection()
+        timeout_ms = 30 * 60 * 1000  # half an hour
+        redis.set(f'repeater_group_{group}', 0, px=timeout_ms)
+        while True:
+            metrics_counter('commcare.repeaters.process_repeaters.iter_once')
+            # A filtered list of the repeater IDs originally returned by
+            # `Repeater.objects.get_all_ready_ids_by_domain()`:
+            repeater_ids = list(iter_filtered_repeater_ids())
+            if not repeater_ids:
+                return
+            for repeater_id in repeater_ids:
+                lock = RepeaterLock(repeater_id)
+                if lock.acquire():  # non-blocking
+                    process_repeater(repeater_id, lock.token, group)
+
+            while int(redis.get(f'repeater_group_{group}')) == 0:
+                # Wait for (at least) one `process_repeater` task to finish
+                # so that `Repeater.objects.get_all_ready_ids_by_domain()`
+                # will return an updated set of repeaters. (This `while`
+                # loop mimics redis-py's `Lock.acquire(blocking=True)`.)
+                # https://github.com/redis/redis-py/blob/e0906519/redis/lock.py#L209-L218
+                time.sleep(0.1)
+            group += 1
+    finally:
+        process_repeaters_lock.release()
+        metrics_counter('commcare.repeaters.process_repeaters.complete')
+
+
+def iter_filtered_repeater_ids():
+    """
+    Filters ready repeater_ids based on whether data forwarding is
+    enabled for the domain, and rate limiting.
+    """
+    for domain, repeater_id in iter_ready_domain_repeater_ids():
         if not domain_can_forward_now(domain):
             continue
         if rate_limit_repeater(domain, repeater_id):
             continue
-        lock = RepeaterLock(repeater_id)
-        if lock.acquire():
-            repeater = Repeater.objects.get(domain=domain, id=repeater_id)
-            process_repeater(repeater, lock.token)
+        yield repeater_id
 
 
-def iter_ready_repeater_ids():
+def iter_ready_domain_repeater_ids():
     """
     Yields domain-repeater_id tuples in a round-robin fashion.
 
@@ -364,7 +407,7 @@ def get_repeater_ids_by_domain():
     }
 
 
-def process_repeater(repeater, lock_token):
+def process_repeater(repeater_id, lock_token, group):
     """
     Initiates a Celery chord to process a repeater.
     """
@@ -376,14 +419,10 @@ def process_repeater(repeater, lock_token):
         }[repeat_record.state]
         return task_.s(repeat_record.id, repeat_record.domain)
 
-    # Fetch an extra row to determine whether there are more repeat
-    # records to send after this batch
-    repeat_records = repeater.repeat_records_ready[:repeater.num_workers + 1]
-    more = len(repeat_records) > repeater.num_workers
-
-    repeat_records = repeat_records[:repeater.num_workers]
+    repeater = Repeater.objects.get(id=repeater_id)
+    repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
     header_tasks = [get_task_signature(rr) for rr in repeat_records]
-    callback = update_repeater.s(repeater.repeater_id, lock_token, more)
+    callback = update_repeater.s(repeater_id, lock_token, group)
     chord(header_tasks, callback)()
 
 
@@ -473,15 +512,14 @@ def _get_wait_duration_seconds(repeat_record):
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def update_repeater(repeat_record_states, repeater_id, lock_token, more):
+def update_repeater(repeat_record_states, repeater_id, lock_token, group):
     """
     Determines whether the repeater should back off, based on the
     results of ``process_ready_repeat_record()``.
 
-    If ``more`` is ``True``, there are more repeat records ready to be
-    sent. Initiates another Celery chord to continue processing the
-    repeater. If ``more`` is ``False``, releases the lock for the
-    repeater.
+    ``group`` is the group number of the repeater. It is used to
+    determine when (at least) one repeater in the group has been
+    processed.
     """
     repeater = Repeater.objects.get(id=repeater_id)
     try:
@@ -498,15 +536,12 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
                 'commcare.repeaters.process_repeaters.repeater_backoff',
                 tags={'domain': repeater.domain},
             )
-            more = False
             repeater.set_backoff()
     finally:
         lock = RepeaterLock(repeater_id, lock_token)
-        if more:
-            lock.reacquire()
-            process_repeater(repeater, lock_token)
-        else:
-            lock.release()
+        lock.release()
+        redis = get_redis_connection()
+        redis.incr(f'repeater_group_{group}')
 
 
 class RepeaterLock:
