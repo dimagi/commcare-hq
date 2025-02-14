@@ -71,3 +71,8 @@ class TestDeviceRateLimiter(SimpleTestCase):
         device_rate_limiter.rate_limit_device(self.domain, 'user-id', 'existing-device-id')
         self.assertFalse(device_rate_limiter.rate_limit_device(self.domain, 'user-id', None))
         self.assertFalse(device_rate_limiter.rate_limit_device(self.domain, None, 'new-device-id'))
+
+    def test_domains_do_not_conflict(self):
+        device_rate_limiter.rate_limit_device(self.domain, 'user-id', 'existing-device-id')
+        device_rate_limiter.rate_limit_device('random-domain', 'user-id', 'random-device')
+        self.assertTrue(device_rate_limiter.rate_limit_device('random-domain', 'user-id', 'existing-device-id'))

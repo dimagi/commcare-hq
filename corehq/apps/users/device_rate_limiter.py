@@ -44,7 +44,7 @@ class DeviceRateLimiter:
             # do not track formplayer activity
             return False
 
-        key = self._get_redis_key(user_id)
+        key = self._get_redis_key(domain, user_id)
 
         key_exists, device_exists, device_count = self._get_usage_for_device(key, device_id)
 
@@ -68,14 +68,14 @@ class DeviceRateLimiter:
         )
         return settings.ENABLE_DEVICE_RATE_LIMITER
 
-    def _get_redis_key(self, user_id):
+    def _get_redis_key(self, domain, user_id):
         """
-        Create a redis key using the user_id and current time to the floored minute
+        Create a redis key using the domain, user_id, and current time to the floored minute
         This ensures a new key is used every minute
         """
         time = datetime.now(timezone.utc)
         formatted_time = time.strftime('%Y-%m-%d_%H:%M')
-        key = f"device-limiter_{user_id}_{formatted_time}"
+        key = f"device-limiter_{domain}_{user_id}_{formatted_time}"
         return key
 
     def _track_usage(self, redis_key, device_id, is_key_new=False):
