@@ -17,6 +17,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views import View
 
+from corehq.apps.sso.models import IdentityProvider
 from django_digest.decorators import httpdigest
 from django_otp import match_token
 from django_prbac.utils import has_privilege
@@ -58,6 +59,8 @@ from corehq.util.soft_assert import soft_assert
 auth_logger = logging.getLogger("commcare_auth")
 
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
+
+SSO_AUTH_FAIL_RESPONSE = {"error": "SSO user must use api key authentication"}
 
 
 def load_domain(req, domain):
@@ -282,6 +285,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
                     @check_lockout
                     @challenge_fn
                     @two_factor_check(fn, api_key)
+                    @sso_check(fn, api_key)
                     def _inner(request, domain, *args, **kwargs):
                         couch_user = _ensure_request_couch_user(request)
                         if (
@@ -517,6 +521,32 @@ def two_factor_check(view_func, api_key):
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
+
+
+def sso_check(view_func, api_key):
+    def _outer(fn):
+        @wraps(fn)
+        def _inner(request, domain, *args, **kwargs):
+            domain_obj = Domain.get_by_name(domain)
+            _ensure_request_couch_user(request)
+            if (
+                not api_key
+                and domain_obj
+                and _sso_required(request)
+            ):
+                return JsonResponse(SSO_AUTH_FAIL_RESPONSE, status=401)
+            return fn(request, domain, *args, **kwargs)
+        return _inner
+    return _outer
+
+
+def _sso_required(request):
+    username = getattr(request, 'couch_user', None)
+    if username:
+        idp = IdentityProvider.get_required_identity_provider(username)
+        if idp:
+            return True
+    return False
 
 
 def _two_factor_required(view_func, domain_obj, request):
