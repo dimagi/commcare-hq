@@ -14,6 +14,7 @@ $(document).on('change', 'input[name="selection"]', function () {
         selectedUsers = selectedUsers.filter(id => id !== rowId);
     }
     updateVerifyButton(selectedUsers.length);
+    updateSelectAllCheckbox(selectedUsers.length);
 });
 
 $(document).on('change', 'input[name="select_all"]', function () {
@@ -50,4 +51,12 @@ function updateVerifyButton(selectedCount) {
         verifyBtnVals['verify_all'] = true;
     }
     $verifyBtn.attr('hx-vals', JSON.stringify(verifyBtnVals));
+}
+
+function updateSelectAllCheckbox(selectedCount) {
+    if (selectedCount > 0) {
+        return;
+    }
+    const $selectAll = $('input[name="select_all"]');
+    $selectAll.prop('checked', false);
 }
