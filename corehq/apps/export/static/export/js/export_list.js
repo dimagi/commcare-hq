@@ -35,7 +35,7 @@ hqDefine("export/js/export_list", [
     Clipboard,
     googleAnalytics,
     kissmetricsAnalytics,
-    utils
+    utils,
 ) {
     var exportModel = function (options, pageOptions) {
         assertProperties.assert(pageOptions, ['is_deid', 'is_odata', 'model_type', 'urls']);
@@ -403,7 +403,7 @@ hqDefine("export/js/export_list", [
             'isOData',
             'modelType',
             'urls',
-            'exportOwnershipEnabled'
+            'exportOwnershipEnabled',
         ]);
 
         var self = {};
@@ -635,7 +635,7 @@ hqDefine("export/js/export_list", [
                 "[BI Integration] Clicked Save Filters button",
                 {
                     "Date Range": self.dateRange(),
-                }
+                },
             );
 
             $.ajax({

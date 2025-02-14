@@ -19,7 +19,7 @@
      alertUser,
      chartsMain,
      filtersMain,
-@@ -18,7 +20,8 @@
+@@ -17,7 +19,8 @@
          var self = {};
          self.reportContent = $('#report-content');
          self.filterForm = o.filterForm || $('#paramSelectorForm');
@@ -29,7 +29,7 @@
          self.issueAttempts = 0;
          self.hqLoading = null;
          self.standardReport = o.standardReport;
-@@ -53,7 +56,7 @@
+@@ -52,7 +55,7 @@
              } catch (e) {
                  console.log(e);
              }
@@ -38,7 +38,7 @@
              self.standardReport.resetFilterState();
          };
  
-@@ -149,9 +152,9 @@
+@@ -148,9 +151,9 @@
                  processFilters = processFilters + "&filterSet=" + setFilters;
              }
              if (setFilters) {
@@ -51,7 +51,7 @@
              }
  
              self.reportRequest = $.ajax({
-@@ -164,8 +167,8 @@
+@@ -163,8 +166,8 @@
                          loadFilters(data);
                      }
                      self.issueAttempts = 0;
@@ -62,7 +62,7 @@
                      }
                      self.hqLoading = $(self.loaderClass);
                      self.reportContent.html(data.report);
-@@ -175,17 +178,17 @@
+@@ -174,17 +177,17 @@
                          $(popover).remove();
                      });
                      self.reportContent.append(self.hqLoading);
@@ -83,7 +83,7 @@
                          setTimeout(function () {
                              // Bootstrap clears all btn styles except btn on reset
                              // This gets around it by waiting 10ms.
-@@ -197,7 +200,7 @@
+@@ -196,7 +199,7 @@
                          }, 10);
                      } else {
                          self.standardReport.filterSubmitButton
@@ -92,7 +92,7 @@
                              .addClass('btn-primary')
                              .removeClass('disabled')
                              .prop('disabled', false);
-@@ -213,13 +216,13 @@
+@@ -212,13 +215,13 @@
                          } else {
                              humanReadable = self.humanReadableErrors[data.status];
                          }
@@ -109,7 +109,7 @@
                      } else {
                          self.hqLoading = $(self.loaderClass);
                          self.hqLoading.find('h4').text(gettext("Loading Stopped"));
-@@ -227,7 +230,7 @@
+@@ -226,7 +229,7 @@
                      }
                  },
                  beforeSend: function () {
@@ -118,7 +118,7 @@
                      $('.loading-backdrop').fadeIn();
                      if (self.hqLoading) {
                          self.hqLoading.attr('style', 'position: absolute; top: 30px; left: 40%;');
-@@ -239,7 +242,7 @@
+@@ -238,7 +241,7 @@
          };
  
          $(document).on('click', '.try-again', function () {
@@ -127,7 +127,7 @@
              if (self.isCaseListRelated(window.location.pathname)) {
                  self.getQueryId(window.location.search.substr(1), true, true, window.location.pathname);
              } else {
-@@ -247,9 +250,9 @@
+@@ -246,9 +249,9 @@
              }
          });
  

@@ -5,7 +5,7 @@ hqDefine('locations/js/location_drilldown', [
 ], function (
     $,
     ko,
-    _
+    _,
 ) {
     function apiGetChildren(locUuid, callback, locUrl) {
         // Both B3 hide and B5 d-none are used to avoid needing to split this template.

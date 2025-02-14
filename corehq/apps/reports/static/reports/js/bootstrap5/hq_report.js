@@ -13,10 +13,9 @@ hqDefine("reports/js/bootstrap5/hq_report", [
     alertUser,
     kissmetrics,
     initialPageData,
-    widgets  // eslint-disable-line no-unused-vars
+    widgets,  // eslint-disable-line no-unused-vars
 ) {
     var hqReport = function (options) {
-        'use strict';
         var self = {};
         self.domain = options.domain;
         self.datespan = options.datespan;

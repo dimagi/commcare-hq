@@ -2,7 +2,7 @@
 hqDefine("locations/spec/location_drilldown_spec", [
     'locations/js/location_drilldown',
 ], function (
-    locationDrilldown
+    locationDrilldown,
 ) {
     describe('Location Drilldown', function () {
         const hierarchy = [["state", [null]], ["district", ["state"]], ["block", ["district"]]],

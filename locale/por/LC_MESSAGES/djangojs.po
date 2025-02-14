@@ -636,6 +636,14 @@ msgid "You have unchanged user properties settings"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to Case Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to User Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
 msgstr ""
 
@@ -750,35 +758,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
 msgid "This code is used in multiple places."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Crunching app diff..."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Error generating the application diff. Please report an issue."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Form Changes"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Case Changes"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Save Questions"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Load Questions"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
-msgid "[unknown]"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
@@ -992,6 +971,10 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "Latest saved"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
+msgid "[unknown]"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
@@ -4332,6 +4315,14 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "_MENU_ per page"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "All Rows"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js

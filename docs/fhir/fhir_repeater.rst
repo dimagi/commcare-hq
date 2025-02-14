@@ -211,4 +211,4 @@ Testing as the app is built catches problems early, and increases
 confidence in the app and the integration.
 
 
-.. _fhir-ref: https://www.hl7.org/fhir/
+.. _fhir-ref: https://hl7.org/fhir/R4/

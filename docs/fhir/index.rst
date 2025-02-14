@@ -93,8 +93,8 @@ to become more familiar with JSONPath.
 
 
 .. _JSONPath: https://goessner.net/articles/JsonPath/
-.. _FHIR Patient: https://www.hl7.org/fhir/patient.html#resource
-.. _HumanName: https://www.hl7.org/fhir/datatypes.html#HumanName
+.. _FHIR Patient: https://hl7.org/fhir/R4/patient.html#resource
+.. _HumanName: https://hl7.org/fhir/R4/datatypes.html#HumanName
 .. _JSONPath expression syntax: https://goessner.net/articles/JsonPath/index.html#e2
 .. _JSONPath Online Evaluator: https://jsonpath.com/
 .. _Postman REST Client: https://www.postman.com/product/rest-client/

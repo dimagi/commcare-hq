@@ -12,7 +12,7 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
     _,
     bootstrap,
     initialPageData,
-    hqReportModule
+    hqReportModule,
 ) {
     var standardReport = undefined,
         asyncReport = undefined;
@@ -23,7 +23,7 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
         }
 
         if (typeof standardHQReport !== 'undefined') {
-            // Custom reports, notably ewsghana
+            // Custom reports
             standardReport = standardHQReport;
         } else {
             // Standard reports

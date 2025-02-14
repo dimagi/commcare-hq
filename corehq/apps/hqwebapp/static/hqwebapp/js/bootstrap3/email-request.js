@@ -130,14 +130,14 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
         if (issueReportModal.length) {
             issueReportModal.koApplyBindings(new EmailRequest(
                 "modalReportIssue",
-                "hqwebapp-bugReportForm"
+                "hqwebapp-bugReportForm",
             ));
         }
         const featureRequestModal = $("#modalSolutionsFeatureRequest");
         if (featureRequestModal.length) {
             featureRequestModal.koApplyBindings(new EmailRequest(
                 "modalSolutionsFeatureRequest",
-                "hqwebapp-requestReportForm"
+                "hqwebapp-requestReportForm",
             ));
         }
     });

@@ -30,6 +30,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
     Invitation,
+    InvitationHistory,
 )
 from corehq.apps.users.role_utils import (
     UserRolePresets,
@@ -1032,3 +1033,4 @@ class TestInvitationResource(APIResourceTest):
         self.assertEqual(invitation.custom_user_data["favorite_subject"], "math")
         self.assertEqual(invitation.tableau_role, "Viewer")
         self.assertEqual(invitation.tableau_group_ids, ["123", "456"])
+        InvitationHistory.objects.get(invitation=invitation)

@@ -1,33 +1,27 @@
 import $ from 'jquery';
+
+import 'datatables.net/js/jquery.dataTables';
+import 'datatables.net-fixedcolumns/js/dataTables.fixedColumns';
+import 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5';
+
 import _ from 'underscore';
 import googleAnalytics from 'analytix/js/google';
 import {Tooltip} from 'bootstrap5';
 
-import 'datatables.bootstrap';
-import 'datatables.fixedColumns';
-
 
 var HQReportDataTables = function (options) {
     var self = {};
-    self.dataTableElem = options.dataTableElem || '.datatable';
-    self.paginationType = options.paginationType || 'bs_normal';
+    self.dataTableElem = options.dataTableElem || '.table-hq-report';
     self.forcePageSize = options.forcePageSize || false;
     self.defaultRows = options.defaultRows || 10;
-    self.startAtRowNum = options.startAtRowNum || 0;
     self.showAllRowsOption = options.showAllRowsOption || false;
-    self.aoColumns = options.aoColumns;
+    self.columns = options.aoColumns;  // todo eventually rename aoColumns outside of file
     self.autoWidth = (options.autoWidth !== undefined) ? options.autoWidth : true;
     self.defaultSort = (options.defaultSort !== undefined) ? options.defaultSort : true;
     self.customSort = options.customSort || null;
     self.ajaxParams = options.ajaxParams || {};
     self.ajaxSource = options.ajaxSource;
-    self.ajaxMethod = options.ajaxMethod || 'GET';
-    self.loadingText = options.loadingText || "<i class='fa fa-spin fa-spinner'></i> " + gettext("Loading");
-    self.loadingTemplateSelector = options.loadingTemplateSelector;
-    if (self.loadingTemplateSelector !== undefined) {
-        var loadingTemplate = _.template($(self.loadingTemplateSelector).html() || self.loadingText);
-        self.loadingText = loadingTemplate({});
-    }
+    self.loadingText = options.loadingText || gettext("Loading");
     self.emptyText = options.emptyText || gettext("No data available to display. " +
                                                   "Please try changing your filters.");
     self.errorText = options.errorText || "<span class='badge text-bg-danger'>" + gettext("Sorry!") + "</span> " +
@@ -39,7 +33,7 @@ var HQReportDataTables = function (options) {
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
     self.fixColsWidth = options.fixColsWidth || 100;
     self.show_pagination = (options.show_pagination === undefined) ? true : options.bPaginate;
-    self.aaSorting = options.aaSorting || null;
+    self.order = options.aaSorting || null; // todo eventually rename aaSorting outside of file
     // a list of functions to call back to after ajax.
     // see user configurable charts for an example usage
     self.successCallbacks = options.successCallbacks;
@@ -93,122 +87,110 @@ var HQReportDataTables = function (options) {
         }
         applyBootstrapMagic();
 
-        var dataTablesDom = "frt<'row dataTables_control'<'col-sm-5'il><'col-sm-7 text-right'p>>";
+        var dataTablesDom = "frt<'d-flex mb-1'<'p-2 ps-3'i><'p-2 ps-0'l><'ms-auto p-2 pe-3'p>>";
         $(self.dataTableElem).each(function () {
-            var params = {
-                sDom: dataTablesDom,
-                bPaginate: self.show_pagination,
-                sPaginationType: self.paginationType,
-                iDisplayLength: self.defaultRows,
-                bAutoWidth: self.autoWidth,
-                sScrollX: "100%",
-                bSort: self.defaultSort,
-                bFilter: self.includeFilter,
+            const params = {
+                dom: dataTablesDom,
+                filter: false,
+                paging: self.show_pagination,
+                pageLength: self.defaultRows,
+                autoWidth: self.autoWidth,
+                scrollX: "100%",
+                ordering: self.defaultSort,
+                searching: self.includeFilter,
             };
-            if (self.aaSorting !== null || self.customSort !== null) {
-                params.aaSorting = self.aaSorting || self.customSort;
+            if (self.order !== null || self.customSort !== null) {
+                params.order = self.order || self.customSort;
             }
 
             if (self.ajaxSource) {
-                params.bServerSide = true;
-                params.bProcessing = true;
-                params.sAjaxSource = {
+                params.serverSide = true;
+                params.processing = true;
+                params.ajax = {
                     url: self.ajaxSource,
-                    method: self.ajaxMethod,
-                };
-                params.bFilter = $(this).data('filter') || false;
-                self.fmtParams = function (defParams) {
-                    var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
-                    for (var p in ajaxParams) {
-                        if (_.has(ajaxParams, p)) {
-                            var currentParam = ajaxParams[p];
-                            if (_.isObject(currentParam.value)) {
-                                for (var j = 0; j < currentParam.value.length; j++) {
-                                    defParams.push({
-                                        name: currentParam.name,
-                                        value: currentParam.value[j],
-                                    });
-                                }
-                            } else {
-                                defParams.push(currentParam);
+                    method: 'POST',
+                    data: function (data) {
+                        // modify the query sent to server to include HQ Filters
+                        self.addHqFiltersToServerSideQuery(data);
+                    },
+                    error: function (jqXHR, statusText, errorThrown) {
+                        $(".dataTables_processing").hide();
+                        if (jqXHR.status === 400) {
+                            let errorMessage = self.badRequestErrorText;
+                            if (jqXHR.responseText) {
+                                errorMessage = "<p><span class='badge text-bg-danger'>" + gettext("Sorry!") + "</span> " + jqXHR.responseText + "</p>";
                             }
+                            $(".dataTables_empty").html(errorMessage);
+                        } else {
+                            $(".dataTables_empty").html(self.errorText);
+                        }
+                        $(".dataTables_empty").show();
+                        if (self.errorCallbacks) {
+                            for (let i = 0; i < self.errorCallbacks.length; i++) {
+                                self.errorCallbacks[i](jqXHR, statusText, errorThrown);
+                            }
+                        }
+                    },
+                };
+                params.searching = $(this).data('filter') || false;
+                self.addHqFiltersToServerSideQuery = function (data) {
+                    let ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
+                    data.hq = {};
+                    for (let p in ajaxParams) {
+                        if (_.has(ajaxParams, p)) {
+                            let param = ajaxParams[p];
+                            data.hq[param.name] = _.isArray(param.value) ? _.uniq(param.value) : param.value;
                         }
                     }
-                    return defParams;
+                    return data;
                 };
-                params.fnServerData = function (sSource, aoData, fnCallback, oSettings) {
-                    var customCallback = function (data) {
-                        if (data.warning) {
-                            throw new Error(data.warning);
+
+                params.footerCallback = function (row, data, start, end, display) {
+                    if ('total_row' in data) {
+                        self.render_footer_row('ajax_total_row', data['total_row']);
+                    }
+                    if ('statistics_rows' in data) {
+                        for (let i = 0; i < data.statistics_rows.length; i++) {
+                            self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
                         }
-                        var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
-                        var i;
-                        if ('total_row' in data) {
-                            self.render_footer_row('ajax_total_row', data['total_row']);
+                    }
+                };
+
+                params.drawCallback = function () {
+                    let api = this.api(),
+                        data = api.ajax.json();
+
+                    if (data.warning) {
+                        throw new Error(data.warning);
+                    }
+                    applyBootstrapMagic();
+                    if ('context' in data) {
+                        let iconPath = data['icon_path'] || $(".base-maps-data").data("icon_path");
+                        hqRequire(["reports/js/bootstrap5/maps_utils"], function (mapsUtils) {
+                            mapsUtils.load(data['context'], iconPath);
+                        });
+                    }
+                    if (self.successCallbacks) {
+                        for (let i = 0; i < self.successCallbacks.length; i++) {
+                            self.successCallbacks[i](data);
                         }
-                        if ('statistics_rows' in data) {
-                            for (i = 0; i < data.statistics_rows.length; i++) {
-                                self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
-                            }
-                        }
-                        applyBootstrapMagic();
-                        if (self.successCallbacks) {
-                            for (i = 0; i < self.successCallbacks.length; i++) {
-                                self.successCallbacks[i](data);
-                            }
-                        }
-                        return result;
-                    };
-                    oSettings.jqXHR = $.ajax({
-                        "url": sSource.url,
-                        "method": sSource.method,
-                        "data": self.fmtParams(aoData),
-                        "success": customCallback,
-                        "error": function (jqXHR, textStatus, errorThrown) {
-                            $(".dataTables_processing").hide();
-                            if (jqXHR.status === 400) {
-                                var errorMessage = self.badRequestErrorText;
-                                if (jqXHR.responseText) {
-                                    errorMessage = "<p><span class='label label-danger'>" + gettext("Sorry!") + "</span> " + jqXHR.responseText + "</p>";
-                                }
-                                $(".dataTables_empty").html(errorMessage);
-                            } else {
-                                $(".dataTables_empty").html(self.errorText);
-                            }
-                            $(".dataTables_empty").show();
-                            if (self.errorCallbacks) {
-                                for (var i = 0; i < self.errorCallbacks.length; i++) {
-                                    self.errorCallbacks[i](jqXHR, textStatus, errorThrown);
-                                }
-                            }
-                        },
-                    });
+                    }
                 };
             }
-            params.oLanguage = {
-                sProcessing: self.loadingText,
-                sLoadingRecords: self.loadingText,
-                sZeroRecords: self.emptyText,
+            params.language = {
+                lengthMenu: gettext("_MENU_ per page"),
+                processing: self.loadingText,
+                loadingRecords: self.loadingText,
+                zeroRecords: self.emptyText,
             };
 
-            params.fnDrawCallback = function (a,b,c) {
-                /* be able to set fnDrawCallback from outside here later */
-                if (self.fnDrawCallback) {
-                    self.fnDrawCallback(a,b,c);
-                }
-            };
-
-            if (self.aoColumns) {
-                params.aoColumns = self.aoColumns;
+            if (self.columns) {
+                params.columns = self.columns;
             }
 
             if (self.forcePageSize) {
                 // limit the page size option to just the default size
                 params.lengthMenu = [self.defaultRows];
-            }
-            var datatable = $(this).dataTable(params);
-            if (!self.datatable) {
-                self.datatable = datatable;
             }
 
             if (self.fixColumns) {
@@ -216,6 +198,14 @@ var HQReportDataTables = function (options) {
                     iLeftColumns: self.fixColsNumLeft,
                     iLeftWidth: self.fixColsWidth,
                 });
+                params.fixedColumns = {
+                    left: self.fixColsNumLeft,
+                    width: self.fixColsWidth,
+                };
+            }
+            let datatable = $(this).dataTable(params);
+            if (!self.datatable) {
+                self.datatable = datatable;
             }
 
             // This fixes a display bug in some browsers where the pagination
@@ -252,19 +242,12 @@ var HQReportDataTables = function (options) {
                 $inputLabel.html($('<i />').addClass("icon-search"));
             }
 
-            var $dataTablesLength = $(self.dataTableElem).parents('.dataTables_wrapper').find(".dataTables_length"),
-                $dataTablesInfo = $(self.dataTableElem).parents('.dataTables_wrapper').find(".dataTables_info");
-            if ($dataTablesLength && $dataTablesInfo) {
-                var $selectField = $dataTablesLength.find("select"),
-                    $selectLabel = $dataTablesLength.find("label");
-
-                $dataTablesLength.append($selectField);
-                $selectLabel.remove();
-                $selectField.children().append(" per page");
+            let $dataTablesLength = $(self.dataTableElem).parents('.dataTables_wrapper').find(".dataTables_length");
+            if ($dataTablesLength) {
+                let $selectField = $dataTablesLength.find("select");
                 if (self.showAllRowsOption) {
                     $selectField.append($('<option value="-1" />').text(gettext("All Rows")));
                 }
-                $selectField.addClass('form-control');
                 $selectField.on("change", function () {
                     var selectedValue = $selectField.find('option:selected').val();
                     googleAnalytics.track.event("Reports", "Changed number of items shown", selectedValue);
@@ -278,12 +261,6 @@ var HQReportDataTables = function (options) {
 
     return self;
 };
-
-$.extend($.fn.dataTableExt.oStdClasses, {
-    "sSortAsc": "header headerSortAsc",
-    "sSortDesc": "header headerSortDesc",
-    "sSortable": "header headerSort",
-});
 
 // For sorting rows
 
@@ -323,14 +300,6 @@ function convertDate(k) {
     }
     return new Date(m[1]);
 }
-
-$.fn.dataTableExt.oSort['title-numeric-asc'] = function (a, b) { return sortSpecial(a, b, true, convertNum); };
-
-$.fn.dataTableExt.oSort['title-numeric-desc'] = function (a, b) { return sortSpecial(a, b, false, convertNum); };
-
-$.fn.dataTableExt.oSort['title-date-asc']  = function (a,b) { return sortSpecial(a, b, true, convertDate); };
-
-$.fn.dataTableExt.oSort['title-date-desc']  = function (a,b) { return sortSpecial(a, b, false, convertDate); };
 
 export default {
     HQReportDataTables: function (options) {

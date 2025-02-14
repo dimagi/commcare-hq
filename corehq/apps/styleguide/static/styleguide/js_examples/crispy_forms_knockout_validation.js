@@ -1,6 +1,4 @@
 $(function () {
-    'use strict';
-
     let UserModel = function () {
         let self = {},
             _rateLimit = {

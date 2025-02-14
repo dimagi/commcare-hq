@@ -12,7 +12,7 @@ hqDefine('userreports/js/expression_debugger', [
     _,
     baseAce,
     initialPageData,
-    expressionModel
+    expressionModel,
 ) {
     $(function () {
         var submitUrl = initialPageData.reverse("expression_evaluator");
@@ -33,7 +33,7 @@ hqDefine('userreports/js/expression_debugger', [
             ucrExpressionId: initialPageData.get('ucr_expression_id'),
         };
         $('#expression-debugger').koApplyBindings(
-            expressionModel.expressionModel(expressionEditor, docEditor, submitUrl, initialData)
+            expressionModel.expressionModel(expressionEditor, docEditor, submitUrl, initialData),
         );
     });
 });

@@ -1,7 +1,7 @@
 hqDefine("reports_core/spec/choice_list_utils_spec", [
     "reports_core/js/choice_list_utils",
 ], function (
-    utils
+    utils,
 ) {
     describe('choiceListUtils', function () {
         it('Correctly formats select2 data', function () {

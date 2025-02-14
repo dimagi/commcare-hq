@@ -32,10 +32,8 @@ hqDefine('export/js/download_export', [
     kissmetricsAnalytics,
     reportFilters,
     reportUtils,
-    exportUtils
+    exportUtils,
 ) {
-    'use strict';
-
     var downloadFormModel = function (options) {
         assertProperties.assert(options, [
             'defaultDateRange',

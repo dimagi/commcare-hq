@@ -1,10 +1,14 @@
-<div class="modal-dialog" aria-labelledby="exampleKoOpenRemoteModalLabel" aria-hidden="true">
+<div class="modal-dialog" aria-labelledby="example-open-remote-modal" aria-hidden="true">
   <div class="modal-content">
     <div class="modal-header">
-      <h4 class="modal-title" id="exampleKoOpenRemoteModalLabel">
+      <h4 id="example-open-remote-modal" class="modal-title">
         Remote Modal Example
       </h4>
-      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <button
+        class="btn-close"
+        type="button" aria-label="Close"
+        data-bs-dismiss="modal"
+      ></button>
     </div>
     <div class="modal-body">
       <p>
@@ -14,8 +18,15 @@
       </p>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</button>
-      <button type="button" class="btn btn-primary">{{ secret_message }}</button>
+      <button
+        class="btn btn-outline-primary" type="button"
+        data-bs-dismiss="modal"
+      >
+        Close
+      </button>
+      <button class="btn btn-primary" type="button">
+        {{ secret_message }}
+      </button>
     </div>
   </div>
 </div>

@@ -238,6 +238,14 @@ def retry_process_datasource_repeat_record(repeat_record_id, domain):
 
 
 def _process_repeat_record(repeat_record):
+
+    def endpoint_duration(timer_):
+        return next((
+            sub.duration
+            for sub in timer_.to_list(exclude_root=True)
+            if sub.name == ENDPOINT_TIMER
+        ), None)  # If there was a payload error, we won't have sent to an endpoint
+
     request_duration = action = None
     with TimingContext('process_repeat_record') as timer:
         if repeat_record.state == State.Cancelled:
@@ -275,9 +283,7 @@ def _process_repeat_record(repeat_record):
                 # round up to the nearest millisecond, meaning always at least 1ms
                 report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
                 action = 'attempted'
-                request_duration = [
-                    sub.duration for sub in fire_timer.to_list(exclude_root=True) if sub.name == ENDPOINT_TIMER
-                ][0]
+                request_duration = endpoint_duration(timer)
         except Exception:
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return

@@ -125,7 +125,7 @@
                {% for stats in report_table.statistics_rows %}
                  <tr>
                    {% for col in stats %}
-@@ -91,13 +118,12 @@
+@@ -91,26 +118,17 @@
                    {% endfor %}
                  </tr>
                {% endfor %}
@@ -144,3 +144,16 @@
    </div>
    {% block posttable %}{% endblock posttable %}
  {% endblock reportcontent %}
+ 
+ {% block js-inline %} {{ block.super }}
+-  <script type="text/template" id="js-template-loading-report">
+-    <div class="report-loading-container">
+-      <div class="report-loading">
+-        <h4>{% trans "Loading Report" %}</h4>
+-        <i class="fa fa-spin fa-spinner"></i>
+-      </div>
+-    </div>
+-  </script>
+   {# For custom reports, template_partial might contain javascript #}
+   {% for chart in charts %}
+     {% with id=forloop.counter|stringformat:"s" slug=report.slug %}

@@ -1,7 +1,7 @@
 --- 
 +++ 
 @@ -1,13 +1,13 @@
- 'use strict';
+ 
 -hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 +hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
      'jquery',

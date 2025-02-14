@@ -17,7 +17,7 @@
      _,
 +    bootstrap,
      initialPageData,
-     hqReportModule
+     hqReportModule,
  ) {
 @@ -50,7 +52,7 @@
          var reportOptions = initialPageData.get('js_options') || {};

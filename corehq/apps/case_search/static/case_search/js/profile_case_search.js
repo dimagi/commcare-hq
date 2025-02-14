@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine('case_search/js/profile_case_search', [
     'jquery',
@@ -10,7 +10,7 @@ hqDefine('case_search/js/profile_case_search', [
     $,
     _,
     ko,
-    alertUser
+    alertUser,
 ) {
     var caseSearchModel = function () {
         var self = {};

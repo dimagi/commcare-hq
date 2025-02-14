@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("case_importer/js/main", [
     'jquery',
     'underscore',
@@ -13,7 +13,7 @@ hqDefine("case_importer/js/main", [
     _,
     initialPageData,
     importHistory,
-    excelFieldsModule
+    excelFieldsModule,
 ) {
     var behaviorForUploadPage = function () {
         var $recentUploads = $('#recent-uploads');
