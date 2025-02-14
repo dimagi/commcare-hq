@@ -310,7 +310,7 @@ class FormattedDetailColumn(object):
                 endpoint_action=self.action,
                 alt_text=self.alt_text,
             )
-            if case_list_optimizations_enabled:
+            if case_list_optimizations_enabled and self.column.supports_optimizations:
                 self._set_case_list_optimizations(field, self.column.optimization)
             yield field
         elif (self.sort_xpath_function and self.detail.display == 'short'
