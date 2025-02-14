@@ -14,12 +14,7 @@
 </div>
 
 <div class="controls translation-controls" data-bind="visible: !translate()">
-  <textarea
-    rows="10"
-    class="form-control"
-    data-bind="value: nonTranslatedMessage"
-    data-image-upload-url="upload_messaging_image"
-  ></textarea>
+  {% include "scheduling/partials/rich_text_editor.html" with editableText="nonTranslatedMessage" %}
 </div>
 
 <div data-bind="visible: translate(), foreach: translatedMessages">
@@ -28,11 +23,6 @@
       >{% trans "Translation" %} (<span data-bind="text: language_code"></span
       >):</label
     >
-    <textarea
-      rows="10"
-      class="form-control"
-      data-bind="value: html_message"
-      data-image-upload-url="upload_messaging_image"
-    ></textarea>
+    {% include "scheduling/partials/rich_text_editor.html" with editableText="html_message" %}
   </div>
 </div>

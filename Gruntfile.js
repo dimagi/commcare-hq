@@ -38,6 +38,7 @@ module.exports = function (grunt) {
         'cloudcare/form_entry',
         'hqwebapp/bootstrap3',
         'hqwebapp/bootstrap5',
+        'hqwebapp/components',
         'case_importer',
     ];
 
