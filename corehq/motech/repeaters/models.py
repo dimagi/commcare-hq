@@ -149,6 +149,11 @@ from .repeater_generators import (
 # are treated as InvalidPayload errors.
 HTTP_STATUS_4XX_RETRY = (
     HTTPStatus.BAD_REQUEST,
+    # Traefik proxy returns (client error) 404 instead of (server error)
+    # 503 when it has not been configured with a catch-all router and is
+    # unable to match a request to a router.
+    # https://doc.traefik.io/traefik/getting-started/faq/#404-not-found
+    HTTPStatus.NOT_FOUND,
     HTTPStatus.REQUEST_TIMEOUT,
     HTTPStatus.CONFLICT,
     HTTPStatus.PRECONDITION_FAILED,
