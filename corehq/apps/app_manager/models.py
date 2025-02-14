@@ -70,6 +70,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_usercase_properties,
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
+from corehq.apps.app_manager.const import FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
@@ -1921,11 +1922,17 @@ class DetailColumn(IndexedSchema):
             for item in to_ret.enum:
                 for lang, path in item.value.items():
                     item.value[lang] = interpolate_media_path(path)
+
+        if to_ret.optimization and not to_ret.supports_optimizations:
+            to_ret.optimization = None
         return to_ret
 
     @property
     def invisible(self):
         return self.format == 'invisible'
+
+    def supports_optimizations(self):
+        return self.format in FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 
 
 class SortElement(IndexedSchema):
