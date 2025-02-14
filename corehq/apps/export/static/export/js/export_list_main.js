@@ -13,7 +13,7 @@ hqDefine("export/js/export_list_main", [
     kissmetricsAnalytics,
     utils,
     createModels,
-    listModels
+    listModels,
 ) {
     $(function () {
         var $createExport = $("#create-export"),
@@ -51,11 +51,11 @@ hqDefine("export/js/export_list_main", [
             kissmetricsAnalytics.track.event("[BI Integration] Visited feature page");
             kissmetricsAnalytics.track.outboundLink(
                 '#js-odata-track-learn-more',
-                "[BI Integration] Clicked Learn More-Wiki"
+                "[BI Integration] Clicked Learn More-Wiki",
             );
             kissmetricsAnalytics.track.outboundLink(
                 '#js-odata-track-learn-more-preview',
-                "[BI Integration] Clicked Learn More-Feature Preview"
+                "[BI Integration] Clicked Learn More-Feature Preview",
             );
         }
 

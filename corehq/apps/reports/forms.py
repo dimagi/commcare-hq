@@ -13,6 +13,7 @@ from crispy_forms.bootstrap import StrictButton
 import langcodes
 from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper, LinkButton
 from corehq.apps.hqwebapp.fields import MultiEmailField
+from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
 from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.saved_reports.models import (
@@ -243,6 +244,12 @@ class EmailReportForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        if get_bootstrap_version() == BOOTSTRAP_5:
+            self._setup_bootstrap5()
+        else:
+            self._setup_bootstrap3()
+
+    def _setup_bootstrap3(self):
         self.helper = HQFormHelper()
         self.helper.field_class = "col-xs-10"
         self.helper.layout = crispy.Layout(
@@ -250,18 +257,38 @@ class EmailReportForm(forms.Form):
                 crispy.Field('subject', data_bind="value: subject"),
                 crispy.Field('send_to_owner', data_bind="checked: send_to_owner"),
                 crispy.Field('recipient_emails', css_id='email-report-recipient_emails',
-                    data_bind="selectedOptions: recipient_emails"),
+                             data_bind="selectedOptions: recipient_emails"),
                 crispy.Field('notes', data_bind="value: notes"),
                 css_class='modal-body'
             ),
             FormActions(
                 crispy.Div(
                     crispy.Button('close', _('Close'), css_class='btn btn-default cancel-button',
-                        data_bind='click: resetModal', data_dismiss='modal'),
+                                  data_bind='click: resetModal', data_dismiss='modal'),
                     crispy.Submit('submit_btn', _('Send Email'), css_class="btn btn-primary send-button",
-                        data_bind='click: sendEmail', data_loading_text=_('Sending...')),
+                                  data_bind='click: sendEmail', data_loading_text=_('Sending...')),
                     css_class='pull-right',
                 )
+            )
+        )
+
+    def _setup_bootstrap5(self):
+        self.helper = FormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('subject', data_bind="value: subject"),
+                crispy.Field('send_to_owner', data_bind="checked: send_to_owner"),
+                crispy.Field('recipient_emails', css_id='email-report-recipient_emails',
+                             data_bind="selectedOptions: recipient_emails"),
+                crispy.Field('notes', data_bind="value: notes"),
+                css_class='modal-body'
+            ),
+            crispy.Div(
+                crispy.Button('close', _('Close'), css_class='btn btn-outline-primary cancel-button',
+                              data_bind='click: resetModal', data_bs_dismiss='modal'),
+                crispy.Submit('submit_btn', _('Send Email'), css_class="btn btn-primary send-button",
+                              data_bind='click: sendEmail', data_loading_text=_('Sending...')),
+                css_class='modal-footer',
             )
         )
 

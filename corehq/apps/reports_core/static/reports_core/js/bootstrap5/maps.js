@@ -7,7 +7,7 @@ hqDefine('reports_core/js/bootstrap5/maps', [
     $,
     _,
     mapsUtils,
-    L
+    L,
 ) {
     // Reset images needed for map markers, which don't play well with webpack.
     // See https://github.com/Leaflet/Leaflet/issues/4968#issuecomment-483402699
@@ -64,7 +64,7 @@ hqDefine('reports_core/js/bootstrap5/maps', [
             L.control.scale({position: 'bottomright'}).addTo(privates.map);
 
             L.control.zoom({
-                position: 'bottomright'
+                position: 'bottomright',
             }).addTo(privates.map);
             $('#zoomtofit').css('display', 'block');
         } else {

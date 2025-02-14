@@ -203,7 +203,7 @@ hqDefine("users/js/web_users",[
                 {id: $(this).data('id')},
                 gettext("Delete request"),
                 gettext("Are you sure you want to delete this request?"),
-                initialPageData.reverse("delete_request")
+                initialPageData.reverse("delete_request"),
             );
             e.preventDefault();
         });
@@ -214,7 +214,7 @@ hqDefine("users/js/web_users",[
             title: _.template(gettext(
                 "We have sent the invitation email to this user but the user's email server " +
                 "rejected it. This usually means either the email address is incorrect or your organization " +
-                "is blocking emails from our address (<%- fromAddress %>)."
+                "is blocking emails from our address (<%- fromAddress %>).",
             ))({
                 fromAddress: initialPageData.get('fromAddress'),
             }),

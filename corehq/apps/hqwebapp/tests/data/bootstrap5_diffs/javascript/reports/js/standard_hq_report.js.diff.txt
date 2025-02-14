@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,11 +1,11 @@
+@@ -1,14 +1,16 @@
  /*
      This file also controls basic logic and event handling for report pages.
  */
@@ -8,13 +8,18 @@
 +hqDefine("reports/js/bootstrap5/standard_hq_report", [
      'jquery',
      'underscore',
++    'bootstrap5',
      'hqwebapp/js/initial_page_data',
 -    'reports/js/bootstrap3/hq_report',
 +    'reports/js/bootstrap5/hq_report',
  ], function (
      $,
      _,
-@@ -50,7 +50,7 @@
++    bootstrap,
+     initialPageData,
+     hqReportModule,
+ ) {
+@@ -50,7 +52,7 @@
          var reportOptions = initialPageData.get('js_options') || {};
          if (reportOptions.slug && reportOptions.async) {
              let promise = $.Deferred();
@@ -23,7 +28,7 @@
                  var asyncHQReport = asyncHQReportModule({
                      standardReport: getStandard(),
                  });
-@@ -69,11 +69,12 @@
+@@ -69,13 +71,19 @@
      asyncReport = getAsync();
  
      $(function () {
@@ -35,7 +40,16 @@
          });
  
 -        $('.report-description-popover').popover({
-+        $('.report-description-popover').popover({  /* todo B5: plugin:popover */
-             placement: 'right',
-             trigger: 'hover',
+-            placement: 'right',
+-            trigger: 'hover',
++        const reportsWithDescriptions = document.getElementsByClassName('report-description-popover');
++        Array.from(reportsWithDescriptions).forEach((elem) => {
++            new bootstrap.Popover(elem, {
++                title: elem.dataset.title,
++                content: elem.dataset.content,
++                placement: 'right',
++                trigger: 'hover',
++            });
          });
+     });
+ 

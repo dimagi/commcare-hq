@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("reports/js/case_activity", ['jquery'], function ($) {
 
     $(document).ajaxSuccess(function (event, xhr, settings) {

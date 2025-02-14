@@ -2,7 +2,7 @@ hqDefine("hqadmin/js/mass_email", [
     'jquery',
     'commcarehq',
 ], function (
-    $
+    $,
 ) {
     $(function () {
         $('#real_email').click(function (e) {

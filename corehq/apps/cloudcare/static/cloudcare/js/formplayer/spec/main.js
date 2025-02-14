@@ -5,6 +5,7 @@ import "cloudcare/js/formplayer/spec/debugger_spec";
 import "cloudcare/js/formplayer/spec/hq_events_spec";
 import "cloudcare/js/spec/markdown_spec";
 import "cloudcare/js/formplayer/spec/menu_list_spec";
+import "cloudcare/js/formplayer/spec/menu_utils_spec";
 import "cloudcare/js/formplayer/spec/query_spec";
 import "cloudcare/js/formplayer/spec/session_middleware_spec";
 import "cloudcare/js/formplayer/spec/split_screen_case_search_spec";

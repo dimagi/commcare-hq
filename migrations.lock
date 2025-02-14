@@ -256,6 +256,7 @@ cleanup
  0015_deletedcouchdoc_unique_id_and_type
  0016_add_deletedsqldoc
  0017_delete_oauth_integrations_models
+ 0018_delete_ewsghana_models
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -649,6 +650,8 @@ integration
  0004_gaenotpserversettings
  0005_gaenotpserversettings_server_type
  0006_kycconfig
+ 0007_alter_kycconfig_api_field_to_user_data_map
+ 0008_kycconfig_provider_kycconfig_unique_domain_provider
 ivr
  0001_initial
  0002_call_app_id
@@ -812,6 +815,7 @@ project_limits
  0001_initial
  0002_ratelimitedtwofactorlog
  0003_pillowlaggaugedefinition
+ 0004_systemlimit
 registration
  0001_initial
  0002_alter_request_ip
@@ -900,6 +904,7 @@ scheduling
  0026_add_model_fcm_notification_content
  0027_emailcontent_html_message
  0028_alertschedule_use_user_case_for_filter_and_more
+ 0029_connectmessagecontent_connectmessagesurveycontent_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -974,6 +979,7 @@ sms
  0057_fcm_content_type_messaging_events
  0058_email_html_body
  0059_remove_unicel_backend
+ 0060_alter_messagingevent_content_type_and_more
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1272,6 +1278,8 @@ users
  0073_rm_location_from_user_data
  0074_alter_sqluserdata_profile
  0075_hqapikey_encrypted_key
+ 0076_connectiduserlink_messaging_consent_and_more
+ 0077_invitationhistory
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

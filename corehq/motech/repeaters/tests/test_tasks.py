@@ -183,6 +183,25 @@ class TestProcessRepeatRecord(TestCase):
         self.assertEqual(self.mock_fire.call_count, 1)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
+    def test_payload_error_metrics(self):
+        with (
+            patch('corehq.motech.repeaters.tasks.metrics_histogram') as mock_metrics,
+            patch('corehq.motech.repeaters.tasks.logging') as mock_logging,
+        ):
+            repeater = FormRepeater.objects.create(
+                domain=self.domain,
+                connection_settings=self.conn_settings,
+            )
+            repeat_record = RepeatRecord(
+                domain=self.domain,
+                payload_id='does-not-exist',
+                registered_at=datetime.utcnow(),
+                repeater_id=repeater.repeater_id,
+            )
+            _process_repeat_record(repeat_record)
+            mock_logging.exception.assert_not_called()
+            mock_metrics.assert_called_once()
+
     def test_paused_and_deleted_repeater_does_not_fire_or_postpone(self):
         paused_and_deleted_repeater = Repeater.objects.create(
             domain=self.domain,

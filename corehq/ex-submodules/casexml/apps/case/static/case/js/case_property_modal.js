@@ -5,7 +5,7 @@ hqDefine('case/js/case_property_modal', [
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
 ) {
     var CasePropertyModal = function (propertyName, changes) {
         var self = {};
