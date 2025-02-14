@@ -4,7 +4,7 @@ from django.http import Http404
 from memoized import memoized
 
 from corehq.apps.accounting.async_handlers import BaseSelect2AsyncHandler
-from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.models import BillingAccount, SoftwarePlanEdition, Subscription
 from corehq.apps.hqwebapp.async_handler import (
     BaseAsyncHandler,
     AsyncHandlerError,
@@ -26,7 +26,19 @@ class Select2IdentityProviderHandler(BaseSelect2AsyncHandler):
 
     @property
     def owner_response(self):
-        accounts = BillingAccount.objects.filter(is_customer_billing_account=True)
+        advanced_subscriptions = Subscription.objects.filter(
+            plan_version__plan__edition=SoftwarePlanEdition.ADVANCED,
+            is_active=True,
+        )
+        advanced_accounts = BillingAccount.objects.filter(
+            id__in=advanced_subscriptions.values_list('account', flat=True),
+            is_active=True,
+        )
+        customer_billing_accounts = BillingAccount.objects.filter(
+            is_customer_billing_account=True,
+            is_active=True,
+        )
+        accounts = advanced_accounts | customer_billing_accounts
         if self.search_string:
             accounts = accounts.filter(name__icontains=self.search_string)
         return [(a.id, a.name) for a in accounts.order_by('name')]
