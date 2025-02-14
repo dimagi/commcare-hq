@@ -258,6 +258,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('email.EmailSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('dhis2.SQLDataSetMap', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('dhis2.SQLDataValueMap', SimpleFilter('dataset_map__domain')),
+    FilteredModelIteratorBuilder('export.DeIdMapping', SimpleFilter('domain')),
 ]]
 
 

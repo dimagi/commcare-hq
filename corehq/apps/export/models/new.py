@@ -99,7 +99,11 @@ from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_sms_export_base_query,
 )
-from corehq.apps.export.utils import is_occurrence_deleted
+from corehq.apps.export.utils import (
+    get_deid_transform_function,
+    get_transform_function,
+    is_occurrence_deleted,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
@@ -322,10 +326,12 @@ class ExportColumn(DocumentSchema):
         if transform_dates:
             value = couch_to_excel_datetime(value, doc)
         if self.item.transform:
-            value = TRANSFORM_FUNCTIONS[self.item.transform](value, doc)
+            transform_function = get_transform_function(TRANSFORM_FUNCTIONS[self.item.transform])
+            value = transform_function(value, doc)
         if self.deid_transform:
             try:
-                value = DEID_TRANSFORM_FUNCTIONS[self.deid_transform](value, doc)
+                transform_function = get_deid_transform_function(DEID_TRANSFORM_FUNCTIONS[self.deid_transform])
+                value = transform_function(value, doc)
             except ValueError:
                 # Unable to convert the string to a date
                 pass
