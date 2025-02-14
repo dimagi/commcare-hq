@@ -321,8 +321,13 @@ def login_or_basic_ex(allow_cc_users=False, allow_sessions=True, require_domain=
     )
 
 
-def login_or_basic_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(basic_or_api_key(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+def login_or_basic_or_api_key_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
+    return _login_or_challenge(
+        basic_or_api_key(),
+        allow_cc_users=allow_cc_users,
+        allow_sessions=allow_sessions,
+        require_domain=require_domain,
+    )
 
 
 def login_or_digest_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
@@ -364,7 +369,9 @@ def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None, allow_creds_in_data=True):
+def get_multi_auth_decorator(
+    default, allow_formplayer=False, oauth_scopes=None, allow_creds_in_data=True, allow_api_key_as_password=False
+):
     """
     :param allow_formplayer: If True this will allow one additional auth mechanism which is used
          by Formplayer:
@@ -373,6 +380,7 @@ def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None,
              formplayer can not use the session cookie to auth. To allow formplayer access to the
              endpoints we validate each formplayer request using a shared key. See the auth
              function for more details.
+    :param allow_api_key_as_password: If True, allows API Key to be used in BASIC auth
     """
     oauth_scopes = oauth_scopes or ['access_apis']
 
@@ -391,6 +399,7 @@ def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None,
                 allow_cc_users=True,
                 oauth_scopes=oauth_scopes,
                 allow_creds_in_data=allow_creds_in_data,
+                allow_api_key_as_password=allow_api_key_as_password,
             )[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
@@ -416,6 +425,20 @@ def api_auth(*, allow_creds_in_data=True, oauth_scopes=None):
         default=DIGEST,
         oauth_scopes=oauth_scopes,
         allow_creds_in_data=allow_creds_in_data,
+        allow_api_key_as_password=False,  # if supporting digest auth, you cannot use an api key as a password
+    )
+
+
+def api_auth_no_digest(*, allow_creds_in_data=True, oauth_scopes=None, allow_api_key_as_password=False):
+    """
+    Intentionally does not support digest auth to allow using api key as password if desired.
+    See determine_authtype_from_header for more details on how defaulting to BASIC drops DIGEST support
+    """
+    return get_multi_auth_decorator(
+        default=BASIC,
+        oauth_scopes=oauth_scopes,
+        allow_creds_in_data=allow_creds_in_data,
+        allow_api_key_as_password=allow_api_key_as_password,
     )
 
 
@@ -435,6 +458,7 @@ def get_auth_decorator_map(
         allow_sessions=True,
         oauth_scopes=None,
         allow_creds_in_data=True,
+        allow_api_key_as_password=False,
 ):
     # get a mapped set of decorators for different auth types with the specified parameters
     oauth_scopes = oauth_scopes or ['access_apis']
@@ -443,9 +467,16 @@ def get_auth_decorator_map(
         'require_domain': require_domain,
         'allow_sessions': allow_sessions,
     }
+
+    basic_auth_fn = (
+        login_or_basic_or_api_key_ex(**decorator_function_kwargs)
+        if allow_api_key_as_password
+        else login_or_basic_ex(**decorator_function_kwargs)
+    )
+
     return {
         DIGEST: login_or_digest_ex(**decorator_function_kwargs),
-        BASIC: login_or_basic_ex(**decorator_function_kwargs),
+        BASIC: basic_auth_fn,
         API_KEY: login_or_api_key_ex(allow_creds_in_data=allow_creds_in_data,
                                      **decorator_function_kwargs),
         OAUTH2: login_or_oauth2_ex(oauth_scopes=oauth_scopes, **decorator_function_kwargs),
