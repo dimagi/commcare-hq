@@ -2,8 +2,8 @@
 hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
     const items = document.getElementsByName('record_ids'),
         selectAll = document.getElementById('select-all'),
-        buttonCancel = document.getElementById('cancel-all-button'),
-        buttonRequeue = document.getElementById('requeue-all-button');
+        cancelButton = document.getElementById('cancel-button'),
+        requeueButton = document.getElementById('requeue-button');
 
     $('#all').on('click', function () {
         selectItems();
@@ -24,10 +24,10 @@ hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
                 selectItems();
                 turnOffCancelRequeue();
             } else if (pendingStates.includes(selectAll.value)) {
-                buttonRequeue.disabled = true;
+                requeueButton.disabled = true;
                 checkMultipleItems('cancel');
             } else if (cancelledStates.includes(selectAll.value)) {
-                buttonCancel.disabled = true;
+                cancelButton.disabled = true;
                 checkMultipleItems('requeue');
             }
         } else {
@@ -64,13 +64,13 @@ hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
     }
 
     function turnOffCancelRequeue() {
-        buttonCancel.disabled = true;
-        buttonRequeue.disabled = true;
+        cancelButton.disabled = true;
+        requeueButton.disabled = true;
     }
 
     function turnOnCancelRequeue() {
-        buttonCancel.disabled = false;
-        buttonRequeue.disabled = false;
+        cancelButton.disabled = false;
+        requeueButton.disabled = false;
     }
 
     function checkMultipleItems(action) {

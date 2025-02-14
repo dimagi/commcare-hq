@@ -11,21 +11,21 @@
       {% if total > 0 %}
         <div id="form_options" class="well form-inline">
           <div>
-            <button id="resend-all-button"
+            <button id="resend-button"
                     class="btn btn-default"
                     data-target="#are-you-sure"
                     title="{% trans 'Resend selected records' %}">
               <i class="fa fa-play"></i>
               {% trans 'Resend' %}
             </button>
-            <button id="cancel-all-button"
+            <button id="cancel-button"
                     class="btn btn-default"
                     data-target="#are-you-sure"
                     title="{% trans 'Cancel selected records' %}">
               <i class="fa fa-times"></i>
               {% trans 'Cancel' %}
             </button>
-            <button id="requeue-all-button"
+            <button id="requeue-button"
                     class="btn btn-default"
                     data-target="#are-you-sure"
                     title="{% trans 'Requeue selected records' %}">
