@@ -61,16 +61,16 @@ class TestKycConfigurationView(BaseTestKycView):
 
     def test_not_logged_in(self):
         response = self._make_request(is_logged_in=False)
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_ff_not_enabled(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     @flag_enabled('KYC_VERIFICATION')
     def test_success(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
 
 class TestKycVerificationReportView(BaseTestKycView):
@@ -78,16 +78,16 @@ class TestKycVerificationReportView(BaseTestKycView):
 
     def test_not_logged_in(self):
         response = self._make_request(is_logged_in=False)
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_ff_not_enabled(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     @flag_enabled('KYC_VERIFICATION')
     def test_success(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
@@ -225,29 +225,29 @@ class TestKycVerificationTableView(BaseTestKycView):
 
     def test_ff_not_enabled(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     @flag_enabled('KYC_VERIFICATION')
     def test_success(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     @flag_enabled('KYC_VERIFICATION')
     def test_response_data_users(self):
         response = self._make_request()
         queryset = response.context['table'].data
-        self.assertEqual(len(queryset), 2)
+        assert len(queryset) == 2
         for row in queryset:
             if row['has_invalid_data']:
-                self.assertEqual(row, {
+                assert row == {
                     'id': self.user2.user_id,
                     'has_invalid_data': True,
                     'first_name': 'Jane',
                     'last_name': 'Doe',
                     'email': '',
-                })
+                }
             else:
-                self.assertEqual(row, {
+                assert row == {
                     'id': self.user1.user_id,
                     'has_invalid_data': False,
                     'first_name': 'John',
@@ -259,7 +259,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Anytown',
                     'post_code': '12345',
                     'country': 'Anyplace',
-                })
+                }
 
     @flag_enabled('KYC_VERIFICATION')
     def test_response_data_cases(self):
@@ -286,17 +286,17 @@ class TestKycVerificationTableView(BaseTestKycView):
 
         response = self._make_request()
         queryset = response.context['table'].data
-        self.assertEqual(len(queryset), 2)
+        assert len(queryset) == 2
         for row in queryset:
             if row['has_invalid_data']:
-                self.assertEqual(row, {
+                assert row == {
                     'id': self.case_list[1].case_id,
                     'has_invalid_data': True,
                     'first_name': 'Foo',
                     'last_name': 'Bar',
-                })
+                }
             else:
-                self.assertEqual(row, {
+                assert row == {
                     'id': self.case_list[0].case_id,
                     'has_invalid_data': False,
                     'first_name': 'Bob',
@@ -308,7 +308,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Sometown',
                     'post_code': '54321',
                     'country': 'Someplace',
-                })
+                }
 
 
 def _create_case(factory, name, data):
