@@ -194,3 +194,29 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
 
     def test_get_oldest_sync_time_excluded(self):
         self._test_get_oldest_sync_time(datetime.utcnow(), ['c'], {'b'}, datetime(2018, 9, 11, 6, 35, 20))
+
+
+@patch('corehq.apps.app_manager.fixtures.mobile_ucr._get_report_configs')
+class TestReportDataCache(SimpleTestCase):
+    def setUp(self):
+        self.domain = 'TestReportDataCache'
+        self.cache = ReportDataCache(self.domain, [
+            Mock(report_id='a'),
+            Mock(report_id='b'),
+            Mock(report_id='c'),
+        ])
+
+    def test_load_reports_all(self, _get_report_configs):
+        self.cache.load_reports()
+        _get_report_configs.assert_called_once_with(['a', 'b', 'c'], self.domain)
+
+    def test_load_reports_some(self, _get_report_configs):
+        self.cache.load_reports([
+            Mock(report_id='b'),
+            Mock(report_id='c'),
+        ])
+        _get_report_configs.assert_called_once_with(['b', 'c'], self.domain)
+
+    def test_load_reports_none(self, _get_report_configs):
+        self.cache.load_reports([])
+        _get_report_configs.assert_called_once_with([], self.domain)
