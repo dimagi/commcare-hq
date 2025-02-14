@@ -48,6 +48,7 @@ from corehq.motech.repeaters.const import (
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     DataSourceRepeater,
+    DataSourceUpdateLog,
     FormRepeater,
     LocationRepeater,
     Repeater,
@@ -1274,64 +1275,116 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
 
     def setUp(self):
         super().setUp()
-        self.config = get_sample_data_source()
-        self.config.save()
-        self.addCleanup(self.config.delete)
-        self.adapter = get_indicator_adapter(self.config)
+        self.data_source = get_sample_data_source()
+        self.data_source.save()
+        self.addCleanup(self.data_source.delete)
+        self.adapter = get_indicator_adapter(self.data_source)
         self.adapter.build_table()
         self.addCleanup(self.adapter.drop_table)
-        self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
-        self.pillow = _get_pillow([self.config], processor_chunk_size=100)
+        self.pillow = _get_pillow([self.data_source], processor_chunk_size=100)
 
         self.connx = ConnectionSettings.objects.create(
             domain=self.domain,
             url="case-repeater-url",
         )
-        self.data_source_id = self.config._id
         self.repeater = DataSourceRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
-            data_source_id=self.data_source_id,
+            data_source_id=self.data_source._id,
         )
         self.repeater.save()
 
     def test_datasource_is_subscribed_to(self):
-        self.assertTrue(self.repeater.datasource_is_subscribed_to(self.domain, self.data_source_id))
-        self.assertFalse(self.repeater.datasource_is_subscribed_to("malicious-domain", self.data_source_id))
+        assert self.repeater.datasource_is_subscribed_to(
+            self.domain,
+            self.data_source._id,
+        )
+        assert not self.repeater.datasource_is_subscribed_to(
+            "malicious-domain",
+            self.data_source._id,
+        )
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_payload_format(self):
-        sample_doc, expected_indicators = self._create_log_and_repeat_record()
-        later = datetime.utcnow() + timedelta(hours=50)
-        repeat_record = RepeatRecord.objects.filter(domain=self.domain, next_check__lt=later).first()
-        json_payload = self.repeater.get_payload(repeat_record)
+        doc_id, expected_indicators = self._create_log_and_repeat_record()
+        repeat_record = self.repeater.repeat_records_ready.first()
+        payload_str = repeat_record.get_payload()
+        payload = json.loads(payload_str)
+        self._assert_payload_equal(payload, [doc_id], [expected_indicators])
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_merged_payload_doc(self):
+        doc_id_1, expected_indicators_1 = self._create_log_and_repeat_record()
+        doc_id_2, expected_indicators_2 = self._create_log_and_repeat_record()
+        self.repeater.merge_records()
+        repeat_record = self.repeater.repeat_records_ready.first()
+        json_payload = repeat_record.get_payload()
         payload = json.loads(json_payload)
 
-        # Clean expected_indicators:
-        # expected_indicators includes 'repeat_iteration'
-        del expected_indicators['repeat_iteration']
-        # Decimal expected indicator is not rounded, and will not match
-        del expected_indicators['estimate']
-        del payload['data'][0]['estimate']
+        del expected_indicators_1['estimate']
+        del expected_indicators_2['estimate']
+        for p in payload['data']:
+            del p['estimate']
 
-        self.assertEqual(payload, {
-            'data_source_id': self.data_source_id,
-            'doc_id': sample_doc['_id'],
-            'data': [expected_indicators]
-        })
+        self._assert_payload_equal(
+            payload,
+            [doc_id_1, doc_id_2],
+            [expected_indicators_1, expected_indicators_2],
+        )
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_merged_record_count(self):
+        self._create_log_and_repeat_record()
+        self._create_log_and_repeat_record()
+        self.repeater.merge_records()
+        assert self.repeater.repeat_records_ready.count() == 1
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_deleted_payload(self):
+        self._create_log_and_repeat_record()
+        repeat_record = self.repeater.repeat_records_ready.first()
+        DataSourceUpdateLog.objects.filter(id=repeat_record.payload_id).delete()
+
+        assert self.repeater.payload_doc(repeat_record) is None
+        assert repeat_record.get_payload() is None
+        state = repeat_record.fire()
+        assert state == State.Empty
 
     def _create_log_and_repeat_record(self):
         from corehq.apps.userreports.tests.test_pillow import _save_sql_case
+
         with patch('corehq.apps.userreports.specs.datetime') as datetime_mock:
-            datetime_mock.utcnow.return_value = self.fake_time_now
-            sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+            fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
+            datetime_mock.utcnow.return_value = fake_time_now
+            sample_doc, expected_indicators = get_sample_doc_and_indicators(fake_time_now)
             since = self.pillow.get_change_feed().get_latest_offsets()
             _save_sql_case(sample_doc)
             self.pillow.process_changes(since=since, forever=False)
+
         # Serialize and deserialize to get objects as strings
         json_indicators = json.dumps(expected_indicators, cls=CommCareJSONEncoder)
         expected_indicators = json.loads(json_indicators)
-        return sample_doc, expected_indicators
+        return sample_doc['_id'], expected_indicators
+
+    def _assert_payload_equal(self, payload, doc_ids, expected_indicators):
+        # assert payload == {
+        #     'data_source_id': self.data_source._id,
+        #     'doc_ids': doc_ids,
+        #     'data': expected_indicators,
+        # }
+        # ^^^ kinda like this, but accommodates the value of "estimate":
+        assert set(payload.keys()) == {'data_source_id', 'doc_id', 'doc_ids', 'data'}
+        assert payload['data_source_id'] == self.data_source._id
+        assert sorted(payload['doc_ids']) == sorted(doc_ids)
+        payload_data = sorted(payload['data'], key=lambda x: x['doc_id'])
+        expected_indicators = sorted(expected_indicators, key=lambda x: x['doc_id'])
+        for i, data in enumerate(payload_data):
+            for key, value in data.items():
+                if key == 'estimate':
+                    # '2.3000000000000000' == '2.2999999999...1893310546875'
+                    assert float(value) == float(expected_indicators[i][key])
+                else:
+                    assert value == expected_indicators[i][key]
 
 
 class TestSetBackoff(TestCase):
