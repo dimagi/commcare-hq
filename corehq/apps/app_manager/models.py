@@ -1860,6 +1860,7 @@ class DetailColumn(IndexedSchema):
     field = StringProperty()
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
+    optimization = StringProperty(exclude_if_none=True)
 
     # Only applies to custom case list tile. grid_x and grid_y are zero-based values
     # representing the starting row and column.
@@ -2576,6 +2577,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
     lazy_load_case_list_fields = BooleanProperty(default=False)
+    show_case_list_optimization_options = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang):
