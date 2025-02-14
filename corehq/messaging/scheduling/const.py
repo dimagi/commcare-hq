@@ -46,9 +46,10 @@ ALLOWED_HTML_TAGS = {
 
 
 ALLOWED_HTML_ATTRIBUTES = {
-    'a': ['href', 'title'],
+    'a': ['href', 'title', 'style', 'class'],
     'abbr': ['title'],
     'acronym': ['title'],
+    'p': ['style', 'class'],
     'div': ['style', 'class'],
     'span': ['style', 'class'],
     'img': ['style', 'src', 'width', 'height', 'class'],
