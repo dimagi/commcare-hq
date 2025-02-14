@@ -501,7 +501,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.field = self.field.val();
             column.header[self.lang] = self.header.val();
             column.format = self.format.val();
-            column.optimization = self.supportsOptimizations() ? self.optimizationSelectElement.val() : null;
+            column.optimization = self.supportsOptimizations() ? self.optimizationSelectElement.ui.find("select").val() : null;
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
             column.endpoint_action_id = self.action_form_extra.val() === "-1" ? null : self.action_form_extra.val();
