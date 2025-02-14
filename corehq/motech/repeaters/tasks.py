@@ -82,8 +82,9 @@ from django.conf import settings
 from celery import chord
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
+from django_redis import get_redis_connection
 
-from dimagi.utils.couch import get_redis_client, get_redis_lock
+from dimagi.utils.couch import get_redis_lock
 
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task
@@ -110,8 +111,9 @@ from .const import (
     ENDPOINT_TIMER,
     MAX_RETRY_WAIT,
     PROCESS_REPEATERS_INTERVAL,
+    PROCESS_REPEATERS_KEY,
     RATE_LIMITER_DELAY_RANGE,
-    State, PROCESS_REPEATERS_KEY,
+    State,
 )
 from .models import (
     Repeater,
@@ -317,7 +319,7 @@ def process_repeaters():
     metrics_counter('commcare.repeaters.process_repeaters.start')
     try:
         group = 0
-        redis = get_redis_client()
+        redis = get_redis_connection()
         timeout_ms = 30 * 60 * 1000  # half an hour
         redis.set(f'repeater_group_{group}', 0, px=timeout_ms)
         while True:
@@ -332,7 +334,7 @@ def process_repeaters():
                 if lock.acquire():  # non-blocking
                     process_repeater(repeater_id, lock.token, group)
 
-            while redis.get(f'repeater_group_{group}') == 0:
+            while int(redis.get(f'repeater_group_{group}')) == 0:
                 # Wait for (at least) one `process_repeater` task to finish
                 # so that `Repeater.objects.get_all_ready_ids_by_domain()`
                 # will return an updated set of repeaters. (This `while`
@@ -532,7 +534,7 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, group):
     finally:
         lock = RepeaterLock(repeater_id, lock_token)
         lock.release()
-        redis = get_redis_client()
+        redis = get_redis_connection()
         redis.incr(f'repeater_group_{group}')
 
 
