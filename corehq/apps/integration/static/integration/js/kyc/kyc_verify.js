@@ -19,7 +19,7 @@ $(document).on('change', 'input[name="selection"]', function () {
 $(document).on('change', 'input[name="select_all"]', function () {
     const isChecked = $(this).prop('checked');
 
-    const $rowCheckboxes = $('input[name="selection"]');
+    const $rowCheckboxes = $('input[name="selection"]:not(:disabled)');
     $rowCheckboxes.prop('checked', isChecked);
 
     if (isChecked) {
