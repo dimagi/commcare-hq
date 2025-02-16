@@ -14,6 +14,8 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
     ace,
 ) {
     const selectAll = document.getElementById('select-all'),
+        requeueButton = document.getElementById('requeue-button'),
+        cancelButton = document.getElementById('cancel-button'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
 
@@ -140,6 +142,32 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
                 $btn = $('#requeue-button');
                 $btn.disableButton();
                 postOther($btn, requestBody, action);
+            }
+        });
+
+        $('#report-content').on('click', '.record-checkbox', function () {
+            const checkedRecords = getCheckedRecords();
+            if (checkedRecords.length == 0) {
+                requeueButton.disabled = true;
+                cancelButton.disabled = true;
+                return;
+            }
+
+            var containsQueuedRecords = false;
+            checkedRecords.some(record => {
+                if (record.getAttribute('is_queued') == true) {
+                    containsQueuedRecords = true;
+                    return true;
+                }
+                return false;
+            });
+
+            if (containsQueuedRecords) {
+                requeueButton.disabled = true;
+                cancelButton.disabled = false;
+            } else {
+                requeueButton.disabled = false;
+                cancelButton.disabled = true;
             }
         });
 

@@ -143,6 +143,32 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             }
         });
 
+        $('#report-content').on('click', '.record-checkbox', function () {
+            const checkedRecords = getCheckedRecords();
+            if (checkedRecords.length == 0) {
+                requeueButton.disabled = true;
+                cancelButton.disabled = true;
+                return;
+            }
+
+            var containsQueuedRecords = false;
+            checkedRecords.some(record => {
+                if (record.getAttribute('is_queued') == true) {
+                    containsQueuedRecords = true;
+                    return true;
+                }
+                return false;
+            });
+
+            if (containsQueuedRecords) {
+                requeueButton.disabled = true;
+                cancelButton.disabled = false;
+            } else {
+                requeueButton.disabled = false;
+                cancelButton.disabled = true;
+            }
+        });
+
         function performAction(action) {
             const checkedRecords = getCheckedRecords();
             if (selectAll.checked) {

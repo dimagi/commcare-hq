@@ -163,8 +163,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def _make_row(self, record):
         display = RepeatRecordDisplay(record, self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
         checkbox = format_html(
-            '<input type="checkbox" class="record-checkbox" data-id="{}" name="record_ids"/>',
-            record.id)
+            '<input type="checkbox" class="record-checkbox" data-id="{}" name="record_ids" is_queued="{}"/>',
+            record.id,
+            1 if record.is_queued() else 0,
+        )
         row = [
             checkbox,
             display.state,
