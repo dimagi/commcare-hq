@@ -192,7 +192,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def _make_row(self, record):
         display = RepeatRecordDisplay(record, self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
         checkbox = format_html(
-            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
+            '<input type="checkbox" class="record-checkbox" data-id="{}" name="record_ids"/>',
             record.id)
         row = [
             checkbox,

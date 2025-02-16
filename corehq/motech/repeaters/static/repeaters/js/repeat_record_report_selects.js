@@ -1,6 +1,6 @@
 
 hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
-    const items = document.getElementsByName('xform_ids'),
+    const items = document.getElementsByName('record_ids'),
         selectAll = document.getElementById('select-all'),
         buttonCancel = document.getElementById('cancel-all-button'),
         buttonRequeue = document.getElementById('requeue-all-button');

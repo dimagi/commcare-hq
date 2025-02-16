@@ -185,7 +185,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         }
 
         function getCheckedRecords() {
-            return $.find('input[type=checkbox][name=xform_ids]:checked');
+            return $.find('input[type=checkbox][name=record_ids]:checked');
         }
 
         function isActionPossibleForCheckedItems(action, items) {
