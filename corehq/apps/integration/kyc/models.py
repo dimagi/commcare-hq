@@ -4,6 +4,9 @@ from django.utils.translation import gettext as _
 
 import jsonfield
 
+from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
 
@@ -67,3 +70,24 @@ class KycConfig(models.Model):
             else:
                 raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
         return self.connection_settings
+
+    def get_user_objects(self):
+        """
+        Returns all CommCareUser or CommCareCase instances based on the
+        user data store.
+        """
+        if self.user_data_store in (
+            UserDataStore.CUSTOM_USER_DATA,
+            UserDataStore.USER_CASE,
+        ):
+            return CommCareUser.by_domain(self.domain)
+        elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
+            # assert self.other_case_type
+            case_ids = (
+                CaseSearchES()
+                .domain(self.domain)
+                .case_type(self.other_case_type)
+            ).get_ids()
+            if not case_ids:
+                return []
+            return CommCareCase.objects.get_cases(case_ids, self.domain)
