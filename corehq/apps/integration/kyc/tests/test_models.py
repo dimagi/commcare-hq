@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 import pytest
@@ -123,5 +124,18 @@ class TestGetUserObjectsCases(TestCase):
             'other_case_property': 'other_case_value',
         }
 
+    def test_other_case_type_clean(self):
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+        )
+        with pytest.raises(ValidationError):
+            config.clean()
+
     def test_assert_other_case_type(self):
-        pass
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+        )
+        with pytest.raises(AssertionError):
+            config.get_user_objects()

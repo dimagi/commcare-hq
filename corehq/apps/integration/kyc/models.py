@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext as _
 
@@ -52,6 +53,21 @@ class KycConfig(models.Model):
             models.UniqueConstraint(fields=['domain', 'provider'], name='unique_domain_provider'),
         ]
 
+    def clean(self):
+        super().clean()
+        if (
+            self.user_data_store == UserDataStore.OTHER_CASE_TYPE
+            and not self.other_case_type
+        ):
+            raise ValidationError({
+                'other_case_type': _(
+                    'This field is required when "User Data Store" is set to '
+                    '"Other Case Type".'
+                )
+            })
+        elif self.user_data_store != UserDataStore.OTHER_CASE_TYPE:
+            self.other_case_type = None
+
     def get_connection_settings(self):
         if not self.connection_settings_id:
             if self.provider == KycProviders.MTN_KYC:
@@ -82,7 +98,7 @@ class KycConfig(models.Model):
         ):
             return CommCareUser.by_domain(self.domain)
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
-            # assert self.other_case_type
+            assert self.other_case_type
             case_ids = (
                 CaseSearchES()
                 .domain(self.domain)
