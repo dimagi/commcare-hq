@@ -652,6 +652,7 @@ integration
  0006_kycconfig
  0007_alter_kycconfig_api_field_to_user_data_map
  0008_kycconfig_provider_kycconfig_unique_domain_provider
+ 0009_alter_kycconfig_connection_settings
 ivr
  0001_initial
  0002_call_app_id
