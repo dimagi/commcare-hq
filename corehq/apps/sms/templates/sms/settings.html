@@ -1,9 +1,9 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% js_entry_b3 'sms/js/settings' %}
+{% js_entry 'sms/js/settings' %}
 
 {% block stylesheets %}
   <style>
@@ -22,7 +22,7 @@
 
 {% block page_content %}
   <div id="sms-settings-form">
-    {% crispy form %}
+    {% crispy form %}  {# todo B5: crispy #}
   </div>
 
   {% include "sms/partials/day_time_windows.html" with context=form.restricted_sms_times_widget_context only %}
