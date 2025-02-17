@@ -163,6 +163,11 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     decisions/*
 
 .. toctree::
+    :caption: CommCare API
+
+    api/README
+
+.. toctree::
     :caption: Documentation Tips
 
     documenting
