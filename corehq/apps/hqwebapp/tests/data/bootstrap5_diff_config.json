@@ -838,5 +838,16 @@
       "label": "javascript/data_interfaces/js",
       "compare_all_files": true
     }
+  ],
+  "tabs/templates/tabs": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "tabs",
+      "compare_all_files": true
+    }
   ]
 }

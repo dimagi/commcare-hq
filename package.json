@@ -101,7 +101,7 @@
         "mocha-headless-chrome": "4.0.0",
         "prettier": "^3.3.3",
         "prettier-plugin-jinja-template": "^2.0.0",
-        "sinon": "2.3.2"
+        "sinon": "19.0.2"
     },
     "engines": {
         "yarn": ">= 1.0.0"
