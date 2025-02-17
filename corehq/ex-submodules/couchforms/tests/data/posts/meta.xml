@@ -7,6 +7,7 @@
 		<username>admin</username>
 		<userID>f7f0c79e-8b79-11df-b7de-005056c00008</userID>
         <appVersion>v1.2.3 (biz bazzle)</appVersion>
+        <formLoadTime>111</formLoadTime>
 	</meta>
 	<case>
 		<patient_id>6713c1c211b3af6832c8ad781e310d98</patient_id>
