@@ -83,6 +83,4 @@ hqDefine("userreports/js/configurable_report", [
             );
         }
     });
-
-    return 1;
 });
