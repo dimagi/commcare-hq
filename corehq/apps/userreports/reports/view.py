@@ -149,7 +149,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     prefix = slug
     emailable = False
     is_exportable = True
-    exportable_all = True
+    exportable_all = False
     show_filters = True
 
     _domain = None
