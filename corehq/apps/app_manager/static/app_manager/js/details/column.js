@@ -83,22 +83,22 @@ hqDefine("app_manager/js/details/column", function () {
         self.tileColumnOptions = _.range(1, self.tileColumnMax());
 
         let optimizationOptions = [
-          {
-            value: "",
-            label: ""
-          },
-          {
-            value: "cache",
-            label: gettext('Cache'),
-          },
-          {
-            value: "lazy_load",
-            label: gettext('Lazy Load'),
-          },
-          {
-            value: "cache_and_lazy_load",
-            label: gettext('Cache & Lazy Load'),
-          }
+            {
+                value: "",
+                label: ""
+            },
+            {
+                value: "cache",
+                label: gettext('Cache'),
+            },
+            {
+                value: "lazy_load",
+                label: gettext('Lazy Load'),
+            },
+            {
+                value: "cache_and_lazy_load",
+                label: gettext('Cache & Lazy Load'),
+            }
         ];
         self.optimizationSelectElement = uiElementSelect.new(optimizationOptions).val(self.original.optimization || "");
         self.$optimizationSelectElement = $('<div/>').append(self.optimizationSelectElement.ui);
@@ -262,15 +262,15 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
         self.supportsOptimizations = ko.observable();
-        self.optimizationsSupported = function() {
+        self.optimizationsSupported = function () {
             return (
                 self.format.val() &&
                 initialPageData.get('formats_supporting_case_list_optimizations').includes(self.format.val())
-            )
-        }
-        self.setSupportOptimizations = function() {
-            self.supportsOptimizations(self.optimizationsSupported())
-        }
+            );
+        };
+        self.setSupportOptimizations = function () {
+            self.supportsOptimizations(self.optimizationsSupported());
+        };
         self.setSupportOptimizations();
 
         (function () {
