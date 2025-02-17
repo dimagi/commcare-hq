@@ -6,8 +6,24 @@ from corehq.apps.es.es_query import HQESQuery
 @dataclass
 class ESQueryProfiler:
     """
-    Allows a user to profile ES queries. The timing_context also allows for adding timing blocks
-    to arbitrary parts of code which will be included in the final timing output.
+    A profiler for gathering timing and profiling data on functions that may or may not contain
+    Elasticsearch queries.
+
+    This is particularly useful for profiling workflows involving multiple ES queries
+    and other operations. For profiling a single ES query, you can simply use `query.enable_profiling`.
+    However, when profiling a broader workflow, the outermost `with timing_context` block
+    should be chosen carefully, as it represents the total evaluation time being measured.
+
+    Attributes:
+        search_class (HQESQuery): The ES query class to be profiled (any subclass of HQESQuery).
+        name (str): A label for the profiler instance, defaults to 'Query Profiler'.
+        debug_mode (bool): Enables ES profiling details when set to True.
+        queries (list): Stores profiling data for individual queries when in debug mode.
+        _query_number (int): Tracks the number of queries executed within the profiler.
+
+    Methods:
+        get_search_class(slug=None): Returns a wrapped version of the search class
+            that automatically profiles query execution times.
     """
 
     search_class: HQESQuery = HQESQuery
