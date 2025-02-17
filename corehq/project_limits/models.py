@@ -97,3 +97,15 @@ class SystemLimit(models.Model):
     def __str__(self):
         domain = f"[{self.domain}] " if self.domain else ""
         return f"{domain}{self.key}: {self.limit}"
+
+    @classmethod
+    def for_key(cls, key, domain=None):
+        """
+        Return the value associated with the given key, prioritizing specificity
+        """
+        domain_filter = models.Q(domain="")
+        if domain:
+            domain_filter |= models.Q(domain=domain)
+        filters = models.Q(key=key) & domain_filter
+        limit = SystemLimit.objects.filter(filters).order_by("-domain").values_list("limit", flat=True).first()
+        return limit or None
