@@ -71,8 +71,19 @@ function imageHandler() {
     input.click();
 }
 
+function linkHandler(value) {
+    if (value) {
+        let href = prompt('Enter the URL').trim();
+        if (!href.match(/^\w+:/)) {
+            href = "http://" + href;
+        }
+        this.quill.format('link', href);
+    }
+}
+
 const converterOptions = {
     inlineStyles: true,
+    linkTarget: "",
 };
 
 const orderedListTypes = ["1", "a", "i"];
@@ -125,6 +136,7 @@ ko.bindingHandlers.richEditor = {
                     container: toolbar,
                     handlers: {
                         image: imageHandler,
+                        link: linkHandler,
                     },
                 },
             },

@@ -254,5 +254,25 @@ describe('Rich Text Editor', function () {
             assert.equal("<html><body><p><span style=\"color:#e60000\">color</span><br>" +
                 "<span style=\"background-color:#e60000\">background</span></p></body></html>", html);
         });
+
+        it('link', function () {
+            const delta =
+                {
+                    "ops": [
+                        {
+                            "attributes": {
+                                "link": "https://dimagi.com",
+                            },
+                            "insert": "link",
+                        },
+                        {
+                            "insert": "\n",
+                        },
+                    ],
+                };
+            const html = deltaToHtml(delta);
+            console.log(html);
+            assert.equal("<html><body><p><a href=\"https://dimagi.com\">link</a></p></body></html>", html);
+        });
     });
 });
