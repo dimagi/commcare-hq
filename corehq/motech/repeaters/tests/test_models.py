@@ -725,6 +725,20 @@ class TestRepeatRecordManager(RepeaterTestCase):
         overdue = RepeatRecord.objects.count_overdue()
         self.assertEqual(overdue, 3)
 
+        with self.pause_repeater():
+            overdue = RepeatRecord.objects.count_overdue()
+            self.assertEqual(overdue, 0)
+
+    @contextmanager
+    def pause_repeater(self):
+        try:
+            self.repeater.is_paused = True
+            self.repeater.save()
+            yield
+        finally:
+            self.repeater.is_paused = False
+            self.repeater.save()
+
     iter_partition = RepeatRecord.objects.iter_partition
 
     def test_one_partition(self):

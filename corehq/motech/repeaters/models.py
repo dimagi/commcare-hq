@@ -1011,8 +1011,13 @@ class RepeatRecordManager(models.Manager):
     def count_overdue(self, threshold=timedelta(minutes=10)):
         return self.filter(
             next_check__isnull=False,
-            next_check__lt=datetime.utcnow() - threshold
-        ).count()
+            next_check__lt=datetime.utcnow() - threshold,
+            # `check_repeaters()` updates the `next_check` value of
+            # repeat records of paused repeaters, but `process_repeaters()`
+            # does not. Exclude the repeat records of paused repeaters
+            # for domains using `process_repeaters()`.
+            repeater__is_paused=False,
+        ).select_related('repeater').count()
 
     @staticmethod
     def count_all_ready():
