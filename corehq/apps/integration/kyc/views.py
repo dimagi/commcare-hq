@@ -9,7 +9,11 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
 from corehq.apps.integration.kyc.models import KycConfig
-from corehq.apps.integration.kyc.services import get_user_data_for_api
+from corehq.apps.integration.kyc.services import (
+    get_user_data_for_api,
+    verify_all,
+    verify_selected_ids,
+)
 from corehq.apps.integration.kyc.tables import KycVerifyTable
 from corehq.apps.users.models import CommCareUser
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
@@ -107,19 +111,14 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
-        verify_all = request.POST.get('verify_all')
-        verify_success = True
-        success_count = 0
-        fail_count = 0
-        if verify_all:
-            # TODO: Need to get all IDS. Could take inspiration from _row_data to fetch all IDs
-            # TODO: Verify all rows
-            pass
+        if request.POST.get('verify_all'):
+            results = verify_all(request.domain)
         else:
-            pass
-            # TODO: Verify selected rows
-            # selected_ids = request.POST.getlist('selected_ids')
-
+            selected_ids = request.POST.getlist('selected_ids')
+            results = verify_selected_ids(request.domain, selected_ids)
+        verify_success = bool(results)
+        success_count = sum(1 for result in results if result)
+        fail_count = sum(1 for result in results if not result)
         context = {
             'verify_success': verify_success,
             'success_count': success_count,

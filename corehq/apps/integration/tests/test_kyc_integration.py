@@ -9,7 +9,8 @@ from corehq.form_processor.tests.utils import create_case
 from corehq.motech.models import ConnectionSettings
 
 
-class TestKycGetUserDataAPI(TestCase):
+# TODO: Move to test_services
+class TestGetUserDataForAPI(TestCase):
     domain = 'test-kyc-integration'
 
     @classmethod
