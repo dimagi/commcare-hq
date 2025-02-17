@@ -85,6 +85,7 @@ IGNORE_MODELS = {
     "pillowtop.DjangoPillowCheckpoint",
     "pillowtop.KafkaCheckpoint",
     "project_limits.DynamicRateDefinition",
+    "project_limits.SystemLimit",
     "project_limits.RateLimitedTwoFactorLog",
     "project_limits.PillowLagGaugeDefinition",
     "registration.SelfSignupWorkflow",
@@ -166,6 +167,7 @@ UNKNOWN_MODELS = {
     "userreports.DataSourceActionLog",
     "userreports.InvalidUCRData",
     "users.HQApiKey",
+    "users.InvitationHistory",
     "users.UserHistory",
     "users.UserReportingMetadataStaging",
 }

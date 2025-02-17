@@ -4,7 +4,7 @@ hqDefine('userreports/js/edit_report_config', [
     'commcarehq',
 ], function (
     $,
-    multiselectUtils
+    multiselectUtils,
 ) {
     $(function () {
         multiselectUtils.createFullMultiselectWidget('domain-selector', {

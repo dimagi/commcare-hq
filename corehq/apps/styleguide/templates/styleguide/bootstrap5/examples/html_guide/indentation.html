@@ -2,7 +2,8 @@
   {% for report in reports %}
     <div class="col-md-6 col-lg-6 col-xl-3">
       <div
-        class="card text-center report-panel mb-3" id="{{ report.slug }}"
+        id="{{ report.slug }}"
+        class="card text-center report-panel mb-3"
         data-slug="{{ report.slug }}"
       >
         {% if report.is_active %}

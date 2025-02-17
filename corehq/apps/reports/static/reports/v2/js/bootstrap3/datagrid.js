@@ -23,10 +23,8 @@ hqDefine('reports/v2/js/bootstrap3/datagrid', [
     columns,
     reportFilters,
     kissmetrics,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
-
     var datagridController = function (options) {
         assertProperties.assert(options, [
             'dataModel',
@@ -111,13 +109,13 @@ hqDefine('reports/v2/js/bootstrap3/datagrid', [
                 self.columns(replacementCols);
                 kissmetrics.track.event(
                     "Clicked Update button on Add Column modal",
-                    self._getColumnAnalyticsData(column)
+                    self._getColumnAnalyticsData(column),
                 );
             } else {
                 self.columns.push(columns.columnModel(column.unwrap()));
                 kissmetrics.track.event(
                     "Clicked Add button on Add Column modal",
-                    self._getColumnAnalyticsData(column)
+                    self._getColumnAnalyticsData(column),
                 );
             }
 

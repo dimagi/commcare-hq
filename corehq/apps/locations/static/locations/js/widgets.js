@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("locations/js/widgets", [
     'jquery',
     'hqwebapp/js/initial_page_data',
@@ -9,7 +9,7 @@ hqDefine("locations/js/widgets", [
     $,
     initialPageData,
     _,
-    toggles
+    toggles,
 ) {
     // Update the options available to one select2 to be
     // the selected values from another (multiselect) select2

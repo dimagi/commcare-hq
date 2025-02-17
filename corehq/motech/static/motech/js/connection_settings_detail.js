@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("motech/js/connection_settings_detail", [
     'jquery',
     'underscore',
@@ -7,7 +7,7 @@ hqDefine("motech/js/connection_settings_detail", [
 ], function (
     $,
     _,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         var $authTypeSelect = $('#id_auth_type'),
@@ -129,7 +129,7 @@ hqDefine("motech/js/connection_settings_detail", [
                 .removeClass("d-none text-success")
                 .addClass("text-danger");
             $testResult.text(gettext(
-                'CommCare HQ was unable to make the request: '
+                'CommCare HQ was unable to make the request: ',
             ) + resp.statusText);
         };
 

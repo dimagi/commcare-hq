@@ -2,6 +2,8 @@ import 'commcarehq';
 
 import $ from 'jquery';
 import _ from 'underscore';
+import {Popover} from 'bootstrap5';
+
 import initialPageData from 'hqwebapp/js/initial_page_data';
 import datatablesConfig from 'reports/js/bootstrap5/datatables_config';
 import standardHQReportModule from 'reports/js/bootstrap5/standard_hq_report';
@@ -27,7 +29,6 @@ function renderPage(slug, tableOptions) {
                 defaultRows: tableConfig.default_rows,
                 startAtRowNum: tableConfig.start_at_row,
                 showAllRowsOption: tableConfig.show_all_rows,
-                loadingTemplateSelector: '#js-template-loading-report',
                 autoWidth: tableConfig.headers.auto_width,
             };
         if (!tableConfig.sortable) {
@@ -49,7 +50,7 @@ function renderPage(slug, tableOptions) {
             });
         }
         if (tableConfig.bad_request_error_text) {
-            options.badRequestErrorText = "<span class='label label-important'>" + gettext("Sorry!") + "</span>" + tableConfig.bad_request_error_text;
+            options.badRequestErrorText = "<span class='badge text-bg-danger'>" + gettext("Sorry!") + "</span>" + tableConfig.bad_request_error_text;
         }
         if (tableConfig.left_col.is_fixed) {
             _.extend(options, {
@@ -66,10 +67,15 @@ function renderPage(slug, tableOptions) {
         reportTables.render();
     }
 
-    $('.header-popover').popover({  /* todo B5: plugin:popover */
-        trigger: 'hover',
-        placement: 'bottom',
-        container: 'body',
+    const tableHeadersWithInfo = document.getElementsByClassName('header-popover');
+    Array.from(tableHeadersWithInfo).forEach((elem) => {
+        new Popover(elem, {
+            title: elem.dataset.title,
+            content: elem.dataset.content,
+            trigger: 'hover',
+            placement: 'bottom',
+            container: 'body',
+        });
     });
 }
 

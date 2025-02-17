@@ -7,5 +7,5 @@
 +hqDefine("hqwebapp/spec/bootstrap5/inactivity_spec", [
 +    'hqwebapp/js/bootstrap5/inactivity',
  ], function (
-     module
+     module,
  ) {

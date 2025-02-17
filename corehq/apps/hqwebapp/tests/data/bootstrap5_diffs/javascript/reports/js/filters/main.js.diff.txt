@@ -26,7 +26,7 @@
                  var standardHQReport = standardHQReportModule.getStandardHQReport();
  
 -                $filterRange.createDateRangePicker(
-+                $filterRange.createDateRangePicker(  /* todo B5: plugin:createDateRangePicker */
++                $filterRange.createDateRangePicker(/* todo B5: plugin:createDateRangePicker */
                      reportLabels, separator,
                      $filterRange.data('startDate'),
-                     $filterRange.data('endDate')
+                     $filterRange.data('endDate'),

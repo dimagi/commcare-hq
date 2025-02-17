@@ -44,7 +44,7 @@ hqDefine("reports/js/bootstrap5/data_corrections", [
     _,
     bootstrap,
     assertProperties,
-    kissAnalytics
+    kissAnalytics,
 ) {
     // Represents a single property/value pair, e.g., a form question and its response
     var PropertyModel = function (options) {

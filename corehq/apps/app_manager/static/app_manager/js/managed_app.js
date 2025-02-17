@@ -11,16 +11,17 @@ hqDefine("app_manager/js/managed_app", function () {
         });
 
         $('.btn-langcode-preprocessed').each(function () {
-            hqImport('hqwebapp/js/bootstrap3/ui-element').langcode_tag_btn($(this), $(this).text());
+            hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').new($(this), $(this).text());
             if ($(this).hasClass('langcode-input')) {
                 var $langcodeInput = $(this).parent().find("input");
                 var that = this;
                 if ($langcodeInput) {
                     $langcodeInput.change(function () {
-                        if ($(this).val() == "")
+                        if ($(this).val() === "") {
                             $(that).show();
-                        else
+                        } else {
                             $(that).hide();
+                        }
                     });
                 }
             }

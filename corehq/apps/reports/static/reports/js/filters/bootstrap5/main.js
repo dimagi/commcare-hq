@@ -30,7 +30,7 @@ hqDefine("reports/js/filters/bootstrap5/main", [
     advancedFormsOptions,
     drilldownOptions,
     choiceListUtils,
-    caseListExplorer
+    caseListExplorer,
 ) {
     var init = function () {
         // Datespans
@@ -41,10 +41,10 @@ hqDefine("reports/js/filters/bootstrap5/main", [
                 var reportLabels = $filterRange.data('reportLabels');
                 var standardHQReport = standardHQReportModule.getStandardHQReport();
 
-                $filterRange.createDateRangePicker(  /* todo B5: plugin:createDateRangePicker */
+                $filterRange.createDateRangePicker(/* todo B5: plugin:createDateRangePicker */
                     reportLabels, separator,
                     $filterRange.data('startDate'),
-                    $filterRange.data('endDate')
+                    $filterRange.data('endDate'),
                 );
                 $filterRange.on('change apply', function () {
                     var dates = $(this).val().split(separator);
@@ -88,7 +88,7 @@ hqDefine("reports/js/filters/bootstrap5/main", [
                         format: 'YYYY-MM-DD',
                     },
                     singleDatePicker: true,
-                }
+                },
             );
         }
 
@@ -257,7 +257,7 @@ hqDefine("reports/js/filters/bootstrap5/main", [
                         caption_text: data.captionText,
                         css_id: data.cssId,
                         css_class: data.cssClass,
-                    }
+                    },
                 );
             }
         });

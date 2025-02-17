@@ -976,7 +976,7 @@ files from Vellum directly, do the following.
 To run the standard tests for CommCare HQ, run
 
 ```sh
-./manage.py test
+pytest
 ```
 
 These may not all pass in a local environment. It's often more practical, and
@@ -985,23 +985,18 @@ faster, to just run tests for the django app where you're working.
 To run a particular test or subset of tests:
 
 ```sh
-./manage.py test <test.module.path>[:<TestClass>[.<test_name>]]
+pytest <test/file/path.py>[::<TestClass>[::<test_name>]]
 
 # examples
-./manage.py test corehq.apps.app_manager
-./manage.py test corehq.apps.app_manager.tests.test_suite:SuiteTest
-./manage.py test corehq.apps.app_manager.tests.test_suite:SuiteTest.test_picture_format
-
-# alternate: file system path
-./manage.py test corehq/apps/app_manager
-./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
-./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest.test_picture_format
+pytest corehq/apps/app_manager
+pytest corehq/apps/app_manager/tests/test_suite.py::SuiteTest
+pytest corehq/apps/app_manager/tests/test_suite.py::SuiteTest::test_printing
 ```
 
 To use the `pdb` debugger in tests, include the `s` flag:
 
 ```sh
-./manage.py test -s <test.module.path>[:<TestClass>[.<test_name>]]
+pytest -s <test/file/path.py>[::<TestClass>[::<test_name>]]
 ```
 
 If database tests are failing because of a `permission denied` error, give your
@@ -1029,13 +1024,13 @@ To avoid having to run the database setup for each test run you can specify the
 exists:
 
 ```sh
-REUSE_DB=1 ./manage.py test corehq.apps.app_manager
+REUSE_DB=1 pytest corehq/apps/app_manager
 ```
 
 Or, to drop the current test DB and create a fresh one
 
 ```sh
-./manage.py test corehq.apps.app_manager --reusedb=reset
+pytest corehq/apps/app_manager --reusedb=reset
 ```
 
 See `corehq.tests.pytest_plugins.reusedb` ([source](corehq/tests/pytest_plugins/reusedb.py))
@@ -1123,10 +1118,10 @@ See https://docs.pytest.org/en/stable/example/markers.html for more details.
 
 ```sh
 # only run tests that extend TestCase
-./manage.py test --db=only
+pytest --db=only
 
 # skip all tests that extend TestCase but run everything else
-./manage.py test --db=skip
+pytest --db=skip
 ```
 
 ### Running only failed tests

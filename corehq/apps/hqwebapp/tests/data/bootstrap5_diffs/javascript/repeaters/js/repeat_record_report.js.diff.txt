@@ -1,12 +1,22 @@
 --- 
 +++ 
-@@ -1,5 +1,5 @@
- 'use strict';
+@@ -1,13 +1,13 @@
+ 
 -hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 +hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
      'jquery',
      'hqwebapp/js/initial_page_data',
      'ace-builds/src-min-noconflict/ace',
+     'ace-builds/src-min-noconflict/mode-json',
+     'ace-builds/src-min-noconflict/mode-xml',
+     'repeaters/js/repeat_record_report_selects',
+-    'reports/js/bootstrap3/base',
+-    'reports/js/bootstrap3/tabular',
++    'reports/js/bootstrap5/base',
++    'reports/js/bootstrap5/tabular',
+     'commcarehq',
+ ], function (
+     $,
 @@ -154,7 +154,7 @@
                  action = getAction();
              let $btn;

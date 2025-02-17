@@ -42,12 +42,12 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 _.extend(detailScreenConfigOptions, options.search_config);
                 var detailScreenConfig = hqImport("app_manager/js/details/screen_config")(detailScreenConfigOptions);
 
-                var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
-                $list_home.koApplyBindings(detailScreenConfig);
+                var $listHome = $("#" + detail.type + "-detail-screen-config-tab");
+                $listHome.koApplyBindings(detailScreenConfig);
 
                 if (detail.long !== undefined) {
-                    var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
-                    $detail_home.koApplyBindings(detailScreenConfig);
+                    var $detailHome = $("#" + detail.type + "-detail-screen-detail-config-tab");
+                    $detailHome.koApplyBindings(detailScreenConfig);
                 }
             }
         }
@@ -166,9 +166,9 @@ hqDefine("app_manager/js/modules/module_view", function () {
             });
         }
 
-        var lazyloadCaseListFields = $('#lazy-load-case-list-fields')
+        var lazyloadCaseListFields = $('#lazy-load-case-list-fields');
         if (lazyloadCaseListFields.length > 0) {
-           lazyloadCaseListFields.koApplyBindings({
+            lazyloadCaseListFields.koApplyBindings({
                 lazy_load_case_list_fields: ko.observable(initialPageData.get('lazy_load_case_list_fields')),
             });
         }
@@ -229,11 +229,11 @@ hqDefine("app_manager/js/modules/module_view", function () {
 
                 return self;
             };
-            var case_list_form_options = initialPageData.get('case_list_form_options');
+            var caseListFormOptions = initialPageData.get('case_list_form_options');
             var caseListForm = caseListFormModel(
-                case_list_form_options ? case_list_form_options.form.form_id : null,
-                case_list_form_options ? case_list_form_options.options : [],
-                case_list_form_options ? case_list_form_options.form.post_form_workflow : 'default'
+                caseListFormOptions ? caseListFormOptions.form.form_id : null,
+                caseListFormOptions ? caseListFormOptions.options : [],
+                caseListFormOptions ? caseListFormOptions.form.post_form_workflow : 'default'
             );
             $('#case-list-form').koApplyBindings(caseListForm);
 
@@ -277,16 +277,16 @@ hqDefine("app_manager/js/modules/module_view", function () {
         setupValidation(initialPageData.reverse('validate_module_for_build'));
 
         // show display style options only when module configured to show module and then forms
-        var $menu_mode = $('#put_in_root');
-        var $display_style_container = $('#display_style_container');
-        var update_display_view = function () {
-            if ($menu_mode.val() === 'false') {
-                $display_style_container.show();
+        var $menuMode = $('#put_in_root');
+        var $displayStyleContainer = $('#display_style_container');
+        var updateDisplayView = function () {
+            if ($menuMode.val() === 'false') {
+                $displayStyleContainer.show();
             } else {
-                $display_style_container.hide();
+                $displayStyleContainer.hide();
             }
         };
-        update_display_view();
-        $menu_mode.on('change', update_display_view);
+        updateDisplayView();
+        $menuMode.on('change', updateDisplayView);
     });
 });

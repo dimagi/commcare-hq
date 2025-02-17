@@ -1,5 +1,5 @@
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 
 from django.test import TestCase
 from django.urls import reverse
@@ -29,6 +29,8 @@ from corehq.apps.users.models import (
     UserHistory,
     UserRole,
     WebUser,
+    Invitation,
+    InvitationHistory,
 )
 from corehq.apps.users.role_utils import (
     UserRolePresets,
@@ -471,6 +473,29 @@ class TestWebUserResource(APIResourceTest):
     def setUpClass(cls):
         super().setUpClass()
         initialize_domain_with_default_roles(cls.domain.name)
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain.name,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.addClassCleanup(cls.definition.delete)
+
+        cls.profile = CustomDataFieldsProfile(
+            name='test_profile',
+            fields={'test_field': 'test'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+        cls.profile2 = CustomDataFieldsProfile(
+            name='test_profile2',
+            fields={'test_field2': 'test2'},
+            definition=cls.definition,
+        )
+        cls.profile2.save()
+        cls.addClassCleanup(cls.profile.delete)
+        cls.loc_type = LocationType.objects.create(domain=cls.domain.name, name='loc_type')
+        cls.loc1 = SQLLocation.objects.create(
+            location_id='loc1', location_type=cls.loc_type, domain=cls.domain.name)
+        cls.loc2 = SQLLocation.objects.create(
+            location_id='loc2', location_type=cls.loc_type, domain=cls.domain.name)
 
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
@@ -547,6 +572,173 @@ class TestWebUserResource(APIResourceTest):
         user = WebUser.get_by_username(username)
         if user:
             user.delete(self.domain.name, deleted_by=None)
+
+    def test_update(self):
+        editable_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
+        self.addCleanup(editable_user.delete, self.domain.name, deleted_by=None)
+
+        expected_json = {}
+
+        update_json = {
+            'role': 'App Editor',
+            'user_data': {
+                'fake_field': 'updated',
+                'another_field': 'value',
+            },
+            'profile': 'test_profile',
+            'primary_location_id': 'loc2',
+            'assigned_location_ids': ['loc1', 'loc2'],
+        }
+        expected_json.update(update_json)
+        self._update_and_assert_user(editable_user, update_json, expected_json)
+
+        update_json_minimal = {
+            'role': 'Field Implementer',
+        }
+        expected_json.update(update_json_minimal)
+        self._update_and_assert_user(editable_user, update_json_minimal, expected_json)
+
+        update_json_removing_user_data = {
+            'user_data': {
+                'fake_field': 'updated',
+                'another_field': ''
+            },
+        }
+        expected_json.update(update_json_removing_user_data)
+        self._update_and_assert_user(editable_user, update_json_removing_user_data, expected_json)
+
+        update_json_update_only_one_user_data_field = {
+            'user_data': {
+                'another_field': 'updated',
+            },
+        }
+        expected_json['user_data'].update(update_json_update_only_one_user_data_field['user_data'])
+        self._update_and_assert_user(editable_user, update_json_update_only_one_user_data_field, expected_json)
+
+        update_json_different_profile = {
+            'profile': 'test_profile2',
+        }
+        expected_json.update(update_json_different_profile)
+        self._update_and_assert_user(editable_user, update_json_different_profile, expected_json)
+
+        update_json_different_location = {
+            'primary_location_id': 'loc1',
+            'assigned_location_ids': ['loc1'],
+        }
+        expected_json.update(update_json_different_location)
+        self._update_and_assert_user(editable_user, update_json_different_location, expected_json)
+
+        update_json_empty = {
+            'user_data': {},
+            'profile': '',
+            'primary_location_id': '',
+            'assigned_location_ids': [],
+        }
+        expected_json.update({
+            'profile': '',
+            'primary_location_id': '',
+            'assigned_location_ids': [],
+        })
+        self._update_and_assert_user(editable_user, update_json_empty, expected_json)
+
+    def _update_and_assert_user(self, editable_user, update_json, expected_json):
+        backend_id = editable_user._id
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
+                                                   json.dumps(update_json),
+                                                   content_type='application/json',
+                                                   method='PATCH')
+        self.assertEqual(response.status_code, 202, response.content)
+        updated_user = WebUser.get(backend_id)
+        response_json = response.json()
+        for key, value in expected_json.items():
+            if key == "role":
+                self.assertEqual(updated_user.get_role(self.domain.name).name, value)
+                self.assertEqual(response_json['role'], value)
+            elif key == "primary_location_id":
+                self.assertEqual(updated_user.get_location_id(self.domain.name) or '', value)
+                self.assertEqual(response_json['primary_location_id'], value)
+            elif key == "assigned_location_ids":
+                self.assertEqual(updated_user.get_location_ids(self.domain.name), value)
+                self.assertEqual(response_json['assigned_location_ids'], value)
+            elif key == "user_data":
+                self.assertEqual(updated_user.get_user_data(self.domain.name).raw, value)
+                self.assertEqual(response_json['user_data'],
+                                 updated_user.get_user_data(self.domain.name).to_dict())
+            elif key == "profile":
+                profile_data = updated_user.get_user_data(self.domain.name).profile
+                self.assertEqual(profile_data.name if profile_data else '', value)
+                self.assertEqual(response_json['profile'], value)
+
+        return updated_user
+
+    @patch('corehq.apps.api.validation.WebUserResourceSpec._validate_param_permissions',
+           return_value=[])
+    @patch('corehq.apps.api.validation.TableauGroupsValidator.validate_tableau_groups',
+           return_value=[])
+    @patch('corehq.apps.api.validation.TableauRoleValidator.validate_tableau_role',
+           return_value=[])
+    @patch('corehq.apps.reports.util.get_tableau_group_json')
+    @patch('corehq.apps.api.resources.v0_5.get_tableau_groups_for_user')
+    @patch('corehq.apps.api.user_updates.update_tableau_user')
+    @patch('corehq.apps.api.user_updates.TableauAPISession.create_session_for_domain')
+    def test_update_tableau_role(self, mock_create_session, mock_update_tableau_user,
+                                 mock_get_tableau_groups_for_user, mock_get_tableau_group_json,
+                                 mock_validate_tableau_role, mock_validate_tableau_group,
+                                 mock_validate_parameters):
+        from corehq.apps.reports.util import TableauGroupTuple
+        mock_create_session.return_value = "fake_session"
+        mock_get_tableau_group_json.return_value = [{"name": "group1", "id": "id1"},
+                                                    {"name": "group2", "id": "id2"},
+                                                    {"name": "group3", "id": "id3"}]
+
+        editable_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
+        self.addCleanup(editable_user.delete, self.domain.name, deleted_by=None)
+
+        # Set up for testing dehydration
+        mock_get_tableau_groups_for_user.return_value = [
+            TableauGroupTuple('group1', 'id1'),
+            TableauGroupTuple('group2', 'id2')
+        ]
+        from corehq.apps.reports.models import TableauServer, TableauUser
+        test_server = TableauServer.objects.create(
+            domain=self.domain.name,
+            server_type='server',
+            server_name='test_server',
+            validate_hostname='host name',
+            target_site='target site'
+        )
+        self.addCleanup(test_server.delete)
+        tableau_user = TableauUser.objects.create(
+            server=test_server,
+            username='anotherguy',
+            tableau_user_id='dfg789poi',
+            role='Viewer'
+        )
+        self.addCleanup(tableau_user.delete)
+
+        update_json = {
+            'tableau_role': 'Viewer',
+            'tableau_groups': ['group1', 'group2'],
+        }
+
+        backend_id = editable_user._id
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
+                                                   json.dumps(update_json),
+                                                   content_type='application/json',
+                                                   method='PATCH')
+        self.assertEqual(response.status_code, 202, response.content)
+
+        response_json = response.json()
+        self.assertEqual(response_json['tableau_role'], 'Viewer')
+        self.assertEqual(response_json['tableau_groups'], ['group1', 'group2'])
+
+        mock_create_session.assert_called_once_with(self.domain.name)
+        mock_update_tableau_user.assert_has_calls([
+            call(self.domain.name, editable_user.username, 'Viewer', session="fake_session"),
+            call(self.domain.name, editable_user.username,
+                 groups=[TableauGroupTuple(name='group1', id='id1'), TableauGroupTuple(name='group2', id='id2')],
+                 session="fake_session")
+        ])
 
 
 class FakeUserES(object):
@@ -745,3 +937,100 @@ class TestCommCareAnalyticsUserResource(APIResourceTest):
             'roles': ['sql_lab', 'dataset_editor']
         }
         self.assertEqual(response.json(), expected_response_obj)
+
+
+class TestInvitationResource(APIResourceTest):
+    resource = v1_0.InvitationResource
+    api_name = 'v1'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        initialize_domain_with_default_roles(cls.domain.name)
+        cls.definition = CustomDataFieldsDefinition.objects.create(
+            domain=cls.domain.name,
+            field_type=UserFieldsView.field_type
+        )
+        cls.definition.set_fields([
+            Field(
+                slug='imaginary',
+                label='Imaginary Person',
+                choices=['yes', 'no'],
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile.objects.create(
+            name='character',
+            fields={'imaginary': 'yes'},
+            definition=cls.definition,
+        )
+        cls.loc_type = LocationType.objects.create(domain=cls.domain.name, name='loc_type')
+        cls.loc1 = SQLLocation.objects.create(
+            location_id='loc1', location_type=cls.loc_type, domain=cls.domain.name)
+        cls.loc2 = SQLLocation.objects.create(
+            location_id='loc2', location_type=cls.loc_type, domain=cls.domain.name)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.definition.delete()
+        super().tearDownClass()
+
+    @patch('corehq.apps.api.validation.WebUserResourceSpec._validate_param_permissions',
+           return_value=[])
+    @patch('corehq.apps.api.validation.get_allowed_tableau_groups_for_domain',
+        return_value=[])
+    @patch('corehq.apps.api.validation.TableauGroupsValidator.validate_tableau_groups',
+           return_value=[])
+    @patch('corehq.apps.api.validation.TableauRoleValidator.validate_tableau_role',
+           return_value=[])
+    @patch('corehq.apps.api.resources.v1_0.get_tableau_group_ids_by_names')
+    @patch('corehq.apps.api.resources.v1_0.get_tableau_groups_by_ids')
+    def test_create(self, mock_get_tableau_groups_by_ids,
+                    mock_get_tableau_group_ids_by_names,
+                    mock_validate_tableau_role, mock_validate_tableau_group,
+                    mock_get_allowed_tableau_groups, mock_validate_param_permission):
+        mock_get_tableau_group_ids_by_names.return_value = ["123", "456"]
+        from corehq.apps.reports.util import TableauGroupTuple
+        mock_get_tableau_groups_by_ids.return_value = [TableauGroupTuple("group1", "123")]
+        self.assertEqual(0, Invitation.objects.all().count())
+
+        user_json = {
+            "email": "jdoe1@example.org",
+            "role": "App Editor",
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        invitation = Invitation.objects.get(email="jdoe1@example.org")
+        self.addCleanup(invitation.delete)
+        self.assertEqual(invitation.get_role_name(), "App Editor")
+
+        user_json = {
+            "email": "jdoe2@example.org",
+            "role": "App Editor",
+            "primary_location_id": "loc1",
+            "assigned_location_ids": ["loc1", "loc2"],
+            "profile": "character",
+            "user_data": {
+                "favorite_subject": "math",
+            },
+            "tableau_role": "Viewer",
+            "tableau_groups": ["group1", "group2"]
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+
+        invitation = Invitation.objects.get(email="jdoe2@example.org")
+        self.addCleanup(invitation.delete)
+        self.assertEqual(invitation.get_role_name(), "App Editor")
+        self.assertEqual(invitation.primary_location, self.loc1)
+        self.assertEqual(list(invitation.assigned_locations.all()), [self.loc1, self.loc2])
+        self.assertEqual(invitation.profile, self.profile)
+        self.assertEqual(invitation.custom_user_data["favorite_subject"], "math")
+        self.assertEqual(invitation.tableau_role, "Viewer")
+        self.assertEqual(invitation.tableau_group_ids, ["123", "456"])
+        InvitationHistory.objects.get(invitation=invitation)

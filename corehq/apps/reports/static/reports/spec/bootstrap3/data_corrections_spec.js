@@ -49,7 +49,7 @@ describe('Data Corrections', function () {
             return dataCorrections.init(
                 $(".data-corrections-trigger"),
                 $(".data-corrections-modal"),
-                _.extend(generateOptions(properties), additionalOptions)
+                _.extend(generateOptions(properties), additionalOptions),
             );
         };
 

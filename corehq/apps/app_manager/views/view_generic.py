@@ -74,7 +74,7 @@ def view_generic(
     module, form = _get_module_and_form(
         app, module_id, form_id, module_unique_id, form_unique_id
     )
-    _handle_bad_states(
+    bad_state_response = _handle_bad_states(
         request,
         domain,
         app_id,
@@ -84,6 +84,8 @@ def view_generic(
         module_unique_id,
         form_unique_id,
     )
+    if bad_state_response:
+        return bad_state_response
 
     if app.copy_of:
         # redirect to "main" app rather than specific build

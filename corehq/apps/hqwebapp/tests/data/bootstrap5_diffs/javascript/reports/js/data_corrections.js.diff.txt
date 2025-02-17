@@ -19,7 +19,7 @@
      _,
 +    bootstrap,
      assertProperties,
-     kissAnalytics
+     kissAnalytics,
  ) {
 @@ -111,6 +113,7 @@
          ]);

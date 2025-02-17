@@ -7,7 +7,7 @@ hqDefine("data_interfaces/js/bootstrap5/manage_case_groups", [
 ], function (
     $,
     _,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         var bulkUploadId = initialPageData.get("bulk_upload_id");
@@ -39,13 +39,13 @@ hqDefine("data_interfaces/js/bootstrap5/manage_case_groups", [
                                     isPollingActive = true;
                                     attempts = 0;
                                     $('#upload-progress').html(
-                                        _.template($('#template-upload-progress').text())(data)
+                                        _.template($('#template-upload-progress').text())(data),
                                     );
                                     retry();
                                 } else {
                                     isPollingActive = false;
                                     $('#upload-notice').html(
-                                        _.template($('#template-bulk-status').text())(data)
+                                        _.template($('#template-bulk-status').text())(data),
                                     );
                                 }
                             } else {

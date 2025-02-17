@@ -80,6 +80,8 @@ cffi==1.14.3
     #   cryptography
     #   csiphash
     #   pynacl
+chardet==5.2.0
+    # via reportlab
 charset-normalizer==3.1.0
     # via requests
 click==8.0.3
@@ -635,7 +637,7 @@ redis==4.5.4
     #   django-websocket-redis
 regex==2023.12.25
     # via parsimonious
-reportlab==3.6.13
+reportlab==4.3.0
     # via -r base-requirements.in
 requests==2.32.3
     # via
@@ -762,7 +764,7 @@ stack-data==0.1.4
     # via ipython
 stone==3.3.1
     # via dropbox
-stripe==7.2.0
+stripe==11.4.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in

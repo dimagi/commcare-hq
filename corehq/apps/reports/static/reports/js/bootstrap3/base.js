@@ -9,7 +9,7 @@ hqDefine("reports/js/bootstrap3/base", [
     $,
     initialPageData,
     filtersMain,
-    reportConfigModels
+    reportConfigModels,
 ) {
     $(function () {
         filtersMain.init();
@@ -27,11 +27,11 @@ hqDefine("reports/js/bootstrap3/base", [
         var $savedReports = $("#savedReports");
         if ($savedReports.length) {
             var reportConfigsView = reportConfigModels.reportConfigsViewModel({
-                    filterForm: $("#reportFilters"),
-                    items: initialPageData.get('report_configs'),
-                    defaultItem: defaultConfig,
-                    saveUrl: initialPageData.reverse("add_report_config"),
-                });
+                filterForm: $("#reportFilters"),
+                items: initialPageData.get('report_configs'),
+                defaultItem: defaultConfig,
+                saveUrl: initialPageData.reverse("add_report_config"),
+            });
             $savedReports.koApplyBindings(reportConfigsView);
             reportConfigsView.setConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
         }

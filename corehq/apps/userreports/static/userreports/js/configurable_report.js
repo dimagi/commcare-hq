@@ -19,7 +19,7 @@ hqDefine("userreports/js/configurable_report", [
     hqReport,
     reportConfigModels,
     util,
-    analytics
+    analytics,
 ) {
     var getStandardHQReport = function (isFirstLoad) {
         if (!initialPageData.get("standardHQReport")) {
@@ -98,11 +98,11 @@ hqDefine("userreports/js/configurable_report", [
         }
 
         var reportConfigsView = reportConfigModels.reportConfigsViewModel({
-                filterForm: $("#paramSelectorForm"),
-                items: initialPageData.get("report_configs"),
-                defaultItem: defaultConfig,
-                saveUrl: initialPageData.reverse("add_report_config"),
-            });
+            filterForm: $("#paramSelectorForm"),
+            items: initialPageData.get("report_configs"),
+            defaultItem: defaultConfig,
+            saveUrl: initialPageData.reverse("add_report_config"),
+        });
         $("#savedReports").koApplyBindings(reportConfigsView);
         reportConfigsView.setUserConfigurableConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
 
@@ -115,7 +115,7 @@ hqDefine("userreports/js/configurable_report", [
         if (initialPageData.get("created_by_builder")) {
             analytics.track.event(
                 initialPageData.get("builder_report_type"),
-                'Load a report that was built in report builder'
+                'Load a report that was built in report builder',
             );
         }
     });
