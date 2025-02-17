@@ -148,12 +148,12 @@
     {% registerurl 'api_send_sms' domain %}
     {% registerurl 'api_history' domain %}
 
-    <div class="initial-page-data" class="hide">
+    <div class="initial-page-data" class="d-none">
       {% block initial_page_data %}
         {# do not override this block, use initial_page_data template tag to populate #}
       {% endblock %}
     </div>
-    <div class="commcarehq-urls" class="hide">
+    <div class="commcarehq-urls" class="d-none">
       {% block registered_urls %}
         {# do not override this block, use registerurl template tag to populate #}
       {% endblock %}
