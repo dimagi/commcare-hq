@@ -1,5 +1,5 @@
 import _ from "underscore";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 
 import Toggles from "hqwebapp/js/toggles";
 import FormWorkflow from "app_manager/js/forms/form_workflow";
@@ -8,9 +8,8 @@ describe('Form Workflow', function () {
     var workflow;
 
     describe('#workflowOptions', function () {
-        const sandbox = sinon.sandbox.create();
 
-        sandbox.stub(Toggles, 'toggleEnabled').withArgs('FORM_LINK_ADVANCED_MODE').returns(true);
+        sinon.stub(Toggles, 'toggleEnabled').withArgs('FORM_LINK_ADVANCED_MODE').returns(true);
 
         beforeEach(function () {
             var labels = {},

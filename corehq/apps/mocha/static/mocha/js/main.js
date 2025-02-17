@@ -1,7 +1,7 @@
 hqDefine("mocha/js/main", [
     "mocha/mocha",
     "chai/chai",
-    "sinon/pkg/sinon",
+    "sinon",
     "analytix/js/google",
     "analytix/js/kissmetrix",
 ], function (

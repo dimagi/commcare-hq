@@ -1,7 +1,7 @@
 import _ from "underscore";
 import Backbone from "backbone";
 import Marionette from "backbone.marionette";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import Toggles from "hqwebapp/js/toggles";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
 import API from "cloudcare/js/formplayer/menus/api";
@@ -13,20 +13,19 @@ import UsersModels from "cloudcare/js/formplayer/users/models";
 
 describe('Split Screen Case Search', function () {
     const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' }),
-        sandbox = sinon.sandbox.create(),
         stubs = {};
 
     before(function () {
-        sandbox.stub(Marionette.CollectionView.prototype, 'render').returns();
-        sandbox.stub(Utils, 'currentUrlToObject').callsFake(function () {
+        sinon.stub(Marionette.CollectionView.prototype, 'render').returns();
+        sinon.stub(Utils, 'currentUrlToObject').callsFake(function () {
             return currentUrl;
         });
 
-        sandbox.stub(Backbone.history, 'start').callsFake(sandbox.spy());
-        sandbox.stub(Backbone.history, 'getFragment').callsFake(function () {
+        sinon.stub(Backbone.history, 'start').callsFake(sinon.spy());
+        sinon.stub(Backbone.history, 'getFragment').callsFake(function () {
             return JSON.stringify(currentUrl);
         });
-        sandbox.stub(API, 'queryFormplayer').callsFake(FakeFormplayer.queryFormplayer);
+        sinon.stub(API, 'queryFormplayer').callsFake(FakeFormplayer.queryFormplayer);
 
         stubs.regions = {};
         FormplayerFrontend.regions = {
@@ -34,15 +33,15 @@ describe('Split Screen Case Search', function () {
                 if (!_.has(stubs.regions, region)) {
                     stubs.regions[region] = {
                         region: region,
-                        show: sandbox.stub().callsFake(function () { return; }),
-                        empty: sandbox.stub().callsFake(function () { return; }),
+                        show: sinon.stub().callsFake(function () { return; }),
+                        empty: sinon.stub().callsFake(function () { return; }),
                     };
                 }
                 return stubs.regions[region];
             },
             addRegions: function () { return; },
         };
-        stubs.splitScreenToggleEnabled = sandbox.stub(Toggles, 'toggleEnabled').withArgs('SPLIT_SCREEN_CASE_SEARCH');
+        stubs.splitScreenToggleEnabled = sinon.stub(Toggles, 'toggleEnabled').withArgs('SPLIT_SCREEN_CASE_SEARCH');
     });
 
     beforeEach(function () {
@@ -54,11 +53,11 @@ describe('Split Screen Case Search', function () {
     });
 
     afterEach(function () {
-        sandbox.resetHistory();
+        sinon.resetHistory();
     });
 
     after(function () {
-        sandbox.restore();
+        sinon.restore();
     });
 
     describe('Controller actions', function () {

@@ -1,6 +1,6 @@
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import constants from "cloudcare/js/form_entry/const";
 import formUI from "cloudcare/js/form_entry/form_ui";
 
