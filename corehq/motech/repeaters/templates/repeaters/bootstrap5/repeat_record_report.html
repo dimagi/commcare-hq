@@ -50,6 +50,16 @@
   <div id="not-allowed" class="alert alert-warning d-none">
     {% blocktrans %}This action is not allowed for some of the selected payloads{% endblocktrans %}
   </div>
+  <div id="select-all-optional" class="alert alert-primary hide">
+    {% blocktrans with state_label=state.label.lower %}
+      All records on this page are selected. <button id="select-table-button" role="button" class="btn btn-default">Select all <b>{{ total }}</b> {{ state_label }} records in this table</button>
+    {% endblocktrans %}
+  </div>
+  <div id="selected-table-info" class="alert alert-info hide">
+    {% blocktrans with state_label=state.label.lower %}
+      All <b>{{ total }}</b> {{ state_label }} records in this table are selected. <button id="clear-table-selection" role="button" class="btn btn-default">Clear selection</button>
+    {% endblocktrans %}
+  </div>
   <div class="modal fade" id="are-you-sure">
     <div class="modal-dialog">
       <div class="modal-content">

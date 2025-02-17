@@ -15,6 +15,7 @@
               <button id="resend-button"
                       class="btn btn-default"
                       data-target="#are-you-sure"
+                      disabled="true"
                       title="{% trans 'Resend selected records' %}">
                 <i class="fa fa-play"></i>
                 {% trans 'Resend' %}
@@ -23,6 +24,7 @@
             <button id="requeue-button"
                     class="btn btn-default"
                     data-target="#are-you-sure"
+                    disabled="true"
                     title="{% trans 'Requeue selected records' %}">
               <i class="fa fa-recycle"></i>
               {% trans 'Requeue' %}
@@ -30,16 +32,11 @@
             <button id="cancel-button"
                     class="btn btn-default"
                     data-target="#are-you-sure"
+                    disabled="true"
                     title="{% trans 'Cancel selected records' %}">
               <i class="fa fa-times"></i>
               {% trans 'Cancel' %}
             </button>
-            <label class="checkbox" >
-              <input type="checkbox" id="select-all" value={{ state.name }}>
-              {% blocktrans with state_label=state.label.lower %}
-                Select all {{ total }} {{ state_label }} payloads
-              {% endblocktrans %}
-            </label>
           </div>
         </div>
       {% endif %}
@@ -49,6 +46,16 @@
   </div>
   <div id="not-allowed" class="alert alert-warning hide">
     {% blocktrans %}This action is not allowed for some of the selected payloads{% endblocktrans %}
+  </div>
+  <div id="selected-page-info" class="alert alert-info hide">
+    {% blocktrans with state_label=state.label.lower %}
+      All records on this page are selected. <button id="select-table-button" role="button" class="btn btn-default">Select all <b>{{ total }}</b> {{ state_label }} records in this table</button>
+    {% endblocktrans %}
+  </div>
+  <div id="selected-table-info" class="alert alert-info hide">
+    {% blocktrans with state_label=state.label.lower %}
+      All <b>{{ total }}</b> {{ state_label }} records in this table are selected. <button id="clear-table-selection" role="button" class="btn btn-default">Clear selection</button>
+    {% endblocktrans %}
   </div>
   <div class="modal fade" id="are-you-sure">
     <div class="modal-dialog">
@@ -81,6 +88,7 @@
     {% initial_page_data 'payload_id' payload_id %}
     {% initial_page_data 'repeater_id' repeater_id %}
     {% initial_page_data 'state' state %}
+    {% initial_page_data 'is_superuser' state %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}

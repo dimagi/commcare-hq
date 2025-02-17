@@ -4,7 +4,6 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     'ace-builds/src-min-noconflict/ace',
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
-    'repeaters/js/repeat_record_report_selects',
     'reports/js/bootstrap5/base',
     'reports/js/bootstrap5/tabular',
     'commcarehq',
@@ -13,15 +12,27 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     initialPageData,
     ace,
 ) {
-    const selectAll = document.getElementById('select-all'),
+    const requeueButton = document.getElementById('requeue-button'),
+        cancelButton = document.getElementById('cancel-button'),
+        selectAllCheckbox = document.getElementById('select-all-checkbox'),
+        selectedPageInfo = document.getElementById('selected-page-info'),
+        selectedTableInfo = document.getElementById('selected-table-info'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
+
+    var superuserResendButton = null;
+    if (initialPageData.get('is_superuser')) {
+        superuserResendButton = document.getElementById('resend-button')
+    }
+
+    var selectedEntireTable = false;
 
     $(function () {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
             $(this).nextAll('.record-attempt').toggle();
             e.preventDefault();
         });
+
         $('#report-content').on('click', '.view-attempts-btn', function () {
             const recordId = $(this).data().recordId;
 
@@ -144,34 +155,42 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         });
 
         $('#report-content').on('click', '.record-checkbox', function () {
-            const checkedRecords = getCheckedRecords();
-            if (checkedRecords.length == 0) {
-                requeueButton.disabled = true;
-                cancelButton.disabled = true;
-                return;
-            }
+            updateActionButtons()
+        });
 
-            var containsQueuedRecords = false;
-            checkedRecords.some(record => {
-                if (record.getAttribute('is_queued') == true) {
-                    containsQueuedRecords = true;
-                    return true;
-                }
-                return false;
-            });
-
-            if (containsQueuedRecords) {
-                requeueButton.disabled = true;
-                cancelButton.disabled = false;
+        $('#report-content').on('click', '#select-all-checkbox', function () {
+            if (selectAllCheckbox.checked) {
+                toggleItems(true);
+                selectedPageInfo.classList.remove('hide');
             } else {
-                requeueButton.disabled = false;
-                cancelButton.disabled = true;
+                toggleItems(false);
+                selectedPageInfo.classList.add('hide');
+                // just in case
+                selectedTableInfo.classList.add('hide');
+                selectedEntireTable = false;
             }
+            updateActionButtons()
+        });
+
+
+        $("#select-table-button").click( function() {
+            selectedEntireTable = true;
+            selectedPageInfo.classList.add('hide');
+            selectedTableInfo.classList.remove('hide');
+            updateActionButtons()
+        });
+
+        $("#clear-table-selection").click( function () {
+            selectedEntireTable = false;
+            selectAllCheckbox.checked = false;
+            selectedTableInfo.classList.add('hide');
+            toggleItems(false);
+            updateActionButtons()
         });
 
         function performAction(action) {
             const checkedRecords = getCheckedRecords();
-            if (selectAll.checked) {
+            if (selectedEntireTable) {
                 hideAllWarnings();
                 $popUp.modal('show');  /* todo B5: plugin:modal */
             } else if (checkedRecords.length > 0) {
@@ -185,7 +204,6 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
                 showWarning('no-selection');
             }
         }
-
 
         function getCheckedRecords() {
             return $.find('input[type=checkbox][name=record_ids]:checked');
@@ -205,7 +223,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         }
 
         function getRequestBody() {
-            if (selectAll.checked) {
+            if (selectedEntireTable) {
                 return getBulkSelectionProperties();
             } else {
                 return getRecordIds();
@@ -226,6 +244,50 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
                 record => record.getAttribute('data-id'),
             ).join(' ');
             return {record_id: recordIds};
+        }
+
+        function updateActionButtons() {
+            const checkedRecords = getCheckedRecords();
+            if (checkedRecords.length == 0) {
+                if (superuserResendButton) {
+                    superuserResendButton.disabled = true;
+                }
+                requeueButton.disabled = true;
+                cancelButton.disabled = true;
+                return;
+            }
+
+            var containsQueuedRecords = false;
+            checkedRecords.some(record => {
+                if (record.getAttribute('is_queued') == true) {
+                    containsQueuedRecords = true;
+                    return true;
+                }
+                return false;
+            });
+
+            if (containsQueuedRecords) {
+                if (superuserResendButton) {
+                    superuserResendButton.disabled = true;
+                }
+                requeueButton.disabled = true;
+                cancelButton.disabled = false;
+            } else {
+                if (superuserResendButton) {
+                    superuserResendButton.disabled = false;
+                }
+                requeueButton.disabled = false;
+                cancelButton.disabled = true;
+            }
+        }
+
+        function toggleItems(checked) {
+            const items = document.getElementsByName('record_ids');
+            for (const item of items) {
+                if (item.type === 'checkbox') {
+                    item.checked = checked;
+                }
+            }
         }
 
         function postResend(btn, data) {
