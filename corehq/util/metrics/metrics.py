@@ -6,6 +6,7 @@ from collections import namedtuple
 from typing import List, Dict
 
 from corehq.util.metrics.const import ALERT_INFO
+from corehq.util.metrics.utils import bucket_value
 from prometheus_client.utils import INF
 
 METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:.][a-zA-Z0-9_:.]*$')
@@ -110,7 +111,7 @@ class DebugMetrics:
         self.metrics = []
 
     def __getattr__(self, item):
-        if item in ('counter', 'gauge', 'histogram'):
+        if item in ('counter', 'gauge', '_histogram'):
             def _check(name, value, *args, **kwargs):
                 tags = kwargs.get('tags') or {}
                 _enforce_prefix(name, 'commcare')
@@ -120,6 +121,10 @@ class DebugMetrics:
                     self.metrics.append(Sample(item, name, tags, value))
             return _check
         raise AttributeError(item)
+
+    def histogram(self, name, value, bucket_tag, buckets, bucket_unit, tags, **kw):
+        bucket_tags = {bucket_tag: bucket_value(value, buckets, bucket_unit)}
+        self._histogram(name, 1, tags=(tags or {}) | bucket_tags, **kw)
 
     def push_metrics(self):
         pass
