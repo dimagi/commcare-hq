@@ -23,7 +23,7 @@ For more information, please review  `API Authentication <https://dimagi.atlassi
 Input Parameters
 
 
-.. list-table:: 
+.. list-table::
    :widths: 20 10 10 60
    :header-rows: 1
 
@@ -138,4 +138,5 @@ Sample Usage
     {
       "success_numbers": ["+16175551234"],
       "invalid_format_numbers": [],
-      "number
+      "numbers_in_use": []
+    }
