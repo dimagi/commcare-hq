@@ -1,6 +1,6 @@
 hqDefine("sms/js/compose",[
     "jquery",
-    "hqwebapp/js/bootstrap3/widgets",
+    "hqwebapp/js/bootstrap5/widgets",
     "jquery-ui/ui/widgets/sortable",
     "commcarehq",
 ], function ($) {
