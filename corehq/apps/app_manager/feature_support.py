@@ -263,3 +263,10 @@ class CommCareFeatureSupportMixin(object):
         return (
             self._require_minimum_version('2.54')
         )
+
+    @property
+    def supports_case_list_optimizations(self):
+        return (
+            toggles.CASE_LIST_OPTIMIZATIONS.enabled(self.domain)
+            and self._require_minimum_version('2.56')
+        )

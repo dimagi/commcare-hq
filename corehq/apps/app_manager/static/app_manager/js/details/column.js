@@ -81,6 +81,27 @@ hqDefine("app_manager/js/details/column", function () {
         });
         self.tileColumnStart = ko.observable(self.original.grid_x + 1 || 1); // converts from 0 to 1-based for UI
         self.tileColumnOptions = _.range(1, self.tileColumnMax());
+
+        let optimizationOptions = [
+            {
+                value: "",
+                label: ""
+            },
+            {
+                value: "cache",
+                label: gettext('Cache'),
+            },
+            {
+                value: "lazy_load",
+                label: gettext('Lazy Load'),
+            },
+            {
+                value: "cache_and_lazy_load",
+                label: gettext('Cache & Lazy Load'),
+            }
+        ];
+        self.optimizationSelectElement = uiElementSelect.new(optimizationOptions).val(self.original.optimization || "");
+        self.$optimizationSelectElement = $('<div/>').append(self.optimizationSelectElement.ui);
         self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
         self.tileWidthOptions = ko.computed(function () {
             return _.range(1, self.tileColumnMax() + 1 - (self.tileColumnStart() || 1));
@@ -240,6 +261,17 @@ hqDefine("app_manager/js/details/column", function () {
         }
 
         self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
+        self.supportsOptimizations = ko.observable();
+        self.optimizationsSupported = function () {
+            return (
+                self.format.val() &&
+                initialPageData.get('formats_supporting_case_list_optimizations').includes(self.format.val())
+            );
+        };
+        self.setSupportOptimizations = function () {
+            self.supportsOptimizations(self.optimizationsSupported());
+        };
+        self.setSupportOptimizations();
 
         (function () {
             const o = {
@@ -347,6 +379,7 @@ hqDefine("app_manager/js/details/column", function () {
             'nodeset_extra',
             'relevant',
             'format',
+            'optimizationSelectElement',
             'date_extra',
             'enum_extra',
             'action_form_extra',
@@ -382,6 +415,7 @@ hqDefine("app_manager/js/details/column", function () {
             }
 
             self.coordinatesVisible(!_.contains(['address', 'address-popup', 'invisible'], self.format.val()));
+            self.setSupportOptimizations();
             // Prevent self from running on page load before init
             if (self.format.ui.parent().length > 0) {
                 self.date_extra.ui.detach();
@@ -467,6 +501,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.field = self.field.val();
             column.header[self.lang] = self.header.val();
             column.format = self.format.val();
+            column.optimization = self.supportsOptimizations() ? self.optimizationSelectElement.ui.find("select").val() : null;
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
             column.endpoint_action_id = self.action_form_extra.val() === "-1" ? null : self.action_form_extra.val();
