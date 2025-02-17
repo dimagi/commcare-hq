@@ -25,6 +25,7 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
+from corehq.apps.es.profiling import ESQueryProfiler
 
 
 class ProjectReport(GenericReportView):
@@ -305,3 +306,31 @@ class MonthYearMixin(object):
             return int(value)
         else:
             return datetime.utcnow().year
+
+
+class ESQueryProfilerMixin(object):
+    """
+    This mixin makes it possible to profile your ES queries.
+    """
+    profiler_enabled = False
+    profiler_name = 'Case List'
+    search_class = None
+    _profiler = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.profiler_enabled:
+            self._profiler = ESQueryProfiler(
+                name=self.profiler_name,
+                search_class=self._get_search_class(),
+            )
+            self.search_class = self.profiler.get_search_class(slug=self.__class__.__name__)
+
+    @property
+    def profiler(self):
+        return self._profiler
+
+    def _get_search_class(self):
+        if not self.search_class:
+            raise NotImplementedError("You must define a search_class attribute.")
+        return self.search_class
